@@ -1,5 +1,11 @@
 export type ServiceType = 'aereo' | 'hotel' | 'carro' | 'seguro' | 'experiencia' | 'adicional';
 
+export interface FlightLeg {
+  origin: string;
+  destination: string;
+  date: string;
+}
+
 export interface ServiceItem {
   id: string;
   type: ServiceType;
@@ -13,6 +19,7 @@ export interface ServiceItem {
   quantity: number;
   imageBase64?: string;
   imagesBase64?: string[];
+  flightLegs?: FlightLeg[];
 }
 
 export interface ClientData {
@@ -50,7 +57,7 @@ export const SERVICE_TYPE_CONFIG: Record<ServiceType, { label: string; icon: str
   aereo: { label: 'Passagens Aéreas', icon: '✈️', pdfLabel: 'Passagens Aereas' },
   hotel: { label: 'Hospedagem', icon: '🏨', pdfLabel: 'Hospedagem' },
   carro: { label: 'Aluguel de Carro', icon: '🚗', pdfLabel: 'Aluguel de Carro' },
-  seguro: { label: 'Seguro Viagem', icon: '🛡', pdfLabel: 'Seguro Viagem' },
-  experiencia: { label: 'Experiências / Passeios', icon: '🎟', pdfLabel: 'Experiencias / Passeios' },
+  seguro: { label: 'Seguro Viagem', icon: '🛡️', pdfLabel: 'Seguro Viagem' },
+  experiencia: { label: 'Experiências / Passeios', icon: '🎟️', pdfLabel: 'Experiencias / Passeios' },
   adicional: { label: 'Serviços Adicionais', icon: '📋', pdfLabel: 'Servicos Adicionais' },
 };

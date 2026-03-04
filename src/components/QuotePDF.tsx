@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import { QuoteData, AgencySettings, ServiceItem, ServiceType, SERVICE_TYPE_CONFIG } from '@/types/quote';
+import { QuoteData, AgencySettings, ServiceItem, ServiceType, SERVICE_TYPE_CONFIG, FlightLeg } from '@/types/quote';
 
 const NAVY = '#1a2744';
 const GOLD = '#c8a951';
@@ -41,6 +41,11 @@ const s = StyleSheet.create({
   serviceQty: { fontSize: 7, color: MID_TEXT, marginTop: 2 },
   serviceImagesRow: { flexDirection: 'row', gap: 4, marginBottom: 6 },
   serviceImageSmall: { width: 55, height: 42, objectFit: 'cover', borderRadius: 3 },
+  flightLegsBox: { marginBottom: 4 },
+  flightLeg: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
+  flightLegText: { fontSize: 8, color: NAVY },
+  flightLegDate: { fontSize: 7, color: MID_TEXT },
+  flightLegArrow: { fontSize: 8, color: GOLD, fontFamily: 'Helvetica-Bold' },
   // Summary
   summaryBox: { marginTop: 28, borderTopWidth: 2, borderTopColor: GOLD, paddingTop: 14 },
   summaryTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 10 },
@@ -166,8 +171,8 @@ export default function QuotePDF({ quote, agency }: Props) {
             <Text style={s.clientLabel}>Periodo</Text>
             <Text style={s.clientValue}>{formatDate(quote.trip.departureDate)} a {formatDate(quote.trip.returnDate)}</Text>
           </View>
-          <View style={{ ...s.clientCol, flex: 0.5 }}>
-            <Text style={s.clientLabel}>Passageiros</Text>
+          <View style={{ ...s.clientCol, flex: 0.6, minWidth: 70 }}>
+            <Text style={s.clientLabel}>Pax</Text>
             <Text style={s.clientValue}>{quote.client.passengers}</Text>
           </View>
         </View>
@@ -199,6 +204,18 @@ export default function QuotePDF({ quote, agency }: Props) {
                       </View>
                     )}
                     <Text style={s.serviceTitle}>{sanitizeText(item.title)}</Text>
+                    {item.flightLegs && item.flightLegs.length > 0 && (
+                      <View style={s.flightLegsBox}>
+                        {item.flightLegs.map((leg: FlightLeg, legIdx: number) => (
+                          <View key={legIdx} style={s.flightLeg}>
+                            <Text style={s.flightLegText}>{sanitizeText(leg.origin)}</Text>
+                            <Text style={s.flightLegArrow}> &gt; </Text>
+                            <Text style={s.flightLegText}>{sanitizeText(leg.destination)}</Text>
+                            {leg.date && <Text style={s.flightLegDate}> ({formatDate(leg.date)})</Text>}
+                          </View>
+                        ))}
+                      </View>
+                    )}
                     {item.description && <Text style={s.serviceDesc}>{sanitizeText(item.description)}</Text>}
                     <View style={s.serviceMeta}>
                       {item.supplier && <Text style={s.serviceMetaItem}>Fornecedor: {sanitizeText(item.supplier)}</Text>}
