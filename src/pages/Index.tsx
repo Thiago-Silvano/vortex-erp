@@ -88,8 +88,7 @@ export default function Index() {
   const handlePreview = () => {
     if (!validate()) return;
     const quote: QuoteData = { client, trip, services };
-    saveQuoteData(quote);
-    navigate('/preview');
+    navigate('/preview', { state: { quote } });
   };
 
   const handlePhoneChange = (value: string) => {
