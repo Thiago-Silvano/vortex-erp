@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PDFViewer, pdf } from '@react-pdf/renderer';
-import { getQuoteData, getAgencySettings, clearQuoteData } from '@/lib/storage';
+import { getAgencySettings } from '@/lib/storage';
 import { QuoteData, AgencySettings } from '@/types/quote';
 import QuotePDF from '@/components/QuotePDF';
 import { Button } from '@/components/ui/button';
@@ -9,15 +9,16 @@ import { ArrowLeft, Download, FilePlus } from 'lucide-react';
 
 export default function Preview() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [quote, setQuote] = useState<QuoteData | null>(null);
   const [agency, setAgency] = useState<AgencySettings | null>(null);
 
   useEffect(() => {
-    const q = getQuoteData();
+    const q = (location.state as any)?.quote as QuoteData | undefined;
     if (!q) { navigate('/'); return; }
     setQuote(q);
     setAgency(getAgencySettings());
-  }, [navigate]);
+  }, [navigate, location.state]);
 
   const handleDownload = async () => {
     if (!quote || !agency) return;
@@ -31,7 +32,6 @@ export default function Preview() {
   };
 
   const handleNewQuote = () => {
-    clearQuoteData();
     navigate('/');
   };
 
