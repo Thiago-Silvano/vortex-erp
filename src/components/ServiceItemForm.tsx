@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ServiceItem, ServiceType, SERVICE_TYPE_CONFIG } from '@/types/quote';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fileToBase64 } from '@/lib/storage';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ImagePlus } from 'lucide-react';
 
 interface Props {
   onAdd: (item: ServiceItem) => void;
@@ -33,6 +33,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
   );
   const [imagePreview, setImagePreview] = useState<string | undefined>(editItem?.imageBase64);
   const [extraImages, setExtraImages] = useState<string[]>(editItem?.imagesBase64 || []);
+  const extraImageInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,15 +44,13 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
     }
   };
 
-  const handleExtraImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    const newImages: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const base64 = await fileToBase64(files[i]);
-      newImages.push(base64);
-    }
-    setExtraImages(prev => [...prev, ...newImages]);
+  const handleAddExtraImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const base64 = await fileToBase64(file);
+    setExtraImages(prev => [...prev, base64]);
+    // Reset input so the same file can be selected again
+    if (extraImageInputRef.current) extraImageInputRef.current.value = '';
   };
 
   const removeExtraImage = (index: number) => {
@@ -137,6 +136,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
           </div>
         </div>
 
+        {/* Imagem principal */}
         <div>
           <Label>Imagem principal (opcional)</Label>
           <Input type="file" accept="image/*" onChange={handleImageUpload} />
@@ -150,21 +150,33 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
           )}
         </div>
 
+        {/* Imagens adicionais com botão + */}
         <div>
-          <Label>Imagens adicionais (opcional)</Label>
-          <Input type="file" accept="image/*" multiple onChange={handleExtraImageUpload} />
-          {extraImages.length > 0 && (
-            <div className="mt-2 flex gap-2 flex-wrap">
-              {extraImages.map((img, idx) => (
-                <div key={idx} className="relative inline-block">
-                  <img src={img} alt={`Extra ${idx + 1}`} className="h-16 rounded object-cover" />
-                  <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => removeExtraImage(idx)}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
+          <Label>Imagens adicionais</Label>
+          <div className="mt-2 flex gap-2 flex-wrap items-center">
+            {extraImages.map((img, idx) => (
+              <div key={idx} className="relative inline-block">
+                <img src={img} alt={`Extra ${idx + 1}`} className="h-16 w-16 rounded object-cover border" />
+                <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => removeExtraImage(idx)}>
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => extraImageInputRef.current?.click()}
+              className="h-16 w-16 rounded border-2 border-dashed border-muted-foreground/40 flex items-center justify-center hover:border-accent hover:bg-accent/10 transition-colors cursor-pointer"
+            >
+              <ImagePlus className="h-5 w-5 text-muted-foreground" />
+            </button>
+            <input
+              ref={extraImageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAddExtraImage}
+            />
+          </div>
         </div>
 
         <Button onClick={handleSubmit} className="w-full">
