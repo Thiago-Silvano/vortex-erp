@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { QuoteData, AgencySettings, ServiceItem, ServiceType, SERVICE_TYPE_CONFIG } from '@/types/quote';
 
 const NAVY = '#1a2744';
@@ -10,7 +10,6 @@ const MID_TEXT = '#666666';
 
 const s = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: DARK_TEXT },
-  // Header
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottomWidth: 2, borderBottomColor: GOLD, paddingBottom: 16 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   logo: { width: 60, height: 60, objectFit: 'contain' },
@@ -18,15 +17,13 @@ const s = StyleSheet.create({
   agencyContact: { fontSize: 8, color: MID_TEXT, marginTop: 2 },
   headerRight: { alignItems: 'flex-end' },
   quoteTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: GOLD, textTransform: 'uppercase', letterSpacing: 2 },
-  // Client
   clientBox: { backgroundColor: NAVY, padding: 16, borderRadius: 6, marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between' },
   clientLabel: { fontSize: 8, color: GOLD, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 },
   clientValue: { fontSize: 11, color: WHITE, fontFamily: 'Helvetica-Bold' },
   clientCol: { flex: 1 },
-  // Category
   categoryHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: GOLD, paddingBottom: 4 },
+  categoryIcon: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: GOLD, backgroundColor: NAVY, width: 20, height: 20, textAlign: 'center', lineHeight: 20, borderRadius: 10 },
   categoryTitle: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: NAVY },
-  // Service card
   serviceCard: { flexDirection: 'row', marginBottom: 8, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 4, overflow: 'hidden' },
   serviceImage: { width: 80, height: 65, objectFit: 'cover' },
   serviceImagePlaceholder: { width: 80, height: 65, backgroundColor: LIGHT_GRAY, justifyContent: 'center', alignItems: 'center' },
@@ -38,7 +35,8 @@ const s = StyleSheet.create({
   serviceValue: { alignItems: 'flex-end', justifyContent: 'center', padding: 8, backgroundColor: LIGHT_GRAY, minWidth: 90 },
   serviceValueText: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: NAVY },
   serviceQty: { fontSize: 7, color: MID_TEXT },
-  // Summary
+  serviceImagesRow: { flexDirection: 'row', gap: 4, marginBottom: 4 },
+  serviceImageSmall: { width: 60, height: 45, objectFit: 'cover', borderRadius: 2 },
   summaryBox: { marginTop: 20, borderTopWidth: 2, borderTopColor: GOLD, paddingTop: 12 },
   summaryTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 8 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: '#eee' },
@@ -47,15 +45,22 @@ const s = StyleSheet.create({
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, backgroundColor: NAVY, paddingHorizontal: 12, borderRadius: 4, marginTop: 6 },
   totalLabel: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: GOLD },
   totalValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: WHITE },
-  // Footer
   footer: { position: 'absolute', bottom: 30, left: 40, right: 40 },
   footerLine: { borderTopWidth: 1, borderTopColor: '#ddd', paddingTop: 8 },
   footerText: { fontSize: 7, color: MID_TEXT, textAlign: 'center', lineHeight: 1.5 },
-  // Notes
   notesBox: { marginTop: 16, padding: 10, backgroundColor: LIGHT_GRAY, borderRadius: 4 },
   notesTitle: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 3 },
   notesText: { fontSize: 8, color: MID_TEXT },
 });
+
+const CATEGORY_ICONS: Record<ServiceType, string> = {
+  aereo: 'A',
+  hotel: 'H',
+  carro: 'C',
+  seguro: 'S',
+  experiencia: 'E',
+  adicional: '+',
+};
 
 function formatCurrency(v: number) {
   return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -65,6 +70,17 @@ function formatDate(d: string) {
   if (!d) return '-';
   const [y, m, day] = d.split('-');
   return `${day}/${m}/${y}`;
+}
+
+function getAllImages(item: ServiceItem): string[] {
+  const images: string[] = [];
+  if (item.imageBase64) images.push(item.imageBase64);
+  if (item.imagesBase64) {
+    item.imagesBase64.forEach(img => {
+      if (!images.includes(img)) images.push(img);
+    });
+  }
+  return images;
 }
 
 const SERVICE_ORDER: ServiceType[] = ['aereo', 'hotel', 'carro', 'seguro', 'experiencia', 'adicional'];
@@ -82,8 +98,7 @@ export default function QuotePDF({ quote, agency }: Props) {
   }, [] as { type: ServiceType; items: ServiceItem[] }[]);
 
   const categoryTotals = grouped.map(g => ({
-    label: SERVICE_TYPE_CONFIG[g.type].label,
-    icon: SERVICE_TYPE_CONFIG[g.type].icon,
+    label: SERVICE_TYPE_CONFIG[g.type].pdfLabel,
     total: g.items.reduce((sum, i) => sum + i.value * i.quantity, 0),
   }));
 
@@ -104,7 +119,7 @@ export default function QuotePDF({ quote, agency }: Props) {
             </View>
           </View>
           <View style={s.headerRight}>
-            <Text style={s.quoteTitle}>Orçamento</Text>
+            <Text style={s.quoteTitle}>Orcamento</Text>
           </View>
         </View>
 
@@ -116,10 +131,10 @@ export default function QuotePDF({ quote, agency }: Props) {
           </View>
           <View style={s.clientCol}>
             <Text style={s.clientLabel}>Destino</Text>
-            <Text style={s.clientValue}>{quote.trip.origin} → {quote.trip.destination}</Text>
+            <Text style={s.clientValue}>{quote.trip.origin} - {quote.trip.destination}</Text>
           </View>
           <View style={s.clientCol}>
-            <Text style={s.clientLabel}>Período</Text>
+            <Text style={s.clientLabel}>Periodo</Text>
             <Text style={s.clientValue}>{formatDate(quote.trip.departureDate)} a {formatDate(quote.trip.returnDate)}</Text>
           </View>
           <View style={{ ...s.clientCol, flex: 0.5 }}>
@@ -132,40 +147,50 @@ export default function QuotePDF({ quote, agency }: Props) {
         {grouped.map(({ type, items }) => (
           <View key={type} wrap={false}>
             <View style={s.categoryHeader}>
-              <Text style={{ fontSize: 14 }}>{SERVICE_TYPE_CONFIG[type].icon}</Text>
-              <Text style={s.categoryTitle}>{SERVICE_TYPE_CONFIG[type].label}</Text>
+              <Text style={s.categoryIcon}>{CATEGORY_ICONS[type]}</Text>
+              <Text style={s.categoryTitle}>{SERVICE_TYPE_CONFIG[type].pdfLabel}</Text>
             </View>
-            {items.map(item => (
-              <View key={item.id} style={s.serviceCard} wrap={false}>
-                {item.imageBase64 ? (
-                  <Image src={item.imageBase64} style={s.serviceImage} />
-                ) : (
-                  <View style={s.serviceImagePlaceholder}>
-                    <Text style={{ fontSize: 20 }}>{SERVICE_TYPE_CONFIG[type].icon}</Text>
+            {items.map(item => {
+              const images = getAllImages(item);
+              return (
+                <View key={item.id} style={s.serviceCard} wrap={false}>
+                  {images.length === 1 ? (
+                    <Image src={images[0]} style={s.serviceImage} />
+                  ) : images.length === 0 ? (
+                    <View style={s.serviceImagePlaceholder}>
+                      <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: GOLD }}>{CATEGORY_ICONS[type]}</Text>
+                    </View>
+                  ) : null}
+                  <View style={s.serviceBody}>
+                    {images.length > 1 && (
+                      <View style={s.serviceImagesRow}>
+                        {images.map((img, idx) => (
+                          <Image key={idx} src={img} style={s.serviceImageSmall} />
+                        ))}
+                      </View>
+                    )}
+                    <Text style={s.serviceTitle}>{item.title}</Text>
+                    {item.description && <Text style={s.serviceDesc}>{item.description}</Text>}
+                    <View style={s.serviceMeta}>
+                      {item.supplier && <Text style={s.serviceMetaItem}>Fornecedor: {item.supplier}</Text>}
+                      {item.location && <Text style={s.serviceMetaItem}>Local: {item.location}</Text>}
+                      {item.startDate && <Text style={s.serviceMetaItem}>Data: {formatDate(item.startDate)} - {formatDate(item.endDate)}</Text>}
+                    </View>
                   </View>
-                )}
-                <View style={s.serviceBody}>
-                  <Text style={s.serviceTitle}>{item.title}</Text>
-                  {item.description && <Text style={s.serviceDesc}>{item.description}</Text>}
-                  <View style={s.serviceMeta}>
-                    {item.supplier && <Text style={s.serviceMetaItem}>📍 {item.supplier}</Text>}
-                    {item.location && <Text style={s.serviceMetaItem}>📌 {item.location}</Text>}
-                    {item.startDate && <Text style={s.serviceMetaItem}>📅 {formatDate(item.startDate)} - {formatDate(item.endDate)}</Text>}
+                  <View style={s.serviceValue}>
+                    <Text style={s.serviceValueText}>{formatCurrency(item.value * item.quantity)}</Text>
+                    {item.quantity > 1 && <Text style={s.serviceQty}>{item.quantity}x {formatCurrency(item.value)}</Text>}
                   </View>
                 </View>
-                <View style={s.serviceValue}>
-                  <Text style={s.serviceValueText}>{formatCurrency(item.value * item.quantity)}</Text>
-                  {item.quantity > 1 && <Text style={s.serviceQty}>{item.quantity}x {formatCurrency(item.value)}</Text>}
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         ))}
 
         {/* Notes */}
         {quote.client.notes && (
           <View style={s.notesBox}>
-            <Text style={s.notesTitle}>Observações</Text>
+            <Text style={s.notesTitle}>Observacoes</Text>
             <Text style={s.notesText}>{quote.client.notes}</Text>
           </View>
         )}
@@ -175,7 +200,7 @@ export default function QuotePDF({ quote, agency }: Props) {
           <Text style={s.summaryTitle}>Resumo Financeiro</Text>
           {categoryTotals.map(c => (
             <View key={c.label} style={s.summaryRow}>
-              <Text style={s.summaryLabel}>{c.icon} {c.label}</Text>
+              <Text style={s.summaryLabel}>{c.label}</Text>
               <Text style={s.summaryValue}>{formatCurrency(c.total)}</Text>
             </View>
           ))}
@@ -189,8 +214,8 @@ export default function QuotePDF({ quote, agency }: Props) {
         <View style={s.footer} fixed>
           <View style={s.footerLine}>
             <Text style={s.footerText}>
-              Valores sujeitos à disponibilidade no momento da emissão • Tarifas podem sofrer alteração sem aviso prévio{'\n'}
-              Valores por pessoa, salvo indicação contrária • {agency.name} {agency.website ? `• ${agency.website}` : ''}
+              Valores sujeitos a disponibilidade no momento da emissao - Tarifas podem sofrer alteracao sem aviso previo{'\n'}
+              Valores por pessoa, salvo indicacao contraria - {agency.name} {agency.website ? `- ${agency.website}` : ''}
             </Text>
           </View>
         </View>

@@ -32,6 +32,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
     editItem ? { ...editItem } : emptyItem()
   );
   const [imagePreview, setImagePreview] = useState<string | undefined>(editItem?.imageBase64);
+  const [extraImages, setExtraImages] = useState<string[]>(editItem?.imagesBase64 || []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,16 +43,33 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
     }
   };
 
+  const handleExtraImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newImages: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const base64 = await fileToBase64(files[i]);
+      newImages.push(base64);
+    }
+    setExtraImages(prev => [...prev, ...newImages]);
+  };
+
+  const removeExtraImage = (index: number) => {
+    setExtraImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = () => {
     if (!item.title) return;
     onAdd({
       ...item,
       id: editItem?.id || crypto.randomUUID(),
       imageBase64: imagePreview,
+      imagesBase64: extraImages.length > 0 ? extraImages : undefined,
     });
     if (!editItem) {
       setItem(emptyItem());
       setImagePreview(undefined);
+      setExtraImages([]);
     }
   };
 
@@ -120,7 +138,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
         </div>
 
         <div>
-          <Label>Imagem (opcional)</Label>
+          <Label>Imagem principal (opcional)</Label>
           <Input type="file" accept="image/*" onChange={handleImageUpload} />
           {imagePreview && (
             <div className="mt-2 relative inline-block">
@@ -128,6 +146,23 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
               <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => { setImagePreview(undefined); setItem(p => ({ ...p, imageBase64: undefined })); }}>
                 <X className="h-3 w-3" />
               </Button>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <Label>Imagens adicionais (opcional)</Label>
+          <Input type="file" accept="image/*" multiple onChange={handleExtraImageUpload} />
+          {extraImages.length > 0 && (
+            <div className="mt-2 flex gap-2 flex-wrap">
+              {extraImages.map((img, idx) => (
+                <div key={idx} className="relative inline-block">
+                  <img src={img} alt={`Extra ${idx + 1}`} className="h-16 rounded object-cover" />
+                  <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => removeExtraImage(idx)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
             </div>
           )}
         </div>
