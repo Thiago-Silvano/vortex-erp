@@ -12,6 +12,7 @@ export interface ServiceItem {
   value: number;
   quantity: number;
   imageBase64?: string;
+  imagesBase64?: string[];
 }
 
 export interface ClientData {
@@ -45,11 +46,11 @@ export interface AgencySettings {
   website: string;
 }
 
-export const SERVICE_TYPE_CONFIG: Record<ServiceType, { label: string; icon: string }> = {
-  aereo: { label: 'Passagens Aéreas', icon: '✈️' },
-  hotel: { label: 'Hospedagem', icon: '🏨' },
-  carro: { label: 'Aluguel de Carro', icon: '🚗' },
-  seguro: { label: 'Seguro Viagem', icon: '🛡' },
-  experiencia: { label: 'Experiências / Passeios', icon: '🎟' },
-  adicional: { label: 'Serviços Adicionais', icon: '📋' },
+export const SERVICE_TYPE_CONFIG: Record<ServiceType, { label: string; icon: string; pdfLabel: string }> = {
+  aereo: { label: 'Passagens Aéreas', icon: '✈️', pdfLabel: 'Passagens Aereas' },
+  hotel: { label: 'Hospedagem', icon: '🏨', pdfLabel: 'Hospedagem' },
+  carro: { label: 'Aluguel de Carro', icon: '🚗', pdfLabel: 'Aluguel de Carro' },
+  seguro: { label: 'Seguro Viagem', icon: '🛡', pdfLabel: 'Seguro Viagem' },
+  experiencia: { label: 'Experiências / Passeios', icon: '🎟', pdfLabel: 'Experiencias / Passeios' },
+  adicional: { label: 'Serviços Adicionais', icon: '📋', pdfLabel: 'Servicos Adicionais' },
 };
