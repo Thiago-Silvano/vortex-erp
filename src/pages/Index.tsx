@@ -9,13 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ServiceItemForm from '@/components/ServiceItemForm';
+import AutocompleteInput from '@/components/AutocompleteInput';
+import { WORLD_CITIES } from '@/data/cities';
 import { Eye, Trash2, Pencil, Settings, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const defaultClient: ClientData = { name: '', passengers: 1, phone: '', email: '', notes: '' };
 const defaultTrip: TripData = { origin: '', destination: '', departureDate: '', returnDate: '', nights: 1, tripType: 'Lazer' };
 
-// Phone mask: (XX) XXXXX-XXXX
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11);
   if (digits.length <= 2) return digits.length ? `(${digits}` : '';
@@ -23,7 +24,6 @@ function formatPhone(value: string): string {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
-// Email simple validation
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -59,25 +59,24 @@ export default function Index() {
   const validate = (): boolean => {
     const errs: ValidationErrors = {};
 
-    if (!client.name.trim()) errs.clientName = 'Nome do cliente é obrigatório';
-    if (!client.phone.trim()) errs.clientPhone = 'Telefone é obrigatório';
-    if (client.email && !isValidEmail(client.email)) errs.clientEmail = 'Email inválido';
-    if (!trip.origin.trim()) errs.tripOrigin = 'Origem é obrigatória';
-    if (!trip.destination.trim()) errs.tripDestination = 'Destino é obrigatório';
-    if (!trip.departureDate) errs.tripDeparture = 'Data de ida é obrigatória';
-    if (!trip.returnDate) errs.tripReturn = 'Data de volta é obrigatória';
-    if (services.length === 0) errs.services = 'Adicione pelo menos um serviço';
+    if (!client.name.trim()) errs.clientName = 'Nome do cliente e obrigatorio';
+    if (!client.phone.trim()) errs.clientPhone = 'Telefone e obrigatorio';
+    if (client.email && !isValidEmail(client.email)) errs.clientEmail = 'Email invalido';
+    if (!trip.origin.trim()) errs.tripOrigin = 'Origem e obrigatoria';
+    if (!trip.destination.trim()) errs.tripDestination = 'Destino e obrigatorio';
+    if (!trip.departureDate) errs.tripDeparture = 'Data de ida e obrigatoria';
+    if (!trip.returnDate) errs.tripReturn = 'Data de volta e obrigatoria';
+    if (services.length === 0) errs.services = 'Adicione pelo menos um servico';
 
-    // Check agency settings
     const agency = getAgencySettings();
-    if (!agency || !agency.name.trim()) errs.agency = 'Configure o nome da agência em Configurações';
+    if (!agency || !agency.name.trim()) errs.agency = 'Configure o nome da agencia em Configuracoes';
 
     setErrors(errs);
 
     if (Object.keys(errs).length > 0) {
       const firstError = Object.values(errs)[0];
       toast({
-        title: 'Campos obrigatórios',
+        title: 'Campos obrigatorios',
         description: firstError,
         variant: 'destructive',
       });
@@ -116,10 +115,10 @@ export default function Index() {
         <div className="container mx-auto flex items-center justify-between py-4 px-4">
           <div className="flex items-center gap-2">
             <FileText className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Sistema de Orçamentos</h1>
+            <h1 className="text-xl font-bold">Sistema de Orcamentos</h1>
           </div>
           <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={() => navigate('/settings')}>
-            <Settings className="h-5 w-5 mr-1" /> Configurações
+            <Settings className="h-5 w-5 mr-1" /> Configuracoes
           </Button>
         </div>
       </header>
@@ -140,7 +139,7 @@ export default function Index() {
                 {errors.clientName && <p className="text-xs text-destructive mt-1">{errors.clientName}</p>}
               </div>
               <div>
-                <Label>Nº de Passageiros</Label>
+                <Label>Passageiros</Label>
                 <Input type="number" min={1} value={client.passengers} onChange={e => setClient(p => ({ ...p, passengers: parseInt(e.target.value) || 1 }))} />
               </div>
             </div>
@@ -168,7 +167,7 @@ export default function Index() {
               </div>
             </div>
             <div>
-              <Label>Observações</Label>
+              <Label>Observacoes</Label>
               <Textarea value={client.notes} onChange={e => setClient(p => ({ ...p, notes: e.target.value }))} rows={2} />
             </div>
           </CardContent>
@@ -176,23 +175,27 @@ export default function Index() {
 
         {/* Trip Data */}
         <Card>
-          <CardHeader><CardTitle>Informações da Viagem</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Informacoes da Viagem</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Origem *</Label>
-                <Input
+                <AutocompleteInput
                   value={trip.origin}
-                  onChange={e => { setTrip(p => ({ ...p, origin: e.target.value })); clearError('tripOrigin'); }}
+                  onChange={v => { setTrip(p => ({ ...p, origin: v })); clearError('tripOrigin'); }}
+                  suggestions={WORLD_CITIES}
+                  placeholder="Buscar cidade..."
                   className={errors.tripOrigin ? 'border-destructive' : ''}
                 />
                 {errors.tripOrigin && <p className="text-xs text-destructive mt-1">{errors.tripOrigin}</p>}
               </div>
               <div>
                 <Label>Destino *</Label>
-                <Input
+                <AutocompleteInput
                   value={trip.destination}
-                  onChange={e => { setTrip(p => ({ ...p, destination: e.target.value })); clearError('tripDestination'); }}
+                  onChange={v => { setTrip(p => ({ ...p, destination: v })); clearError('tripDestination'); }}
+                  suggestions={WORLD_CITIES}
+                  placeholder="Buscar cidade..."
                   className={errors.tripDestination ? 'border-destructive' : ''}
                 />
                 {errors.tripDestination && <p className="text-xs text-destructive mt-1">{errors.tripDestination}</p>}
@@ -229,9 +232,9 @@ export default function Index() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Lazer">Lazer</SelectItem>
-                    <SelectItem value="Negócios">Negócios</SelectItem>
+                    <SelectItem value="Negócios">Negocios</SelectItem>
                     <SelectItem value="Lua de mel">Lua de mel</SelectItem>
-                    <SelectItem value="Família">Família</SelectItem>
+                    <SelectItem value="Família">Familia</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -243,9 +246,9 @@ export default function Index() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Serviços ({services.length})
+              Servicos ({services.length})
               {!showForm && !editingId && (
-                <Button size="sm" onClick={() => { setShowForm(true); clearError('services'); }}>+ Adicionar Serviço</Button>
+                <Button size="sm" onClick={() => { setShowForm(true); clearError('services'); }}>+ Adicionar Servico</Button>
               )}
             </CardTitle>
             {errors.services && <p className="text-xs text-destructive">{errors.services}</p>}
@@ -261,7 +264,7 @@ export default function Index() {
                     <p className="font-medium text-sm truncate">
                       {SERVICE_TYPE_CONFIG[s.type].icon} {s.title}
                     </p>
-                    <p className="text-xs text-muted-foreground">{s.supplier} • {s.location}</p>
+                    <p className="text-xs text-muted-foreground">{s.supplier} - {s.location}</p>
                   </div>
                   <span className="text-sm font-semibold whitespace-nowrap">
                     R$ {(s.value * s.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -273,7 +276,7 @@ export default function Index() {
             ))}
             {showForm && <ServiceItemForm onAdd={addService} onCancel={() => setShowForm(false)} />}
             {services.length === 0 && !showForm && (
-              <p className="text-center text-muted-foreground py-8">Nenhum serviço adicionado. Clique em "Adicionar Serviço" para começar.</p>
+              <p className="text-center text-muted-foreground py-8">Nenhum servico adicionado. Clique em "Adicionar Servico" para comecar.</p>
             )}
           </CardContent>
         </Card>
@@ -283,23 +286,22 @@ export default function Index() {
           <Card className="bg-primary text-primary-foreground">
             <CardContent className="flex items-center justify-between py-4">
               <div>
-                <p className="text-sm opacity-80">{services.length} serviço(s)</p>
+                <p className="text-sm opacity-80">{services.length} servico(s)</p>
                 <p className="text-2xl font-bold">
                   Total: R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <Button size="lg" variant="secondary" onClick={handlePreview} className="text-accent-foreground">
-                <Eye className="h-5 w-5 mr-2" /> Visualizar Orçamento
+                <Eye className="h-5 w-5 mr-2" /> Visualizar Orcamento
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Button when no services yet */}
         {services.length === 0 && (
           <div className="flex justify-end">
             <Button size="lg" variant="secondary" onClick={handlePreview}>
-              <Eye className="h-5 w-5 mr-2" /> Visualizar Orçamento
+              <Eye className="h-5 w-5 mr-2" /> Visualizar Orcamento
             </Button>
           </div>
         )}
