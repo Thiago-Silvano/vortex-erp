@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fileToBase64 } from '@/lib/storage';
 import { Plus, X, ImagePlus } from 'lucide-react';
+import AirportAutocomplete from '@/components/AirportAutocomplete';
 
 interface Props {
   onAdd: (item: ServiceItem) => void;
@@ -122,10 +123,21 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <div>
-            <Label>Local</Label>
-            <Input value={item.location} onChange={e => setItem(p => ({ ...p, location: e.target.value }))} placeholder="Ex: Paris, França" />
-          </div>
+          {item.type === 'aereo' ? (
+            <div>
+              <Label>Aeroporto / Local</Label>
+              <AirportAutocomplete
+                value={item.location}
+                onChange={v => setItem(p => ({ ...p, location: v }))}
+                placeholder="Buscar aeroporto por nome ou sigla..."
+              />
+            </div>
+          ) : (
+            <div>
+              <Label>Local</Label>
+              <Input value={item.location} onChange={e => setItem(p => ({ ...p, location: e.target.value }))} placeholder="Ex: Paris, Franca" />
+            </div>
+          )}
           <div>
             <Label>Valor (R$)</Label>
             <Input type="number" min={0} step={0.01} value={item.value || ''} onChange={e => setItem(p => ({ ...p, value: parseFloat(e.target.value) || 0 }))} />

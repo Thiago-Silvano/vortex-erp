@@ -6,51 +6,58 @@ const GOLD = '#c8a951';
 const LIGHT_GRAY = '#f5f5f5';
 const WHITE = '#ffffff';
 const DARK_TEXT = '#2a2a2a';
-const MID_TEXT = '#666666';
+const MID_TEXT = '#555555';
 
 const s = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: DARK_TEXT },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottomWidth: 2, borderBottomColor: GOLD, paddingBottom: 16 },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  logo: { width: 60, height: 60, objectFit: 'contain' },
-  agencyName: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: NAVY },
-  agencyContact: { fontSize: 8, color: MID_TEXT, marginTop: 2 },
+  // Header
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, borderBottomWidth: 2, borderBottomColor: GOLD, paddingBottom: 18 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  logo: { width: 56, height: 56, objectFit: 'contain' },
+  agencyName: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: NAVY, letterSpacing: 0.5 },
+  agencyContact: { fontSize: 8, color: MID_TEXT, marginTop: 3, lineHeight: 1.4 },
   headerRight: { alignItems: 'flex-end' },
-  quoteTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: GOLD, textTransform: 'uppercase', letterSpacing: 2 },
-  clientBox: { backgroundColor: NAVY, padding: 16, borderRadius: 6, marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between' },
-  clientLabel: { fontSize: 8, color: GOLD, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 },
+  quoteTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: GOLD, textTransform: 'uppercase', letterSpacing: 3 },
+  // Client
+  clientBox: { backgroundColor: NAVY, padding: 18, borderRadius: 6, marginBottom: 24, flexDirection: 'row', justifyContent: 'space-between' },
+  clientLabel: { fontSize: 7, color: GOLD, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 4 },
   clientValue: { fontSize: 11, color: WHITE, fontFamily: 'Helvetica-Bold' },
-  clientCol: { flex: 1 },
-  categoryHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: GOLD, paddingBottom: 4 },
-  categoryIcon: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: GOLD, backgroundColor: NAVY, width: 20, height: 20, textAlign: 'center', lineHeight: 20, borderRadius: 10 },
-  categoryTitle: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: NAVY },
-  serviceCard: { flexDirection: 'row', marginBottom: 8, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 4, overflow: 'hidden' },
-  serviceImage: { width: 80, height: 65, objectFit: 'cover' },
-  serviceImagePlaceholder: { width: 80, height: 65, backgroundColor: LIGHT_GRAY, justifyContent: 'center', alignItems: 'center' },
-  serviceBody: { flex: 1, padding: 8 },
-  serviceTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: NAVY },
-  serviceDesc: { fontSize: 8, color: MID_TEXT, marginTop: 2 },
-  serviceMeta: { flexDirection: 'row', gap: 12, marginTop: 4 },
+  clientCol: { flex: 1, paddingHorizontal: 4 },
+  // Category
+  categoryHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: GOLD, paddingBottom: 6 },
+  categoryIcon: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: WHITE, backgroundColor: GOLD, width: 22, height: 22, textAlign: 'center', lineHeight: 22, borderRadius: 11 },
+  categoryTitle: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: NAVY, letterSpacing: 0.3 },
+  // Service card
+  serviceCard: { flexDirection: 'row', marginBottom: 10, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 6, overflow: 'hidden', backgroundColor: WHITE },
+  serviceImage: { width: 80, height: 70, objectFit: 'cover' },
+  serviceImagePlaceholder: { width: 80, height: 70, backgroundColor: LIGHT_GRAY, justifyContent: 'center', alignItems: 'center' },
+  serviceBody: { flex: 1, padding: 10, justifyContent: 'center' },
+  serviceTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 3 },
+  serviceDesc: { fontSize: 8, color: MID_TEXT, marginBottom: 4, lineHeight: 1.4 },
+  serviceMeta: { flexDirection: 'row', gap: 14, marginTop: 2 },
   serviceMetaItem: { fontSize: 8, color: MID_TEXT },
-  serviceValue: { alignItems: 'flex-end', justifyContent: 'center', padding: 8, backgroundColor: LIGHT_GRAY, minWidth: 90 },
+  serviceValue: { alignItems: 'flex-end', justifyContent: 'center', padding: 10, backgroundColor: LIGHT_GRAY, minWidth: 95 },
   serviceValueText: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: NAVY },
-  serviceQty: { fontSize: 7, color: MID_TEXT },
-  serviceImagesRow: { flexDirection: 'row', gap: 4, marginBottom: 4 },
-  serviceImageSmall: { width: 60, height: 45, objectFit: 'cover', borderRadius: 2 },
-  summaryBox: { marginTop: 20, borderTopWidth: 2, borderTopColor: GOLD, paddingTop: 12 },
-  summaryTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 8 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  serviceQty: { fontSize: 7, color: MID_TEXT, marginTop: 2 },
+  serviceImagesRow: { flexDirection: 'row', gap: 4, marginBottom: 6 },
+  serviceImageSmall: { width: 55, height: 42, objectFit: 'cover', borderRadius: 3 },
+  // Summary
+  summaryBox: { marginTop: 28, borderTopWidth: 2, borderTopColor: GOLD, paddingTop: 14 },
+  summaryTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 10 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#eee' },
   summaryLabel: { fontSize: 10, color: MID_TEXT },
   summaryValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: DARK_TEXT },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, backgroundColor: NAVY, paddingHorizontal: 12, borderRadius: 4, marginTop: 6 },
-  totalLabel: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: GOLD },
-  totalValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: WHITE },
-  footer: { position: 'absolute', bottom: 30, left: 40, right: 40 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, backgroundColor: NAVY, paddingHorizontal: 14, borderRadius: 6, marginTop: 8 },
+  totalLabel: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: GOLD },
+  totalValue: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: WHITE },
+  // Footer
+  footer: { position: 'absolute', bottom: 28, left: 40, right: 40 },
   footerLine: { borderTopWidth: 1, borderTopColor: '#ddd', paddingTop: 8 },
-  footerText: { fontSize: 7, color: MID_TEXT, textAlign: 'center', lineHeight: 1.5 },
-  notesBox: { marginTop: 16, padding: 10, backgroundColor: LIGHT_GRAY, borderRadius: 4 },
-  notesTitle: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 3 },
-  notesText: { fontSize: 8, color: MID_TEXT },
+  footerText: { fontSize: 7, color: MID_TEXT, textAlign: 'center', lineHeight: 1.6 },
+  // Notes
+  notesBox: { marginTop: 18, padding: 12, backgroundColor: LIGHT_GRAY, borderRadius: 6, borderLeftWidth: 3, borderLeftColor: GOLD },
+  notesTitle: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 4 },
+  notesText: { fontSize: 8, color: MID_TEXT, lineHeight: 1.5 },
 });
 
 const CATEGORY_ICONS: Record<ServiceType, string> = {
@@ -63,13 +70,35 @@ const CATEGORY_ICONS: Record<ServiceType, string> = {
 };
 
 function formatCurrency(v: number) {
-  return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  const formatted = v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `R$ ${formatted}`;
 }
 
 function formatDate(d: string) {
   if (!d) return '-';
   const [y, m, day] = d.split('-');
   return `${day}/${m}/${y}`;
+}
+
+function sanitizeText(text: string): string {
+  return text
+    .replace(/ã/g, 'a').replace(/Ã/g, 'A')
+    .replace(/õ/g, 'o').replace(/Õ/g, 'O')
+    .replace(/á/g, 'a').replace(/Á/g, 'A')
+    .replace(/é/g, 'e').replace(/É/g, 'E')
+    .replace(/í/g, 'i').replace(/Í/g, 'I')
+    .replace(/ó/g, 'o').replace(/Ó/g, 'O')
+    .replace(/ú/g, 'u').replace(/Ú/g, 'U')
+    .replace(/â/g, 'a').replace(/Â/g, 'A')
+    .replace(/ê/g, 'e').replace(/Ê/g, 'E')
+    .replace(/î/g, 'i').replace(/Î/g, 'I')
+    .replace(/ô/g, 'o').replace(/Ô/g, 'O')
+    .replace(/û/g, 'u').replace(/Û/g, 'U')
+    .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+    .replace(/ñ/g, 'n').replace(/Ñ/g, 'N')
+    .replace(/à/g, 'a').replace(/À/g, 'A')
+    .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+    .replace(/[^\x00-\x7F]/g, '');
 }
 
 function getAllImages(item: ServiceItem): string[] {
@@ -92,7 +121,7 @@ interface Props {
 
 export default function QuotePDF({ quote, agency }: Props) {
   const grouped = SERVICE_ORDER.reduce((acc, type) => {
-    const items = quote.services.filter(s => s.type === type);
+    const items = quote.services.filter(svc => svc.type === type);
     if (items.length > 0) acc.push({ type, items });
     return acc;
   }, [] as { type: ServiceType; items: ServiceItem[] }[]);
@@ -112,10 +141,10 @@ export default function QuotePDF({ quote, agency }: Props) {
           <View style={s.headerLeft}>
             {agency.logoBase64 && <Image src={agency.logoBase64} style={s.logo} />}
             <View>
-              <Text style={s.agencyName}>{agency.name}</Text>
-              {agency.whatsapp && <Text style={s.agencyContact}>WhatsApp: {agency.whatsapp}</Text>}
-              {agency.email && <Text style={s.agencyContact}>{agency.email}</Text>}
-              {agency.website && <Text style={s.agencyContact}>{agency.website}</Text>}
+              <Text style={s.agencyName}>{sanitizeText(agency.name)}</Text>
+              {agency.whatsapp && <Text style={s.agencyContact}>WhatsApp: {sanitizeText(agency.whatsapp)}</Text>}
+              {agency.email && <Text style={s.agencyContact}>{sanitizeText(agency.email)}</Text>}
+              {agency.website && <Text style={s.agencyContact}>{sanitizeText(agency.website)}</Text>}
             </View>
           </View>
           <View style={s.headerRight}>
@@ -127,11 +156,11 @@ export default function QuotePDF({ quote, agency }: Props) {
         <View style={s.clientBox}>
           <View style={s.clientCol}>
             <Text style={s.clientLabel}>Cliente</Text>
-            <Text style={s.clientValue}>{quote.client.name}</Text>
+            <Text style={s.clientValue}>{sanitizeText(quote.client.name)}</Text>
           </View>
           <View style={s.clientCol}>
             <Text style={s.clientLabel}>Destino</Text>
-            <Text style={s.clientValue}>{quote.trip.origin} - {quote.trip.destination}</Text>
+            <Text style={s.clientValue}>{sanitizeText(quote.trip.origin)} - {sanitizeText(quote.trip.destination)}</Text>
           </View>
           <View style={s.clientCol}>
             <Text style={s.clientLabel}>Periodo</Text>
@@ -158,7 +187,7 @@ export default function QuotePDF({ quote, agency }: Props) {
                     <Image src={images[0]} style={s.serviceImage} />
                   ) : images.length === 0 ? (
                     <View style={s.serviceImagePlaceholder}>
-                      <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: GOLD }}>{CATEGORY_ICONS[type]}</Text>
+                      <Text style={{ fontSize: 18, fontFamily: 'Helvetica-Bold', color: GOLD }}>{CATEGORY_ICONS[type]}</Text>
                     </View>
                   ) : null}
                   <View style={s.serviceBody}>
@@ -169,11 +198,11 @@ export default function QuotePDF({ quote, agency }: Props) {
                         ))}
                       </View>
                     )}
-                    <Text style={s.serviceTitle}>{item.title}</Text>
-                    {item.description && <Text style={s.serviceDesc}>{item.description}</Text>}
+                    <Text style={s.serviceTitle}>{sanitizeText(item.title)}</Text>
+                    {item.description && <Text style={s.serviceDesc}>{sanitizeText(item.description)}</Text>}
                     <View style={s.serviceMeta}>
-                      {item.supplier && <Text style={s.serviceMetaItem}>Fornecedor: {item.supplier}</Text>}
-                      {item.location && <Text style={s.serviceMetaItem}>Local: {item.location}</Text>}
+                      {item.supplier && <Text style={s.serviceMetaItem}>Fornecedor: {sanitizeText(item.supplier)}</Text>}
+                      {item.location && <Text style={s.serviceMetaItem}>Local: {sanitizeText(item.location)}</Text>}
                       {item.startDate && <Text style={s.serviceMetaItem}>Data: {formatDate(item.startDate)} - {formatDate(item.endDate)}</Text>}
                     </View>
                   </View>
@@ -191,7 +220,7 @@ export default function QuotePDF({ quote, agency }: Props) {
         {quote.client.notes && (
           <View style={s.notesBox}>
             <Text style={s.notesTitle}>Observacoes</Text>
-            <Text style={s.notesText}>{quote.client.notes}</Text>
+            <Text style={s.notesText}>{sanitizeText(quote.client.notes)}</Text>
           </View>
         )}
 
@@ -215,7 +244,7 @@ export default function QuotePDF({ quote, agency }: Props) {
           <View style={s.footerLine}>
             <Text style={s.footerText}>
               Valores sujeitos a disponibilidade no momento da emissao - Tarifas podem sofrer alteracao sem aviso previo{'\n'}
-              Valores por pessoa, salvo indicacao contraria - {agency.name} {agency.website ? `- ${agency.website}` : ''}
+              Valores por pessoa, salvo indicacao contraria - {sanitizeText(agency.name)} {agency.website ? `- ${sanitizeText(agency.website)}` : ''}
             </Text>
           </View>
         </View>
