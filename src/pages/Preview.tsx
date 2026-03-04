@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PDFViewer, pdf } from '@react-pdf/renderer';
-import { getAgencySettings } from '@/lib/storage';
+import { getAgencySettings, saveQuote } from '@/lib/storage';
 import { QuoteData, AgencySettings } from '@/types/quote';
 import QuotePDF from '@/components/QuotePDF';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, FilePlus } from 'lucide-react';
+import { ArrowLeft, Download, FilePlus, Save, Printer } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Preview() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [quote, setQuote] = useState<QuoteData | null>(null);
   const [agency, setAgency] = useState<AgencySettings | null>(null);
 
@@ -31,8 +33,21 @@ export default function Preview() {
     URL.revokeObjectURL(url);
   };
 
-  const handleNewQuote = () => {
-    navigate('/');
+  const handlePrint = async () => {
+    if (!quote || !agency) return;
+    const blob = await pdf(<QuotePDF quote={quote} agency={agency} />).toBlob();
+    const url = URL.createObjectURL(blob);
+    const printWindow = window.open(url);
+    if (printWindow) {
+      printWindow.onload = () => printWindow.print();
+    }
+  };
+
+  const handleSave = () => {
+    if (!quote) return;
+    const saved = saveQuote(quote);
+    setQuote(saved);
+    toast({ title: 'Orçamento salvo!' });
   };
 
   if (!quote || !agency) return null;
@@ -48,10 +63,16 @@ export default function Preview() {
             <h1 className="text-xl font-bold">Visualizar Orçamento</h1>
           </div>
           <div className="flex gap-2">
+            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handleSave}>
+              <Save className="h-4 w-4 mr-2" /> Salvar
+            </Button>
+            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handlePrint}>
+              <Printer className="h-4 w-4 mr-2" /> Imprimir
+            </Button>
             <Button variant="secondary" onClick={handleDownload}>
               <Download className="h-4 w-4 mr-2" /> Baixar PDF
             </Button>
-            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handleNewQuote}>
+            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={() => navigate('/')}>
               <FilePlus className="h-4 w-4 mr-2" /> Nova Cotação
             </Button>
           </div>

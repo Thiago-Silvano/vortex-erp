@@ -10,7 +10,6 @@ const MID_TEXT = '#555555';
 
 const s = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: DARK_TEXT },
-  // Header
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, borderBottomWidth: 2, borderBottomColor: GOLD, paddingBottom: 18 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   logo: { width: 56, height: 56, objectFit: 'contain' },
@@ -18,16 +17,13 @@ const s = StyleSheet.create({
   agencyContact: { fontSize: 8, color: MID_TEXT, marginTop: 3, lineHeight: 1.4 },
   headerRight: { alignItems: 'flex-end' },
   quoteTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: GOLD, textTransform: 'uppercase', letterSpacing: 3 },
-  // Client
   clientBox: { backgroundColor: NAVY, padding: 18, borderRadius: 6, marginBottom: 24, flexDirection: 'row', justifyContent: 'space-between' },
   clientLabel: { fontSize: 7, color: GOLD, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 4 },
   clientValue: { fontSize: 11, color: WHITE, fontFamily: 'Helvetica-Bold' },
   clientCol: { flex: 1, paddingHorizontal: 4 },
-  // Category
   categoryHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: GOLD, paddingBottom: 6 },
   categoryIcon: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: WHITE, backgroundColor: GOLD, width: 22, height: 22, textAlign: 'center', lineHeight: 22, borderRadius: 11 },
   categoryTitle: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: NAVY, letterSpacing: 0.3 },
-  // Service card
   serviceCard: { flexDirection: 'row', marginBottom: 10, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 6, overflow: 'hidden', backgroundColor: WHITE },
   serviceImage: { width: 80, height: 70, objectFit: 'cover' },
   serviceImagePlaceholder: { width: 80, height: 70, backgroundColor: LIGHT_GRAY, justifyContent: 'center', alignItems: 'center' },
@@ -46,7 +42,6 @@ const s = StyleSheet.create({
   flightLegText: { fontSize: 8, color: NAVY },
   flightLegDate: { fontSize: 7, color: MID_TEXT },
   flightLegArrow: { fontSize: 8, color: GOLD, fontFamily: 'Helvetica-Bold' },
-  // Summary
   summaryBox: { marginTop: 28, borderTopWidth: 2, borderTopColor: GOLD, paddingTop: 14 },
   summaryTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 10 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#eee' },
@@ -55,23 +50,16 @@ const s = StyleSheet.create({
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, backgroundColor: NAVY, paddingHorizontal: 14, borderRadius: 6, marginTop: 8 },
   totalLabel: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: GOLD },
   totalValue: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: WHITE },
-  // Footer
   footer: { position: 'absolute', bottom: 28, left: 40, right: 40 },
   footerLine: { borderTopWidth: 1, borderTopColor: '#ddd', paddingTop: 8 },
   footerText: { fontSize: 7, color: MID_TEXT, textAlign: 'center', lineHeight: 1.6 },
-  // Notes
   notesBox: { marginTop: 18, padding: 12, backgroundColor: LIGHT_GRAY, borderRadius: 6, borderLeftWidth: 3, borderLeftColor: GOLD },
   notesTitle: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 4 },
   notesText: { fontSize: 8, color: MID_TEXT, lineHeight: 1.5 },
 });
 
 const CATEGORY_ICONS: Record<ServiceType, string> = {
-  aereo: 'A',
-  hotel: 'H',
-  carro: 'C',
-  seguro: 'S',
-  experiencia: 'E',
-  adicional: '+',
+  aereo: 'A', hotel: 'H', carro: 'C', seguro: 'S', experiencia: 'E', adicional: '+',
 };
 
 function formatCurrency(v: number) {
@@ -141,7 +129,6 @@ export default function QuotePDF({ quote, agency }: Props) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
-        {/* Header */}
         <View style={s.header}>
           <View style={s.headerLeft}>
             {agency.logoBase64 && <Image src={agency.logoBase64} style={s.logo} />}
@@ -157,7 +144,6 @@ export default function QuotePDF({ quote, agency }: Props) {
           </View>
         </View>
 
-        {/* Client Info */}
         <View style={s.clientBox}>
           <View style={s.clientCol}>
             <Text style={s.clientLabel}>Cliente</Text>
@@ -177,7 +163,6 @@ export default function QuotePDF({ quote, agency }: Props) {
           </View>
         </View>
 
-        {/* Services by category */}
         {grouped.map(({ type, items }) => (
           <View key={type} wrap={false}>
             <View style={s.categoryHeader}>
@@ -211,14 +196,21 @@ export default function QuotePDF({ quote, agency }: Props) {
                             <Text style={s.flightLegText}>{sanitizeText(leg.origin)}</Text>
                             <Text style={s.flightLegArrow}> &gt; </Text>
                             <Text style={s.flightLegText}>{sanitizeText(leg.destination)}</Text>
-                            {leg.date && <Text style={s.flightLegDate}> ({formatDate(leg.date)})</Text>}
+                            {leg.departureDate && (
+                              <Text style={s.flightLegDate}>
+                                {' '}{formatDate(leg.departureDate)}
+                                {leg.departureTime && ` ${leg.departureTime}`}
+                                {leg.arrivalDate && ` - ${formatDate(leg.arrivalDate)}`}
+                                {leg.arrivalTime && ` ${leg.arrivalTime}`}
+                              </Text>
+                            )}
                           </View>
                         ))}
                       </View>
                     )}
                     {item.description && <Text style={s.serviceDesc}>{sanitizeText(item.description)}</Text>}
                     <View style={s.serviceMeta}>
-                      {item.supplier && <Text style={s.serviceMetaItem}>Fornecedor: {sanitizeText(item.supplier)}</Text>}
+                      {item.supplier && <Text style={s.serviceMetaItem}>{item.type === 'aereo' ? 'Cia Aerea' : 'Fornecedor'}: {sanitizeText(item.supplier)}</Text>}
                       {item.location && <Text style={s.serviceMetaItem}>Local: {sanitizeText(item.location)}</Text>}
                       {item.startDate && <Text style={s.serviceMetaItem}>Data: {formatDate(item.startDate)} - {formatDate(item.endDate)}</Text>}
                     </View>
@@ -233,7 +225,6 @@ export default function QuotePDF({ quote, agency }: Props) {
           </View>
         ))}
 
-        {/* Notes */}
         {quote.client.notes && (
           <View style={s.notesBox}>
             <Text style={s.notesTitle}>Observacoes</Text>
@@ -241,7 +232,6 @@ export default function QuotePDF({ quote, agency }: Props) {
           </View>
         )}
 
-        {/* Financial Summary */}
         <View style={s.summaryBox}>
           <Text style={s.summaryTitle}>Resumo Financeiro</Text>
           {categoryTotals.map(c => (
@@ -256,7 +246,6 @@ export default function QuotePDF({ quote, agency }: Props) {
           </View>
         </View>
 
-        {/* Footer */}
         <View style={s.footer} fixed>
           <View style={s.footerLine}>
             <Text style={s.footerText}>

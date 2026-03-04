@@ -16,7 +16,7 @@ interface Props {
   onCancel?: () => void;
 }
 
-const emptyLeg = (): FlightLeg => ({ origin: '', destination: '', date: '' });
+const emptyLeg = (): FlightLeg => ({ origin: '', destination: '', departureDate: '', departureTime: '', arrivalDate: '', arrivalTime: '' });
 
 const emptyItem = (): Omit<ServiceItem, 'id'> => ({
   type: 'aereo',
@@ -81,6 +81,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
     onAdd({
       ...item,
       id: editItem?.id || crypto.randomUUID(),
+      quantity: isAereo ? 1 : item.quantity,
       imageBase64: imagePreview,
       imagesBase64: extraImages.length > 0 ? extraImages : undefined,
       flightLegs: isAereo ? flightLegs : undefined,
@@ -124,10 +125,13 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
           </div>
         </div>
 
-        <div>
-          <Label>Descrição</Label>
-          <Textarea value={item.description} onChange={e => setItem(p => ({ ...p, description: e.target.value }))} placeholder="Detalhes do serviço..." rows={2} />
-        </div>
+        {/* Descrição - only for non-aéreo */}
+        {!isAereo && (
+          <div>
+            <Label>Descrição</Label>
+            <Textarea value={item.description} onChange={e => setItem(p => ({ ...p, description: e.target.value }))} placeholder="Detalhes do serviço..." rows={2} />
+          </div>
+        )}
 
         {/* Flight legs for aéreo */}
         {isAereo && (
@@ -141,44 +145,67 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
               </Button>
             </div>
             {flightLegs.map((leg, idx) => (
-              <div key={idx} className="flex items-end gap-2 p-2 rounded-md bg-muted/50 border">
-                <span className="text-xs font-semibold text-muted-foreground pb-2 min-w-[24px]">{idx + 1}.</span>
-                <div className="flex-1">
-                  <Label className="text-xs">Origem</Label>
-                  <AirportAutocomplete
-                    value={leg.origin}
-                    onChange={v => updateLeg(idx, 'origin', v)}
-                    placeholder="Aeroporto de origem..."
-                  />
+              <div key={idx} className="p-3 rounded-md bg-muted/50 border space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground min-w-[24px]">Trecho {idx + 1}</span>
+                  {flightLegs.length > 1 && (
+                    <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" onClick={() => removeLeg(idx)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
-                <div className="flex-1">
-                  <Label className="text-xs">Destino</Label>
-                  <AirportAutocomplete
-                    value={leg.destination}
-                    onChange={v => updateLeg(idx, 'destination', v)}
-                    placeholder="Aeroporto de destino..."
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Origem</Label>
+                    <AirportAutocomplete
+                      value={leg.origin}
+                      onChange={v => updateLeg(idx, 'origin', v)}
+                      placeholder="Aeroporto de origem..."
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Destino</Label>
+                    <AirportAutocomplete
+                      value={leg.destination}
+                      onChange={v => updateLeg(idx, 'destination', v)}
+                      placeholder="Aeroporto de destino..."
+                    />
+                  </div>
                 </div>
-                <div className="w-[130px]">
-                  <Label className="text-xs">Data</Label>
-                  <Input type="date" value={leg.date} onChange={e => updateLeg(idx, 'date', e.target.value)} />
+                <div className="grid grid-cols-4 gap-2">
+                  <div>
+                    <Label className="text-xs">Data Partida</Label>
+                    <Input type="date" value={leg.departureDate} onChange={e => updateLeg(idx, 'departureDate', e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Hora Partida</Label>
+                    <Input type="time" value={leg.departureTime} onChange={e => updateLeg(idx, 'departureTime', e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Data Chegada</Label>
+                    <Input type="date" value={leg.arrivalDate} onChange={e => updateLeg(idx, 'arrivalDate', e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Hora Chegada</Label>
+                    <Input type="time" value={leg.arrivalTime} onChange={e => updateLeg(idx, 'arrivalTime', e.target.value)} />
+                  </div>
                 </div>
-                {flightLegs.length > 1 && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeLeg(idx)}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
               </div>
             ))}
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className={`grid ${isAereo ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
           <div>
-            <Label>Fornecedor</Label>
-            <Input value={item.supplier} onChange={e => setItem(p => ({ ...p, supplier: e.target.value }))} placeholder="Ex: Latam" />
+            <Label>{isAereo ? 'Cia Aérea' : 'Fornecedor'}</Label>
+            <Input value={item.supplier} onChange={e => setItem(p => ({ ...p, supplier: e.target.value }))} placeholder={isAereo ? "Ex: LATAM, GOL" : "Ex: Hotel Marriott"} />
           </div>
-          {!isAereo && (
+          {isAereo ? (
+            <div>
+              <Label>Valor Total (R$)</Label>
+              <Input type="number" min={0} step={0.01} value={item.value || ''} onChange={e => setItem(p => ({ ...p, value: parseFloat(e.target.value) || 0 }))} />
+            </div>
+          ) : (
             <>
               <div>
                 <Label>Data Início</Label>
@@ -190,25 +217,13 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
               </div>
             </>
           )}
-          {isAereo ? (
-            <>
-              <div>
-                <Label>Valor Total (R$)</Label>
-                <Input type="number" min={0} step={0.01} value={item.value || ''} onChange={e => setItem(p => ({ ...p, value: parseFloat(e.target.value) || 0 }))} />
-              </div>
-              <div>
-                <Label>Quantidade</Label>
-                <Input type="number" min={1} value={item.quantity} onChange={e => setItem(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
-              </div>
-            </>
-          ) : null}
         </div>
 
         {!isAereo && (
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label>Local</Label>
-              <Input value={item.location} onChange={e => setItem(p => ({ ...p, location: e.target.value }))} placeholder="Ex: Paris, Franca" />
+              <Input value={item.location} onChange={e => setItem(p => ({ ...p, location: e.target.value }))} placeholder="Ex: Paris, França" />
             </div>
             <div>
               <Label>Valor (R$)</Label>

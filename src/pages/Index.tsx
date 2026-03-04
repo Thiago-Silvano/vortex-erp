@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { QuoteData, ClientData, TripData, ServiceItem, SERVICE_TYPE_CONFIG } from '@/types/quote';
-import { saveQuoteData, getAgencySettings } from '@/lib/storage';
+import { getAgencySettings, saveQuote } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,17 +11,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ServiceItemForm from '@/components/ServiceItemForm';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import { WORLD_CITIES } from '@/data/cities';
-import { Eye, Trash2, Pencil, Settings, FileText } from 'lucide-react';
+import { Eye, Trash2, Pencil, Settings, FileText, Save, List } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const defaultClient: ClientData = { name: '', passengers: 1, phone: '', email: '', notes: '' };
-const defaultTrip: TripData = { origin: '', destination: '', departureDate: '', returnDate: '', nights: 1, tripType: 'Lazer' };
+const defaultTrip: TripData = { origin: '', destination: '', departureDate: '', returnDate: '', tripType: 'Lazer' };
 
 function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 2) return digits.length ? `(${digits}` : '';
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  const digits = value.replace(/\D/g, '');
+  // If starts with +, keep it as international
+  if (value.startsWith('+')) {
+    return '+' + digits.slice(0, 15);
+  }
+  // Brazilian format
+  const br = digits.slice(0, 11);
+  if (br.length <= 2) return br.length ? `(${br}` : '';
+  if (br.length <= 7) return `(${br.slice(0, 2)}) ${br.slice(2)}`;
+  return `(${br.slice(0, 2)}) ${br.slice(2, 7)}-${br.slice(7)}`;
 }
 
 function isValidEmail(email: string): boolean {
@@ -34,13 +40,29 @@ interface ValidationErrors {
 
 export default function Index() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const [quoteId, setQuoteId] = useState<string | undefined>();
   const [client, setClient] = useState<ClientData>(defaultClient);
   const [trip, setTrip] = useState<TripData>(defaultTrip);
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
+
+  // Load quote if navigated from saved quotes
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.editQuote) {
+      const q: QuoteData = state.editQuote;
+      setQuoteId(q.id);
+      setClient(q.client);
+      setTrip(q.trip);
+      setServices(q.services);
+      // Clear state to prevent re-loading on refresh
+      window.history.replaceState({}, '');
+    }
+  }, [location.state]);
 
   const addService = (item: ServiceItem) => {
     setServices(prev => {
@@ -58,28 +80,19 @@ export default function Index() {
 
   const validate = (): boolean => {
     const errs: ValidationErrors = {};
-
-    if (!client.name.trim()) errs.clientName = 'Nome do cliente e obrigatorio';
-    if (!client.phone.trim()) errs.clientPhone = 'Telefone e obrigatorio';
-    if (client.email && !isValidEmail(client.email)) errs.clientEmail = 'Email invalido';
-    if (!trip.origin.trim()) errs.tripOrigin = 'Origem e obrigatoria';
-    if (!trip.destination.trim()) errs.tripDestination = 'Destino e obrigatorio';
-    if (!trip.departureDate) errs.tripDeparture = 'Data de ida e obrigatoria';
-    if (!trip.returnDate) errs.tripReturn = 'Data de volta e obrigatoria';
-    if (services.length === 0) errs.services = 'Adicione pelo menos um servico';
-
+    if (!client.name.trim()) errs.clientName = 'Nome do cliente é obrigatório';
+    if (!client.phone.trim()) errs.clientPhone = 'Telefone é obrigatório';
+    if (client.email && !isValidEmail(client.email)) errs.clientEmail = 'Email inválido';
+    if (!trip.origin.trim()) errs.tripOrigin = 'Origem é obrigatória';
+    if (!trip.destination.trim()) errs.tripDestination = 'Destino é obrigatório';
+    if (!trip.departureDate) errs.tripDeparture = 'Data de ida é obrigatória';
+    if (!trip.returnDate) errs.tripReturn = 'Data de volta é obrigatória';
+    if (services.length === 0) errs.services = 'Adicione pelo menos um serviço';
     const agency = getAgencySettings();
-    if (!agency || !agency.name.trim()) errs.agency = 'Configure o nome da agencia em Configuracoes';
-
+    if (!agency || !agency.name.trim()) errs.agency = 'Configure o nome da agência em Configurações';
     setErrors(errs);
-
     if (Object.keys(errs).length > 0) {
-      const firstError = Object.values(errs)[0];
-      toast({
-        title: 'Campos obrigatorios',
-        description: firstError,
-        variant: 'destructive',
-      });
+      toast({ title: 'Campos obrigatórios', description: Object.values(errs)[0], variant: 'destructive' });
       return false;
     }
     return true;
@@ -87,8 +100,15 @@ export default function Index() {
 
   const handlePreview = () => {
     if (!validate()) return;
-    const quote: QuoteData = { client, trip, services };
+    const quote: QuoteData = { id: quoteId, client, trip, services };
     navigate('/preview', { state: { quote } });
+  };
+
+  const handleSave = () => {
+    const quote: QuoteData = { id: quoteId, client, trip, services };
+    const saved = saveQuote(quote);
+    setQuoteId(saved.id);
+    toast({ title: 'Orçamento salvo!', description: 'Você pode acessá-lo em "Orçamentos Salvos".' });
   };
 
   const handlePhoneChange = (value: string) => {
@@ -114,11 +134,16 @@ export default function Index() {
         <div className="container mx-auto flex items-center justify-between py-4 px-4">
           <div className="flex items-center gap-2">
             <FileText className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Sistema de Orcamentos</h1>
+            <h1 className="text-xl font-bold">Sistema de Orçamentos</h1>
           </div>
-          <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={() => navigate('/settings')}>
-            <Settings className="h-5 w-5 mr-1" /> Configuracoes
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={() => navigate('/quotes')}>
+              <List className="h-5 w-5 mr-1" /> Orçamentos Salvos
+            </Button>
+            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={() => navigate('/settings')}>
+              <Settings className="h-5 w-5 mr-1" /> Configurações
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -148,7 +173,7 @@ export default function Index() {
                 <Input
                   value={client.phone}
                   onChange={e => handlePhoneChange(e.target.value)}
-                  placeholder="(XX) XXXXX-XXXX"
+                  placeholder="+55 (XX) XXXXX-XXXX"
                   className={errors.clientPhone ? 'border-destructive' : ''}
                 />
                 {errors.clientPhone && <p className="text-xs text-destructive mt-1">{errors.clientPhone}</p>}
@@ -166,7 +191,7 @@ export default function Index() {
               </div>
             </div>
             <div>
-              <Label>Observacoes</Label>
+              <Label>Observações</Label>
               <Textarea value={client.notes} onChange={e => setClient(p => ({ ...p, notes: e.target.value }))} rows={2} />
             </div>
           </CardContent>
@@ -174,7 +199,7 @@ export default function Index() {
 
         {/* Trip Data */}
         <Card>
-          <CardHeader><CardTitle>Informacoes da Viagem</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Informações da Viagem</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -200,7 +225,7 @@ export default function Index() {
                 {errors.tripDestination && <p className="text-xs text-destructive mt-1">{errors.tripDestination}</p>}
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Data Ida *</Label>
                 <Input
@@ -222,18 +247,14 @@ export default function Index() {
                 {errors.tripReturn && <p className="text-xs text-destructive mt-1">{errors.tripReturn}</p>}
               </div>
               <div>
-                <Label>Noites</Label>
-                <Input type="number" min={1} value={trip.nights} onChange={e => setTrip(p => ({ ...p, nights: parseInt(e.target.value) || 1 }))} />
-              </div>
-              <div>
                 <Label>Tipo</Label>
                 <Select value={trip.tripType} onValueChange={(v) => setTrip(p => ({ ...p, tripType: v as TripData['tripType'] }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Lazer">Lazer</SelectItem>
-                    <SelectItem value="Negócios">Negocios</SelectItem>
+                    <SelectItem value="Negócios">Negócios</SelectItem>
                     <SelectItem value="Lua de mel">Lua de mel</SelectItem>
-                    <SelectItem value="Família">Familia</SelectItem>
+                    <SelectItem value="Família">Família</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -245,9 +266,9 @@ export default function Index() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Servicos ({services.length})
+              Serviços ({services.length})
               {!showForm && !editingId && (
-                <Button size="sm" onClick={() => { setShowForm(true); clearError('services'); }}>+ Adicionar Servico</Button>
+                <Button size="sm" onClick={() => { setShowForm(true); clearError('services'); }}>+ Adicionar Serviço</Button>
               )}
             </CardTitle>
             {errors.services && <p className="text-xs text-destructive">{errors.services}</p>}
@@ -275,7 +296,7 @@ export default function Index() {
             ))}
             {showForm && <ServiceItemForm onAdd={addService} onCancel={() => setShowForm(false)} />}
             {services.length === 0 && !showForm && (
-              <p className="text-center text-muted-foreground py-8">Nenhum servico adicionado. Clique em "Adicionar Servico" para comecar.</p>
+              <p className="text-center text-muted-foreground py-8">Nenhum serviço adicionado. Clique em "Adicionar Serviço" para começar.</p>
             )}
           </CardContent>
         </Card>
@@ -285,22 +306,30 @@ export default function Index() {
           <Card className="bg-primary text-primary-foreground">
             <CardContent className="flex items-center justify-between py-4">
               <div>
-                <p className="text-sm opacity-80">{services.length} servico(s)</p>
+                <p className="text-sm opacity-80">{services.length} serviço(s)</p>
                 <p className="text-2xl font-bold">
                   Total: R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
-              <Button size="lg" variant="secondary" onClick={handlePreview} className="text-accent-foreground">
-                <Eye className="h-5 w-5 mr-2" /> Visualizar Orcamento
-              </Button>
+              <div className="flex gap-2">
+                <Button size="lg" variant="outline" onClick={handleSave} className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                  <Save className="h-5 w-5 mr-2" /> Salvar
+                </Button>
+                <Button size="lg" variant="secondary" onClick={handlePreview} className="text-accent-foreground">
+                  <Eye className="h-5 w-5 mr-2" /> Visualizar
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
 
         {services.length === 0 && (
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button size="lg" variant="outline" onClick={handleSave}>
+              <Save className="h-5 w-5 mr-2" /> Salvar Rascunho
+            </Button>
             <Button size="lg" variant="secondary" onClick={handlePreview}>
-              <Eye className="h-5 w-5 mr-2" /> Visualizar Orcamento
+              <Eye className="h-5 w-5 mr-2" /> Visualizar Orçamento
             </Button>
           </div>
         )}

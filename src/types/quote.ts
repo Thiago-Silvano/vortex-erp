@@ -3,7 +3,10 @@ export type ServiceType = 'aereo' | 'hotel' | 'carro' | 'seguro' | 'experiencia'
 export interface FlightLeg {
   origin: string;
   destination: string;
-  date: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalDate: string;
+  arrivalTime: string;
 }
 
 export interface ServiceItem {
@@ -35,14 +38,16 @@ export interface TripData {
   destination: string;
   departureDate: string;
   returnDate: string;
-  nights: number;
   tripType: 'Lazer' | 'Negócios' | 'Lua de mel' | 'Família';
 }
 
 export interface QuoteData {
+  id?: string;
   client: ClientData;
   trip: TripData;
   services: ServiceItem[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AgencySettings {

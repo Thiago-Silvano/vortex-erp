@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Preview from "./pages/Preview";
 import Settings from "./pages/Settings";
+import SavedQuotes from "./pages/SavedQuotes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/preview" element={<Preview />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/quotes" element={<SavedQuotes />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
