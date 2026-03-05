@@ -1,0 +1,1 @@
+ALTER TABLE public.flight_legs ADD COLUMN connection_duration text DEFAULT '';

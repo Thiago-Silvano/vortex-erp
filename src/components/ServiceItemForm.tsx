@@ -145,49 +145,63 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
               </Button>
             </div>
             {flightLegs.map((leg, idx) => (
-              <div key={idx} className="p-3 rounded-md bg-muted/50 border space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-muted-foreground min-w-[24px]">Trecho {idx + 1}</span>
-                  {flightLegs.length > 1 && (
-                    <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" onClick={() => removeLeg(idx)}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs">Origem</Label>
-                    <AirportAutocomplete
-                      value={leg.origin}
-                      onChange={v => updateLeg(idx, 'origin', v)}
-                      placeholder="Aeroporto de origem..."
+              <div key={idx}>
+                {/* Connection duration between legs */}
+                {idx > 0 && (
+                  <div className="flex items-center gap-2 py-2 px-3 my-1 bg-accent/20 rounded-md border border-dashed border-accent/40">
+                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">⏱️ Conexão:</span>
+                    <Input
+                      value={flightLegs[idx - 1].connectionDuration || ''}
+                      onChange={e => updateLeg(idx - 1, 'connectionDuration', e.target.value)}
+                      placeholder="Ex: 2h30"
+                      className="h-7 text-xs max-w-[120px]"
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs">Destino</Label>
-                    <AirportAutocomplete
-                      value={leg.destination}
-                      onChange={v => updateLeg(idx, 'destination', v)}
-                      placeholder="Aeroporto de destino..."
-                    />
+                )}
+                <div className="p-3 rounded-md bg-muted/50 border space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground min-w-[24px]">Trecho {idx + 1}</span>
+                    {flightLegs.length > 1 && (
+                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" onClick={() => removeLeg(idx)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <div>
-                    <Label className="text-xs">Data Partida</Label>
-                    <Input type="date" value={leg.departureDate} onChange={e => updateLeg(idx, 'departureDate', e.target.value)} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Origem</Label>
+                      <AirportAutocomplete
+                        value={leg.origin}
+                        onChange={v => updateLeg(idx, 'origin', v)}
+                        placeholder="Aeroporto de origem..."
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Destino</Label>
+                      <AirportAutocomplete
+                        value={leg.destination}
+                        onChange={v => updateLeg(idx, 'destination', v)}
+                        placeholder="Aeroporto de destino..."
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label className="text-xs">Hora Partida</Label>
-                    <Input type="time" value={leg.departureTime} onChange={e => updateLeg(idx, 'departureTime', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Data Chegada</Label>
-                    <Input type="date" value={leg.arrivalDate} onChange={e => updateLeg(idx, 'arrivalDate', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Hora Chegada</Label>
-                    <Input type="time" value={leg.arrivalTime} onChange={e => updateLeg(idx, 'arrivalTime', e.target.value)} />
+                  <div className="grid grid-cols-4 gap-2">
+                    <div>
+                      <Label className="text-xs">Data Partida</Label>
+                      <Input type="date" value={leg.departureDate} onChange={e => updateLeg(idx, 'departureDate', e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Hora Partida</Label>
+                      <Input type="time" value={leg.departureTime} onChange={e => updateLeg(idx, 'departureTime', e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Data Chegada</Label>
+                      <Input type="date" value={leg.arrivalDate} onChange={e => updateLeg(idx, 'arrivalDate', e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Hora Chegada</Label>
+                      <Input type="time" value={leg.arrivalTime} onChange={e => updateLeg(idx, 'arrivalTime', e.target.value)} />
+                    </div>
                   </div>
                 </div>
               </div>
