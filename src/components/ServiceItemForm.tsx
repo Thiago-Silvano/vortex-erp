@@ -49,20 +49,12 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   const [searchingHotel, setSearchingHotel] = useState(false);
   const { toast } = useToast();
 
-  // Auto-fill title for aereo based on flight legs origin/destination
+  // Auto-fill title for aereo based on trip origin/destination
   useEffect(() => {
-    if (item.type === 'aereo' && !editItem) {
-      const idaLegsLocal = flightLegs.filter(l => l.direction !== 'volta');
-      const voltaLegsLocal = flightLegs.filter(l => l.direction === 'volta');
-      
-      const firstOrigin = idaLegsLocal[0]?.origin || '';
-      const lastDestination = idaLegsLocal[idaLegsLocal.length - 1]?.destination || '';
-      
-      if (firstOrigin && lastDestination) {
-        setItem(p => ({ ...p, title: `Voo ${firstOrigin} - ${lastDestination}` }));
-      }
+    if (item.type === 'aereo' && !editItem && tripOrigin && tripDestination) {
+      setItem(p => ({ ...p, title: `Voo ${tripOrigin} - ${tripDestination}` }));
     }
-  }, [item.type, flightLegs, editItem]);
+  }, [item.type, tripOrigin, tripDestination, editItem]);
 
   const isAereo = item.type === 'aereo';
   const isHotel = item.type === 'hotel';
