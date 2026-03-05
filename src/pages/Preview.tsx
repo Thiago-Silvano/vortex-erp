@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { PDFViewer, pdf } from '@react-pdf/renderer';
 import { getAgencySettings } from '@/lib/storage';
 import { saveQuoteToDB } from '@/lib/supabase-storage';
-import { supabase } from '@/integrations/supabase/client';
 import { QuoteData, AgencySettings } from '@/types/quote';
 import QuotePDF from '@/components/QuotePDF';
 import { Button } from '@/components/ui/button';
@@ -63,23 +62,14 @@ export default function Preview() {
     setSaving(false);
   };
 
-  const handleCopyLink = async () => {
+  const handleCopyLink = () => {
     if (!shortId) {
       toast({ title: 'Salve primeiro para gerar um link', variant: 'destructive' });
       return;
     }
     const link = `${window.location.origin}/orcamento/${shortId}`;
-    try {
-      const { data, error } = await supabase.functions.invoke('shorten-url', {
-        body: { url: link },
-      });
-      if (error || !data?.shortUrl) throw new Error('Failed');
-      await navigator.clipboard.writeText(data.shortUrl);
-      toast({ title: 'Link encurtado copiado!', description: data.shortUrl });
-    } catch {
-      await navigator.clipboard.writeText(link);
-      toast({ title: 'Link copiado!', description: link });
-    }
+    navigator.clipboard.writeText(link);
+    toast({ title: 'Link copiado!', description: link });
   };
 
   if (!quote || !agency) return null;
