@@ -24,16 +24,16 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingBottom: 14,
+    paddingBottom: 10,
     borderBottomWidth: 2,
     borderBottomColor: GOLD,
-    marginBottom: 18,
+    marginBottom: 14,
   },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  logo: { width: 90, height: 90, objectFit: "contain" },
-  agencyName: { fontSize: 18, fontFamily: "Helvetica-Bold", color: NAVY, letterSpacing: 0.5 },
-  agencyContact: { fontSize: 7, color: MID_TEXT, marginTop: 2, lineHeight: 1.4 },
-  quoteLabel: { fontSize: 11, fontFamily: "Helvetica-Bold", color: GOLD, textTransform: "uppercase", letterSpacing: 3 },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
+  logo: { width: 50, height: 50, objectFit: "contain" },
+  agencyName: { fontSize: 14, fontFamily: "Helvetica-Bold", color: NAVY, letterSpacing: 0.5 },
+  agencyContact: { fontSize: 7, color: MID_TEXT, lineHeight: 1.3 },
+  quoteLabel: { fontSize: 9, fontFamily: "Helvetica-Bold", color: GOLD, textTransform: "uppercase", letterSpacing: 2.5 },
 
   // Client highlight bar
   clientBar: {
@@ -641,14 +641,12 @@ export default function QuotePDF({ quote, agency }: Props) {
                 <Image src={agency.logoBase64 || VORTEX_LOGO_URL} style={s.logo} />
               )}
               <View>
-                <View style={{ flexDirection: "row", gap: 8, marginTop: 2 }}>
-                  {agency.whatsapp && <Text style={s.agencyContact}>WhatsApp: {sanitizeText(agency.whatsapp)}</Text>}
-                  {agency.email && <Text style={s.agencyContact}>{sanitizeText(agency.email)}</Text>}
-                </View>
-                {agency.website && <Text style={s.agencyContact}>{sanitizeText(agency.website)}</Text>}
+                <Text style={{ fontSize: 7, color: MID_TEXT, lineHeight: 1.4 }}>
+                  {[agency.whatsapp && `WhatsApp: ${sanitizeText(agency.whatsapp)}`, agency.email && sanitizeText(agency.email), agency.website && sanitizeText(agency.website)].filter(Boolean).join("  |  ")}
+                </Text>
               </View>
             </View>
-            <Text style={s.quoteLabel}>Cotação de viagem</Text>
+            <Text style={s.quoteLabel}>Cotacao de viagem</Text>
           </View>
 
           {/* Client bar */}
