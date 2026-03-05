@@ -372,7 +372,14 @@ export default function Index() {
                   type="number"
                   min={0}
                   value={payment.installmentsNoInterest || ''}
-                  onChange={e => setPayment(p => ({ ...p, installmentsNoInterest: parseInt(e.target.value) || 0 }))}
+                  onChange={e => {
+                    const n = parseInt(e.target.value) || 0;
+                    setPayment(p => ({
+                      ...p,
+                      installmentsNoInterest: n,
+                      installmentValueNoInterest: n > 0 ? Math.round((total / n) * 100) / 100 : 0,
+                    }));
+                  }}
                   placeholder="Ex: 10"
                 />
               </div>
@@ -383,8 +390,8 @@ export default function Index() {
                   min={0}
                   step={0.01}
                   value={payment.installmentValueNoInterest || ''}
-                  onChange={e => setPayment(p => ({ ...p, installmentValueNoInterest: parseFloat(e.target.value) || 0 }))}
-                  placeholder="Ex: 900.00"
+                  readOnly
+                  className="bg-muted"
                 />
               </div>
               <div>
