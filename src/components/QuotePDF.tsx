@@ -684,7 +684,7 @@ export default function QuotePDF({ quote, agency }: Props) {
               </Text>
             </View>
             <View style={s.tripCol}>
-              <Text style={s.tripLabel}>Periodo</Text>
+              <Text style={s.tripLabel}>Período</Text>
               <Text style={s.tripValue}>
                 {formatDate(quote.trip.departureDate)} a {formatDate(quote.trip.returnDate)}
               </Text>
@@ -713,7 +713,7 @@ export default function QuotePDF({ quote, agency }: Props) {
           {/* Notes */}
           {quote.client.notes && (
             <View style={s.notesBox}>
-              <Text style={s.notesTitle}>Observacoes</Text>
+              <Text style={s.notesTitle}>Observações</Text>
               <Text style={s.notesText}>{sanitizeText(quote.client.notes)}</Text>
             </View>
           )}
@@ -739,7 +739,7 @@ export default function QuotePDF({ quote, agency }: Props) {
             {payment &&
               (payment.pixValue > 0 || payment.installmentsNoInterest > 0 || payment.installmentsWithInterest > 0) && (
                 <View style={s.paymentBox}>
-                  <Text style={s.paymentTitle}>Condicoes de Pagamento</Text>
+                  <Text style={s.paymentTitle}>Condições de Pagamento</Text>
 
                   {payment.pixValue > 0 && (
                     <View style={s.paymentCardGreen}>
@@ -747,7 +747,7 @@ export default function QuotePDF({ quote, agency }: Props) {
                         <View>
                           <Text style={s.paymentLabelGreen}>Pix a vista</Text>
                           <Text style={{ fontSize: 7, color: GREEN, marginTop: 1 }}>
-                            Pagamento instantaneo com desconto
+                            Pagamento instantâneo com desconto
                           </Text>
                         </View>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -764,7 +764,7 @@ export default function QuotePDF({ quote, agency }: Props) {
 
                   {payment.installmentsNoInterest > 0 && payment.installmentValueNoInterest > 0 && (
                     <View style={s.paymentCard}>
-                      <Text style={s.paymentLabel}>Cartao sem juros</Text>
+                      <Text style={s.paymentLabel}>Cartão sem juros</Text>
                       <Text style={s.paymentInstallment}>
                         {payment.installmentsNoInterest}x {formatCurrency(payment.installmentValueNoInterest)}
                       </Text>
@@ -776,7 +776,7 @@ export default function QuotePDF({ quote, agency }: Props) {
 
                   {payment.installmentsWithInterest > 0 && payment.installmentValueWithInterest > 0 && (
                     <View style={s.paymentCard}>
-                      <Text style={s.paymentLabel}>Cartao com juros</Text>
+                      <Text style={s.paymentLabel}>Cartão com juros</Text>
                       <Text style={s.paymentInstallment}>
                         {payment.installmentsWithInterest}x {formatCurrency(payment.installmentValueWithInterest)}
                       </Text>
@@ -795,11 +795,11 @@ export default function QuotePDF({ quote, agency }: Props) {
           <View style={s.footerLine}>
             <Text style={s.footerBold}>Vortex Viagens - CNPJ: 51.209.371/0001-19</Text>
             <Text style={s.footerText}>
-              Rua Jorge Elias De Lucca, 677 - Nacoes Shopping - Sala 04 - Criciuma - SC, 88813-901
+              Rua Jorge Elias De Lucca, 677 - Nações Shopping - Sala 04 - Criciúma - SC, 88813-901
             </Text>
             <Text style={s.footerText}>(48) 3500-0975 | contato@vortexviagens.com.br | @vortexviagem</Text>
             <Text style={s.footerText}>
-              Valores sujeitos a disponibilidade no momento da emissao - Tarifas podem sofrer alteracao sem aviso previo
+              Valores sujeitos a disponibilidade no momento da emissão - Tarifas podem sofrer alteracao sem aviso prévio
             </Text>
           </View>
         </View>
