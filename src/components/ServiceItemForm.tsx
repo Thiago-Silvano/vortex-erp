@@ -7,8 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fileToBase64 } from '@/lib/storage';
-import { Plus, X, ImagePlus, PlaneTakeoff, PlaneLanding } from 'lucide-react';
+import { Plus, X, ImagePlus, PlaneTakeoff, PlaneLanding, Search, Loader2 } from 'lucide-react';
 import AirportAutocomplete from '@/components/AirportAutocomplete';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   onAdd: (item: ServiceItem) => void;
@@ -44,13 +46,23 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   const [imagePreview, setImagePreview] = useState<string | undefined>(editItem?.imageBase64);
   const [extraImages, setExtraImages] = useState<string[]>(editItem?.imagesBase64 || []);
   const extraImageInputRef = useRef<HTMLInputElement>(null);
+  const [searchingHotel, setSearchingHotel] = useState(false);
+  const { toast } = useToast();
 
-  // Auto-fill title for aereo based on trip origin/destination
+  // Auto-fill title for aereo based on flight legs origin/destination
   useEffect(() => {
-    if (item.type === 'aereo' && !editItem && tripOrigin && tripDestination && !item.title) {
-      setItem(p => ({ ...p, title: `Voo ${tripOrigin} - ${tripDestination}` }));
+    if (item.type === 'aereo' && !editItem) {
+      const idaLegsLocal = flightLegs.filter(l => l.direction !== 'volta');
+      const voltaLegsLocal = flightLegs.filter(l => l.direction === 'volta');
+      
+      const firstOrigin = idaLegsLocal[0]?.origin || '';
+      const lastDestination = idaLegsLocal[idaLegsLocal.length - 1]?.destination || '';
+      
+      if (firstOrigin && lastDestination) {
+        setItem(p => ({ ...p, title: `Voo ${firstOrigin} - ${lastDestination}` }));
+      }
     }
-  }, [item.type, tripOrigin, tripDestination]);
+  }, [item.type, flightLegs, editItem]);
 
   const isAereo = item.type === 'aereo';
   const isHotel = item.type === 'hotel';
@@ -64,11 +76,15 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
     }
   };
 
-  const handleAddExtraImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const base64 = await fileToBase64(file);
-    setExtraImages(prev => [...prev, base64]);
+  const handleAddExtraImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const newImages: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const base64 = await fileToBase64(files[i]);
+      newImages.push(base64);
+    }
+    setExtraImages(prev => [...prev, ...newImages]);
     if (extraImageInputRef.current) extraImageInputRef.current.value = '';
   };
 
@@ -87,6 +103,34 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   const removeLeg = (index: number) => {
     if (flightLegs.length <= 1) return;
     setFlightLegs(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const searchHotelInfo = async () => {
+    if (!item.title.trim()) {
+      toast({ title: 'Digite o nome do hotel', description: 'Preencha o nome do hotel antes de buscar.', variant: 'destructive' });
+      return;
+    }
+    setSearchingHotel(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-hotel', {
+        body: { hotelName: item.title },
+      });
+      if (error) throw error;
+      if (data?.description) {
+        setItem(p => ({
+          ...p,
+          description: data.description || p.description,
+          location: data.address || p.location,
+        }));
+        toast({ title: 'Informações encontradas!', description: 'Descrição e endereço preenchidos automaticamente.' });
+      } else {
+        toast({ title: 'Sem resultados', description: 'Não foi possível encontrar informações sobre este hotel.', variant: 'destructive' });
+      }
+    } catch (err) {
+      console.error('Hotel search error:', err);
+      toast({ title: 'Erro na busca', description: 'Não foi possível buscar informações do hotel.', variant: 'destructive' });
+    }
+    setSearchingHotel(false);
   };
 
   const handleSubmit = () => {
@@ -112,13 +156,11 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
 
   const generateReturnLegs = () => {
     if (idaLegs.length === 0) return;
-    // Reverse the ida legs: last ida destination becomes first volta origin
     const reversed = [...idaLegs].reverse().map((leg, idx, arr) => ({
       ...emptyLeg('volta'),
       origin: leg.destination,
       destination: leg.origin,
     }));
-    // Remove existing volta legs and add new ones
     setFlightLegs(prev => [...prev.filter(l => l.direction !== 'volta'), ...reversed]);
   };
 
@@ -211,7 +253,19 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
           </div>
           <div>
             <Label>{isHotel ? 'Nome do Hotel' : 'Título'}</Label>
-            <Input value={item.title} onChange={e => setItem(p => ({ ...p, title: e.target.value }))} placeholder={isAereo ? "Ex: Voo São Paulo → Paris" : isHotel ? "Ex: Marriott Resort" : "Título do serviço"} />
+            <div className="flex gap-2">
+              <Input 
+                value={item.title} 
+                onChange={e => setItem(p => ({ ...p, title: e.target.value }))} 
+                placeholder={isAereo ? "Ex: Voo São Paulo → Paris" : isHotel ? "Ex: Marriott Resort" : "Título do serviço"} 
+                className="flex-1"
+              />
+              {isHotel && (
+                <Button type="button" variant="outline" size="icon" onClick={searchHotelInfo} disabled={searchingHotel} title="Buscar informações do hotel">
+                  {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -230,7 +284,6 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
               <PlaneTakeoff className="h-4 w-4" /> Trechos do Voo
             </Label>
             
-            {/* Render all legs in order */}
             {flightLegs.map((leg, globalIdx) => {
               const sameDirectionBefore = flightLegs.slice(0, globalIdx).filter(l => l.direction === leg.direction);
               return renderLeg(leg, sameDirectionBefore.length, globalIdx);
@@ -253,7 +306,6 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
         )}
 
         <div className={`grid ${isAereo ? 'grid-cols-2' : (isHotel ? 'grid-cols-2' : 'grid-cols-3')} gap-3`}>
-          {/* Cia Aérea for aereo, hide supplier for hotel */}
           {isAereo && (
             <div>
               <Label>Cia Aérea</Label>
@@ -341,8 +393,9 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
               ref={extraImageInputRef}
               type="file"
               accept="image/*"
+              multiple
               className="hidden"
-              onChange={handleAddExtraImage}
+              onChange={handleAddExtraImages}
             />
           </div>
         </div>

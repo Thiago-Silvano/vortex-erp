@@ -96,6 +96,16 @@ export default function Index() {
 
   const total = services.reduce((sum, s) => sum + s.value * s.quantity, 0);
 
+  // Auto-recalculate installment value when total or installments change
+  useEffect(() => {
+    if (payment.installmentsNoInterest > 0 && total > 0) {
+      setPayment(p => ({
+        ...p,
+        installmentValueNoInterest: Math.round((total / p.installmentsNoInterest) * 100) / 100,
+      }));
+    }
+  }, [total, payment.installmentsNoInterest]);
+
   const validate = (): boolean => {
     const errs: ValidationErrors = {};
     if (!client.name.trim()) errs.clientName = 'Nome do cliente é obrigatório';
