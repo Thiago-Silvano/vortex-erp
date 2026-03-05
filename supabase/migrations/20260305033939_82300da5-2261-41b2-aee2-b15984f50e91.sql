@@ -1,0 +1,1 @@
+ALTER TABLE public.quotes ADD COLUMN show_individual_values boolean NOT NULL DEFAULT false;

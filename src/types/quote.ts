@@ -50,6 +50,7 @@ export interface PaymentData {
   installmentsWithInterest: number;
   installmentValueNoInterest: number;
   installmentValueWithInterest: number;
+  showIndividualValues?: boolean;
 }
 
 export interface QuoteData {

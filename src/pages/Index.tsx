@@ -362,6 +362,18 @@ export default function Index() {
         <Card>
           <CardHeader><CardTitle>Condições de Pagamento</CardTitle></CardHeader>
           <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="checkbox"
+                id="showIndividualValues"
+                checked={payment.showIndividualValues || false}
+                onChange={e => setPayment(p => ({ ...p, showIndividualValues: e.target.checked }))}
+                className="h-4 w-4 rounded border-input"
+              />
+              <Label htmlFor="showIndividualValues" className="cursor-pointer text-sm">
+                Informar no orçamento valor individual de cada serviço?
+              </Label>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label className="text-green-600 font-semibold">💰 Valor à vista (Pix)</Label>

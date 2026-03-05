@@ -460,6 +460,22 @@ export default function ClientQuote() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold text-[#1a2744] mb-8 text-center">Investimento</h2>
           <div className="bg-gray-50 rounded-2xl p-6 md:p-8">
+            {/* Individual service values */}
+            {payment?.showIndividualValues && (
+              <div className="space-y-3 mb-6">
+                {categoryTotals.map((cat, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-[#c8a951]/20 rounded-full flex items-center justify-center text-[#c8a951]">
+                        {cat.icon}
+                      </div>
+                      <span className="font-medium text-[#1a2744]">{cat.label}</span>
+                    </div>
+                    <span className="font-bold text-[#1a2744]">{formatCurrency(cat.total)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="bg-[#1a2744] rounded-xl p-8 text-center">
               <p className="text-[#c8a951] font-semibold text-sm uppercase tracking-wider mb-2">Valor total por pessoa</p>
               <span className="text-white font-bold text-4xl">{formatCurrency(grandTotal)}</span>
