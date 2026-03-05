@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getQuoteByShortId, getAgencySettingsFromDB, FullQuote } from '@/lib/supabase-storage';
 import { AgencySettings, SERVICE_TYPE_CONFIG, ServiceItem, FlightLeg, PaymentData } from '@/types/quote';
 import { MessageCircle, Plane, Hotel, Car, Shield, Ticket, FileText, MapPin, Calendar, Users, Moon, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import vortexLogo from '@/assets/vortex-logo.png';
 
 function formatDate(d: string) {
   if (!d) return '';
@@ -375,10 +376,12 @@ export default function ClientQuote() {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#1a2744]/90 via-[#1a2744]/40 to-transparent" />
         
+        {/* Logo top-left */}
+        <div className="absolute top-6 left-6 md:top-10 md:left-12 lg:left-20 z-20">
+          <img src={agency.logoBase64 || vortexLogo} alt={agency.name} className="h-24 md:h-32 lg:h-40 object-contain drop-shadow-2xl" />
+        </div>
+
         <div className="relative z-10 w-full px-6 pb-12 md:px-12 lg:px-20">
-          {agency.logoBase64 && (
-            <img src={agency.logoBase64} alt={agency.name} className="h-12 mb-6 object-contain" />
-          )}
           <p className="text-[#c8a951] text-sm font-semibold tracking-[3px] uppercase mb-3">
             Viagem personalizada para
           </p>
