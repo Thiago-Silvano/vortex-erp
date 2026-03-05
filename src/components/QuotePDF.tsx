@@ -745,7 +745,7 @@ export default function QuotePDF({ quote, agency }: Props) {
                     <View style={s.paymentCardGreen}>
                       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                         <View>
-                          <Text style={s.paymentLabelGreen}>Pix a vista</Text>
+                          <Text style={s.paymentLabelGreen}>Pix à vista</Text>
                           <Text style={{ fontSize: 7, color: GREEN, marginTop: 1 }}>
                             Pagamento instantâneo com desconto
                           </Text>
