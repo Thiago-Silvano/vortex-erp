@@ -85,19 +85,19 @@ export default function Preview() {
             <h1 className="text-base sm:text-xl font-bold">Cotação de Viagem</h1>
           </div>
           <div className="flex gap-1 sm:gap-2 flex-wrap">
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-accent text-xs sm:text-sm" onClick={handleSave} disabled={saving}>
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={handleSave} disabled={saving}>
               <Save className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">{saving ? 'Salvando...' : 'Salvar'}</span>
             </Button>
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-accent text-xs sm:text-sm" onClick={handleCopyLink}>
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={handleCopyLink}>
               <Link className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Copiar Link</span>
             </Button>
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-accent text-xs sm:text-sm" onClick={handlePrint}>
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={handlePrint}>
               <Printer className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Imprimir</span>
             </Button>
-            <Button variant="secondary" size="sm" onClick={handleDownload}>
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={handleDownload}>
               <Download className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Baixar PDF</span>
             </Button>
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-accent text-xs sm:text-sm" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={() => navigate('/')}>
               <FilePlus className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Nova Cotação</span>
             </Button>
           </div>
