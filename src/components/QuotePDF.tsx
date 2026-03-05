@@ -2,7 +2,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/render
 import { QuoteData, AgencySettings, ServiceItem, ServiceType, SERVICE_TYPE_CONFIG, FlightLeg } from "@/types/quote";
 
 // Convert logo to absolute URL for @react-pdf/renderer compatibility
-const VORTEX_LOGO_URL = new URL('/images/vortex-logo-white.png', window.location.origin).href;
+const VORTEX_LOGO_URL = new URL("/images/vortex-logo-white.png", window.location.origin).href;
 
 const NAVY = "#1a2744";
 const GOLD = "#c8a951";
@@ -637,7 +637,9 @@ export default function QuotePDF({ quote, agency }: Props) {
           {/* Header */}
           <View style={s.header}>
             <View style={s.headerLeft}>
-              {(agency.logoBase64 || VORTEX_LOGO_URL) && <Image src={agency.logoBase64 || VORTEX_LOGO_URL} style={s.logo} />}
+              {(agency.logoBase64 || VORTEX_LOGO_URL) && (
+                <Image src={agency.logoBase64 || VORTEX_LOGO_URL} style={s.logo} />
+              )}
               <View>
                 <View style={{ flexDirection: "row", gap: 8, marginTop: 2 }}>
                   {agency.whatsapp && <Text style={s.agencyContact}>WhatsApp: {sanitizeText(agency.whatsapp)}</Text>}
@@ -656,7 +658,7 @@ export default function QuotePDF({ quote, agency }: Props) {
               <Text style={s.clientName}>{sanitizeText(quote.client.name)}</Text>
             </View>
             <View style={{ alignItems: "flex-end" }}>
-              <Text style={{ fontSize: 7, color: GOLD, fontFamily: "Helvetica-Bold" }}>PAX</Text>
+              <Text style={{ fontSize: 7, color: GOLD, fontFamily: "Helvetica-Bold" }}>Passageiro(s)</Text>
               <Text style={{ fontSize: 14, color: WHITE, fontFamily: "Helvetica-Bold" }}>
                 {quote.client.passengers}
               </Text>
