@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ServiceItem, ServiceType, SERVICE_TYPE_CONFIG, FlightLeg } from '@/types/quote';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,16 +7,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fileToBase64 } from '@/lib/storage';
-import { Plus, X, ImagePlus, PlaneTakeoff } from 'lucide-react';
+import { Plus, X, ImagePlus, PlaneTakeoff, PlaneLanding } from 'lucide-react';
 import AirportAutocomplete from '@/components/AirportAutocomplete';
 
 interface Props {
   onAdd: (item: ServiceItem) => void;
   editItem?: ServiceItem;
   onCancel?: () => void;
+  tripOrigin?: string;
+  tripDestination?: string;
 }
 
-const emptyLeg = (): FlightLeg => ({ origin: '', destination: '', departureDate: '', departureTime: '', arrivalDate: '', arrivalTime: '' });
+const emptyLeg = (direction: 'ida' | 'volta' = 'ida'): FlightLeg => ({
+  origin: '', destination: '', departureDate: '', departureTime: '', arrivalDate: '', arrivalTime: '', direction,
+});
 
 const emptyItem = (): Omit<ServiceItem, 'id'> => ({
   type: 'aereo',
@@ -30,16 +34,26 @@ const emptyItem = (): Omit<ServiceItem, 'id'> => ({
   quantity: 1,
 });
 
-export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
+export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin, tripDestination }: Props) {
   const [item, setItem] = useState<Omit<ServiceItem, 'id'>>(
     editItem ? { ...editItem } : emptyItem()
   );
   const [flightLegs, setFlightLegs] = useState<FlightLeg[]>(
-    editItem?.flightLegs?.length ? editItem.flightLegs : [emptyLeg()]
+    editItem?.flightLegs?.length ? editItem.flightLegs : [emptyLeg('ida')]
   );
   const [imagePreview, setImagePreview] = useState<string | undefined>(editItem?.imageBase64);
   const [extraImages, setExtraImages] = useState<string[]>(editItem?.imagesBase64 || []);
   const extraImageInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-fill title for aereo based on trip origin/destination
+  useEffect(() => {
+    if (item.type === 'aereo' && !editItem && tripOrigin && tripDestination && !item.title) {
+      setItem(p => ({ ...p, title: `Voo ${tripOrigin} - ${tripDestination}` }));
+    }
+  }, [item.type, tripOrigin, tripDestination]);
+
+  const isAereo = item.type === 'aereo';
+  const isHotel = item.type === 'hotel';
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,8 +80,8 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
     setFlightLegs(prev => prev.map((leg, i) => i === index ? { ...leg, [field]: value } : leg));
   };
 
-  const addLeg = () => {
-    setFlightLegs(prev => [...prev, emptyLeg()]);
+  const addLeg = (direction: 'ida' | 'volta') => {
+    setFlightLegs(prev => [...prev, emptyLeg(direction)]);
   };
 
   const removeLeg = (index: number) => {
@@ -77,11 +91,10 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
 
   const handleSubmit = () => {
     if (!item.title) return;
-    const isAereo = item.type === 'aereo';
     onAdd({
       ...item,
       id: editItem?.id || crypto.randomUUID(),
-      quantity: isAereo ? 1 : item.quantity,
+      quantity: isAereo ? 1 : (isHotel ? 1 : item.quantity),
       imageBase64: imagePreview,
       imagesBase64: extraImages.length > 0 ? extraImages : undefined,
       flightLegs: isAereo ? flightLegs : undefined,
@@ -90,11 +103,76 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
       setItem(emptyItem());
       setImagePreview(undefined);
       setExtraImages([]);
-      setFlightLegs([emptyLeg()]);
+      setFlightLegs([emptyLeg('ida')]);
     }
   };
 
-  const isAereo = item.type === 'aereo';
+  const idaLegs = flightLegs.filter(l => l.direction !== 'volta');
+  const voltaLegs = flightLegs.filter(l => l.direction === 'volta');
+
+  const renderLeg = (leg: FlightLeg, idx: number, globalIdx: number) => (
+    <div key={globalIdx}>
+      {globalIdx > 0 && flightLegs[globalIdx - 1]?.direction === leg.direction && (
+        <div className="flex items-center gap-2 py-2 px-3 my-1 bg-accent/20 rounded-md border border-dashed border-accent/40">
+          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">⏱️ Conexão:</span>
+          <Input
+            value={flightLegs[globalIdx - 1].connectionDuration || ''}
+            onChange={e => updateLeg(globalIdx - 1, 'connectionDuration', e.target.value)}
+            placeholder="Ex: 2h30"
+            className="h-7 text-xs max-w-[120px]"
+          />
+        </div>
+      )}
+      <div className="p-3 rounded-md bg-muted/50 border space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-muted-foreground min-w-[24px]">
+            {leg.direction === 'volta' ? '🔙' : '✈️'} Trecho {idx + 1} ({leg.direction === 'volta' ? 'Volta' : 'Ida'})
+          </span>
+          {flightLegs.length > 1 && (
+            <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" onClick={() => removeLeg(globalIdx)}>
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Origem</Label>
+            <AirportAutocomplete
+              value={leg.origin}
+              onChange={v => updateLeg(globalIdx, 'origin', v)}
+              placeholder="Aeroporto de origem..."
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Destino</Label>
+            <AirportAutocomplete
+              value={leg.destination}
+              onChange={v => updateLeg(globalIdx, 'destination', v)}
+              placeholder="Aeroporto de destino..."
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          <div>
+            <Label className="text-xs">Data Partida</Label>
+            <Input type="date" value={leg.departureDate} onChange={e => updateLeg(globalIdx, 'departureDate', e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Hora Partida</Label>
+            <Input type="time" value={leg.departureTime} onChange={e => updateLeg(globalIdx, 'departureTime', e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Data Chegada</Label>
+            <Input type="date" value={leg.arrivalDate} onChange={e => updateLeg(globalIdx, 'arrivalDate', e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Hora Chegada</Label>
+            <Input type="time" value={leg.arrivalTime} onChange={e => updateLeg(globalIdx, 'arrivalTime', e.target.value)} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <Card className="border-dashed border-2 border-accent/40">
@@ -120,8 +198,8 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
             </Select>
           </div>
           <div>
-            <Label>Título</Label>
-            <Input value={item.title} onChange={e => setItem(p => ({ ...p, title: e.target.value }))} placeholder={isAereo ? "Ex: Voo São Paulo → Paris" : "Título do serviço"} />
+            <Label>{isHotel ? 'Nome do Hotel' : 'Título'}</Label>
+            <Input value={item.title} onChange={e => setItem(p => ({ ...p, title: e.target.value }))} placeholder={isAereo ? "Ex: Voo São Paulo → Paris" : isHotel ? "Ex: Marriott Resort" : "Título do serviço"} />
           </div>
         </div>
 
@@ -136,84 +214,41 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
         {/* Flight legs for aéreo */}
         {isAereo && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-1">
-                <PlaneTakeoff className="h-4 w-4" /> Trechos do Voo
-              </Label>
-              <Button type="button" variant="outline" size="sm" onClick={addLeg} className="h-7 text-xs">
-                <Plus className="h-3 w-3 mr-1" /> Adicionar Trecho
+            <Label className="flex items-center gap-1">
+              <PlaneTakeoff className="h-4 w-4" /> Trechos do Voo
+            </Label>
+            
+            {/* Render all legs in order */}
+            {flightLegs.map((leg, globalIdx) => {
+              const sameDirectionBefore = flightLegs.slice(0, globalIdx).filter(l => l.direction === leg.direction);
+              return renderLeg(leg, sameDirectionBefore.length, globalIdx);
+            })}
+
+            <div className="flex gap-2 pt-1">
+              <Button type="button" variant="outline" size="sm" onClick={() => addLeg('ida')} className="h-7 text-xs flex-1">
+                <PlaneTakeoff className="h-3 w-3 mr-1" /> + Adicionar trecho ida
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => addLeg('volta')} className="h-7 text-xs flex-1">
+                <PlaneLanding className="h-3 w-3 mr-1" /> + Adicionar trecho volta
               </Button>
             </div>
-            {flightLegs.map((leg, idx) => (
-              <div key={idx}>
-                {/* Connection duration between legs */}
-                {idx > 0 && (
-                  <div className="flex items-center gap-2 py-2 px-3 my-1 bg-accent/20 rounded-md border border-dashed border-accent/40">
-                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">⏱️ Conexão:</span>
-                    <Input
-                      value={flightLegs[idx - 1].connectionDuration || ''}
-                      onChange={e => updateLeg(idx - 1, 'connectionDuration', e.target.value)}
-                      placeholder="Ex: 2h30"
-                      className="h-7 text-xs max-w-[120px]"
-                    />
-                  </div>
-                )}
-                <div className="p-3 rounded-md bg-muted/50 border space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-muted-foreground min-w-[24px]">Trecho {idx + 1}</span>
-                    {flightLegs.length > 1 && (
-                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" onClick={() => removeLeg(idx)}>
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Origem</Label>
-                      <AirportAutocomplete
-                        value={leg.origin}
-                        onChange={v => updateLeg(idx, 'origin', v)}
-                        placeholder="Aeroporto de origem..."
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Destino</Label>
-                      <AirportAutocomplete
-                        value={leg.destination}
-                        onChange={v => updateLeg(idx, 'destination', v)}
-                        placeholder="Aeroporto de destino..."
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    <div>
-                      <Label className="text-xs">Data Partida</Label>
-                      <Input type="date" value={leg.departureDate} onChange={e => updateLeg(idx, 'departureDate', e.target.value)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Hora Partida</Label>
-                      <Input type="time" value={leg.departureTime} onChange={e => updateLeg(idx, 'departureTime', e.target.value)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Data Chegada</Label>
-                      <Input type="date" value={leg.arrivalDate} onChange={e => updateLeg(idx, 'arrivalDate', e.target.value)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Hora Chegada</Label>
-                      <Input type="time" value={leg.arrivalTime} onChange={e => updateLeg(idx, 'arrivalTime', e.target.value)} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         )}
 
-        <div className={`grid ${isAereo ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
-          <div>
-            <Label>{isAereo ? 'Cia Aérea' : 'Fornecedor'}</Label>
-            <Input value={item.supplier} onChange={e => setItem(p => ({ ...p, supplier: e.target.value }))} placeholder={isAereo ? "Ex: LATAM, GOL" : "Ex: Hotel Marriott"} />
-          </div>
+        <div className={`grid ${isAereo ? 'grid-cols-2' : (isHotel ? 'grid-cols-2' : 'grid-cols-3')} gap-3`}>
+          {/* Cia Aérea for aereo, hide supplier for hotel */}
+          {isAereo && (
+            <div>
+              <Label>Cia Aérea</Label>
+              <Input value={item.supplier} onChange={e => setItem(p => ({ ...p, supplier: e.target.value }))} placeholder="Ex: LATAM, GOL" />
+            </div>
+          )}
+          {!isAereo && !isHotel && (
+            <div>
+              <Label>Fornecedor</Label>
+              <Input value={item.supplier} onChange={e => setItem(p => ({ ...p, supplier: e.target.value }))} placeholder="Ex: Hotel Marriott" />
+            </div>
+          )}
           {isAereo ? (
             <div>
               <Label>Valor Total (R$)</Label>
@@ -234,19 +269,21 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel }: Props) {
         </div>
 
         {!isAereo && (
-          <div className="grid grid-cols-3 gap-3">
+          <div className={`grid ${isHotel ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
             <div>
-              <Label>Local</Label>
-              <Input value={item.location} onChange={e => setItem(p => ({ ...p, location: e.target.value }))} placeholder="Ex: Paris, França" />
+              <Label>{isHotel ? 'Endereço' : 'Local'}</Label>
+              <Input value={item.location} onChange={e => setItem(p => ({ ...p, location: e.target.value }))} placeholder={isHotel ? "Ex: Rua Principal, 123" : "Ex: Paris, França"} />
             </div>
             <div>
               <Label>Valor (R$)</Label>
               <Input type="number" min={0} step={0.01} value={item.value || ''} onChange={e => setItem(p => ({ ...p, value: parseFloat(e.target.value) || 0 }))} />
             </div>
-            <div>
-              <Label>Quantidade</Label>
-              <Input type="number" min={1} value={item.quantity} onChange={e => setItem(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
-            </div>
+            {!isHotel && (
+              <div>
+                <Label>Quantidade</Label>
+                <Input type="number" min={1} value={item.quantity} onChange={e => setItem(p => ({ ...p, quantity: parseInt(e.target.value) || 1 }))} />
+              </div>
+            )}
           </div>
         )}
 

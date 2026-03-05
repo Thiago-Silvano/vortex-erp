@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { QuoteData, ClientData, TripData, ServiceItem, SERVICE_TYPE_CONFIG } from '@/types/quote';
+import { QuoteData, ClientData, TripData, ServiceItem, SERVICE_TYPE_CONFIG, PaymentData } from '@/types/quote';
 import { getAgencySettings } from '@/lib/storage';
 import { saveQuoteToDB, uploadImage } from '@/lib/supabase-storage';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const defaultClient: ClientData = { name: '', passengers: 1, phone: '', email: '', notes: '' };
 const defaultTrip: TripData = { origin: '', destination: '', departureDate: '', returnDate: '', tripType: 'Lazer', nights: 0 };
+const defaultPayment: PaymentData = { pixValue: 0, installmentsNoInterest: 0, installmentsWithInterest: 0, installmentValueNoInterest: 0, installmentValueWithInterest: 0 };
 
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, '');
@@ -53,6 +54,7 @@ export default function Index() {
   const [client, setClient] = useState<ClientData>(defaultClient);
   const [trip, setTrip] = useState<TripData>(defaultTrip);
   const [services, setServices] = useState<ServiceItem[]>([]);
+  const [payment, setPayment] = useState<PaymentData>(defaultPayment);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -69,6 +71,7 @@ export default function Index() {
       setTrip(q.trip);
       setServices(q.services);
       setDestinationImage(q.destinationImageUrl);
+      if (q.payment) setPayment(q.payment);
       window.history.replaceState({}, '');
     }
   }, [location.state]);
@@ -113,14 +116,14 @@ export default function Index() {
 
   const handlePreview = () => {
     if (!validate()) return;
-    const quote: QuoteData = { id: quoteId, client, trip, services, destinationImageUrl: destinationImage };
+    const quote: QuoteData = { id: quoteId, client, trip, services, payment, destinationImageUrl: destinationImage };
     navigate('/preview', { state: { quote, shortId } });
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const quoteData: QuoteData = { client, trip, services, destinationImageUrl: destinationImage };
+      const quoteData: QuoteData = { client, trip, services, payment, destinationImageUrl: destinationImage };
       const saved = await saveQuoteToDB(quoteData, quoteId);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
@@ -136,7 +139,7 @@ export default function Index() {
     if (!validate()) return;
     setSaving(true);
     try {
-      const quoteData: QuoteData = { client, trip, services, destinationImageUrl: destinationImage };
+      const quoteData: QuoteData = { client, trip, services, payment, destinationImageUrl: destinationImage };
       const saved = await saveQuoteToDB(quoteData, quoteId);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
@@ -297,7 +300,7 @@ export default function Index() {
                 {errors.tripDestination && <p className="text-xs text-destructive mt-1">{errors.tripDestination}</p>}
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Data Ida *</Label>
                 <Input
@@ -320,20 +323,12 @@ export default function Index() {
               </div>
               <div>
                 <Label>Noites</Label>
-                <Input type="number" min={0} value={trip.nights || 0} readOnly className="bg-muted" />
-              </div>
-              <div>
-                <Label>Tipo</Label>
-                <Select value={trip.tripType} onValueChange={(v) => setTrip(p => ({ ...p, tripType: v as TripData['tripType'] }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Lazer">Lazer</SelectItem>
-                    <SelectItem value="Negócios">Negócios</SelectItem>
-                    <SelectItem value="Lua de mel">Lua de mel</SelectItem>
-                    <SelectItem value="Família">Família</SelectItem>
-                    <SelectItem value="Experiência Premium">Experiência Premium</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  type="number"
+                  min={0}
+                  value={trip.nights || 0}
+                  onChange={e => setTrip(p => ({ ...p, nights: parseInt(e.target.value) || 0 }))}
+                />
               </div>
             </div>
 
@@ -353,6 +348,70 @@ export default function Index() {
           </CardContent>
         </Card>
 
+        {/* Payment Conditions */}
+        <Card>
+          <CardHeader><CardTitle>Condições de Pagamento</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-green-600 font-semibold">💰 Valor à vista (Pix)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={payment.pixValue || ''}
+                  onChange={e => setPayment(p => ({ ...p, pixValue: parseFloat(e.target.value) || 0 }))}
+                  placeholder="Ex: 8500.00"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <Label>Parcelas sem juros</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={payment.installmentsNoInterest || ''}
+                  onChange={e => setPayment(p => ({ ...p, installmentsNoInterest: parseInt(e.target.value) || 0 }))}
+                  placeholder="Ex: 10"
+                />
+              </div>
+              <div>
+                <Label>Valor da parcela (s/ juros)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={payment.installmentValueNoInterest || ''}
+                  onChange={e => setPayment(p => ({ ...p, installmentValueNoInterest: parseFloat(e.target.value) || 0 }))}
+                  placeholder="Ex: 900.00"
+                />
+              </div>
+              <div>
+                <Label>Parcelas com juros</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={payment.installmentsWithInterest || ''}
+                  onChange={e => setPayment(p => ({ ...p, installmentsWithInterest: parseInt(e.target.value) || 0 }))}
+                  placeholder="Ex: 12"
+                />
+              </div>
+              <div>
+                <Label>Valor da parcela (c/ juros)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={payment.installmentValueWithInterest || ''}
+                  onChange={e => setPayment(p => ({ ...p, installmentValueWithInterest: parseFloat(e.target.value) || 0 }))}
+                  placeholder="Ex: 850.00"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Services */}
         <Card>
           <CardHeader>
@@ -367,7 +426,7 @@ export default function Index() {
           <CardContent className="space-y-3">
             {services.map(s => (
               editingId === s.id ? (
-                <ServiceItemForm key={s.id} editItem={s} onAdd={addService} onCancel={() => setEditingId(null)} />
+                <ServiceItemForm key={s.id} editItem={s} onAdd={addService} onCancel={() => setEditingId(null)} tripOrigin={trip.origin} tripDestination={trip.destination} />
               ) : (
                 <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
                   {s.imageBase64 && <img src={s.imageBase64} alt="" className="h-12 w-12 rounded object-cover" />}
@@ -385,7 +444,7 @@ export default function Index() {
                 </div>
               )
             ))}
-            {showForm && <ServiceItemForm onAdd={addService} onCancel={() => setShowForm(false)} />}
+            {showForm && <ServiceItemForm onAdd={addService} onCancel={() => setShowForm(false)} tripOrigin={trip.origin} tripDestination={trip.destination} />}
             {services.length === 0 && !showForm && (
               <p className="text-center text-muted-foreground py-8">Nenhum serviço adicionado. Clique em "Adicionar Serviço" para começar.</p>
             )}
