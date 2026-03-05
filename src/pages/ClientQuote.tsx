@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getQuoteByShortId, getAgencySettingsFromDB, FullQuote } from '@/lib/supabase-storage';
+import { getQuoteByShortId, getAgencySettingsFromDB, incrementViewCount, FullQuote } from '@/lib/supabase-storage';
 import { AgencySettings, SERVICE_TYPE_CONFIG, ServiceItem, FlightLeg, PaymentData } from '@/types/quote';
 import { MessageCircle, Plane, Hotel, Car, Shield, Ticket, FileText, MapPin, Calendar, Users, Moon, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import vortexLogo from '@/assets/vortex-logo.png';
@@ -319,6 +319,8 @@ export default function ClientQuote() {
       setQuote(q);
       setAgency(a);
       setLoading(false);
+      // Increment view count
+      incrementViewCount(shortId);
     }
     load();
   }, [shortId]);
@@ -598,22 +600,46 @@ export default function ClientQuote() {
 
       {/* Footer */}
       <footer className="bg-[#111b2e] py-10 px-6 md:px-12 lg:px-20">
-        <div className="max-w-4xl mx-auto text-center">
-          {agency.logoBase64 && (
-            <img src={agency.logoBase64} alt={agency.name} className="h-10 mx-auto mb-4 object-contain opacity-70" />
-          )}
-          <p className="text-white/50 text-sm mb-2">{agency.name}</p>
-          {agency.website && <p className="text-white/40 text-xs mb-6">{agency.website}</p>}
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Brand */}
+            <div className="text-center md:text-left">
+              {agency.logoBase64 && (
+                <img src={agency.logoBase64} alt={agency.name} className="h-10 mx-auto md:mx-0 mb-4 object-contain opacity-70" />
+              )}
+              <p className="text-white/60 text-sm">{agency.name}</p>
+              <p className="text-white/40 text-xs mt-1">CNPJ: 51.209.371/0001-19</p>
+            </div>
+
+            {/* Contact */}
+            <div className="text-center md:text-left">
+              <p className="text-white/80 font-semibold text-sm mb-3">Contato</p>
+              <p className="text-white/50 text-xs leading-relaxed mb-2">
+                Rua Jorge Elias De Lucca, 677 - Nações Shopping - Sala 04 - Nossa Senhora da Salete, Criciúma - SC, 88813-901
+              </p>
+              <p className="text-white/50 text-xs">
+                <a href="tel:+554835000975" className="hover:text-white/80 transition-colors">(48) 3500-0975</a>
+              </p>
+              <p className="text-white/50 text-xs mt-1">
+                <a href="mailto:contato@vortexviagens.com.br" className="hover:text-white/80 transition-colors">contato@vortexviagens.com.br</a>
+              </p>
+            </div>
+
+            {/* Social */}
+            <div className="text-center md:text-left">
+              <p className="text-white/80 font-semibold text-sm mb-3">Redes Sociais</p>
+              <a href="https://instagram.com/vortexviagem" target="_blank" rel="noopener noreferrer" className="text-white/50 text-xs hover:text-white/80 transition-colors">
+                @vortexviagem
+              </a>
+            </div>
+          </div>
           
           <div className="border-t border-white/10 pt-6 space-y-2">
-            <p className="text-white/40 text-xs">
-              Valores sujeitos à disponibilidade no momento da reserva.
+            <p className="text-white/40 text-xs text-center">
+              Valores sujeitos à disponibilidade no momento da reserva. Tarifas podem sofrer alteração sem aviso prévio. Valores por pessoa, salvo indicação contrária.
             </p>
-            <p className="text-white/40 text-xs">
-              Tarifas podem sofrer alteração sem aviso prévio.
-            </p>
-            <p className="text-white/40 text-xs">
-              Valores por pessoa, salvo indicação contrária.
+            <p className="text-white/40 text-xs text-center mt-4">
+              © 2026 Vortex Viagens. Todos os direitos reservados.
             </p>
           </div>
         </div>

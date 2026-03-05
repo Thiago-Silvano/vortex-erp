@@ -64,6 +64,7 @@ export interface FullQuote {
   status: string;
   createdAt: string;
   updatedAt: string;
+  viewCount: number;
 }
 
 function parsePayment(q: any): PaymentData | undefined {
@@ -153,6 +154,7 @@ function mapQuoteRow(q: any, services: ServiceItem[]): FullQuote {
     status: q.status,
     createdAt: q.created_at,
     updatedAt: q.updated_at,
+    viewCount: q.view_count || 0,
   };
 }
 
@@ -303,6 +305,20 @@ export async function saveQuoteToDB(
   }
 
   return (await getQuoteById(quoteId))!;
+}
+
+export async function incrementViewCount(shortId: string) {
+  const { data } = await supabase
+    .from('quotes')
+    .select('id, view_count')
+    .eq('short_id', shortId)
+    .single();
+  if (data) {
+    await supabase
+      .from('quotes')
+      .update({ view_count: (data.view_count || 0) + 1 } as any)
+      .eq('id', data.id);
+  }
 }
 
 export async function deleteQuoteFromDB(id: string) {

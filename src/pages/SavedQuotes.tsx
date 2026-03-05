@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, FullQuote } from '@/lib/supabase-storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink } from 'lucide-react';
+import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -61,6 +61,44 @@ export default function SavedQuotes() {
       await loadQuotes();
       toast({ title: 'Orçamento duplicado!', description: `Cópia criada com ID: ${dup.shortId}` });
     }
+  };
+
+  const handleReuse = (quote: FullQuote) => {
+    const reusedQuote = {
+      ...quote,
+      id: undefined,
+      shortId: undefined,
+      client: {
+        ...quote.client,
+        name: '',
+        phone: '',
+        email: '',
+        notes: '',
+        passengers: 1,
+      },
+      trip: {
+        ...quote.trip,
+        departureDate: '',
+        returnDate: '',
+        nights: undefined,
+      },
+      services: quote.services.map(s => ({
+        ...s,
+        startDate: '',
+        endDate: '',
+        flightLegs: s.flightLegs?.map(fl => ({
+          ...fl,
+          departureDate: '',
+          departureTime: '',
+          arrivalDate: '',
+          arrivalTime: '',
+        })),
+      })),
+      createdAt: undefined,
+      updatedAt: undefined,
+    };
+    navigate('/', { state: { editQuote: reusedQuote } });
+    toast({ title: 'Orçamento reutilizado', description: 'Datas e dados do passageiro foram limpos.' });
   };
 
   const handleCopyLink = (shortId: string) => {
@@ -125,10 +163,16 @@ export default function SavedQuotes() {
                         {q.services.length} serviço(s) • ID: {q.shortId} • {formatDate(q.updatedAt)}
                       </p>
                     </div>
-                    <div className="text-right mr-2">
-                      <p className="text-lg font-bold text-primary">
-                        R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
+                    <div className="flex items-center gap-3 mr-2">
+                      <div className="flex items-center gap-1 text-muted-foreground" title="Visualizações do link">
+                        <Eye className="h-4 w-4" />
+                        <span className="text-sm font-medium">{q.viewCount}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-primary">
+                          R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex gap-1 flex-wrap">
                       <Button variant="ghost" size="icon" title="Editar" onClick={() => handleEdit(q)}>
@@ -145,6 +189,9 @@ export default function SavedQuotes() {
                       </Button>
                       <Button variant="ghost" size="icon" title="Duplicar" onClick={() => handleDuplicate(q.id)}>
                         <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Reutilizar orçamento" onClick={() => handleReuse(q)}>
+                        <RotateCcw className="h-4 w-4" />
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
