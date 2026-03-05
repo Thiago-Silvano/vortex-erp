@@ -731,7 +731,7 @@ export default function QuotePDF({ quote, agency }: Props) {
               ))}
 
             <View style={s.totalRow}>
-              <Text style={s.totalLabel}>VALOR TOTAL POR PESSOA</Text>
+              <Text style={s.totalLabel}>Valor total por pessoa</Text>
               <Text style={s.totalValue}>{formatCurrency(grandTotal)}</Text>
             </View>
 
