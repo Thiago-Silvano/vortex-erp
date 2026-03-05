@@ -406,12 +406,11 @@ export default function QuotePDF({ quote, agency }: Props) {
       {/* ── Page 1: Header + Trip Info + Services ── */}
       <Page size="A4" style={s.page}>
         <View style={s.pageContent}>
-          {/* Header */}
+           {/* Header */}
           <View style={s.header}>
             <View style={s.headerLeft}>
               {agency.logoBase64 && <Image src={agency.logoBase64} style={s.logo} />}
               <View>
-                <Text style={s.agencyName}>{sanitizeText(agency.name)}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
                   {agency.whatsapp && <Text style={s.agencyContact}>WhatsApp: {sanitizeText(agency.whatsapp)}</Text>}
                   {agency.email && <Text style={s.agencyContact}>{sanitizeText(agency.email)}</Text>}
@@ -473,8 +472,8 @@ export default function QuotePDF({ quote, agency }: Props) {
             </View>
           )}
 
-          {/* Financial Summary */}
-          <View style={s.summaryBox}>
+          {/* Financial Summary - on new page */}
+          <View style={s.summaryBox} break>
             <Text style={s.summaryTitle}>Investimento</Text>
 
             {showIndividual && categoryTotals.map(c => (
