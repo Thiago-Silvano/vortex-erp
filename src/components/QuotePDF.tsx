@@ -668,7 +668,7 @@ export default function QuotePDF({ quote, agency }: Props) {
               <Text style={s.clientName}>{sanitizeText(quote.client.name)}</Text>
             </View>
             <View style={{ alignItems: "flex-end" }}>
-              <Text style={{ fontSize: 7, color: GOLD, fontFamily: "Helvetica-Bold" }}>Passageiro(s)</Text>
+              <Text style={{ fontSize: 10, color: GOLD, fontFamily: "Helvetica-Bold" }}>Passageiro(s)</Text>
               <Text style={{ fontSize: 14, color: WHITE, fontFamily: "Helvetica-Bold" }}>
                 {quote.client.passengers}
               </Text>
