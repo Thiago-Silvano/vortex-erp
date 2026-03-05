@@ -56,6 +56,7 @@ export type Database = {
           departure_date: string | null
           departure_time: string | null
           destination: string
+          direction: string | null
           id: string
           origin: string
           service_id: string
@@ -69,6 +70,7 @@ export type Database = {
           departure_date?: string | null
           departure_time?: string | null
           destination?: string
+          direction?: string | null
           id?: string
           origin?: string
           service_id: string
@@ -82,6 +84,7 @@ export type Database = {
           departure_date?: string | null
           departure_time?: string | null
           destination?: string
+          direction?: string | null
           id?: string
           origin?: string
           service_id?: string
@@ -107,6 +110,11 @@ export type Database = {
           created_at: string
           destination_image_url: string | null
           id: string
+          payment_installment_value_no_interest: number | null
+          payment_installment_value_with_interest: number | null
+          payment_installments_no_interest: number | null
+          payment_installments_with_interest: number | null
+          payment_pix_value: number | null
           short_id: string
           status: string
           trip_departure_date: string | null
@@ -126,6 +134,11 @@ export type Database = {
           created_at?: string
           destination_image_url?: string | null
           id?: string
+          payment_installment_value_no_interest?: number | null
+          payment_installment_value_with_interest?: number | null
+          payment_installments_no_interest?: number | null
+          payment_installments_with_interest?: number | null
+          payment_pix_value?: number | null
           short_id?: string
           status?: string
           trip_departure_date?: string | null
@@ -145,6 +158,11 @@ export type Database = {
           created_at?: string
           destination_image_url?: string | null
           id?: string
+          payment_installment_value_no_interest?: number | null
+          payment_installment_value_with_interest?: number | null
+          payment_installments_no_interest?: number | null
+          payment_installments_with_interest?: number | null
+          payment_pix_value?: number | null
           short_id?: string
           status?: string
           trip_departure_date?: string | null

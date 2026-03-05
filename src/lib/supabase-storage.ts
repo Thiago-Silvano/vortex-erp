@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { QuoteData, ServiceItem, FlightLeg, AgencySettings } from '@/types/quote';
+import { QuoteData, ServiceItem, FlightLeg, AgencySettings, PaymentData } from '@/types/quote';
 
 // ---- Agency Settings ----
 
@@ -59,10 +59,23 @@ export interface FullQuote {
   client: QuoteData['client'];
   trip: QuoteData['trip'];
   services: ServiceItem[];
+  payment?: PaymentData;
   destinationImageUrl?: string;
   status: string;
   createdAt: string;
   updatedAt: string;
+}
+
+function parsePayment(q: any): PaymentData | undefined {
+  const p: PaymentData = {
+    pixValue: Number(q.payment_pix_value) || 0,
+    installmentsNoInterest: Number(q.payment_installments_no_interest) || 0,
+    installmentsWithInterest: Number(q.payment_installments_with_interest) || 0,
+    installmentValueNoInterest: Number(q.payment_installment_value_no_interest) || 0,
+    installmentValueWithInterest: Number(q.payment_installment_value_with_interest) || 0,
+  };
+  if (p.pixValue || p.installmentsNoInterest || p.installmentsWithInterest) return p;
+  return undefined;
 }
 
 async function fetchServicesForQuote(quoteId: string): Promise<ServiceItem[]> {
@@ -81,7 +94,7 @@ async function fetchServicesForQuote(quoteId: string): Promise<ServiceItem[]> {
     supabase.from('service_images').select('*').in('service_id', serviceIds).order('sort_order'),
   ]);
 
-  return servicesData.map((s, idx) => ({
+  return servicesData.map((s) => ({
     id: s.id,
     type: s.type as ServiceItem['type'],
     title: s.title,
@@ -104,8 +117,37 @@ async function fetchServicesForQuote(quoteId: string): Promise<ServiceItem[]> {
         arrivalDate: fl.arrival_date || '',
         arrivalTime: fl.arrival_time || '',
         connectionDuration: (fl as any).connection_duration || '',
+        direction: ((fl as any).direction || 'ida') as 'ida' | 'volta',
       })) || [],
   }));
+}
+
+function mapQuoteRow(q: any, services: ServiceItem[]): FullQuote {
+  return {
+    id: q.id,
+    shortId: q.short_id,
+    client: {
+      name: q.client_name,
+      passengers: q.client_passengers,
+      phone: q.client_phone || '',
+      email: q.client_email || '',
+      notes: q.client_notes || '',
+    },
+    trip: {
+      origin: q.trip_origin || '',
+      destination: q.trip_destination || '',
+      departureDate: q.trip_departure_date || '',
+      returnDate: q.trip_return_date || '',
+      tripType: q.trip_type as QuoteData['trip']['tripType'],
+      nights: q.trip_nights || undefined,
+    },
+    services,
+    payment: parsePayment(q),
+    destinationImageUrl: q.destination_image_url || undefined,
+    status: q.status,
+    createdAt: q.created_at,
+    updatedAt: q.updated_at,
+  };
 }
 
 export async function getQuoteByShortId(shortId: string): Promise<FullQuote | null> {
@@ -116,33 +158,8 @@ export async function getQuoteByShortId(shortId: string): Promise<FullQuote | nu
     .single();
 
   if (!q) return null;
-
   const services = await fetchServicesForQuote(q.id);
-
-  return {
-    id: q.id,
-    shortId: q.short_id,
-    client: {
-      name: q.client_name,
-      passengers: q.client_passengers,
-      phone: q.client_phone || '',
-      email: q.client_email || '',
-      notes: q.client_notes || '',
-    },
-    trip: {
-      origin: q.trip_origin || '',
-      destination: q.trip_destination || '',
-      departureDate: q.trip_departure_date || '',
-      returnDate: q.trip_return_date || '',
-      tripType: q.trip_type as QuoteData['trip']['tripType'],
-      nights: q.trip_nights || undefined,
-    },
-    services,
-    destinationImageUrl: q.destination_image_url || undefined,
-    status: q.status,
-    createdAt: q.created_at,
-    updatedAt: q.updated_at,
-  };
+  return mapQuoteRow(q, services);
 }
 
 export async function getQuoteById(id: string): Promise<FullQuote | null> {
@@ -153,33 +170,8 @@ export async function getQuoteById(id: string): Promise<FullQuote | null> {
     .single();
 
   if (!q) return null;
-
   const services = await fetchServicesForQuote(q.id);
-
-  return {
-    id: q.id,
-    shortId: q.short_id,
-    client: {
-      name: q.client_name,
-      passengers: q.client_passengers,
-      phone: q.client_phone || '',
-      email: q.client_email || '',
-      notes: q.client_notes || '',
-    },
-    trip: {
-      origin: q.trip_origin || '',
-      destination: q.trip_destination || '',
-      departureDate: q.trip_departure_date || '',
-      returnDate: q.trip_return_date || '',
-      tripType: q.trip_type as QuoteData['trip']['tripType'],
-      nights: q.trip_nights || undefined,
-    },
-    services,
-    destinationImageUrl: q.destination_image_url || undefined,
-    status: q.status,
-    createdAt: q.created_at,
-    updatedAt: q.updated_at,
-  };
+  return mapQuoteRow(q, services);
 }
 
 export async function getAllQuotes(): Promise<FullQuote[]> {
@@ -193,30 +185,7 @@ export async function getAllQuotes(): Promise<FullQuote[]> {
   const results: FullQuote[] = [];
   for (const q of quotesData) {
     const services = await fetchServicesForQuote(q.id);
-    results.push({
-      id: q.id,
-      shortId: q.short_id,
-      client: {
-        name: q.client_name,
-        passengers: q.client_passengers,
-        phone: q.client_phone || '',
-        email: q.client_email || '',
-        notes: q.client_notes || '',
-      },
-      trip: {
-        origin: q.trip_origin || '',
-        destination: q.trip_destination || '',
-        departureDate: q.trip_departure_date || '',
-        returnDate: q.trip_return_date || '',
-        tripType: q.trip_type as QuoteData['trip']['tripType'],
-        nights: q.trip_nights || undefined,
-      },
-      services,
-      destinationImageUrl: q.destination_image_url || undefined,
-      status: q.status,
-      createdAt: q.created_at,
-      updatedAt: q.updated_at,
-    });
+    results.push(mapQuoteRow(q, services));
   }
   return results;
 }
@@ -225,7 +194,7 @@ export async function saveQuoteToDB(
   quoteData: QuoteData & { destinationImageUrl?: string },
   existingId?: string
 ): Promise<FullQuote> {
-  const quotePayload = {
+  const quotePayload: any = {
     client_name: quoteData.client.name,
     client_phone: quoteData.client.phone,
     client_email: quoteData.client.email,
@@ -239,6 +208,11 @@ export async function saveQuoteToDB(
     trip_nights: quoteData.trip.nights || 0,
     destination_image_url: quoteData.destinationImageUrl || null,
     status: 'active',
+    payment_pix_value: quoteData.payment?.pixValue || 0,
+    payment_installments_no_interest: quoteData.payment?.installmentsNoInterest || 0,
+    payment_installments_with_interest: quoteData.payment?.installmentsWithInterest || 0,
+    payment_installment_value_no_interest: quoteData.payment?.installmentValueNoInterest || 0,
+    payment_installment_value_with_interest: quoteData.payment?.installmentValueWithInterest || 0,
   };
 
   let quoteId: string;
@@ -302,6 +276,7 @@ export async function saveQuoteToDB(
           arrival_date: fl.arrivalDate || null,
           arrival_time: fl.arrivalTime || '',
           connection_duration: fl.connectionDuration || '',
+          direction: fl.direction || 'ida',
           sort_order: idx,
         }))
       );
@@ -334,6 +309,7 @@ export async function duplicateQuote(id: string): Promise<FullQuote | null> {
     client: { ...original.client, name: `${original.client.name} (cópia)` },
     trip: original.trip,
     services: original.services,
+    payment: original.payment,
     destinationImageUrl: original.destinationImageUrl,
   };
 

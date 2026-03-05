@@ -8,6 +8,7 @@ export interface FlightLeg {
   arrivalDate: string;
   arrivalTime: string;
   connectionDuration?: string;
+  direction?: 'ida' | 'volta';
 }
 
 export interface ServiceItem {
@@ -43,11 +44,20 @@ export interface TripData {
   nights?: number;
 }
 
+export interface PaymentData {
+  pixValue: number;
+  installmentsNoInterest: number;
+  installmentsWithInterest: number;
+  installmentValueNoInterest: number;
+  installmentValueWithInterest: number;
+}
+
 export interface QuoteData {
   id?: string;
   client: ClientData;
   trip: TripData;
   services: ServiceItem[];
+  payment?: PaymentData;
   createdAt?: string;
   updatedAt?: string;
   destinationImageUrl?: string;
