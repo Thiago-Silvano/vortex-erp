@@ -125,6 +125,7 @@ export type Database = {
           trip_return_date: string | null
           trip_type: Database["public"]["Enums"]["trip_type"]
           updated_at: string
+          view_count: number
         }
         Insert: {
           client_email?: string | null
@@ -150,6 +151,7 @@ export type Database = {
           trip_return_date?: string | null
           trip_type?: Database["public"]["Enums"]["trip_type"]
           updated_at?: string
+          view_count?: number
         }
         Update: {
           client_email?: string | null
@@ -175,6 +177,7 @@ export type Database = {
           trip_return_date?: string | null
           trip_type?: Database["public"]["Enums"]["trip_type"]
           updated_at?: string
+          view_count?: number
         }
         Relationships: []
       }
