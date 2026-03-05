@@ -378,7 +378,7 @@ export default function ClientQuote() {
         
         {/* Logo top-left */}
         <div className="absolute top-6 left-6 md:top-10 md:left-12 lg:left-20 z-20">
-          <img src={agency.logoBase64 || vortexLogo} alt={agency.name} className="h-24 md:h-32 lg:h-40 object-contain drop-shadow-2xl" />
+          <img src={agency.logoBase64 || vortexLogo} alt={agency.name} className="h-40 md:h-56 lg:h-72 object-contain drop-shadow-2xl" />
         </div>
 
         <div className="relative z-10 w-full px-6 pb-12 md:px-12 lg:px-20">

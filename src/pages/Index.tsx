@@ -214,17 +214,17 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-primary text-primary-foreground">
-        <div className="container mx-auto flex items-center justify-between py-4 px-4">
+        <div className="container mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 gap-2">
           <div className="flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Sistema de Orçamentos</h1>
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
+            <h1 className="text-base sm:text-xl font-bold">Sistema de Orçamentos</h1>
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" className="text-primary-foreground hover:text-foreground hover:bg-muted" onClick={() => navigate('/quotes')}>
-              <List className="h-5 w-5 mr-1" /> Orçamentos Salvos
+          <div className="flex gap-1 sm:gap-2">
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/quotes')}>
+              <List className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Orçamentos Salvos</span>
             </Button>
-            <Button variant="ghost" className="text-primary-foreground hover:text-foreground hover:bg-muted" onClick={() => navigate('/settings')}>
-              <Settings className="h-5 w-5 mr-1" /> Configurações
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/settings')}>
+              <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Configurações</span>
             </Button>
           </div>
         </div>
@@ -248,7 +248,7 @@ export default function Index() {
         <Card>
           <CardHeader><CardTitle>Dados do Cliente</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Nome do Cliente *</Label>
                 <Input
@@ -263,7 +263,7 @@ export default function Index() {
                 <Input type="number" min={1} value={client.passengers} onChange={e => setClient(p => ({ ...p, passengers: parseInt(e.target.value) || 1 }))} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Telefone *</Label>
                 <Input
@@ -321,7 +321,7 @@ export default function Index() {
                 {errors.tripDestination && <p className="text-xs text-destructive mt-1">{errors.tripDestination}</p>}
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label>Data Ida *</Label>
                 <Input
@@ -467,7 +467,7 @@ export default function Index() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <Label>Parcelas sem juros</Label>
                 <Input
@@ -523,22 +523,22 @@ export default function Index() {
         {/* Summary & Actions */}
         {services.length > 0 && (
           <Card className="bg-primary text-primary-foreground">
-            <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
+            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 gap-3">
               <div>
                 <p className="text-sm opacity-80">{services.length} serviço(s)</p>
-                <p className="text-2xl font-bold">
+                <p className="text-xl sm:text-2xl font-bold">
                   Total: R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button size="lg" onClick={handleSave} disabled={saving} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                  <Save className="h-5 w-5 mr-2" /> {saving ? 'Salvando...' : 'Salvar'}
+              <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+                <Button size="sm" onClick={handleSave} disabled={saving} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 flex-1 sm:flex-none sm:size-default">
+                  <Save className="h-4 w-4 mr-1 sm:mr-2" /> {saving ? 'Salvando...' : 'Salvar'}
                 </Button>
-                <Button size="lg" onClick={handleGenerateLink} disabled={saving} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                  <Link className="h-5 w-5 mr-2" /> Gerar Link
+                <Button size="sm" onClick={handleGenerateLink} disabled={saving} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 flex-1 sm:flex-none sm:size-default">
+                  <Link className="h-4 w-4 mr-1 sm:mr-2" /> Gerar Link
                 </Button>
-                <Button size="lg" onClick={handlePreview} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                  <Eye className="h-5 w-5 mr-2" /> Visualizar PDF
+                <Button size="sm" onClick={handlePreview} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 flex-1 sm:flex-none sm:size-default">
+                  <Eye className="h-4 w-4 mr-1 sm:mr-2" /> Visualizar PDF
                 </Button>
               </div>
             </CardContent>
