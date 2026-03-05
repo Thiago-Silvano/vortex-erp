@@ -92,11 +92,70 @@ function FlightCard({ item }: { item: ServiceItem }) {
   const idaLegs = (item.flightLegs || []).filter(l => l.direction !== 'volta');
   const voltaLegs = (item.flightLegs || []).filter(l => l.direction === 'volta');
 
-  const renderLegs = (legs: FlightLeg[], label: string) => {
+  // Calculate total duration for a set of legs (flight time + connection time)
+  const calcTotalDuration = (legs: FlightLeg[]): string | null => {
+    let totalMinutes = 0;
+    let hasAnyTime = false;
+
+    for (let i = 0; i < legs.length; i++) {
+      const leg = legs[i];
+      // Calculate flight duration from departure/arrival times
+      if (leg.departureDate && leg.departureTime && leg.arrivalDate && leg.arrivalTime) {
+        const dep = new Date(`${leg.departureDate}T${leg.departureTime}`);
+        const arr = new Date(`${leg.arrivalDate}T${leg.arrivalTime}`);
+        if (!isNaN(dep.getTime()) && !isNaN(arr.getTime())) {
+          totalMinutes += (arr.getTime() - dep.getTime()) / (1000 * 60);
+          hasAnyTime = true;
+        }
+      }
+      // Add connection duration (from previous leg)
+      if (i > 0 && legs[i - 1]?.connectionDuration) {
+        const conn = parseConnectionDuration(legs[i - 1].connectionDuration!);
+        if (conn > 0) {
+          totalMinutes += conn;
+          hasAnyTime = true;
+        }
+      }
+    }
+
+    if (!hasAnyTime || totalMinutes <= 0) return null;
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = Math.round(totalMinutes % 60);
+    return mins > 0 ? `${hours}h${mins.toString().padStart(2, '0')} total do voo` : `${hours}h total do voo`;
+  };
+
+  // Parse connection duration string like "2h30", "1h", "45min", "2h 30min"
+  const parseConnectionDuration = (str: string): number => {
+    if (!str) return 0;
+    const s = str.trim().toLowerCase();
+    let totalMin = 0;
+    const hMatch = s.match(/(\d+)\s*h/);
+    const mMatch = s.match(/(\d+)\s*m/);
+    if (hMatch) totalMin += parseInt(hMatch[1]) * 60;
+    if (mMatch) totalMin += parseInt(mMatch[1]);
+    // If just "2h30" without m
+    if (hMatch && !mMatch) {
+      const afterH = s.split('h')[1]?.trim();
+      if (afterH && /^\d+$/.test(afterH)) totalMin += parseInt(afterH);
+    }
+    return totalMin;
+  };
+
+  const idaDuration = calcTotalDuration(idaLegs);
+  const voltaDuration = calcTotalDuration(voltaLegs);
+
+  const renderLegs = (legs: FlightLeg[], label: string, totalDuration: string | null) => {
     if (legs.length === 0) return null;
     return (
       <div className="space-y-3">
-        <span className="bg-[#1a2744] text-white text-xs font-bold px-3 py-1 rounded">{label}</span>
+        <div className="flex items-center justify-between">
+          <span className="bg-[#1a2744] text-white text-xs font-bold px-3 py-1 rounded">{label}</span>
+          {totalDuration && (
+            <span className="text-xs font-semibold text-[#c8a951] bg-[#c8a951]/10 px-3 py-1 rounded-full">
+              🕐 {totalDuration}
+            </span>
+          )}
+        </div>
         {legs.map((leg, idx) => (
           <div key={idx}>
             {idx > 0 && leg.direction === legs[idx-1]?.direction && legs[idx-1]?.connectionDuration && (
@@ -151,8 +210,8 @@ function FlightCard({ item }: { item: ServiceItem }) {
         </div>
         
         <div className="space-y-4">
-          {renderLegs(idaLegs, '✈️ Voo de Ida')}
-          {renderLegs(voltaLegs, '🔙 Voo de Volta')}
+          {renderLegs(idaLegs, '✈️ Voo de Ida', idaDuration)}
+          {renderLegs(voltaLegs, '🔙 Voo de Volta', voltaDuration)}
         </div>
       </div>
     </div>
