@@ -30,7 +30,7 @@ const s = StyleSheet.create({
     marginBottom: 18,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  logo: { width: 150, height: 150, objectFit: "contain" },
+  logo: { width: 90, height: 90, objectFit: "contain" },
   agencyName: { fontSize: 18, fontFamily: "Helvetica-Bold", color: NAVY, letterSpacing: 0.5 },
   agencyContact: { fontSize: 7, color: MID_TEXT, marginTop: 2, lineHeight: 1.4 },
   quoteLabel: { fontSize: 11, fontFamily: "Helvetica-Bold", color: GOLD, textTransform: "uppercase", letterSpacing: 3 },
