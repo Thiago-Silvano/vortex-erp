@@ -281,13 +281,16 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
           </div>
         )}
 
-        {/* Hotel description (read-only, filled by search) */}
-        {isHotel && item.description && (
+        {/* Hotel description (editable, filled by search) */}
+        {isHotel && (
           <div>
             <Label>Informações do Hotel</Label>
-            <div className="bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap max-h-[960px] overflow-y-auto border">
-              {item.description}
-            </div>
+            <textarea
+              className="w-full bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap max-h-[960px] min-h-[200px] overflow-y-auto border resize-y"
+              value={item.description || ''}
+              onChange={e => setItem(p => ({ ...p, description: e.target.value }))}
+              rows={12}
+            />
           </div>
         )}
 
