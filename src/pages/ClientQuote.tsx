@@ -536,7 +536,7 @@ export default function ClientQuote() {
                         <span className="text-sm font-semibold block text-center">OFF</span>
                       </span>
                     )}
-                    <span className="font-bold text-green-700 text-2xl break-all">{formatCurrency(Math.round(payment.pixValue))}</span>
+                    <span className="font-bold text-green-700 text-2xl break-all">{formatCurrency(payment.pixValue)}</span>
                   </div>
                 </div>
               )}
