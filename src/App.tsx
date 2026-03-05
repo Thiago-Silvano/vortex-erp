@@ -9,6 +9,8 @@ import Preview from "./pages/Preview";
 import Settings from "./pages/Settings";
 import SavedQuotes from "./pages/SavedQuotes";
 import ClientQuote from "./pages/ClientQuote";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ const App = () => (
         <Routes>
           {/* Public route - client quote view */}
           <Route path="/orcamento/:shortId" element={<ClientQuote />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Protected routes */}
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
