@@ -212,10 +212,27 @@ If you cannot find specific info, provide reasonable estimates based on the hote
       console.error('Image search error:', e);
     }
 
+    // Build separate fields
+    const checkInOut = [
+      hotelInfo.check_in_time ? `Check-in: ${hotelInfo.check_in_time}` : '',
+      hotelInfo.check_out_time ? `Check-out: ${hotelInfo.check_out_time}` : '',
+    ].filter(Boolean).join('\n');
+
+    const policies = (hotelInfo.policies && hotelInfo.policies.length > 0)
+      ? hotelInfo.policies.map((s: string) => `• ${s}`).join('\n')
+      : '';
+
+    const accessibility = (hotelInfo.accessibility && hotelInfo.accessibility.length > 0)
+      ? hotelInfo.accessibility.map((s: string) => `• ${s}`).join('\n')
+      : '';
+
     const result = {
       description: sections.join('\n'),
       address: hotelInfo.address || '',
       images,
+      checkInOut,
+      policies,
+      accessibility,
     };
 
     return new Response(

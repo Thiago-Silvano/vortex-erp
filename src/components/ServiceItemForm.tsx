@@ -47,6 +47,9 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   const [extraImages, setExtraImages] = useState<string[]>(editItem?.imagesBase64 || []);
   const extraImageInputRef = useRef<HTMLInputElement>(null);
   const [searchingHotel, setSearchingHotel] = useState(false);
+  const [hotelCheckInOut, setHotelCheckInOut] = useState('');
+  const [hotelPolicies, setHotelPolicies] = useState('');
+  const [hotelAccessibility, setHotelAccessibility] = useState('');
   const { toast } = useToast();
 
   // Auto-fill title for aereo based on trip origin/destination
@@ -114,6 +117,9 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
           description: data.description || p.description,
           location: data.address || p.location,
         }));
+        if (data.checkInOut) setHotelCheckInOut(data.checkInOut);
+        if (data.policies) setHotelPolicies(data.policies);
+        if (data.accessibility) setHotelAccessibility(data.accessibility);
 
         // Add fetched images as extra images
         if (data.images && Array.isArray(data.images) && data.images.length > 0) {
@@ -282,6 +288,36 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
             <div className="bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap max-h-[960px] overflow-y-auto border">
               {item.description}
             </div>
+          </div>
+        )}
+
+        {/* Hotel extra fields */}
+        {isHotel && (hotelCheckInOut || hotelPolicies || hotelAccessibility) && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {hotelCheckInOut && (
+              <div>
+                <Label>🕐 Check-in / Check-out</Label>
+                <div className="bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap border min-h-[60px]">
+                  {hotelCheckInOut}
+                </div>
+              </div>
+            )}
+            {hotelPolicies && (
+              <div>
+                <Label>📜 Políticas</Label>
+                <div className="bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap border min-h-[60px] max-h-[200px] overflow-y-auto">
+                  {hotelPolicies}
+                </div>
+              </div>
+            )}
+            {hotelAccessibility && (
+              <div>
+                <Label>♿ Acessibilidade</Label>
+                <div className="bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap border min-h-[60px] max-h-[200px] overflow-y-auto">
+                  {hotelAccessibility}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
