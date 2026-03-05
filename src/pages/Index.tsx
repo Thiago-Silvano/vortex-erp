@@ -390,8 +390,7 @@ export default function Index() {
                   min={0}
                   step={0.01}
                   value={payment.installmentValueNoInterest || ''}
-                  readOnly
-                  className="bg-muted"
+                  onChange={e => setPayment(p => ({ ...p, installmentValueNoInterest: parseFloat(e.target.value) || 0 }))}
                 />
               </div>
               <div>
