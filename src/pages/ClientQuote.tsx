@@ -519,7 +519,7 @@ export default function ClientQuote() {
             <h2 className="text-2xl font-bold text-[#1a2744] mb-8 text-center">Condições de Pagamento</h2>
             <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 space-y-6">
               {payment.pixValue > 0 && (
-                <div className="flex items-center justify-between p-5 bg-green-50 rounded-xl border border-green-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 bg-green-50 rounded-xl border border-green-200">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">💰</span>
                     <div>
@@ -527,14 +527,14 @@ export default function ClientQuote() {
                       <p className="text-green-600 text-sm">Pagamento instantâneo com desconto</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 justify-end flex-wrap">
                     {grandTotal > 0 && payment.pixValue < grandTotal && (
-                      <span className="text-green-600 font-black text-4xl">
+                      <span className="text-green-600 font-black text-4xl leading-tight">
                         {Math.round(((grandTotal - payment.pixValue) / grandTotal) * 100)}%
                         <span className="text-sm font-semibold block text-center">OFF</span>
                       </span>
                     )}
-                    <span className="font-bold text-green-700 text-2xl">{formatCurrency(Math.round(payment.pixValue))}</span>
+                    <span className="font-bold text-green-700 text-2xl break-all">{formatCurrency(Math.round(payment.pixValue))}</span>
                   </div>
                 </div>
               )}
