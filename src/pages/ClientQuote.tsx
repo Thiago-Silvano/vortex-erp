@@ -239,7 +239,9 @@ function ServiceCard({ item, isHotel }: { item: ServiceItem; isHotel?: boolean }
         <div className="p-6">
           <h3 className="text-lg font-bold text-[#1a2744] mb-2">{item.title}</h3>
           {item.description && (
-            <p className="text-gray-600 text-sm mb-4 leading-relaxed">{item.description}</p>
+            <div className="text-gray-600 text-sm mb-4 leading-relaxed whitespace-pre-wrap">
+              {item.description}
+            </div>
           )}
           <div className="space-y-2 text-sm">
             {item.location && (
@@ -500,37 +502,41 @@ export default function ClientQuote() {
                       <p className="text-green-600 text-sm">Pagamento instantâneo com desconto</p>
                     </div>
                   </div>
-                  <span className="font-bold text-green-700 text-2xl">{formatCurrency(payment.pixValue)}</span>
+                  <span className="font-bold text-green-700 text-2xl">{formatCurrency(Math.round(payment.pixValue))}</span>
                 </div>
               )}
               
               {payment.installmentsNoInterest > 0 && payment.installmentValueNoInterest > 0 && (
-                <div className="flex items-center justify-between p-5 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="flex items-center gap-3">
+                <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-3 mb-2">
                     <span className="text-2xl">💳</span>
-                    <div>
-                      <p className="font-bold text-[#1a2744] text-lg">Cartão sem juros</p>
-                      <p className="text-gray-600 text-sm">{payment.installmentsNoInterest}x de {formatCurrency(payment.installmentValueNoInterest)}</p>
-                    </div>
+                    <p className="font-bold text-[#1a2744] text-lg">Cartão sem juros</p>
                   </div>
-                  <span className="font-bold text-[#1a2744] text-2xl">
-                    {formatCurrency(payment.installmentsNoInterest * payment.installmentValueNoInterest)}
-                  </span>
+                  <div className="text-right">
+                    <p className="font-bold text-[#1a2744] text-3xl">
+                      {payment.installmentsNoInterest}x {formatCurrency(payment.installmentValueNoInterest)}
+                    </p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      Total: {formatCurrency(payment.installmentsNoInterest * payment.installmentValueNoInterest)}
+                    </p>
+                  </div>
                 </div>
               )}
               
               {payment.installmentsWithInterest > 0 && payment.installmentValueWithInterest > 0 && (
-                <div className="flex items-center justify-between p-5 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="flex items-center gap-3">
+                <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-3 mb-2">
                     <span className="text-2xl">💳</span>
-                    <div>
-                      <p className="font-bold text-[#1a2744] text-lg">Cartão com juros</p>
-                      <p className="text-gray-600 text-sm">{payment.installmentsWithInterest}x de {formatCurrency(payment.installmentValueWithInterest)}</p>
-                    </div>
+                    <p className="font-bold text-[#1a2744] text-lg">Cartão com juros</p>
                   </div>
-                  <span className="font-bold text-[#1a2744] text-2xl">
-                    {formatCurrency(payment.installmentsWithInterest * payment.installmentValueWithInterest)}
-                  </span>
+                  <div className="text-right">
+                    <p className="font-bold text-[#1a2744] text-3xl">
+                      {payment.installmentsWithInterest}x {formatCurrency(payment.installmentValueWithInterest)}
+                    </p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      Total: {formatCurrency(payment.installmentsWithInterest * payment.installmentValueWithInterest)}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
