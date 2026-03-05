@@ -82,7 +82,7 @@ export default function Preview() {
             <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate('/')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-base sm:text-xl font-bold">Visualizar Orçamento</h1>
+            <h1 className="text-base sm:text-xl font-bold">Cotação de Viagem</h1>
           </div>
           <div className="flex gap-1 sm:gap-2 flex-wrap">
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-accent text-xs sm:text-sm" onClick={handleSave} disabled={saving}>

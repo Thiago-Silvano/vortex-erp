@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, FullQuote } from '@/lib/supabase-storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw } from 'lucide-react';
+import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -179,7 +179,7 @@ export default function SavedQuotes() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" title="Visualizar PDF" onClick={() => handlePreview(q)}>
-                        <Eye className="h-4 w-4" />
+                        <FileDown className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" title="Copiar link" onClick={() => handleCopyLink(q.shortId)}>
                         <Link className="h-4 w-4" />
