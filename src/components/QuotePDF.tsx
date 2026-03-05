@@ -3,68 +3,113 @@ import { QuoteData, AgencySettings, ServiceItem, ServiceType, SERVICE_TYPE_CONFI
 
 const NAVY = '#1a2744';
 const GOLD = '#c8a951';
-const LIGHT_GRAY = '#f5f5f5';
+const LIGHT_BG = '#f8f7f4';
+const LIGHT_GRAY = '#f0f0f0';
 const WHITE = '#ffffff';
-const DARK_TEXT = '#2a2a2a';
+const DARK_TEXT = '#1a1a1a';
 const MID_TEXT = '#555555';
+const GREEN = '#16a34a';
 
 const s = StyleSheet.create({
-  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: DARK_TEXT },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottomWidth: 2, borderBottomColor: GOLD, paddingBottom: 14 },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  logo: { width: 56, height: 56, objectFit: 'contain' },
-  agencyName: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: NAVY, letterSpacing: 0.5 },
-  agencyContact: { fontSize: 8, color: MID_TEXT, marginTop: 3, lineHeight: 1.4 },
-  headerRight: { alignItems: 'flex-end' },
-  quoteTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: GOLD, textTransform: 'uppercase', letterSpacing: 3 },
-  clientNameRow: { backgroundColor: NAVY, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 6, marginBottom: 10 },
-  clientNameLabel: { fontSize: 7, color: GOLD, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 3 },
-  clientNameValue: { fontSize: 14, color: WHITE, fontFamily: 'Helvetica-Bold' },
-  tripBox: { backgroundColor: LIGHT_GRAY, padding: 14, borderRadius: 6, marginBottom: 24, flexDirection: 'row', justifyContent: 'space-between', borderWidth: 1, borderColor: '#e0e0e0' },
-  tripCol: { flex: 1, paddingHorizontal: 6 },
-  tripLabel: { fontSize: 7, color: GOLD, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 3, fontFamily: 'Helvetica-Bold' },
-  tripValue: { fontSize: 11, color: NAVY, fontFamily: 'Helvetica-Bold' },
-  categoryHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: GOLD, paddingBottom: 6 },
-  categoryIcon: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: WHITE, backgroundColor: GOLD, width: 22, height: 22, textAlign: 'center', lineHeight: 22, borderRadius: 11 },
-  categoryTitle: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: NAVY, letterSpacing: 0.3 },
-  serviceCard: { flexDirection: 'row', marginBottom: 10, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 6, overflow: 'hidden', backgroundColor: WHITE },
-  serviceImage: { width: 80, height: 70, objectFit: 'cover' },
-  serviceImagePlaceholder: { width: 80, height: 70, backgroundColor: LIGHT_GRAY, justifyContent: 'center', alignItems: 'center' },
-  serviceBody: { flex: 1, padding: 10, justifyContent: 'center' },
-  serviceTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 3 },
-  serviceDesc: { fontSize: 8, color: MID_TEXT, marginBottom: 4, lineHeight: 1.4 },
-  serviceMeta: { flexDirection: 'row', gap: 14, marginTop: 2 },
-  serviceMetaItem: { fontSize: 8, color: MID_TEXT },
-  serviceMetaLabel: { fontSize: 8, color: MID_TEXT, fontFamily: 'Helvetica-Bold' },
-  serviceValue: { alignItems: 'flex-end', justifyContent: 'center', padding: 10, backgroundColor: LIGHT_GRAY, minWidth: 95 },
-  serviceValueText: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: NAVY },
-  serviceQty: { fontSize: 7, color: MID_TEXT, marginTop: 2 },
-  serviceImagesRow: { flexDirection: 'row', gap: 4, marginBottom: 6 },
-  serviceImageSmall: { width: 55, height: 42, objectFit: 'cover', borderRadius: 3 },
-  aereoImageCard: { marginBottom: 10, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 6, overflow: 'hidden', backgroundColor: WHITE },
-  aereoImageFull: { width: '100%', height: 130, objectFit: 'contain', backgroundColor: WHITE },
-  aereoBody: { padding: 10 },
-  flightLegsBox: { marginTop: 6, marginBottom: 4 },
-  flightLeg: { paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  flightLegRoute: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 3 },
-  flightLegText: { fontSize: 9, color: NAVY, fontFamily: 'Helvetica-Bold' },
-  flightLegArrow: { fontSize: 9, color: GOLD, fontFamily: 'Helvetica-Bold', marginHorizontal: 4 },
-  flightLegInfoLine: { fontSize: 8, color: MID_TEXT, marginTop: 1 },
-  flightLegInfoLabel: { fontFamily: 'Helvetica-Bold', color: NAVY },
-  summaryBox: { marginTop: 28, borderTopWidth: 2, borderTopColor: GOLD, paddingTop: 14 },
-  summaryTitle: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 10 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  summaryLabel: { fontSize: 10, color: MID_TEXT },
-  summaryValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: DARK_TEXT },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, backgroundColor: NAVY, paddingHorizontal: 14, borderRadius: 6, marginTop: 8 },
-  totalLabel: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: GOLD },
-  totalValue: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: WHITE },
-  notesBox: { marginTop: 18, padding: 12, backgroundColor: LIGHT_GRAY, borderRadius: 6, borderLeftWidth: 3, borderLeftColor: GOLD },
-  notesTitle: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 4 },
-  notesText: { fontSize: 8, color: MID_TEXT, lineHeight: 1.5 },
-  footer: { position: 'absolute', bottom: 28, left: 40, right: 40 },
-  footerLine: { borderTopWidth: 1, borderTopColor: '#ddd', paddingTop: 8 },
-  footerText: { fontSize: 7, color: MID_TEXT, textAlign: 'center', lineHeight: 1.6 },
+  // Page
+  page: { fontFamily: 'Helvetica', fontSize: 9, color: DARK_TEXT, backgroundColor: WHITE },
+  pageContent: { paddingHorizontal: 40, paddingTop: 36, paddingBottom: 60 },
+
+  // Header
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14, borderBottomWidth: 2, borderBottomColor: GOLD, marginBottom: 18 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  logo: { width: 50, height: 50, objectFit: 'contain' },
+  agencyName: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: NAVY, letterSpacing: 0.5 },
+  agencyContact: { fontSize: 7, color: MID_TEXT, marginTop: 2, lineHeight: 1.4 },
+  quoteLabel: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: GOLD, textTransform: 'uppercase', letterSpacing: 3 },
+
+  // Client highlight bar
+  clientBar: { backgroundColor: NAVY, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 6, marginBottom: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  clientLabel: { fontSize: 7, color: GOLD, textTransform: 'uppercase', letterSpacing: 1.5 },
+  clientName: { fontSize: 14, color: WHITE, fontFamily: 'Helvetica-Bold', marginTop: 2 },
+
+  // Trip info
+  tripBox: { backgroundColor: LIGHT_BG, padding: 12, borderRadius: 6, marginBottom: 20, flexDirection: 'row', borderWidth: 1, borderColor: '#e0e0e0' },
+  tripCol: { flex: 1, paddingHorizontal: 4 },
+  tripLabel: { fontSize: 6.5, color: GOLD, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 2, fontFamily: 'Helvetica-Bold' },
+  tripValue: { fontSize: 10, color: NAVY, fontFamily: 'Helvetica-Bold' },
+
+  // Category
+  catHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16, marginBottom: 8, borderBottomWidth: 1.5, borderBottomColor: GOLD, paddingBottom: 5 },
+  catIcon: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: WHITE, backgroundColor: GOLD, width: 20, height: 20, textAlign: 'center', lineHeight: 20, borderRadius: 10 },
+  catTitle: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: NAVY },
+
+  // Service card (generic)
+  card: { marginBottom: 8, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 6, overflow: 'hidden', backgroundColor: WHITE },
+  cardRow: { flexDirection: 'row' },
+  cardImage: { width: 80, height: 70, objectFit: 'cover' },
+  cardImagePlaceholder: { width: 80, height: 70, backgroundColor: LIGHT_GRAY, justifyContent: 'center', alignItems: 'center' },
+  cardBody: { flex: 1, padding: 10, justifyContent: 'center' },
+  cardTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 2 },
+  cardMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 3 },
+  cardMetaLabel: { fontSize: 8, color: MID_TEXT, fontFamily: 'Helvetica-Bold' },
+  cardMetaValue: { fontSize: 8, color: MID_TEXT },
+  cardValueBox: { alignItems: 'flex-end', justifyContent: 'center', padding: 10, backgroundColor: LIGHT_BG, minWidth: 90 },
+  cardValueText: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: NAVY },
+  cardQty: { fontSize: 7, color: MID_TEXT, marginTop: 2 },
+
+  // Hotel card
+  hotelCard: { marginBottom: 8, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 6, overflow: 'hidden', backgroundColor: WHITE },
+  hotelImageMain: { width: '100%', height: 160, objectFit: 'cover' },
+  hotelBody: { padding: 12 },
+  hotelTitle: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 4 },
+  hotelMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 6 },
+  hotelSectionTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: NAVY, marginTop: 6, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.8 },
+  hotelDescText: { fontSize: 8, color: MID_TEXT, lineHeight: 1.5 },
+  hotelImagesRow: { flexDirection: 'row', gap: 4, marginTop: 6 },
+  hotelImageSmall: { width: 58, height: 44, objectFit: 'cover', borderRadius: 3 },
+
+  // Flight card
+  flightCard: { marginBottom: 8, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 6, overflow: 'hidden', backgroundColor: WHITE },
+  flightImageFull: { width: '100%', height: 100, objectFit: 'contain', backgroundColor: WHITE },
+  flightBody: { padding: 10 },
+  flightTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+  flightTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: NAVY },
+  flightDirectionLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: WHITE, backgroundColor: NAVY, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 3, marginBottom: 4 },
+  flightLeg: { paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  flightLegRoute: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+  flightLegOrigin: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: NAVY },
+  flightLegArrow: { fontSize: 9, color: GOLD, fontFamily: 'Helvetica-Bold', marginHorizontal: 6 },
+  flightLegDest: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: NAVY },
+  flightLegInfo: { fontSize: 7.5, color: MID_TEXT, marginTop: 1 },
+  flightLegInfoBold: { fontFamily: 'Helvetica-Bold', color: NAVY },
+  flightConnection: { fontSize: 7, color: GOLD, fontFamily: 'Helvetica-Bold', textAlign: 'center', paddingVertical: 3 },
+
+  // Summary
+  summaryBox: { marginTop: 20, borderTopWidth: 2, borderTopColor: GOLD, paddingTop: 12 },
+  summaryTitle: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 8 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  summaryLabel: { fontSize: 9, color: MID_TEXT },
+  summaryValue: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: DARK_TEXT },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, backgroundColor: NAVY, paddingHorizontal: 14, borderRadius: 6, marginTop: 8 },
+  totalLabel: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: GOLD },
+  totalValue: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: WHITE },
+
+  // Payment
+  paymentBox: { marginTop: 14 },
+  paymentTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 8 },
+  paymentCard: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 6, padding: 12, marginBottom: 6, backgroundColor: LIGHT_BG },
+  paymentCardGreen: { borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 6, padding: 12, marginBottom: 6, backgroundColor: '#f0fdf4' },
+  paymentLabel: { fontSize: 8, color: MID_TEXT, fontFamily: 'Helvetica-Bold', marginBottom: 2 },
+  paymentLabelGreen: { fontSize: 8, color: GREEN, fontFamily: 'Helvetica-Bold', marginBottom: 2 },
+  paymentInstallment: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: NAVY },
+  paymentInstallmentGreen: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: GREEN },
+  paymentTotal: { fontSize: 8, color: MID_TEXT, marginTop: 2 },
+
+  // Notes
+  notesBox: { marginTop: 14, padding: 10, backgroundColor: LIGHT_BG, borderRadius: 6, borderLeftWidth: 3, borderLeftColor: GOLD },
+  notesTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 3 },
+  notesText: { fontSize: 7.5, color: MID_TEXT, lineHeight: 1.5 },
+
+  // Footer
+  footer: { position: 'absolute', bottom: 20, left: 40, right: 40 },
+  footerLine: { borderTopWidth: 1, borderTopColor: '#ddd', paddingTop: 6 },
+  footerText: { fontSize: 6.5, color: MID_TEXT, textAlign: 'center', lineHeight: 1.5 },
 });
 
 const CATEGORY_ICONS: Record<ServiceType, string> = {
@@ -73,6 +118,11 @@ const CATEGORY_ICONS: Record<ServiceType, string> = {
 
 function formatCurrency(v: number) {
   const formatted = v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `R$ ${formatted}`;
+}
+
+function formatCurrencyInteger(v: number) {
+  const formatted = Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   return `R$ ${formatted}`;
 }
 
@@ -116,115 +166,208 @@ function getAllImages(item: ServiceItem): string[] {
 
 const SERVICE_ORDER: ServiceType[] = ['aereo', 'hotel', 'carro', 'seguro', 'experiencia', 'adicional'];
 
-function FlightLegRow({ leg }: { leg: FlightLeg }) {
-  return (
-    <View style={s.flightLeg}>
-      <View style={s.flightLegRoute}>
-        <Text style={s.flightLegText}>{sanitizeText(leg.origin)}</Text>
-        <Text style={s.flightLegArrow}>{'>'}</Text>
-        <Text style={s.flightLegText}>{sanitizeText(leg.destination)}</Text>
-      </View>
-      {leg.departureDate && (
-        <Text style={s.flightLegInfoLine}>
-          <Text style={s.flightLegInfoLabel}>Partida: </Text>
-          {formatDate(leg.departureDate)}{leg.departureTime ? ` ${leg.departureTime}` : ''}
-        </Text>
-      )}
-      {leg.arrivalDate && (
-        <Text style={s.flightLegInfoLine}>
-          <Text style={s.flightLegInfoLabel}>Chegada: </Text>
-          {formatDate(leg.arrivalDate)}{leg.arrivalTime ? ` ${leg.arrivalTime}` : ''}
-        </Text>
-      )}
-    </View>
-  );
-}
-
-function AereoServiceCard({ item }: { item: ServiceItem }) {
+// ── Hotel Card ──────────────────────────────────────────
+function HotelServiceCard({ item }: { item: ServiceItem }) {
   const images = getAllImages(item);
-  const hasImage = images.length > 0;
+  const descLines = (item.description || '').split('\n').filter(l => l.trim());
+
+  // Parse description into sections
+  const sections: { title: string; lines: string[] }[] = [];
+  let currentSection: { title: string; lines: string[] } = { title: '', lines: [] };
+
+  for (const line of descLines) {
+    const trimmed = line.trim();
+    // Check if it's a section header (all caps or starts with emoji-like prefix followed by caps)
+    const isSectionHeader = /^[A-Z\s]{4,}$/.test(sanitizeText(trimmed).replace(/[^A-Za-z\s]/g, '').trim()) && trimmed.length < 40;
+    
+    if (isSectionHeader || trimmed.match(/^[\p{Emoji}\u200d\ufe0f\s]*[A-ZÀ-Ú\s]{4,}$/u)) {
+      if (currentSection.title || currentSection.lines.length > 0) {
+        sections.push(currentSection);
+      }
+      currentSection = { title: sanitizeText(trimmed).replace(/[^A-Za-z\s\/]/g, '').trim(), lines: [] };
+    } else {
+      currentSection.lines.push(sanitizeText(trimmed));
+    }
+  }
+  if (currentSection.title || currentSection.lines.length > 0) {
+    sections.push(currentSection);
+  }
 
   return (
-    <View style={s.aereoImageCard} wrap={false}>
-      {hasImage && <Image src={images[0]} style={s.aereoImageFull} />}
-      <View style={s.aereoBody}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <View style={{ flex: 1, paddingRight: 8 }}>
-            <Text style={s.serviceTitle}>{sanitizeText(item.title)}</Text>
-            {item.supplier && (
-              <View style={{ flexDirection: 'row', marginBottom: 4 }}>
-                <Text style={s.serviceMetaLabel}>Cia Aerea: </Text>
-                <Text style={s.serviceMetaItem}>{sanitizeText(item.supplier)}</Text>
-              </View>
-            )}
+    <View style={s.hotelCard} wrap={false}>
+      {images.length > 0 && <Image src={images[0]} style={s.hotelImageMain} />}
+      <View style={s.hotelBody}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.hotelTitle}>{sanitizeText(item.title)}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={s.serviceValueText}>{formatCurrency(item.value)}</Text>
+            <Text style={s.cardValueText}>{formatCurrency(item.value * item.quantity)}</Text>
           </View>
         </View>
-        {item.flightLegs && item.flightLegs.length > 0 && (
-          <View style={s.flightLegsBox}>
-            {item.flightLegs.map((leg, idx) => (
-              <FlightLegRow key={idx} leg={leg} />
-            ))}
-          </View>
-        )}
-      </View>
-    </View>
-  );
-}
 
-function GenericServiceCard({ item, type }: { item: ServiceItem; type: ServiceType }) {
-  const images = getAllImages(item);
-
-  return (
-    <View style={s.serviceCard} wrap={false}>
-      {images.length === 1 ? (
-        <Image src={images[0]} style={s.serviceImage} />
-      ) : images.length === 0 ? (
-        <View style={s.serviceImagePlaceholder}>
-          <Text style={{ fontSize: 18, fontFamily: 'Helvetica-Bold', color: GOLD }}>{CATEGORY_ICONS[type]}</Text>
-        </View>
-      ) : null}
-      <View style={s.serviceBody}>
-        {images.length > 1 && (
-          <View style={s.serviceImagesRow}>
-            {images.map((img, idx) => (
-              <Image key={idx} src={img} style={s.serviceImageSmall} />
-            ))}
-          </View>
-        )}
-        <Text style={s.serviceTitle}>{sanitizeText(item.title)}</Text>
-        {item.description && <Text style={s.serviceDesc}>{sanitizeText(item.description)}</Text>}
-        <View style={s.serviceMeta}>
-          {item.supplier && (
-            <View style={{ flexDirection: 'row' }}>
-              <Text style={s.serviceMetaLabel}>Fornecedor: </Text>
-              <Text style={s.serviceMetaItem}>{sanitizeText(item.supplier)}</Text>
-            </View>
-          )}
+        <View style={s.hotelMeta}>
           {item.location && (
             <View style={{ flexDirection: 'row' }}>
-              <Text style={s.serviceMetaLabel}>Local: </Text>
-              <Text style={s.serviceMetaItem}>{sanitizeText(item.location)}</Text>
+              <Text style={s.cardMetaLabel}>Endereco: </Text>
+              <Text style={s.cardMetaValue}>{sanitizeText(item.location)}</Text>
             </View>
           )}
           {item.startDate && (
             <View style={{ flexDirection: 'row' }}>
-              <Text style={s.serviceMetaLabel}>Data: </Text>
-              <Text style={s.serviceMetaItem}>{formatDate(item.startDate)} - {formatDate(item.endDate)}</Text>
+              <Text style={s.cardMetaLabel}>Periodo: </Text>
+              <Text style={s.cardMetaValue}>{formatDate(item.startDate)} a {formatDate(item.endDate)}</Text>
             </View>
           )}
         </View>
-      </View>
-      <View style={s.serviceValue}>
-        <Text style={s.serviceValueText}>{formatCurrency(item.value * item.quantity)}</Text>
-        {item.quantity > 1 && <Text style={s.serviceQty}>{item.quantity}x {formatCurrency(item.value)}</Text>}
+
+        {/* Organized description by sections */}
+        {sections.map((sec, idx) => (
+          <View key={idx}>
+            {sec.title ? (
+              <Text style={s.hotelSectionTitle}>{sec.title}</Text>
+            ) : null}
+            {sec.lines.map((line, li) => (
+              <Text key={li} style={s.hotelDescText}>{line}</Text>
+            ))}
+          </View>
+        ))}
+
+        {/* Extra images gallery */}
+        {images.length > 1 && (
+          <View style={s.hotelImagesRow}>
+            {images.slice(1, 7).map((img, idx) => (
+              <Image key={idx} src={img} style={s.hotelImageSmall} />
+            ))}
+          </View>
+        )}
       </View>
     </View>
   );
 }
 
+// ── Flight Card ─────────────────────────────────────────
+function FlightServiceCard({ item }: { item: ServiceItem }) {
+  const images = getAllImages(item);
+  const idaLegs = (item.flightLegs || []).filter(l => l.direction !== 'volta');
+  const voltaLegs = (item.flightLegs || []).filter(l => l.direction === 'volta');
+
+  const renderLegs = (legs: FlightLeg[], label: string) => {
+    if (legs.length === 0) return null;
+    return (
+      <View style={{ marginBottom: 4 }}>
+        <Text style={s.flightDirectionLabel}>{label}</Text>
+        {legs.map((leg, idx) => (
+          <View key={idx}>
+            {idx > 0 && legs[idx - 1]?.connectionDuration && (
+              <Text style={s.flightConnection}>Conexao: {sanitizeText(legs[idx - 1].connectionDuration!)}</Text>
+            )}
+            <View style={s.flightLeg}>
+              <View style={s.flightLegRoute}>
+                <Text style={s.flightLegOrigin}>{sanitizeText(leg.origin)}</Text>
+                <Text style={s.flightLegArrow}>{'>'}</Text>
+                <Text style={s.flightLegDest}>{sanitizeText(leg.destination)}</Text>
+              </View>
+              {leg.departureDate && (
+                <Text style={s.flightLegInfo}>
+                  <Text style={s.flightLegInfoBold}>Partida: </Text>
+                  {formatDate(leg.departureDate)}{leg.departureTime ? ` as ${leg.departureTime}` : ''}
+                </Text>
+              )}
+              {leg.arrivalDate && (
+                <Text style={s.flightLegInfo}>
+                  <Text style={s.flightLegInfoBold}>Chegada: </Text>
+                  {formatDate(leg.arrivalDate)}{leg.arrivalTime ? ` as ${leg.arrivalTime}` : ''}
+                </Text>
+              )}
+            </View>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  return (
+    <View style={s.flightCard} wrap={false}>
+      {images.length > 0 && <Image src={images[0]} style={s.flightImageFull} />}
+      <View style={s.flightBody}>
+        <View style={s.flightTitleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.flightTitle}>{sanitizeText(item.title)}</Text>
+            {item.supplier && (
+              <View style={{ flexDirection: 'row', marginTop: 2 }}>
+                <Text style={s.cardMetaLabel}>Cia Aerea: </Text>
+                <Text style={s.cardMetaValue}>{sanitizeText(item.supplier)}</Text>
+              </View>
+            )}
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={s.cardValueText}>{formatCurrency(item.value)}</Text>
+          </View>
+        </View>
+        {renderLegs(idaLegs, 'Voo de Ida')}
+        {renderLegs(voltaLegs, 'Voo de Volta')}
+      </View>
+    </View>
+  );
+}
+
+// ── Generic Service Card ────────────────────────────────
+function GenericServiceCard({ item, type }: { item: ServiceItem; type: ServiceType }) {
+  const images = getAllImages(item);
+
+  return (
+    <View style={s.card} wrap={false}>
+      <View style={s.cardRow}>
+        {images.length > 0 ? (
+          <Image src={images[0]} style={s.cardImage} />
+        ) : (
+          <View style={s.cardImagePlaceholder}>
+            <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: GOLD }}>{CATEGORY_ICONS[type]}</Text>
+          </View>
+        )}
+        <View style={s.cardBody}>
+          <Text style={s.cardTitle}>{sanitizeText(item.title)}</Text>
+          {item.description && <Text style={{ fontSize: 7.5, color: MID_TEXT, lineHeight: 1.4, marginBottom: 3 }}>{sanitizeText(item.description)}</Text>}
+          <View style={s.cardMeta}>
+            {item.supplier && (
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={s.cardMetaLabel}>Fornecedor: </Text>
+                <Text style={s.cardMetaValue}>{sanitizeText(item.supplier)}</Text>
+              </View>
+            )}
+            {item.location && (
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={s.cardMetaLabel}>Local: </Text>
+                <Text style={s.cardMetaValue}>{sanitizeText(item.location)}</Text>
+              </View>
+            )}
+            {item.startDate && (
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={s.cardMetaLabel}>Data: </Text>
+                <Text style={s.cardMetaValue}>{formatDate(item.startDate)} a {formatDate(item.endDate)}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        <View style={s.cardValueBox}>
+          <Text style={s.cardValueText}>{formatCurrency(item.value * item.quantity)}</Text>
+          {item.quantity > 1 && <Text style={s.cardQty}>{item.quantity}x {formatCurrency(item.value)}</Text>}
+        </View>
+      </View>
+      {/* Extra images row */}
+      {images.length > 1 && (
+        <View style={{ flexDirection: 'row', gap: 3, padding: 6, paddingTop: 0 }}>
+          {images.slice(1, 6).map((img, idx) => (
+            <Image key={idx} src={img} style={{ width: 50, height: 38, objectFit: 'cover', borderRadius: 3 }} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ── Main PDF Document ───────────────────────────────────
 interface Props {
   quote: QuoteData;
   agency: AgencySettings;
@@ -243,84 +386,138 @@ export default function QuotePDF({ quote, agency }: Props) {
   }));
 
   const grandTotal = categoryTotals.reduce((sum, c) => sum + c.total, 0);
+  const payment = quote.payment;
+  const showIndividual = payment?.showIndividualValues;
 
   return (
     <Document>
+      {/* ── Page 1: Header + Trip Info + Services ── */}
       <Page size="A4" style={s.page}>
-        <View style={s.header}>
-          <View style={s.headerLeft}>
-            {agency.logoBase64 && <Image src={agency.logoBase64} style={s.logo} />}
+        <View style={s.pageContent}>
+          {/* Header */}
+          <View style={s.header}>
+            <View style={s.headerLeft}>
+              {agency.logoBase64 && <Image src={agency.logoBase64} style={s.logo} />}
+              <View>
+                <Text style={s.agencyName}>{sanitizeText(agency.name)}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
+                  {agency.whatsapp && <Text style={s.agencyContact}>WhatsApp: {sanitizeText(agency.whatsapp)}</Text>}
+                  {agency.email && <Text style={s.agencyContact}>{sanitizeText(agency.email)}</Text>}
+                </View>
+                {agency.website && <Text style={s.agencyContact}>{sanitizeText(agency.website)}</Text>}
+              </View>
+            </View>
+            <Text style={s.quoteLabel}>Orcamento</Text>
+          </View>
+
+          {/* Client bar */}
+          <View style={s.clientBar}>
             <View>
-              <Text style={s.agencyName}>{sanitizeText(agency.name)}</Text>
-              {agency.whatsapp && <Text style={s.agencyContact}>WhatsApp: {sanitizeText(agency.whatsapp)}</Text>}
-              {agency.email && <Text style={s.agencyContact}>{sanitizeText(agency.email)}</Text>}
-              {agency.website && <Text style={s.agencyContact}>{sanitizeText(agency.website)}</Text>}
+              <Text style={s.clientLabel}>Cliente</Text>
+              <Text style={s.clientName}>{sanitizeText(quote.client.name)}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ fontSize: 7, color: GOLD, fontFamily: 'Helvetica-Bold' }}>PAX</Text>
+              <Text style={{ fontSize: 14, color: WHITE, fontFamily: 'Helvetica-Bold' }}>{quote.client.passengers}</Text>
             </View>
           </View>
-          <View style={s.headerRight}>
-            <Text style={s.quoteTitle}>Orcamento</Text>
-          </View>
-        </View>
 
-        <View style={s.clientNameRow}>
-          <Text style={s.clientNameLabel}>Cliente</Text>
-          <Text style={s.clientNameValue}>{sanitizeText(quote.client.name)}</Text>
-        </View>
-
-        <View style={s.tripBox}>
-          <View style={s.tripCol}>
-            <Text style={s.tripLabel}>Origem</Text>
-            <Text style={s.tripValue}>{sanitizeText(quote.trip.origin)}</Text>
-          </View>
-          <View style={s.tripCol}>
-            <Text style={s.tripLabel}>Destino</Text>
-            <Text style={s.tripValue}>{sanitizeText(quote.trip.destination)}</Text>
-          </View>
-          <View style={s.tripCol}>
-            <Text style={s.tripLabel}>Periodo</Text>
-            <Text style={s.tripValue}>{formatDate(quote.trip.departureDate)} a {formatDate(quote.trip.returnDate)}</Text>
-          </View>
-          <View style={{ ...s.tripCol, flex: 0.5 }}>
-            <Text style={s.tripLabel}>Pax</Text>
-            <Text style={s.tripValue}>{quote.client.passengers}</Text>
-          </View>
-        </View>
-
-        {grouped.map(({ type, items }) => (
-          <View key={type} wrap={false}>
-            <View style={s.categoryHeader}>
-              <Text style={s.categoryIcon}>{CATEGORY_ICONS[type]}</Text>
-              <Text style={s.categoryTitle}>{SERVICE_TYPE_CONFIG[type].pdfLabel}</Text>
+          {/* Trip info */}
+          <View style={s.tripBox}>
+            <View style={s.tripCol}>
+              <Text style={s.tripLabel}>Origem - Destino</Text>
+              <Text style={s.tripValue}>{sanitizeText(quote.trip.origin)} - {sanitizeText(quote.trip.destination)}</Text>
             </View>
-            {items.map(item => (
-              type === 'aereo'
-                ? <AereoServiceCard key={item.id} item={item} />
-                : <GenericServiceCard key={item.id} item={item} type={type} />
-            ))}
+            <View style={s.tripCol}>
+              <Text style={s.tripLabel}>Periodo</Text>
+              <Text style={s.tripValue}>{formatDate(quote.trip.departureDate)} a {formatDate(quote.trip.returnDate)}</Text>
+            </View>
+            <View style={{ ...s.tripCol, flex: 0.5 }}>
+              <Text style={s.tripLabel}>Tipo</Text>
+              <Text style={s.tripValue}>{sanitizeText(quote.trip.tripType)}</Text>
+            </View>
           </View>
-        ))}
 
-        {quote.client.notes && (
-          <View style={s.notesBox}>
-            <Text style={s.notesTitle}>Observacoes</Text>
-            <Text style={s.notesText}>{sanitizeText(quote.client.notes)}</Text>
-          </View>
-        )}
-
-        <View style={s.summaryBox}>
-          <Text style={s.summaryTitle}>Resumo Financeiro</Text>
-          {categoryTotals.map(c => (
-            <View key={c.label} style={s.summaryRow}>
-              <Text style={s.summaryLabel}>{c.label}</Text>
-              <Text style={s.summaryValue}>{formatCurrency(c.total)}</Text>
+          {/* Services by category */}
+          {grouped.map(({ type, items }) => (
+            <View key={type}>
+              <View style={s.catHeader}>
+                <Text style={s.catIcon}>{CATEGORY_ICONS[type]}</Text>
+                <Text style={s.catTitle}>{SERVICE_TYPE_CONFIG[type].pdfLabel}</Text>
+              </View>
+              {items.map(item => {
+                if (type === 'aereo') return <FlightServiceCard key={item.id} item={item} />;
+                if (type === 'hotel') return <HotelServiceCard key={item.id} item={item} />;
+                return <GenericServiceCard key={item.id} item={item} type={type} />;
+              })}
             </View>
           ))}
-          <View style={s.totalRow}>
-            <Text style={s.totalLabel}>TOTAL DA VIAGEM</Text>
-            <Text style={s.totalValue}>{formatCurrency(grandTotal)}</Text>
+
+          {/* Notes */}
+          {quote.client.notes && (
+            <View style={s.notesBox}>
+              <Text style={s.notesTitle}>Observacoes</Text>
+              <Text style={s.notesText}>{sanitizeText(quote.client.notes)}</Text>
+            </View>
+          )}
+
+          {/* Financial Summary */}
+          <View style={s.summaryBox}>
+            <Text style={s.summaryTitle}>Investimento</Text>
+
+            {showIndividual && categoryTotals.map(c => (
+              <View key={c.label} style={s.summaryRow}>
+                <Text style={s.summaryLabel}>{c.label}</Text>
+                <Text style={s.summaryValue}>{formatCurrency(c.total)}</Text>
+              </View>
+            ))}
+
+            <View style={s.totalRow}>
+              <Text style={s.totalLabel}>VALOR TOTAL POR PESSOA</Text>
+              <Text style={s.totalValue}>{formatCurrency(grandTotal)}</Text>
+            </View>
+
+            {/* Payment Conditions */}
+            {payment && (payment.pixValue > 0 || payment.installmentsNoInterest > 0 || payment.installmentsWithInterest > 0) && (
+              <View style={s.paymentBox}>
+                <Text style={s.paymentTitle}>Condicoes de Pagamento</Text>
+
+                {payment.pixValue > 0 && (
+                  <View style={s.paymentCardGreen}>
+                    <Text style={s.paymentLabelGreen}>Pix a vista</Text>
+                    <Text style={s.paymentInstallmentGreen}>{formatCurrencyInteger(payment.pixValue)}</Text>
+                  </View>
+                )}
+
+                {payment.installmentsNoInterest > 0 && payment.installmentValueNoInterest > 0 && (
+                  <View style={s.paymentCard}>
+                    <Text style={s.paymentLabel}>Cartao sem juros</Text>
+                    <Text style={s.paymentInstallment}>
+                      {payment.installmentsNoInterest}x {formatCurrency(payment.installmentValueNoInterest)}
+                    </Text>
+                    <Text style={s.paymentTotal}>
+                      Total: {formatCurrency(payment.installmentsNoInterest * payment.installmentValueNoInterest)}
+                    </Text>
+                  </View>
+                )}
+
+                {payment.installmentsWithInterest > 0 && payment.installmentValueWithInterest > 0 && (
+                  <View style={s.paymentCard}>
+                    <Text style={s.paymentLabel}>Cartao com juros</Text>
+                    <Text style={s.paymentInstallment}>
+                      {payment.installmentsWithInterest}x {formatCurrency(payment.installmentValueWithInterest)}
+                    </Text>
+                    <Text style={s.paymentTotal}>
+                      Total: {formatCurrency(payment.installmentsWithInterest * payment.installmentValueWithInterest)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
         </View>
 
+        {/* Footer */}
         <View style={s.footer} fixed>
           <View style={s.footerLine}>
             <Text style={s.footerText}>
