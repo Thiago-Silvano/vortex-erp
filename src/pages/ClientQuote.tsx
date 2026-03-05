@@ -213,6 +213,27 @@ function FlightCard({ item }: { item: ServiceItem }) {
           {renderLegs(idaLegs, '✈️ Voo de Ida', idaDuration)}
           {renderLegs(voltaLegs, '🔙 Voo de Volta', voltaDuration)}
         </div>
+
+        {/* Baggage info */}
+        {item.baggage && (item.baggage.personalItem > 0 || item.baggage.carryOn > 0 || item.baggage.checkedBag > 0) && (
+          <div className="mt-4 flex gap-3 flex-wrap">
+            {item.baggage.personalItem > 0 && (
+              <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full">
+                👜 {item.baggage.personalItem}x Bolsa
+              </span>
+            )}
+            {item.baggage.carryOn > 0 && (
+              <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full">
+                🧳 {item.baggage.carryOn}x Mala de mão
+              </span>
+            )}
+            {item.baggage.checkedBag > 0 && (
+              <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full">
+                🛄 {item.baggage.checkedBag}x Mala despachada
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

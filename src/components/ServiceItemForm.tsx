@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ServiceItem, ServiceType, SERVICE_TYPE_CONFIG, FlightLeg } from '@/types/quote';
+import { ServiceItem, ServiceType, SERVICE_TYPE_CONFIG, FlightLeg, BaggageInfo } from '@/types/quote';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +42,9 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   );
   const [flightLegs, setFlightLegs] = useState<FlightLeg[]>(
     editItem?.flightLegs?.length ? editItem.flightLegs : [emptyLeg('ida')]
+  );
+  const [baggage, setBaggage] = useState<BaggageInfo>(
+    editItem?.baggage || { personalItem: 0, carryOn: 0, checkedBag: 0 }
   );
   const [imagePreview, setImagePreview] = useState<string | undefined>(editItem?.imageBase64);
   const [extraImages, setExtraImages] = useState<string[]>(editItem?.imagesBase64 || []);
@@ -139,6 +142,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
 
   const handleSubmit = () => {
     if (!item.title) return;
+    const hasBaggage = isAereo && (baggage.personalItem > 0 || baggage.carryOn > 0 || baggage.checkedBag > 0);
     onAdd({
       ...item,
       id: editItem?.id || crypto.randomUUID(),
@@ -146,12 +150,14 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
       imageBase64: imagePreview,
       imagesBase64: extraImages.length > 0 ? extraImages : undefined,
       flightLegs: isAereo ? flightLegs : undefined,
+      baggage: hasBaggage ? baggage : undefined,
     });
     if (!editItem) {
       setItem(emptyItem());
       setImagePreview(undefined);
       setExtraImages([]);
       setFlightLegs([emptyLeg('ida')]);
+      setBaggage({ personalItem: 0, carryOn: 0, checkedBag: 0 });
     }
   };
 
@@ -348,6 +354,31 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
                   🔄 Inverter Ida → Volta
                 </Button>
               )}
+            </div>
+
+            {/* Baggage buttons */}
+            <div className="pt-2">
+              <Label className="text-xs mb-2 block">🧳 Bagagem (por passageiro)</Label>
+              <div className="flex gap-3">
+                <div className="flex items-center gap-1.5 bg-muted/50 rounded-md px-3 py-1.5 border">
+                  <span className="text-xs">👜 Bolsa</span>
+                  <Button type="button" variant="outline" size="icon" className="h-5 w-5 text-xs" onClick={() => setBaggage(b => ({ ...b, personalItem: Math.max(0, b.personalItem - 1) }))}>-</Button>
+                  <span className="text-xs font-bold min-w-[16px] text-center">{baggage.personalItem}</span>
+                  <Button type="button" variant="outline" size="icon" className="h-5 w-5 text-xs" onClick={() => setBaggage(b => ({ ...b, personalItem: b.personalItem + 1 }))}>+</Button>
+                </div>
+                <div className="flex items-center gap-1.5 bg-muted/50 rounded-md px-3 py-1.5 border">
+                  <span className="text-xs">🧳 Mão</span>
+                  <Button type="button" variant="outline" size="icon" className="h-5 w-5 text-xs" onClick={() => setBaggage(b => ({ ...b, carryOn: Math.max(0, b.carryOn - 1) }))}>-</Button>
+                  <span className="text-xs font-bold min-w-[16px] text-center">{baggage.carryOn}</span>
+                  <Button type="button" variant="outline" size="icon" className="h-5 w-5 text-xs" onClick={() => setBaggage(b => ({ ...b, carryOn: b.carryOn + 1 }))}>+</Button>
+                </div>
+                <div className="flex items-center gap-1.5 bg-muted/50 rounded-md px-3 py-1.5 border">
+                  <span className="text-xs">🛄 Despachada</span>
+                  <Button type="button" variant="outline" size="icon" className="h-5 w-5 text-xs" onClick={() => setBaggage(b => ({ ...b, checkedBag: Math.max(0, b.checkedBag - 1) }))}>-</Button>
+                  <span className="text-xs font-bold min-w-[16px] text-center">{baggage.checkedBag}</span>
+                  <Button type="button" variant="outline" size="icon" className="h-5 w-5 text-xs" onClick={() => setBaggage(b => ({ ...b, checkedBag: b.checkedBag + 1 }))}>+</Button>
+                </div>
+              </div>
             </div>
           </div>
         )}

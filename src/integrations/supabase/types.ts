@@ -212,6 +212,7 @@ export type Database = {
       }
       services: {
         Row: {
+          baggage: Json | null
           created_at: string
           description: string | null
           end_date: string | null
@@ -228,6 +229,7 @@ export type Database = {
           value: number
         }
         Insert: {
+          baggage?: Json | null
           created_at?: string
           description?: string | null
           end_date?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           value?: number
         }
         Update: {
+          baggage?: Json | null
           created_at?: string
           description?: string | null
           end_date?: string | null
