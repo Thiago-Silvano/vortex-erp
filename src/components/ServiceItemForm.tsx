@@ -279,7 +279,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
         {isHotel && item.description && (
           <div>
             <Label>Informações do Hotel</Label>
-            <div className="bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap max-h-60 overflow-y-auto border">
+            <div className="bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap max-h-[960px] overflow-y-auto border">
               {item.description}
             </div>
           </div>
