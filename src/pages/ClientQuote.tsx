@@ -382,7 +382,7 @@ export default function ClientQuote() {
         </div>
 
         <div className="relative z-10 w-full px-6 pb-12 md:px-12 lg:px-20">
-          <p className="text-[#c8a951] text-sm font-semibold tracking-[3px] uppercase mb-3">
+          <p className="text-[#c8a951] text-base md:text-lg font-bold tracking-[3px] uppercase mb-3 drop-shadow-lg">
             Viagem personalizada para
           </p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4">
