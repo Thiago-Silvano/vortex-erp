@@ -34,7 +34,13 @@ const s = StyleSheet.create({
   logo: { width: 45, height: 45, objectFit: "contain" },
   agencyName: { fontSize: 14, fontFamily: "Helvetica-Bold", color: WHITE, letterSpacing: 0.5 },
   agencyContact: { fontSize: 7, color: GOLD, lineHeight: 1.3 },
-  quoteLabel: { fontSize: 9, fontFamily: "Helvetica-Bold", color: GOLD, textTransform: "uppercase", letterSpacing: 2.5 },
+  quoteLabel: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: GOLD,
+    textTransform: "uppercase",
+    letterSpacing: 2.5,
+  },
 
   // Client highlight bar
   clientBar: {
@@ -643,11 +649,16 @@ export default function QuotePDF({ quote, agency }: Props) {
               )}
               <View>
                 <Text style={{ fontSize: 7, color: GOLD, lineHeight: 1.4 }}>
-                  {[agency.whatsapp && `WhatsApp: ${sanitizeText(agency.whatsapp)}`, agency.email && sanitizeText(agency.email), agency.website && sanitizeText(agency.website)].filter(Boolean).join("  |  ")}
+                  {[
+                    agency.whatsapp && `WhatsApp: ${sanitizeText(agency.whatsapp)}`,
+                    agency.email && sanitizeText(agency.email),
+                    agency.website && sanitizeText(agency.website),
+                  ]
+                    .filter(Boolean)
+                    .join("  |  ")}
                 </Text>
               </View>
             </View>
-            <Text style={s.quoteLabel}>Cotacao de viagem</Text>
           </View>
 
           {/* Client bar */}
