@@ -60,6 +60,7 @@ export default function Index() {
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [saving, setSaving] = useState(false);
   const [destinationImage, setDestinationImage] = useState<string | undefined>();
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
 
   useEffect(() => {
     const state = location.state as any;
@@ -95,6 +96,16 @@ export default function Index() {
   const removeService = (id: string) => setServices(prev => prev.filter(s => s.id !== id));
 
   const total = services.reduce((sum, s) => sum + s.value * s.quantity, 0);
+
+  // Auto-recalculate pix value when discount or total changes
+  useEffect(() => {
+    if (discountPercent > 0 && total > 0) {
+      setPayment(p => ({
+        ...p,
+        pixValue: Math.round(total * (1 - discountPercent / 100) * 100) / 100,
+      }));
+    }
+  }, [total, discountPercent]);
 
   // Auto-recalculate installment value when total or installments change
   useEffect(() => {
@@ -209,10 +220,10 @@ export default function Index() {
             <h1 className="text-xl font-bold">Sistema de Orçamentos</h1>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={() => navigate('/quotes')}>
+            <Button variant="ghost" className="text-primary-foreground hover:text-foreground hover:bg-muted" onClick={() => navigate('/quotes')}>
               <List className="h-5 w-5 mr-1" /> Orçamentos Salvos
             </Button>
-            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={() => navigate('/settings')}>
+            <Button variant="ghost" className="text-primary-foreground hover:text-foreground hover:bg-muted" onClick={() => navigate('/settings')}>
               <Settings className="h-5 w-5 mr-1" /> Configurações
             </Button>
           </div>
@@ -358,7 +369,46 @@ export default function Index() {
           </CardContent>
         </Card>
 
-        {/* Payment Conditions */}
+        {/* Services */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Serviços ({services.length})
+              {!showForm && !editingId && (
+                <Button size="sm" onClick={() => { setShowForm(true); clearError('services'); }}>+ Adicionar Serviço</Button>
+              )}
+            </CardTitle>
+            {errors.services && <p className="text-xs text-destructive">{errors.services}</p>}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {services.map(s => (
+              editingId === s.id ? (
+                <ServiceItemForm key={s.id} editItem={s} onAdd={addService} onCancel={() => setEditingId(null)} tripOrigin={trip.origin} tripDestination={trip.destination} />
+              ) : (
+                <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
+                  {s.imageBase64 && <img src={s.imageBase64} alt="" className="h-12 w-12 rounded object-cover" />}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {SERVICE_TYPE_CONFIG[s.type].icon} {s.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{s.supplier} - {s.location}</p>
+                  </div>
+                  <span className="text-sm font-semibold whitespace-nowrap">
+                    R$ {(s.value * s.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                  <Button variant="ghost" size="icon" onClick={() => setEditingId(s.id)}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => removeService(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                </div>
+              )
+            ))}
+            {showForm && <ServiceItemForm onAdd={addService} onCancel={() => setShowForm(false)} tripOrigin={trip.origin} tripDestination={trip.destination} />}
+            {services.length === 0 && !showForm && (
+              <p className="text-center text-muted-foreground py-8">Nenhum serviço adicionado. Clique em "Adicionar Serviço" para começar.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Payment Conditions - now after services */}
         <Card>
           <CardHeader><CardTitle>Condições de Pagamento</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -374,7 +424,37 @@ export default function Index() {
                 Informar no orçamento valor individual de cada serviço?
               </Label>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Valor Total */}
+            <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
+              <Label className="text-lg font-bold text-primary">Valor Total</Label>
+              <p className="text-3xl font-bold text-primary mt-1">
+                R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-green-600 font-semibold">% Desconto Pix</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={discountPercent || ''}
+                  onChange={e => {
+                    const pct = parseFloat(e.target.value) || 0;
+                    setDiscountPercent(pct);
+                    if (pct > 0 && total > 0) {
+                      setPayment(p => ({
+                        ...p,
+                        pixValue: Math.round(total * (1 - pct / 100) * 100) / 100,
+                      }));
+                    }
+                  }}
+                  placeholder="Ex: 5"
+                />
+              </div>
               <div>
                 <Label className="text-green-600 font-semibold">💰 Valor à vista (Pix)</Label>
                 <Input
@@ -437,45 +517,6 @@ export default function Index() {
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Services */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Serviços ({services.length})
-              {!showForm && !editingId && (
-                <Button size="sm" onClick={() => { setShowForm(true); clearError('services'); }}>+ Adicionar Serviço</Button>
-              )}
-            </CardTitle>
-            {errors.services && <p className="text-xs text-destructive">{errors.services}</p>}
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {services.map(s => (
-              editingId === s.id ? (
-                <ServiceItemForm key={s.id} editItem={s} onAdd={addService} onCancel={() => setEditingId(null)} tripOrigin={trip.origin} tripDestination={trip.destination} />
-              ) : (
-                <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
-                  {s.imageBase64 && <img src={s.imageBase64} alt="" className="h-12 w-12 rounded object-cover" />}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
-                      {SERVICE_TYPE_CONFIG[s.type].icon} {s.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{s.supplier} - {s.location}</p>
-                  </div>
-                  <span className="text-sm font-semibold whitespace-nowrap">
-                    R$ {(s.value * s.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                  <Button variant="ghost" size="icon" onClick={() => setEditingId(s.id)}><Pencil className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => removeService(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                </div>
-              )
-            ))}
-            {showForm && <ServiceItemForm onAdd={addService} onCancel={() => setShowForm(false)} tripOrigin={trip.origin} tripDestination={trip.destination} />}
-            {services.length === 0 && !showForm && (
-              <p className="text-center text-muted-foreground py-8">Nenhum serviço adicionado. Clique em "Adicionar Serviço" para começar.</p>
-            )}
           </CardContent>
         </Card>
 

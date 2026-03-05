@@ -108,13 +108,19 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
         body: { hotelName: item.title },
       });
       if (error) throw error;
-      if (data?.description) {
+      if (data) {
         setItem(p => ({
           ...p,
           description: data.description || p.description,
           location: data.address || p.location,
         }));
-        toast({ title: 'Informações encontradas!', description: 'Descrição e endereço preenchidos automaticamente.' });
+
+        // Add fetched images as extra images
+        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+          setExtraImages(prev => [...prev, ...data.images]);
+        }
+
+        toast({ title: 'Informações encontradas!', description: 'Dados do hotel preenchidos automaticamente.' });
       } else {
         toast({ title: 'Sem resultados', description: 'Não foi possível encontrar informações sobre este hotel.', variant: 'destructive' });
       }
@@ -261,11 +267,21 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
           </div>
         </div>
 
-        {/* Descrição - only for non-aéreo */}
-        {!isAereo && (
+        {/* Descrição - only for non-aéreo and non-hotel */}
+        {!isAereo && !isHotel && (
           <div>
             <Label>Descrição</Label>
             <Textarea value={item.description} onChange={e => setItem(p => ({ ...p, description: e.target.value }))} placeholder="Detalhes do serviço..." rows={2} />
+          </div>
+        )}
+
+        {/* Hotel description (read-only, filled by search) */}
+        {isHotel && item.description && (
+          <div>
+            <Label>Informações do Hotel</Label>
+            <div className="bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap max-h-60 overflow-y-auto border">
+              {item.description}
+            </div>
           </div>
         )}
 
