@@ -756,7 +756,7 @@ export default function QuotePDF({ quote, agency }: Props) {
                               {Math.round(((grandTotal - payment.pixValue) / grandTotal) * 100)}% OFF
                             </Text>
                           )}
-                          <Text style={s.paymentInstallmentGreen}>{formatCurrencyInteger(payment.pixValue)}</Text>
+                          <Text style={s.paymentInstallmentGreen}>{formatCurrency(payment.pixValue)}</Text>
                         </View>
                       </View>
                     </View>
