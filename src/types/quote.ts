@@ -66,3 +66,4 @@ export const SERVICE_TYPE_CONFIG: Record<ServiceType, { label: string; icon: str
   experiencia: { label: 'Experiências / Passeios', icon: '🎟️', pdfLabel: 'Experiencias / Passeios' },
   adicional: { label: 'Serviços Adicionais', icon: '📋', pdfLabel: 'Servicos Adicionais' },
 };
+
