@@ -1,4 +1,4 @@
-export type ServiceType = 'aereo' | 'hotel' | 'carro' | 'seguro' | 'experiencia' | 'adicional';
+export type ServiceType = "aereo" | "hotel" | "carro" | "seguro" | "experiencia" | "adicional";
 
 export interface FlightLeg {
   origin: string;
@@ -8,7 +8,7 @@ export interface FlightLeg {
   arrivalDate: string;
   arrivalTime: string;
   connectionDuration?: string;
-  direction?: 'ida' | 'volta';
+  direction?: "ida" | "volta";
 }
 
 export interface BaggageInfo {
@@ -48,7 +48,7 @@ export interface TripData {
   destination: string;
   departureDate: string;
   returnDate: string;
-  tripType: 'Lazer' | 'Negócios' | 'Lua de mel' | 'Família' | 'Experiência Premium';
+  tripType: "Lazer" | "Negócios" | "Lua de mel" | "Família" | "Experiência Premium";
   nights?: number;
 }
 
@@ -81,10 +81,10 @@ export interface AgencySettings {
 }
 
 export const SERVICE_TYPE_CONFIG: Record<ServiceType, { label: string; icon: string; pdfLabel: string }> = {
-  aereo: { label: 'Passagens Aéreas', icon: '✈️', pdfLabel: 'Passagens Aereas' },
-  hotel: { label: 'Hospedagem', icon: '🏨', pdfLabel: 'Hospedagem' },
-  carro: { label: 'Aluguel de Carro', icon: '🚗', pdfLabel: 'Aluguel de Carro' },
-  seguro: { label: 'Seguro Viagem', icon: '🛡️', pdfLabel: 'Seguro Viagem' },
-  experiencia: { label: 'Experiências / Passeios', icon: '🎟️', pdfLabel: 'Experiencias / Passeios' },
-  adicional: { label: 'Serviços Adicionais', icon: '📋', pdfLabel: 'Servicos Adicionais' },
+  aereo: { label: "Passagens Aéreas", icon: "✈️", pdfLabel: "Passagens Aéreas" },
+  hotel: { label: "Hospedagem", icon: "🏨", pdfLabel: "Hospedagem" },
+  carro: { label: "Aluguel de Carro", icon: "🚗", pdfLabel: "Aluguel de Carro" },
+  seguro: { label: "Seguro Viagem", icon: "🛡️", pdfLabel: "Seguro Viagem" },
+  experiencia: { label: "Experiências / Passeios", icon: "🎟️", pdfLabel: "Experiencias / Passeios" },
+  adicional: { label: "Serviços Adicionais", icon: "📋", pdfLabel: "Servicos Adicionais" },
 };
