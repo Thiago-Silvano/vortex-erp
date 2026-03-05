@@ -3,16 +3,17 @@ import { QuoteData, AgencySettings, ServiceItem, ServiceType, SERVICE_TYPE_CONFI
 
 const NAVY = '#1a2744';
 const GOLD = '#c8a951';
-const LIGHT_BG = '#f8f7f4';
-const LIGHT_GRAY = '#f0f0f0';
-const WHITE = '#ffffff';
+const SAND_BG = '#f5f0e8';
+const LIGHT_BG = '#f5f0e8';
+const LIGHT_GRAY = '#ede8de';
+const WHITE = '#faf8f4';
 const DARK_TEXT = '#1a1a1a';
 const MID_TEXT = '#555555';
 const GREEN = '#16a34a';
 
 const s = StyleSheet.create({
   // Page
-  page: { fontFamily: 'Helvetica', fontSize: 9, color: DARK_TEXT, backgroundColor: WHITE },
+  page: { fontFamily: 'Helvetica', fontSize: 9, color: DARK_TEXT, backgroundColor: SAND_BG },
   pageContent: { paddingHorizontal: 40, paddingTop: 36, paddingBottom: 60 },
 
   // Header
@@ -107,9 +108,10 @@ const s = StyleSheet.create({
   notesText: { fontSize: 7.5, color: MID_TEXT, lineHeight: 1.5 },
 
   // Footer
-  footer: { position: 'absolute', bottom: 20, left: 40, right: 40 },
-  footerLine: { borderTopWidth: 1, borderTopColor: '#ddd', paddingTop: 6 },
-  footerText: { fontSize: 6.5, color: MID_TEXT, textAlign: 'center', lineHeight: 1.5 },
+  footer: { position: 'absolute', bottom: 14, left: 40, right: 40 },
+  footerLine: { borderTopWidth: 1, borderTopColor: GOLD, paddingTop: 6 },
+  footerText: { fontSize: 6, color: MID_TEXT, textAlign: 'center', lineHeight: 1.5 },
+  footerBold: { fontSize: 6, color: NAVY, textAlign: 'center', fontFamily: 'Helvetica-Bold' },
 });
 
 const CATEGORY_ICONS: Record<ServiceType, string> = {
@@ -195,7 +197,6 @@ function HotelServiceCard({ item }: { item: ServiceItem }) {
 
   return (
     <View style={s.hotelCard} wrap={false}>
-      {images.length > 0 && <Image src={images[0]} style={s.hotelImageMain} />}
       <View style={s.hotelBody}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
           <View style={{ flex: 1 }}>
@@ -232,15 +233,6 @@ function HotelServiceCard({ item }: { item: ServiceItem }) {
             ))}
           </View>
         ))}
-
-        {/* Extra images gallery */}
-        {images.length > 1 && (
-          <View style={s.hotelImagesRow}>
-            {images.slice(1, 7).map((img, idx) => (
-              <Image key={idx} src={img} style={s.hotelImageSmall} />
-            ))}
-          </View>
-        )}
       </View>
     </View>
   );
@@ -427,7 +419,7 @@ export default function QuotePDF({ quote, agency }: Props) {
                 {agency.website && <Text style={s.agencyContact}>{sanitizeText(agency.website)}</Text>}
               </View>
             </View>
-            <Text style={s.quoteLabel}>Orcamento</Text>
+            <Text style={s.quoteLabel}>Cotacao de viagem</Text>
           </View>
 
           {/* Client bar */}
@@ -504,8 +496,20 @@ export default function QuotePDF({ quote, agency }: Props) {
 
                 {payment.pixValue > 0 && (
                   <View style={s.paymentCardGreen}>
-                    <Text style={s.paymentLabelGreen}>Pix a vista</Text>
-                    <Text style={s.paymentInstallmentGreen}>{formatCurrencyInteger(payment.pixValue)}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View>
+                        <Text style={s.paymentLabelGreen}>Pix a vista</Text>
+                        <Text style={{ fontSize: 7, color: GREEN, marginTop: 1 }}>Pagamento instantaneo com desconto</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        {grandTotal > 0 && payment.pixValue < grandTotal && (
+                          <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: GREEN }}>
+                            {Math.round(((grandTotal - payment.pixValue) / grandTotal) * 100)}% OFF
+                          </Text>
+                        )}
+                        <Text style={s.paymentInstallmentGreen}>{formatCurrencyInteger(payment.pixValue)}</Text>
+                      </View>
+                    </View>
                   </View>
                 )}
 
@@ -540,9 +544,17 @@ export default function QuotePDF({ quote, agency }: Props) {
         {/* Footer */}
         <View style={s.footer} fixed>
           <View style={s.footerLine}>
+            <Text style={s.footerBold}>
+              Vortex Viagens - CNPJ: 51.209.371/0001-19
+            </Text>
             <Text style={s.footerText}>
-              Valores sujeitos a disponibilidade no momento da emissao - Tarifas podem sofrer alteracao sem aviso previo{'\n'}
-              Valores por pessoa, salvo indicacao contraria - {sanitizeText(agency.name)} {agency.website ? `- ${sanitizeText(agency.website)}` : ''}
+              Rua Jorge Elias De Lucca, 677 - Nacoes Shopping - Sala 04 - Criciuma - SC, 88813-901
+            </Text>
+            <Text style={s.footerText}>
+              (48) 3500-0975 | contato@vortexviagens.com.br | @vortexviagem
+            </Text>
+            <Text style={s.footerText}>
+              Valores sujeitos a disponibilidade no momento da emissao - Tarifas podem sofrer alteracao sem aviso previo
             </Text>
           </View>
         </View>
