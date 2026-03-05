@@ -143,16 +143,11 @@ function FlightCard({ item }: { item: ServiceItem }) {
         </div>
       )}
       <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-bold text-[#1a2744]">{item.title}</h3>
-            {item.supplier && (
-              <p className="text-sm text-gray-500 mt-1">Cia Aérea: <span className="font-semibold text-[#1a2744]">{item.supplier}</span></p>
-            )}
-          </div>
-          <div className="text-right">
-            <p className="text-xl font-bold text-[#c8a951]">{formatCurrency(item.value)}</p>
-          </div>
+        <div className="mb-4">
+          <h3 className="text-lg font-bold text-[#1a2744]">{item.title}</h3>
+          {item.supplier && (
+            <p className="text-sm text-gray-500 mt-1">Cia Aérea: <span className="font-semibold text-[#1a2744]">{item.supplier}</span></p>
+          )}
         </div>
         
         <div className="space-y-4">
@@ -200,14 +195,6 @@ function ServiceCard({ item, isHotel }: { item: ServiceItem; isHotel?: boolean }
                 <span className="text-gray-600">{formatDate(item.startDate)}{item.endDate ? ` a ${formatDate(item.endDate)}` : ''}</span>
               </div>
             )}
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-            <div>
-              {item.quantity > 1 && (
-                <p className="text-xs text-gray-500">{item.quantity}x {formatCurrency(item.value)}</p>
-              )}
-            </div>
-            <p className="text-xl font-bold text-[#c8a951]">{formatCurrency(item.value * item.quantity)}</p>
           </div>
         </div>
         {images.length > 1 && (
@@ -412,20 +399,12 @@ export default function ClientQuote() {
       {/* Financial Summary */}
       <section className="py-12 px-6 md:px-12 lg:px-20 bg-white">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-[#1a2744] mb-8 text-center">Resumo Financeiro</h2>
+          <h2 className="text-2xl font-bold text-[#1a2744] mb-8 text-center">Investimento</h2>
           <div className="bg-gray-50 rounded-2xl p-6 md:p-8">
-            {categoryTotals.map((c, idx) => (
-              <div key={idx} className="flex items-center justify-between py-4 border-b border-gray-200 last:border-0">
-                <div className="flex items-center gap-3">
-                  <span className="text-[#c8a951]">{c.icon}</span>
-                  <span className="text-gray-700 font-medium">{c.label}</span>
-                </div>
-                <span className="font-bold text-[#1a2744] text-lg">{formatCurrency(c.total)}</span>
-              </div>
-            ))}
-            <div className="mt-6 bg-[#1a2744] rounded-xl p-6 flex items-center justify-between">
-              <span className="text-[#c8a951] font-bold text-xl">TOTAL DA VIAGEM</span>
-              <span className="text-white font-bold text-3xl">{formatCurrency(grandTotal)}</span>
+            <div className="bg-[#1a2744] rounded-xl p-8 text-center">
+              <p className="text-[#c8a951] font-semibold text-sm uppercase tracking-wider mb-2">Valor total por pessoa</p>
+              <span className="text-white font-bold text-4xl">{formatCurrency(grandTotal)}</span>
+              <p className="text-white/50 text-sm mt-3">*Valor por pessoa, sujeito à disponibilidade</p>
             </div>
           </div>
         </div>
