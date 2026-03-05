@@ -11,6 +11,12 @@ export interface FlightLeg {
   direction?: 'ida' | 'volta';
 }
 
+export interface BaggageInfo {
+  personalItem: number;
+  carryOn: number;
+  checkedBag: number;
+}
+
 export interface ServiceItem {
   id: string;
   type: ServiceType;
@@ -25,6 +31,7 @@ export interface ServiceItem {
   imageBase64?: string;
   imagesBase64?: string[];
   flightLegs?: FlightLeg[];
+  baggage?: BaggageInfo;
 }
 
 export interface ClientData {

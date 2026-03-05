@@ -95,32 +95,37 @@ async function fetchServicesForQuote(quoteId: string): Promise<ServiceItem[]> {
     supabase.from('service_images').select('*').in('service_id', serviceIds).order('sort_order'),
   ]);
 
-  return servicesData.map((s) => ({
-    id: s.id,
-    type: s.type as ServiceItem['type'],
-    title: s.title,
-    description: s.description || '',
-    supplier: s.supplier || '',
-    startDate: s.start_date || '',
-    endDate: s.end_date || '',
-    location: s.location || '',
-    value: Number(s.value),
-    quantity: s.quantity,
-    imageBase64: s.image_url || undefined,
-    imagesBase64: imagesData?.filter(img => img.service_id === s.id).map(img => img.image_url),
-    flightLegs: flightLegsData
-      ?.filter(fl => fl.service_id === s.id)
-      .map(fl => ({
-        origin: fl.origin,
-        destination: fl.destination,
-        departureDate: fl.departure_date || '',
-        departureTime: fl.departure_time || '',
-        arrivalDate: fl.arrival_date || '',
-        arrivalTime: fl.arrival_time || '',
-        connectionDuration: (fl as any).connection_duration || '',
-        direction: ((fl as any).direction || 'ida') as 'ida' | 'volta',
-      })) || [],
-  }));
+  return servicesData.map((s) => {
+    const rawBaggage = (s as any).baggage;
+    const baggage = rawBaggage ? (typeof rawBaggage === 'string' ? JSON.parse(rawBaggage) : rawBaggage) : undefined;
+    return {
+      id: s.id,
+      type: s.type as ServiceItem['type'],
+      title: s.title,
+      description: s.description || '',
+      supplier: s.supplier || '',
+      startDate: s.start_date || '',
+      endDate: s.end_date || '',
+      location: s.location || '',
+      value: Number(s.value),
+      quantity: s.quantity,
+      imageBase64: s.image_url || undefined,
+      imagesBase64: imagesData?.filter(img => img.service_id === s.id).map(img => img.image_url),
+      flightLegs: flightLegsData
+        ?.filter(fl => fl.service_id === s.id)
+        .map(fl => ({
+          origin: fl.origin,
+          destination: fl.destination,
+          departureDate: fl.departure_date || '',
+          departureTime: fl.departure_time || '',
+          arrivalDate: fl.arrival_date || '',
+          arrivalTime: fl.arrival_time || '',
+          connectionDuration: (fl as any).connection_duration || '',
+          direction: ((fl as any).direction || 'ida') as 'ida' | 'volta',
+        })) || [],
+      baggage,
+    };
+  });
 }
 
 function mapQuoteRow(q: any, services: ServiceItem[]): FullQuote {
@@ -260,7 +265,8 @@ export async function saveQuoteToDB(
         quantity: s.quantity,
         image_url: s.imageBase64 || null,
         sort_order: i,
-      })
+        baggage: s.baggage ? s.baggage as any : null,
+      } as any)
       .select('id')
       .single();
 

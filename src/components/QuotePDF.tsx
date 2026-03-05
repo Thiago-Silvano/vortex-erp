@@ -307,6 +307,26 @@ function FlightServiceCard({ item }: { item: ServiceItem }) {
         </View>
         {renderLegs(idaLegs, 'Voo de Ida')}
         {renderLegs(voltaLegs, 'Voo de Volta')}
+        {/* Baggage info */}
+        {item.baggage && (item.baggage.personalItem > 0 || item.baggage.carryOn > 0 || item.baggage.checkedBag > 0) && (
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#f0f0f0' }}>
+            {item.baggage.personalItem > 0 && (
+              <View style={{ flexDirection: 'row', backgroundColor: LIGHT_GRAY, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
+                <Text style={{ fontSize: 7.5, color: MID_TEXT }}>{item.baggage.personalItem}x Bolsa</Text>
+              </View>
+            )}
+            {item.baggage.carryOn > 0 && (
+              <View style={{ flexDirection: 'row', backgroundColor: LIGHT_GRAY, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
+                <Text style={{ fontSize: 7.5, color: MID_TEXT }}>{item.baggage.carryOn}x Mala de mao</Text>
+              </View>
+            )}
+            {item.baggage.checkedBag > 0 && (
+              <View style={{ flexDirection: 'row', backgroundColor: LIGHT_GRAY, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
+                <Text style={{ fontSize: 7.5, color: MID_TEXT }}>{item.baggage.checkedBag}x Mala despachada</Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
