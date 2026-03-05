@@ -113,7 +113,7 @@ export default function SavedQuotes() {
               const total = q.services.reduce((sum, s) => sum + s.value * s.quantity, 0);
               return (
                 <Card key={q.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="flex items-center gap-4 py-4 flex-wrap">
+                  <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4">
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-base truncate">{q.client.name || 'Sem nome'}</p>
                       <p className="text-sm text-muted-foreground">

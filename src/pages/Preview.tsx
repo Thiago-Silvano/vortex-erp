@@ -77,28 +77,28 @@ export default function Preview() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b bg-primary text-primary-foreground">
-        <div className="container mx-auto flex items-center justify-between py-4 px-4">
+        <div className="container mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 gap-2">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate('/')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">Visualizar Orçamento</h1>
+            <h1 className="text-base sm:text-xl font-bold">Visualizar Orçamento</h1>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handleSave} disabled={saving}>
-              <Save className="h-4 w-4 mr-2" /> {saving ? 'Salvando...' : 'Salvar'}
+          <div className="flex gap-1 sm:gap-2 flex-wrap">
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-accent text-xs sm:text-sm" onClick={handleSave} disabled={saving}>
+              <Save className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">{saving ? 'Salvando...' : 'Salvar'}</span>
             </Button>
-            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handleCopyLink}>
-              <Link className="h-4 w-4 mr-2" /> Copiar Link
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-accent text-xs sm:text-sm" onClick={handleCopyLink}>
+              <Link className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Copiar Link</span>
             </Button>
-            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handlePrint}>
-              <Printer className="h-4 w-4 mr-2" /> Imprimir
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-accent text-xs sm:text-sm" onClick={handlePrint}>
+              <Printer className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Imprimir</span>
             </Button>
-            <Button variant="secondary" onClick={handleDownload}>
-              <Download className="h-4 w-4 mr-2" /> Baixar PDF
+            <Button variant="secondary" size="sm" onClick={handleDownload}>
+              <Download className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Baixar PDF</span>
             </Button>
-            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={() => navigate('/')}>
-              <FilePlus className="h-4 w-4 mr-2" /> Nova Cotação
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-accent text-xs sm:text-sm" onClick={() => navigate('/')}>
+              <FilePlus className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Nova Cotação</span>
             </Button>
           </div>
         </div>
