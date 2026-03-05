@@ -110,6 +110,18 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   const idaLegs = flightLegs.filter(l => l.direction !== 'volta');
   const voltaLegs = flightLegs.filter(l => l.direction === 'volta');
 
+  const generateReturnLegs = () => {
+    if (idaLegs.length === 0) return;
+    // Reverse the ida legs: last ida destination becomes first volta origin
+    const reversed = [...idaLegs].reverse().map((leg, idx, arr) => ({
+      ...emptyLeg('volta'),
+      origin: leg.destination,
+      destination: leg.origin,
+    }));
+    // Remove existing volta legs and add new ones
+    setFlightLegs(prev => [...prev.filter(l => l.direction !== 'volta'), ...reversed]);
+  };
+
   const renderLeg = (leg: FlightLeg, idx: number, globalIdx: number) => (
     <div key={globalIdx}>
       {globalIdx > 0 && flightLegs[globalIdx - 1]?.direction === leg.direction && (
@@ -226,11 +238,16 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
 
             <div className="flex gap-2 pt-1">
               <Button type="button" variant="outline" size="sm" onClick={() => addLeg('ida')} className="h-7 text-xs flex-1">
-                <PlaneTakeoff className="h-3 w-3 mr-1" /> + Adicionar trecho ida
+                <PlaneTakeoff className="h-3 w-3 mr-1" /> + Trecho ida
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={() => addLeg('volta')} className="h-7 text-xs flex-1">
-                <PlaneLanding className="h-3 w-3 mr-1" /> + Adicionar trecho volta
+                <PlaneLanding className="h-3 w-3 mr-1" /> + Trecho volta
               </Button>
+              {idaLegs.length > 0 && (
+                <Button type="button" variant="secondary" size="sm" onClick={generateReturnLegs} className="h-7 text-xs flex-1">
+                  🔄 Inverter Ida → Volta
+                </Button>
+              )}
             </div>
           </div>
         )}
