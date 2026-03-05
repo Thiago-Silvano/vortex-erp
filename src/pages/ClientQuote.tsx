@@ -230,6 +230,7 @@ function FlightCard({ item }: { item: ServiceItem }) {
             {item.baggage.checkedBag > 0 && (
               <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full">
                 🛄 {item.baggage.checkedBag}x Mala despachada
+                {item.baggage.checkedBagReturnOnly && <span className="text-[#c8a951] font-semibold">(somente na volta)</span>}
               </span>
             )}
           </div>
@@ -523,7 +524,15 @@ export default function ClientQuote() {
                       <p className="text-green-600 text-sm">Pagamento instantâneo com desconto</p>
                     </div>
                   </div>
-                  <span className="font-bold text-green-700 text-2xl">{formatCurrency(Math.round(payment.pixValue))}</span>
+                  <div className="flex items-center gap-4">
+                    {grandTotal > 0 && payment.pixValue < grandTotal && (
+                      <span className="text-green-600 font-black text-4xl">
+                        {Math.round(((grandTotal - payment.pixValue) / grandTotal) * 100)}%
+                        <span className="text-sm font-semibold block text-center">OFF</span>
+                      </span>
+                    )}
+                    <span className="font-bold text-green-700 text-2xl">{formatCurrency(Math.round(payment.pixValue))}</span>
+                  </div>
                 </div>
               )}
               

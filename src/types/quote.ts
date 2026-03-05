@@ -15,6 +15,7 @@ export interface BaggageInfo {
   personalItem: number;
   carryOn: number;
   checkedBag: number;
+  checkedBagReturnOnly?: boolean;
 }
 
 export interface ServiceItem {
