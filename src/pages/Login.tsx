@@ -2,31 +2,27 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, Send } from 'lucide-react';
-
-const AUTHORIZED_EMAIL = 'contato@vortexviagens.com.br';
+import { Lock, LogIn } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Login() {
   const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
-  const handleRequestAccess = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email: AUTHORIZED_EMAIL,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
 
     if (error) {
-      toast({ title: 'Erro ao enviar link', description: error.message, variant: 'destructive' });
-      return;
+      toast({ title: 'Erro ao entrar', description: 'Email ou senha incorretos.', variant: 'destructive' });
     }
-
-    setSent(true);
-    toast({ title: 'Link enviado!', description: `Verifique o email ${AUTHORIZED_EMAIL}` });
   };
 
   return (
@@ -39,33 +35,42 @@ export default function Login() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">Vortex Viagens</CardTitle>
-          <CardDescription>
-            {sent
-              ? `Um link de acesso foi enviado para ${AUTHORIZED_EMAIL}. Verifique sua caixa de entrada.`
-              : 'Área restrita. Solicite acesso para continuar.'}
-          </CardDescription>
+          <CardDescription>Área restrita. Faça login para continuar.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {sent ? (
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => { setSent(false); }}
-            >
-              <Send className="h-4 w-4 mr-2" />
-              Reenviar link
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button className="w-full" size="lg" type="submit" disabled={loading}>
+              <LogIn className="h-4 w-4 mr-2" />
+              {loading ? 'Entrando...' : 'Entrar'}
             </Button>
-          ) : (
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={handleRequestAccess}
-              disabled={loading}
-            >
-              <Send className="h-4 w-4 mr-2" />
-              {loading ? 'Enviando...' : 'Solicitar Acesso'}
-            </Button>
-          )}
+            <div className="text-center">
+              <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary underline">
+                Esqueci minha senha
+              </Link>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
