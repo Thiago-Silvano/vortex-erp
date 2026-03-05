@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fileToBase64 } from '@/lib/storage';
 import { Plus, X, ImagePlus, PlaneTakeoff, PlaneLanding, Search, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import AirportAutocomplete from '@/components/AirportAutocomplete';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +45,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
     editItem?.flightLegs?.length ? editItem.flightLegs : [emptyLeg('ida')]
   );
   const [baggage, setBaggage] = useState<BaggageInfo>(
-    editItem?.baggage || { personalItem: 0, carryOn: 0, checkedBag: 0 }
+    editItem?.baggage || { personalItem: 0, carryOn: 0, checkedBag: 0, checkedBagReturnOnly: false }
   );
   const [imagePreview, setImagePreview] = useState<string | undefined>(editItem?.imageBase64);
   const [extraImages, setExtraImages] = useState<string[]>(editItem?.imagesBase64 || []);
@@ -157,7 +158,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
       setImagePreview(undefined);
       setExtraImages([]);
       setFlightLegs([emptyLeg('ida')]);
-      setBaggage({ personalItem: 0, carryOn: 0, checkedBag: 0 });
+      setBaggage({ personalItem: 0, carryOn: 0, checkedBag: 0, checkedBagReturnOnly: false });
     }
   };
 
@@ -379,6 +380,18 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
                   <Button type="button" variant="outline" size="icon" className="h-5 w-5 text-xs" onClick={() => setBaggage(b => ({ ...b, checkedBag: b.checkedBag + 1 }))}>+</Button>
                 </div>
               </div>
+              {baggage.checkedBag > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <Checkbox
+                    id="checkedBagReturnOnly"
+                    checked={baggage.checkedBagReturnOnly || false}
+                    onCheckedChange={(checked) => setBaggage(b => ({ ...b, checkedBagReturnOnly: checked === true }))}
+                  />
+                  <Label htmlFor="checkedBagReturnOnly" className="text-xs cursor-pointer">
+                    Mala despachada somente na volta?
+                  </Label>
+                </div>
+              )}
             </div>
           </div>
         )}

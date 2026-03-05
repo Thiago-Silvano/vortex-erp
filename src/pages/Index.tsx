@@ -531,13 +531,13 @@ export default function Index() {
                 </p>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <Button size="lg" variant="outline" onClick={handleSave} disabled={saving} className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                <Button size="lg" onClick={handleSave} disabled={saving} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
                   <Save className="h-5 w-5 mr-2" /> {saving ? 'Salvando...' : 'Salvar'}
                 </Button>
-                <Button size="lg" variant="secondary" onClick={handleGenerateLink} disabled={saving}>
+                <Button size="lg" onClick={handleGenerateLink} disabled={saving} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
                   <Link className="h-5 w-5 mr-2" /> Gerar Link
                 </Button>
-                <Button size="lg" variant="secondary" onClick={handlePreview} className="text-accent-foreground">
+                <Button size="lg" onClick={handlePreview} className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
                   <Eye className="h-5 w-5 mr-2" /> Visualizar PDF
                 </Button>
               </div>
