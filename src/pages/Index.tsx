@@ -217,11 +217,11 @@ export default function Index() {
         <div className="container mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 gap-2">
           <div className="flex items-center gap-2">
             <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
-            <h1 className="text-base sm:text-xl font-bold">Sistema de Orçamentos</h1>
+            <h1 className="text-base sm:text-xl font-bold">Vortex Viagens - Gerador de Cotação</h1>
           </div>
           <div className="flex gap-1 sm:gap-2">
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/quotes')}>
-              <List className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Orçamentos Salvos</span>
+              <List className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Cotações Salvas</span>
             </Button>
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/settings')}>
               <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Configurações</span>

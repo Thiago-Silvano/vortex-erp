@@ -130,7 +130,7 @@ export default function SavedQuotes() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <FileText className="h-6 w-6" />
-          <h1 className="text-xl font-bold">Orçamentos Salvos</h1>
+          <h1 className="text-xl font-bold">Cotações Salvas</h1>
         </div>
       </header>
 
