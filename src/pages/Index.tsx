@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QuoteData, ClientData, TripData, ServiceItem, SERVICE_TYPE_CONFIG } from '@/types/quote';
-import { getAgencySettings, saveQuote } from '@/lib/storage';
+import { getAgencySettings } from '@/lib/storage';
+import { saveQuoteToDB, uploadImage } from '@/lib/supabase-storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,19 +12,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ServiceItemForm from '@/components/ServiceItemForm';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import { WORLD_CITIES } from '@/data/cities';
-import { Eye, Trash2, Pencil, Settings, FileText, Save, List } from 'lucide-react';
+import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const defaultClient: ClientData = { name: '', passengers: 1, phone: '', email: '', notes: '' };
-const defaultTrip: TripData = { origin: '', destination: '', departureDate: '', returnDate: '', tripType: 'Lazer' };
+const defaultTrip: TripData = { origin: '', destination: '', departureDate: '', returnDate: '', tripType: 'Lazer', nights: 0 };
 
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, '');
-  // If starts with +, keep it as international
   if (value.startsWith('+')) {
     return '+' + digits.slice(0, 15);
   }
-  // Brazilian format
   const br = digits.slice(0, 11);
   if (br.length <= 2) return br.length ? `(${br}` : '';
   if (br.length <= 7) return `(${br.slice(0, 2)}) ${br.slice(2)}`;
@@ -32,6 +31,13 @@ function formatPhone(value: string): string {
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function calcNights(dep: string, ret: string): number {
+  if (!dep || !ret) return 0;
+  const d1 = new Date(dep);
+  const d2 = new Date(ret);
+  return Math.max(0, Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
 interface ValidationErrors {
@@ -43,26 +49,35 @@ export default function Index() {
   const location = useLocation();
   const { toast } = useToast();
   const [quoteId, setQuoteId] = useState<string | undefined>();
+  const [shortId, setShortId] = useState<string | undefined>();
   const [client, setClient] = useState<ClientData>(defaultClient);
   const [trip, setTrip] = useState<TripData>(defaultTrip);
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const [saving, setSaving] = useState(false);
+  const [destinationImage, setDestinationImage] = useState<string | undefined>();
 
-  // Load quote if navigated from saved quotes
   useEffect(() => {
     const state = location.state as any;
     if (state?.editQuote) {
-      const q: QuoteData = state.editQuote;
+      const q = state.editQuote;
       setQuoteId(q.id);
+      setShortId(q.shortId);
       setClient(q.client);
       setTrip(q.trip);
       setServices(q.services);
-      // Clear state to prevent re-loading on refresh
+      setDestinationImage(q.destinationImageUrl);
       window.history.replaceState({}, '');
     }
   }, [location.state]);
+
+  // Auto-calculate nights
+  useEffect(() => {
+    const nights = calcNights(trip.departureDate, trip.returnDate);
+    setTrip(p => ({ ...p, nights }));
+  }, [trip.departureDate, trip.returnDate]);
 
   const addService = (item: ServiceItem) => {
     setServices(prev => {
@@ -88,8 +103,6 @@ export default function Index() {
     if (!trip.departureDate) errs.tripDeparture = 'Data de ida é obrigatória';
     if (!trip.returnDate) errs.tripReturn = 'Data de volta é obrigatória';
     if (services.length === 0) errs.services = 'Adicione pelo menos um serviço';
-    const agency = getAgencySettings();
-    if (!agency || !agency.name.trim()) errs.agency = 'Configure o nome da agência em Configurações';
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
       toast({ title: 'Campos obrigatórios', description: Object.values(errs)[0], variant: 'destructive' });
@@ -100,15 +113,61 @@ export default function Index() {
 
   const handlePreview = () => {
     if (!validate()) return;
-    const quote: QuoteData = { id: quoteId, client, trip, services };
-    navigate('/preview', { state: { quote } });
+    const quote: QuoteData = { id: quoteId, client, trip, services, destinationImageUrl: destinationImage };
+    navigate('/preview', { state: { quote, shortId } });
   };
 
-  const handleSave = () => {
-    const quote: QuoteData = { id: quoteId, client, trip, services };
-    const saved = saveQuote(quote);
-    setQuoteId(saved.id);
-    toast({ title: 'Orçamento salvo!', description: 'Você pode acessá-lo em "Orçamentos Salvos".' });
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const quoteData: QuoteData = { client, trip, services, destinationImageUrl: destinationImage };
+      const saved = await saveQuoteToDB(quoteData, quoteId);
+      setQuoteId(saved.id);
+      setShortId(saved.shortId);
+      toast({ title: 'Orçamento salvo!', description: 'Orçamento salvo no banco de dados com sucesso.' });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Erro ao salvar', description: 'Ocorreu um erro. Tente novamente.', variant: 'destructive' });
+    }
+    setSaving(false);
+  };
+
+  const handleGenerateLink = async () => {
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      const quoteData: QuoteData = { client, trip, services, destinationImageUrl: destinationImage };
+      const saved = await saveQuoteToDB(quoteData, quoteId);
+      setQuoteId(saved.id);
+      setShortId(saved.shortId);
+      const link = `${window.location.origin}/orcamento/${saved.shortId}`;
+      await navigator.clipboard.writeText(link);
+      toast({ title: 'Link gerado e copiado!', description: link });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Erro ao gerar link', description: 'Ocorreu um erro. Tente novamente.', variant: 'destructive' });
+    }
+    setSaving(false);
+  };
+
+  const handleCopyLink = () => {
+    if (!shortId) {
+      toast({ title: 'Salve primeiro', description: 'Salve o orçamento para gerar um link.', variant: 'destructive' });
+      return;
+    }
+    const link = `${window.location.origin}/orcamento/${shortId}`;
+    navigator.clipboard.writeText(link);
+    toast({ title: 'Link copiado!', description: link });
+  };
+
+  const handleDestinationImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadImage(file, 'destinations');
+    if (url) {
+      setDestinationImage(url);
+      toast({ title: 'Imagem do destino enviada!' });
+    }
   };
 
   const handlePhoneChange = (value: string) => {
@@ -148,6 +207,19 @@ export default function Index() {
       </header>
 
       <main className="container mx-auto py-6 px-4 max-w-4xl space-y-6">
+        {shortId && (
+          <div className="flex items-center gap-2 bg-accent/50 border border-accent rounded-lg px-4 py-3">
+            <Link className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">Link do orçamento:</span>
+            <code className="text-sm bg-background px-2 py-1 rounded flex-1 truncate">
+              {window.location.origin}/orcamento/{shortId}
+            </code>
+            <Button variant="outline" size="sm" onClick={handleCopyLink}>
+              <Copy className="h-3 w-3 mr-1" /> Copiar
+            </Button>
+          </div>
+        )}
+
         {/* Client Data */}
         <Card>
           <CardHeader><CardTitle>Dados do Cliente</CardTitle></CardHeader>
@@ -225,7 +297,7 @@ export default function Index() {
                 {errors.tripDestination && <p className="text-xs text-destructive mt-1">{errors.tripDestination}</p>}
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div>
                 <Label>Data Ida *</Label>
                 <Input
@@ -247,6 +319,10 @@ export default function Index() {
                 {errors.tripReturn && <p className="text-xs text-destructive mt-1">{errors.tripReturn}</p>}
               </div>
               <div>
+                <Label>Noites</Label>
+                <Input type="number" min={0} value={trip.nights || 0} readOnly className="bg-muted" />
+              </div>
+              <div>
                 <Label>Tipo</Label>
                 <Select value={trip.tripType} onValueChange={(v) => setTrip(p => ({ ...p, tripType: v as TripData['tripType'] }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -255,9 +331,24 @@ export default function Index() {
                     <SelectItem value="Negócios">Negócios</SelectItem>
                     <SelectItem value="Lua de mel">Lua de mel</SelectItem>
                     <SelectItem value="Família">Família</SelectItem>
+                    <SelectItem value="Experiência Premium">Experiência Premium</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Destination Image */}
+            <div>
+              <Label>Imagem do Destino (exibida no link do orçamento)</Label>
+              <Input type="file" accept="image/*" onChange={handleDestinationImage} />
+              {destinationImage && (
+                <div className="mt-2 relative inline-block">
+                  <img src={destinationImage} alt="Destino" className="h-24 rounded object-cover" />
+                  <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => setDestinationImage(undefined)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -301,22 +392,25 @@ export default function Index() {
           </CardContent>
         </Card>
 
-        {/* Summary */}
+        {/* Summary & Actions */}
         {services.length > 0 && (
           <Card className="bg-primary text-primary-foreground">
-            <CardContent className="flex items-center justify-between py-4">
+            <CardContent className="flex items-center justify-between py-4 flex-wrap gap-3">
               <div>
                 <p className="text-sm opacity-80">{services.length} serviço(s)</p>
                 <p className="text-2xl font-bold">
                   Total: R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button size="lg" variant="outline" onClick={handleSave} className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                  <Save className="h-5 w-5 mr-2" /> Salvar
+              <div className="flex gap-2 flex-wrap">
+                <Button size="lg" variant="outline" onClick={handleSave} disabled={saving} className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                  <Save className="h-5 w-5 mr-2" /> {saving ? 'Salvando...' : 'Salvar'}
+                </Button>
+                <Button size="lg" variant="secondary" onClick={handleGenerateLink} disabled={saving}>
+                  <Link className="h-5 w-5 mr-2" /> Gerar Link
                 </Button>
                 <Button size="lg" variant="secondary" onClick={handlePreview} className="text-accent-foreground">
-                  <Eye className="h-5 w-5 mr-2" /> Visualizar
+                  <Eye className="h-5 w-5 mr-2" /> Visualizar PDF
                 </Button>
               </div>
             </CardContent>
@@ -325,11 +419,8 @@ export default function Index() {
 
         {services.length === 0 && (
           <div className="flex justify-end gap-2">
-            <Button size="lg" variant="outline" onClick={handleSave}>
-              <Save className="h-5 w-5 mr-2" /> Salvar Rascunho
-            </Button>
-            <Button size="lg" variant="secondary" onClick={handlePreview}>
-              <Eye className="h-5 w-5 mr-2" /> Visualizar Orçamento
+            <Button size="lg" variant="outline" onClick={handleSave} disabled={saving}>
+              <Save className="h-5 w-5 mr-2" /> {saving ? 'Salvando...' : 'Salvar Rascunho'}
             </Button>
           </div>
         )}

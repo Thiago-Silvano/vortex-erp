@@ -38,7 +38,8 @@ export interface TripData {
   destination: string;
   departureDate: string;
   returnDate: string;
-  tripType: 'Lazer' | 'Negócios' | 'Lua de mel' | 'Família';
+  tripType: 'Lazer' | 'Negócios' | 'Lua de mel' | 'Família' | 'Experiência Premium';
+  nights?: number;
 }
 
 export interface QuoteData {
@@ -48,6 +49,7 @@ export interface QuoteData {
   services: ServiceItem[];
   createdAt?: string;
   updatedAt?: string;
+  destinationImageUrl?: string;
 }
 
 export interface AgencySettings {
@@ -66,4 +68,3 @@ export const SERVICE_TYPE_CONFIG: Record<ServiceType, { label: string; icon: str
   experiencia: { label: 'Experiências / Passeios', icon: '🎟️', pdfLabel: 'Experiencias / Passeios' },
   adicional: { label: 'Serviços Adicionais', icon: '📋', pdfLabel: 'Servicos Adicionais' },
 };
-

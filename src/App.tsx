@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Preview from "./pages/Preview";
 import Settings from "./pages/Settings";
 import SavedQuotes from "./pages/SavedQuotes";
+import ClientQuote from "./pages/ClientQuote";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/preview" element={<Preview />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/quotes" element={<SavedQuotes />} />
+          <Route path="/orcamento/:shortId" element={<ClientQuote />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

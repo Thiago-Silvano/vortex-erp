@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PDFViewer, pdf } from '@react-pdf/renderer';
-import { getAgencySettings, saveQuote } from '@/lib/storage';
+import { getAgencySettings } from '@/lib/storage';
+import { saveQuoteToDB } from '@/lib/supabase-storage';
 import { QuoteData, AgencySettings } from '@/types/quote';
 import QuotePDF from '@/components/QuotePDF';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, FilePlus, Save, Printer } from 'lucide-react';
+import { ArrowLeft, Download, FilePlus, Save, Printer, Link, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Preview() {
@@ -14,11 +15,15 @@ export default function Preview() {
   const { toast } = useToast();
   const [quote, setQuote] = useState<QuoteData | null>(null);
   const [agency, setAgency] = useState<AgencySettings | null>(null);
+  const [shortId, setShortId] = useState<string | undefined>();
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const q = (location.state as any)?.quote as QuoteData | undefined;
+    const state = location.state as any;
+    const q = state?.quote as QuoteData | undefined;
     if (!q) { navigate('/'); return; }
     setQuote(q);
+    setShortId(state?.shortId);
     setAgency(getAgencySettings());
   }, [navigate, location.state]);
 
@@ -43,11 +48,28 @@ export default function Preview() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!quote) return;
-    const saved = saveQuote(quote);
-    setQuote(saved);
-    toast({ title: 'Orçamento salvo!' });
+    setSaving(true);
+    try {
+      const saved = await saveQuoteToDB(quote, quote.id);
+      setQuote({ ...quote, id: saved.id });
+      setShortId(saved.shortId);
+      toast({ title: 'Orçamento salvo!' });
+    } catch {
+      toast({ title: 'Erro ao salvar', variant: 'destructive' });
+    }
+    setSaving(false);
+  };
+
+  const handleCopyLink = () => {
+    if (!shortId) {
+      toast({ title: 'Salve primeiro para gerar um link', variant: 'destructive' });
+      return;
+    }
+    const link = `${window.location.origin}/orcamento/${shortId}`;
+    navigator.clipboard.writeText(link);
+    toast({ title: 'Link copiado!', description: link });
   };
 
   if (!quote || !agency) return null;
@@ -62,9 +84,12 @@ export default function Preview() {
             </Button>
             <h1 className="text-xl font-bold">Visualizar Orçamento</h1>
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" /> Salvar
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handleSave} disabled={saving}>
+              <Save className="h-4 w-4 mr-2" /> {saving ? 'Salvando...' : 'Salvar'}
+            </Button>
+            <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handleCopyLink}>
+              <Link className="h-4 w-4 mr-2" /> Copiar Link
             </Button>
             <Button variant="ghost" className="text-primary-foreground hover:text-accent" onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-2" /> Imprimir
