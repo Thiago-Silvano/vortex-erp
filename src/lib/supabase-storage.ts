@@ -103,6 +103,7 @@ async function fetchServicesForQuote(quoteId: string): Promise<ServiceItem[]> {
         departureTime: fl.departure_time || '',
         arrivalDate: fl.arrival_date || '',
         arrivalTime: fl.arrival_time || '',
+        connectionDuration: (fl as any).connection_duration || '',
       })) || [],
   }));
 }
@@ -300,6 +301,7 @@ export async function saveQuoteToDB(
           departure_time: fl.departureTime || '',
           arrival_date: fl.arrivalDate || null,
           arrival_time: fl.arrivalTime || '',
+          connection_duration: fl.connectionDuration || '',
           sort_order: idx,
         }))
       );

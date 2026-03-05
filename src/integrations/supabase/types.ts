@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           arrival_date: string | null
           arrival_time: string | null
+          connection_duration: string | null
           created_at: string
           departure_date: string | null
           departure_time: string | null
@@ -63,6 +64,7 @@ export type Database = {
         Insert: {
           arrival_date?: string | null
           arrival_time?: string | null
+          connection_duration?: string | null
           created_at?: string
           departure_date?: string | null
           departure_time?: string | null
@@ -75,6 +77,7 @@ export type Database = {
         Update: {
           arrival_date?: string | null
           arrival_time?: string | null
+          connection_duration?: string | null
           created_at?: string
           departure_date?: string | null
           departure_time?: string | null

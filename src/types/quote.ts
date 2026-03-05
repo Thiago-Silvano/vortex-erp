@@ -7,6 +7,7 @@ export interface FlightLeg {
   departureTime: string;
   arrivalDate: string;
   arrivalTime: string;
+  connectionDuration?: string;
 }
 
 export interface ServiceItem {
