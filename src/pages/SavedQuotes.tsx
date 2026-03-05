@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, FullQuote } from '@/lib/supabase-storage';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw, FileDown } from 'lucide-react';
@@ -102,19 +101,10 @@ export default function SavedQuotes() {
     toast({ title: 'Orçamento reutilizado', description: 'Datas e dados do passageiro foram limpos.' });
   };
 
-  const handleCopyLink = async (shortId: string) => {
+  const handleCopyLink = (shortId: string) => {
     const link = `${window.location.origin}/orcamento/${shortId}`;
-    try {
-      const { data, error } = await supabase.functions.invoke('shorten-url', {
-        body: { url: link },
-      });
-      if (error || !data?.shortUrl) throw new Error('Failed');
-      await navigator.clipboard.writeText(data.shortUrl);
-      toast({ title: 'Link encurtado copiado!', description: data.shortUrl });
-    } catch {
-      await navigator.clipboard.writeText(link);
-      toast({ title: 'Link copiado!', description: link });
-    }
+    navigator.clipboard.writeText(link);
+    toast({ title: 'Link copiado!', description: link });
   };
 
   const handleOpenLink = (shortId: string) => {
