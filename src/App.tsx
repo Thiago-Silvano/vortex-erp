@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Preview from "./pages/Preview";
 import Settings from "./pages/Settings";
@@ -19,11 +20,15 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/preview" element={<Preview />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/quotes" element={<SavedQuotes />} />
+          {/* Public route - client quote view */}
           <Route path="/orcamento/:shortId" element={<ClientQuote />} />
+          
+          {/* Protected routes */}
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/preview" element={<ProtectedRoute><Preview /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/quotes" element={<ProtectedRoute><SavedQuotes /></ProtectedRoute>} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ServiceItemForm from '@/components/ServiceItemForm';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import { WORLD_CITIES } from '@/data/cities';
-import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X } from 'lucide-react';
+import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X, LogOut } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const defaultClient: ClientData = { name: '', passengers: 1, phone: '', email: '', notes: '' };
@@ -225,6 +226,9 @@ export default function Index() {
             </Button>
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/settings')}>
               <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Configurações</span>
+            </Button>
+            <Button variant="ghost" size="icon" className="text-primary-foreground hover:text-foreground hover:bg-muted" title="Sair" onClick={() => supabase.auth.signOut()}>
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
