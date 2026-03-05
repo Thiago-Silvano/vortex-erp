@@ -191,9 +191,7 @@ export default function ClientQuote() {
   }
 
   const nights = quote.trip.nights || calcNights(quote.trip.departureDate, quote.trip.returnDate);
-  const whatsappUrl = agency.whatsapp
-    ? `https://wa.me/${agency.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Olá! Gostaria de falar sobre o orçamento de viagem para ${quote.trip.destination}.`)}`
-    : '#';
+  const whatsappUrl = 'https://wa.me/554835000975';
 
   const grouped = SERVICE_ORDER.map(type => ({
     type,
@@ -353,7 +351,7 @@ export default function ClientQuote() {
         <p className="text-white/70 text-lg mb-10 max-w-xl mx-auto">
           Garanta já a sua viagem dos sonhos. Entre em contato com nosso consultor e reserve agora mesmo.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex justify-center">
           <a
             href={whatsappUrl}
             target="_blank"
@@ -361,16 +359,7 @@ export default function ClientQuote() {
             className="inline-flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold px-10 py-5 rounded-full transition-all shadow-xl hover:shadow-2xl text-lg"
           >
             <MessageCircle className="h-6 w-6" />
-            Quero reservar essa viagem
-          </a>
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-3 border-2 border-[#c8a951] text-[#c8a951] hover:bg-[#c8a951] hover:text-[#1a2744] font-bold px-10 py-5 rounded-full transition-all text-lg"
-          >
-            <MessageCircle className="h-6 w-6" />
-            Falar com consultor
+            Quero reservar agora
           </a>
         </div>
       </section>
