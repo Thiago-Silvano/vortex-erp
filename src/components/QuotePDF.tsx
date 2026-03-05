@@ -467,7 +467,7 @@ function FlightServiceCard({ item }: { item: ServiceItem }) {
             <Text style={s.flightTitle}>{sanitizeText(item.title)}</Text>
             {item.supplier && (
               <View style={{ flexDirection: "row", marginTop: 2 }}>
-                <Text style={s.cardMetaLabel}>Cia Aerea: </Text>
+                <Text style={s.cardMetaLabel}>Cia Aérea: </Text>
                 <Text style={s.cardMetaValue}>{sanitizeText(item.supplier)}</Text>
               </View>
             )}
