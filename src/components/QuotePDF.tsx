@@ -21,18 +21,19 @@ const s = StyleSheet.create({
 
   // Header
   header: {
+    backgroundColor: NAVY,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginBottom: 14,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingBottom: 10,
-    borderBottomWidth: 2,
-    borderBottomColor: GOLD,
-    marginBottom: 14,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  logo: { width: 50, height: 50, objectFit: "contain" },
-  agencyName: { fontSize: 14, fontFamily: "Helvetica-Bold", color: NAVY, letterSpacing: 0.5 },
-  agencyContact: { fontSize: 7, color: MID_TEXT, lineHeight: 1.3 },
+  logo: { width: 45, height: 45, objectFit: "contain" },
+  agencyName: { fontSize: 14, fontFamily: "Helvetica-Bold", color: WHITE, letterSpacing: 0.5 },
+  agencyContact: { fontSize: 7, color: GOLD, lineHeight: 1.3 },
   quoteLabel: { fontSize: 9, fontFamily: "Helvetica-Bold", color: GOLD, textTransform: "uppercase", letterSpacing: 2.5 },
 
   // Client highlight bar
@@ -641,7 +642,7 @@ export default function QuotePDF({ quote, agency }: Props) {
                 <Image src={agency.logoBase64 || VORTEX_LOGO_URL} style={s.logo} />
               )}
               <View>
-                <Text style={{ fontSize: 7, color: MID_TEXT, lineHeight: 1.4 }}>
+                <Text style={{ fontSize: 7, color: GOLD, lineHeight: 1.4 }}>
                   {[agency.whatsapp && `WhatsApp: ${sanitizeText(agency.whatsapp)}`, agency.email && sanitizeText(agency.email), agency.website && sanitizeText(agency.website)].filter(Boolean).join("  |  ")}
                 </Text>
               </View>
