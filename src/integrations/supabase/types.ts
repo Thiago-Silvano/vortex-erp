@@ -100,6 +100,41 @@ export type Database = {
           },
         ]
       }
+      quote_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          quote_id: string
+          summary: string
+          user_email: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          quote_id: string
+          summary: string
+          user_email: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          quote_id?: string
+          summary?: string
+          user_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_audit_log_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotes: {
         Row: {
           client_email: string | null

@@ -198,10 +198,69 @@ export async function getAllQuotes(): Promise<FullQuote[]> {
   return results;
 }
 
+async function getCurrentUserEmail(): Promise<string | null> {
+  const { data } = await supabase.auth.getUser();
+  return data.user?.email || null;
+}
+
+async function buildAuditSummary(
+  quoteData: QuoteData,
+  existingId?: string
+): Promise<string> {
+  if (!existingId) return 'Orçamento criado';
+
+  const existing = await getQuoteById(existingId);
+  if (!existing) return 'Orçamento atualizado';
+
+  const changes: string[] = [];
+  if (existing.client.name !== quoteData.client.name) changes.push(`Cliente: ${existing.client.name} → ${quoteData.client.name}`);
+  if (existing.trip.destination !== quoteData.trip.destination) changes.push(`Destino: ${existing.trip.destination} → ${quoteData.trip.destination}`);
+  if (existing.trip.origin !== quoteData.trip.origin) changes.push(`Origem: ${existing.trip.origin} → ${quoteData.trip.origin}`);
+  if (existing.trip.departureDate !== quoteData.trip.departureDate) changes.push('Data ida alterada');
+  if (existing.trip.returnDate !== quoteData.trip.returnDate) changes.push('Data volta alterada');
+  
+  const oldTotal = existing.services.reduce((s, sv) => s + sv.value * sv.quantity, 0);
+  const newTotal = quoteData.services.reduce((s, sv) => s + sv.value * sv.quantity, 0);
+  if (oldTotal !== newTotal) changes.push(`Total: R$ ${oldTotal.toFixed(2)} → R$ ${newTotal.toFixed(2)}`);
+  
+  if (existing.services.length !== quoteData.services.length) changes.push(`Serviços: ${existing.services.length} → ${quoteData.services.length}`);
+  if (existing.payment?.pixValue !== quoteData.payment?.pixValue) changes.push('Valor Pix alterado');
+
+  return changes.length > 0 ? changes.join('; ') : 'Atualização sem mudanças significativas';
+}
+
+export async function addAuditLog(quoteId: string, action: string, summary: string, userEmail: string) {
+  await supabase.from('quote_audit_log').insert({
+    quote_id: quoteId,
+    action,
+    summary,
+    user_email: userEmail,
+  } as any);
+}
+
+export async function getAuditLog(quoteId: string) {
+  const { data } = await supabase
+    .from('quote_audit_log' as any)
+    .select('*')
+    .eq('quote_id', quoteId)
+    .order('created_at', { ascending: false });
+  return data || [];
+}
+
 export async function saveQuoteToDB(
   quoteData: QuoteData & { destinationImageUrl?: string },
   existingId?: string
 ): Promise<FullQuote> {
+  const userEmail = await getCurrentUserEmail();
+  
+  // Build audit summary BEFORE modifying data
+  let auditSummary: string | null = null;
+  if (userEmail) {
+    auditSummary = existingId
+      ? await buildAuditSummary(quoteData, existingId)
+      : 'Orçamento criado';
+  }
+
   const quotePayload: any = {
     client_name: quoteData.client.name,
     client_phone: quoteData.client.phone,
@@ -247,6 +306,11 @@ export async function saveQuoteToDB(
       .single();
     quoteId = data!.id;
     shortId = data!.short_id;
+  }
+
+  // Audit log
+  if (userEmail && auditSummary) {
+    await addAuditLog(quoteId, existingId ? 'atualizado' : 'criado', auditSummary, userEmail);
   }
 
   // Insert services
@@ -322,6 +386,10 @@ export async function incrementViewCount(shortId: string) {
 }
 
 export async function deleteQuoteFromDB(id: string) {
+  const userEmail = await getCurrentUserEmail();
+  if (userEmail) {
+    await addAuditLog(id, 'excluído', 'Orçamento excluído', userEmail);
+  }
   await supabase.from('quotes').delete().eq('id', id);
 }
 
