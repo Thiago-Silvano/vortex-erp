@@ -240,6 +240,36 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
             </Button>
           )}
         </div>
+        {/* Flight code + date row */}
+        <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+          <div>
+            <Label className="text-xs">Código do Voo (IATA)</Label>
+            <Input
+              value={leg.flightCode || ''}
+              onChange={e => updateLeg(globalIdx, 'flightCode', e.target.value.toUpperCase())}
+              placeholder="Ex: LA3456"
+              className="h-8 text-xs font-mono"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Data do Voo</Label>
+            <Input type="date" value={leg.departureDate} onChange={e => updateLeg(globalIdx, 'departureDate', e.target.value)} className="h-8 text-xs" />
+          </div>
+          <div className="flex items-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={searchingFlight === globalIdx}
+              onClick={() => searchFlightInfo(globalIdx)}
+              title="Buscar dados do voo automaticamente"
+            >
+              {searchingFlight === globalIdx ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plane className="h-3 w-3" />}
+              Buscar
+            </Button>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label className="text-xs">Origem</Label>
