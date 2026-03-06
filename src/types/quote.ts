@@ -9,6 +9,7 @@ export interface FlightLeg {
   arrivalTime: string;
   connectionDuration?: string;
   direction?: "ida" | "volta";
+  flightCode?: string;
 }
 
 export interface BaggageInfo {
