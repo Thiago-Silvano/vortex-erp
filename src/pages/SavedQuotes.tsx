@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, FullQuote } from '@/lib/supabase-storage';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import AuditLogDialog from '@/components/AuditLogDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +24,11 @@ export default function SavedQuotes() {
   const { toast } = useToast();
   const [quotes, setQuotes] = useState<FullQuote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || null));
+  }, []);
 
   const loadQuotes = async () => {
     setLoading(true);
@@ -193,6 +200,9 @@ export default function SavedQuotes() {
                       <Button variant="ghost" size="icon" title="Reutilizar orçamento" onClick={() => handleReuse(q)}>
                         <RotateCcw className="h-4 w-4" />
                       </Button>
+                      {userEmail === 'thiago@vortexviagens.com.br' && (
+                        <AuditLogDialog quoteId={q.id} clientName={q.client.name || 'Sem nome'} />
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" title="Excluir">
