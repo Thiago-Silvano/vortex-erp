@@ -142,46 +142,6 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
     setSearchingHotel(false);
   };
 
-  const searchFlightInfo = async (globalIdx: number) => {
-    const leg = flightLegs[globalIdx];
-    if (!leg.flightCode) {
-      toast({ title: 'Digite o código do voo', description: 'Ex: LA3456, G31234, AA100', variant: 'destructive' });
-      return;
-    }
-    if (!leg.departureDate) {
-      toast({ title: 'Selecione a data', description: 'Informe a data de partida antes de buscar.', variant: 'destructive' });
-      return;
-    }
-    setSearchingFlight(globalIdx);
-    try {
-      const { data, error } = await supabase.functions.invoke('search-flight', {
-        body: { flightCode: leg.flightCode, date: leg.departureDate },
-      });
-      if (error) throw error;
-      if (data?.error) {
-        toast({ title: 'Voo não encontrado', description: data.error, variant: 'destructive' });
-      } else if (data) {
-        setFlightLegs(prev => prev.map((l, i) => i === globalIdx ? {
-          ...l,
-          origin: data.origin || l.origin,
-          destination: data.destination || l.destination,
-          departureDate: data.departureDate || l.departureDate,
-          departureTime: data.departureTime || l.departureTime,
-          arrivalDate: data.arrivalDate || l.arrivalDate,
-          arrivalTime: data.arrivalTime || l.arrivalTime,
-        } : l));
-        if (data.airline) {
-          setItem(p => ({ ...p, supplier: p.supplier || data.airline }));
-        }
-        toast({ title: '✈️ Voo encontrado!', description: `${data.origin} → ${data.destination} - ${data.airline || ''}` });
-      }
-    } catch (err) {
-      console.error('Flight search error:', err);
-      toast({ title: 'Erro na busca', description: 'Não foi possível buscar dados do voo.', variant: 'destructive' });
-    }
-    setSearchingFlight(null);
-  };
-
   const handleSubmit = () => {
     if (!item.title) return;
     const hasBaggage = isAereo && (baggage.personalItem > 0 || baggage.carryOn > 0 || baggage.checkedBag > 0);
