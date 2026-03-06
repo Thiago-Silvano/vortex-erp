@@ -51,6 +51,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   const [extraImages, setExtraImages] = useState<string[]>(editItem?.imagesBase64 || []);
   const extraImageInputRef = useRef<HTMLInputElement>(null);
   const [searchingHotel, setSearchingHotel] = useState(false);
+  const [searchingFlight, setSearchingFlight] = useState<number | null>(null);
   const [hotelCheckInOut, setHotelCheckInOut] = useState('');
   const [hotelPolicies, setHotelPolicies] = useState('');
   const [hotelAccessibility, setHotelAccessibility] = useState('');
