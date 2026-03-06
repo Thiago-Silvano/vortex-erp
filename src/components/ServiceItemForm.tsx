@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fileToBase64 } from '@/lib/storage';
-import { Plus, X, ImagePlus, PlaneTakeoff, PlaneLanding, Search, Loader2 } from 'lucide-react';
+import { Plus, X, ImagePlus, PlaneTakeoff, PlaneLanding, Search, Loader2, Plane } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import AirportAutocomplete from '@/components/AirportAutocomplete';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +51,7 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   const [extraImages, setExtraImages] = useState<string[]>(editItem?.imagesBase64 || []);
   const extraImageInputRef = useRef<HTMLInputElement>(null);
   const [searchingHotel, setSearchingHotel] = useState(false);
+  const [searchingFlight, setSearchingFlight] = useState<number | null>(null);
   const [hotelCheckInOut, setHotelCheckInOut] = useState('');
   const [hotelPolicies, setHotelPolicies] = useState('');
   const [hotelAccessibility, setHotelAccessibility] = useState('');
@@ -141,6 +142,46 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
     setSearchingHotel(false);
   };
 
+  const searchFlightInfo = async (globalIdx: number) => {
+    const leg = flightLegs[globalIdx];
+    if (!leg.flightCode) {
+      toast({ title: 'Digite o código do voo', description: 'Ex: LA3456, G31234, AA100', variant: 'destructive' });
+      return;
+    }
+    if (!leg.departureDate) {
+      toast({ title: 'Selecione a data', description: 'Informe a data de partida antes de buscar.', variant: 'destructive' });
+      return;
+    }
+    setSearchingFlight(globalIdx);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-flight', {
+        body: { flightCode: leg.flightCode, date: leg.departureDate },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast({ title: 'Voo não encontrado', description: data.error, variant: 'destructive' });
+      } else if (data) {
+        setFlightLegs(prev => prev.map((l, i) => i === globalIdx ? {
+          ...l,
+          origin: data.origin || l.origin,
+          destination: data.destination || l.destination,
+          departureDate: data.departureDate || l.departureDate,
+          departureTime: data.departureTime || l.departureTime,
+          arrivalDate: data.arrivalDate || l.arrivalDate,
+          arrivalTime: data.arrivalTime || l.arrivalTime,
+        } : l));
+        if (data.airline) {
+          setItem(p => ({ ...p, supplier: p.supplier || data.airline }));
+        }
+        toast({ title: '✈️ Voo encontrado!', description: `${data.origin} → ${data.destination} - ${data.airline || ''}` });
+      }
+    } catch (err) {
+      console.error('Flight search error:', err);
+      toast({ title: 'Erro na busca', description: 'Não foi possível buscar dados do voo.', variant: 'destructive' });
+    }
+    setSearchingFlight(null);
+  };
+
   const handleSubmit = () => {
     if (!item.title) return;
     const hasBaggage = isAereo && (baggage.personalItem > 0 || baggage.carryOn > 0 || baggage.checkedBag > 0);
@@ -198,6 +239,36 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
               <X className="h-3 w-3" />
             </Button>
           )}
+        </div>
+        {/* Flight code + date row */}
+        <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+          <div>
+            <Label className="text-xs">Código do Voo (IATA)</Label>
+            <Input
+              value={leg.flightCode || ''}
+              onChange={e => updateLeg(globalIdx, 'flightCode', e.target.value.toUpperCase())}
+              placeholder="Ex: LA3456"
+              className="h-8 text-xs font-mono"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Data do Voo</Label>
+            <Input type="date" value={leg.departureDate} onChange={e => updateLeg(globalIdx, 'departureDate', e.target.value)} className="h-8 text-xs" />
+          </div>
+          <div className="flex items-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={searchingFlight === globalIdx}
+              onClick={() => searchFlightInfo(globalIdx)}
+              title="Buscar dados do voo automaticamente"
+            >
+              {searchingFlight === globalIdx ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plane className="h-3 w-3" />}
+              Buscar
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
