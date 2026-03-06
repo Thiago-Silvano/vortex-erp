@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fileToBase64 } from '@/lib/storage';
-import { Plus, X, ImagePlus, PlaneTakeoff, PlaneLanding, Search, Loader2 } from 'lucide-react';
+import { Plus, X, ImagePlus, PlaneTakeoff, PlaneLanding, Search, Loader2, Plane } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import AirportAutocomplete from '@/components/AirportAutocomplete';
 import { supabase } from '@/integrations/supabase/client';
