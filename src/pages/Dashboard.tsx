@@ -100,7 +100,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
             <p className="text-muted-foreground text-sm mt-1">Visão geral das suas cotações</p>
           </div>
-          <Button onClick={() => navigate('/')} className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
+          <Button onClick={() => navigate('/new')} className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
             <Plus className="h-5 w-5" /> Nova Cotação
           </Button>
         </div>
