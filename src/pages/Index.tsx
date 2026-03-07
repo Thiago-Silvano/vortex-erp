@@ -267,39 +267,33 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-primary text-primary-foreground">
-        <div className="container mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 gap-2">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
-            <h1 className="text-base sm:text-xl font-bold">Vortex Viagens - Gerador de Cotação</h1>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/quotes')}>
-              <List className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Cotações Salvas</span>
-            </Button>
-            {userEmail === 'thiago@vortexviagens.com.br' && (
-              <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/settings')}>
-                <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Configurações</span>
-              </Button>
-            )}
-            {userEmail === 'thiago@vortexviagens.com.br' && (
-              <>
-                <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/users')}>
-                  <Users className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Usuários</span>
-                </Button>
-                <UserManagement />
-              </>
-            )}
-            <span className="hidden md:inline text-xs text-primary-foreground/70 px-1">{userEmail}</span>
-            <Button variant="ghost" size="icon" className="text-primary-foreground hover:text-foreground hover:bg-muted" title="Sair" onClick={() => supabase.auth.signOut()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+    <AppLayout>
+      <div className="container mx-auto py-6 px-4 max-w-4xl space-y-6">
+        {/* Back button */}
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => handleNavigateAway('/quotes')}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Voltar às Cotações
+          </Button>
+          {quoteId && <span className="text-sm text-muted-foreground">Editando cotação #{shortId}</span>}
         </div>
-      </header>
 
-      <main className="container mx-auto py-6 px-4 max-w-4xl space-y-6">
+        {/* Leave confirmation dialog */}
+        <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deseja salvar antes de sair?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você tem alterações não salvas nesta cotação. Deseja salvar antes de sair?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowLeaveDialog(false)}>Cancelar</AlertDialogCancel>
+              <Button variant="outline" onClick={confirmLeave}>Sair sem salvar</Button>
+              <AlertDialogAction onClick={confirmLeaveAndSave}>Salvar e sair</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {shortId && (
           <div className="flex items-center gap-2 bg-accent/50 border border-accent rounded-lg px-4 py-3">
             <Link className="h-4 w-4 text-primary" />
