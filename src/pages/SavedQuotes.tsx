@@ -210,16 +210,12 @@ export default function SavedQuotes() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-base truncate">{q.client.name || 'Sem nome'}</p>
-                        <Select value={q.status === 'concluido' || q.status === 'perdido' ? q.status : 'active'} onValueChange={(v) => handleStatusChange(q.id, v)}>
-                          <SelectTrigger className={`h-6 w-auto text-xs border-0 bg-transparent px-1 ${getStatusColor(q.status)}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="active">Em aberto</SelectItem>
-                            <SelectItem value="concluido">Concluída</SelectItem>
-                            <SelectItem value="perdido">Perdida</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {q.status === 'concluido' && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">Vendida</span>
+                        )}
+                        {q.status === 'perdido' && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-destructive/15 text-destructive">Perdida</span>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {q.trip.origin} → {q.trip.destination}
