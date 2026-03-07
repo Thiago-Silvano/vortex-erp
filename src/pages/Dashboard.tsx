@@ -16,7 +16,7 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<DashboardStats>({ openCount: 0, completedCount: 0, soldValue: 0, lostValue: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ openCount: 0, openValue: 0, completedCount: 0, soldValue: 0, lostValue: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
