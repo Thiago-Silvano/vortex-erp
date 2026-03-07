@@ -185,6 +185,11 @@ export default function SavedQuotes() {
                       <div className="flex items-center gap-1 text-muted-foreground" title="Visualizações do link">
                         <Eye className="h-4 w-4" />
                         <span className="text-sm font-medium">{q.viewCount}</span>
+                        {userEmail === 'thiago@vortexviagens.com.br' && q.viewCount > 0 && (
+                          <Button variant="ghost" size="icon" className="h-6 w-6" title="Zerar visualizações" onClick={() => handleResetViews(q.id)}>
+                            <EyeOff className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-primary">
