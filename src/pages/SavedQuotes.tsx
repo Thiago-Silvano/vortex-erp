@@ -108,6 +108,17 @@ export default function SavedQuotes() {
     toast({ title: 'Orçamento reutilizado', description: 'Datas e dados do passageiro foram limpos.' });
   };
 
+  const handleResetViews = async (id: string) => {
+    try {
+      const { error } = await supabase.from('quotes').update({ view_count: 0 }).eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Visualizações zeradas!' });
+      await loadQuotes();
+    } catch {
+      toast({ title: 'Erro ao zerar visualizações', variant: 'destructive' });
+    }
+  };
+
   const handleCopyLink = (shortId: string) => {
     const link = `${window.location.origin}/orcamento/${shortId}`;
     navigator.clipboard.writeText(link);
