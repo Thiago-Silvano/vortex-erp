@@ -231,9 +231,11 @@ export default function Index() {
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/quotes')}>
               <List className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Cotações Salvas</span>
             </Button>
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/settings')}>
-              <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Configurações</span>
-            </Button>
+            {userEmail === 'thiago@vortexviagens.com.br' && (
+              <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/settings')}>
+                <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Configurações</span>
+              </Button>
+            )}
             {userEmail === 'thiago@vortexviagens.com.br' && (
               <>
                 <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/users')}>
