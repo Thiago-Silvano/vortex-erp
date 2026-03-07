@@ -284,6 +284,7 @@ export async function saveQuoteToDB(
     payment_installment_value_with_interest: quoteData.payment?.installmentValueWithInterest || 0,
     show_individual_values: quoteData.payment?.showIndividualValues || false,
     show_per_passenger: quoteData.payment?.showPerPassenger || false,
+    payment_rav: quoteData.payment?.rav || 0,
   };
 
   let quoteId: string;
