@@ -142,7 +142,7 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-accent" onClick={() => navigate('/')}>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-accent" onClick={() => navigate('/new')}>
             <CardContent className="p-6 flex items-center gap-4">
               <div className="h-12 w-12 rounded-xl bg-accent/20 flex items-center justify-center">
                 <Plus className="h-6 w-6 text-accent-foreground" />

@@ -201,7 +201,7 @@ export default function SavedQuotes() {
           <div className="text-center py-16 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-4 opacity-40" />
             <p className="text-lg">Nenhuma cotação salva ainda.</p>
-            <Button className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate('/')}>
+            <Button className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate('/new')}>
               <Plus className="h-4 w-4 mr-2" /> Criar Nova Cotação
             </Button>
           </div>
