@@ -542,13 +542,13 @@ export default function ClientQuote() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 justify-end flex-wrap">
-                    {grandTotal > 0 && payment.pixValue < grandTotal && (
+                     {grandTotal > 0 && payment.pixValue < grandTotal && (
                       <span className="text-green-600 font-black text-4xl leading-tight">
                         {Math.round(((grandTotal - payment.pixValue) / grandTotal) * 100)}%
                         <span className="text-sm font-semibold block text-center">OFF</span>
                       </span>
                     )}
-                    <span className="font-bold text-green-700 text-2xl break-all">{formatCurrency(payment.pixValue)}</span>
+                    <span className="font-bold text-green-700 text-2xl break-all">{formatCurrency(displayPixValue || 0)}</span>
                   </div>
                 </div>
               )}
