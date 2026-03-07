@@ -184,7 +184,7 @@ export default function SavedQuotes() {
             <p className="text-muted-foreground text-sm mt-1">{quotes.length} cotação(ões) salva(s)</p>
           </div>
           <Button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/new')}
             className="h-14 w-14 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg"
             size="icon"
             title="Nova Cotação"
