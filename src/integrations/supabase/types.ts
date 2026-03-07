@@ -47,6 +47,30 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          created_at: string
+          event_date: string
+          event_time: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          event_date: string
+          event_time?: string | null
+          id?: string
+          title?: string
+        }
+        Update: {
+          created_at?: string
+          event_date?: string
+          event_time?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       flight_legs: {
         Row: {
           arrival_date: string | null
