@@ -56,7 +56,7 @@ export default function SavedQuotes() {
   };
 
   const handleEdit = (quote: FullQuote) => {
-    navigate('/', { state: { editQuote: quote } });
+    navigate('/new', { state: { editQuote: quote } });
   };
 
   const handlePreview = (quote: FullQuote) => {
