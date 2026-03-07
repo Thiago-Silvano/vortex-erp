@@ -105,6 +105,38 @@ export default function Index() {
     setTrip(p => ({ ...p, nights }));
   }, [trip.departureDate, trip.returnDate]);
 
+  // Track unsaved changes
+  useEffect(() => {
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+    const hasData = client.name || services.length > 0 || trip.origin || trip.destination;
+    if (hasData) setHasUnsavedChanges(true);
+  }, [client, services, trip, payment, destinationImage]);
+
+  const handleNavigateAway = (path: string) => {
+    if (hasUnsavedChanges) {
+      setPendingNavigation(path);
+      setShowLeaveDialog(true);
+    } else {
+      navigate(path);
+    }
+  };
+
+  const confirmLeave = () => {
+    setShowLeaveDialog(false);
+    setHasUnsavedChanges(false);
+    if (pendingNavigation) navigate(pendingNavigation);
+  };
+
+  const confirmLeaveAndSave = async () => {
+    await handleSave();
+    setShowLeaveDialog(false);
+    setHasUnsavedChanges(false);
+    if (pendingNavigation) navigate(pendingNavigation);
+  };
+
   const addService = (item: ServiceItem) => {
     setServices(prev => {
       const idx = prev.findIndex(s => s.id === item.id);
