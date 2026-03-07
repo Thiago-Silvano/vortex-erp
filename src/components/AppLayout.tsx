@@ -48,7 +48,7 @@ function AppSidebar() {
           {!collapsed && (
             <div>
               <h2 className="font-bold text-base text-sidebar-primary">Vortex Viagens</h2>
-              <p className="text-xs text-sidebar-foreground/60">Gerador de Cotação</p>
+              <p className="text-xs text-sidebar-foreground/60">Gerenciador</p>
             </div>
           )}
           {collapsed && (
