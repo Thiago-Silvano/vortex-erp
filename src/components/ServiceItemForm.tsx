@@ -93,7 +93,55 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   };
 
   const updateLeg = (index: number, field: keyof FlightLeg, value: string) => {
-    setFlightLegs(prev => prev.map((leg, i) => i === index ? { ...leg, [field]: value } : leg));
+    setFlightLegs(prev => {
+      const updated = prev.map((leg, i) => i === index ? { ...leg, [field]: value } : leg);
+      return autoCalcConnections(updated);
+    });
+  };
+
+  // Auto-calculate connection duration between consecutive legs in the same direction
+  const autoCalcConnections = useCallback((legs: FlightLeg[]): FlightLeg[] => {
+    return legs.map((leg, i) => {
+      if (i === 0) return leg;
+      const prevLeg = legs[i - 1];
+      // Only calculate for consecutive legs in the same direction
+      if (prevLeg.direction !== leg.direction) return leg;
+      // Need arrival of previous leg and departure of current leg
+      if (!prevLeg.arrivalDate || !prevLeg.arrivalTime || !leg.departureDate || !leg.departureTime) {
+        return leg;
+      }
+      const arrival = new Date(`${prevLeg.arrivalDate}T${prevLeg.arrivalTime}`);
+      const departure = new Date(`${leg.departureDate}T${leg.departureTime}`);
+      if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return leg;
+      const diffMinutes = (departure.getTime() - arrival.getTime()) / (1000 * 60);
+      if (diffMinutes <= 0) return leg;
+      const hours = Math.floor(diffMinutes / 60);
+      const mins = Math.round(diffMinutes % 60);
+      const connectionStr = mins > 0 ? `${hours}h${mins.toString().padStart(2, '0')}` : `${hours}h`;
+      // Set on the previous leg (connectionDuration belongs to the leg before the connection)
+      // We need to update prevLeg, not current leg
+      return leg;
+    });
+    // Actually we need to set connectionDuration on prevLeg, let me restructure
+  }, []);
+
+  // Better approach: calculate connections after update
+  const autoCalcConnectionsFn = (legs: FlightLeg[]): FlightLeg[] => {
+    return legs.map((leg, i) => {
+      // Check if next leg exists and is same direction
+      const nextLeg = legs[i + 1];
+      if (!nextLeg || nextLeg.direction !== leg.direction) return leg;
+      if (!leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) return leg;
+      const arrival = new Date(`${leg.arrivalDate}T${leg.arrivalTime}`);
+      const departure = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}`);
+      if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return leg;
+      const diffMinutes = (departure.getTime() - arrival.getTime()) / (1000 * 60);
+      if (diffMinutes <= 0) return leg;
+      const hours = Math.floor(diffMinutes / 60);
+      const mins = Math.round(diffMinutes % 60);
+      const connectionStr = mins > 0 ? `${hours}h${mins.toString().padStart(2, '0')}` : `${hours}h`;
+      return { ...leg, connectionDuration: connectionStr };
+    });
   };
 
   const addLeg = (direction: 'ida' | 'volta') => {
