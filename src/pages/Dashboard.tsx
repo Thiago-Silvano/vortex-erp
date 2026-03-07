@@ -38,7 +38,7 @@ export default function Dashboard() {
         quoteTotals[s.quote_id] = (quoteTotals[s.quote_id] || 0) + Number(s.value) * s.quantity;
       });
 
-      let openCount = 0, completedCount = 0, soldValue = 0, lostValue = 0;
+      let openCount = 0, openValue = 0, completedCount = 0, soldValue = 0, lostValue = 0;
 
       quotes.forEach(q => {
         const servicesCost = quoteTotals[q.id] || 0;
@@ -52,6 +52,7 @@ export default function Dashboard() {
           lostValue += total;
         } else {
           openCount++;
+          openValue += total;
         }
       });
 
