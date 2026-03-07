@@ -2,6 +2,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/render
 import { QuoteData, AgencySettings, ServiceItem, ServiceType, SERVICE_TYPE_CONFIG, FlightLeg } from "@/types/quote";
 import { getAirportUtcOffset } from "@/data/airport-timezones";
 import { getFlightDayOffset } from "@/lib/flight-utils";
+import { formatQuoteValidity } from "@/lib/quote-utils";
 
 // Convert logo to absolute URL for @react-pdf/renderer compatibility
 const VORTEX_LOGO_URL = new URL("/images/vortex-logo-white.png", window.location.origin).href;
