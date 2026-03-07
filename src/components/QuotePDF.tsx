@@ -754,6 +754,15 @@ export default function QuotePDF({ quote, agency }: Props) {
             </View>
           ))}
 
+          {/* Validity Notice */}
+          <View style={{ ...s.notesBox, marginTop: 16, borderLeftColor: GOLD }}>
+            <Text style={s.notesTitle}>Validade da Cotação</Text>
+            <Text style={s.notesText}>
+              <Text style={{ fontFamily: "Helvetica-Bold" }}>Valida ate 23:59 de {formatQuoteValidity()}</Text>
+            </Text>
+            <Text style={{ ...s.notesText, marginTop: 4 }}>Mediante reserva em nome dos passageiros. Valores sujeitos a alteracoes a partir do dia seguinte. Consulte-nos para mais informacoes sobre disponibilidade e confirmacao de tarifas.</Text>
+          </View>
+
           {/* Notes */}
           {quote.client.notes && (
             <View style={s.notesBox}>
