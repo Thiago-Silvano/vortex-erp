@@ -266,6 +266,60 @@ export default function SavedQuotes() {
                       <Button variant="ghost" size="icon" title="Reutilizar cotação" onClick={() => handleReuse(q)}>
                         <RotateCcw className="h-4 w-4" />
                       </Button>
+
+                      {/* Marcar como vendida */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={q.status === 'concluido' ? 'Já marcada como vendida' : 'Marcar como vendida'}
+                            disabled={q.status === 'concluido'}
+                            className={q.status === 'concluido' ? 'text-success' : 'hover:text-success'}
+                          >
+                            <ThumbsUp className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Marcar como vendida?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A cotação de "{q.client.name}" será marcada como vendida e o valor será contabilizado no dashboard.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleStatusChange(q.id, 'concluido')}>Confirmar Venda</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+                      {/* Marcar como perdida */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={q.status === 'perdido' ? 'Já marcada como perdida' : 'Marcar como perdida'}
+                            disabled={q.status === 'perdido'}
+                            className={q.status === 'perdido' ? 'text-destructive' : 'hover:text-destructive'}
+                          >
+                            <ThumbsDown className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Marcar como perdida?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A cotação de "{q.client.name}" será marcada como perdida e o valor será contabilizado como perda no dashboard.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleStatusChange(q.id, 'perdido')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar Perda</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                       {userEmail === 'thiago@vortexviagens.com.br' && (
                         <AuditLogDialog quoteId={q.id} clientName={q.client.name || 'Sem nome'} />
                       )}
