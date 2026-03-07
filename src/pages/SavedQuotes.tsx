@@ -4,7 +4,7 @@ import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, FullQuote } from '@/li
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw, FileDown } from 'lucide-react';
+import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw, FileDown, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuditLogDialog from '@/components/AuditLogDialog';
 import {
