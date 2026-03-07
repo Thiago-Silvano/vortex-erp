@@ -76,8 +76,9 @@ function parsePayment(q: any): PaymentData | undefined {
     installmentValueWithInterest: Number(q.payment_installment_value_with_interest) || 0,
     showIndividualValues: q.show_individual_values || false,
     showPerPassenger: q.show_per_passenger || false,
+    rav: Number(q.payment_rav) || 0,
   };
-  if (p.pixValue || p.installmentsNoInterest || p.installmentsWithInterest || p.showIndividualValues || p.showPerPassenger) return p;
+  if (p.pixValue || p.installmentsNoInterest || p.installmentsWithInterest || p.showIndividualValues || p.showPerPassenger || p.rav) return p;
   return undefined;
 }
 
@@ -283,6 +284,7 @@ export async function saveQuoteToDB(
     payment_installment_value_with_interest: quoteData.payment?.installmentValueWithInterest || 0,
     show_individual_values: quoteData.payment?.showIndividualValues || false,
     show_per_passenger: quoteData.payment?.showPerPassenger || false,
+    payment_rav: quoteData.payment?.rav || 0,
   };
 
   let quoteId: string;

@@ -356,7 +356,7 @@ export default function ClientQuote() {
     total: g.items.reduce((sum, i) => sum + i.value * i.quantity, 0),
   }));
 
-  const grandTotal = categoryTotals.reduce((sum, c) => sum + c.total, 0);
+  const grandTotal = categoryTotals.reduce((sum, c) => sum + c.total, 0) + (payment?.rav || 0);
   const passengers = quote.client.passengers || 1;
   const showPerPassenger = payment?.showPerPassenger && passengers > 1;
   const displayTotal = showPerPassenger ? grandTotal / passengers : grandTotal;

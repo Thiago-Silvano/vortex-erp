@@ -103,7 +103,8 @@ export default function Index() {
 
   const removeService = (id: string) => setServices(prev => prev.filter(s => s.id !== id));
 
-  const total = services.reduce((sum, s) => sum + s.value * s.quantity, 0);
+  const costTotal = services.reduce((sum, s) => sum + s.value * s.quantity, 0);
+  const total = costTotal + (payment.rav || 0);
 
   // Auto-recalculate pix value when discount or total changes
   useEffect(() => {
@@ -460,9 +461,30 @@ export default function Index() {
               </Label>
             </div>
 
+            {/* RAV (Markup) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="font-semibold">💼 RAV (Lucro / Markup)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={payment.rav || ''}
+                  onChange={e => setPayment(p => ({ ...p, rav: parseFloat(e.target.value) || 0 }))}
+                  placeholder="Ex: 1500.00"
+                />
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-sm">Custo dos serviços</Label>
+                <p className="text-lg font-semibold mt-1">
+                  R$ {costTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+
             {/* Valor Total */}
             <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
-              <Label className="text-lg font-bold text-primary">Valor Total</Label>
+              <Label className="text-lg font-bold text-primary">Valor Total (Custo + RAV)</Label>
               <p className="text-3xl font-bold text-primary mt-1">
                 R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>

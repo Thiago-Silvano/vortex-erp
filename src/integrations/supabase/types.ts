@@ -182,6 +182,7 @@ export type Database = {
           payment_installments_no_interest: number | null
           payment_installments_with_interest: number | null
           payment_pix_value: number | null
+          payment_rav: number | null
           short_id: string
           show_individual_values: boolean
           show_per_passenger: boolean
@@ -209,6 +210,7 @@ export type Database = {
           payment_installments_no_interest?: number | null
           payment_installments_with_interest?: number | null
           payment_pix_value?: number | null
+          payment_rav?: number | null
           short_id?: string
           show_individual_values?: boolean
           show_per_passenger?: boolean
@@ -236,6 +238,7 @@ export type Database = {
           payment_installments_no_interest?: number | null
           payment_installments_with_interest?: number | null
           payment_pix_value?: number | null
+          payment_rav?: number | null
           short_id?: string
           show_individual_values?: boolean
           show_per_passenger?: boolean

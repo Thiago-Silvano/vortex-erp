@@ -61,6 +61,7 @@ export interface PaymentData {
   installmentValueWithInterest: number;
   showIndividualValues?: boolean;
   showPerPassenger?: boolean;
+  rav?: number;
 }
 
 export interface QuoteData {
