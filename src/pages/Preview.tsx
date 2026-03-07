@@ -97,7 +97,7 @@ export default function Preview() {
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={handleDownload}>
               <Download className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Baixar PDF</span>
             </Button>
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={() => navigate('/new')}>
               <FilePlus className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Nova Cotação</span>
             </Button>
           </div>
