@@ -506,7 +506,7 @@ export default function ClientQuote() {
                       </div>
                       <span className="font-medium text-[#1a2744]">{cat.label}</span>
                     </div>
-                    <span className="font-bold text-[#1a2744]">{formatCurrency(cat.total)}</span>
+                     <span className="font-bold text-[#1a2744]">{formatCurrency(showPerPassenger ? cat.total / passengers : cat.total)}</span>
                   </div>
                 ))}
               </div>
