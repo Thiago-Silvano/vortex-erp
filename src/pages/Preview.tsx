@@ -21,7 +21,7 @@ export default function Preview() {
   useEffect(() => {
     const state = location.state as any;
     const q = state?.quote as QuoteData | undefined;
-    if (!q) { navigate('/'); return; }
+    if (!q) { navigate('/dashboard'); return; }
     setQuote(q);
     setShortId(state?.shortId);
     setAgency(getAgencySettings());
