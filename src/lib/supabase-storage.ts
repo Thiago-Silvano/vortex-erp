@@ -75,8 +75,9 @@ function parsePayment(q: any): PaymentData | undefined {
     installmentValueNoInterest: Number(q.payment_installment_value_no_interest) || 0,
     installmentValueWithInterest: Number(q.payment_installment_value_with_interest) || 0,
     showIndividualValues: q.show_individual_values || false,
+    showPerPassenger: q.show_per_passenger || false,
   };
-  if (p.pixValue || p.installmentsNoInterest || p.installmentsWithInterest || p.showIndividualValues) return p;
+  if (p.pixValue || p.installmentsNoInterest || p.installmentsWithInterest || p.showIndividualValues || p.showPerPassenger) return p;
   return undefined;
 }
 
