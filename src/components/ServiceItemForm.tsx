@@ -201,15 +201,11 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
 
   const renderLeg = (leg: FlightLeg, idx: number, globalIdx: number) => (
     <div key={globalIdx}>
-      {globalIdx > 0 && flightLegs[globalIdx - 1]?.direction === leg.direction && (
+      {globalIdx > 0 && flightLegs[globalIdx - 1]?.direction === leg.direction && flightLegs[globalIdx - 1].connectionDuration && (
         <div className="flex items-center gap-2 py-2 px-3 my-1 bg-accent/20 rounded-md border border-dashed border-accent/40">
           <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">⏱️ Conexão:</span>
-          <Input
-            value={flightLegs[globalIdx - 1].connectionDuration || ''}
-            onChange={e => updateLeg(globalIdx - 1, 'connectionDuration', e.target.value)}
-            placeholder="Ex: 2h30"
-            className="h-7 text-xs max-w-[120px]"
-          />
+          <span className="text-xs font-bold text-foreground">{flightLegs[globalIdx - 1].connectionDuration}</span>
+        </div>
         </div>
       )}
       <div className="p-3 rounded-md bg-muted/50 border space-y-2">
