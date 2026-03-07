@@ -364,6 +364,12 @@ export default function ClientQuote() {
   }));
 
   const grandTotal = categoryTotals.reduce((sum, c) => sum + c.total, 0);
+  const passengers = quote.client.passengers || 1;
+  const showPerPassenger = payment?.showPerPassenger && passengers > 1;
+  const displayTotal = showPerPassenger ? grandTotal / passengers : grandTotal;
+  const displayPixValue = showPerPassenger && payment?.pixValue ? payment.pixValue / passengers : payment?.pixValue;
+  const displayInstallmentNoInterest = showPerPassenger && payment?.installmentValueNoInterest ? payment.installmentValueNoInterest / passengers : payment?.installmentValueNoInterest;
+  const displayInstallmentWithInterest = showPerPassenger && payment?.installmentValueWithInterest ? payment.installmentValueWithInterest / passengers : payment?.installmentValueWithInterest;
 
   const heroImage = quote.destinationImageUrl || quote.services.find(s => s.type === 'hotel')?.imageBase64;
 
