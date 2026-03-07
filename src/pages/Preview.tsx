@@ -79,7 +79,7 @@ export default function Preview() {
       <header className="border-b bg-primary text-primary-foreground">
         <div className="container mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 gap-2">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate('/quotes')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-base sm:text-xl font-bold">Cotação de Viagem</h1>
