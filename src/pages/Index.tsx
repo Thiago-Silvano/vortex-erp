@@ -103,7 +103,8 @@ export default function Index() {
 
   const removeService = (id: string) => setServices(prev => prev.filter(s => s.id !== id));
 
-  const total = services.reduce((sum, s) => sum + s.value * s.quantity, 0);
+  const costTotal = services.reduce((sum, s) => sum + s.value * s.quantity, 0);
+  const total = costTotal + (payment.rav || 0);
 
   // Auto-recalculate pix value when discount or total changes
   useEffect(() => {
