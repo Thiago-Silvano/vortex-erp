@@ -493,6 +493,9 @@ function FlightServiceCard({ item }: { item: ServiceItem }) {
                   <Text style={s.flightLegInfoBold}>Chegada: </Text>
                   {formatDate(leg.arrivalDate)}
                   {leg.arrivalTime ? ` as ${leg.arrivalTime}` : ""}
+                  {getFlightDayOffset(leg) && (
+                    <Text style={{ fontFamily: "Helvetica-Bold", color: GOLD }}> {getFlightDayOffset(leg)}</Text>
+                  )}
                 </Text>
               )}
             </View>
