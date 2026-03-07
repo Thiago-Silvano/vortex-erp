@@ -4,7 +4,7 @@ import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, FullQuote } from '@/li
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw, FileDown } from 'lucide-react';
+import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw, FileDown, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuditLogDialog from '@/components/AuditLogDialog';
 import {
@@ -108,6 +108,17 @@ export default function SavedQuotes() {
     toast({ title: 'Orçamento reutilizado', description: 'Datas e dados do passageiro foram limpos.' });
   };
 
+  const handleResetViews = async (id: string) => {
+    try {
+      const { error } = await supabase.from('quotes').update({ view_count: 0 }).eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Visualizações zeradas!' });
+      await loadQuotes();
+    } catch {
+      toast({ title: 'Erro ao zerar visualizações', variant: 'destructive' });
+    }
+  };
+
   const handleCopyLink = (shortId: string) => {
     const link = `${window.location.origin}/orcamento/${shortId}`;
     navigator.clipboard.writeText(link);
@@ -174,6 +185,11 @@ export default function SavedQuotes() {
                       <div className="flex items-center gap-1 text-muted-foreground" title="Visualizações do link">
                         <Eye className="h-4 w-4" />
                         <span className="text-sm font-medium">{q.viewCount}</span>
+                        {userEmail === 'thiago@vortexviagens.com.br' && q.viewCount > 0 && (
+                          <Button variant="ghost" size="icon" className="h-6 w-6" title="Zerar visualizações" onClick={() => handleResetViews(q.id)}>
+                            <EyeOff className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-primary">
