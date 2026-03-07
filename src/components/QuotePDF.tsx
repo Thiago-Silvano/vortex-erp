@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import { QuoteData, AgencySettings, ServiceItem, ServiceType, SERVICE_TYPE_CONFIG, FlightLeg } from "@/types/quote";
 import { getAirportUtcOffset } from "@/data/airport-timezones";
+import { getFlightDayOffset } from "@/lib/flight-utils";
 
 // Convert logo to absolute URL for @react-pdf/renderer compatibility
 const VORTEX_LOGO_URL = new URL("/images/vortex-logo-white.png", window.location.origin).href;
@@ -492,6 +493,9 @@ function FlightServiceCard({ item }: { item: ServiceItem }) {
                   <Text style={s.flightLegInfoBold}>Chegada: </Text>
                   {formatDate(leg.arrivalDate)}
                   {leg.arrivalTime ? ` as ${leg.arrivalTime}` : ""}
+                  {getFlightDayOffset(leg) && (
+                    <Text style={{ fontFamily: "Helvetica-Bold", color: GOLD }}> {getFlightDayOffset(leg)}</Text>
+                  )}
                 </Text>
               )}
             </View>
