@@ -4,6 +4,7 @@ import { getQuoteByShortId, getAgencySettingsFromDB, incrementViewCount, FullQuo
 import { AgencySettings, SERVICE_TYPE_CONFIG, ServiceItem, FlightLeg, PaymentData } from '@/types/quote';
 import { MessageCircle, Plane, Hotel, Car, Shield, Ticket, FileText, MapPin, Calendar, Users, Moon, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import vortexLogo from '@/assets/vortex-logo.png';
+import { getAirportUtcOffset } from '@/data/airport-timezones';
 
 function formatDate(d: string) {
   if (!d) return '';
