@@ -591,6 +591,26 @@ export default function ClientQuote() {
         </section>
       )}
 
+      {/* Quote Validity Notice */}
+      <section className="py-8 px-6 md:px-12 lg:px-20 bg-gradient-to-r from-[#1a2744] to-[#2a3a54]">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 md:p-8">
+            <div className="flex items-start gap-4">
+              <Calendar className="h-6 w-6 text-[#c8a951] flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-white font-bold text-lg mb-2">Validade da Cotação</h3>
+                <p className="text-white/90 mb-1">
+                  <span className="font-bold text-[#c8a951]">Válida até 23:59 de {formatQuoteValidity()}</span>
+                </p>
+                <p className="text-white/70 text-sm leading-relaxed">
+                  Mediante reserva em nome dos passageiros. Valores sujeitos a alterações a partir do dia seguinte. Consulte-nos para mais informações sobre disponibilidade e confirmação de tarifas.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-16 px-6 md:px-12 lg:px-20 bg-gradient-to-br from-[#1a2744] to-[#243656] text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Pronto para embarcar?</h2>
