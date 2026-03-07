@@ -665,7 +665,7 @@ export default function QuotePDF({ quote, agency }: Props) {
     total: g.items.reduce((sum, i) => sum + i.value * i.quantity, 0),
   }));
 
-  const grandTotal = categoryTotals.reduce((sum, c) => sum + c.total, 0);
+  const grandTotal = categoryTotals.reduce((sum, c) => sum + c.total, 0) + (payment?.rav || 0);
   const payment = quote.payment;
   const showIndividual = payment?.showIndividualValues;
   const passengers = quote.client.passengers || 1;
