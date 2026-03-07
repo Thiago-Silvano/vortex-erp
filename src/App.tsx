@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Preview from "./pages/Preview";
 import Settings from "./pages/Settings";
 import SavedQuotes from "./pages/SavedQuotes";
+import Dashboard from "./pages/Dashboard";
 import ClientQuote from "./pages/ClientQuote";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Protected routes */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/preview" element={<ProtectedRoute><Preview /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
