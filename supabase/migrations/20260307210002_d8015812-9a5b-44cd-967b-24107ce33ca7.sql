@@ -1,0 +1,1 @@
+ALTER TABLE public.quotes ADD COLUMN show_per_passenger boolean NOT NULL DEFAULT false;
