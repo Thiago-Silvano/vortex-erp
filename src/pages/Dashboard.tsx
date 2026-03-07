@@ -67,6 +67,7 @@ export default function Dashboard() {
     {
       label: 'Cotações em Aberto',
       value: stats.openCount.toString(),
+      subtitle: `R$ ${stats.openValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       icon: FileText,
       color: 'bg-primary text-primary-foreground',
       iconColor: 'text-primary-foreground/80',
