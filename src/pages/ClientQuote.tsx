@@ -5,6 +5,7 @@ import { AgencySettings, SERVICE_TYPE_CONFIG, ServiceItem, FlightLeg, PaymentDat
 import { MessageCircle, Plane, Hotel, Car, Shield, Ticket, FileText, MapPin, Calendar, Users, Moon, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import vortexLogo from '@/assets/vortex-logo.png';
 import { getAirportUtcOffset } from '@/data/airport-timezones';
+import { getFlightDayOffset } from '@/lib/flight-utils';
 
 function formatDate(d: string) {
   if (!d) return '';
