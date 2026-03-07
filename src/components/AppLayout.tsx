@@ -34,6 +34,7 @@ function AppSidebar() {
   const menuItems = [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
     { title: 'Cotações', url: '/quotes', icon: FileText },
+    { title: 'Calendário', url: '/calendar', icon: CalendarDays },
     ...(isAdmin ? [
       { title: 'Configurações', url: '/settings', icon: Settings },
       { title: 'Usuários', url: '/users', icon: Users },
