@@ -112,7 +112,7 @@ export default function SavedQuotes() {
       createdAt: undefined,
       updatedAt: undefined,
     };
-    navigate('/', { state: { editQuote: reusedQuote } });
+    navigate('/new', { state: { editQuote: reusedQuote } });
     toast({ title: 'Cotação reutilizada', description: 'Datas e dados do passageiro foram limpos.' });
   };
 
