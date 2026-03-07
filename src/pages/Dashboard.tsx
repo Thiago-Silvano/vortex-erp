@@ -56,7 +56,7 @@ export default function Dashboard() {
         }
       });
 
-      setStats({ openCount, completedCount, soldValue, lostValue });
+      setStats({ openCount, openValue, completedCount, soldValue, lostValue });
     } catch (err) {
       console.error(err);
     }
