@@ -14,6 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import UserAdmin from "./pages/UserAdmin";
+import CalendarPage from "./pages/CalendarPage";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/quotes" element={<ProtectedRoute><SavedQuotes /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><UserAdmin /></ProtectedRoute>} />
+          <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

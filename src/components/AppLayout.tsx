@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { NavLink } from '@/components/NavLink';
-import { LayoutDashboard, FileText, Settings, Users, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function AppSidebar() {
@@ -34,6 +34,7 @@ function AppSidebar() {
   const menuItems = [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
     { title: 'Cotações', url: '/quotes', icon: FileText },
+    { title: 'Calendário', url: '/calendar', icon: CalendarDays },
     ...(isAdmin ? [
       { title: 'Configurações', url: '/settings', icon: Settings },
       { title: 'Usuários', url: '/users', icon: Users },
