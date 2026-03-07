@@ -4,7 +4,7 @@ import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, FullQuote } from '@/li
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Pencil, Trash2, Eye, Copy, Link, ExternalLink, RotateCcw, FileDown, EyeOff, Plus, CheckCircle, XCircle } from 'lucide-react';
+import { FileText, Pencil, Trash2, Eye, Copy, Link, ExternalLink, RotateCcw, FileDown, EyeOff, Plus, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuditLogDialog from '@/components/AuditLogDialog';
 import AppLayout from '@/components/AppLayout';
@@ -19,13 +19,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 export default function SavedQuotes() {
   const navigate = useNavigate();
@@ -217,16 +210,12 @@ export default function SavedQuotes() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-base truncate">{q.client.name || 'Sem nome'}</p>
-                        <Select value={q.status === 'concluido' || q.status === 'perdido' ? q.status : 'active'} onValueChange={(v) => handleStatusChange(q.id, v)}>
-                          <SelectTrigger className={`h-6 w-auto text-xs border-0 bg-transparent px-1 ${getStatusColor(q.status)}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="active">Em aberto</SelectItem>
-                            <SelectItem value="concluido">Concluída</SelectItem>
-                            <SelectItem value="perdido">Perdida</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {q.status === 'concluido' && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">Vendida</span>
+                        )}
+                        {q.status === 'perdido' && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-destructive/15 text-destructive">Perdida</span>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {q.trip.origin} → {q.trip.destination}
@@ -277,6 +266,60 @@ export default function SavedQuotes() {
                       <Button variant="ghost" size="icon" title="Reutilizar cotação" onClick={() => handleReuse(q)}>
                         <RotateCcw className="h-4 w-4" />
                       </Button>
+
+                      {/* Marcar como vendida */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={q.status === 'concluido' ? 'Já marcada como vendida' : 'Marcar como vendida'}
+                            disabled={q.status === 'concluido'}
+                            className={q.status === 'concluido' ? 'text-success' : 'hover:text-success'}
+                          >
+                            <ThumbsUp className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Marcar como vendida?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A cotação de "{q.client.name}" será marcada como vendida e o valor será contabilizado no dashboard.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleStatusChange(q.id, 'concluido')}>Confirmar Venda</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+                      {/* Marcar como perdida */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={q.status === 'perdido' ? 'Já marcada como perdida' : 'Marcar como perdida'}
+                            disabled={q.status === 'perdido'}
+                            className={q.status === 'perdido' ? 'text-destructive' : 'hover:text-destructive'}
+                          >
+                            <ThumbsDown className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Marcar como perdida?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A cotação de "{q.client.name}" será marcada como perdida e o valor será contabilizado como perda no dashboard.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleStatusChange(q.id, 'perdido')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar Perda</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                       {userEmail === 'thiago@vortexviagens.com.br' && (
                         <AuditLogDialog quoteId={q.id} clientName={q.client.name || 'Sem nome'} />
                       )}
