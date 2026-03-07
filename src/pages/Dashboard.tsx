@@ -8,6 +8,7 @@ import AppLayout from '@/components/AppLayout';
 
 interface DashboardStats {
   openCount: number;
+  openValue: number;
   completedCount: number;
   soldValue: number;
   lostValue: number;
