@@ -432,11 +432,43 @@ function FlightServiceCard({ item }: { item: ServiceItem }) {
   const idaLegs = (item.flightLegs || []).filter((l) => l.direction !== "volta");
   const voltaLegs = (item.flightLegs || []).filter((l) => l.direction === "volta");
 
-  const renderLegs = (legs: FlightLeg[], label: string) => {
+  const calcTotalDuration = (legs: FlightLeg[]): string | null => {
+    if (legs.length === 0) return null;
+    const firstLeg = legs[0];
+    const lastLeg = legs[legs.length - 1];
+    if (!firstLeg.departureDate || !firstLeg.departureTime || !lastLeg.arrivalDate || !lastLeg.arrivalTime) return null;
+    const originOffset = getAirportUtcOffset(firstLeg.origin);
+    const destOffset = getAirportUtcOffset(lastLeg.destination);
+    const depLocal = new Date(`${firstLeg.departureDate}T${firstLeg.departureTime}`);
+    const arrLocal = new Date(`${lastLeg.arrivalDate}T${lastLeg.arrivalTime}`);
+    if (isNaN(depLocal.getTime()) || isNaN(arrLocal.getTime())) return null;
+    let totalMinutes: number;
+    if (originOffset !== null && destOffset !== null) {
+      const depUtcMs = depLocal.getTime() - (originOffset * 60 * 60 * 1000);
+      const arrUtcMs = arrLocal.getTime() - (destOffset * 60 * 60 * 1000);
+      totalMinutes = (arrUtcMs - depUtcMs) / (1000 * 60);
+    } else {
+      totalMinutes = (arrLocal.getTime() - depLocal.getTime()) / (1000 * 60);
+    }
+    if (totalMinutes <= 0) return null;
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = Math.round(totalMinutes % 60);
+    return mins > 0 ? `${hours}h${mins.toString().padStart(2, "0")} total` : `${hours}h total`;
+  };
+
+  const idaDuration = calcTotalDuration(idaLegs);
+  const voltaDuration = calcTotalDuration(voltaLegs);
+
+  const renderLegs = (legs: FlightLeg[], label: string, totalDuration: string | null) => {
     if (legs.length === 0) return null;
     return (
       <View style={{ marginBottom: 4 }}>
-        <Text style={s.flightDirectionLabel}>{label}</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+          <Text style={s.flightDirectionLabel}>{label}</Text>
+          {totalDuration && (
+            <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: GOLD }}>{totalDuration}</Text>
+          )}
+        </View>
         {legs.map((leg, idx) => (
           <View key={idx}>
             {idx > 0 && legs[idx - 1]?.connectionDuration && (
