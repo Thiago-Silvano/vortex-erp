@@ -64,6 +64,11 @@ export default function Index() {
   const [saving, setSaving] = useState(false);
   const [destinationImage, setDestinationImage] = useState<string | undefined>();
   const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || null));
+  }, []);
 
   useEffect(() => {
     const state = location.state as any;
