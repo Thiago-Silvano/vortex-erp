@@ -178,7 +178,12 @@ function FlightCard({ item }: { item: ServiceItem }) {
                   <p className="text-xs text-gray-500 uppercase">Destino</p>
                   <p className="font-bold text-[#1a2744] text-sm">{leg.destination}</p>
                   {leg.arrivalDate && (
-                    <p className="text-xs text-gray-500 mt-1">{formatDate(leg.arrivalDate)}{leg.arrivalTime ? ` às ${leg.arrivalTime}` : ''}</p>
+                    <div className="flex items-center justify-center gap-1">
+                      <p className="text-xs text-gray-500 mt-1">{formatDate(leg.arrivalDate)}{leg.arrivalTime ? ` às ${leg.arrivalTime}` : ''}</p>
+                      {getFlightDayOffset(leg) && (
+                        <span className="text-xs font-bold text-[#c8a951] bg-[#c8a951]/10 px-2 py-0.5 rounded-full">{getFlightDayOffset(leg)}</span>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
