@@ -652,7 +652,7 @@ export default function Index() {
             </Button>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
