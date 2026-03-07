@@ -14,7 +14,7 @@ import AutocompleteInput from '@/components/AutocompleteInput';
 import InternalFiles from '@/components/InternalFiles';
 import UserManagement from '@/components/UserManagement';
 import { WORLD_CITIES } from '@/data/cities';
-import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X, LogOut } from 'lucide-react';
+import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X, LogOut, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
