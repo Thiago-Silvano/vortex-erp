@@ -203,7 +203,8 @@ export default function Index() {
       const saved = await saveQuoteToDB(quoteData, quoteId);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
-      toast({ title: 'Orçamento salvo!', description: 'Orçamento salvo no banco de dados com sucesso.' });
+      setHasUnsavedChanges(false);
+      toast({ title: 'Cotação salva!', description: 'Cotação salva com sucesso.' });
     } catch (err) {
       console.error(err);
       toast({ title: 'Erro ao salvar', description: 'Ocorreu um erro. Tente novamente.', variant: 'destructive' });
