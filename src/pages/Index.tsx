@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QuoteData, ClientData, TripData, ServiceItem, SERVICE_TYPE_CONFIG, PaymentData } from '@/types/quote';
 import { getAgencySettings } from '@/lib/storage';
@@ -12,11 +12,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ServiceItemForm from '@/components/ServiceItemForm';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import InternalFiles from '@/components/InternalFiles';
-import UserManagement from '@/components/UserManagement';
+import AppLayout from '@/components/AppLayout';
 import { WORLD_CITIES } from '@/data/cities';
-import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X, LogOut, Users } from 'lucide-react';
+import { Eye, Trash2, Pencil, Save, Link, Copy, ImagePlus, X, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const defaultClient: ClientData = { name: '', passengers: 1, phone: '', email: '', notes: '' };
 const defaultTrip: TripData = { origin: '', destination: '', departureDate: '', returnDate: '', tripType: 'Lazer', nights: 0 };
