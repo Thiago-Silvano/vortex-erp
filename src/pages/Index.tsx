@@ -75,6 +75,10 @@ export default function Index() {
   const [destinationImage, setDestinationImage] = useState<string | undefined>();
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || null));
