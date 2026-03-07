@@ -2,6 +2,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/render
 import { QuoteData, AgencySettings, ServiceItem, ServiceType, SERVICE_TYPE_CONFIG, FlightLeg } from "@/types/quote";
 import { getAirportUtcOffset } from "@/data/airport-timezones";
 import { getFlightDayOffset } from "@/lib/flight-utils";
+import { formatQuoteValidity } from "@/lib/quote-utils";
 
 // Convert logo to absolute URL for @react-pdf/renderer compatibility
 const VORTEX_LOGO_URL = new URL("/images/vortex-logo-white.png", window.location.origin).href;
@@ -752,6 +753,15 @@ export default function QuotePDF({ quote, agency }: Props) {
               })}
             </View>
           ))}
+
+          {/* Validity Notice */}
+          <View style={{ ...s.notesBox, marginTop: 16, borderLeftColor: GOLD }}>
+            <Text style={s.notesTitle}>Validade da Cotação</Text>
+            <Text style={s.notesText}>
+              <Text style={{ fontFamily: "Helvetica-Bold" }}>Valida ate 23:59 de {formatQuoteValidity()}</Text>
+            </Text>
+            <Text style={{ ...s.notesText, marginTop: 4 }}>Mediante reserva em nome dos passageiros. Valores sujeitos a alteracoes a partir do dia seguinte. Consulte-nos para mais informacoes sobre disponibilidade e confirmacao de tarifas.</Text>
+          </View>
 
           {/* Notes */}
           {quote.client.notes && (
