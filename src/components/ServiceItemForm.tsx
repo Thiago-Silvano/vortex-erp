@@ -206,7 +206,6 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
           <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">⏱️ Conexão:</span>
           <span className="text-xs font-bold text-foreground">{flightLegs[globalIdx - 1].connectionDuration}</span>
         </div>
-        </div>
       )}
       <div className="p-3 rounded-md bg-muted/50 border space-y-2">
         <div className="flex items-center gap-2">
