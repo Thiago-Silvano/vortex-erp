@@ -772,10 +772,10 @@ export default function QuotePDF({ quote, agency }: Props) {
                     <View style={s.paymentCard}>
                       <Text style={s.paymentLabel}>Cartão sem juros</Text>
                       <Text style={s.paymentInstallment}>
-                        {payment.installmentsNoInterest}x {formatCurrency(payment.installmentValueNoInterest)}
+                        {payment.installmentsNoInterest}x {formatCurrency(displayInstallmentNoInterest || 0)}
                       </Text>
                       <Text style={s.paymentTotal}>
-                        Total: {formatCurrency(payment.installmentsNoInterest * payment.installmentValueNoInterest)}
+                        Total: {formatCurrency(payment.installmentsNoInterest * (displayInstallmentNoInterest || 0))}
                       </Text>
                     </View>
                   )}
