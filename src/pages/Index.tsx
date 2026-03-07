@@ -447,6 +447,19 @@ export default function Index() {
               </Label>
             </div>
 
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="checkbox"
+                id="showPerPassenger"
+                checked={payment.showPerPassenger || false}
+                onChange={e => setPayment(p => ({ ...p, showPerPassenger: e.target.checked }))}
+                className="h-4 w-4 rounded border-input"
+              />
+              <Label htmlFor="showPerPassenger" className="cursor-pointer text-sm">
+                Mostrar valor por passageiro?
+              </Label>
+            </div>
+
             {/* Valor Total */}
             <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
               <Label className="text-lg font-bold text-primary">Valor Total</Label>
