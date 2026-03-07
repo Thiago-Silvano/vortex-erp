@@ -184,6 +184,7 @@ export type Database = {
           payment_pix_value: number | null
           short_id: string
           show_individual_values: boolean
+          show_per_passenger: boolean
           status: string
           trip_departure_date: string | null
           trip_destination: string | null
@@ -210,6 +211,7 @@ export type Database = {
           payment_pix_value?: number | null
           short_id?: string
           show_individual_values?: boolean
+          show_per_passenger?: boolean
           status?: string
           trip_departure_date?: string | null
           trip_destination?: string | null
@@ -236,6 +238,7 @@ export type Database = {
           payment_pix_value?: number | null
           short_id?: string
           show_individual_values?: boolean
+          show_per_passenger?: boolean
           status?: string
           trip_departure_date?: string | null
           trip_destination?: string | null

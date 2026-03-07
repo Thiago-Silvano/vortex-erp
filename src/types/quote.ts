@@ -60,6 +60,7 @@ export interface PaymentData {
   installmentValueNoInterest: number;
   installmentValueWithInterest: number;
   showIndividualValues?: boolean;
+  showPerPassenger?: boolean;
 }
 
 export interface QuoteData {

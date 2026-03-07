@@ -364,6 +364,12 @@ export default function ClientQuote() {
   }));
 
   const grandTotal = categoryTotals.reduce((sum, c) => sum + c.total, 0);
+  const passengers = quote.client.passengers || 1;
+  const showPerPassenger = payment?.showPerPassenger && passengers > 1;
+  const displayTotal = showPerPassenger ? grandTotal / passengers : grandTotal;
+  const displayPixValue = showPerPassenger && payment?.pixValue ? payment.pixValue / passengers : payment?.pixValue;
+  const displayInstallmentNoInterest = showPerPassenger && payment?.installmentValueNoInterest ? payment.installmentValueNoInterest / passengers : payment?.installmentValueNoInterest;
+  const displayInstallmentWithInterest = showPerPassenger && payment?.installmentValueWithInterest ? payment.installmentValueWithInterest / passengers : payment?.installmentValueWithInterest;
 
   const heroImage = quote.destinationImageUrl || quote.services.find(s => s.type === 'hotel')?.imageBase64;
 
@@ -500,15 +506,21 @@ export default function ClientQuote() {
                       </div>
                       <span className="font-medium text-[#1a2744]">{cat.label}</span>
                     </div>
-                    <span className="font-bold text-[#1a2744]">{formatCurrency(cat.total)}</span>
+                     <span className="font-bold text-[#1a2744]">{formatCurrency(showPerPassenger ? cat.total / passengers : cat.total)}</span>
                   </div>
                 ))}
               </div>
             )}
             <div className="bg-[#1a2744] rounded-xl p-8 text-center">
-              <p className="text-[#c8a951] font-semibold text-sm uppercase tracking-wider mb-2">Valor total por pessoa</p>
-              <span className="text-white font-bold text-4xl">{formatCurrency(grandTotal)}</span>
-              <p className="text-white/50 text-sm mt-3">*Valor por pessoa, sujeito à disponibilidade</p>
+              <p className="text-[#c8a951] font-semibold text-sm uppercase tracking-wider mb-2">
+                {showPerPassenger ? 'Valor por passageiro' : 'Valor total por pessoa'}
+              </p>
+              <span className="text-white font-bold text-4xl">{formatCurrency(displayTotal)}</span>
+              <p className="text-white/50 text-sm mt-3">
+                {showPerPassenger 
+                  ? `*Valor por passageiro (${passengers} passageiros) - Total: ${formatCurrency(grandTotal)}`
+                  : '*Valor por pessoa, sujeito à disponibilidade'}
+              </p>
             </div>
           </div>
         </div>
@@ -530,13 +542,13 @@ export default function ClientQuote() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 justify-end flex-wrap">
-                    {grandTotal > 0 && payment.pixValue < grandTotal && (
+                     {grandTotal > 0 && payment.pixValue < grandTotal && (
                       <span className="text-green-600 font-black text-4xl leading-tight">
                         {Math.round(((grandTotal - payment.pixValue) / grandTotal) * 100)}%
                         <span className="text-sm font-semibold block text-center">OFF</span>
                       </span>
                     )}
-                    <span className="font-bold text-green-700 text-2xl break-all">{formatCurrency(payment.pixValue)}</span>
+                    <span className="font-bold text-green-700 text-2xl break-all">{formatCurrency(displayPixValue || 0)}</span>
                   </div>
                 </div>
               )}
@@ -549,10 +561,10 @@ export default function ClientQuote() {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-[#1a2744] text-3xl">
-                      {payment.installmentsNoInterest}x {formatCurrency(payment.installmentValueNoInterest)}
+                      {payment.installmentsNoInterest}x {formatCurrency(displayInstallmentNoInterest || 0)}
                     </p>
                     <p className="text-gray-500 text-sm mt-1">
-                      Total: {formatCurrency(payment.installmentsNoInterest * payment.installmentValueNoInterest)}
+                      Total: {formatCurrency(payment.installmentsNoInterest * (displayInstallmentNoInterest || 0))}
                     </p>
                   </div>
                 </div>
@@ -566,10 +578,10 @@ export default function ClientQuote() {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-[#1a2744] text-3xl">
-                      {payment.installmentsWithInterest}x {formatCurrency(payment.installmentValueWithInterest)}
+                      {payment.installmentsWithInterest}x {formatCurrency(displayInstallmentWithInterest || 0)}
                     </p>
                     <p className="text-gray-500 text-sm mt-1">
-                      Total: {formatCurrency(payment.installmentsWithInterest * payment.installmentValueWithInterest)}
+                      Total: {formatCurrency(payment.installmentsWithInterest * (displayInstallmentWithInterest || 0))}
                     </p>
                   </div>
                 </div>

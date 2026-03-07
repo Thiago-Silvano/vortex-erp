@@ -635,6 +635,12 @@ export default function QuotePDF({ quote, agency }: Props) {
   const grandTotal = categoryTotals.reduce((sum, c) => sum + c.total, 0);
   const payment = quote.payment;
   const showIndividual = payment?.showIndividualValues;
+  const passengers = quote.client.passengers || 1;
+  const showPerPassenger = payment?.showPerPassenger && passengers > 1;
+  const displayTotal = showPerPassenger ? grandTotal / passengers : grandTotal;
+  const displayPixValue = showPerPassenger && payment?.pixValue ? payment.pixValue / passengers : payment?.pixValue;
+  const displayInstallmentNoInterest = showPerPassenger && payment?.installmentValueNoInterest ? payment.installmentValueNoInterest / passengers : payment?.installmentValueNoInterest;
+  const displayInstallmentWithInterest = showPerPassenger && payment?.installmentValueWithInterest ? payment.installmentValueWithInterest / passengers : payment?.installmentValueWithInterest;
 
   return (
     <Document>
@@ -726,13 +732,13 @@ export default function QuotePDF({ quote, agency }: Props) {
               categoryTotals.map((c) => (
                 <View key={c.label} style={s.summaryRow}>
                   <Text style={s.summaryLabel}>{c.label}</Text>
-                  <Text style={s.summaryValue}>{formatCurrency(c.total)}</Text>
+                  <Text style={s.summaryValue}>{formatCurrency(showPerPassenger ? c.total / passengers : c.total)}</Text>
                 </View>
               ))}
 
             <View style={s.totalRow}>
-              <Text style={s.totalLabel}>Valor total por pessoa</Text>
-              <Text style={s.totalValue}>{formatCurrency(grandTotal)}</Text>
+              <Text style={s.totalLabel}>{showPerPassenger ? 'Valor por passageiro' : 'Valor total por pessoa'}</Text>
+              <Text style={s.totalValue}>{formatCurrency(displayTotal)}</Text>
             </View>
 
             {/* Payment Conditions */}
@@ -756,7 +762,7 @@ export default function QuotePDF({ quote, agency }: Props) {
                               {Math.round(((grandTotal - payment.pixValue) / grandTotal) * 100)}% OFF
                             </Text>
                           )}
-                          <Text style={s.paymentInstallmentGreen}>{formatCurrency(payment.pixValue)}</Text>
+                          <Text style={s.paymentInstallmentGreen}>{formatCurrency(displayPixValue || 0)}</Text>
                         </View>
                       </View>
                     </View>
@@ -766,10 +772,10 @@ export default function QuotePDF({ quote, agency }: Props) {
                     <View style={s.paymentCard}>
                       <Text style={s.paymentLabel}>Cartão sem juros</Text>
                       <Text style={s.paymentInstallment}>
-                        {payment.installmentsNoInterest}x {formatCurrency(payment.installmentValueNoInterest)}
+                        {payment.installmentsNoInterest}x {formatCurrency(displayInstallmentNoInterest || 0)}
                       </Text>
                       <Text style={s.paymentTotal}>
-                        Total: {formatCurrency(payment.installmentsNoInterest * payment.installmentValueNoInterest)}
+                        Total: {formatCurrency(payment.installmentsNoInterest * (displayInstallmentNoInterest || 0))}
                       </Text>
                     </View>
                   )}
@@ -778,10 +784,10 @@ export default function QuotePDF({ quote, agency }: Props) {
                     <View style={s.paymentCard}>
                       <Text style={s.paymentLabel}>Cartão com juros</Text>
                       <Text style={s.paymentInstallment}>
-                        {payment.installmentsWithInterest}x {formatCurrency(payment.installmentValueWithInterest)}
+                        {payment.installmentsWithInterest}x {formatCurrency(displayInstallmentWithInterest || 0)}
                       </Text>
                       <Text style={s.paymentTotal}>
-                        Total: {formatCurrency(payment.installmentsWithInterest * payment.installmentValueWithInterest)}
+                        Total: {formatCurrency(payment.installmentsWithInterest * (displayInstallmentWithInterest || 0))}
                       </Text>
                     </View>
                   )}
