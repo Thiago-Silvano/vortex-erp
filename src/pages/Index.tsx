@@ -533,6 +533,9 @@ export default function Index() {
           </CardContent>
         </Card>
 
+        {/* Internal Files */}
+        <InternalFiles quoteId={quoteId} />
+
         {/* Summary & Actions */}
         {services.length > 0 && (
           <Card className="bg-primary text-primary-foreground">
