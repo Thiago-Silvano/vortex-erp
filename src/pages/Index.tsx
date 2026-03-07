@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ServiceItemForm from '@/components/ServiceItemForm';
 import AutocompleteInput from '@/components/AutocompleteInput';
+import InternalFiles from '@/components/InternalFiles';
+import UserManagement from '@/components/UserManagement';
 import { WORLD_CITIES } from '@/data/cities';
 import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
