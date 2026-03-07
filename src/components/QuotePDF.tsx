@@ -732,13 +732,13 @@ export default function QuotePDF({ quote, agency }: Props) {
               categoryTotals.map((c) => (
                 <View key={c.label} style={s.summaryRow}>
                   <Text style={s.summaryLabel}>{c.label}</Text>
-                  <Text style={s.summaryValue}>{formatCurrency(c.total)}</Text>
+                  <Text style={s.summaryValue}>{formatCurrency(showPerPassenger ? c.total / passengers : c.total)}</Text>
                 </View>
               ))}
 
             <View style={s.totalRow}>
-              <Text style={s.totalLabel}>Valor total por pessoa</Text>
-              <Text style={s.totalValue}>{formatCurrency(grandTotal)}</Text>
+              <Text style={s.totalLabel}>{showPerPassenger ? 'Valor por passageiro' : 'Valor total por pessoa'}</Text>
+              <Text style={s.totalValue}>{formatCurrency(displayTotal)}</Text>
             </View>
 
             {/* Payment Conditions */}
