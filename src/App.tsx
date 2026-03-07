@@ -14,6 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import UserAdmin from "./pages/UserAdmin";
+import CalendarPage from "./pages/CalendarPage";
 
 const queryClient = new QueryClient();
 
