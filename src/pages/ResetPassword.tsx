@@ -19,14 +19,14 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setIsRecovery(true);
       }
     });
 
-    // Check URL hash for recovery token
+    // Check URL hash for recovery or invite token
     const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
+    if (hash.includes('type=recovery') || hash.includes('type=invite') || hash.includes('type=signup')) {
       setIsRecovery(true);
     }
 
@@ -56,7 +56,7 @@ export default function ResetPassword() {
     }
 
     setSuccess(true);
-    toast({ title: 'Senha atualizada!', description: 'Sua senha foi alterada com sucesso.' });
+    toast({ title: 'Senha criada!', description: 'Sua senha foi definida com sucesso.' });
     setTimeout(() => navigate('/'), 2000);
   };
 
@@ -86,8 +86,8 @@ export default function ResetPassword() {
             <div className="flex justify-center mb-2">
               <CheckCircle className="h-12 w-12 text-green-500" />
             </div>
-            <CardTitle>Senha atualizada!</CardTitle>
-            <CardDescription>Redirecionando para o login...</CardDescription>
+            <CardTitle>Senha definida!</CardTitle>
+            <CardDescription>Redirecionando para o sistema...</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -103,8 +103,8 @@ export default function ResetPassword() {
               <KeyRound className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Nova Senha</CardTitle>
-          <CardDescription>Digite sua nova senha.</CardDescription>
+          <CardTitle className="text-2xl font-bold">Criar Senha</CardTitle>
+          <CardDescription>Defina sua senha para acessar o sistema.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -121,7 +121,7 @@ export default function ResetPassword() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+              <Label htmlFor="confirmPassword">Confirmar senha</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -133,7 +133,7 @@ export default function ResetPassword() {
               />
             </div>
             <Button className="w-full" size="lg" type="submit" disabled={loading}>
-              {loading ? 'Salvando...' : 'Salvar nova senha'}
+              {loading ? 'Salvando...' : 'Definir senha'}
             </Button>
           </form>
         </CardContent>
