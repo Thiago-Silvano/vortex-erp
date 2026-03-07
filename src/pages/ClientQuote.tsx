@@ -578,10 +578,10 @@ export default function ClientQuote() {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-[#1a2744] text-3xl">
-                      {payment.installmentsWithInterest}x {formatCurrency(payment.installmentValueWithInterest)}
+                      {payment.installmentsWithInterest}x {formatCurrency(displayInstallmentWithInterest || 0)}
                     </p>
                     <p className="text-gray-500 text-sm mt-1">
-                      Total: {formatCurrency(payment.installmentsWithInterest * payment.installmentValueWithInterest)}
+                      Total: {formatCurrency(payment.installmentsWithInterest * (displayInstallmentWithInterest || 0))}
                     </p>
                   </div>
                 </div>
