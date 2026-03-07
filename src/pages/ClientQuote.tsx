@@ -512,9 +512,15 @@ export default function ClientQuote() {
               </div>
             )}
             <div className="bg-[#1a2744] rounded-xl p-8 text-center">
-              <p className="text-[#c8a951] font-semibold text-sm uppercase tracking-wider mb-2">Valor total por pessoa</p>
-              <span className="text-white font-bold text-4xl">{formatCurrency(grandTotal)}</span>
-              <p className="text-white/50 text-sm mt-3">*Valor por pessoa, sujeito à disponibilidade</p>
+              <p className="text-[#c8a951] font-semibold text-sm uppercase tracking-wider mb-2">
+                {showPerPassenger ? 'Valor por passageiro' : 'Valor total por pessoa'}
+              </p>
+              <span className="text-white font-bold text-4xl">{formatCurrency(displayTotal)}</span>
+              <p className="text-white/50 text-sm mt-3">
+                {showPerPassenger 
+                  ? `*Valor por passageiro (${passengers} passageiros) - Total: ${formatCurrency(grandTotal)}`
+                  : '*Valor por pessoa, sujeito à disponibilidade'}
+              </p>
             </div>
           </div>
         </div>
