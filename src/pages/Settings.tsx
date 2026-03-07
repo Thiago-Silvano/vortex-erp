@@ -31,7 +31,7 @@ export default function Settings() {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-primary text-primary-foreground">
         <div className="container mx-auto flex items-center gap-3 py-4 px-4">
-          <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate('/')}>
+          <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-bold">Configurações da Agência</h1>

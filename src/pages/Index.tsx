@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QuoteData, ClientData, TripData, ServiceItem, SERVICE_TYPE_CONFIG, PaymentData } from '@/types/quote';
 import { getAgencySettings } from '@/lib/storage';
@@ -12,11 +12,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ServiceItemForm from '@/components/ServiceItemForm';
 import AutocompleteInput from '@/components/AutocompleteInput';
 import InternalFiles from '@/components/InternalFiles';
-import UserManagement from '@/components/UserManagement';
+import AppLayout from '@/components/AppLayout';
 import { WORLD_CITIES } from '@/data/cities';
-import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X, LogOut, Users } from 'lucide-react';
+import { Eye, Trash2, Pencil, Save, Link, Copy, ImagePlus, X, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const defaultClient: ClientData = { name: '', passengers: 1, phone: '', email: '', notes: '' };
 const defaultTrip: TripData = { origin: '', destination: '', departureDate: '', returnDate: '', tripType: 'Lazer', nights: 0 };
@@ -65,6 +75,10 @@ export default function Index() {
   const [destinationImage, setDestinationImage] = useState<string | undefined>();
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || null));
@@ -90,6 +104,38 @@ export default function Index() {
     const nights = calcNights(trip.departureDate, trip.returnDate);
     setTrip(p => ({ ...p, nights }));
   }, [trip.departureDate, trip.returnDate]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+    const hasData = client.name || services.length > 0 || trip.origin || trip.destination;
+    if (hasData) setHasUnsavedChanges(true);
+  }, [client, services, trip, payment, destinationImage]);
+
+  const handleNavigateAway = (path: string) => {
+    if (hasUnsavedChanges) {
+      setPendingNavigation(path);
+      setShowLeaveDialog(true);
+    } else {
+      navigate(path);
+    }
+  };
+
+  const confirmLeave = () => {
+    setShowLeaveDialog(false);
+    setHasUnsavedChanges(false);
+    if (pendingNavigation) navigate(pendingNavigation);
+  };
+
+  const confirmLeaveAndSave = async () => {
+    await handleSave();
+    setShowLeaveDialog(false);
+    setHasUnsavedChanges(false);
+    if (pendingNavigation) navigate(pendingNavigation);
+  };
 
   const addService = (item: ServiceItem) => {
     setServices(prev => {
@@ -157,7 +203,8 @@ export default function Index() {
       const saved = await saveQuoteToDB(quoteData, quoteId);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
-      toast({ title: 'Orçamento salvo!', description: 'Orçamento salvo no banco de dados com sucesso.' });
+      setHasUnsavedChanges(false);
+      toast({ title: 'Cotação salva!', description: 'Cotação salva com sucesso.' });
     } catch (err) {
       console.error(err);
       toast({ title: 'Erro ao salvar', description: 'Ocorreu um erro. Tente novamente.', variant: 'destructive' });
@@ -221,39 +268,33 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-primary text-primary-foreground">
-        <div className="container mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 gap-2">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
-            <h1 className="text-base sm:text-xl font-bold">Vortex Viagens - Gerador de Cotação</h1>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/quotes')}>
-              <List className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Cotações Salvas</span>
-            </Button>
-            {userEmail === 'thiago@vortexviagens.com.br' && (
-              <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/settings')}>
-                <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Configurações</span>
-              </Button>
-            )}
-            {userEmail === 'thiago@vortexviagens.com.br' && (
-              <>
-                <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/users')}>
-                  <Users className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Usuários</span>
-                </Button>
-                <UserManagement />
-              </>
-            )}
-            <span className="hidden md:inline text-xs text-primary-foreground/70 px-1">{userEmail}</span>
-            <Button variant="ghost" size="icon" className="text-primary-foreground hover:text-foreground hover:bg-muted" title="Sair" onClick={() => supabase.auth.signOut()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+    <AppLayout>
+      <div className="container mx-auto py-6 px-4 max-w-4xl space-y-6">
+        {/* Back button */}
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => handleNavigateAway('/quotes')}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Voltar às Cotações
+          </Button>
+          {quoteId && <span className="text-sm text-muted-foreground">Editando cotação #{shortId}</span>}
         </div>
-      </header>
 
-      <main className="container mx-auto py-6 px-4 max-w-4xl space-y-6">
+        {/* Leave confirmation dialog */}
+        <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deseja salvar antes de sair?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você tem alterações não salvas nesta cotação. Deseja salvar antes de sair?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowLeaveDialog(false)}>Cancelar</AlertDialogCancel>
+              <Button variant="outline" onClick={confirmLeave}>Sair sem salvar</Button>
+              <AlertDialogAction onClick={confirmLeaveAndSave}>Salvar e sair</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {shortId && (
           <div className="flex items-center gap-2 bg-accent/50 border border-accent rounded-lg px-4 py-3">
             <Link className="h-4 w-4 text-primary" />
@@ -612,7 +653,7 @@ export default function Index() {
             </Button>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

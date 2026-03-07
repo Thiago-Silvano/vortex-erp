@@ -21,7 +21,7 @@ export default function Preview() {
   useEffect(() => {
     const state = location.state as any;
     const q = state?.quote as QuoteData | undefined;
-    if (!q) { navigate('/'); return; }
+    if (!q) { navigate('/dashboard'); return; }
     setQuote(q);
     setShortId(state?.shortId);
     setAgency(getAgencySettings());
@@ -79,7 +79,7 @@ export default function Preview() {
       <header className="border-b bg-primary text-primary-foreground">
         <div className="container mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 gap-2">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate('/quotes')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-base sm:text-xl font-bold">Cotação de Viagem</h1>
@@ -97,7 +97,7 @@ export default function Preview() {
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={handleDownload}>
               <Download className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Baixar PDF</span>
             </Button>
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground text-xs sm:text-sm" onClick={() => navigate('/new')}>
               <FilePlus className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Nova Cotação</span>
             </Button>
           </div>

@@ -57,7 +57,7 @@ export default function ResetPassword() {
 
     setSuccess(true);
     toast({ title: 'Senha criada!', description: 'Sua senha foi definida com sucesso.' });
-    setTimeout(() => navigate('/'), 2000);
+    setTimeout(() => navigate('/dashboard'), 2000);
   };
 
   if (!isRecovery) {

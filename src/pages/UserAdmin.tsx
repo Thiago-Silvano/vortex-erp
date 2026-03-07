@@ -105,7 +105,7 @@ export default function UserAdmin() {
           </div>
           <div className="flex items-center gap-2">
             <UserManagement />
-            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted" onClick={() => navigate('/dashboard')}>
               <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
             </Button>
           </div>

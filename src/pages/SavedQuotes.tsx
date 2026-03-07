@@ -4,9 +4,10 @@ import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, FullQuote } from '@/li
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Pencil, Trash2, Eye, ArrowLeft, Copy, Link, ExternalLink, RotateCcw, FileDown, EyeOff } from 'lucide-react';
+import { FileText, Pencil, Trash2, Eye, Copy, Link, ExternalLink, RotateCcw, FileDown, EyeOff, Plus, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuditLogDialog from '@/components/AuditLogDialog';
+import AppLayout from '@/components/AppLayout';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function SavedQuotes() {
   const navigate = useNavigate();
@@ -44,11 +52,11 @@ export default function SavedQuotes() {
   const handleDelete = async (id: string) => {
     await deleteQuoteFromDB(id);
     await loadQuotes();
-    toast({ title: 'Orçamento excluído' });
+    toast({ title: 'Cotação excluída' });
   };
 
   const handleEdit = (quote: FullQuote) => {
-    navigate('/', { state: { editQuote: quote } });
+    navigate('/new', { state: { editQuote: quote } });
   };
 
   const handlePreview = (quote: FullQuote) => {
@@ -66,7 +74,7 @@ export default function SavedQuotes() {
     const dup = await duplicateQuote(id);
     if (dup) {
       await loadQuotes();
-      toast({ title: 'Orçamento duplicado!', description: `Cópia criada com ID: ${dup.shortId}` });
+      toast({ title: 'Cotação duplicada!', description: `Cópia criada com ID: ${dup.shortId}` });
     }
   };
 
@@ -104,8 +112,8 @@ export default function SavedQuotes() {
       createdAt: undefined,
       updatedAt: undefined,
     };
-    navigate('/', { state: { editQuote: reusedQuote } });
-    toast({ title: 'Orçamento reutilizado', description: 'Datas e dados do passageiro foram limpos.' });
+    navigate('/new', { state: { editQuote: reusedQuote } });
+    toast({ title: 'Cotação reutilizada', description: 'Datas e dados do passageiro foram limpos.' });
   };
 
   const handleResetViews = async (id: string) => {
@@ -129,6 +137,33 @@ export default function SavedQuotes() {
     window.open(`/orcamento/${shortId}`, '_blank');
   };
 
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase.from('quotes').update({ status: newStatus }).eq('id', id);
+      if (error) throw error;
+      toast({ title: `Status atualizado para: ${getStatusLabel(newStatus)}` });
+      await loadQuotes();
+    } catch {
+      toast({ title: 'Erro ao atualizar status', variant: 'destructive' });
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'concluido': return 'Concluída';
+      case 'perdido': return 'Perdida';
+      default: return 'Em aberto';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'concluido': return 'text-success';
+      case 'perdido': return 'text-destructive';
+      default: return 'text-accent-foreground';
+    }
+  };
+
   const formatDate = (d?: string) => {
     if (!d) return '-';
     return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -141,18 +176,23 @@ export default function SavedQuotes() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-primary text-primary-foreground">
-        <div className="container mx-auto flex items-center gap-3 py-4 px-4">
-          <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-5 w-5" />
+    <AppLayout>
+      <div className="p-6 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Cotações</h1>
+            <p className="text-muted-foreground text-sm mt-1">{quotes.length} cotação(ões) salva(s)</p>
+          </div>
+          <Button
+            onClick={() => navigate('/new')}
+            className="h-14 w-14 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg"
+            size="icon"
+            title="Nova Cotação"
+          >
+            <Plus className="h-7 w-7" />
           </Button>
-          <FileText className="h-6 w-6" />
-          <h1 className="text-xl font-bold">Cotações Salvas</h1>
         </div>
-      </header>
 
-      <main className="container mx-auto py-6 px-4 max-w-4xl">
         {loading ? (
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-lg">Carregando...</p>
@@ -160,18 +200,34 @@ export default function SavedQuotes() {
         ) : quotes.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-4 opacity-40" />
-            <p className="text-lg">Nenhum orçamento salvo ainda.</p>
-            <Button className="mt-4" onClick={() => navigate('/')}>Criar Novo Orçamento</Button>
+            <p className="text-lg">Nenhuma cotação salva ainda.</p>
+            <Button className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate('/new')}>
+              <Plus className="h-4 w-4 mr-2" /> Criar Nova Cotação
+            </Button>
           </div>
         ) : (
           <div className="space-y-3">
             {quotes.map(q => {
-              const total = q.services.reduce((sum, s) => sum + s.value * s.quantity, 0);
+              const costTotal = q.services.reduce((sum, s) => sum + s.value * s.quantity, 0);
+              const rav = q.payment?.rav || 0;
+              const total = costTotal + rav;
               return (
                 <Card key={q.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4">
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-base truncate">{q.client.name || 'Sem nome'}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-base truncate">{q.client.name || 'Sem nome'}</p>
+                        <Select value={q.status === 'concluido' || q.status === 'perdido' ? q.status : 'active'} onValueChange={(v) => handleStatusChange(q.id, v)}>
+                          <SelectTrigger className={`h-6 w-auto text-xs border-0 bg-transparent px-1 ${getStatusColor(q.status)}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Em aberto</SelectItem>
+                            <SelectItem value="concluido">Concluída</SelectItem>
+                            <SelectItem value="perdido">Perdida</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {q.trip.origin} → {q.trip.destination}
                         {q.trip.departureDate && ` • ${formatTripDate(q.trip.departureDate)}`}
@@ -195,6 +251,11 @@ export default function SavedQuotes() {
                         <p className="text-lg font-bold text-primary">
                           R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
+                        {rav > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            Custo: R$ {costTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + RAV
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-1 flex-wrap">
@@ -213,7 +274,7 @@ export default function SavedQuotes() {
                       <Button variant="ghost" size="icon" title="Duplicar" onClick={() => handleDuplicate(q.id)}>
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" title="Reutilizar orçamento" onClick={() => handleReuse(q)}>
+                      <Button variant="ghost" size="icon" title="Reutilizar cotação" onClick={() => handleReuse(q)}>
                         <RotateCcw className="h-4 w-4" />
                       </Button>
                       {userEmail === 'thiago@vortexviagens.com.br' && (
@@ -227,9 +288,9 @@ export default function SavedQuotes() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
+                            <AlertDialogTitle>Excluir cotação?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Esta ação não pode ser desfeita. O orçamento de "{q.client.name}" será removido permanentemente.
+                              Esta ação não pode ser desfeita. A cotação de "{q.client.name}" será removida permanentemente.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -245,7 +306,7 @@ export default function SavedQuotes() {
             })}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
