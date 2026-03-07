@@ -126,6 +126,9 @@ export default function Dashboard() {
                   </div>
                   <p className="text-2xl font-bold">{card.value}</p>
                   <p className="text-sm opacity-80 mt-1">{card.label}</p>
+                  {'subtitle' in card && card.subtitle && (
+                    <p className="text-xs opacity-60 mt-0.5">{card.subtitle}</p>
+                  )}
                 </CardContent>
               </Card>
             ))}
