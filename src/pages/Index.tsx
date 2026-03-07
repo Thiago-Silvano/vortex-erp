@@ -227,13 +227,15 @@ export default function Index() {
             <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
             <h1 className="text-base sm:text-xl font-bold">Vortex Viagens - Gerador de Cotação</h1>
           </div>
-          <div className="flex gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/quotes')}>
               <List className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Cotações Salvas</span>
             </Button>
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/settings')}>
               <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Configurações</span>
             </Button>
+            {userEmail === 'thiago@vortexviagens.com.br' && <UserManagement />}
+            <span className="hidden md:inline text-xs text-primary-foreground/70 px-1">{userEmail}</span>
             <Button variant="ghost" size="icon" className="text-primary-foreground hover:text-foreground hover:bg-muted" title="Sair" onClick={() => supabase.auth.signOut()}>
               <LogOut className="h-4 w-4" />
             </Button>
