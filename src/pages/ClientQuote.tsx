@@ -135,23 +135,6 @@ function FlightCard({ item }: { item: ServiceItem }) {
     return mins > 0 ? `${hours}h${mins.toString().padStart(2, '0')} total do voo` : `${hours}h total do voo`;
   };
 
-  // Parse connection duration string like "2h30", "1h", "45min", "2h 30min"
-  const parseConnectionDuration = (str: string): number => {
-    if (!str) return 0;
-    const s = str.trim().toLowerCase();
-    let totalMin = 0;
-    const hMatch = s.match(/(\d+)\s*h/);
-    const mMatch = s.match(/(\d+)\s*m/);
-    if (hMatch) totalMin += parseInt(hMatch[1]) * 60;
-    if (mMatch) totalMin += parseInt(mMatch[1]);
-    // If just "2h30" without m
-    if (hMatch && !mMatch) {
-      const afterH = s.split('h')[1]?.trim();
-      if (afterH && /^\d+$/.test(afterH)) totalMin += parseInt(afterH);
-    }
-    return totalMin;
-  };
-
   const idaDuration = calcTotalDuration(idaLegs);
   const voltaDuration = calcTotalDuration(voltaLegs);
 
