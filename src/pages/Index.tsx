@@ -14,7 +14,7 @@ import AutocompleteInput from '@/components/AutocompleteInput';
 import InternalFiles from '@/components/InternalFiles';
 import UserManagement from '@/components/UserManagement';
 import { WORLD_CITIES } from '@/data/cities';
-import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X, LogOut } from 'lucide-react';
+import { Eye, Trash2, Pencil, Settings, FileText, Save, List, Link, Copy, ImagePlus, X, LogOut, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -234,7 +234,14 @@ export default function Index() {
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/settings')}>
               <Settings className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Configurações</span>
             </Button>
-            {userEmail === 'thiago@vortexviagens.com.br' && <UserManagement />}
+            {userEmail === 'thiago@vortexviagens.com.br' && (
+              <>
+                <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-foreground hover:bg-muted text-xs sm:text-sm" onClick={() => navigate('/users')}>
+                  <Users className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Usuários</span>
+                </Button>
+                <UserManagement />
+              </>
+            )}
             <span className="hidden md:inline text-xs text-primary-foreground/70 px-1">{userEmail}</span>
             <Button variant="ghost" size="icon" className="text-primary-foreground hover:text-foreground hover:bg-muted" title="Sair" onClick={() => supabase.auth.signOut()}>
               <LogOut className="h-4 w-4" />

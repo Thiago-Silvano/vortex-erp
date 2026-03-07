@@ -12,6 +12,7 @@ import ClientQuote from "./pages/ClientQuote";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import UserAdmin from "./pages/UserAdmin";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/preview" element={<ProtectedRoute><Preview /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/quotes" element={<ProtectedRoute><SavedQuotes /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><UserAdmin /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -10,7 +10,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    // Verify the caller is thiago@vortexviagens.com.br
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Não autorizado");
 
@@ -18,7 +17,6 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify caller
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -30,9 +28,14 @@ serve(async (req) => {
     const { email } = await req.json();
     if (!email) throw new Error("Email é obrigatório");
 
-    // Use service role to create user with invite
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-    const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email);
+    
+    // Get the origin from the request headers for redirect URL
+    const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/$/, "") || "https://orcamentovortex.lovable.app";
+    
+    const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${origin}/reset-password`,
+    });
 
     if (error) throw error;
 
