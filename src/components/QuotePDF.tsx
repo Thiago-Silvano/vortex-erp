@@ -519,8 +519,8 @@ function FlightServiceCard({ item }: { item: ServiceItem }) {
             <Text style={s.cardValueText}>{formatCurrency(item.value)}</Text>
           </View>
         </View>
-        {renderLegs(idaLegs, "Voo de Ida")}
-        {renderLegs(voltaLegs, "Voo de Volta")}
+        {renderLegs(idaLegs, "Voo de Ida", idaDuration)}
+        {renderLegs(voltaLegs, "Voo de Volta", voltaDuration)}
         {/* Baggage info */}
         {item.baggage && (item.baggage.personalItem > 0 || item.baggage.carryOn > 0 || item.baggage.checkedBag > 0) && (
           <View
