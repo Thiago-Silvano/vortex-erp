@@ -4,6 +4,7 @@ import { getQuoteByShortId, getAgencySettingsFromDB, incrementViewCount, FullQuo
 import { AgencySettings, SERVICE_TYPE_CONFIG, ServiceItem, FlightLeg, PaymentData } from '@/types/quote';
 import { MessageCircle, Plane, Hotel, Car, Shield, Ticket, FileText, MapPin, Calendar, Users, Moon, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import vortexLogo from '@/assets/vortex-logo.png';
+import { getAirportUtcOffset } from '@/data/airport-timezones';
 
 function formatDate(d: string) {
   if (!d) return '';
@@ -93,53 +94,45 @@ function FlightCard({ item }: { item: ServiceItem }) {
   const idaLegs = (item.flightLegs || []).filter(l => l.direction !== 'volta');
   const voltaLegs = (item.flightLegs || []).filter(l => l.direction === 'volta');
 
-  // Calculate total duration for a set of legs (flight time + connection time)
+  // Calculate total duration for a set of legs considering timezone differences
   const calcTotalDuration = (legs: FlightLeg[]): string | null => {
-    let totalMinutes = 0;
-    let hasAnyTime = false;
-
-    for (let i = 0; i < legs.length; i++) {
-      const leg = legs[i];
-      // Calculate flight duration from departure/arrival times
-      if (leg.departureDate && leg.departureTime && leg.arrivalDate && leg.arrivalTime) {
-        const dep = new Date(`${leg.departureDate}T${leg.departureTime}`);
-        const arr = new Date(`${leg.arrivalDate}T${leg.arrivalTime}`);
-        if (!isNaN(dep.getTime()) && !isNaN(arr.getTime())) {
-          totalMinutes += (arr.getTime() - dep.getTime()) / (1000 * 60);
-          hasAnyTime = true;
-        }
-      }
-      // Add connection duration (from previous leg)
-      if (i > 0 && legs[i - 1]?.connectionDuration) {
-        const conn = parseConnectionDuration(legs[i - 1].connectionDuration!);
-        if (conn > 0) {
-          totalMinutes += conn;
-          hasAnyTime = true;
-        }
-      }
+    if (legs.length === 0) return null;
+    
+    const firstLeg = legs[0];
+    const lastLeg = legs[legs.length - 1];
+    
+    if (!firstLeg.departureDate || !firstLeg.departureTime || !lastLeg.arrivalDate || !lastLeg.arrivalTime) {
+      return null;
+    }
+    
+    // Get UTC offsets for origin and destination
+    const originOffset = getAirportUtcOffset(firstLeg.origin);
+    const destOffset = getAirportUtcOffset(lastLeg.destination);
+    
+    const depLocal = new Date(`${firstLeg.departureDate}T${firstLeg.departureTime}`);
+    const arrLocal = new Date(`${lastLeg.arrivalDate}T${lastLeg.arrivalTime}`);
+    
+    if (isNaN(depLocal.getTime()) || isNaN(arrLocal.getTime())) return null;
+    
+    let totalMinutes: number;
+    
+    if (originOffset !== null && destOffset !== null) {
+      // Convert both to UTC then calculate difference
+      const depUtc = depLocal.getTime() + originOffset * 60 * 60 * 1000; // subtract offset to get UTC (local = UTC + offset)
+      const arrUtc = arrLocal.getTime() + destOffset * 60 * 60 * 1000;
+      // Actually: local time = UTC + offset, so UTC = local - offset
+      const depUtcMs = depLocal.getTime() - (originOffset * 60 * 60 * 1000);
+      const arrUtcMs = arrLocal.getTime() - (destOffset * 60 * 60 * 1000);
+      totalMinutes = (arrUtcMs - depUtcMs) / (1000 * 60);
+    } else {
+      // Fallback: no timezone data, use naive calculation
+      totalMinutes = (arrLocal.getTime() - depLocal.getTime()) / (1000 * 60);
     }
 
-    if (!hasAnyTime || totalMinutes <= 0) return null;
+    if (totalMinutes <= 0) return null;
     const hours = Math.floor(totalMinutes / 60);
     const mins = Math.round(totalMinutes % 60);
     return mins > 0 ? `${hours}h${mins.toString().padStart(2, '0')} total do voo` : `${hours}h total do voo`;
-  };
-
-  // Parse connection duration string like "2h30", "1h", "45min", "2h 30min"
-  const parseConnectionDuration = (str: string): number => {
-    if (!str) return 0;
-    const s = str.trim().toLowerCase();
-    let totalMin = 0;
-    const hMatch = s.match(/(\d+)\s*h/);
-    const mMatch = s.match(/(\d+)\s*m/);
-    if (hMatch) totalMin += parseInt(hMatch[1]) * 60;
-    if (mMatch) totalMin += parseInt(mMatch[1]);
-    // If just "2h30" without m
-    if (hMatch && !mMatch) {
-      const afterH = s.split('h')[1]?.trim();
-      if (afterH && /^\d+$/.test(afterH)) totalMin += parseInt(afterH);
-    }
-    return totalMin;
   };
 
   const idaDuration = calcTotalDuration(idaLegs);
