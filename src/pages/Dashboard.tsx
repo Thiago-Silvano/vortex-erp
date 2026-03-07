@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, CheckCircle, TrendingUp, TrendingDown, Plus } from 'lucide-react';
+import { FileText, CheckCircle, TrendingUp, TrendingDown, Plus, DollarSign } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 
 interface DashboardStats {
   openCount: number;
+  openValue: number;
   completedCount: number;
   soldValue: number;
   lostValue: number;
@@ -15,7 +16,7 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<DashboardStats>({ openCount: 0, completedCount: 0, soldValue: 0, lostValue: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ openCount: 0, openValue: 0, completedCount: 0, soldValue: 0, lostValue: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function Dashboard() {
         quoteTotals[s.quote_id] = (quoteTotals[s.quote_id] || 0) + Number(s.value) * s.quantity;
       });
 
-      let openCount = 0, completedCount = 0, soldValue = 0, lostValue = 0;
+      let openCount = 0, openValue = 0, completedCount = 0, soldValue = 0, lostValue = 0;
 
       quotes.forEach(q => {
         const servicesCost = quoteTotals[q.id] || 0;
@@ -51,10 +52,11 @@ export default function Dashboard() {
           lostValue += total;
         } else {
           openCount++;
+          openValue += total;
         }
       });
 
-      setStats({ openCount, completedCount, soldValue, lostValue });
+      setStats({ openCount, openValue, completedCount, soldValue, lostValue });
     } catch (err) {
       console.error(err);
     }
@@ -65,6 +67,7 @@ export default function Dashboard() {
     {
       label: 'Cotações em Aberto',
       value: stats.openCount.toString(),
+      subtitle: `R$ ${stats.openValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       icon: FileText,
       color: 'bg-primary text-primary-foreground',
       iconColor: 'text-primary-foreground/80',
@@ -123,6 +126,9 @@ export default function Dashboard() {
                   </div>
                   <p className="text-2xl font-bold">{card.value}</p>
                   <p className="text-sm opacity-80 mt-1">{card.label}</p>
+                  {'subtitle' in card && card.subtitle && (
+                    <p className="text-xs opacity-60 mt-0.5">{card.subtitle}</p>
+                  )}
                 </CardContent>
               </Card>
             ))}
