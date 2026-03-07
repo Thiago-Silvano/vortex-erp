@@ -6,6 +6,7 @@ import { MessageCircle, Plane, Hotel, Car, Shield, Ticket, FileText, MapPin, Cal
 import vortexLogo from '@/assets/vortex-logo.png';
 import { getAirportUtcOffset } from '@/data/airport-timezones';
 import { getFlightDayOffset } from '@/lib/flight-utils';
+import { formatQuoteValidity } from '@/lib/quote-utils';
 
 function formatDate(d: string) {
   if (!d) return '';
