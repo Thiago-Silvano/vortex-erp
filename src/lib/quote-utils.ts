@@ -1,11 +1,10 @@
 /**
- * Calculate quote validity date (tomorrow at 23:59)
+ * Calculate quote validity date (today at 23:59)
  */
 export function getQuoteValidityDate(): Date {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(23, 59, 0, 0);
-  return tomorrow;
+  const today = new Date();
+  today.setHours(23, 59, 0, 0);
+  return today;
 }
 
 /**
