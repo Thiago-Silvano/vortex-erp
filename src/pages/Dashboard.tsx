@@ -135,31 +135,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-accent" onClick={() => navigate('/quotes')}>
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Ver Cotações</h3>
-                <p className="text-sm text-muted-foreground">Gerenciar todas as cotações</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-accent" onClick={() => navigate('/new')}>
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-accent/20 flex items-center justify-center">
-                <Plus className="h-6 w-6 text-accent-foreground" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Nova Cotação</h3>
-                <p className="text-sm text-muted-foreground">Criar uma nova cotação do zero</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </AppLayout>
   );
