@@ -214,8 +214,36 @@ function AppSidebar() {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
+  const navigate = useNavigate();
   const accessibleCompanies = companies.filter(c => userCompanyIds.includes(c.id));
   const showSelector = isMaster && accessibleCompanies.length > 1;
+
+  const [pendingCompany, setPendingCompany] = useState<typeof activeCompany>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleCompanyChange = (val: string) => {
+    const comp = companies.find(c => c.id === val);
+    if (!comp || comp.id === activeCompany?.id) return;
+    setPendingCompany(comp);
+    setShowConfirm(true);
+  };
+
+  const confirmSwitch = () => {
+    if (pendingCompany) {
+      setActiveCompany(pendingCompany);
+      navigate('/dashboard');
+      toast.success(`Empresa alterada para ${pendingCompany.name}`, {
+        description: 'Os dados exibidos agora são desta empresa.',
+      });
+    }
+    setShowConfirm(false);
+    setPendingCompany(null);
+  };
+
+  const cancelSwitch = () => {
+    setShowConfirm(false);
+    setPendingCompany(null);
+  };
 
   return (
     <SidebarProvider>
@@ -229,10 +257,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {showSelector && (
               <Select
                 value={activeCompany?.id || ''}
-                onValueChange={(val) => {
-                  const comp = companies.find(c => c.id === val);
-                  if (comp) setActiveCompany(comp);
-                }}
+                onValueChange={handleCompanyChange}
               >
                 <SelectTrigger className="w-[200px] h-9 text-sm">
                   <Building className="h-4 w-4 mr-2 shrink-0" />
@@ -255,6 +280,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
+
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Trocar de empresa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a mudar para <strong>{pendingCompany?.name}</strong>.
+              Qualquer cadastro, edição ou venda em andamento será perdido.
+              Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelSwitch}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSwitch}>Sim, trocar empresa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 }
