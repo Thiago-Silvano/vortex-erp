@@ -157,7 +157,7 @@ function AppSidebar() {
         <div className="p-4 flex items-center gap-3 border-b border-sidebar-border">
           {!collapsed ? (
             <div>
-              <h2 className="font-bold text-base text-sidebar-primary">Vortex Viagens</h2>
+              <h2 className="font-bold text-base text-sidebar-primary">GRUPO VORTEX</h2>
               <p className="text-xs text-sidebar-foreground/60">Gerenciador</p>
             </div>
           ) : (
