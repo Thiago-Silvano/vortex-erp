@@ -127,6 +127,7 @@ export default function UserAdmin() {
     if (perm) {
       setPermRole(perm.user_role);
       setPermChecks(perm.permissions);
+      setPermEmpresaIds(perm.empresa_ids || []);
     } else {
       // Default for master email
       if (user.email === 'thiago@vortexviagens.com.br') {
@@ -134,9 +135,11 @@ export default function UserAdmin() {
         const all: Record<string, boolean> = {};
         ALL_PERMISSIONS.forEach(g => g.keys.forEach(k => { all[k.key] = true; }));
         setPermChecks(all);
+        setPermEmpresaIds(companies.map(c => c.id));
       } else {
         setPermRole('vendedor');
         setPermChecks({ clients_view: true, clients_create: true, clients_edit: true, quotes_view: true, quotes_create: true, quotes_convert: true, sales_view: true, sales_create: true, reservations_view: true });
+        setPermEmpresaIds(companies.length > 0 ? [companies[0].id] : []);
       }
     }
   };
