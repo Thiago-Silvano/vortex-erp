@@ -332,7 +332,7 @@ export default function CalendarPage() {
                   return (
                     <div
                       key={i}
-                      className={`relative min-h-[100px] md:min-h-[120px] border-b border-r p-1.5 flex flex-col transition-colors ${
+                      className={`group/day relative min-h-[100px] md:min-h-[120px] border-b border-r p-1.5 flex flex-col transition-colors ${
                         isPast ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-muted/20'
                       } ${!isCurrentMonth ? 'bg-muted/30' : ''} ${isToday ? 'bg-primary/5' : ''}`}
                       onClick={() => !isPast && openNewEventForDate(dateKey)}
@@ -361,14 +361,35 @@ export default function CalendarPage() {
                         ))}
                         {hiddenCount > 0 && (
                           <div
-                            className="text-[10px] text-muted-foreground font-medium px-1.5 cursor-pointer hover:text-foreground"
-                            onClick={e => { e.stopPropagation(); }}
-                            title={dayEvents.slice(MAX_VISIBLE_EVENTS).map(ev => ev.title).join(', ')}
+                            className="text-[10px] text-muted-foreground font-medium px-1.5"
+                            onClick={e => e.stopPropagation()}
                           >
                             +{hiddenCount} mais
                           </div>
                         )}
                       </div>
+                      {/* Hover expand overlay for overflow */}
+                      {hiddenCount > 0 && (
+                        <div className="hidden group-hover/day:block absolute top-8 left-0 right-0 bg-card border rounded-md shadow-lg p-2 z-40 space-y-0.5"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {dayEvents.map(ev => (
+                            <div
+                              key={ev.id}
+                              className="flex items-center gap-1 bg-primary/10 text-primary rounded px-1.5 py-1 text-xs leading-tight cursor-pointer hover:bg-primary/20"
+                              onClick={() => openEditEvent(ev)}
+                            >
+                              {ev.event_time && (
+                                <span className="font-semibold shrink-0">{ev.event_time.slice(0, 5)}</span>
+                              )}
+                              <span className="break-words">{ev.title}</span>
+                              {isFuture && (
+                                <span className="shrink-0 text-[10px] opacity-70 ml-auto">{ev.passengers || 1}p</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
