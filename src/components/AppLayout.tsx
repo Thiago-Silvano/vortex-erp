@@ -33,7 +33,11 @@ function AppSidebar() {
 
   const menuItems = [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+    { title: 'Clientes', url: '/clients', icon: UserRound },
+    { title: 'Fornecedores', url: '/suppliers', icon: Building2 },
     { title: 'Cotações', url: '/quotes', icon: FileText },
+    { title: 'Vendas', url: '/sales', icon: ShoppingCart },
+    { title: 'Reservas', url: '/reservations', icon: BookOpen },
     { title: 'Calendário', url: '/calendar', icon: CalendarDays },
     ...(isAdmin ? [
       { title: 'Configurações', url: '/settings', icon: Settings },
