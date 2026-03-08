@@ -219,7 +219,7 @@ export default function Index() {
     setSaving(true);
     try {
       const quoteData: QuoteData = { client, trip, services, payment, destinationImageUrl: destinationImage };
-      const saved = await saveQuoteToDB(quoteData, quoteId);
+      const saved = await saveQuoteToDB(quoteData, quoteId, activeCompany?.id);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
       const link = `${window.location.origin}/orcamento/${saved.shortId}`;
