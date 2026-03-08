@@ -502,10 +502,12 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
           <Label>Imagens adicionais</Label>
           <div className="mt-2 flex gap-2 flex-wrap items-center">
             {extraImages.map((img, idx) => (
-              <div key={idx} className="relative inline-block">
-                <img src={img} alt={`Extra ${idx + 1}`} className="h-16 w-16 rounded object-cover border" />
-                <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => removeExtraImage(idx)}>
-                  <X className="h-3 w-3" />
+              <div key={idx} className="flex items-center gap-1">
+                <a href={img} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">
+                  📷 Img {idx + 1}
+                </a>
+                <Button variant="destructive" size="icon" className="h-4 w-4" onClick={() => removeExtraImage(idx)}>
+                  <X className="h-2 w-2" />
                 </Button>
               </div>
             ))}

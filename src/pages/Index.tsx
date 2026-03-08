@@ -470,7 +470,7 @@ export default function Index() {
                 <ServiceItemForm key={s.id} editItem={s} onAdd={addService} onCancel={() => setEditingId(null)} tripOrigin={trip.origin} tripDestination={trip.destination} />
               ) : (
                 <div key={s.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
-                  {s.imageBase64 && <img src={s.imageBase64} alt="" className="h-12 w-12 rounded object-cover" />}
+                  {s.imageBase64 && <a href={s.imageBase64} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">📷</a>}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">
                       {SERVICE_TYPE_CONFIG[s.type].icon} {s.title}
