@@ -36,6 +36,13 @@ import ReportProducts from "./pages/reports/ReportProducts";
 import ReportCheckins from "./pages/reports/ReportCheckins";
 import ReportProfit from "./pages/reports/ReportProfit";
 
+// Vistos pages
+import VistosDashboard from "./pages/vistos/VistosDashboard";
+import VistosProductsPage from "./pages/vistos/VistosProductsPage";
+import VistosSalesPage from "./pages/vistos/VistosSalesPage";
+import VistosNewSalePage from "./pages/vistos/VistosNewSalePage";
+import VistosProductionPage from "./pages/vistos/VistosProductionPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -78,6 +85,14 @@ const App = () => (
           <Route path="/reports/products" element={<ProtectedRoute><ReportProducts /></ProtectedRoute>} />
           <Route path="/reports/checkins" element={<ProtectedRoute><ReportCheckins /></ProtectedRoute>} />
           <Route path="/reports/profit" element={<ProtectedRoute><ReportProfit /></ProtectedRoute>} />
+
+          {/* Vistos routes */}
+          <Route path="/vistos/dashboard" element={<ProtectedRoute><VistosDashboard /></ProtectedRoute>} />
+          <Route path="/vistos/products" element={<ProtectedRoute><VistosProductsPage /></ProtectedRoute>} />
+          <Route path="/vistos/sales" element={<ProtectedRoute><VistosSalesPage /></ProtectedRoute>} />
+          <Route path="/vistos/sales/new" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
+          <Route path="/vistos/sales/edit" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
+          <Route path="/vistos/production" element={<ProtectedRoute><VistosProductionPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

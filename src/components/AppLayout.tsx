@@ -3,24 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import React from 'react';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, useSidebar,
 } from '@/components/ui/sidebar';
 import { NavLink } from '@/components/NavLink';
 import {
   LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays,
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
-  Plane, Award, ChevronDown, Building,
+  Plane, Award, ChevronDown, Building, Cog, Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -43,6 +34,7 @@ function AppSidebar() {
   const [userRole, setUserRole] = useState<string>('vendedor');
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [permLoaded, setPermLoaded] = useState(false);
+  const { activeCompany } = useCompany();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -58,26 +50,20 @@ function AppSidebar() {
         setUserRole(data.user_role);
         setPermissions(data.permissions || {});
       } else {
-        // If no permissions record, check if admin email
-        if (userEmail === 'thiago@vortexviagens.com.br') {
-          setUserRole('master');
-        }
+        if (userEmail === 'thiago@vortexviagens.com.br') setUserRole('master');
       }
       setPermLoaded(true);
     });
   }, [userId, userEmail]);
 
   const isAdmin = userRole === 'master' || userEmail === 'thiago@vortexviagens.com.br';
-
-  const hasPerm = (key?: string) => {
-    if (!key) return true;
-    if (isAdmin) return true;
-    return !!permissions[key];
-  };
-
+  const hasPerm = (key?: string) => !key || isAdmin || !!permissions[key];
   const filterItems = (items: MenuItem[]) => items.filter(i => hasPerm(i.permKey));
 
-  const mainItems: MenuItem[] = [
+  const isVistos = activeCompany?.slug === 'vortex-vistos';
+
+  // --- Viagens menu ---
+  const viagensMain: MenuItem[] = [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
     { title: 'Clientes', url: '/clients', icon: UserRound, permKey: 'clients_view' },
     { title: 'Fornecedores', url: '/suppliers', icon: Building2, permKey: 'suppliers_view' },
@@ -87,14 +73,14 @@ function AppSidebar() {
     { title: 'Calendário', url: '/calendar', icon: CalendarDays },
   ];
 
-  const financialItems: MenuItem[] = [
+  const viagensFinancial: MenuItem[] = [
     { title: 'Contas a Receber', url: '/financial/receivable', icon: ArrowDownCircle, permKey: 'financial_receivable' },
     { title: 'Contas a Pagar', url: '/financial/payable', icon: ArrowUpCircle, permKey: 'financial_payable' },
     { title: 'Fluxo de Caixa', url: '/financial/cashflow', icon: BarChart3, permKey: 'financial_cashflow' },
     { title: 'Centros de Custo', url: '/financial/cost-centers', icon: Tag, permKey: 'financial_cashflow' },
   ];
 
-  const reportItems: MenuItem[] = [
+  const viagensReports: MenuItem[] = [
     { title: 'Dashboard Geral', url: '/reports/dashboard', icon: PieChart, permKey: 'reports_dashboard' },
     { title: 'Relatório de Vendas', url: '/reports/sales', icon: ShoppingCart, permKey: 'reports_sales' },
     { title: 'Relatório Financeiro', url: '/reports/financial', icon: DollarSign, permKey: 'reports_financial' },
@@ -106,6 +92,21 @@ function AppSidebar() {
     { title: 'Relatório de Check-ins', url: '/reports/checkins', icon: Plane, permKey: 'reports_sales' },
     { title: 'Lucro por Venda', url: '/reports/profit', icon: Award, permKey: 'reports_financial' },
   ];
+
+  // --- Vistos menu ---
+  const vistosMain: MenuItem[] = [
+    { title: 'Dashboard', url: '/vistos/dashboard', icon: LayoutDashboard },
+    { title: 'Clientes', url: '/clients', icon: UserRound, permKey: 'clients_view' },
+    { title: 'Fornecedores', url: '/suppliers', icon: Building2, permKey: 'suppliers_view' },
+    { title: 'Vendas', url: '/vistos/sales', icon: ShoppingCart, permKey: 'sales_view' },
+    { title: 'Produtos', url: '/vistos/products', icon: Package },
+    { title: 'Produção', url: '/vistos/production', icon: Cog },
+    { title: 'Calendário', url: '/calendar', icon: CalendarDays },
+  ];
+
+  const mainItems = isVistos ? vistosMain : viagensMain;
+  const financialItems = isVistos ? viagensFinancial : viagensFinancial; // shared for now
+  const reportItems = isVistos ? viagensReports : viagensReports; // shared for now
 
   const adminItems: MenuItem[] = [
     { title: 'Configurações', url: '/settings', icon: Settings, permKey: 'settings_access' },
@@ -121,7 +122,7 @@ function AppSidebar() {
   const renderMenuItems = (items: MenuItem[]) => (
     <SidebarMenu>
       {items.map((item) => (
-        <SidebarMenuItem key={item.title}>
+        <SidebarMenuItem key={item.title + item.url}>
           <SidebarMenuButton asChild>
             <NavLink to={item.url} end className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
               <item.icon className="h-5 w-5 shrink-0" />
@@ -159,7 +160,9 @@ function AppSidebar() {
         <div className="p-4 flex items-center gap-3 border-b border-sidebar-border">
           {!collapsed ? (
             <div>
-              <h2 className="font-bold text-base text-sidebar-primary">GRUPO VORTEX</h2>
+              <h2 className="font-bold text-base text-sidebar-primary">
+                {isVistos ? 'VORTEX VISTOS' : 'VORTEX VIAGENS'}
+              </h2>
               <p className="text-xs text-sidebar-foreground/60">Gerenciador</p>
             </div>
           ) : (
