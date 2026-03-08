@@ -62,15 +62,17 @@ export default function SavedQuotes() {
     navigate('/new', { state: { editQuote: fullQuote || quote } });
   };
 
-  const handlePreview = (quote: FullQuote) => {
+  const handlePreview = async (quote: FullQuote) => {
+    const fullQuote = await getQuoteById(quote.id);
+    const q = fullQuote || quote;
     const quoteData = {
-      id: quote.id,
-      client: quote.client,
-      trip: quote.trip,
-      services: quote.services,
-      destinationImageUrl: quote.destinationImageUrl,
+      id: q.id,
+      client: q.client,
+      trip: q.trip,
+      services: q.services,
+      destinationImageUrl: q.destinationImageUrl,
     };
-    navigate('/preview', { state: { quote: quoteData, shortId: quote.shortId } });
+    navigate('/preview', { state: { quote: quoteData, shortId: q.shortId } });
   };
 
   const handleDuplicate = async (id: string) => {
