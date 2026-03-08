@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { QuoteData, ClientData, TripData, ServiceItem, SERVICE_TYPE_CONFIG, PaymentData } from '@/types/quote';
 import { getAgencySettings } from '@/lib/storage';
 import { saveQuoteToDB, uploadImage } from '@/lib/supabase-storage';
+import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
