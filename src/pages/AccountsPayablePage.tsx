@@ -301,7 +301,7 @@ export default function AccountsPayablePage() {
         </Dialog>
 
         <Dialog open={manualDialog} onOpenChange={setManualDialog}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Novo Lançamento Manual</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
