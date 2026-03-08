@@ -209,7 +209,7 @@ export default function NewSalePage() {
     const { data: { user } } = await supabase.auth.getUser();
     const userEmail = user?.email || '';
 
-    const salePayload = {
+    const salePayload: any = {
       quote_id: quoteId || null,
       client_name: clientName,
       sale_date: saleDate,
@@ -229,6 +229,7 @@ export default function NewSalePage() {
       status: 'active',
       created_by: userEmail,
       updated_by: userEmail,
+      empresa_id: activeCompany?.id || null,
     };
 
     let saleId = editSaleId;
