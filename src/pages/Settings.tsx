@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 import { AgencySettings } from '@/types/quote';
 import { getAgencySettings, saveAgencySettings, fileToBase64 } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ interface CardRate {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { activeCompany } = useCompany();
   const [settings, setSettings] = useState<AgencySettings>(getAgencySettings());
   const [ecRates, setEcRates] = useState<CardRate[]>([]);
   const [linkRates, setLinkRates] = useState<CardRate[]>([]);
@@ -45,10 +47,12 @@ export default function Settings() {
 
   useEffect(() => {
     loadRates();
-  }, []);
+  }, [activeCompany]);
 
   const loadRates = async () => {
-    const { data } = await supabase.from('card_rates').select('*').order('installments') as any;
+    let query = supabase.from('card_rates').select('*').order('installments');
+    if (activeCompany) query = query.eq('empresa_id', activeCompany.id) as any;
+    const { data } = await query as any;
     if (data && data.length > 0) {
       const ec = data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate), label: r.installments === 0 ? 'Débito' : undefined }));
       const link = data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) }));
@@ -76,12 +80,15 @@ export default function Settings() {
   const handleSave = async () => {
     saveAgencySettings(settings);
 
-    // Delete existing rates and insert new ones
-    await supabase.from('card_rates').delete().neq('id', '00000000-0000-0000-0000-000000000000') as any;
+    // Delete existing rates for this company and insert new ones
+    let deleteQuery = supabase.from('card_rates').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (activeCompany) deleteQuery = deleteQuery.eq('empresa_id', activeCompany.id) as any;
+    await deleteQuery as any;
     
+    const empresaId = activeCompany?.id || null;
     const allRates = [
-      ...ecRates.map(r => ({ payment_type: 'ec', installments: r.installments, rate: r.rate })),
-      ...linkRates.map(r => ({ payment_type: 'link', installments: r.installments, rate: r.rate })),
+      ...ecRates.map(r => ({ payment_type: 'ec', installments: r.installments, rate: r.rate, empresa_id: empresaId })),
+      ...linkRates.map(r => ({ payment_type: 'link', installments: r.installments, rate: r.rate, empresa_id: empresaId })),
     ];
     
     await supabase.from('card_rates').insert(allRates as any);
