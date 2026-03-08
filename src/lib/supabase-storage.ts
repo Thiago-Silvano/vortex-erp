@@ -287,7 +287,8 @@ export async function getAuditLog(quoteId: string) {
 
 export async function saveQuoteToDB(
   quoteData: QuoteData & { destinationImageUrl?: string },
-  existingId?: string
+  existingId?: string,
+  empresaId?: string
 ): Promise<FullQuote> {
   const userEmail = await getCurrentUserEmail();
   
