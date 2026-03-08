@@ -644,6 +644,62 @@ export type Database = {
           },
         ]
       }
+      sale_passengers: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          document_expiry: string | null
+          document_number: string
+          document_type: string
+          email: string | null
+          first_name: string
+          id: string
+          is_main: boolean
+          last_name: string
+          phone: string | null
+          sale_id: string
+          sort_order: number
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          document_expiry?: string | null
+          document_number?: string
+          document_type?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          is_main?: boolean
+          last_name?: string
+          phone?: string | null
+          sale_id: string
+          sort_order?: number
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          document_expiry?: string | null
+          document_number?: string
+          document_type?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          is_main?: boolean
+          last_name?: string
+          phone?: string | null
+          sale_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_passengers_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sale_suppliers: {
         Row: {
           created_at: string
