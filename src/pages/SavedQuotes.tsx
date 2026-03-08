@@ -44,7 +44,7 @@ export default function SavedQuotes() {
 
   const loadQuotes = async () => {
     setLoading(true);
-    const data = await getAllQuotes();
+    const data = await getAllQuotes(activeCompany?.id);
     setQuotes(data);
     setLoading(false);
   };
