@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 interface CardRate {
   installments: number;
   rate: number;
+  label?: string;
 }
 
 export default function Settings() {
@@ -24,6 +25,7 @@ export default function Settings() {
   const [linkRates, setLinkRates] = useState<CardRate[]>([]);
 
   const defaultEcRates: CardRate[] = [
+    { installments: 0, rate: 1.39, label: 'Débito' },
     { installments: 1, rate: 0.79 }, { installments: 2, rate: 1.80 }, { installments: 3, rate: 1.85 },
     { installments: 4, rate: 2.10 }, { installments: 5, rate: 2.35 }, { installments: 6, rate: 2.60 },
     { installments: 7, rate: 2.90 }, { installments: 8, rate: 3.10 }, { installments: 9, rate: 3.30 },
@@ -48,7 +50,7 @@ export default function Settings() {
   const loadRates = async () => {
     const { data } = await supabase.from('card_rates').select('*').order('installments') as any;
     if (data && data.length > 0) {
-      const ec = data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) }));
+      const ec = data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate), label: r.installments === 0 ? 'Débito' : undefined }));
       const link = data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) }));
       setEcRates(ec.length > 0 ? ec : defaultEcRates);
       setLinkRates(link.length > 0 ? link : defaultLinkRates);
@@ -100,8 +102,8 @@ export default function Settings() {
           </TableHeader>
           <TableBody>
             {rates.map(r => (
-              <TableRow key={r.installments}>
-                <TableCell className="font-medium">{r.installments}x</TableCell>
+              <TableRow key={`${type}-${r.installments}-${r.label || ''}`}>
+                <TableCell className="font-medium">{r.label || `${r.installments}x`}</TableCell>
                 <TableCell>
                   <Input
                     type="number"
