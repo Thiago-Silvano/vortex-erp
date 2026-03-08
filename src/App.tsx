@@ -35,6 +35,8 @@ import ReportCostCenters from "./pages/reports/ReportCostCenters";
 import ReportProducts from "./pages/reports/ReportProducts";
 import ReportCheckins from "./pages/reports/ReportCheckins";
 import ReportProfit from "./pages/reports/ReportProfit";
+import SellersPage from "./pages/SellersPage";
+import CommissionsPage from "./pages/CommissionsPage";
 
 // Vistos pages
 import VistosDashboard from "./pages/vistos/VistosDashboard";
