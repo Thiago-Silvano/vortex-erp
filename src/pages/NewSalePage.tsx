@@ -68,6 +68,8 @@ export default function NewSalePage() {
   const [feeRate, setFeeRate] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
+  const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
+  const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
 
   const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
   const [linkRates, setLinkRates] = useState<CardRateEntry[]>([]);
