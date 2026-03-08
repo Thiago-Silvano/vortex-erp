@@ -177,9 +177,9 @@ export default function UserAdmin() {
   const getRoleBadge = (userId: string) => {
     const perm = permissions[userId];
     if (!perm) return <Badge variant="outline">Sem perfil</Badge>;
-    return perm.user_role === 'master' 
-      ? <Badge className="bg-primary">Master</Badge> 
-      : <Badge variant="secondary">Vendedor</Badge>;
+    if (perm.user_role === 'master') return <Badge className="bg-primary">Master</Badge>;
+    if (perm.user_role === 'operacional') return <Badge className="bg-orange-500 text-white">Operacional</Badge>;
+    return <Badge variant="secondary">Vendedor</Badge>;
   };
 
   return (
