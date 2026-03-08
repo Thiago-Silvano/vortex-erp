@@ -32,6 +32,7 @@ interface Payable {
 
 interface SupplierOpt { id: string; name: string; }
 interface CostCenter { id: string; name: string; }
+interface InstallmentRow { due_date: string; amount: number; }
 
 export default function AccountsPayablePage() {
   const [items, setItems] = useState<Payable[]>([]);
@@ -55,6 +56,7 @@ export default function AccountsPayablePage() {
   const [manualDueDate, setManualDueDate] = useState('');
   const [manualInstallments, setManualInstallments] = useState(1);
   const [manualIsInstallment, setManualIsInstallment] = useState(false);
+  const [installmentRows, setInstallmentRows] = useState<InstallmentRow[]>([]);
 
   const fetch_ = async () => {
     const { data } = await supabase.from('accounts_payable').select('*').order('due_date');
@@ -66,6 +68,26 @@ export default function AccountsPayablePage() {
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setSuppliers(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
   }, []);
+
+  const generateInstallmentRows = (count: number, total: number, baseDate: string) => {
+    const perInstallment = total / count;
+    const rows: InstallmentRow[] = [];
+    for (let i = 0; i < count; i++) {
+      const dueDate = baseDate ? new Date(baseDate + 'T12:00:00') : new Date();
+      if (i > 0) dueDate.setMonth(dueDate.getMonth() + i);
+      rows.push({
+        due_date: format(dueDate, 'yyyy-MM-dd'),
+        amount: Math.round(perInstallment * 100) / 100,
+      });
+    }
+    return rows;
+  };
+
+  useEffect(() => {
+    if (manualIsInstallment && manualInstallments >= 2) {
+      setInstallmentRows(generateInstallmentRows(manualInstallments, manualAmount, manualDueDate));
+    }
+  }, [manualIsInstallment, manualInstallments, manualAmount, manualDueDate]);
 
   const filtered = items.filter(r => {
     if (filterStatus !== 'all' && r.status !== filterStatus) return false;
@@ -99,29 +121,44 @@ export default function AccountsPayablePage() {
     if (!manualCostCenter) { toast.error('Centro de custo é obrigatório'); return; }
     if (manualAmount <= 0) { toast.error('Valor deve ser maior que zero'); return; }
 
-    const count = manualIsInstallment ? manualInstallments : 1;
-    const perInstallment = manualAmount / count;
     const records = [];
-    for (let i = 1; i <= count; i++) {
-      const dueDate = manualDueDate ? new Date(manualDueDate + 'T12:00:00') : new Date();
-      if (i > 1) dueDate.setMonth(dueDate.getMonth() + (i - 1));
+    if (manualIsInstallment && installmentRows.length >= 2) {
+      for (let i = 0; i < installmentRows.length; i++) {
+        records.push({
+          supplier_id: manualSupplierId,
+          description: manualDescription,
+          cost_center_id: manualCostCenter,
+          amount: installmentRows[i].amount,
+          due_date: installmentRows[i].due_date,
+          installment_number: i + 1,
+          total_installments: installmentRows.length,
+          status: 'open',
+          origin_type: 'manual',
+        });
+      }
+    } else {
       records.push({
         supplier_id: manualSupplierId,
         description: manualDescription,
         cost_center_id: manualCostCenter,
-        amount: perInstallment,
-        due_date: format(dueDate, 'yyyy-MM-dd'),
-        installment_number: i,
-        total_installments: count,
+        amount: manualAmount,
+        due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'),
+        installment_number: 1,
+        total_installments: 1,
         status: 'open',
         origin_type: 'manual',
       });
     }
+
     await supabase.from('accounts_payable').insert(records);
-    toast.success(`${count} parcela(s) criada(s)!`);
+    toast.success(`${records.length} parcela(s) criada(s)!`);
     setManualDialog(false);
-    setManualSupplierId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter('');
+    setManualSupplierId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
     fetch_();
+  };
+
+  const updateInstallmentRow = (index: number, field: keyof InstallmentRow, value: string | number) => {
+    setInstallmentRows(prev => prev.map((row, i) => i === index ? { ...row, [field]: value } : row));
   };
 
   return (
@@ -221,7 +258,7 @@ export default function AccountsPayablePage() {
 
         {/* Manual entry dialog */}
         <Dialog open={manualDialog} onOpenChange={setManualDialog}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Novo Lançamento Manual</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
@@ -262,10 +299,41 @@ export default function AccountsPayablePage() {
                 {manualIsInstallment && (
                   <div className="flex items-center gap-2">
                     <Label className="text-sm">Parcelas:</Label>
-                    <Input type="number" min={2} max={24} className="w-20" value={manualInstallments} onChange={e => setManualInstallments(parseInt(e.target.value) || 1)} />
+                    <Input type="number" min={2} max={24} className="w-20" value={manualInstallments} onChange={e => setManualInstallments(parseInt(e.target.value) || 2)} />
                   </div>
                 )}
               </div>
+
+              {/* Installment table */}
+              {manualIsInstallment && installmentRows.length >= 2 && (
+                <Card>
+                  <CardContent className="p-3">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">Parcela</TableHead>
+                          <TableHead>Vencimento</TableHead>
+                          <TableHead>Valor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {installmentRows.map((row, i) => (
+                          <TableRow key={i}>
+                            <TableCell className="font-medium">{i + 1}ª</TableCell>
+                            <TableCell>
+                              <Input type="date" value={row.due_date} onChange={e => updateInstallmentRow(i, 'due_date', e.target.value)} className="w-40" />
+                            </TableCell>
+                            <TableCell>
+                              <Input type="number" step="0.01" value={row.amount} onChange={e => updateInstallmentRow(i, 'amount', parseFloat(e.target.value) || 0)} className="w-32" />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setManualDialog(false)}>Cancelar</Button>
                 <Button onClick={handleManualSave}>Salvar</Button>

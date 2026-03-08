@@ -11,7 +11,7 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { maskPhone, maskCnpj, unmask } from '@/lib/masks';
+import { maskPhone, maskCnpj, unmask, validateEmail } from '@/lib/masks';
 
 interface Supplier {
   id: string;
@@ -49,6 +49,7 @@ export default function SuppliersPage() {
   const [form, setForm] = useState<Omit<Supplier, 'id'>>(emptySupplier());
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [cnpjLoading, setCnpjLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   const fetchSuppliers = async () => {
     const { data } = await supabase.from('suppliers').select('*').order('name');
@@ -222,7 +223,18 @@ export default function SuppliersPage() {
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+                  <Input
+                    type="email"
+                    value={form.email}
+                    onChange={e => {
+                      const lower = e.target.value.toLowerCase();
+                      setForm(p => ({ ...p, email: lower }));
+                      setEmailError(lower && !validateEmail(lower) ? 'Email inválido' : '');
+                    }}
+                    placeholder="exemplo@email.com"
+                    className={emailError ? 'border-destructive' : ''}
+                  />
+                  {emailError && <p className="text-xs text-destructive mt-1">{emailError}</p>}
                 </div>
                 <div>
                   <Label>Telefone</Label>

@@ -30,10 +30,13 @@ interface Receivable {
   origin_type: string;
 }
 
+interface ClientOpt { id: string; full_name: string; }
 interface CostCenter { id: string; name: string; }
+interface InstallmentRow { due_date: string; amount: number; }
 
 export default function AccountsReceivablePage() {
   const [items, setItems] = useState<Receivable[]>([]);
+  const [clients, setClients] = useState<ClientOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [filterMonth, setFilterMonth] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -49,13 +52,14 @@ export default function AccountsReceivablePage() {
 
   // Manual entry dialog
   const [manualDialog, setManualDialog] = useState(false);
-  const [manualClientName, setManualClientName] = useState('');
+  const [manualClientId, setManualClientId] = useState('');
   const [manualDescription, setManualDescription] = useState('');
   const [manualCostCenter, setManualCostCenter] = useState('');
   const [manualAmount, setManualAmount] = useState(0);
   const [manualDueDate, setManualDueDate] = useState('');
   const [manualInstallments, setManualInstallments] = useState(1);
   const [manualIsInstallment, setManualIsInstallment] = useState(false);
+  const [installmentRows, setInstallmentRows] = useState<InstallmentRow[]>([]);
 
   const fetch_ = async () => {
     const { data } = await supabase.from('receivables').select('*').order('due_date');
@@ -64,9 +68,32 @@ export default function AccountsReceivablePage() {
 
   useEffect(() => {
     fetch_();
+    supabase.from('clients').select('id, full_name').order('full_name')
+      .then(({ data }) => { if (data) setClients(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name')
       .then(({ data }) => { if (data) setCostCenters(data); });
   }, []);
+
+  // Generate installment rows when count or total amount changes
+  const generateInstallmentRows = (count: number, total: number, baseDate: string) => {
+    const perInstallment = total / count;
+    const rows: InstallmentRow[] = [];
+    for (let i = 0; i < count; i++) {
+      const dueDate = baseDate ? new Date(baseDate + 'T12:00:00') : new Date();
+      if (i > 0) dueDate.setMonth(dueDate.getMonth() + i);
+      rows.push({
+        due_date: format(dueDate, 'yyyy-MM-dd'),
+        amount: Math.round(perInstallment * 100) / 100,
+      });
+    }
+    return rows;
+  };
+
+  useEffect(() => {
+    if (manualIsInstallment && manualInstallments >= 2) {
+      setInstallmentRows(generateInstallmentRows(manualInstallments, manualAmount, manualDueDate));
+    }
+  }, [manualIsInstallment, manualInstallments, manualAmount, manualDueDate]);
 
   const filtered = items.filter(r => {
     if (filterStatus !== 'all' && r.status !== filterStatus) return false;
@@ -100,32 +127,48 @@ export default function AccountsReceivablePage() {
     fetch_();
   };
 
+  const selectedClientName = clients.find(c => c.id === manualClientId)?.full_name || '';
+
   const handleManualSave = async () => {
-    if (!manualClientName.trim()) { toast.error('Cliente é obrigatório'); return; }
+    if (!manualClientId) { toast.error('Cliente é obrigatório'); return; }
     if (manualAmount <= 0) { toast.error('Valor deve ser maior que zero'); return; }
 
-    const count = manualIsInstallment ? manualInstallments : 1;
-    const perInstallment = manualAmount / count;
     const records = [];
-    for (let i = 1; i <= count; i++) {
-      const dueDate = manualDueDate ? new Date(manualDueDate + 'T12:00:00') : new Date();
-      if (i > 1) dueDate.setMonth(dueDate.getMonth() + (i - 1));
+    if (manualIsInstallment && installmentRows.length >= 2) {
+      for (let i = 0; i < installmentRows.length; i++) {
+        records.push({
+          client_name: selectedClientName,
+          description: manualDescription,
+          cost_center_id: manualCostCenter || null,
+          amount: installmentRows[i].amount,
+          due_date: installmentRows[i].due_date,
+          installment_number: i + 1,
+          status: 'pending',
+          origin_type: 'manual',
+        });
+      }
+    } else {
       records.push({
-        client_name: manualClientName,
+        client_name: selectedClientName,
         description: manualDescription,
         cost_center_id: manualCostCenter || null,
-        amount: perInstallment,
-        due_date: format(dueDate, 'yyyy-MM-dd'),
-        installment_number: i,
+        amount: manualAmount,
+        due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'),
+        installment_number: 1,
         status: 'pending',
         origin_type: 'manual',
       });
     }
+
     await supabase.from('receivables').insert(records as any);
-    toast.success(`${count} parcela(s) criada(s)!`);
+    toast.success(`${records.length} parcela(s) criada(s)!`);
     setManualDialog(false);
-    setManualClientName(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter('');
+    setManualClientId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
     fetch_();
+  };
+
+  const updateInstallmentRow = (index: number, field: keyof InstallmentRow, value: string | number) => {
+    setInstallmentRows(prev => prev.map((row, i) => i === index ? { ...row, [field]: value } : row));
   };
 
   return (
@@ -224,12 +267,17 @@ export default function AccountsReceivablePage() {
 
         {/* Manual entry dialog */}
         <Dialog open={manualDialog} onOpenChange={setManualDialog}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Novo Lançamento Manual</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
                 <Label>Cliente *</Label>
-                <Input value={manualClientName} onChange={e => setManualClientName(e.target.value)} />
+                <Select value={manualClientId} onValueChange={setManualClientId}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar cliente..." /></SelectTrigger>
+                  <SelectContent>
+                    {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Descrição</Label>
@@ -260,10 +308,41 @@ export default function AccountsReceivablePage() {
                 {manualIsInstallment && (
                   <div className="flex items-center gap-2">
                     <Label className="text-sm">Parcelas:</Label>
-                    <Input type="number" min={2} max={24} className="w-20" value={manualInstallments} onChange={e => setManualInstallments(parseInt(e.target.value) || 1)} />
+                    <Input type="number" min={2} max={24} className="w-20" value={manualInstallments} onChange={e => setManualInstallments(parseInt(e.target.value) || 2)} />
                   </div>
                 )}
               </div>
+
+              {/* Installment table */}
+              {manualIsInstallment && installmentRows.length >= 2 && (
+                <Card>
+                  <CardContent className="p-3">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">Parcela</TableHead>
+                          <TableHead>Vencimento</TableHead>
+                          <TableHead>Valor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {installmentRows.map((row, i) => (
+                          <TableRow key={i}>
+                            <TableCell className="font-medium">{i + 1}ª</TableCell>
+                            <TableCell>
+                              <Input type="date" value={row.due_date} onChange={e => updateInstallmentRow(i, 'due_date', e.target.value)} className="w-40" />
+                            </TableCell>
+                            <TableCell>
+                              <Input type="number" step="0.01" value={row.amount} onChange={e => updateInstallmentRow(i, 'amount', parseFloat(e.target.value) || 0)} className="w-32" />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setManualDialog(false)}>Cancelar</Button>
                 <Button onClick={handleManualSave}>Salvar</Button>
