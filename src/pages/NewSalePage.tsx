@@ -74,6 +74,9 @@ export default function NewSalePage() {
 
   const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
   const [linkRates, setLinkRates] = useState<CardRateEntry[]>([]);
+  const [invoiceUrl, setInvoiceUrl] = useState('');
+  const [invoiceFileName, setInvoiceFileName] = useState('');
+  const [uploadingInvoice, setUploadingInvoice] = useState(false);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
