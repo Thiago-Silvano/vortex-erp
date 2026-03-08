@@ -24,6 +24,7 @@ import {
 export default function SavedQuotes() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { activeCompany } = useCompany();
   const [quotes, setQuotes] = useState<FullQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
