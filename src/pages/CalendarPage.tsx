@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, ChevronLeft, ChevronRight, Search, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isSameDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface CalendarEvent {
@@ -44,11 +44,30 @@ export default function CalendarPage() {
 
   useEffect(() => { fetchEvents(); }, []);
 
+  const today = new Date();
+
   const handleAdd = async () => {
     if (!newTitle.trim() || !newDate) {
       toast.error('Preencha o evento e a data.');
       return;
     }
+
+    const selectedDate = new Date(newDate + 'T12:00:00');
+    if (isBefore(startOfDay(selectedDate), startOfDay(today))) {
+      toast.error('Não é possível adicionar eventos em datas passadas.');
+      return;
+    }
+
+    if (isSameDay(selectedDate, today) && newTime) {
+      const [h, m] = newTime.split(':').map(Number);
+      const eventMinutes = h * 60 + m;
+      const nowMinutes = today.getHours() * 60 + today.getMinutes();
+      if (eventMinutes < nowMinutes) {
+        toast.error('Não é possível adicionar eventos em horários já passados.');
+        return;
+      }
+    }
+
     setLoading(true);
     const { error } = await supabase.from('calendar_events').insert({
       title: newTitle.trim(),
@@ -70,6 +89,10 @@ export default function CalendarPage() {
   };
 
   const openNewEventForDate = (dateStr: string) => {
+    const selectedDate = new Date(dateStr + 'T12:00:00');
+    if (isBefore(startOfDay(selectedDate), startOfDay(today))) {
+      return;
+    }
     setNewTitle('');
     setNewDate(dateStr);
     setNewTime('');
@@ -108,7 +131,6 @@ export default function CalendarPage() {
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h1 className="text-2xl font-bold text-foreground">Calendário</h1>
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -136,7 +158,12 @@ export default function CalendarPage() {
                   </div>
                   <div>
                     <Label>Data</Label>
-                    <Input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} />
+                    <Input
+                      type="date"
+                      value={newDate}
+                      onChange={e => setNewDate(e.target.value)}
+                      min={format(today, 'yyyy-MM-dd')}
+                    />
                   </div>
                   <div>
                     <Label>Hora (opcional)</Label>
@@ -157,7 +184,6 @@ export default function CalendarPage() {
         </div>
 
         {isSearching ? (
-          /* Search results list */
           <div className="border rounded-lg bg-card divide-y">
             {filteredEvents.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
@@ -201,7 +227,6 @@ export default function CalendarPage() {
           </div>
         ) : (
           <>
-            {/* Month navigation */}
             <div className="flex items-center justify-center gap-4">
               <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
                 <ChevronLeft className="h-4 w-4" />
@@ -214,7 +239,6 @@ export default function CalendarPage() {
               </Button>
             </div>
 
-            {/* Calendar grid */}
             <div className="border rounded-lg overflow-hidden bg-card">
               <div className="grid grid-cols-7">
                 {weekDays.map(wd => (
@@ -228,33 +252,43 @@ export default function CalendarPage() {
                   const dateKey = format(d, 'yyyy-MM-dd');
                   const dayEvents = eventsMap[dateKey] || [];
                   const isCurrentMonth = isSameMonth(d, currentMonth);
-                  const isToday = isSameDay(d, new Date());
+                  const isToday = isSameDay(d, today);
+                  const isPast = isBefore(startOfDay(d), startOfDay(today));
+                  const hasEvents = dayEvents.length > 0;
 
                   return (
                     <div
                       key={i}
-                      className={`min-h-[100px] md:min-h-[120px] border-b border-r p-1.5 flex flex-col cursor-pointer hover:bg-muted/20 transition-colors ${
-                        !isCurrentMonth ? 'bg-muted/30' : ''
-                      } ${isToday ? 'bg-primary/5' : ''}`}
-                      onClick={() => openNewEventForDate(dateKey)}
+                      className={`group/day relative min-h-[100px] md:min-h-[120px] border-b border-r p-1.5 flex flex-col transition-colors ${
+                        isPast ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-muted/20'
+                      } ${!isCurrentMonth ? 'bg-muted/30' : ''} ${isToday ? 'bg-primary/5' : ''}`}
+                      onClick={() => !isPast && openNewEventForDate(dateKey)}
                     >
                       <span className={`text-xs font-medium self-end rounded-full w-6 h-6 flex items-center justify-center ${
                         isToday ? 'bg-primary text-primary-foreground' : !isCurrentMonth ? 'text-muted-foreground/50' : 'text-foreground'
                       }`}>
                         {format(d, 'd')}
                       </span>
-                      <div className="flex-1 mt-1 space-y-0.5 overflow-y-auto max-h-[80px]">
+                      <div className={`flex-1 mt-1 space-y-0.5 overflow-y-auto max-h-[80px] ${
+                        hasEvents
+                          ? 'group-hover/day:max-h-none group-hover/day:overflow-visible group-hover/day:absolute group-hover/day:top-8 group-hover/day:left-0 group-hover/day:right-0 group-hover/day:bg-card group-hover/day:border group-hover/day:rounded-md group-hover/day:shadow-lg group-hover/day:p-2 group-hover/day:z-40'
+                          : ''
+                      }`}>
                         {dayEvents.map(ev => (
                           <div
                             key={ev.id}
-                            className="group flex items-center gap-1 bg-primary/10 text-primary rounded px-1.5 py-0.5 text-[11px] leading-tight truncate"
+                            className={`group flex items-center gap-1 bg-primary/10 text-primary rounded px-1.5 py-0.5 text-[11px] leading-tight ${
+                              hasEvents ? 'group-hover/day:text-xs group-hover/day:py-1' : ''
+                            } truncate`}
                             title={`${ev.title}${ev.event_time ? ` - ${ev.event_time.slice(0, 5)}` : ''}`}
                             onClick={e => e.stopPropagation()}
                           >
                             {ev.event_time && (
                               <span className="font-semibold shrink-0">{ev.event_time.slice(0, 5)}</span>
                             )}
-                            <span className="truncate">{ev.title}</span>
+                            <span className={`truncate ${hasEvents ? 'group-hover/day:whitespace-normal group-hover/day:break-words' : ''}`}>
+                              {ev.title}
+                            </span>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <button className="ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive">
