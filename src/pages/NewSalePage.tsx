@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,6 +45,7 @@ interface CardRateEntry { installments: number; rate: number; }
 export default function NewSalePage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { activeCompany } = useCompany();
   const quoteData = (location.state as any)?.quoteData;
   const editSaleId = (location.state as any)?.editSaleId;
 
@@ -207,7 +209,7 @@ export default function NewSalePage() {
     const { data: { user } } = await supabase.auth.getUser();
     const userEmail = user?.email || '';
 
-    const salePayload = {
+    const salePayload: any = {
       quote_id: quoteId || null,
       client_name: clientName,
       sale_date: saleDate,
@@ -227,6 +229,7 @@ export default function NewSalePage() {
       status: 'active',
       created_by: userEmail,
       updated_by: userEmail,
+      empresa_id: activeCompany?.id || null,
     };
 
     let saleId = editSaleId;

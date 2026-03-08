@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AppLayout from '@/components/AppLayout';
+import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +33,7 @@ const normalize = (s: string) =>
 const MAX_VISIBLE_EVENTS = 2;
 
 export default function CalendarPage() {
+  const { activeCompany } = useCompany();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [filter, setFilter] = useState('');
@@ -44,11 +46,13 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(false);
 
   const fetchEvents = async () => {
-    const { data } = await supabase.from('calendar_events').select('*').order('event_date');
+    let query = supabase.from('calendar_events').select('*').order('event_date');
+    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+    const { data } = await query;
     if (data) setEvents(data.map((e: any) => ({ ...e, passengers: e.passengers ?? 1 })));
   };
 
-  useEffect(() => { fetchEvents(); }, []);
+  useEffect(() => { fetchEvents(); }, [activeCompany?.id]);
 
   const today = new Date();
 
@@ -106,11 +110,12 @@ export default function CalendarPage() {
     }
 
     setLoading(true);
-    const payload = {
+    const payload: any = {
       title: newTitle.trim(),
       event_date: newDate,
       event_time: newTime || null,
       passengers: newPassengers || 1,
+      empresa_id: activeCompany?.id || null,
     };
 
     if (editingEvent) {

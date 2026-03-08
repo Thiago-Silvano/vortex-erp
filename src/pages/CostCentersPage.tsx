@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +26,7 @@ interface CostCenter {
 }
 
 export default function CostCentersPage() {
+  const { activeCompany } = useCompany();
   const [items, setItems] = useState<CostCenter[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -34,18 +36,21 @@ export default function CostCentersPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetch_ = async () => {
-    const { data } = await supabase.from('cost_centers').select('*').order('name');
+    let query = supabase.from('cost_centers').select('*').order('name');
+    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+    const { data } = await query;
     if (data) setItems(data as CostCenter[]);
   };
-  useEffect(() => { fetch_(); }, []);
+  useEffect(() => { fetch_(); }, [activeCompany?.id]);
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
-    const payload = { name, description, status };
+    const payload: any = { name, description, status };
     if (editingId) {
       await supabase.from('cost_centers').update(payload).eq('id', editingId);
       toast.success('Centro de custo atualizado!');
     } else {
+      payload.empresa_id = activeCompany?.id || null;
       await supabase.from('cost_centers').insert(payload);
       toast.success('Centro de custo cadastrado!');
     }

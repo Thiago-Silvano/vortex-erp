@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,6 +42,7 @@ const emptyClient = (): Omit<Client, 'id'> => ({
 });
 
 export default function ClientsPage() {
+  const { activeCompany } = useCompany();
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -50,11 +52,13 @@ export default function ClientsPage() {
   const [emailError, setEmailError] = useState('');
 
   const fetchClients = async () => {
-    const { data } = await supabase.from('clients').select('*').order('full_name');
+    let query = supabase.from('clients').select('*').order('full_name');
+    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+    const { data } = await query;
     if (data) setClients(data as Client[]);
   };
 
-  useEffect(() => { fetchClients(); }, []);
+  useEffect(() => { fetchClients(); }, [activeCompany?.id]);
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
@@ -85,7 +89,7 @@ export default function ClientsPage() {
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Cliente atualizado!');
     } else {
-      const { error } = await supabase.from('clients').insert(form);
+      const { error } = await supabase.from('clients').insert({ ...form, empresa_id: activeCompany?.id } as any);
       if (error) { toast.error('Erro ao cadastrar'); return; }
       toast.success('Cliente cadastrado!');
     }

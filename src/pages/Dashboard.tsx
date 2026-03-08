@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, CheckCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface DashboardStats {
   openCount: number;
@@ -16,6 +17,7 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { activeCompany } = useCompany();
   const [stats, setStats] = useState<DashboardStats>({ openCount: 0, openValue: 0, completedCount: 0, soldValue: 0, lostValue: 0 });
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
@@ -27,12 +29,14 @@ export default function Dashboard() {
         setUserName(data.user.email?.split('@')[0] || 'Usuário');
       }
     });
-  }, []);
+  }, [activeCompany?.id]);
 
   const loadStats = async () => {
     setLoading(true);
     try {
-      const { data: quotes } = await supabase.from('quotes').select('status, payment_rav, id');
+      let query = supabase.from('quotes').select('status, payment_rav, id');
+      if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+      const { data: quotes } = await query;
       if (!quotes) { setLoading(false); return; }
 
       // Fetch services totals for each quote

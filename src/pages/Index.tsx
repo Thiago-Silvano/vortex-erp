@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { QuoteData, ClientData, TripData, ServiceItem, SERVICE_TYPE_CONFIG, PaymentData } from '@/types/quote';
 import { getAgencySettings } from '@/lib/storage';
 import { saveQuoteToDB, uploadImage } from '@/lib/supabase-storage';
+import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,6 +63,7 @@ export default function Index() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { activeCompany } = useCompany();
   const [quoteId, setQuoteId] = useState<string | undefined>();
   const [shortId, setShortId] = useState<string | undefined>();
   const [client, setClient] = useState<ClientData>(defaultClient);
@@ -200,7 +202,7 @@ export default function Index() {
     setSaving(true);
     try {
       const quoteData: QuoteData = { client, trip, services, payment, destinationImageUrl: destinationImage };
-      const saved = await saveQuoteToDB(quoteData, quoteId);
+      const saved = await saveQuoteToDB(quoteData, quoteId, activeCompany?.id);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
       setHasUnsavedChanges(false);
@@ -217,7 +219,7 @@ export default function Index() {
     setSaving(true);
     try {
       const quoteData: QuoteData = { client, trip, services, payment, destinationImageUrl: destinationImage };
-      const saved = await saveQuoteToDB(quoteData, quoteId);
+      const saved = await saveQuoteToDB(quoteData, quoteId, activeCompany?.id);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
       const link = `${window.location.origin}/orcamento/${saved.shortId}`;

@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Pencil, Shield } from 'lucide-react';
 import UserManagement from '@/components/UserManagement';
+import { useCompany, Company } from '@/contexts/CompanyContext';
 
 interface UserInfo {
   id: string;
@@ -28,6 +29,7 @@ interface UserPermission {
   user_id: string;
   user_role: string;
   permissions: Record<string, boolean>;
+  empresa_ids: string[];
 }
 
 const ALL_PERMISSIONS = [
@@ -44,6 +46,7 @@ const ALL_PERMISSIONS = [
 export default function UserAdmin() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { companies } = useCompany();
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [permissions, setPermissions] = useState<Record<string, UserPermission>>({});
   const [loading, setLoading] = useState(true);
@@ -54,6 +57,7 @@ export default function UserAdmin() {
   const [permUser, setPermUser] = useState<UserInfo | null>(null);
   const [permRole, setPermRole] = useState('vendedor');
   const [permChecks, setPermChecks] = useState<Record<string, boolean>>({});
+  const [permEmpresaIds, setPermEmpresaIds] = useState<string[]>([]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -72,7 +76,7 @@ export default function UserAdmin() {
     const { data } = await supabase.from('user_permissions').select('*') as any;
     if (data) {
       const map: Record<string, UserPermission> = {};
-      data.forEach((p: any) => { map[p.user_id] = { user_id: p.user_id, user_role: p.user_role, permissions: p.permissions || {} }; });
+      data.forEach((p: any) => { map[p.user_id] = { user_id: p.user_id, user_role: p.user_role, permissions: p.permissions || {}, empresa_ids: p.empresa_ids || [] }; });
       setPermissions(map);
     }
   };
@@ -123,6 +127,7 @@ export default function UserAdmin() {
     if (perm) {
       setPermRole(perm.user_role);
       setPermChecks(perm.permissions);
+      setPermEmpresaIds(perm.empresa_ids || []);
     } else {
       // Default for master email
       if (user.email === 'thiago@vortexviagens.com.br') {
@@ -130,9 +135,11 @@ export default function UserAdmin() {
         const all: Record<string, boolean> = {};
         ALL_PERMISSIONS.forEach(g => g.keys.forEach(k => { all[k.key] = true; }));
         setPermChecks(all);
+        setPermEmpresaIds(companies.map(c => c.id));
       } else {
         setPermRole('vendedor');
         setPermChecks({ clients_view: true, clients_create: true, clients_edit: true, quotes_view: true, quotes_create: true, quotes_convert: true, sales_view: true, sales_create: true, reservations_view: true });
+        setPermEmpresaIds(companies.length > 0 ? [companies[0].id] : []);
       }
     }
   };
@@ -140,7 +147,7 @@ export default function UserAdmin() {
   const handleSavePermissions = async () => {
     if (!permUser) return;
     setSaving(true);
-    const payload = { user_id: permUser.id, user_role: permRole, permissions: permChecks, updated_at: new Date().toISOString() };
+    const payload = { user_id: permUser.id, user_role: permRole, permissions: permChecks, empresa_ids: permEmpresaIds, updated_at: new Date().toISOString() };
     
     if (permissions[permUser.id]) {
       await supabase.from('user_permissions').update(payload as any).eq('user_id', permUser.id) as any;
@@ -170,9 +177,9 @@ export default function UserAdmin() {
   const getRoleBadge = (userId: string) => {
     const perm = permissions[userId];
     if (!perm) return <Badge variant="outline">Sem perfil</Badge>;
-    return perm.user_role === 'master' 
-      ? <Badge className="bg-primary">Master</Badge> 
-      : <Badge variant="secondary">Vendedor</Badge>;
+    if (perm.user_role === 'master') return <Badge className="bg-primary">Master</Badge>;
+    if (perm.user_role === 'operacional') return <Badge className="bg-orange-500 text-white">Operacional</Badge>;
+    return <Badge variant="secondary">Vendedor</Badge>;
   };
 
   return (
@@ -271,9 +278,33 @@ export default function UserAdmin() {
                 <SelectContent>
                   <SelectItem value="master">Master</SelectItem>
                   <SelectItem value="vendedor">Vendedor</SelectItem>
+                  <SelectItem value="operacional">Operacional</SelectItem>
                 </SelectContent>
               </Select>
-              {permRole === 'master' && <p className="text-xs text-muted-foreground mt-1">Master tem acesso total ao sistema</p>}
+              {permRole === 'master' && <p className="text-xs text-muted-foreground mt-1">Master tem acesso total ao sistema e pode alternar entre empresas</p>}
+              {permRole === 'operacional' && <p className="text-xs text-muted-foreground mt-1">Operacional tem acesso a produção e calendário</p>}
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium text-sm mb-3">Empresas com acesso</h3>
+              <div className="flex flex-col gap-2">
+                {companies.map(c => (
+                  <label key={c.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={permRole === 'master' || permEmpresaIds.includes(c.id)}
+                      disabled={permRole === 'master'}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setPermEmpresaIds(prev => [...prev, c.id]);
+                        } else {
+                          setPermEmpresaIds(prev => prev.filter(id => id !== c.id));
+                        }
+                      }}
+                    />
+                    <span className="text-sm">{c.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-4">

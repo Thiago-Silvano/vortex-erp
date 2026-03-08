@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,6 +38,7 @@ interface InstallmentRow { due_date: string; amount: number; }
 type PeriodFilter = 'day' | 'month' | 'year';
 
 export default function AccountsReceivablePage() {
+  const { activeCompany } = useCompany();
   const [items, setItems] = useState<Receivable[]>([]);
   const [clients, setClients] = useState<ClientOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
@@ -62,7 +64,9 @@ export default function AccountsReceivablePage() {
   const [installmentRows, setInstallmentRows] = useState<InstallmentRow[]>([]);
 
   const fetch_ = async () => {
-    const { data } = await supabase.from('receivables').select('*').order('due_date');
+    let query = supabase.from('receivables').select('*').order('due_date');
+    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+    const { data } = await query;
     if (data) setItems(data as unknown as Receivable[]);
   };
 
@@ -72,7 +76,7 @@ export default function AccountsReceivablePage() {
       .then(({ data }) => { if (data) setClients(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name')
       .then(({ data }) => { if (data) setCostCenters(data); });
-  }, []);
+  }, [activeCompany?.id]);
 
   const generateInstallmentRows = (count: number, total: number, baseDate: string) => {
     const perInstallment = total / count;

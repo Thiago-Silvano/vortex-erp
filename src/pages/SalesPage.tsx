@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface SaleRow {
   id: string;
@@ -25,11 +26,13 @@ export default function SalesPage() {
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const { activeCompany } = useCompany();
 
   useEffect(() => {
-    supabase.from('sales').select('*').order('created_at', { ascending: false })
-      .then(({ data }) => { if (data) setSales(data as SaleRow[]); });
-  }, []);
+    let query = supabase.from('sales').select('*').order('created_at', { ascending: false });
+    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+    query.then(({ data }) => { if (data) setSales(data as SaleRow[]); });
+  }, [activeCompany?.id]);
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const filtered = sales.filter(s => normalize(s.client_name).includes(normalize(search)));

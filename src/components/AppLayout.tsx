@@ -20,10 +20,12 @@ import {
   LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays,
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
-  Plane, Award, ChevronDown,
+  Plane, Award, ChevronDown, Building,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useCompany } from '@/contexts/CompanyContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface MenuItem {
   title: string;
@@ -195,15 +197,44 @@ function AppSidebar() {
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
+  const accessibleCompanies = companies.filter(c => userCompanyIds.includes(c.id));
+  const showSelector = isMaster && accessibleCompanies.length > 1;
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b bg-card px-4 shrink-0">
-            <SidebarTrigger className="mr-3">
+          <header className="h-14 flex items-center border-b bg-card px-4 shrink-0 gap-3">
+            <SidebarTrigger className="mr-1">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
+            {showSelector && (
+              <Select
+                value={activeCompany?.id || ''}
+                onValueChange={(val) => {
+                  const comp = companies.find(c => c.id === val);
+                  if (comp) setActiveCompany(comp);
+                }}
+              >
+                <SelectTrigger className="w-[200px] h-9 text-sm">
+                  <Building className="h-4 w-4 mr-2 shrink-0" />
+                  <SelectValue placeholder="Selecione a empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {accessibleCompanies.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {!showSelector && activeCompany && (
+              <span className="text-sm text-muted-foreground flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                {activeCompany.name}
+              </span>
+            )}
           </header>
           <main className="flex-1 overflow-auto">{children}</main>
         </div>

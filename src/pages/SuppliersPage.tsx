@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +43,7 @@ const emptySupplier = (): Omit<Supplier, 'id'> => ({
 });
 
 export default function SuppliersPage() {
+  const { activeCompany } = useCompany();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -52,11 +54,13 @@ export default function SuppliersPage() {
   const [emailError, setEmailError] = useState('');
 
   const fetchSuppliers = async () => {
-    const { data } = await supabase.from('suppliers').select('*').order('name');
+    let query = supabase.from('suppliers').select('*').order('name');
+    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+    const { data } = await query;
     if (data) setSuppliers(data as unknown as Supplier[]);
   };
 
-  useEffect(() => { fetchSuppliers(); }, []);
+  useEffect(() => { fetchSuppliers(); }, [activeCompany?.id]);
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const filtered = suppliers.filter(s =>
@@ -107,7 +111,7 @@ export default function SuppliersPage() {
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Fornecedor atualizado!');
     } else {
-      const { error } = await supabase.from('suppliers').insert(form as any);
+      const { error } = await supabase.from('suppliers').insert({ ...form, empresa_id: activeCompany?.id } as any);
       if (error) { toast.error('Erro ao cadastrar'); return; }
       toast.success('Fornecedor cadastrado!');
     }

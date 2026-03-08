@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, getQuoteById, FullQuote } from '@/lib/supabase-storage';
+import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +24,7 @@ import {
 export default function SavedQuotes() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { activeCompany } = useCompany();
   const [quotes, setQuotes] = useState<FullQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -42,14 +44,14 @@ export default function SavedQuotes() {
 
   const loadQuotes = async () => {
     setLoading(true);
-    const data = await getAllQuotes();
+    const data = await getAllQuotes(activeCompany?.id);
     setQuotes(data);
     setLoading(false);
   };
 
   useEffect(() => {
     loadQuotes();
-  }, []);
+  }, [activeCompany?.id]);
 
   const handleDelete = async (id: string) => {
     await deleteQuoteFromDB(id);

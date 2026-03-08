@@ -184,11 +184,17 @@ export async function getQuoteById(id: string): Promise<FullQuote | null> {
   return mapQuoteRow(q, services);
 }
 
-export async function getAllQuotes(): Promise<FullQuote[]> {
-  const { data: quotesData } = await supabase
+export async function getAllQuotes(empresaId?: string): Promise<FullQuote[]> {
+  let query = supabase
     .from('quotes')
     .select('*')
     .order('updated_at', { ascending: false });
+
+  if (empresaId) {
+    query = query.eq('empresa_id', empresaId);
+  }
+
+  const { data: quotesData } = await query;
 
   if (!quotesData || quotesData.length === 0) return [];
 
@@ -281,7 +287,8 @@ export async function getAuditLog(quoteId: string) {
 
 export async function saveQuoteToDB(
   quoteData: QuoteData & { destinationImageUrl?: string },
-  existingId?: string
+  existingId?: string,
+  empresaId?: string
 ): Promise<FullQuote> {
   const userEmail = await getCurrentUserEmail();
   
@@ -294,6 +301,7 @@ export async function saveQuoteToDB(
   }
 
   const quotePayload: any = {
+    empresa_id: empresaId || null,
     client_name: quoteData.client.name,
     client_phone: quoteData.client.phone,
     client_email: quoteData.client.email,
