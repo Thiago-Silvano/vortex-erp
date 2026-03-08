@@ -102,8 +102,8 @@ export default function Settings() {
           </TableHeader>
           <TableBody>
             {rates.map(r => (
-              <TableRow key={r.installments}>
-                <TableCell className="font-medium">{r.installments}x</TableCell>
+              <TableRow key={`${type}-${r.installments}-${r.label || ''}`}>
+                <TableCell className="font-medium">{r.label || `${r.installments}x`}</TableCell>
                 <TableCell>
                   <Input
                     type="number"

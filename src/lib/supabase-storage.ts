@@ -194,12 +194,8 @@ export async function getAllQuotes(): Promise<FullQuote[]> {
 
   const quoteIds = quotesData.map(q => q.id);
 
-  // Batch fetch all services, flight_legs, and images in parallel
-  const [{ data: allServices }, { data: allFlightLegs }, { data: allImages }] = await Promise.all([
-    supabase.from('services').select('*').in('quote_id', quoteIds).order('sort_order'),
-    supabase.from('flight_legs').select('*').order('sort_order'),
-    supabase.from('service_images').select('*').order('sort_order'),
-  ]);
+  // Only fetch services for listing - skip images and flight_legs for performance
+  const { data: allServices } = await supabase.from('services').select('id, quote_id, type, title, description, supplier, start_date, end_date, location, value, quantity, image_url, baggage, sort_order').in('quote_id', quoteIds).order('sort_order');
 
   const servicesByQuote = new Map<string, any[]>();
   (allServices || []).forEach(s => {
