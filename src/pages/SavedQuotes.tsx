@@ -134,6 +134,27 @@ export default function SavedQuotes() {
     try {
       const { error } = await supabase.from('quotes').update({ status: newStatus }).eq('id', id);
       if (error) throw error;
+
+      if (newStatus === 'concluido') {
+        // Convert to sale - find the quote and navigate
+        const q = quotes.find(q => q.id === id);
+        if (q) {
+          const costTotal = q.services.reduce((sum, s) => sum + s.value * s.quantity, 0);
+          const rav = q.payment?.rav || 0;
+          navigate('/sales/new', {
+            state: {
+              quoteData: {
+                id: q.id,
+                clientName: q.client.name,
+                services: q.services,
+                rav,
+              }
+            }
+          });
+          return;
+        }
+      }
+
       toast({ title: `Status atualizado para: ${getStatusLabel(newStatus)}` });
       await loadQuotes();
     } catch {
