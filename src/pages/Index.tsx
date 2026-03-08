@@ -102,6 +102,7 @@ export default function Index() {
       setServices(q.services);
       setDestinationImage(q.destinationImageUrl);
       if (q.payment) setPayment(q.payment);
+      if (q.sellerId) setSellerId(q.sellerId);
       window.history.replaceState({}, '');
     }
   }, [location.state]);
