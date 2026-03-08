@@ -158,6 +158,7 @@ function mapQuoteRow(q: any, services: ServiceItem[]): FullQuote {
     createdAt: q.created_at,
     updatedAt: q.updated_at,
     viewCount: q.view_count || 0,
+    sellerId: q.seller_id || undefined,
   };
 }
 
