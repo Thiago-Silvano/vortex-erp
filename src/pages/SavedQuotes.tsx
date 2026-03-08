@@ -141,11 +141,8 @@ export default function SavedQuotes() {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
-      const { error } = await supabase.from('quotes').update({ status: newStatus }).eq('id', id);
-      if (error) throw error;
-
       if (newStatus === 'concluido') {
-        // Convert to sale - find the quote and navigate
+        // Navigate to sale creation without changing status yet (sale page handles it on save, cancel reverts)
         const q = quotes.find(q => q.id === id);
         if (q) {
           const rav = q.payment?.rav || 0;
@@ -162,6 +159,9 @@ export default function SavedQuotes() {
           return;
         }
       }
+
+      const { error } = await supabase.from('quotes').update({ status: newStatus }).eq('id', id);
+      if (error) throw error;
 
       // When reverting to draft, delete sale + related receivables/payables
       if (newStatus === 'draft') {
