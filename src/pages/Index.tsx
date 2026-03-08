@@ -440,9 +440,11 @@ export default function Index() {
               <Label>Imagem do Destino (exibida no link do orçamento)</Label>
               <Input type="file" accept="image/*" onChange={handleDestinationImage} />
               {destinationImage && (
-                <div className="mt-2 relative inline-block">
-                  <img src={destinationImage} alt="Destino" className="h-24 rounded object-cover" />
-                  <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => setDestinationImage(undefined)}>
+                <div className="mt-2 flex items-center gap-2">
+                  <a href={destinationImage} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline hover:text-primary/80 truncate max-w-xs">
+                    📷 Imagem do destino
+                  </a>
+                  <Button variant="destructive" size="icon" className="h-5 w-5" onClick={() => setDestinationImage(undefined)}>
                     <X className="h-3 w-3" />
                   </Button>
                 </div>
