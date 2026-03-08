@@ -237,7 +237,7 @@ export default function NewSalePage() {
       created_by: userEmail,
       updated_by: userEmail,
       empresa_id: activeCompany?.id || null,
-      seller_id: sellerId || null,
+      seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
     };
 
     let saleId = editSaleId;
