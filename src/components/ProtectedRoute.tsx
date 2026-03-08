@@ -18,11 +18,20 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }, []);
 
   useEffect(() => {
+    // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === 'SIGNED_IN') {
+        // Reset lastActivity on fresh login so inactivity check doesn't immediately sign out
+        localStorage.setItem('lastActivity', Date.now().toString());
+      }
       setSession(session);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        // If we have a valid session, update lastActivity to prevent stale expiry
+        localStorage.setItem('lastActivity', Date.now().toString());
+      }
       setSession(session);
     });
 
