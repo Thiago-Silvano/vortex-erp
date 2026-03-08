@@ -121,12 +121,16 @@ export default function NewSalePage() {
   useEffect(() => {
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setAllSuppliers(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
-    (supabase.from('card_rates').select('*').order('installments') as any).then(({ data }: any) => {
-      if (data && data.length > 0) {
-        setEcRates(data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) })));
-        setLinkRates(data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) })));
-      }
-    });
+    (() => {
+      let query = supabase.from('card_rates').select('*').order('installments');
+      if (activeCompany) query = query.eq('empresa_id', activeCompany.id) as any;
+      (query as any).then(({ data }: any) => {
+        if (data && data.length > 0) {
+          setEcRates(data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) })));
+          setLinkRates(data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) })));
+        }
+      });
+    })();
     if (activeCompany) {
       (supabase.from('sellers') as any).select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
     }

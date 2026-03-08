@@ -80,12 +80,15 @@ export default function Settings() {
   const handleSave = async () => {
     saveAgencySettings(settings);
 
-    // Delete existing rates and insert new ones
-    await supabase.from('card_rates').delete().neq('id', '00000000-0000-0000-0000-000000000000') as any;
+    // Delete existing rates for this company and insert new ones
+    let deleteQuery = supabase.from('card_rates').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (activeCompany) deleteQuery = deleteQuery.eq('empresa_id', activeCompany.id) as any;
+    await deleteQuery as any;
     
+    const empresaId = activeCompany?.id || null;
     const allRates = [
-      ...ecRates.map(r => ({ payment_type: 'ec', installments: r.installments, rate: r.rate })),
-      ...linkRates.map(r => ({ payment_type: 'link', installments: r.installments, rate: r.rate })),
+      ...ecRates.map(r => ({ payment_type: 'ec', installments: r.installments, rate: r.rate, empresa_id: empresaId })),
+      ...linkRates.map(r => ({ payment_type: 'link', installments: r.installments, rate: r.rate, empresa_id: empresaId })),
     ];
     
     await supabase.from('card_rates').insert(allRates as any);
