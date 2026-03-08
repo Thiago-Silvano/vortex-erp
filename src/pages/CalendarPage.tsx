@@ -221,13 +221,34 @@ export default function CalendarPage() {
                     />
                   </div>
                 </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancelar</Button>
-                  </DialogClose>
-                  <Button onClick={handleSave} disabled={loading}>
-                    {loading ? 'Salvando...' : 'Salvar'}
-                  </Button>
+                <DialogFooter className="flex justify-between sm:justify-between">
+                  {editingEvent && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remover evento?</AlertDialogTitle>
+                          <AlertDialogDescription>O evento "{editingEvent.title}" será removido permanentemente.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => { handleDelete(editingEvent.id); setDialogOpen(false); setEditingEvent(null); }}>Remover</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                  <div className="flex gap-2">
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancelar</Button>
+                    </DialogClose>
+                    <Button onClick={handleSave} disabled={loading}>
+                      {loading ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                  </div>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

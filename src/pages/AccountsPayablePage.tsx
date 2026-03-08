@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Check } from 'lucide-react';
+import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 
 interface Payable {
   id: string;
@@ -34,14 +34,16 @@ interface SupplierOpt { id: string; name: string; }
 interface CostCenter { id: string; name: string; }
 interface InstallmentRow { due_date: string; amount: number; }
 
+type PeriodFilter = 'day' | 'month' | 'year';
+
 export default function AccountsPayablePage() {
   const [items, setItems] = useState<Payable[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
-  const [filterMonth, setFilterMonth] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSupplier, setFilterSupplier] = useState('all');
   const [filterCostCenter, setFilterCostCenter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
 
   const [markDialog, setMarkDialog] = useState(false);
   const [markId, setMarkId] = useState('');
@@ -75,10 +77,7 @@ export default function AccountsPayablePage() {
     for (let i = 0; i < count; i++) {
       const dueDate = baseDate ? new Date(baseDate + 'T12:00:00') : new Date();
       if (i > 0) dueDate.setMonth(dueDate.getMonth() + i);
-      rows.push({
-        due_date: format(dueDate, 'yyyy-MM-dd'),
-        amount: Math.round(perInstallment * 100) / 100,
-      });
+      rows.push({ due_date: format(dueDate, 'yyyy-MM-dd'), amount: Math.round(perInstallment * 100) / 100 });
     }
     return rows;
   };
@@ -89,13 +88,44 @@ export default function AccountsPayablePage() {
     }
   }, [manualIsInstallment, manualInstallments, manualAmount, manualDueDate]);
 
-  const filtered = items.filter(r => {
-    if (filterStatus !== 'all' && r.status !== filterStatus) return false;
-    if (filterSupplier !== 'all' && r.supplier_id !== filterSupplier) return false;
-    if (filterMonth && r.due_date && !r.due_date.startsWith(filterMonth)) return false;
-    if (filterCostCenter !== 'all' && r.cost_center_id !== filterCostCenter) return false;
-    return true;
-  });
+  const today = new Date();
+
+  const getPeriodRange = () => {
+    if (periodFilter === 'day') return { start: startOfDay(today), end: endOfDay(today) };
+    if (periodFilter === 'month') return { start: startOfMonth(today), end: endOfMonth(today) };
+    return { start: startOfYear(today), end: endOfYear(today) };
+  };
+
+  const periodRange = getPeriodRange();
+
+  const periodItems = useMemo(() => {
+    return items.filter(r => {
+      if (!r.due_date) return false;
+      const d = new Date(r.due_date + 'T12:00:00');
+      return d >= periodRange.start && d <= periodRange.end;
+    });
+  }, [items, periodFilter]);
+
+  const indicators = useMemo(() => {
+    const todayStr = format(today, 'yyyy-MM-dd');
+    let overdue = 0, dueToday = 0, pending = 0, paid = 0;
+    periodItems.forEach(r => {
+      if (r.status === 'paid') { paid += r.amount; return; }
+      if (r.due_date && r.due_date < todayStr && r.status !== 'paid') { overdue += r.amount; return; }
+      if (r.due_date && r.due_date === todayStr && r.status !== 'paid') { dueToday += r.amount; return; }
+      if (r.status === 'open') { pending += r.amount; }
+    });
+    return { overdue, dueToday, pending, paid };
+  }, [periodItems]);
+
+  const filtered = useMemo(() => {
+    return periodItems.filter(r => {
+      if (filterStatus !== 'all' && r.status !== filterStatus) return false;
+      if (filterSupplier !== 'all' && r.supplier_id !== filterSupplier) return false;
+      if (filterCostCenter !== 'all' && r.cost_center_id !== filterCostCenter) return false;
+      return true;
+    });
+  }, [periodItems, filterStatus, filterSupplier, filterCostCenter]);
 
   const statusLabel: Record<string, string> = { open: 'Em aberto', paid: 'Pago', overdue: 'Atrasado' };
   const statusVariant = (s: string) => s === 'paid' ? 'default' as const : s === 'overdue' ? 'destructive' as const : 'secondary' as const;
@@ -120,36 +150,22 @@ export default function AccountsPayablePage() {
     if (!manualSupplierId) { toast.error('Fornecedor é obrigatório'); return; }
     if (!manualCostCenter) { toast.error('Centro de custo é obrigatório'); return; }
     if (manualAmount <= 0) { toast.error('Valor deve ser maior que zero'); return; }
-
     const records = [];
     if (manualIsInstallment && installmentRows.length >= 2) {
       for (let i = 0; i < installmentRows.length; i++) {
         records.push({
-          supplier_id: manualSupplierId,
-          description: manualDescription,
-          cost_center_id: manualCostCenter,
-          amount: installmentRows[i].amount,
-          due_date: installmentRows[i].due_date,
-          installment_number: i + 1,
-          total_installments: installmentRows.length,
-          status: 'open',
-          origin_type: 'manual',
+          supplier_id: manualSupplierId, description: manualDescription, cost_center_id: manualCostCenter,
+          amount: installmentRows[i].amount, due_date: installmentRows[i].due_date, installment_number: i + 1,
+          total_installments: installmentRows.length, status: 'open', origin_type: 'manual',
         });
       }
     } else {
       records.push({
-        supplier_id: manualSupplierId,
-        description: manualDescription,
-        cost_center_id: manualCostCenter,
-        amount: manualAmount,
-        due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'),
-        installment_number: 1,
-        total_installments: 1,
-        status: 'open',
-        origin_type: 'manual',
+        supplier_id: manualSupplierId, description: manualDescription, cost_center_id: manualCostCenter,
+        amount: manualAmount, due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'), installment_number: 1,
+        total_installments: 1, status: 'open', origin_type: 'manual',
       });
     }
-
     await supabase.from('accounts_payable').insert(records);
     toast.success(`${records.length} parcela(s) criada(s)!`);
     setManualDialog(false);
@@ -161,6 +177,15 @@ export default function AccountsPayablePage() {
     setInstallmentRows(prev => prev.map((row, i) => i === index ? { ...row, [field]: value } : row));
   };
 
+  const periodLabels: Record<PeriodFilter, string> = { day: 'Hoje', month: 'Este Mês', year: 'Este Ano' };
+
+  const indicatorCards = [
+    { label: 'Vencidos', value: indicators.overdue, icon: AlertTriangle, color: 'text-destructive', bg: 'bg-destructive/10' },
+    { label: 'Vencem Hoje', value: indicators.dueToday, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-500/10' },
+    { label: 'A Pagar', value: indicators.pending, icon: DollarSign, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Pagos', value: indicators.paid, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+  ];
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -169,8 +194,34 @@ export default function AccountsPayablePage() {
           <Button onClick={() => setManualDialog(true)}><Plus className="h-4 w-4 mr-2" />Novo Lançamento</Button>
         </div>
 
+        {/* Period selector */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground font-medium">Período:</span>
+          {(['day', 'month', 'year'] as PeriodFilter[]).map(p => (
+            <Button key={p} size="sm" variant={periodFilter === p ? 'default' : 'outline'} onClick={() => setPeriodFilter(p)}>
+              {periodLabels[p]}
+            </Button>
+          ))}
+        </div>
+
+        {/* Indicator cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {indicatorCards.map(card => (
+            <Card key={card.label} className="border">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className={`rounded-lg p-2.5 ${card.bg}`}>
+                  <card.icon className={`h-5 w-5 ${card.color}`} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{card.label}</p>
+                  <p className={`text-lg font-bold ${card.color}`}>{fmt(card.value)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
         <div className="flex flex-wrap gap-3">
-          <Input type="month" className="w-48" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} />
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
@@ -235,19 +286,12 @@ export default function AccountsPayablePage() {
           </CardContent>
         </Card>
 
-        {/* Mark as paid dialog */}
         <Dialog open={markDialog} onOpenChange={setMarkDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader><DialogTitle>Marcar como Pago</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div>
-                <Label>Data do Pagamento</Label>
-                <Input type="date" value={markPaymentDate} onChange={e => setMarkPaymentDate(e.target.value)} />
-              </div>
-              <div>
-                <Label>Observação</Label>
-                <Textarea value={markNotes} onChange={e => setMarkNotes(e.target.value)} />
-              </div>
+              <div><Label>Data do Pagamento</Label><Input type="date" value={markPaymentDate} onChange={e => setMarkPaymentDate(e.target.value)} /></div>
+              <div><Label>Observação</Label><Textarea value={markNotes} onChange={e => setMarkNotes(e.target.value)} /></div>
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setMarkDialog(false)}>Cancelar</Button>
                 <Button onClick={handleMark}>Confirmar</Button>
@@ -256,7 +300,6 @@ export default function AccountsPayablePage() {
           </DialogContent>
         </Dialog>
 
-        {/* Manual entry dialog */}
         <Dialog open={manualDialog} onOpenChange={setManualDialog}>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Novo Lançamento Manual</DialogTitle></DialogHeader>
@@ -265,32 +308,19 @@ export default function AccountsPayablePage() {
                 <Label>Fornecedor *</Label>
                 <Select value={manualSupplierId} onValueChange={setManualSupplierId}>
                   <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Descrição</Label>
-                <Input value={manualDescription} onChange={e => setManualDescription(e.target.value)} />
-              </div>
+              <div><Label>Descrição</Label><Input value={manualDescription} onChange={e => setManualDescription(e.target.value)} /></div>
               <div>
                 <Label>Centro de Custo *</Label>
                 <Select value={manualCostCenter} onValueChange={setManualCostCenter}>
                   <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent>
-                    {costCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{costCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Valor Total *</Label>
-                <Input type="number" step="0.01" value={manualAmount} onChange={e => setManualAmount(parseFloat(e.target.value) || 0)} />
-              </div>
-              <div>
-                <Label>Data de Vencimento</Label>
-                <Input type="date" value={manualDueDate} onChange={e => setManualDueDate(e.target.value)} />
-              </div>
+              <div><Label>Valor Total *</Label><Input type="number" step="0.01" value={manualAmount} onChange={e => setManualAmount(parseFloat(e.target.value) || 0)} /></div>
+              <div><Label>Data de Vencimento</Label><Input type="date" value={manualDueDate} onChange={e => setManualDueDate(e.target.value)} /></div>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                   <input type="checkbox" checked={manualIsInstallment} onChange={e => setManualIsInstallment(e.target.checked)} className="rounded" />
@@ -303,29 +333,17 @@ export default function AccountsPayablePage() {
                   </div>
                 )}
               </div>
-
-              {/* Installment table */}
               {manualIsInstallment && installmentRows.length >= 2 && (
                 <Card>
                   <CardContent className="p-3">
                     <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-16">Parcela</TableHead>
-                          <TableHead>Vencimento</TableHead>
-                          <TableHead>Valor</TableHead>
-                        </TableRow>
-                      </TableHeader>
+                      <TableHeader><TableRow><TableHead className="w-16">Parcela</TableHead><TableHead>Vencimento</TableHead><TableHead>Valor</TableHead></TableRow></TableHeader>
                       <TableBody>
                         {installmentRows.map((row, i) => (
                           <TableRow key={i}>
                             <TableCell className="font-medium">{i + 1}ª</TableCell>
-                            <TableCell>
-                              <Input type="date" value={row.due_date} onChange={e => updateInstallmentRow(i, 'due_date', e.target.value)} className="w-40" />
-                            </TableCell>
-                            <TableCell>
-                              <Input type="number" step="0.01" value={row.amount} onChange={e => updateInstallmentRow(i, 'amount', parseFloat(e.target.value) || 0)} className="w-32" />
-                            </TableCell>
+                            <TableCell><Input type="date" value={row.due_date} onChange={e => updateInstallmentRow(i, 'due_date', e.target.value)} className="w-40" /></TableCell>
+                            <TableCell><Input type="number" step="0.01" value={row.amount} onChange={e => updateInstallmentRow(i, 'amount', parseFloat(e.target.value) || 0)} className="w-32" /></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -333,7 +351,6 @@ export default function AccountsPayablePage() {
                   </CardContent>
                 </Card>
               )}
-
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setManualDialog(false)}>Cancelar</Button>
                 <Button onClick={handleManualSave}>Salvar</Button>
