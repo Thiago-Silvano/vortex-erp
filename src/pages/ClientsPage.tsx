@@ -47,7 +47,6 @@ export default function ClientsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<Client, 'id'>>(emptyClient());
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [cpfLoading, setCpfLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
 
   const fetchClients = async () => {
