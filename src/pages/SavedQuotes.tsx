@@ -51,7 +51,7 @@ export default function SavedQuotes() {
 
   useEffect(() => {
     loadQuotes();
-  }, []);
+  }, [activeCompany?.id]);
 
   const handleDelete = async (id: string) => {
     await deleteQuoteFromDB(id);
