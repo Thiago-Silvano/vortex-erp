@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 import { AgencySettings } from '@/types/quote';
 import { getAgencySettings, saveAgencySettings, fileToBase64 } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
