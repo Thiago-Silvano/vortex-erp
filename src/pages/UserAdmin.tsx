@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Pencil, Shield } from 'lucide-react';
 import UserManagement from '@/components/UserManagement';
+import { useCompany, Company } from '@/contexts/CompanyContext';
 
 interface UserInfo {
   id: string;
@@ -28,6 +29,7 @@ interface UserPermission {
   user_id: string;
   user_role: string;
   permissions: Record<string, boolean>;
+  empresa_ids: string[];
 }
 
 const ALL_PERMISSIONS = [
