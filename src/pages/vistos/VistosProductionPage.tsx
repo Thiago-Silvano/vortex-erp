@@ -99,6 +99,14 @@ export default function VistosProductionPage() {
     }
 
     await supabase.from('visa_processes').update({ status: newStatus }).eq('id', processId);
+    
+    // Send email notification for key status changes
+    if (['aprovado', 'negado'].includes(newStatus)) {
+      supabase.functions.invoke('visa-notification', {
+        body: { processId, newStatus },
+      }).catch(err => console.error('Notification error:', err));
+    }
+
     toast.success(`Status atualizado para ${STATUSES.find(s => s.key === newStatus)?.label}`);
     fetchProcesses();
   };
