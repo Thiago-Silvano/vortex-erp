@@ -57,8 +57,9 @@ export default function SavedQuotes() {
     toast({ title: 'Cotação excluída' });
   };
 
-  const handleEdit = (quote: FullQuote) => {
-    navigate('/new', { state: { editQuote: quote } });
+  const handleEdit = async (quote: FullQuote) => {
+    const fullQuote = await getQuoteById(quote.id);
+    navigate('/new', { state: { editQuote: fullQuote || quote } });
   };
 
   const handlePreview = (quote: FullQuote) => {
