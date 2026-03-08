@@ -196,6 +196,8 @@ export async function getAllQuotes(empresaId?: string): Promise<FullQuote[]> {
 
   const { data: quotesData } = await query;
 
+  if (!quotesData || quotesData.length === 0) return [];
+
   const quoteIds = quotesData.map(q => q.id);
 
   // Only fetch services for listing - skip images and flight_legs for performance
