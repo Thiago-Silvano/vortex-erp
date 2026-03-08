@@ -50,7 +50,7 @@ export default function Settings() {
   const loadRates = async () => {
     const { data } = await supabase.from('card_rates').select('*').order('installments') as any;
     if (data && data.length > 0) {
-      const ec = data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) }));
+      const ec = data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate), label: r.installments === 0 ? 'Débito' : undefined }));
       const link = data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) }));
       setEcRates(ec.length > 0 ? ec : defaultEcRates);
       setLinkRates(link.length > 0 ? link : defaultLinkRates);
