@@ -117,7 +117,10 @@ export default function NewSalePage() {
         setLinkRates(data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) })));
       }
     });
-  }, []);
+    if (activeCompany) {
+      (supabase.from('sellers') as any).select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
+    }
+  }, [activeCompany]);
 
   useEffect(() => {
     if (quoteData?.services && items.length === 0 && !editSaleId) {
