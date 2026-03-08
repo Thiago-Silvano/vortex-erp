@@ -301,6 +301,7 @@ export async function saveQuoteToDB(
   }
 
   const quotePayload: any = {
+    empresa_id: empresaId || null,
     client_name: quoteData.client.name,
     client_phone: quoteData.client.phone,
     client_email: quoteData.client.email,
