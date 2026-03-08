@@ -362,6 +362,16 @@ export default function Index() {
               <Label>Observações</Label>
               <Textarea value={client.notes} onChange={e => setClient(p => ({ ...p, notes: e.target.value }))} rows={2} />
             </div>
+            <div>
+              <Label>Vendedor Responsável</Label>
+              <Select value={sellerId} onValueChange={setSellerId}>
+                <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhum</SelectItem>
+                  {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 
