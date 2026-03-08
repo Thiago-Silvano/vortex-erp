@@ -49,6 +49,7 @@ export default function SuppliersPage() {
   const [form, setForm] = useState<Omit<Supplier, 'id'>>(emptySupplier());
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [cnpjLoading, setCnpjLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   const fetchSuppliers = async () => {
     const { data } = await supabase.from('suppliers').select('*').order('name');
