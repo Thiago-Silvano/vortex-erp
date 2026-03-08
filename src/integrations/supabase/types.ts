@@ -1150,6 +1150,255 @@ export type Database = {
         }
         Relationships: []
       }
+      visa_applicants: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_main: boolean
+          passport_number: string | null
+          phone: string | null
+          sort_order: number
+          visa_sale_id: string
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_main?: boolean
+          passport_number?: string | null
+          phone?: string | null
+          sort_order?: number
+          visa_sale_id: string
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_main?: boolean
+          passport_number?: string | null
+          phone?: string | null
+          sort_order?: number
+          visa_sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visa_applicants_visa_sale_id_fkey"
+            columns: ["visa_sale_id"]
+            isOneToOne: false
+            referencedRelation: "visa_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visa_processes: {
+        Row: {
+          applicant_id: string
+          applicant_name: string
+          client_name: string
+          consulate: string | null
+          created_at: string
+          describe_duties: string | null
+          documents: Json | null
+          empresa_id: string | null
+          id: string
+          interview_date: string | null
+          interview_notes: string | null
+          interview_time: string | null
+          photo_url: string | null
+          product_id: string | null
+          status: Database["public"]["Enums"]["visa_process_status"]
+          updated_at: string
+          visa_sale_id: string
+        }
+        Insert: {
+          applicant_id: string
+          applicant_name?: string
+          client_name?: string
+          consulate?: string | null
+          created_at?: string
+          describe_duties?: string | null
+          documents?: Json | null
+          empresa_id?: string | null
+          id?: string
+          interview_date?: string | null
+          interview_notes?: string | null
+          interview_time?: string | null
+          photo_url?: string | null
+          product_id?: string | null
+          status?: Database["public"]["Enums"]["visa_process_status"]
+          updated_at?: string
+          visa_sale_id: string
+        }
+        Update: {
+          applicant_id?: string
+          applicant_name?: string
+          client_name?: string
+          consulate?: string | null
+          created_at?: string
+          describe_duties?: string | null
+          documents?: Json | null
+          empresa_id?: string | null
+          id?: string
+          interview_date?: string | null
+          interview_notes?: string | null
+          interview_time?: string | null
+          photo_url?: string | null
+          product_id?: string | null
+          status?: Database["public"]["Enums"]["visa_process_status"]
+          updated_at?: string
+          visa_sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visa_processes_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "visa_applicants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visa_processes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visa_processes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "visa_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visa_processes_visa_sale_id_fkey"
+            columns: ["visa_sale_id"]
+            isOneToOne: false
+            referencedRelation: "visa_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visa_products: {
+        Row: {
+          average_days: number | null
+          created_at: string
+          description: string | null
+          empresa_id: string | null
+          id: string
+          name: string
+          price: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          average_days?: number | null
+          created_at?: string
+          description?: string | null
+          empresa_id?: string | null
+          id?: string
+          name?: string
+          price?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          average_days?: number | null
+          created_at?: string
+          description?: string | null
+          empresa_id?: string | null
+          id?: string
+          name?: string
+          price?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visa_products_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visa_sales: {
+        Row: {
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string | null
+          id: string
+          installments: number | null
+          notes: string | null
+          payment_method: string | null
+          product_id: string | null
+          sale_date: string
+          status: string
+          total_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          id?: string
+          installments?: number | null
+          notes?: string | null
+          payment_method?: string | null
+          product_id?: string | null
+          sale_date?: string
+          status?: string
+          total_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          id?: string
+          installments?: number | null
+          notes?: string | null
+          payment_method?: string | null
+          product_id?: string | null
+          sale_date?: string
+          status?: string
+          total_value?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visa_sales_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visa_sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "visa_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1171,6 +1420,13 @@ export type Database = {
         | "Família"
         | "Negócios"
         | "Experiência Premium"
+      visa_process_status:
+        | "falta_passaporte"
+        | "produzindo"
+        | "agendado"
+        | "aguardando_renovacao"
+        | "aprovado"
+        | "negado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1312,6 +1568,14 @@ export const Constants = {
         "Família",
         "Negócios",
         "Experiência Premium",
+      ],
+      visa_process_status: [
+        "falta_passaporte",
+        "produzindo",
+        "agendado",
+        "aguardando_renovacao",
+        "aprovado",
+        "negado",
       ],
     },
   },
