@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { NavLink } from '@/components/NavLink';
-import { LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays, UserRound, Building2, ShoppingCart, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function AppSidebar() {
