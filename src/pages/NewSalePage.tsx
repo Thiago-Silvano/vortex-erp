@@ -38,6 +38,7 @@ interface Passenger {
 }
 
 interface SupplierOption { id: string; name: string; }
+interface SellerOption { id: string; full_name: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
@@ -67,6 +68,8 @@ export default function NewSalePage() {
   const [feeRate, setFeeRate] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
+  const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
+  const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
 
   const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
   const [linkRates, setLinkRates] = useState<CardRateEntry[]>([]);
@@ -86,6 +89,7 @@ export default function NewSalePage() {
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setCommissionRate(Number(sale.commission_rate) || 0);
+    setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
@@ -114,7 +118,10 @@ export default function NewSalePage() {
         setLinkRates(data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) })));
       }
     });
-  }, []);
+    if (activeCompany) {
+      (supabase.from('sellers') as any).select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
+    }
+  }, [activeCompany]);
 
   useEffect(() => {
     if (quoteData?.services && items.length === 0 && !editSaleId) {
@@ -230,6 +237,7 @@ export default function NewSalePage() {
       created_by: userEmail,
       updated_by: userEmail,
       empresa_id: activeCompany?.id || null,
+      seller_id: sellerId || null,
     };
 
     let saleId = editSaleId;
@@ -299,6 +307,40 @@ export default function NewSalePage() {
       });
     }
 
+    // Auto-generate commission if seller is assigned
+    if (sellerId && !editSaleId) {
+      const { data: sellerData } = await (supabase.from('sellers') as any).select('*').eq('id', sellerId).single();
+      if (sellerData && sellerData.commission_type !== 'none') {
+        let commValue = 0;
+        const pct = Number(sellerData.commission_percentage) || 0;
+        if (sellerData.commission_type === 'sales_percentage') {
+          const base = sellerData.commission_base === 'net_received' ? totalSale - cardFeeValue
+            : sellerData.commission_base === 'sale_profit' ? grossProfit : totalSale;
+          commValue = base * (pct / 100);
+        } else if (sellerData.commission_type === 'profit_percentage') {
+          commValue = grossProfit * (pct / 100);
+        } else if (sellerData.commission_type === 'company_profit_percentage') {
+          commValue = commissionValue * (pct / 100);
+        } else {
+          commValue = grossProfit * (pct / 100);
+        }
+        await (supabase.from('seller_commissions') as any).insert({
+          empresa_id: activeCompany?.id || null,
+          seller_id: sellerId,
+          sale_id: saleId,
+          client_name: clientName,
+          sale_date: saleDate,
+          sale_value: totalSale,
+          cost_value: totalCost,
+          profit_value: grossProfit,
+          commission_percentage: pct,
+          commission_value: commValue,
+          commission_type: sellerData.commission_type,
+          status: 'pending',
+        });
+      }
+    }
+
     toast.success(editSaleId ? 'Venda atualizada!' : 'Venda criada com sucesso!');
     navigate('/sales');
   };
@@ -328,6 +370,16 @@ export default function NewSalePage() {
               <div>
                 <Label>Data da Venda</Label>
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
+              </div>
+              <div>
+                <Label>Vendedor Responsável</Label>
+                <Select value={sellerId} onValueChange={setSellerId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum</SelectItem>
+                    {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>

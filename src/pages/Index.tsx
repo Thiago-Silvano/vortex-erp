@@ -80,11 +80,16 @@ export default function Index() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [allSellers, setAllSellers] = useState<{id: string; full_name: string}[]>([]);
+  const [sellerId, setSellerId] = useState<string>('');
   const initialLoadRef = useRef(true);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || null));
-  }, []);
+    if (activeCompany) {
+      (supabase.from('sellers') as any).select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
+    }
+  }, [activeCompany]);
 
   useEffect(() => {
     const state = location.state as any;
@@ -97,6 +102,7 @@ export default function Index() {
       setServices(q.services);
       setDestinationImage(q.destinationImageUrl);
       if (q.payment) setPayment(q.payment);
+      if (q.sellerId) setSellerId(q.sellerId);
       window.history.replaceState({}, '');
     }
   }, [location.state]);
@@ -201,7 +207,7 @@ export default function Index() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const quoteData: QuoteData = { client, trip, services, payment, destinationImageUrl: destinationImage };
+      const quoteData: any = { client, trip, services, payment, destinationImageUrl: destinationImage, sellerId };
       const saved = await saveQuoteToDB(quoteData, quoteId, activeCompany?.id);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
@@ -218,7 +224,7 @@ export default function Index() {
     if (!validate()) return;
     setSaving(true);
     try {
-      const quoteData: QuoteData = { client, trip, services, payment, destinationImageUrl: destinationImage };
+      const quoteData: any = { client, trip, services, payment, destinationImageUrl: destinationImage, sellerId };
       const saved = await saveQuoteToDB(quoteData, quoteId, activeCompany?.id);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
@@ -355,6 +361,16 @@ export default function Index() {
             <div>
               <Label>Observações</Label>
               <Textarea value={client.notes} onChange={e => setClient(p => ({ ...p, notes: e.target.value }))} rows={2} />
+            </div>
+            <div>
+              <Label>Vendedor Responsável</Label>
+              <Select value={sellerId} onValueChange={setSellerId}>
+                <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhum</SelectItem>
+                  {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

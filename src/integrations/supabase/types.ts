@@ -306,6 +306,53 @@ export type Database = {
           },
         ]
       }
+      commission_closings: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          period_month: number
+          period_year: number
+          status: string
+          total_commission: number | null
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          period_month: number
+          period_year: number
+          status?: string
+          total_commission?: number | null
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          period_month?: number
+          period_year?: number
+          status?: string
+          total_commission?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_closings_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string
@@ -499,6 +546,7 @@ export type Database = {
           payment_installments_with_interest: number | null
           payment_pix_value: number | null
           payment_rav: number | null
+          seller_id: string | null
           short_id: string
           show_individual_values: boolean
           show_per_passenger: boolean
@@ -528,6 +576,7 @@ export type Database = {
           payment_installments_with_interest?: number | null
           payment_pix_value?: number | null
           payment_rav?: number | null
+          seller_id?: string | null
           short_id?: string
           show_individual_values?: boolean
           show_per_passenger?: boolean
@@ -557,6 +606,7 @@ export type Database = {
           payment_installments_with_interest?: number | null
           payment_pix_value?: number | null
           payment_rav?: number | null
+          seller_id?: string | null
           short_id?: string
           show_individual_values?: boolean
           show_per_passenger?: boolean
@@ -576,6 +626,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
         ]
@@ -876,6 +933,7 @@ export type Database = {
           payment_method: string | null
           quote_id: string | null
           sale_date: string
+          seller_id: string | null
           status: string
           total_sale: number | null
           total_supplier_cost: number | null
@@ -901,6 +959,7 @@ export type Database = {
           payment_method?: string | null
           quote_id?: string | null
           sale_date?: string
+          seller_id?: string | null
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null
@@ -926,6 +985,7 @@ export type Database = {
           payment_method?: string | null
           quote_id?: string | null
           sale_date?: string
+          seller_id?: string | null
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null
@@ -945,6 +1005,258 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_commissions: {
+        Row: {
+          client_name: string | null
+          closing_id: string | null
+          commission_percentage: number | null
+          commission_type: string | null
+          commission_value: number | null
+          cost_value: number | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          notes: string | null
+          payment_date: string | null
+          profit_value: number | null
+          received_value: number | null
+          sale_date: string | null
+          sale_id: string | null
+          sale_value: number | null
+          seller_id: string
+          status: string
+          updated_at: string
+          visa_sale_id: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          closing_id?: string | null
+          commission_percentage?: number | null
+          commission_type?: string | null
+          commission_value?: number | null
+          cost_value?: number | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          profit_value?: number | null
+          received_value?: number | null
+          sale_date?: string | null
+          sale_id?: string | null
+          sale_value?: number | null
+          seller_id: string
+          status?: string
+          updated_at?: string
+          visa_sale_id?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          closing_id?: string | null
+          commission_percentage?: number | null
+          commission_type?: string | null
+          commission_value?: number | null
+          cost_value?: number | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          profit_value?: number | null
+          received_value?: number | null
+          sale_date?: string | null
+          sale_id?: string | null
+          sale_value?: number | null
+          seller_id?: string
+          status?: string
+          updated_at?: string
+          visa_sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_commissions_closing_id_fkey"
+            columns: ["closing_id"]
+            isOneToOne: false
+            referencedRelation: "commission_closings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_commissions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_commissions_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_commissions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_commissions_visa_sale_id_fkey"
+            columns: ["visa_sale_id"]
+            isOneToOne: false
+            referencedRelation: "visa_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sellers: {
+        Row: {
+          account_type: string | null
+          address: string | null
+          address_number: string | null
+          admission_date: string | null
+          bank_account: string | null
+          bank_agency: string | null
+          bank_name: string | null
+          beneficiary_document: string | null
+          beneficiary_name: string | null
+          birth_date: string | null
+          cep: string | null
+          city: string | null
+          commission_base: string | null
+          commission_include_card_fee: boolean | null
+          commission_include_discounts: boolean | null
+          commission_include_operational: boolean | null
+          commission_include_taxes: boolean | null
+          commission_mixed_config: Json | null
+          commission_percentage: number | null
+          commission_revenue_scope: string | null
+          commission_trigger: string | null
+          commission_type: string
+          complement: string | null
+          cpf: string | null
+          created_at: string
+          email: string | null
+          empresa_id: string | null
+          full_name: string
+          id: string
+          marital_status: string | null
+          monthly_salary: number | null
+          neighborhood: string | null
+          notes: string | null
+          phone: string | null
+          pix_key: string | null
+          rg: string | null
+          role_title: string | null
+          state: string | null
+          status: string
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          account_type?: string | null
+          address?: string | null
+          address_number?: string | null
+          admission_date?: string | null
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          beneficiary_document?: string | null
+          beneficiary_name?: string | null
+          birth_date?: string | null
+          cep?: string | null
+          city?: string | null
+          commission_base?: string | null
+          commission_include_card_fee?: boolean | null
+          commission_include_discounts?: boolean | null
+          commission_include_operational?: boolean | null
+          commission_include_taxes?: boolean | null
+          commission_mixed_config?: Json | null
+          commission_percentage?: number | null
+          commission_revenue_scope?: string | null
+          commission_trigger?: string | null
+          commission_type?: string
+          complement?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          empresa_id?: string | null
+          full_name?: string
+          id?: string
+          marital_status?: string | null
+          monthly_salary?: number | null
+          neighborhood?: string | null
+          notes?: string | null
+          phone?: string | null
+          pix_key?: string | null
+          rg?: string | null
+          role_title?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          account_type?: string | null
+          address?: string | null
+          address_number?: string | null
+          admission_date?: string | null
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          beneficiary_document?: string | null
+          beneficiary_name?: string | null
+          birth_date?: string | null
+          cep?: string | null
+          city?: string | null
+          commission_base?: string | null
+          commission_include_card_fee?: boolean | null
+          commission_include_discounts?: boolean | null
+          commission_include_operational?: boolean | null
+          commission_include_taxes?: boolean | null
+          commission_mixed_config?: Json | null
+          commission_percentage?: number | null
+          commission_revenue_scope?: string | null
+          commission_trigger?: string | null
+          commission_type?: string
+          complement?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          empresa_id?: string | null
+          full_name?: string
+          id?: string
+          marital_status?: string | null
+          monthly_salary?: number | null
+          neighborhood?: string | null
+          notes?: string | null
+          phone?: string | null
+          pix_key?: string | null
+          rg?: string | null
+          role_title?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sellers_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]

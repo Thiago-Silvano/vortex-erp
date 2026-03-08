@@ -65,6 +65,7 @@ export interface FullQuote {
   createdAt: string;
   updatedAt: string;
   viewCount: number;
+  sellerId?: string;
 }
 
 function parsePayment(q: any): PaymentData | undefined {
@@ -157,6 +158,7 @@ function mapQuoteRow(q: any, services: ServiceItem[]): FullQuote {
     createdAt: q.created_at,
     updatedAt: q.updated_at,
     viewCount: q.view_count || 0,
+    sellerId: q.seller_id || undefined,
   };
 }
 
@@ -286,7 +288,7 @@ export async function getAuditLog(quoteId: string) {
 }
 
 export async function saveQuoteToDB(
-  quoteData: QuoteData & { destinationImageUrl?: string },
+  quoteData: QuoteData & { destinationImageUrl?: string; sellerId?: string },
   existingId?: string,
   empresaId?: string
 ): Promise<FullQuote> {
@@ -323,6 +325,7 @@ export async function saveQuoteToDB(
     show_individual_values: quoteData.payment?.showIndividualValues || false,
     show_per_passenger: quoteData.payment?.showPerPassenger || false,
     payment_rav: quoteData.payment?.rav || 0,
+    seller_id: (quoteData as any).sellerId || null,
   };
 
   let quoteId: string;
