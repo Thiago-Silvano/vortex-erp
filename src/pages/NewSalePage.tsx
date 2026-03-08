@@ -95,6 +95,11 @@ export default function NewSalePage() {
     setCommissionRate(Number(sale.commission_rate) || 0);
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
+    setInvoiceUrl((sale as any).invoice_url || '');
+    if ((sale as any).invoice_url) {
+      const parts = (sale as any).invoice_url.split('/');
+      setInvoiceFileName(decodeURIComponent(parts[parts.length - 1]) || 'nota-fiscal.pdf');
+    }
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
     if (saleItems) setItems(saleItems.map(i => ({ id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav), total_value: Number(i.total_value) })));
