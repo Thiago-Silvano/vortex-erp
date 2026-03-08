@@ -111,7 +111,7 @@ export default function SuppliersPage() {
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Fornecedor atualizado!');
     } else {
-      const { error } = await supabase.from('suppliers').insert(form as any);
+      const { error } = await supabase.from('suppliers').insert({ ...form, empresa_id: activeCompany?.id } as any);
       if (error) { toast.error('Erro ao cadastrar'); return; }
       toast.success('Fornecedor cadastrado!');
     }

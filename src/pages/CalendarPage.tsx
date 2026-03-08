@@ -110,11 +110,12 @@ export default function CalendarPage() {
     }
 
     setLoading(true);
-    const payload = {
+    const payload: any = {
       title: newTitle.trim(),
       event_date: newDate,
       event_time: newTime || null,
       passengers: newPassengers || 1,
+      empresa_id: activeCompany?.id || null,
     };
 
     if (editingEvent) {

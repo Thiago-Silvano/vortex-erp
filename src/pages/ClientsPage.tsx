@@ -89,7 +89,7 @@ export default function ClientsPage() {
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Cliente atualizado!');
     } else {
-      const { error } = await supabase.from('clients').insert(form);
+      const { error } = await supabase.from('clients').insert({ ...form, empresa_id: activeCompany?.id } as any);
       if (error) { toast.error('Erro ao cadastrar'); return; }
       toast.success('Cliente cadastrado!');
     }
