@@ -65,6 +65,7 @@ export interface FullQuote {
   createdAt: string;
   updatedAt: string;
   viewCount: number;
+  sellerId?: string;
 }
 
 function parsePayment(q: any): PaymentData | undefined {
