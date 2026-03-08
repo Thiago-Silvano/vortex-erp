@@ -76,7 +76,7 @@ export default function UserAdmin() {
     const { data } = await supabase.from('user_permissions').select('*') as any;
     if (data) {
       const map: Record<string, UserPermission> = {};
-      data.forEach((p: any) => { map[p.user_id] = { user_id: p.user_id, user_role: p.user_role, permissions: p.permissions || {} }; });
+      data.forEach((p: any) => { map[p.user_id] = { user_id: p.user_id, user_role: p.user_role, permissions: p.permissions || {}, empresa_ids: p.empresa_ids || [] }; });
       setPermissions(map);
     }
   };
