@@ -73,7 +73,7 @@ export default function SalesPage() {
                     <TableCell>{fmt(Number(s.net_profit))}</TableCell>
                     <TableCell><Badge variant={s.status === 'active' ? 'default' : 'secondary'}>{s.status === 'active' ? 'Ativa' : s.status}</Badge></TableCell>
                     <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => navigate(`/sales/${s.id}`)}><Eye className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
                     </TableCell>
                   </TableRow>
                 ))}
