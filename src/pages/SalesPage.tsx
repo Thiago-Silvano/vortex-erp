@@ -41,6 +41,7 @@ export default function SalesPage() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Vendas</h1>
+          <Button onClick={() => navigate('/sales/new')}><Plus className="h-4 w-4 mr-2" />Nova Venda</Button>
         </div>
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
