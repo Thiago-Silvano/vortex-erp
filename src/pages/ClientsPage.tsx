@@ -11,6 +11,7 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { maskCpf, unmask, validateEmail } from '@/lib/masks';
 
 interface Client {
   id: string;
@@ -46,6 +47,8 @@ export default function ClientsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<Client, 'id'>>(emptyClient());
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [cpfLoading, setCpfLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   const fetchClients = async () => {
     const { data } = await supabase.from('clients').select('*').order('full_name');
@@ -62,9 +65,44 @@ export default function ClientsPage() {
     normalize(c.email).includes(normalize(search))
   );
 
+  const handleCpfSearch = async () => {
+    const digits = unmask(form.cpf);
+    if (digits.length !== 11) { toast.error('CPF deve ter 11 dígitos'); return; }
+    setCpfLoading(true);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cpf/v1/${digits}`);
+      if (res.ok) {
+        const json = await res.json();
+        setForm(p => ({
+          ...p,
+          full_name: json.nome || p.full_name,
+          birth_date: json.data_nascimento ? json.data_nascimento.slice(0, 10) : p.birth_date,
+        }));
+        toast.success('Dados do CPF preenchidos!');
+      } else {
+        toast.error('CPF não encontrado na base pública');
+      }
+    } catch {
+      toast.error('Erro ao consultar CPF');
+    } finally {
+      setCpfLoading(false);
+    }
+  };
+
+  const handleEmailChange = (value: string) => {
+    const lower = value.toLowerCase();
+    setForm(p => ({ ...p, email: lower }));
+    if (lower && !validateEmail(lower)) {
+      setEmailError('Email inválido');
+    } else {
+      setEmailError('');
+    }
+  };
+
   const handleSave = async () => {
     if (!form.full_name.trim()) { toast.error('Nome é obrigatório'); return; }
     if (!form.cpf.trim()) { toast.error('CPF é obrigatório'); return; }
+    if (form.email && !validateEmail(form.email)) { toast.error('Email inválido'); return; }
 
     if (editingId) {
       const { error } = await supabase.from('clients').update(form).eq('id', editingId);
@@ -78,6 +116,7 @@ export default function ClientsPage() {
     setDialogOpen(false);
     setEditingId(null);
     setForm(emptyClient());
+    setEmailError('');
     fetchClients();
   };
 
@@ -85,6 +124,7 @@ export default function ClientsPage() {
     setEditingId(c.id);
     const { id, ...rest } = c;
     setForm(rest);
+    setEmailError('');
     setDialogOpen(true);
   };
 
@@ -99,6 +139,7 @@ export default function ClientsPage() {
   const openNew = () => {
     setEditingId(null);
     setForm(emptyClient());
+    setEmailError('');
     setDialogOpen(true);
   };
 
@@ -161,17 +202,26 @@ export default function ClientsPage() {
             </DialogHeader>
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <Label>Nome completo *</Label>
-                  <Input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} />
+                <div>
+                  <Label>CPF *</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={form.cpf}
+                      onChange={e => setForm(p => ({ ...p, cpf: maskCpf(e.target.value) }))}
+                      placeholder="000.000.000-00"
+                    />
+                    <Button variant="outline" size="icon" onClick={handleCpfSearch} disabled={cpfLoading} title="Buscar dados pelo CPF">
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <Label>Data de nascimento</Label>
                   <Input type="date" value={form.birth_date || ''} onChange={e => setForm(p => ({ ...p, birth_date: e.target.value || null }))} />
                 </div>
-                <div>
-                  <Label>CPF *</Label>
-                  <Input value={form.cpf} onChange={e => setForm(p => ({ ...p, cpf: e.target.value }))} placeholder="000.000.000-00" />
+                <div className="md:col-span-2">
+                  <Label>Nome completo *</Label>
+                  <Input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} />
                 </div>
               </div>
 
@@ -198,7 +248,14 @@ export default function ClientsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Email</Label>
-                  <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+                  <Input
+                    type="email"
+                    value={form.email}
+                    onChange={e => handleEmailChange(e.target.value)}
+                    placeholder="exemplo@email.com"
+                    className={emailError ? 'border-destructive' : ''}
+                  />
+                  {emailError && <p className="text-xs text-destructive mt-1">{emailError}</p>}
                 </div>
                 <div>
                   <Label>Telefone</Label>
