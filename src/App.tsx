@@ -19,6 +19,7 @@ import ClientsPage from "./pages/ClientsPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import SalesPage from "./pages/SalesPage";
 import ReservationsPage from "./pages/ReservationsPage";
+import NewSalePage from "./pages/NewSalePage";
 
 const queryClient = new QueryClient();
 
