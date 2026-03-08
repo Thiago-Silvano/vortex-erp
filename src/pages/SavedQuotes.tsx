@@ -148,7 +148,6 @@ export default function SavedQuotes() {
         // Convert to sale - find the quote and navigate
         const q = quotes.find(q => q.id === id);
         if (q) {
-          const costTotal = q.services.reduce((sum, s) => sum + s.value * s.quantity, 0);
           const rav = q.payment?.rav || 0;
           navigate('/sales/new', {
             state: {
@@ -161,6 +160,20 @@ export default function SavedQuotes() {
             }
           });
           return;
+        }
+      }
+
+      // When reverting to draft, delete sale + related receivables/payables
+      if (newStatus === 'draft') {
+        const { data: relatedSales } = await supabase.from('sales').select('id').eq('quote_id', id);
+        if (relatedSales && relatedSales.length > 0) {
+          const saleIds = relatedSales.map(s => s.id);
+          await supabase.from('receivables').delete().in('sale_id', saleIds);
+          await supabase.from('accounts_payable').delete().in('sale_id', saleIds);
+          await supabase.from('sale_items').delete().in('sale_id', saleIds);
+          await supabase.from('sale_suppliers').delete().in('sale_id', saleIds);
+          await supabase.from('reservations').delete().in('sale_id', saleIds);
+          await supabase.from('sales').delete().in('id', saleIds);
         }
       }
 
