@@ -26,9 +26,18 @@ export default function SavedQuotes() {
   const [quotes, setQuotes] = useState<FullQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('vendedor');
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || null));
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data.user?.id;
+      setUserEmail(data.user?.email || null);
+      if (uid) {
+        supabase.from('user_permissions').select('user_role').eq('user_id', uid).maybeSingle().then(({ data: perm }) => {
+          if (perm?.user_role) setUserRole(perm.user_role);
+        });
+      }
+    });
   }, []);
 
   const loadQuotes = async () => {
@@ -288,14 +297,14 @@ export default function SavedQuotes() {
                         <RotateCcw className="h-4 w-4" />
                       </Button>
 
-                      {/* Marcar como vendida */}
+                      {/* Marcar como vendida / desfazer */}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            title={q.status === 'concluido' ? 'Já marcada como vendida' : 'Marcar como vendida'}
-                            disabled={q.status === 'concluido'}
+                            title={q.status === 'concluido' ? (userRole === 'master' ? 'Desfazer venda' : 'Já marcada como vendida') : 'Marcar como vendida'}
+                            disabled={q.status === 'concluido' && userRole !== 'master'}
                             className={q.status === 'concluido' ? 'text-success' : 'hover:text-success'}
                           >
                             <ThumbsUp className="h-4 w-4" />
@@ -303,26 +312,30 @@ export default function SavedQuotes() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Marcar como vendida?</AlertDialogTitle>
+                            <AlertDialogTitle>{q.status === 'concluido' ? 'Desfazer venda?' : 'Marcar como vendida?'}</AlertDialogTitle>
                             <AlertDialogDescription>
-                              A cotação de "{q.client.name}" será marcada como vendida e o valor será contabilizado no dashboard.
+                              {q.status === 'concluido'
+                                ? `A cotação de "${q.client.name}" voltará para "Em aberto".`
+                                : `A cotação de "${q.client.name}" será marcada como vendida e o valor será contabilizado no dashboard.`}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleStatusChange(q.id, 'concluido')}>Confirmar Venda</AlertDialogAction>
+                            <AlertDialogAction onClick={() => handleStatusChange(q.id, q.status === 'concluido' ? 'draft' : 'concluido')}>
+                              {q.status === 'concluido' ? 'Desfazer' : 'Confirmar Venda'}
+                            </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
 
-                      {/* Marcar como perdida */}
+                      {/* Marcar como perdida / desfazer */}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            title={q.status === 'perdido' ? 'Já marcada como perdida' : 'Marcar como perdida'}
-                            disabled={q.status === 'perdido'}
+                            title={q.status === 'perdido' ? (userRole === 'master' ? 'Desfazer perda' : 'Já marcada como perdida') : 'Marcar como perdida'}
+                            disabled={q.status === 'perdido' && userRole !== 'master'}
                             className={q.status === 'perdido' ? 'text-destructive' : 'hover:text-destructive'}
                           >
                             <ThumbsDown className="h-4 w-4" />
@@ -330,14 +343,18 @@ export default function SavedQuotes() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Marcar como perdida?</AlertDialogTitle>
+                            <AlertDialogTitle>{q.status === 'perdido' ? 'Desfazer perda?' : 'Marcar como perdida?'}</AlertDialogTitle>
                             <AlertDialogDescription>
-                              A cotação de "{q.client.name}" será marcada como perdida e o valor será contabilizado como perda no dashboard.
+                              {q.status === 'perdido'
+                                ? `A cotação de "${q.client.name}" voltará para "Em aberto".`
+                                : `A cotação de "${q.client.name}" será marcada como perdida e o valor será contabilizado como perda no dashboard.`}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleStatusChange(q.id, 'perdido')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Confirmar Perda</AlertDialogAction>
+                            <AlertDialogAction onClick={() => handleStatusChange(q.id, q.status === 'perdido' ? 'draft' : 'perdido')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              {q.status === 'perdido' ? 'Desfazer' : 'Confirmar Perda'}
+                            </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

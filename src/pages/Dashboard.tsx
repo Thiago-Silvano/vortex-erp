@@ -76,15 +76,15 @@ export default function Dashboard() {
       label: 'Cotações Concluídas',
       value: stats.completedCount.toString(),
       icon: CheckCircle,
-      color: 'bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]',
+      color: 'bg-yellow-500 text-white',
       iconColor: 'text-white/80',
     },
     {
       label: 'Valor Vendido',
       value: `R$ ${stats.soldValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       icon: TrendingUp,
-      color: 'bg-accent text-accent-foreground',
-      iconColor: 'text-accent-foreground/80',
+      color: 'bg-emerald-600 text-white',
+      iconColor: 'text-white/80',
     },
     {
       label: 'Valor Perdido',
@@ -103,9 +103,6 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
             <p className="text-muted-foreground text-sm mt-1">Visão geral das suas cotações</p>
           </div>
-          <Button onClick={() => navigate('/new')} className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
-            <Plus className="h-5 w-5" /> Nova Cotação
-          </Button>
         </div>
 
         {loading ? (
@@ -135,31 +132,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-accent" onClick={() => navigate('/quotes')}>
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Ver Cotações</h3>
-                <p className="text-sm text-muted-foreground">Gerenciar todas as cotações</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-transparent hover:border-accent" onClick={() => navigate('/new')}>
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-accent/20 flex items-center justify-center">
-                <Plus className="h-6 w-6 text-accent-foreground" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Nova Cotação</h3>
-                <p className="text-sm text-muted-foreground">Criar uma nova cotação do zero</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </AppLayout>
   );
