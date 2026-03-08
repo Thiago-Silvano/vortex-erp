@@ -44,6 +44,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <CompanyProvider>
         <Routes>
           <Route path="/orcamento/:shortId" element={<ClientQuote />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
