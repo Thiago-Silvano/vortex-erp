@@ -486,9 +486,11 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
           <Label>Imagem principal (opcional)</Label>
           <Input type="file" accept="image/*" onChange={handleImageUpload} />
           {imagePreview && (
-            <div className="mt-2 relative inline-block">
-              <img src={imagePreview} alt="Preview" className="h-20 rounded object-cover" />
-              <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => { setImagePreview(undefined); setItem(p => ({ ...p, imageBase64: undefined })); }}>
+            <div className="mt-2 flex items-center gap-2">
+              <a href={imagePreview} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline hover:text-primary/80 truncate max-w-[200px]">
+                📷 Imagem principal
+              </a>
+              <Button variant="destructive" size="icon" className="h-5 w-5" onClick={() => { setImagePreview(undefined); setItem(p => ({ ...p, imageBase64: undefined })); }}>
                 <X className="h-3 w-3" />
               </Button>
             </div>
@@ -500,10 +502,12 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
           <Label>Imagens adicionais</Label>
           <div className="mt-2 flex gap-2 flex-wrap items-center">
             {extraImages.map((img, idx) => (
-              <div key={idx} className="relative inline-block">
-                <img src={img} alt={`Extra ${idx + 1}`} className="h-16 w-16 rounded object-cover border" />
-                <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => removeExtraImage(idx)}>
-                  <X className="h-3 w-3" />
+              <div key={idx} className="flex items-center gap-1">
+                <a href={img} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">
+                  📷 Img {idx + 1}
+                </a>
+                <Button variant="destructive" size="icon" className="h-4 w-4" onClick={() => removeExtraImage(idx)}>
+                  <X className="h-2 w-2" />
                 </Button>
               </div>
             ))}
