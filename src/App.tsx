@@ -15,6 +15,10 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import UserAdmin from "./pages/UserAdmin";
 import CalendarPage from "./pages/CalendarPage";
+import ClientsPage from "./pages/ClientsPage";
+import SuppliersPage from "./pages/SuppliersPage";
+import SalesPage from "./pages/SalesPage";
+import ReservationsPage from "./pages/ReservationsPage";
 
 const queryClient = new QueryClient();
 
