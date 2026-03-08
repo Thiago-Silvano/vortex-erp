@@ -308,7 +308,7 @@ export default function NewSalePage() {
     }
 
     // Auto-generate commission if seller is assigned
-    if (sellerId && !editSaleId) {
+    if (sellerId && sellerId !== 'none' && !editSaleId) {
       const { data: sellerData } = await (supabase.from('sellers') as any).select('*').eq('id', sellerId).single();
       if (sellerData && sellerData.commission_type !== 'none') {
         let commValue = 0;
