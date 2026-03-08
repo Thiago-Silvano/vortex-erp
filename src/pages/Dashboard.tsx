@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, CheckCircle, TrendingUp, TrendingDown, Plus, DollarSign } from 'lucide-react';
+import { FileText, CheckCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 
 interface DashboardStats {
@@ -18,9 +18,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({ openCount: 0, openValue: 0, completedCount: 0, soldValue: 0, lostValue: 0 });
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     loadStats();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserName(data.user.email?.split('@')[0] || 'Usuário');
+      }
+    });
   }, []);
 
   const loadStats = async () => {
@@ -100,7 +106,9 @@ export default function Dashboard() {
       <div className="p-6 max-w-6xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              {userName ? `Bem-vindo, ${userName}.` : 'Dashboard'}
+            </h1>
             <p className="text-muted-foreground text-sm mt-1">Visão geral das suas cotações</p>
           </div>
         </div>

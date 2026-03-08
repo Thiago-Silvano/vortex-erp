@@ -11,21 +11,25 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Plus, ChevronLeft, ChevronRight, Search, Trash2, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Search, Trash2, Calendar as CalendarIcon, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
 
 interface CalendarEvent {
   id: string;
   title: string;
   event_date: string;
   event_time: string | null;
+  passengers: number;
   created_at: string;
 }
 
 const normalize = (s: string) =>
   s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+const MAX_VISIBLE_EVENTS = 2;
 
 export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -34,31 +38,64 @@ export default function CalendarPage() {
   const [newTitle, setNewTitle] = useState('');
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
+  const [newPassengers, setNewPassengers] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetchEvents = async () => {
     const { data } = await supabase.from('calendar_events').select('*').order('event_date');
-    if (data) setEvents(data as CalendarEvent[]);
+    if (data) setEvents(data.map((e: any) => ({ ...e, passengers: e.passengers ?? 1 })));
   };
 
   useEffect(() => { fetchEvents(); }, []);
 
   const today = new Date();
 
-  const handleAdd = async () => {
+  const upcomingEvents = useMemo(() => {
+    return events.filter(ev => {
+      const evDate = new Date(ev.event_date + 'T23:59:59');
+      return evDate >= startOfDay(today);
+    });
+  }, [events]);
+
+  const upcomingPassengers = useMemo(() => {
+    return upcomingEvents.reduce((sum, ev) => sum + (ev.passengers || 1), 0);
+  }, [upcomingEvents]);
+
+  const openNewEventForDate = (dateStr: string) => {
+    const selectedDate = new Date(dateStr + 'T12:00:00');
+    if (isBefore(startOfDay(selectedDate), startOfDay(today))) return;
+    setEditingEvent(null);
+    setNewTitle('');
+    setNewDate(dateStr);
+    setNewTime('');
+    setNewPassengers(1);
+    setDialogOpen(true);
+  };
+
+  const openEditEvent = (ev: CalendarEvent) => {
+    setEditingEvent(ev);
+    setNewTitle(ev.title);
+    setNewDate(ev.event_date);
+    setNewTime(ev.event_time?.slice(0, 5) || '');
+    setNewPassengers(ev.passengers || 1);
+    setDialogOpen(true);
+  };
+
+  const handleSave = async () => {
     if (!newTitle.trim() || !newDate) {
       toast.error('Preencha o evento e a data.');
       return;
     }
 
     const selectedDate = new Date(newDate + 'T12:00:00');
-    if (isBefore(startOfDay(selectedDate), startOfDay(today))) {
+    if (!editingEvent && isBefore(startOfDay(selectedDate), startOfDay(today))) {
       toast.error('Não é possível adicionar eventos em datas passadas.');
       return;
     }
 
-    if (isSameDay(selectedDate, today) && newTime) {
+    if (!editingEvent && isSameDay(selectedDate, today) && newTime) {
       const [h, m] = newTime.split(':').map(Number);
       const eventMinutes = h * 60 + m;
       const nowMinutes = today.getHours() * 60 + today.getMinutes();
@@ -69,15 +106,26 @@ export default function CalendarPage() {
     }
 
     setLoading(true);
-    const { error } = await supabase.from('calendar_events').insert({
+    const payload = {
       title: newTitle.trim(),
       event_date: newDate,
       event_time: newTime || null,
-    });
+      passengers: newPassengers || 1,
+    };
+
+    if (editingEvent) {
+      const { error } = await supabase.from('calendar_events').update(payload).eq('id', editingEvent.id);
+      if (error) { toast.error('Erro ao atualizar evento.'); setLoading(false); return; }
+      toast.success('Evento atualizado!');
+    } else {
+      const { error } = await supabase.from('calendar_events').insert(payload);
+      if (error) { toast.error('Erro ao salvar evento.'); setLoading(false); return; }
+      toast.success('Evento adicionado!');
+    }
+
     setLoading(false);
-    if (error) { toast.error('Erro ao salvar evento.'); return; }
-    toast.success('Evento adicionado!');
-    setNewTitle(''); setNewDate(''); setNewTime('');
+    setNewTitle(''); setNewDate(''); setNewTime(''); setNewPassengers(1);
+    setEditingEvent(null);
     setDialogOpen(false);
     fetchEvents();
   };
@@ -86,17 +134,6 @@ export default function CalendarPage() {
     await supabase.from('calendar_events').delete().eq('id', id);
     toast.success('Evento removido.');
     fetchEvents();
-  };
-
-  const openNewEventForDate = (dateStr: string) => {
-    const selectedDate = new Date(dateStr + 'T12:00:00');
-    if (isBefore(startOfDay(selectedDate), startOfDay(today))) {
-      return;
-    }
-    setNewTitle('');
-    setNewDate(dateStr);
-    setNewTime('');
-    setDialogOpen(true);
   };
 
   const monthStart = startOfMonth(currentMonth);
@@ -143,13 +180,18 @@ export default function CalendarPage() {
                 className="pl-9 w-full sm:w-64"
               />
             </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) setEditingEvent(null);
+            }}>
               <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-1" /> Evento</Button>
+                <Button onClick={() => { setEditingEvent(null); setNewTitle(''); setNewDate(''); setNewTime(''); setNewPassengers(1); }}>
+                  <Plus className="h-4 w-4 mr-1" /> Evento
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Adicionar Evento</DialogTitle>
+                  <DialogTitle>{editingEvent ? 'Editar Evento' : 'Adicionar Evento'}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-2">
                   <div>
@@ -162,25 +204,46 @@ export default function CalendarPage() {
                       type="date"
                       value={newDate}
                       onChange={e => setNewDate(e.target.value)}
-                      min={format(today, 'yyyy-MM-dd')}
+                      min={editingEvent ? undefined : format(today, 'yyyy-MM-dd')}
                     />
                   </div>
                   <div>
                     <Label>Hora (opcional)</Label>
                     <Input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} />
                   </div>
+                  <div>
+                    <Label>Passageiros</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={newPassengers}
+                      onChange={e => setNewPassengers(Math.max(1, parseInt(e.target.value) || 1))}
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
                     <Button variant="outline">Cancelar</Button>
                   </DialogClose>
-                  <Button onClick={handleAdd} disabled={loading}>
+                  <Button onClick={handleSave} disabled={loading}>
                     {loading ? 'Salvando...' : 'Salvar'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
+        </div>
+
+        {/* Upcoming events counter */}
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="text-sm px-3 py-1.5 gap-1.5">
+            <CalendarIcon className="h-3.5 w-3.5" />
+            {upcomingEvents.length} evento{upcomingEvents.length !== 1 ? 's' : ''} pendente{upcomingEvents.length !== 1 ? 's' : ''}
+          </Badge>
+          <Badge variant="outline" className="text-sm px-3 py-1.5 gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            {upcomingPassengers} passageiro{upcomingPassengers !== 1 ? 's' : ''}
+          </Badge>
         </div>
 
         {isSearching ? (
@@ -191,7 +254,11 @@ export default function CalendarPage() {
               </div>
             ) : (
               filteredEvents.map(ev => (
-                <div key={ev.id} className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors">
+                <div
+                  key={ev.id}
+                  className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => openEditEvent(ev)}
+                >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="shrink-0 h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
                       <CalendarIcon className="h-4 w-4" />
@@ -201,12 +268,16 @@ export default function CalendarPage() {
                       <p className="text-xs text-muted-foreground">
                         {format(new Date(ev.event_date + 'T12:00:00'), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                         {ev.event_time && ` às ${ev.event_time.slice(0, 5)}`}
+                        {' · '}{ev.passengers || 1} pax
                       </p>
                     </div>
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <button className="shrink-0 text-destructive hover:text-destructive/80 p-1">
+                      <button
+                        className="shrink-0 text-destructive hover:text-destructive/80 p-1"
+                        onClick={e => e.stopPropagation()}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </AlertDialogTrigger>
@@ -254,12 +325,14 @@ export default function CalendarPage() {
                   const isCurrentMonth = isSameMonth(d, currentMonth);
                   const isToday = isSameDay(d, today);
                   const isPast = isBefore(startOfDay(d), startOfDay(today));
-                  const hasEvents = dayEvents.length > 0;
+                  const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
+                  const hiddenCount = dayEvents.length - MAX_VISIBLE_EVENTS;
+                  const isFuture = !isPast;
 
                   return (
                     <div
                       key={i}
-                      className={`group/day relative min-h-[100px] md:min-h-[120px] border-b border-r p-1.5 flex flex-col transition-colors ${
+                      className={`relative min-h-[100px] md:min-h-[120px] border-b border-r p-1.5 flex flex-col transition-colors ${
                         isPast ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-muted/20'
                       } ${!isCurrentMonth ? 'bg-muted/30' : ''} ${isToday ? 'bg-primary/5' : ''}`}
                       onClick={() => !isPast && openNewEventForDate(dateKey)}
@@ -269,45 +342,32 @@ export default function CalendarPage() {
                       }`}>
                         {format(d, 'd')}
                       </span>
-                      <div className={`flex-1 mt-1 space-y-0.5 overflow-y-auto max-h-[80px] ${
-                        hasEvents
-                          ? 'group-hover/day:max-h-none group-hover/day:overflow-visible group-hover/day:absolute group-hover/day:top-8 group-hover/day:left-0 group-hover/day:right-0 group-hover/day:bg-card group-hover/day:border group-hover/day:rounded-md group-hover/day:shadow-lg group-hover/day:p-2 group-hover/day:z-40'
-                          : ''
-                      }`}>
-                        {dayEvents.map(ev => (
+                      <div className="flex-1 mt-1 space-y-0.5 overflow-hidden">
+                        {visibleEvents.map(ev => (
                           <div
                             key={ev.id}
-                            className={`group flex items-center gap-1 bg-primary/10 text-primary rounded px-1.5 py-0.5 text-[11px] leading-tight ${
-                              hasEvents ? 'group-hover/day:text-xs group-hover/day:py-1' : ''
-                            } truncate`}
-                            title={`${ev.title}${ev.event_time ? ` - ${ev.event_time.slice(0, 5)}` : ''}`}
-                            onClick={e => e.stopPropagation()}
+                            className="group flex items-center gap-1 bg-primary/10 text-primary rounded px-1.5 py-0.5 text-[11px] leading-tight truncate cursor-pointer hover:bg-primary/20"
+                            title={`${ev.title}${ev.event_time ? ` - ${ev.event_time.slice(0, 5)}` : ''} · ${ev.passengers || 1} pax`}
+                            onClick={e => { e.stopPropagation(); openEditEvent(ev); }}
                           >
                             {ev.event_time && (
                               <span className="font-semibold shrink-0">{ev.event_time.slice(0, 5)}</span>
                             )}
-                            <span className={`truncate ${hasEvents ? 'group-hover/day:whitespace-normal group-hover/day:break-words' : ''}`}>
-                              {ev.title}
-                            </span>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <button className="ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive">
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Remover evento?</AlertDialogTitle>
-                                  <AlertDialogDescription>O evento "{ev.title}" será removido permanentemente.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(ev.id)}>Remover</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <span className="truncate">{ev.title}</span>
+                            {isFuture && (
+                              <span className="shrink-0 text-[10px] opacity-70">{ev.passengers || 1}p</span>
+                            )}
                           </div>
                         ))}
+                        {hiddenCount > 0 && (
+                          <div
+                            className="text-[10px] text-muted-foreground font-medium px-1.5 cursor-pointer hover:text-foreground"
+                            onClick={e => { e.stopPropagation(); }}
+                            title={dayEvents.slice(MAX_VISIBLE_EVENTS).map(ev => ev.title).join(', ')}
+                          >
+                            +{hiddenCount} mais
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
