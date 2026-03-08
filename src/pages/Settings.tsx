@@ -21,6 +21,7 @@ interface CardRate {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { activeCompany } = useCompany();
   const [settings, setSettings] = useState<AgencySettings>(getAgencySettings());
   const [ecRates, setEcRates] = useState<CardRate[]>([]);
   const [linkRates, setLinkRates] = useState<CardRate[]>([]);
