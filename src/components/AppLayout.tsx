@@ -15,16 +15,19 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { NavLink } from '@/components/NavLink';
-import { LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays, UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle, ArrowUpCircle, BarChart3, Tag } from 'lucide-react';
+import {
+  LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays,
+  UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
+  ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
+  Plane, Award, ChevronDown,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown } from 'lucide-react';
 
 function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
-  const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,92 +53,85 @@ function AppSidebar() {
     { title: 'Centros de Custo', url: '/financial/cost-centers', icon: Tag },
   ];
 
+  const reportItems = [
+    { title: 'Dashboard Geral', url: '/reports/dashboard', icon: PieChart },
+    { title: 'Relatório de Vendas', url: '/reports/sales', icon: ShoppingCart },
+    { title: 'Relatório Financeiro', url: '/reports/financial', icon: DollarSign },
+    { title: 'Fluxo de Caixa', url: '/reports/cashflow', icon: TrendingUp },
+    { title: 'Relatório de Clientes', url: '/reports/clients', icon: UserRound },
+    { title: 'Relatório de Fornecedores', url: '/reports/suppliers', icon: Building2 },
+    { title: 'Centro de Custo', url: '/reports/cost-centers', icon: Tag },
+    { title: 'Relatório de Produtos', url: '/reports/products', icon: ClipboardList },
+    { title: 'Relatório de Check-ins', url: '/reports/checkins', icon: Plane },
+    { title: 'Lucro por Venda', url: '/reports/profit', icon: Award },
+  ];
+
   const adminItems = [
     { title: 'Configurações', url: '/settings', icon: Settings },
     { title: 'Usuários', url: '/users', icon: Users },
   ];
 
   const isFinancialActive = location.pathname.startsWith('/financial');
+  const isReportsActive = location.pathname.startsWith('/reports');
+
+  const renderMenuItems = (items: typeof mainItems) => (
+    <SidebarMenu>
+      {items.map((item) => (
+        <SidebarMenuItem key={item.title}>
+          <SidebarMenuButton asChild>
+            <NavLink to={item.url} end className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+              <item.icon className="h-5 w-5 shrink-0" />
+              {!collapsed && <span>{item.title}</span>}
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
+
+  const renderCollapsibleGroup = (label: string, icon: any, items: typeof mainItems, isActive: boolean) => (
+    <SidebarGroup>
+      <Collapsible defaultOpen={isActive}>
+        <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 w-full text-sidebar-foreground/50 text-xs uppercase tracking-wider hover:text-sidebar-foreground/80">
+          {React.createElement(icon, { className: 'h-4 w-4' })}
+          {!collapsed && <>
+            <span>{label}</span>
+            <ChevronDown className="h-3 w-3 ml-auto transition-transform" />
+          </>}
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarGroupContent>{renderMenuItems(items)}</SidebarGroupContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarGroup>
+  );
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarContent className="bg-sidebar text-sidebar-foreground">
         <div className="p-4 flex items-center gap-3 border-b border-sidebar-border">
-          {!collapsed && (
+          {!collapsed ? (
             <div>
               <h2 className="font-bold text-base text-sidebar-primary">Vortex Viagens</h2>
               <p className="text-xs text-sidebar-foreground/60">Gerenciador</p>
             </div>
-          )}
-          {collapsed && (
+          ) : (
             <span className="text-sidebar-primary font-bold text-lg">V</span>
           )}
         </div>
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
+          <SidebarGroupContent>{renderMenuItems(mainItems)}</SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Financial submenu */}
-        <SidebarGroup>
-          <Collapsible defaultOpen={isFinancialActive}>
-            <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 w-full text-sidebar-foreground/50 text-xs uppercase tracking-wider hover:text-sidebar-foreground/80">
-              <DollarSign className="h-4 w-4" />
-              {!collapsed && <>
-                <span>Financeiro</span>
-                <ChevronDown className="h-3 w-3 ml-auto transition-transform group-data-[state=open]:rotate-180" />
-              </>}
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {financialItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <NavLink to={item.url} end className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                          <item.icon className="h-5 w-5 shrink-0" />
-                          {!collapsed && <span>{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
+        {renderCollapsibleGroup('Financeiro', DollarSign, financialItems, isFinancialActive)}
+        {renderCollapsibleGroup('Relatórios', BarChart3, reportItems, isReportsActive)}
 
         {isAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">Admin</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {adminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} end className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                        <item.icon className="h-5 w-5 shrink-0" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
+            <SidebarGroupContent>{renderMenuItems(adminItems)}</SidebarGroupContent>
           </SidebarGroup>
         )}
 
@@ -153,6 +149,8 @@ function AppSidebar() {
   );
 }
 
+import React from 'react';
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
@@ -164,9 +162,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
           </header>
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
+          <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
     </SidebarProvider>

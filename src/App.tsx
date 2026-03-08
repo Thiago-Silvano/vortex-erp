@@ -24,6 +24,16 @@ import AccountsReceivablePage from "./pages/AccountsReceivablePage";
 import AccountsPayablePage from "./pages/AccountsPayablePage";
 import CashFlowPage from "./pages/CashFlowPage";
 import CostCentersPage from "./pages/CostCentersPage";
+import ReportDashboard from "./pages/reports/ReportDashboard";
+import ReportSales from "./pages/reports/ReportSales";
+import ReportFinancial from "./pages/reports/ReportFinancial";
+import ReportCashFlow from "./pages/reports/ReportCashFlow";
+import ReportClients from "./pages/reports/ReportClients";
+import ReportSuppliers from "./pages/reports/ReportSuppliers";
+import ReportCostCenters from "./pages/reports/ReportCostCenters";
+import ReportProducts from "./pages/reports/ReportProducts";
+import ReportCheckins from "./pages/reports/ReportCheckins";
+import ReportProfit from "./pages/reports/ReportProfit";
 
 const queryClient = new QueryClient();
 
@@ -34,12 +44,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Public route - client quote view */}
           <Route path="/orcamento/:shortId" element={<ClientQuote />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           
-          {/* Protected routes */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
           <Route path="/new" element={<ProtectedRoute><Index /></ProtectedRoute>} />
@@ -58,6 +66,16 @@ const App = () => (
           <Route path="/financial/payable" element={<ProtectedRoute><AccountsPayablePage /></ProtectedRoute>} />
           <Route path="/financial/cashflow" element={<ProtectedRoute><CashFlowPage /></ProtectedRoute>} />
           <Route path="/financial/cost-centers" element={<ProtectedRoute><CostCentersPage /></ProtectedRoute>} />
+          <Route path="/reports/dashboard" element={<ProtectedRoute><ReportDashboard /></ProtectedRoute>} />
+          <Route path="/reports/sales" element={<ProtectedRoute><ReportSales /></ProtectedRoute>} />
+          <Route path="/reports/financial" element={<ProtectedRoute><ReportFinancial /></ProtectedRoute>} />
+          <Route path="/reports/cashflow" element={<ProtectedRoute><ReportCashFlow /></ProtectedRoute>} />
+          <Route path="/reports/clients" element={<ProtectedRoute><ReportClients /></ProtectedRoute>} />
+          <Route path="/reports/suppliers" element={<ProtectedRoute><ReportSuppliers /></ProtectedRoute>} />
+          <Route path="/reports/cost-centers" element={<ProtectedRoute><ReportCostCenters /></ProtectedRoute>} />
+          <Route path="/reports/products" element={<ProtectedRoute><ReportProducts /></ProtectedRoute>} />
+          <Route path="/reports/checkins" element={<ProtectedRoute><ReportCheckins /></ProtectedRoute>} />
+          <Route path="/reports/profit" element={<ProtectedRoute><ReportProfit /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
