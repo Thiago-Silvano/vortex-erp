@@ -34,7 +34,9 @@ export default function Dashboard() {
   const loadStats = async () => {
     setLoading(true);
     try {
-      const { data: quotes } = await supabase.from('quotes').select('status, payment_rav, id');
+      let query = supabase.from('quotes').select('status, payment_rav, id');
+      if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+      const { data: quotes } = await query;
       if (!quotes) { setLoading(false); return; }
 
       // Fetch services totals for each quote
