@@ -176,7 +176,7 @@ function AppSidebar() {
           {!collapsed ? (
             <div>
               <h2 className="font-bold text-base text-sidebar-primary">
-                {isVistos ? 'VORTEX VISTOS' : 'VORTEX VIAGENS'}
+                {isVistos ? 'VORTEX VISTOS' : 'GRUPO VORTEX'}
               </h2>
               <p className="text-xs text-sidebar-foreground/60">Gerenciador</p>
             </div>

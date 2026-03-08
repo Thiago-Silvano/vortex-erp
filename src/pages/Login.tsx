@@ -34,7 +34,7 @@ export default function Login() {
               <Lock className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Vortex Viagens</CardTitle>
+          <CardTitle className="text-2xl font-bold">Grupo Vortex</CardTitle>
           <CardDescription>Área restrita. Faça login para continuar.</CardDescription>
         </CardHeader>
         <CardContent>

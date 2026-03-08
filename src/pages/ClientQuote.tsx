@@ -671,7 +671,7 @@ export default function ClientQuote() {
               Valores sujeitos à disponibilidade no momento da reserva. Tarifas podem sofrer alteração sem aviso prévio. Valores por pessoa, salvo indicação contrária.
             </p>
             <p className="text-white/40 text-xs text-center mt-4">
-              © 2026 Vortex Viagens. Todos os direitos reservados.
+              © 2026 Grupo Vortex. Todos os direitos reservados.
             </p>
           </div>
         </div>

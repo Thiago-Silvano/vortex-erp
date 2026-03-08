@@ -846,7 +846,7 @@ export default function QuotePDF({ quote, agency }: Props) {
         {/* Footer */}
         <View style={s.footer} fixed>
           <View style={s.footerLine}>
-            <Text style={s.footerBold}>Vortex Viagens - CNPJ: 51.209.371/0001-19</Text>
+            <Text style={s.footerBold}>Grupo Vortex - CNPJ: 51.209.371/0001-19</Text>
             <Text style={s.footerText}>
               Rua Jorge Elias De Lucca, 677 - Nações Shopping - Sala 04 - Criciúma - SC, 88813-901
             </Text>
