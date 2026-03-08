@@ -159,6 +159,7 @@ export type Database = {
           empresa_id: string | null
           event_date: string
           event_time: string | null
+          event_type: string | null
           id: string
           passengers: number
           title: string
@@ -168,6 +169,7 @@ export type Database = {
           empresa_id?: string | null
           event_date: string
           event_time?: string | null
+          event_type?: string | null
           id?: string
           passengers?: number
           title?: string
@@ -177,6 +179,7 @@ export type Database = {
           empresa_id?: string | null
           event_date?: string
           event_time?: string | null
+          event_type?: string | null
           id?: string
           passengers?: number
           title?: string
