@@ -160,6 +160,7 @@ export default function SavedQuotes() {
                 clientName: q.client.name,
                 services: q.services,
                 rav,
+                sellerId: q.sellerId || '',
               }
             }
           });
