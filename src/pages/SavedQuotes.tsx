@@ -26,9 +26,18 @@ export default function SavedQuotes() {
   const [quotes, setQuotes] = useState<FullQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('vendedor');
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || null));
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data.user?.id;
+      setUserEmail(data.user?.email || null);
+      if (uid) {
+        supabase.from('user_permissions').select('user_role').eq('user_id', uid).maybeSingle().then(({ data: perm }) => {
+          if (perm?.user_role) setUserRole(perm.user_role);
+        });
+      }
+    });
   }, []);
 
   const loadQuotes = async () => {
