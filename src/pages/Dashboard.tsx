@@ -106,7 +106,9 @@ export default function Dashboard() {
       <div className="p-6 max-w-6xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              {userName ? `Bem-vindo, ${userName}.` : 'Dashboard'}
+            </h1>
             <p className="text-muted-foreground text-sm mt-1">Visão geral das suas cotações</p>
           </div>
         </div>
