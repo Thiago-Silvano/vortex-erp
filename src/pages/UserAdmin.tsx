@@ -46,6 +46,7 @@ const ALL_PERMISSIONS = [
 export default function UserAdmin() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { companies } = useCompany();
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [permissions, setPermissions] = useState<Record<string, UserPermission>>({});
   const [loading, setLoading] = useState(true);
@@ -56,6 +57,7 @@ export default function UserAdmin() {
   const [permUser, setPermUser] = useState<UserInfo | null>(null);
   const [permRole, setPermRole] = useState('vendedor');
   const [permChecks, setPermChecks] = useState<Record<string, boolean>>({});
+  const [permEmpresaIds, setPermEmpresaIds] = useState<string[]>([]);
 
   const fetchUsers = async () => {
     setLoading(true);
