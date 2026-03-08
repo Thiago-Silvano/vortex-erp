@@ -76,15 +76,15 @@ export default function Dashboard() {
       label: 'Cotações Concluídas',
       value: stats.completedCount.toString(),
       icon: CheckCircle,
-      color: 'bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]',
+      color: 'bg-yellow-500 text-white',
       iconColor: 'text-white/80',
     },
     {
       label: 'Valor Vendido',
       value: `R$ ${stats.soldValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       icon: TrendingUp,
-      color: 'bg-accent text-accent-foreground',
-      iconColor: 'text-accent-foreground/80',
+      color: 'bg-emerald-600 text-white',
+      iconColor: 'text-white/80',
     },
     {
       label: 'Valor Perdido',
