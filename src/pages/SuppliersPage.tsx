@@ -223,7 +223,18 @@ export default function SuppliersPage() {
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+                  <Input
+                    type="email"
+                    value={form.email}
+                    onChange={e => {
+                      const lower = e.target.value.toLowerCase();
+                      setForm(p => ({ ...p, email: lower }));
+                      setEmailError(lower && !validateEmail(lower) ? 'Email inválido' : '');
+                    }}
+                    placeholder="exemplo@email.com"
+                    className={emailError ? 'border-destructive' : ''}
+                  />
+                  {emailError && <p className="text-xs text-destructive mt-1">{emailError}</p>}
                 </div>
                 <div>
                   <Label>Telefone</Label>
