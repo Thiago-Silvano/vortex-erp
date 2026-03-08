@@ -22,13 +22,15 @@ interface ReservationRow {
 }
 
 export default function ReservationsPage() {
+  const { activeCompany } = useCompany();
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    supabase.from('reservations').select('*').order('created_at', { ascending: false })
-      .then(({ data }) => { if (data) setReservations(data as ReservationRow[]); });
-  }, []);
+    let query = supabase.from('reservations').select('*').order('created_at', { ascending: false });
+    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+    query.then(({ data }) => { if (data) setReservations(data as ReservationRow[]); });
+  }, [activeCompany?.id]);
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const filtered = reservations.filter(r =>
