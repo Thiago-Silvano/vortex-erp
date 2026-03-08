@@ -20,6 +20,10 @@ import SuppliersPage from "./pages/SuppliersPage";
 import SalesPage from "./pages/SalesPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import NewSalePage from "./pages/NewSalePage";
+import AccountsReceivablePage from "./pages/AccountsReceivablePage";
+import AccountsPayablePage from "./pages/AccountsPayablePage";
+import CashFlowPage from "./pages/CashFlowPage";
+import CostCentersPage from "./pages/CostCentersPage";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +54,10 @@ const App = () => (
           <Route path="/sales/new" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
           <Route path="/sales/:id" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
           <Route path="/reservations" element={<ProtectedRoute><ReservationsPage /></ProtectedRoute>} />
+          <Route path="/financial/receivable" element={<ProtectedRoute><AccountsReceivablePage /></ProtectedRoute>} />
+          <Route path="/financial/payable" element={<ProtectedRoute><AccountsPayablePage /></ProtectedRoute>} />
+          <Route path="/financial/cashflow" element={<ProtectedRoute><CashFlowPage /></ProtectedRoute>} />
+          <Route path="/financial/cost-centers" element={<ProtectedRoute><CostCentersPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
