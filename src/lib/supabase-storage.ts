@@ -204,22 +204,6 @@ export async function getAllQuotes(): Promise<FullQuote[]> {
     servicesByQuote.set(s.quote_id, list);
   });
 
-  const serviceIds = new Set((allServices || []).map(s => s.id));
-
-  const flightLegsByService = new Map<string, any[]>();
-  (allFlightLegs || []).filter(fl => serviceIds.has(fl.service_id)).forEach(fl => {
-    const list = flightLegsByService.get(fl.service_id) || [];
-    list.push(fl);
-    flightLegsByService.set(fl.service_id, list);
-  });
-
-  const imagesByService = new Map<string, any[]>();
-  (allImages || []).filter(img => serviceIds.has(img.service_id)).forEach(img => {
-    const list = imagesByService.get(img.service_id) || [];
-    list.push(img);
-    imagesByService.set(img.service_id, list);
-  });
-
   return quotesData.map(q => {
     const servicesData = servicesByQuote.get(q.id) || [];
     const services: ServiceItem[] = servicesData.map(s => {
@@ -236,18 +220,9 @@ export async function getAllQuotes(): Promise<FullQuote[]> {
         location: s.location || '',
         value: Number(s.value),
         quantity: s.quantity,
-        imageBase64: s.image_url || undefined,
-        imagesBase64: (imagesByService.get(s.id) || []).map((img: any) => img.image_url),
-        flightLegs: (flightLegsByService.get(s.id) || []).map((fl: any) => ({
-          origin: fl.origin,
-          destination: fl.destination,
-          departureDate: fl.departure_date || '',
-          departureTime: fl.departure_time || '',
-          arrivalDate: fl.arrival_date || '',
-          arrivalTime: fl.arrival_time || '',
-          connectionDuration: fl.connection_duration || '',
-          direction: (fl.direction || 'ida') as 'ida' | 'volta',
-        })),
+        imageBase64: undefined,
+        imagesBase64: [],
+        flightLegs: [],
         baggage,
       };
     });
