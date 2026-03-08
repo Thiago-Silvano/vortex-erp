@@ -86,7 +86,10 @@ export default function Index() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || null));
-  }, []);
+    if (activeCompany) {
+      (supabase.from('sellers') as any).select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
+    }
+  }, [activeCompany]);
 
   useEffect(() => {
     const state = location.state as any;
