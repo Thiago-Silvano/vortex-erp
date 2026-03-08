@@ -45,11 +45,12 @@ export default function CostCentersPage() {
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
-    const payload = { name, description, status };
+    const payload: any = { name, description, status };
     if (editingId) {
       await supabase.from('cost_centers').update(payload).eq('id', editingId);
       toast.success('Centro de custo atualizado!');
     } else {
+      payload.empresa_id = activeCompany?.id || null;
       await supabase.from('cost_centers').insert(payload);
       toast.success('Centro de custo cadastrado!');
     }
