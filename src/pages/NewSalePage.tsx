@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { maskPhone, maskCpf, maskEmail } from '@/lib/masks';
 
 interface SaleItem {
   id?: string;
@@ -20,6 +21,19 @@ interface SaleItem {
   cost_price: number;
   rav: number;
   total_value: number;
+}
+
+interface Passenger {
+  id?: string;
+  first_name: string;
+  last_name: string;
+  birth_date: string;
+  document_type: 'cpf' | 'passaporte';
+  document_number: string;
+  document_expiry: string;
+  email: string;
+  phone: string;
+  is_main: boolean;
 }
 
 interface SupplierOption { id: string; name: string; }
@@ -43,6 +57,7 @@ export default function NewSalePage() {
   const [addingSupplierId, setAddingSupplierId] = useState('');
   const [items, setItems] = useState<SaleItem[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [passengers, setPassengers] = useState<Passenger[]>([]);
 
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [installments, setInstallments] = useState(1);
@@ -51,7 +66,6 @@ export default function NewSalePage() {
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
 
-  // Card rates per installment from DB
   const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
   const [linkRates, setLinkRates] = useState<CardRateEntry[]>([]);
 
@@ -80,13 +94,18 @@ export default function NewSalePage() {
 
     const { data: recs } = await supabase.from('receivables').select('*').eq('sale_id', id).order('installment_number');
     if (recs) setReceivables(recs.map(r => ({ installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount) })));
+
+    const { data: pax } = await supabase.from('sale_passengers' as any).select('*').eq('sale_id', id).order('sort_order');
+    if (pax) setPassengers((pax as any[]).map(p => ({
+      id: p.id, first_name: p.first_name, last_name: p.last_name, birth_date: p.birth_date || '',
+      document_type: p.document_type || 'cpf', document_number: p.document_number || '',
+      document_expiry: p.document_expiry || '', email: p.email || '', phone: p.phone || '', is_main: p.is_main || false,
+    })));
   };
 
   useEffect(() => {
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setAllSuppliers(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
-    
-    // Load card rates per installment
     (supabase.from('card_rates').select('*').order('installments') as any).then(({ data }: any) => {
       if (data && data.length > 0) {
         setEcRates(data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) })));
@@ -110,14 +129,11 @@ export default function NewSalePage() {
     }
   }, [quoteData]);
 
-  // Auto-fill fee rate based on card payment type + installments
   useEffect(() => {
     if (paymentMethod !== 'credito' || !cardPaymentType) return;
     const rates = cardPaymentType === 'ec' ? ecRates : linkRates;
     const found = rates.find(r => r.installments === installments);
-    if (found) {
-      setFeeRate(found.rate);
-    }
+    if (found) setFeeRate(found.rate);
   }, [cardPaymentType, installments, ecRates, linkRates, paymentMethod]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
@@ -153,6 +169,36 @@ export default function NewSalePage() {
     if (!addingSupplierId || selectedSupplierIds.includes(addingSupplierId)) return;
     setSelectedSupplierIds(prev => [...prev, addingSupplierId]);
     setAddingSupplierId('');
+  };
+
+  const addPassenger = () => {
+    setPassengers(prev => [...prev, {
+      first_name: '', last_name: '', birth_date: '', document_type: 'cpf',
+      document_number: '', document_expiry: '', email: '', phone: '', is_main: prev.length === 0,
+    }]);
+  };
+
+  const updatePassenger = (idx: number, field: keyof Passenger, value: any) => {
+    setPassengers(prev => prev.map((p, i) => {
+      if (i !== idx) return field === 'is_main' && value === true ? { ...p, is_main: false } : p;
+      return { ...p, [field]: value };
+    }));
+  };
+
+  const removePassenger = (idx: number) => {
+    setPassengers(prev => {
+      const updated = prev.filter((_, i) => i !== idx);
+      if (updated.length > 0 && !updated.some(p => p.is_main)) updated[0].is_main = true;
+      return updated;
+    });
+  };
+
+  const handleCancel = async () => {
+    // If coming from quote conversion and not editing, revert quote status back to draft
+    if (quoteId && !editSaleId) {
+      await supabase.from('quotes').update({ status: 'draft' }).eq('id', quoteId);
+    }
+    navigate('/sales');
   };
 
   const handleSave = async () => {
@@ -192,6 +238,7 @@ export default function NewSalePage() {
       await supabase.from('sale_suppliers').delete().eq('sale_id', editSaleId);
       await supabase.from('receivables').delete().eq('sale_id', editSaleId);
       await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      await (supabase.from('sale_passengers' as any) as any).delete().eq('sale_id', editSaleId);
     } else {
       const { data, error } = await supabase.from('sales').insert(salePayload as any).select('id').single();
       if (error || !data) { toast.error('Erro ao criar venda'); return; }
@@ -206,6 +253,16 @@ export default function NewSalePage() {
 
     if (selectedSupplierIds.length > 0) {
       await supabase.from('sale_suppliers').insert(selectedSupplierIds.map(sid => ({ sale_id: saleId, supplier_id: sid })));
+    }
+
+    // Save passengers
+    if (passengers.length > 0) {
+      await (supabase.from('sale_passengers' as any) as any).insert(passengers.map((p, idx) => ({
+        sale_id: saleId, first_name: p.first_name, last_name: p.last_name,
+        birth_date: p.birth_date || null, document_type: p.document_type,
+        document_number: p.document_number, document_expiry: p.document_expiry || null,
+        email: p.email, phone: p.phone, is_main: p.is_main, sort_order: idx,
+      })));
     }
 
     if (receivables.length > 0) {
@@ -225,6 +282,18 @@ export default function NewSalePage() {
 
     if (quoteId) {
       await supabase.from('quotes').update({ status: 'concluido' }).eq('id', quoteId);
+    }
+
+    // Auto-create calendar event with main passenger info
+    if (passengers.length > 0 && !editSaleId) {
+      const mainPassenger = passengers.find(p => p.is_main) || passengers[0];
+      const eventTitle = `${mainPassenger.first_name} ${mainPassenger.last_name}`.trim() || clientName;
+      const eventDate = saleDate; // departure date = sale date as default
+      await supabase.from('calendar_events').insert({
+        title: eventTitle,
+        event_date: eventDate,
+        passengers: passengers.length,
+      });
     }
 
     toast.success(editSaleId ? 'Venda atualizada!' : 'Venda criada com sucesso!');
@@ -258,6 +327,90 @@ export default function NewSalePage() {
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Passengers */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">Passageiros da Reserva</CardTitle>
+            <Button size="sm" variant="outline" onClick={addPassenger}>
+              <Plus className="h-4 w-4 mr-1" />Adicionar
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {passengers.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum passageiro adicionado</p>
+            )}
+            {passengers.map((pax, idx) => (
+              <div key={idx} className="border rounded-lg p-4 space-y-3 relative">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Checkbox checked={pax.is_main} onCheckedChange={(checked) => updatePassenger(idx, 'is_main', !!checked)} />
+                    <Label className="text-sm font-medium">Passageiro principal</Label>
+                  </div>
+                  <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs">Nome</Label>
+                    <Input value={pax.first_name} onChange={e => updatePassenger(idx, 'first_name', e.target.value)} placeholder="Nome" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Sobrenome</Label>
+                    <Input value={pax.last_name} onChange={e => updatePassenger(idx, 'last_name', e.target.value)} placeholder="Sobrenome" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Data de Nascimento</Label>
+                    <Input type="date" value={pax.birth_date} onChange={e => updatePassenger(idx, 'birth_date', e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Tipo de Documento</Label>
+                    <Select value={pax.document_type} onValueChange={v => updatePassenger(idx, 'document_type', v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cpf">CPF</SelectItem>
+                        <SelectItem value="passaporte">Passaporte</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Nº do Documento</Label>
+                    <Input
+                      value={pax.document_number}
+                      onChange={e => {
+                        const val = pax.document_type === 'cpf' ? maskCpf(e.target.value) : e.target.value;
+                        updatePassenger(idx, 'document_number', val);
+                      }}
+                      placeholder={pax.document_type === 'cpf' ? '000.000.000-00' : 'Nº passaporte'}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Vencimento Doc.</Label>
+                    <Input type="date" value={pax.document_expiry} onChange={e => updatePassenger(idx, 'document_expiry', e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">E-mail</Label>
+                    <Input
+                      value={pax.email}
+                      onChange={e => updatePassenger(idx, 'email', maskEmail(e.target.value))}
+                      placeholder="email@exemplo.com"
+                      type="email"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Telefone</Label>
+                    <Input
+                      value={pax.phone}
+                      onChange={e => updatePassenger(idx, 'phone', maskPhone(e.target.value))}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
@@ -458,7 +611,7 @@ export default function NewSalePage() {
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pb-8">
-          <Button variant="outline" onClick={() => navigate('/sales')}>Cancelar</Button>
+          <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
           <Button onClick={handleSave}>{editSaleId ? 'Atualizar Venda' : 'Salvar Venda'}</Button>
         </div>
       </div>
