@@ -42,6 +42,7 @@ import VistosProductsPage from "./pages/vistos/VistosProductsPage";
 import VistosSalesPage from "./pages/vistos/VistosSalesPage";
 import VistosNewSalePage from "./pages/vistos/VistosNewSalePage";
 import VistosProductionPage from "./pages/vistos/VistosProductionPage";
+import VistosReportsPage from "./pages/vistos/VistosReportsPage";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const App = () => (
           <Route path="/vistos/sales/new" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
           <Route path="/vistos/sales/edit" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
           <Route path="/vistos/production" element={<ProtectedRoute><VistosProductionPage /></ProtectedRoute>} />
+          <Route path="/vistos/reports" element={<ProtectedRoute><VistosReportsPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

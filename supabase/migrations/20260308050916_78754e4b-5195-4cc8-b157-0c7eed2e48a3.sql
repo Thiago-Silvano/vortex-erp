@@ -1,0 +1,2 @@
+
+ALTER TABLE public.calendar_events ADD COLUMN IF NOT EXISTS event_type TEXT DEFAULT 'geral';

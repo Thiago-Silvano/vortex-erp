@@ -11,7 +11,7 @@ import {
   LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays,
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
-  Plane, Award, ChevronDown, Building, Cog, Package,
+  Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -102,11 +102,19 @@ function AppSidebar() {
     { title: 'Produtos', url: '/vistos/products', icon: Package },
     { title: 'Produção', url: '/vistos/production', icon: Cog },
     { title: 'Calendário', url: '/calendar', icon: CalendarDays },
+    { title: 'Relatórios', url: '/vistos/reports', icon: FileBarChart },
+  ];
+
+  const vistosFinancial: MenuItem[] = [
+    { title: 'Contas a Receber', url: '/financial/receivable', icon: ArrowDownCircle, permKey: 'financial_receivable' },
+    { title: 'Contas a Pagar', url: '/financial/payable', icon: ArrowUpCircle, permKey: 'financial_payable' },
+    { title: 'Fluxo de Caixa', url: '/financial/cashflow', icon: BarChart3, permKey: 'financial_cashflow' },
+    { title: 'Centros de Custo', url: '/financial/cost-centers', icon: Tag, permKey: 'financial_cashflow' },
   ];
 
   const mainItems = isVistos ? vistosMain : viagensMain;
-  const financialItems = isVistos ? viagensFinancial : viagensFinancial; // shared for now
-  const reportItems = isVistos ? viagensReports : viagensReports; // shared for now
+  const financialItems = isVistos ? vistosFinancial : viagensFinancial;
+  const reportItems = isVistos ? [] : viagensReports;
 
   const adminItems: MenuItem[] = [
     { title: 'Configurações', url: '/settings', icon: Settings, permKey: 'settings_access' },
