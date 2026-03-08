@@ -237,7 +237,7 @@ export default function NewSalePage() {
       created_by: userEmail,
       updated_by: userEmail,
       empresa_id: activeCompany?.id || null,
-      seller_id: sellerId || null,
+      seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
     };
 
     let saleId = editSaleId;
@@ -308,7 +308,7 @@ export default function NewSalePage() {
     }
 
     // Auto-generate commission if seller is assigned
-    if (sellerId && !editSaleId) {
+    if (sellerId && sellerId !== 'none' && !editSaleId) {
       const { data: sellerData } = await (supabase.from('sellers') as any).select('*').eq('id', sellerId).single();
       if (sellerData && sellerData.commission_type !== 'none') {
         let commValue = 0;
@@ -389,7 +389,7 @@ export default function NewSalePage() {
                 <Select value={sellerId} onValueChange={setSellerId}>
                   <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
