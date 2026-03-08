@@ -325,7 +325,7 @@ export async function saveQuoteToDB(
     show_individual_values: quoteData.payment?.showIndividualValues || false,
     show_per_passenger: quoteData.payment?.showPerPassenger || false,
     payment_rav: quoteData.payment?.rav || 0,
-    seller_id: (quoteData as any).sellerId || null,
+    seller_id: (quoteData as any).sellerId && (quoteData as any).sellerId !== 'none' ? (quoteData as any).sellerId : null,
   };
 
   let quoteId: string;

@@ -367,7 +367,7 @@ export default function Index() {
               <Select value={sellerId} onValueChange={setSellerId}>
                 <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="none">Nenhum</SelectItem>
                   {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
                 </SelectContent>
               </Select>
