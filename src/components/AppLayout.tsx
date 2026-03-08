@@ -20,10 +20,12 @@ import {
   LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays,
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
-  Plane, Award, ChevronDown,
+  Plane, Award, ChevronDown, Building,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useCompany } from '@/contexts/CompanyContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface MenuItem {
   title: string;
