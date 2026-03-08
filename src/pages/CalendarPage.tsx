@@ -33,6 +33,7 @@ const normalize = (s: string) =>
 const MAX_VISIBLE_EVENTS = 2;
 
 export default function CalendarPage() {
+  const { activeCompany } = useCompany();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [filter, setFilter] = useState('');
@@ -45,7 +46,9 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(false);
 
   const fetchEvents = async () => {
-    const { data } = await supabase.from('calendar_events').select('*').order('event_date');
+    let query = supabase.from('calendar_events').select('*').order('event_date');
+    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+    const { data } = await query;
     if (data) setEvents(data.map((e: any) => ({ ...e, passengers: e.passengers ?? 1 })));
   };
 
