@@ -666,6 +666,45 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
+        {/* Invoice Upload */}
+        <Card>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Nota Fiscal</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label className="text-sm">Enviar PDF da Nota Fiscal</Label>
+              <Input
+                type="file"
+                accept="application/pdf"
+                onChange={handleInvoiceUpload}
+                disabled={uploadingInvoice}
+              />
+              {uploadingInvoice && <p className="text-xs text-muted-foreground mt-1">Enviando...</p>}
+            </div>
+            {invoiceUrl && (
+              <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                <FileText className="h-4 w-4 text-primary shrink-0" />
+                <a
+                  href={invoiceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary underline hover:text-primary/80 truncate flex items-center gap-1"
+                >
+                  {invoiceFileName || 'nota-fiscal.pdf'}
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                </a>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 ml-auto"
+                  onClick={() => { setInvoiceUrl(''); setInvoiceFileName(''); }}
+                >
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Notes */}
         <Card>
           <CardHeader><CardTitle className="text-base">Observação da Venda</CardTitle></CardHeader>
