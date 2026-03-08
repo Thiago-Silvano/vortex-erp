@@ -47,10 +47,12 @@ export default function Settings() {
 
   useEffect(() => {
     loadRates();
-  }, []);
+  }, [activeCompany]);
 
   const loadRates = async () => {
-    const { data } = await supabase.from('card_rates').select('*').order('installments') as any;
+    let query = supabase.from('card_rates').select('*').order('installments');
+    if (activeCompany) query = query.eq('empresa_id', activeCompany.id) as any;
+    const { data } = await query as any;
     if (data && data.length > 0) {
       const ec = data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate), label: r.installments === 0 ? 'Débito' : undefined }));
       const link = data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) }));
