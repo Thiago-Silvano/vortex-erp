@@ -63,6 +63,7 @@ export default function Index() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { activeCompany } = useCompany();
   const [quoteId, setQuoteId] = useState<string | undefined>();
   const [shortId, setShortId] = useState<string | undefined>();
   const [client, setClient] = useState<ClientData>(defaultClient);
