@@ -83,9 +83,11 @@ export default function SavedQuotes() {
     }
   };
 
-  const handleReuse = (quote: FullQuote) => {
+  const handleReuse = async (quote: FullQuote) => {
+    const fullQuote = await getQuoteById(quote.id);
+    const q = fullQuote || quote;
     const reusedQuote = {
-      ...quote,
+      ...q,
       id: undefined,
       shortId: undefined,
       client: {
