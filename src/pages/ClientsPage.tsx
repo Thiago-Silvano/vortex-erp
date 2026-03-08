@@ -11,7 +11,7 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { maskCpf, unmask, validateEmail } from '@/lib/masks';
+import { maskCpf, validateEmail } from '@/lib/masks';
 
 interface Client {
   id: string;
@@ -47,7 +47,6 @@ export default function ClientsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<Client, 'id'>>(emptyClient());
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [cpfLoading, setCpfLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
 
   const fetchClients = async () => {
@@ -65,29 +64,6 @@ export default function ClientsPage() {
     normalize(c.email).includes(normalize(search))
   );
 
-  const handleCpfSearch = async () => {
-    const digits = unmask(form.cpf);
-    if (digits.length !== 11) { toast.error('CPF deve ter 11 dígitos'); return; }
-    setCpfLoading(true);
-    try {
-      const res = await fetch(`https://brasilapi.com.br/api/cpf/v1/${digits}`);
-      if (res.ok) {
-        const json = await res.json();
-        setForm(p => ({
-          ...p,
-          full_name: json.nome || p.full_name,
-          birth_date: json.data_nascimento ? json.data_nascimento.slice(0, 10) : p.birth_date,
-        }));
-        toast.success('Dados do CPF preenchidos!');
-      } else {
-        toast.error('CPF não encontrado na base pública');
-      }
-    } catch {
-      toast.error('Erro ao consultar CPF');
-    } finally {
-      setCpfLoading(false);
-    }
-  };
 
   const handleEmailChange = (value: string) => {
     const lower = value.toLowerCase();
@@ -204,16 +180,11 @@ export default function ClientsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>CPF *</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={form.cpf}
-                      onChange={e => setForm(p => ({ ...p, cpf: maskCpf(e.target.value) }))}
-                      placeholder="000.000.000-00"
-                    />
-                    <Button variant="outline" size="icon" onClick={handleCpfSearch} disabled={cpfLoading} title="Buscar dados pelo CPF">
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    value={form.cpf}
+                    onChange={e => setForm(p => ({ ...p, cpf: maskCpf(e.target.value) }))}
+                    placeholder="000.000.000-00"
+                  />
                 </div>
                 <div>
                   <Label>Data de nascimento</Label>
