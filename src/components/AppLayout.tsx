@@ -11,7 +11,7 @@ import {
   LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays,
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
-  Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart,
+  Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
