@@ -928,6 +928,7 @@ export type Database = {
           gross_profit: number | null
           id: string
           installments: number | null
+          invoice_url: string | null
           net_profit: number | null
           notes: string | null
           payment_method: string | null
@@ -954,6 +955,7 @@ export type Database = {
           gross_profit?: number | null
           id?: string
           installments?: number | null
+          invoice_url?: string | null
           net_profit?: number | null
           notes?: string | null
           payment_method?: string | null
@@ -980,6 +982,7 @@ export type Database = {
           gross_profit?: number | null
           id?: string
           installments?: number | null
+          invoice_url?: string | null
           net_profit?: number | null
           notes?: string | null
           payment_method?: string | null

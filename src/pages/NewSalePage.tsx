@@ -11,10 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, maskCpf, maskEmail } from '@/lib/masks';
+import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
 interface SaleItem {
   id?: string;
@@ -73,6 +74,9 @@ export default function NewSalePage() {
 
   const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
   const [linkRates, setLinkRates] = useState<CardRateEntry[]>([]);
+  const [invoiceUrl, setInvoiceUrl] = useState('');
+  const [invoiceFileName, setInvoiceFileName] = useState('');
+  const [uploadingInvoice, setUploadingInvoice] = useState(false);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
@@ -91,6 +95,11 @@ export default function NewSalePage() {
     setCommissionRate(Number(sale.commission_rate) || 0);
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
+    setInvoiceUrl((sale as any).invoice_url || '');
+    if ((sale as any).invoice_url) {
+      const parts = (sale as any).invoice_url.split('/');
+      setInvoiceFileName(decodeURIComponent(parts[parts.length - 1]) || 'nota-fiscal.pdf');
+    }
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
     if (saleItems) setItems(saleItems.map(i => ({ id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav), total_value: Number(i.total_value) })));
@@ -203,11 +212,34 @@ export default function NewSalePage() {
   };
 
   const handleCancel = async () => {
-    // If coming from quote conversion and not editing, revert quote status back to draft
     if (quoteId && !editSaleId) {
       await supabase.from('quotes').update({ status: 'draft' }).eq('id', quoteId);
     }
     navigate('/sales');
+  };
+
+  const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      toast.error('Apenas arquivos PDF são aceitos');
+      return;
+    }
+    setUploadingInvoice(true);
+    const ext = file.name.split('.').pop();
+    const fileName = `invoices/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
+    if (error) {
+      toast.error('Erro ao enviar nota fiscal');
+      setUploadingInvoice(false);
+      return;
+    }
+    const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+    setInvoiceUrl(data.publicUrl);
+    setInvoiceFileName(file.name);
+    setUploadingInvoice(false);
+    toast.success('Nota fiscal enviada!');
+    e.target.value = '';
   };
 
   const handleSave = async () => {
@@ -238,6 +270,7 @@ export default function NewSalePage() {
       updated_by: userEmail,
       empresa_id: activeCompany?.id || null,
       seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
+      invoice_url: invoiceUrl || null,
     };
 
     let saleId = editSaleId;
@@ -630,6 +663,45 @@ export default function NewSalePage() {
                 ))}
               </TableBody>
             </Table>
+          </CardContent>
+        </Card>
+
+        {/* Invoice Upload */}
+        <Card>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Nota Fiscal</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label className="text-sm">Enviar PDF da Nota Fiscal</Label>
+              <Input
+                type="file"
+                accept="application/pdf"
+                onChange={handleInvoiceUpload}
+                disabled={uploadingInvoice}
+              />
+              {uploadingInvoice && <p className="text-xs text-muted-foreground mt-1">Enviando...</p>}
+            </div>
+            {invoiceUrl && (
+              <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                <FileText className="h-4 w-4 text-primary shrink-0" />
+                <a
+                  href={invoiceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary underline hover:text-primary/80 truncate flex items-center gap-1"
+                >
+                  {invoiceFileName || 'nota-fiscal.pdf'}
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                </a>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 ml-auto"
+                  onClick={() => { setInvoiceUrl(''); setInvoiceFileName(''); }}
+                >
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
