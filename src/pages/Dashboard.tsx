@@ -22,6 +22,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadStats();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserName(data.user.email?.split('@')[0] || 'Usuário');
+      }
+    });
   }, []);
 
   const loadStats = async () => {
