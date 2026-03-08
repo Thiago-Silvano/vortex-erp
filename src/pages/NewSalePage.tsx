@@ -324,7 +324,7 @@ export default function NewSalePage() {
         } else {
           commValue = grossProfit * (pct / 100);
         }
-        await (supabase.from('seller_commissions') as any).insert({
+        const { data: commData } = await (supabase.from('seller_commissions') as any).insert({
           empresa_id: activeCompany?.id || null,
           seller_id: sellerId,
           sale_id: saleId,
@@ -337,7 +337,20 @@ export default function NewSalePage() {
           commission_value: commValue,
           commission_type: sellerData.commission_type,
           status: 'pending',
-        });
+        }).select('id').single();
+
+        // Create accounts payable for the commission (pay to seller)
+        if (commValue > 0) {
+          await supabase.from('accounts_payable').insert({
+            sale_id: saleId,
+            amount: commValue,
+            due_date: saleDate,
+            description: `Comissão - ${sellerData.full_name} - ${clientName}`,
+            status: 'open',
+            origin_type: 'commission',
+            empresa_id: activeCompany?.id || null,
+          } as any);
+        }
       }
     }
 
