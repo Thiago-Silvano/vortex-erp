@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 interface CardRate {
   installments: number;
   rate: number;
+  label?: string;
 }
 
 export default function Settings() {
@@ -24,6 +25,7 @@ export default function Settings() {
   const [linkRates, setLinkRates] = useState<CardRate[]>([]);
 
   const defaultEcRates: CardRate[] = [
+    { installments: 0, rate: 1.39, label: 'Débito' },
     { installments: 1, rate: 0.79 }, { installments: 2, rate: 1.80 }, { installments: 3, rate: 1.85 },
     { installments: 4, rate: 2.10 }, { installments: 5, rate: 2.35 }, { installments: 6, rate: 2.60 },
     { installments: 7, rate: 2.90 }, { installments: 8, rate: 3.10 }, { installments: 9, rate: 3.30 },
