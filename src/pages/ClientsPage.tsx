@@ -180,16 +180,11 @@ export default function ClientsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>CPF *</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={form.cpf}
-                      onChange={e => setForm(p => ({ ...p, cpf: maskCpf(e.target.value) }))}
-                      placeholder="000.000.000-00"
-                    />
-                    <Button variant="outline" size="icon" onClick={handleCpfSearch} disabled={cpfLoading} title="Buscar dados pelo CPF">
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    value={form.cpf}
+                    onChange={e => setForm(p => ({ ...p, cpf: maskCpf(e.target.value) }))}
+                    placeholder="000.000.000-00"
+                  />
                 </div>
                 <div>
                   <Label>Data de nascimento</Label>
