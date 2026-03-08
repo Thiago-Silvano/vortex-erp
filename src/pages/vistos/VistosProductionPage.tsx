@@ -133,7 +133,13 @@ export default function VistosProductionPage() {
       event_date: intDate,
       event_time: intTime,
       passengers: 1,
+      event_type: 'entrevista',
     });
+
+    // Send email notification
+    supabase.functions.invoke('visa-notification', {
+      body: { processId: selectedProcess.id, newStatus: 'agendado' },
+    }).catch(err => console.error('Notification error:', err));
 
     toast.success('Entrevista agendada e evento criado no calendário!');
     setInterviewOpen(false);
