@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, CheckCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface DashboardStats {
   openCount: number;
