@@ -1,0 +1,1 @@
+ALTER TABLE public.calendar_events ADD COLUMN passengers integer NOT NULL DEFAULT 1;
