@@ -147,7 +147,7 @@ export default function UserAdmin() {
   const handleSavePermissions = async () => {
     if (!permUser) return;
     setSaving(true);
-    const payload = { user_id: permUser.id, user_role: permRole, permissions: permChecks, updated_at: new Date().toISOString() };
+    const payload = { user_id: permUser.id, user_role: permRole, permissions: permChecks, empresa_ids: permEmpresaIds, updated_at: new Date().toISOString() };
     
     if (permissions[permUser.id]) {
       await supabase.from('user_permissions').update(payload as any).eq('user_id', permUser.id) as any;
