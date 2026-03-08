@@ -224,7 +224,7 @@ export default function Index() {
     if (!validate()) return;
     setSaving(true);
     try {
-      const quoteData: QuoteData = { client, trip, services, payment, destinationImageUrl: destinationImage };
+      const quoteData: any = { client, trip, services, payment, destinationImageUrl: destinationImage, sellerId };
       const saved = await saveQuoteToDB(quoteData, quoteId, activeCompany?.id);
       setQuoteId(saved.id);
       setShortId(saved.shortId);
