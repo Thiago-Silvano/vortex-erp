@@ -270,6 +270,7 @@ export default function NewSalePage() {
       updated_by: userEmail,
       empresa_id: activeCompany?.id || null,
       seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
+      invoice_url: invoiceUrl || null,
     };
 
     let saleId = editSaleId;
