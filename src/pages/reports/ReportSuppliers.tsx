@@ -1,0 +1,86 @@
+import { useState, useEffect, useMemo } from 'react';
+import AppLayout from '@/components/AppLayout';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+export default function ReportSuppliers() {
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [sales, setSales] = useState<any[]>([]);
+  const [saleSups, setSaleSups] = useState<any[]>([]);
+
+  useEffect(() => {
+    supabase.from('suppliers').select('*').order('name').then(({ data }) => { if (data) setSuppliers(data); });
+    supabase.from('sales').select('*').then(({ data }) => { if (data) setSales(data); });
+    supabase.from('sale_suppliers').select('*').then(({ data }) => { if (data) setSaleSups(data); });
+  }, []);
+
+  const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const supplierStats = useMemo(() => {
+    return suppliers.map(sup => {
+      const saleIds = saleSups.filter(ss => ss.supplier_id === sup.id).map(ss => ss.sale_id);
+      const supSales = sales.filter(s => saleIds.includes(s.id));
+      const totalGerado = supSales.reduce((s, v) => s + Number(v.total_sale || 0), 0);
+      const totalCusto = supSales.reduce((s, v) => s + Number(v.total_supplier_cost || 0), 0);
+      return { name: sup.name, numVendas: supSales.length, totalGerado, totalCusto, lucro: totalGerado - totalCusto };
+    }).filter(s => s.numVendas > 0);
+  }, [suppliers, sales, saleSups]);
+
+  const chartData = supplierStats.map(s => ({ name: s.name.length > 15 ? s.name.slice(0, 15) + '...' : s.name, vendas: s.numVendas, valor: s.totalGerado }));
+
+  return (
+    <AppLayout>
+      <div className="p-6 space-y-6">
+        <h1 className="text-2xl font-bold text-foreground">Relatório de Fornecedores</h1>
+
+        <Card>
+          <CardHeader><CardTitle className="text-base">Vendas por Fornecedor</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="name" width={120} />
+                  <Tooltip formatter={(v: number) => fmt(v)} />
+                  <Bar dataKey="valor" name="Valor Total" fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead>Nº Vendas</TableHead>
+                  <TableHead>Valor Total</TableHead>
+                  <TableHead>Custo Total</TableHead>
+                  <TableHead>Lucro</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {supplierStats.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum dado</TableCell></TableRow>
+                ) : supplierStats.map((s, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>{s.numVendas}</TableCell>
+                    <TableCell>{fmt(s.totalGerado)}</TableCell>
+                    <TableCell>{fmt(s.totalCusto)}</TableCell>
+                    <TableCell className={s.lucro >= 0 ? 'text-primary font-medium' : 'text-destructive font-medium'}>{fmt(s.lucro)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </AppLayout>
+  );
+}
