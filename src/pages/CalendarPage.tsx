@@ -52,7 +52,7 @@ export default function CalendarPage() {
     if (data) setEvents(data.map((e: any) => ({ ...e, passengers: e.passengers ?? 1 })));
   };
 
-  useEffect(() => { fetchEvents(); }, []);
+  useEffect(() => { fetchEvents(); }, [activeCompany?.id]);
 
   const today = new Date();
 
