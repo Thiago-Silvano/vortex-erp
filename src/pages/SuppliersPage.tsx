@@ -11,10 +11,12 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { maskPhone, maskCnpj, unmask } from '@/lib/masks';
 
 interface Supplier {
   id: string;
   name: string;
+  razao_social: string;
   cnpj: string;
   email: string;
   phone: string;
@@ -33,7 +35,7 @@ interface Supplier {
 }
 
 const emptySupplier = (): Omit<Supplier, 'id'> => ({
-  name: '', cnpj: '', email: '', phone: '',
+  name: '', razao_social: '', cnpj: '', email: '', phone: '',
   cep: '', address: '', address_number: '', complement: '',
   neighborhood: '', city: '', state: '', country: 'Brasil',
   sales_rep_name: '', sales_rep_phone: '', executive_name: '', executive_phone: '',
@@ -46,10 +48,11 @@ export default function SuppliersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<Supplier, 'id'>>(emptySupplier());
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [cnpjLoading, setCnpjLoading] = useState(false);
 
   const fetchSuppliers = async () => {
     const { data } = await supabase.from('suppliers').select('*').order('name');
-    if (data) setSuppliers(data as Supplier[]);
+    if (data) setSuppliers(data as unknown as Supplier[]);
   };
 
   useEffect(() => { fetchSuppliers(); }, []);
@@ -61,15 +64,49 @@ export default function SuppliersPage() {
     normalize(s.email).includes(normalize(search))
   );
 
+  const handleCnpjSearch = async () => {
+    const digits = unmask(form.cnpj);
+    if (digits.length !== 14) { toast.error('CNPJ deve ter 14 dígitos'); return; }
+    setCnpjLoading(true);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+      const json = await res.json();
+      if (res.ok) {
+        setForm(p => ({
+          ...p,
+          name: json.nome_fantasia || json.razao_social || p.name,
+          razao_social: json.razao_social || '',
+          address: json.logradouro || '',
+          address_number: json.numero || '',
+          complement: json.complemento || '',
+          neighborhood: json.bairro || '',
+          city: json.municipio || '',
+          state: json.uf || '',
+          cep: json.cep ? json.cep.replace(/\D/g, '') : '',
+          country: 'Brasil',
+        }));
+        toast.success('Dados do CNPJ preenchidos!');
+      } else {
+        toast.error('CNPJ não encontrado');
+      }
+    } catch {
+      toast.error('Erro ao consultar CNPJ');
+    } finally {
+      setCnpjLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Nome é obrigatório'); return; }
+    if (!unmask(form.cnpj)) { toast.error('CNPJ é obrigatório'); return; }
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { toast.error('Email inválido'); return; }
 
     if (editingId) {
-      const { error } = await supabase.from('suppliers').update(form).eq('id', editingId);
+      const { error } = await supabase.from('suppliers').update(form as any).eq('id', editingId);
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Fornecedor atualizado!');
     } else {
-      const { error } = await supabase.from('suppliers').insert(form);
+      const { error } = await supabase.from('suppliers').insert(form as any);
       if (error) { toast.error('Erro ao cadastrar'); return; }
       toast.success('Fornecedor cadastrado!');
     }
@@ -157,14 +194,31 @@ export default function SuppliersPage() {
               <DialogTitle>{editingId ? 'Editar Fornecedor' : 'Cadastrar Fornecedor'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
+              {/* CNPJ with lookup */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <Label>Nome do fornecedor *</Label>
-                  <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+                <div>
+                  <Label>CNPJ *</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={form.cnpj}
+                      onChange={e => setForm(p => ({ ...p, cnpj: maskCnpj(e.target.value) }))}
+                      placeholder="00.000.000/0000-00"
+                    />
+                    <Button variant="outline" size="icon" onClick={handleCnpjSearch} disabled={cnpjLoading}>
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div>
-                  <Label>CNPJ</Label>
-                  <Input value={form.cnpj} onChange={e => setForm(p => ({ ...p, cnpj: e.target.value }))} placeholder="00.000.000/0000-00" />
+                  <Label>Razão Social</Label>
+                  <Input value={form.razao_social} onChange={e => setForm(p => ({ ...p, razao_social: e.target.value }))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <Label>Nome fantasia *</Label>
+                  <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Email</Label>
@@ -172,7 +226,11 @@ export default function SuppliersPage() {
                 </div>
                 <div>
                   <Label>Telefone</Label>
-                  <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+                  <Input
+                    value={form.phone}
+                    onChange={e => setForm(p => ({ ...p, phone: maskPhone(e.target.value) }))}
+                    placeholder="(00) 00000-0000"
+                  />
                 </div>
               </div>
 
@@ -210,7 +268,11 @@ export default function SuppliersPage() {
                     </div>
                     <div>
                       <Label>Telefone do representante</Label>
-                      <Input value={form.sales_rep_phone} onChange={e => setForm(p => ({ ...p, sales_rep_phone: e.target.value }))} />
+                      <Input
+                        value={form.sales_rep_phone}
+                        onChange={e => setForm(p => ({ ...p, sales_rep_phone: maskPhone(e.target.value) }))}
+                        placeholder="(00) 00000-0000"
+                      />
                     </div>
                     <div>
                       <Label>Vendedor executivo</Label>
@@ -218,7 +280,11 @@ export default function SuppliersPage() {
                     </div>
                     <div>
                       <Label>Telefone do vendedor executivo</Label>
-                      <Input value={form.executive_phone} onChange={e => setForm(p => ({ ...p, executive_phone: e.target.value }))} />
+                      <Input
+                        value={form.executive_phone}
+                        onChange={e => setForm(p => ({ ...p, executive_phone: maskPhone(e.target.value) }))}
+                        placeholder="(00) 00000-0000"
+                      />
                     </div>
                   </div>
                 </CardContent>

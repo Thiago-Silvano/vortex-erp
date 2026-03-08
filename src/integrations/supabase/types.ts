@@ -14,8 +14,85 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts_payable: {
+        Row: {
+          amount: number | null
+          cost_center_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          installment_number: number | null
+          notes: string | null
+          origin_type: string | null
+          payment_date: string | null
+          sale_id: string | null
+          status: string
+          supplier_id: string | null
+          total_installments: number | null
+        }
+        Insert: {
+          amount?: number | null
+          cost_center_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          installment_number?: number | null
+          notes?: string | null
+          origin_type?: string | null
+          payment_date?: string | null
+          sale_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          total_installments?: number | null
+        }
+        Update: {
+          amount?: number | null
+          cost_center_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          installment_number?: number | null
+          notes?: string | null
+          origin_type?: string | null
+          payment_date?: string | null
+          sale_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          total_installments?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_payable_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_payable_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_payable_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_settings: {
         Row: {
+          card_rate_antecipado_ec: number | null
+          card_rate_antecipado_link: number | null
+          card_rate_simple_ec: number | null
+          card_rate_simple_link: number | null
           created_at: string
           email: string | null
           id: string
@@ -26,6 +103,10 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          card_rate_antecipado_ec?: number | null
+          card_rate_antecipado_link?: number | null
+          card_rate_simple_ec?: number | null
+          card_rate_simple_link?: number | null
           created_at?: string
           email?: string | null
           id?: string
@@ -36,6 +117,10 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          card_rate_antecipado_ec?: number | null
+          card_rate_antecipado_link?: number | null
+          card_rate_simple_ec?: number | null
+          card_rate_simple_link?: number | null
           created_at?: string
           email?: string | null
           id?: string
@@ -134,6 +219,30 @@ export type Database = {
           phone?: string | null
           state?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      cost_centers: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
         }
         Relationships: []
       }
@@ -347,32 +456,60 @@ export type Database = {
       receivables: {
         Row: {
           amount: number | null
+          client_name: string | null
+          cost_center_id: string | null
           created_at: string
+          description: string | null
           due_date: string | null
           id: string
           installment_number: number
+          notes: string | null
+          origin_type: string | null
+          payment_date: string | null
+          payment_method: string | null
           sale_id: string
           status: string | null
         }
         Insert: {
           amount?: number | null
+          client_name?: string | null
+          cost_center_id?: string | null
           created_at?: string
+          description?: string | null
           due_date?: string | null
           id?: string
           installment_number?: number
+          notes?: string | null
+          origin_type?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
           sale_id: string
           status?: string | null
         }
         Update: {
           amount?: number | null
+          client_name?: string | null
+          cost_center_id?: string | null
           created_at?: string
+          description?: string | null
           due_date?: string | null
           id?: string
           installment_number?: number
+          notes?: string | null
+          origin_type?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
           sale_id?: string
           status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "receivables_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "receivables_sale_id_fkey"
             columns: ["sale_id"]
@@ -521,6 +658,7 @@ export type Database = {
           card_charge_type: string | null
           card_fee_rate: number | null
           card_fee_value: number | null
+          card_payment_type: string | null
           client_name: string
           commission_rate: number | null
           commission_value: number | null
@@ -542,6 +680,7 @@ export type Database = {
           card_charge_type?: string | null
           card_fee_rate?: number | null
           card_fee_value?: number | null
+          card_payment_type?: string | null
           client_name?: string
           commission_rate?: number | null
           commission_value?: number | null
@@ -563,6 +702,7 @@ export type Database = {
           card_charge_type?: string | null
           card_fee_rate?: number | null
           card_fee_value?: number | null
+          card_payment_type?: string | null
           client_name?: string
           commission_rate?: number | null
           commission_value?: number | null
@@ -701,6 +841,7 @@ export type Database = {
           name: string
           neighborhood: string | null
           phone: string | null
+          razao_social: string | null
           sales_rep_name: string | null
           sales_rep_phone: string | null
           state: string | null
@@ -722,6 +863,7 @@ export type Database = {
           name?: string
           neighborhood?: string | null
           phone?: string | null
+          razao_social?: string | null
           sales_rep_name?: string | null
           sales_rep_phone?: string | null
           state?: string | null
@@ -743,6 +885,7 @@ export type Database = {
           name?: string
           neighborhood?: string | null
           phone?: string | null
+          razao_social?: string | null
           sales_rep_name?: string | null
           sales_rep_phone?: string | null
           state?: string | null

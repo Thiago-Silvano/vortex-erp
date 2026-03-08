@@ -22,16 +22,9 @@ interface SaleItem {
   total_value: number;
 }
 
-interface SupplierOption {
-  id: string;
-  name: string;
-}
-
-interface Receivable {
-  installment_number: number;
-  due_date: string;
-  amount: number;
-}
+interface SupplierOption { id: string; name: string; }
+interface Receivable { installment_number: number; due_date: string; amount: number; }
+interface CostCenter { id: string; name: string; }
 
 export default function NewSalePage() {
   const location = useLocation();
@@ -44,31 +37,25 @@ export default function NewSalePage() {
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [notes, setNotes] = useState('');
 
-  // Suppliers
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([]);
   const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);
   const [addingSupplierId, setAddingSupplierId] = useState('');
-
-  // Items
   const [items, setItems] = useState<SaleItem[]>([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
 
-  // Payment
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [installments, setInstallments] = useState(1);
-  const [chargeType, setChargeType] = useState('simples'); // antecipado | simples
+  const [chargeType, setChargeType] = useState('simples');
+  const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
-
-  // Financial
   const [commissionRate, setCommissionRate] = useState(0);
-
-  // Receivables
   const [receivables, setReceivables] = useState<Receivable[]>([]);
 
-  // Loading existing sale for editing
+  // Payment rates from settings
+  const [rates, setRates] = useState({ simple_ec: 0, antec_ec: 0, simple_link: 0, antec_link: 0 });
+
   useEffect(() => {
-    if (editSaleId) {
-      loadSale(editSaleId);
-    }
+    if (editSaleId) loadSale(editSaleId);
   }, [editSaleId]);
 
   const loadSale = async (id: string) => {
@@ -80,31 +67,36 @@ export default function NewSalePage() {
     setPaymentMethod(sale.payment_method || 'pix');
     setInstallments(sale.installments || 1);
     setChargeType(sale.card_charge_type || 'simples');
+    setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setCommissionRate(Number(sale.commission_rate) || 0);
     setNotes(sale.notes || '');
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
-    if (saleItems) setItems(saleItems.map(i => ({
-      id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav), total_value: Number(i.total_value),
-    })));
+    if (saleItems) setItems(saleItems.map(i => ({ id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav), total_value: Number(i.total_value) })));
 
     const { data: saleSups } = await supabase.from('sale_suppliers').select('supplier_id').eq('sale_id', id);
     if (saleSups) setSelectedSupplierIds(saleSups.map(s => s.supplier_id));
 
     const { data: recs } = await supabase.from('receivables').select('*').eq('sale_id', id).order('installment_number');
-    if (recs) setReceivables(recs.map(r => ({
-      installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount),
-    })));
+    if (recs) setReceivables(recs.map(r => ({ installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount) })));
   };
 
-  // Load suppliers list
   useEffect(() => {
-    supabase.from('suppliers').select('id, name').order('name')
-      .then(({ data }) => { if (data) setAllSuppliers(data); });
+    supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setAllSuppliers(data); });
+    supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
+    supabase.from('agency_settings').select('*').limit(1).single().then(({ data }) => {
+      if (data) {
+        setRates({
+          simple_ec: Number((data as any).card_rate_simple_ec) || 0,
+          antec_ec: Number((data as any).card_rate_antecipado_ec) || 0,
+          simple_link: Number((data as any).card_rate_simple_link) || 0,
+          antec_link: Number((data as any).card_rate_antecipado_link) || 0,
+        });
+      }
+    });
   }, []);
 
-  // Init items from quote
   useEffect(() => {
     if (quoteData?.services && items.length === 0 && !editSaleId) {
       const mapped = quoteData.services.map((s: any) => ({
@@ -113,7 +105,6 @@ export default function NewSalePage() {
         rav: 0,
         total_value: (s.value || 0) * (s.quantity || 1),
       }));
-      // Add RAV as separate line if present
       if (quoteData.rav && quoteData.rav > 0) {
         mapped.push({ description: 'RAV (Markup)', cost_price: 0, rav: quoteData.rav, total_value: quoteData.rav });
       }
@@ -121,16 +112,23 @@ export default function NewSalePage() {
     }
   }, [quoteData]);
 
-  // Financial calculations
+  // Auto-fill fee rate based on card payment type + charge type
+  useEffect(() => {
+    if (paymentMethod !== 'credito' || !cardPaymentType) return;
+    if (cardPaymentType === 'ec') {
+      setFeeRate(chargeType === 'antecipado' ? rates.antec_ec : rates.simple_ec);
+    } else if (cardPaymentType === 'link') {
+      setFeeRate(chargeType === 'antecipado' ? rates.antec_link : rates.simple_link);
+    }
+  }, [cardPaymentType, chargeType, rates, paymentMethod]);
+
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
-  const totalRav = useMemo(() => items.reduce((s, i) => s + i.rav, 0), [items]);
   const grossProfit = totalSale - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
   const cardFeeValue = paymentMethod === 'credito' ? totalSale * (feeRate / 100) : 0;
   const netProfit = grossProfit - commissionValue - cardFeeValue;
 
-  // Generate receivables when installments change
   useEffect(() => {
     if (paymentMethod !== 'credito') {
       setReceivables([{ installment_number: 1, due_date: '', amount: totalSale }]);
@@ -148,9 +146,7 @@ export default function NewSalePage() {
     setItems(prev => prev.map((item, i) => {
       if (i !== idx) return item;
       const updated = { ...item, [field]: value };
-      if (field === 'cost_price' || field === 'rav') {
-        updated.total_value = updated.cost_price + updated.rav;
-      }
+      if (field === 'cost_price' || field === 'rav') updated.total_value = updated.cost_price + updated.rav;
       return updated;
     }));
   };
@@ -159,10 +155,6 @@ export default function NewSalePage() {
     if (!addingSupplierId || selectedSupplierIds.includes(addingSupplierId)) return;
     setSelectedSupplierIds(prev => [...prev, addingSupplierId]);
     setAddingSupplierId('');
-  };
-
-  const removeSupplier = (id: string) => {
-    setSelectedSupplierIds(prev => prev.filter(s => s !== id));
   };
 
   const handleSave = async () => {
@@ -175,6 +167,7 @@ export default function NewSalePage() {
       payment_method: paymentMethod,
       installments: paymentMethod === 'credito' ? installments : 1,
       card_charge_type: paymentMethod === 'credito' ? chargeType : '',
+      card_payment_type: paymentMethod === 'credito' ? cardPaymentType : '',
       card_fee_rate: paymentMethod === 'credito' ? feeRate : 0,
       total_sale: totalSale,
       total_supplier_cost: totalCost,
@@ -190,14 +183,14 @@ export default function NewSalePage() {
     let saleId = editSaleId;
 
     if (editSaleId) {
-      const { error } = await supabase.from('sales').update(salePayload).eq('id', editSaleId);
+      const { error } = await supabase.from('sales').update(salePayload as any).eq('id', editSaleId);
       if (error) { toast.error('Erro ao atualizar venda'); return; }
-      // Clear old related data
       await supabase.from('sale_items').delete().eq('sale_id', editSaleId);
       await supabase.from('sale_suppliers').delete().eq('sale_id', editSaleId);
       await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
     } else {
-      const { data, error } = await supabase.from('sales').insert(salePayload).select('id').single();
+      const { data, error } = await supabase.from('sales').insert(salePayload as any).select('id').single();
       if (error || !data) { toast.error('Erro ao criar venda'); return; }
       saleId = data.id;
     }
@@ -205,34 +198,33 @@ export default function NewSalePage() {
     // Save items
     if (items.length > 0) {
       await supabase.from('sale_items').insert(items.map((item, idx) => ({
-        sale_id: saleId,
-        description: item.description,
-        cost_price: item.cost_price,
-        rav: item.rav,
-        total_value: item.total_value,
-        sort_order: idx,
+        sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav, total_value: item.total_value, sort_order: idx,
       })));
     }
 
     // Save suppliers
     if (selectedSupplierIds.length > 0) {
-      await supabase.from('sale_suppliers').insert(selectedSupplierIds.map(sid => ({
-        sale_id: saleId,
-        supplier_id: sid,
-      })));
+      await supabase.from('sale_suppliers').insert(selectedSupplierIds.map(sid => ({ sale_id: saleId, supplier_id: sid })));
     }
 
-    // Save receivables
+    // Save receivables (Contas a Receber)
     if (receivables.length > 0) {
       await supabase.from('receivables').insert(receivables.map(r => ({
-        sale_id: saleId,
-        installment_number: r.installment_number,
-        due_date: r.due_date || null,
-        amount: r.amount,
+        sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
+        client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
+      } as any)));
+    }
+
+    // Generate Accounts Payable from supplier cost
+    if (totalCost > 0 && selectedSupplierIds.length > 0) {
+      const costPerSupplier = totalCost / selectedSupplierIds.length;
+      await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
+        sale_id: saleId, supplier_id: sid, amount: costPerSupplier,
+        due_date: saleDate, description: `Venda - ${clientName}`, status: 'open', origin_type: 'sale',
       })));
     }
 
-    // Update quote status if converting from quote
+    // Update quote status
     if (quoteId) {
       await supabase.from('quotes').update({ status: 'concluido' }).eq('id', quoteId);
     }
@@ -277,9 +269,7 @@ export default function NewSalePage() {
           <CardContent className="space-y-3">
             <div className="flex gap-2">
               <Select value={addingSupplierId} onValueChange={setAddingSupplierId}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Selecionar fornecedor..." />
-                </SelectTrigger>
+                <SelectTrigger className="flex-1"><SelectValue placeholder="Selecionar fornecedor..." /></SelectTrigger>
                 <SelectContent>
                   {allSuppliers.filter(s => !selectedSupplierIds.includes(s.id)).map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
@@ -295,7 +285,7 @@ export default function NewSalePage() {
                   return (
                     <div key={sid} className="flex items-center gap-1 bg-secondary px-3 py-1 rounded-full text-sm">
                       <span>{sup?.name || sid}</span>
-                      <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => removeSupplier(sid)}>
+                      <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setSelectedSupplierIds(prev => prev.filter(s => s !== sid))}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -328,18 +318,10 @@ export default function NewSalePage() {
               <TableBody>
                 {items.map((item, idx) => (
                   <TableRow key={idx}>
-                    <TableCell>
-                      <Input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} />
-                    </TableCell>
-                    <TableCell>
-                      <Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} />
-                    </TableCell>
-                    <TableCell>
-                      <Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} />
-                    </TableCell>
-                    <TableCell>
-                      <Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" />
-                    </TableCell>
+                    <TableCell><Input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} /></TableCell>
+                    <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
+                    <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
+                    <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
                     <TableCell>
                       <Button size="icon" variant="ghost" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))}>
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -364,12 +346,7 @@ export default function NewSalePage() {
                 { value: 'credito', label: 'Cartão de Crédito' },
                 { value: 'debito', label: 'Cartão de Débito' },
               ].map(opt => (
-                <Button
-                  key={opt.value}
-                  variant={paymentMethod === opt.value ? 'default' : 'outline'}
-                  className="w-full"
-                  onClick={() => setPaymentMethod(opt.value)}
-                >
+                <Button key={opt.value} variant={paymentMethod === opt.value ? 'default' : 'outline'} className="w-full" onClick={() => setPaymentMethod(opt.value)}>
                   {opt.label}
                 </Button>
               ))}
@@ -377,7 +354,7 @@ export default function NewSalePage() {
 
             {paymentMethod === 'credito' && (
               <div className="space-y-4 pt-4 border-t">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <Label>Parcelamento</Label>
                     <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
@@ -386,6 +363,16 @@ export default function NewSalePage() {
                         {Array.from({ length: 18 }, (_, i) => i + 1).map(n => (
                           <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
                         ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Tipo de Pagamento</Label>
+                    <Select value={cardPaymentType} onValueChange={setCardPaymentType}>
+                      <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ec">EC (Máquina)</SelectItem>
+                        <SelectItem value="link">Link de Pagamento</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
