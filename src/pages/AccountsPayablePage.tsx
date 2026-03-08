@@ -38,6 +38,7 @@ interface InstallmentRow { due_date: string; amount: number; }
 type PeriodFilter = 'day' | 'month' | 'year';
 
 export default function AccountsPayablePage() {
+  const { activeCompany } = useCompany();
   const [items, setItems] = useState<Payable[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
