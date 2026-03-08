@@ -45,6 +45,7 @@ interface CardRateEntry { installments: number; rate: number; }
 export default function NewSalePage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { activeCompany } = useCompany();
   const quoteData = (location.state as any)?.quoteData;
   const editSaleId = (location.state as any)?.editSaleId;
 
