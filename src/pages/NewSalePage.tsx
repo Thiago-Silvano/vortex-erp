@@ -212,11 +212,34 @@ export default function NewSalePage() {
   };
 
   const handleCancel = async () => {
-    // If coming from quote conversion and not editing, revert quote status back to draft
     if (quoteId && !editSaleId) {
       await supabase.from('quotes').update({ status: 'draft' }).eq('id', quoteId);
     }
     navigate('/sales');
+  };
+
+  const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      toast.error('Apenas arquivos PDF são aceitos');
+      return;
+    }
+    setUploadingInvoice(true);
+    const ext = file.name.split('.').pop();
+    const fileName = `invoices/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
+    if (error) {
+      toast.error('Erro ao enviar nota fiscal');
+      setUploadingInvoice(false);
+      return;
+    }
+    const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+    setInvoiceUrl(data.publicUrl);
+    setInvoiceFileName(file.name);
+    setUploadingInvoice(false);
+    toast.success('Nota fiscal enviada!');
+    e.target.value = '';
   };
 
   const handleSave = async () => {
