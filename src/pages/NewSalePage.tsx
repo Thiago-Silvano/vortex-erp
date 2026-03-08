@@ -337,6 +337,16 @@ export default function NewSalePage() {
                 <Label>Data da Venda</Label>
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
               </div>
+              <div>
+                <Label>Vendedor Responsável</Label>
+                <Select value={sellerId} onValueChange={setSellerId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum</SelectItem>
+                    {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
