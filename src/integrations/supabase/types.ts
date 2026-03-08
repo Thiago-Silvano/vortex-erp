@@ -156,6 +156,30 @@ export type Database = {
         }
         Relationships: []
       }
+      card_rates: {
+        Row: {
+          created_at: string
+          id: string
+          installments: number
+          payment_type: string
+          rate: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          installments?: number
+          payment_type?: string
+          rate?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          installments?: number
+          payment_type?: string
+          rate?: number
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -663,6 +687,7 @@ export type Database = {
           commission_rate: number | null
           commission_value: number | null
           created_at: string
+          created_by: string | null
           gross_profit: number | null
           id: string
           installments: number | null
@@ -675,6 +700,7 @@ export type Database = {
           total_sale: number | null
           total_supplier_cost: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           card_charge_type?: string | null
@@ -685,6 +711,7 @@ export type Database = {
           commission_rate?: number | null
           commission_value?: number | null
           created_at?: string
+          created_by?: string | null
           gross_profit?: number | null
           id?: string
           installments?: number | null
@@ -697,6 +724,7 @@ export type Database = {
           total_sale?: number | null
           total_supplier_cost?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           card_charge_type?: string | null
@@ -707,6 +735,7 @@ export type Database = {
           commission_rate?: number | null
           commission_value?: number | null
           created_at?: string
+          created_by?: string | null
           gross_profit?: number | null
           id?: string
           installments?: number | null
@@ -719,6 +748,7 @@ export type Database = {
           total_sale?: number | null
           total_supplier_cost?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -890,6 +920,33 @@ export type Database = {
           sales_rep_phone?: string | null
           state?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permissions: Json
+          updated_at: string
+          user_id: string
+          user_role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permissions?: Json
+          updated_at?: string
+          user_id: string
+          user_role?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permissions?: Json
+          updated_at?: string
+          user_id?: string
+          user_role?: string
         }
         Relationships: []
       }

@@ -25,6 +25,7 @@ interface SaleItem {
 interface SupplierOption { id: string; name: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; }
 interface CostCenter { id: string; name: string; }
+interface CardRateEntry { installments: number; rate: number; }
 
 export default function NewSalePage() {
   const location = useLocation();
@@ -45,14 +46,14 @@ export default function NewSalePage() {
 
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [installments, setInstallments] = useState(1);
-  const [chargeType, setChargeType] = useState('simples');
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
 
-  // Payment rates from settings
-  const [rates, setRates] = useState({ simple_ec: 0, antec_ec: 0, simple_link: 0, antec_link: 0 });
+  // Card rates per installment from DB
+  const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
+  const [linkRates, setLinkRates] = useState<CardRateEntry[]>([]);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
@@ -66,7 +67,6 @@ export default function NewSalePage() {
     setSaleDate(sale.sale_date);
     setPaymentMethod(sale.payment_method || 'pix');
     setInstallments(sale.installments || 1);
-    setChargeType(sale.card_charge_type || 'simples');
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setCommissionRate(Number(sale.commission_rate) || 0);
@@ -85,14 +85,12 @@ export default function NewSalePage() {
   useEffect(() => {
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setAllSuppliers(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
-    supabase.from('agency_settings').select('*').limit(1).single().then(({ data }) => {
-      if (data) {
-        setRates({
-          simple_ec: Number((data as any).card_rate_simple_ec) || 0,
-          antec_ec: Number((data as any).card_rate_antecipado_ec) || 0,
-          simple_link: Number((data as any).card_rate_simple_link) || 0,
-          antec_link: Number((data as any).card_rate_antecipado_link) || 0,
-        });
+    
+    // Load card rates per installment
+    (supabase.from('card_rates').select('*').order('installments') as any).then(({ data }: any) => {
+      if (data && data.length > 0) {
+        setEcRates(data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) })));
+        setLinkRates(data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) })));
       }
     });
   }, []);
@@ -112,15 +110,15 @@ export default function NewSalePage() {
     }
   }, [quoteData]);
 
-  // Auto-fill fee rate based on card payment type + charge type
+  // Auto-fill fee rate based on card payment type + installments
   useEffect(() => {
     if (paymentMethod !== 'credito' || !cardPaymentType) return;
-    if (cardPaymentType === 'ec') {
-      setFeeRate(chargeType === 'antecipado' ? rates.antec_ec : rates.simple_ec);
-    } else if (cardPaymentType === 'link') {
-      setFeeRate(chargeType === 'antecipado' ? rates.antec_link : rates.simple_link);
+    const rates = cardPaymentType === 'ec' ? ecRates : linkRates;
+    const found = rates.find(r => r.installments === installments);
+    if (found) {
+      setFeeRate(found.rate);
     }
-  }, [cardPaymentType, chargeType, rates, paymentMethod]);
+  }, [cardPaymentType, installments, ecRates, linkRates, paymentMethod]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
@@ -160,13 +158,16 @@ export default function NewSalePage() {
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    const userEmail = user?.email || '';
+
     const salePayload = {
       quote_id: quoteId || null,
       client_name: clientName,
       sale_date: saleDate,
       payment_method: paymentMethod,
       installments: paymentMethod === 'credito' ? installments : 1,
-      card_charge_type: paymentMethod === 'credito' ? chargeType : '',
+      card_charge_type: '',
       card_payment_type: paymentMethod === 'credito' ? cardPaymentType : '',
       card_fee_rate: paymentMethod === 'credito' ? feeRate : 0,
       total_sale: totalSale,
@@ -178,12 +179,14 @@ export default function NewSalePage() {
       net_profit: netProfit,
       notes,
       status: 'active',
+      created_by: userEmail,
+      updated_by: userEmail,
     };
 
     let saleId = editSaleId;
 
     if (editSaleId) {
-      const { error } = await supabase.from('sales').update(salePayload as any).eq('id', editSaleId);
+      const { error } = await supabase.from('sales').update({ ...salePayload, updated_by: userEmail } as any).eq('id', editSaleId);
       if (error) { toast.error('Erro ao atualizar venda'); return; }
       await supabase.from('sale_items').delete().eq('sale_id', editSaleId);
       await supabase.from('sale_suppliers').delete().eq('sale_id', editSaleId);
@@ -195,19 +198,16 @@ export default function NewSalePage() {
       saleId = data.id;
     }
 
-    // Save items
     if (items.length > 0) {
       await supabase.from('sale_items').insert(items.map((item, idx) => ({
         sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav, total_value: item.total_value, sort_order: idx,
       })));
     }
 
-    // Save suppliers
     if (selectedSupplierIds.length > 0) {
       await supabase.from('sale_suppliers').insert(selectedSupplierIds.map(sid => ({ sale_id: saleId, supplier_id: sid })));
     }
 
-    // Save receivables (Contas a Receber)
     if (receivables.length > 0) {
       await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
@@ -215,7 +215,6 @@ export default function NewSalePage() {
       } as any)));
     }
 
-    // Generate Accounts Payable from supplier cost
     if (totalCost > 0 && selectedSupplierIds.length > 0) {
       const costPerSupplier = totalCost / selectedSupplierIds.length;
       await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
@@ -224,7 +223,6 @@ export default function NewSalePage() {
       })));
     }
 
-    // Update quote status
     if (quoteId) {
       await supabase.from('quotes').update({ status: 'concluido' }).eq('id', quoteId);
     }
@@ -354,7 +352,17 @@ export default function NewSalePage() {
 
             {paymentMethod === 'credito' && (
               <div className="space-y-4 pt-4 border-t">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Tipo de Pagamento</Label>
+                    <Select value={cardPaymentType} onValueChange={setCardPaymentType}>
+                      <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ec">EC (Máquina)</SelectItem>
+                        <SelectItem value="link">Link de Pagamento</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div>
                     <Label>Parcelamento</Label>
                     <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
@@ -367,31 +375,9 @@ export default function NewSalePage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Tipo de Pagamento</Label>
-                    <Select value={cardPaymentType} onValueChange={setCardPaymentType}>
-                      <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ec">EC (Máquina)</SelectItem>
-                        <SelectItem value="link">Link de Pagamento</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Tipo de Cobrança</Label>
-                    <div className="flex gap-4 mt-2">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox checked={chargeType === 'antecipado'} onCheckedChange={() => setChargeType('antecipado')} />
-                        <span className="text-sm">Antecipado</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox checked={chargeType === 'simples'} onCheckedChange={() => setChargeType('simples')} />
-                        <span className="text-sm">Simples</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Taxa de {chargeType === 'antecipado' ? 'Antecipação' : 'Simples'} (%)</Label>
+                    <Label>Taxa (%)</Label>
                     <Input type="number" step="0.01" value={feeRate} onChange={e => setFeeRate(parseFloat(e.target.value) || 0)} />
+                    <p className="text-xs text-muted-foreground mt-1">Preenchida automaticamente, editável manualmente</p>
                   </div>
                 </div>
               </div>
@@ -458,7 +444,7 @@ export default function NewSalePage() {
               </div>
               {paymentMethod === 'credito' && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Taxa Cartão</p>
+                  <p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p>
                   <p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p>
                 </div>
               )}

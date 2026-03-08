@@ -8,31 +8,55 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Save, X } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface CardRate {
+  installments: number;
+  rate: number;
+}
 
 export default function Settings() {
   const navigate = useNavigate();
   const [settings, setSettings] = useState<AgencySettings>(getAgencySettings());
+  const [ecRates, setEcRates] = useState<CardRate[]>([]);
+  const [linkRates, setLinkRates] = useState<CardRate[]>([]);
 
-  // Payment rates from DB
-  const [rateSimpleEc, setRateSimpleEc] = useState(0);
-  const [rateAntecEc, setRateAntecEc] = useState(0);
-  const [rateSimpleLink, setRateSimpleLink] = useState(0);
-  const [rateAntecLink, setRateAntecLink] = useState(0);
-  const [settingsId, setSettingsId] = useState<string | null>(null);
+  const defaultEcRates: CardRate[] = [
+    { installments: 1, rate: 0.79 }, { installments: 2, rate: 1.80 }, { installments: 3, rate: 1.85 },
+    { installments: 4, rate: 2.10 }, { installments: 5, rate: 2.35 }, { installments: 6, rate: 2.60 },
+    { installments: 7, rate: 2.90 }, { installments: 8, rate: 3.10 }, { installments: 9, rate: 3.30 },
+    { installments: 10, rate: 3.60 }, { installments: 11, rate: 3.80 }, { installments: 12, rate: 4.10 },
+    { installments: 13, rate: 4.30 }, { installments: 14, rate: 4.50 }, { installments: 15, rate: 4.70 },
+    { installments: 16, rate: 4.90 }, { installments: 17, rate: 5.10 }, { installments: 18, rate: 5.30 },
+  ];
+
+  const defaultLinkRates: CardRate[] = [
+    { installments: 1, rate: 1.99 }, { installments: 2, rate: 2.90 }, { installments: 3, rate: 3.20 },
+    { installments: 4, rate: 3.60 }, { installments: 5, rate: 3.90 }, { installments: 6, rate: 4.20 },
+    { installments: 7, rate: 4.50 }, { installments: 8, rate: 4.80 }, { installments: 9, rate: 5.00 },
+    { installments: 10, rate: 5.20 }, { installments: 11, rate: 5.40 }, { installments: 12, rate: 5.60 },
+    { installments: 13, rate: 5.80 }, { installments: 14, rate: 6.00 }, { installments: 15, rate: 6.20 },
+    { installments: 16, rate: 6.40 }, { installments: 17, rate: 6.60 }, { installments: 18, rate: 6.80 },
+  ];
 
   useEffect(() => {
-    supabase.from('agency_settings').select('*').limit(1).single().then(({ data }) => {
-      if (data) {
-        setSettingsId(data.id);
-        setRateSimpleEc(Number((data as any).card_rate_simple_ec) || 0);
-        setRateAntecEc(Number((data as any).card_rate_antecipado_ec) || 0);
-        setRateSimpleLink(Number((data as any).card_rate_simple_link) || 0);
-        setRateAntecLink(Number((data as any).card_rate_antecipado_link) || 0);
-      }
-    });
+    loadRates();
   }, []);
+
+  const loadRates = async () => {
+    const { data } = await supabase.from('card_rates').select('*').order('installments') as any;
+    if (data && data.length > 0) {
+      const ec = data.filter((r: any) => r.payment_type === 'ec').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) }));
+      const link = data.filter((r: any) => r.payment_type === 'link').map((r: any) => ({ installments: r.installments, rate: Number(r.rate) }));
+      setEcRates(ec.length > 0 ? ec : defaultEcRates);
+      setLinkRates(link.length > 0 ? link : defaultLinkRates);
+    } else {
+      setEcRates(defaultEcRates);
+      setLinkRates(defaultLinkRates);
+    }
+  };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,28 +66,62 @@ export default function Settings() {
     }
   };
 
+  const updateRate = (type: 'ec' | 'link', installments: number, rate: number) => {
+    const setter = type === 'ec' ? setEcRates : setLinkRates;
+    setter(prev => prev.map(r => r.installments === installments ? { ...r, rate } : r));
+  };
+
   const handleSave = async () => {
     saveAgencySettings(settings);
 
-    const rateData = {
-      card_rate_simple_ec: rateSimpleEc,
-      card_rate_antecipado_ec: rateAntecEc,
-      card_rate_simple_link: rateSimpleLink,
-      card_rate_antecipado_link: rateAntecLink,
-    };
-
-    if (settingsId) {
-      await supabase.from('agency_settings').update(rateData as any).eq('id', settingsId);
-    } else {
-      await supabase.from('agency_settings').insert({ name: settings.name, ...rateData } as any);
-    }
+    // Delete existing rates and insert new ones
+    await supabase.from('card_rates').delete().neq('id', '00000000-0000-0000-0000-000000000000') as any;
+    
+    const allRates = [
+      ...ecRates.map(r => ({ payment_type: 'ec', installments: r.installments, rate: r.rate })),
+      ...linkRates.map(r => ({ payment_type: 'link', installments: r.installments, rate: r.rate })),
+    ];
+    
+    await supabase.from('card_rates').insert(allRates as any);
 
     toast.success('Configurações salvas!');
   };
 
+  const renderRateTable = (type: 'ec' | 'link', rates: CardRate[], title: string) => (
+    <Card>
+      <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-24">Parcelas</TableHead>
+              <TableHead>Taxa (%)</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rates.map(r => (
+              <TableRow key={r.installments}>
+                <TableCell className="font-medium">{r.installments}x</TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={r.rate}
+                    onChange={e => updateRate(type, r.installments, parseFloat(e.target.value) || 0)}
+                    className="w-28"
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <AppLayout>
-      <div className="p-6 max-w-2xl mx-auto space-y-6">
+      <div className="p-6 max-w-4xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
 
         <Card>
@@ -102,38 +160,12 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* Payment Rates */}
-        <Card>
-          <CardHeader><CardTitle>Taxas de Pagamento - Cartão</CardTitle></CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="font-medium text-sm text-muted-foreground mb-3">EC (Máquina)</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Taxa Simples (%)</Label>
-                  <Input type="number" step="0.01" value={rateSimpleEc} onChange={e => setRateSimpleEc(parseFloat(e.target.value) || 0)} placeholder="3.49" />
-                </div>
-                <div>
-                  <Label>Taxa Antecipação (%)</Label>
-                  <Input type="number" step="0.01" value={rateAntecEc} onChange={e => setRateAntecEc(parseFloat(e.target.value) || 0)} placeholder="4.89" />
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-medium text-sm text-muted-foreground mb-3">Link de Pagamento</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Taxa Simples (%)</Label>
-                  <Input type="number" step="0.01" value={rateSimpleLink} onChange={e => setRateSimpleLink(parseFloat(e.target.value) || 0)} placeholder="3.49" />
-                </div>
-                <div>
-                  <Label>Taxa Antecipação (%)</Label>
-                  <Input type="number" step="0.01" value={rateAntecLink} onChange={e => setRateAntecLink(parseFloat(e.target.value) || 0)} placeholder="4.89" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <h2 className="text-xl font-semibold text-foreground pt-4">Taxas de Pagamento - Cartão</h2>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {renderRateTable('ec', ecRates, 'Taxas EC (Máquina)')}
+          {renderRateTable('link', linkRates, 'Taxas Link de Pagamento')}
+        </div>
 
         <Button onClick={handleSave} className="w-full">
           <Save className="h-4 w-4 mr-2" /> Salvar Configurações

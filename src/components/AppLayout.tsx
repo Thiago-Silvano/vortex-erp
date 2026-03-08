@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -24,57 +25,98 @@ import {
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: any;
+  permKey?: string;
+}
+
 function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('vendedor');
+  const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [permLoaded, setPermLoaded] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || null));
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email || null);
+      setUserId(data.user?.id || null);
+    });
   }, []);
 
-  const isAdmin = userEmail === 'thiago@vortexviagens.com.br';
+  useEffect(() => {
+    if (!userId) return;
+    (supabase.from('user_permissions').select('*').eq('user_id', userId).single() as any).then(({ data }: any) => {
+      if (data) {
+        setUserRole(data.user_role);
+        setPermissions(data.permissions || {});
+      } else {
+        // If no permissions record, check if admin email
+        if (userEmail === 'thiago@vortexviagens.com.br') {
+          setUserRole('master');
+        }
+      }
+      setPermLoaded(true);
+    });
+  }, [userId, userEmail]);
 
-  const mainItems = [
+  const isAdmin = userRole === 'master' || userEmail === 'thiago@vortexviagens.com.br';
+
+  const hasPerm = (key?: string) => {
+    if (!key) return true;
+    if (isAdmin) return true;
+    return !!permissions[key];
+  };
+
+  const filterItems = (items: MenuItem[]) => items.filter(i => hasPerm(i.permKey));
+
+  const mainItems: MenuItem[] = [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-    { title: 'Clientes', url: '/clients', icon: UserRound },
-    { title: 'Fornecedores', url: '/suppliers', icon: Building2 },
-    { title: 'Cotações', url: '/quotes', icon: FileText },
-    { title: 'Vendas', url: '/sales', icon: ShoppingCart },
-    { title: 'Reservas', url: '/reservations', icon: BookOpen },
+    { title: 'Clientes', url: '/clients', icon: UserRound, permKey: 'clients_view' },
+    { title: 'Fornecedores', url: '/suppliers', icon: Building2, permKey: 'suppliers_view' },
+    { title: 'Cotações', url: '/quotes', icon: FileText, permKey: 'quotes_view' },
+    { title: 'Vendas', url: '/sales', icon: ShoppingCart, permKey: 'sales_view' },
+    { title: 'Reservas', url: '/reservations', icon: BookOpen, permKey: 'reservations_view' },
     { title: 'Calendário', url: '/calendar', icon: CalendarDays },
   ];
 
-  const financialItems = [
-    { title: 'Contas a Receber', url: '/financial/receivable', icon: ArrowDownCircle },
-    { title: 'Contas a Pagar', url: '/financial/payable', icon: ArrowUpCircle },
-    { title: 'Fluxo de Caixa', url: '/financial/cashflow', icon: BarChart3 },
-    { title: 'Centros de Custo', url: '/financial/cost-centers', icon: Tag },
+  const financialItems: MenuItem[] = [
+    { title: 'Contas a Receber', url: '/financial/receivable', icon: ArrowDownCircle, permKey: 'financial_receivable' },
+    { title: 'Contas a Pagar', url: '/financial/payable', icon: ArrowUpCircle, permKey: 'financial_payable' },
+    { title: 'Fluxo de Caixa', url: '/financial/cashflow', icon: BarChart3, permKey: 'financial_cashflow' },
+    { title: 'Centros de Custo', url: '/financial/cost-centers', icon: Tag, permKey: 'financial_cashflow' },
   ];
 
-  const reportItems = [
-    { title: 'Dashboard Geral', url: '/reports/dashboard', icon: PieChart },
-    { title: 'Relatório de Vendas', url: '/reports/sales', icon: ShoppingCart },
-    { title: 'Relatório Financeiro', url: '/reports/financial', icon: DollarSign },
-    { title: 'Fluxo de Caixa', url: '/reports/cashflow', icon: TrendingUp },
-    { title: 'Relatório de Clientes', url: '/reports/clients', icon: UserRound },
-    { title: 'Relatório de Fornecedores', url: '/reports/suppliers', icon: Building2 },
-    { title: 'Centro de Custo', url: '/reports/cost-centers', icon: Tag },
-    { title: 'Relatório de Produtos', url: '/reports/products', icon: ClipboardList },
-    { title: 'Relatório de Check-ins', url: '/reports/checkins', icon: Plane },
-    { title: 'Lucro por Venda', url: '/reports/profit', icon: Award },
+  const reportItems: MenuItem[] = [
+    { title: 'Dashboard Geral', url: '/reports/dashboard', icon: PieChart, permKey: 'reports_dashboard' },
+    { title: 'Relatório de Vendas', url: '/reports/sales', icon: ShoppingCart, permKey: 'reports_sales' },
+    { title: 'Relatório Financeiro', url: '/reports/financial', icon: DollarSign, permKey: 'reports_financial' },
+    { title: 'Fluxo de Caixa', url: '/reports/cashflow', icon: TrendingUp, permKey: 'reports_financial' },
+    { title: 'Relatório de Clientes', url: '/reports/clients', icon: UserRound, permKey: 'reports_sales' },
+    { title: 'Relatório de Fornecedores', url: '/reports/suppliers', icon: Building2, permKey: 'reports_sales' },
+    { title: 'Centro de Custo', url: '/reports/cost-centers', icon: Tag, permKey: 'reports_financial' },
+    { title: 'Relatório de Produtos', url: '/reports/products', icon: ClipboardList, permKey: 'reports_sales' },
+    { title: 'Relatório de Check-ins', url: '/reports/checkins', icon: Plane, permKey: 'reports_sales' },
+    { title: 'Lucro por Venda', url: '/reports/profit', icon: Award, permKey: 'reports_financial' },
   ];
 
-  const adminItems = [
-    { title: 'Configurações', url: '/settings', icon: Settings },
+  const adminItems: MenuItem[] = [
+    { title: 'Configurações', url: '/settings', icon: Settings, permKey: 'settings_access' },
     { title: 'Usuários', url: '/users', icon: Users },
   ];
 
   const isFinancialActive = location.pathname.startsWith('/financial');
   const isReportsActive = location.pathname.startsWith('/reports');
 
-  const renderMenuItems = (items: typeof mainItems) => (
+  const filteredFinancial = filterItems(financialItems);
+  const filteredReports = filterItems(reportItems);
+
+  const renderMenuItems = (items: MenuItem[]) => (
     <SidebarMenu>
       {items.map((item) => (
         <SidebarMenuItem key={item.title}>
@@ -89,22 +131,25 @@ function AppSidebar() {
     </SidebarMenu>
   );
 
-  const renderCollapsibleGroup = (label: string, icon: any, items: typeof mainItems, isActive: boolean) => (
-    <SidebarGroup>
-      <Collapsible defaultOpen={isActive}>
-        <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 w-full text-sidebar-foreground/50 text-xs uppercase tracking-wider hover:text-sidebar-foreground/80">
-          {React.createElement(icon, { className: 'h-4 w-4' })}
-          {!collapsed && <>
-            <span>{label}</span>
-            <ChevronDown className="h-3 w-3 ml-auto transition-transform" />
-          </>}
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarGroupContent>{renderMenuItems(items)}</SidebarGroupContent>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarGroup>
-  );
+  const renderCollapsibleGroup = (label: string, icon: any, items: MenuItem[], isActive: boolean) => {
+    if (items.length === 0) return null;
+    return (
+      <SidebarGroup>
+        <Collapsible defaultOpen={isActive}>
+          <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 w-full text-sidebar-foreground/50 text-xs uppercase tracking-wider hover:text-sidebar-foreground/80">
+            {React.createElement(icon, { className: 'h-4 w-4' })}
+            {!collapsed && <>
+              <span>{label}</span>
+              <ChevronDown className="h-3 w-3 ml-auto transition-transform" />
+            </>}
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarGroupContent>{renderMenuItems(items)}</SidebarGroupContent>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarGroup>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -122,11 +167,11 @@ function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">Menu</SidebarGroupLabel>
-          <SidebarGroupContent>{renderMenuItems(mainItems)}</SidebarGroupContent>
+          <SidebarGroupContent>{renderMenuItems(filterItems(mainItems))}</SidebarGroupContent>
         </SidebarGroup>
 
-        {renderCollapsibleGroup('Financeiro', DollarSign, financialItems, isFinancialActive)}
-        {renderCollapsibleGroup('Relatórios', BarChart3, reportItems, isReportsActive)}
+        {renderCollapsibleGroup('Financeiro', DollarSign, filteredFinancial, isFinancialActive)}
+        {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
 
         {isAdmin && (
           <SidebarGroup>
@@ -148,8 +193,6 @@ function AppSidebar() {
     </Sidebar>
   );
 }
-
-import React from 'react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
