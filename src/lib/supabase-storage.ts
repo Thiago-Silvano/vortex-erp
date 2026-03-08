@@ -184,13 +184,17 @@ export async function getQuoteById(id: string): Promise<FullQuote | null> {
   return mapQuoteRow(q, services);
 }
 
-export async function getAllQuotes(): Promise<FullQuote[]> {
-  const { data: quotesData } = await supabase
+export async function getAllQuotes(empresaId?: string): Promise<FullQuote[]> {
+  let query = supabase
     .from('quotes')
     .select('*')
     .order('updated_at', { ascending: false });
 
-  if (!quotesData || quotesData.length === 0) return [];
+  if (empresaId) {
+    query = query.eq('empresa_id', empresaId);
+  }
+
+  const { data: quotesData } = await query;
 
   const quoteIds = quotesData.map(q => q.id);
 
