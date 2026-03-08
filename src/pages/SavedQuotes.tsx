@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, FullQuote } from '@/lib/supabase-storage';
+import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, getQuoteById, FullQuote } from '@/lib/supabase-storage';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -57,19 +57,22 @@ export default function SavedQuotes() {
     toast({ title: 'Cotação excluída' });
   };
 
-  const handleEdit = (quote: FullQuote) => {
-    navigate('/new', { state: { editQuote: quote } });
+  const handleEdit = async (quote: FullQuote) => {
+    const fullQuote = await getQuoteById(quote.id);
+    navigate('/new', { state: { editQuote: fullQuote || quote } });
   };
 
-  const handlePreview = (quote: FullQuote) => {
+  const handlePreview = async (quote: FullQuote) => {
+    const fullQuote = await getQuoteById(quote.id);
+    const q = fullQuote || quote;
     const quoteData = {
-      id: quote.id,
-      client: quote.client,
-      trip: quote.trip,
-      services: quote.services,
-      destinationImageUrl: quote.destinationImageUrl,
+      id: q.id,
+      client: q.client,
+      trip: q.trip,
+      services: q.services,
+      destinationImageUrl: q.destinationImageUrl,
     };
-    navigate('/preview', { state: { quote: quoteData, shortId: quote.shortId } });
+    navigate('/preview', { state: { quote: quoteData, shortId: q.shortId } });
   };
 
   const handleDuplicate = async (id: string) => {
@@ -80,9 +83,11 @@ export default function SavedQuotes() {
     }
   };
 
-  const handleReuse = (quote: FullQuote) => {
+  const handleReuse = async (quote: FullQuote) => {
+    const fullQuote = await getQuoteById(quote.id);
+    const q = fullQuote || quote;
     const reusedQuote = {
-      ...quote,
+      ...q,
       id: undefined,
       shortId: undefined,
       client: {
