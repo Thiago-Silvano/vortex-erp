@@ -89,6 +89,7 @@ export default function NewSalePage() {
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setCommissionRate(Number(sale.commission_rate) || 0);
+    setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
