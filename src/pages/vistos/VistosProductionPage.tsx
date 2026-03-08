@@ -1,0 +1,344 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
+import AppLayout from '@/components/AppLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Upload, FileText, User, GripVertical } from 'lucide-react';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+
+type ProcessStatus = 'falta_passaporte' | 'produzindo' | 'agendado' | 'aguardando_renovacao' | 'aprovado' | 'negado';
+
+interface Process {
+  id: string;
+  visa_sale_id: string;
+  applicant_id: string;
+  product_id: string;
+  client_name: string;
+  applicant_name: string;
+  status: ProcessStatus;
+  describe_duties: string;
+  photo_url: string;
+  documents: any[];
+  consulate: string;
+  interview_date: string | null;
+  interview_time: string | null;
+  interview_notes: string;
+  created_at: string;
+  product_name?: string;
+}
+
+const STATUSES: { key: ProcessStatus; label: string; color: string }[] = [
+  { key: 'falta_passaporte', label: 'Falta Passaporte', color: 'bg-amber-500' },
+  { key: 'produzindo', label: 'Produzindo', color: 'bg-blue-500' },
+  { key: 'agendado', label: 'Agendado', color: 'bg-violet-500' },
+  { key: 'aguardando_renovacao', label: 'Aguard. Renovação', color: 'bg-orange-500' },
+  { key: 'aprovado', label: 'Aprovado', color: 'bg-emerald-500' },
+  { key: 'negado', label: 'Negado', color: 'bg-red-500' },
+];
+
+const CONSULATES = ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Recife', 'Porto Alegre'];
+
+export default function VistosProductionPage() {
+  const { activeCompany } = useCompany();
+  const [processes, setProcesses] = useState<Process[]>([]);
+  const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [interviewOpen, setInterviewOpen] = useState(false);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+
+  // Interview form
+  const [intConsulate, setIntConsulate] = useState('');
+  const [intDate, setIntDate] = useState('');
+  const [intTime, setIntTime] = useState('');
+  const [intNotes, setIntNotes] = useState('');
+
+  // Detail form
+  const [duties, setDuties] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const fetchProcesses = async () => {
+    if (!activeCompany?.id) return;
+    const { data } = await supabase
+      .from('visa_processes')
+      .select('*, visa_products(name)')
+      .eq('empresa_id', activeCompany.id)
+      .order('created_at');
+
+    if (data) {
+      setProcesses(data.map((p: any) => ({
+        ...p,
+        documents: Array.isArray(p.documents) ? p.documents : [],
+        product_name: p.visa_products?.name || '',
+      })));
+    }
+  };
+
+  useEffect(() => { fetchProcesses(); }, [activeCompany?.id]);
+
+  const moveToStatus = async (processId: string, newStatus: ProcessStatus) => {
+    // If moving to 'agendado', open interview form
+    const proc = processes.find(p => p.id === processId);
+    if (!proc) return;
+
+    if (newStatus === 'agendado') {
+      setSelectedProcess({ ...proc, status: newStatus });
+      setIntConsulate(proc.consulate || '');
+      setIntDate(proc.interview_date || '');
+      setIntTime(proc.interview_time?.slice(0, 5) || '');
+      setIntNotes(proc.interview_notes || '');
+      setInterviewOpen(true);
+      return;
+    }
+
+    await supabase.from('visa_processes').update({ status: newStatus }).eq('id', processId);
+    toast.success(`Status atualizado para ${STATUSES.find(s => s.key === newStatus)?.label}`);
+    fetchProcesses();
+  };
+
+  const saveInterview = async () => {
+    if (!selectedProcess) return;
+    if (!intConsulate || !intDate || !intTime) {
+      toast.error('Preencha consulado, data e horário.');
+      return;
+    }
+
+    await supabase.from('visa_processes').update({
+      status: 'agendado' as ProcessStatus,
+      consulate: intConsulate,
+      interview_date: intDate,
+      interview_time: intTime,
+      interview_notes: intNotes,
+    }).eq('id', selectedProcess.id);
+
+    // Create calendar event
+    await supabase.from('calendar_events').insert({
+      empresa_id: activeCompany?.id,
+      title: `Entrevista Consulado — ${selectedProcess.applicant_name}`,
+      event_date: intDate,
+      event_time: intTime,
+      passengers: 1,
+    });
+
+    toast.success('Entrevista agendada e evento criado no calendário!');
+    setInterviewOpen(false);
+    fetchProcesses();
+  };
+
+  const openDetail = (proc: Process) => {
+    setSelectedProcess(proc);
+    setDuties(proc.describe_duties || '');
+    setDetailOpen(true);
+  };
+
+  const saveDetail = async () => {
+    if (!selectedProcess) return;
+    await supabase.from('visa_processes').update({ describe_duties: duties }).eq('id', selectedProcess.id);
+    toast.success('Processo atualizado!');
+    setDetailOpen(false);
+    fetchProcesses();
+  };
+
+  const uploadFile = async (processId: string, file: File, type: 'photo' | 'document') => {
+    setUploading(true);
+    const path = `${processId}/${type}-${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from('visa-documents').upload(path, file);
+    if (error) { toast.error('Erro no upload.'); setUploading(false); return; }
+    const { data: { publicUrl } } = supabase.storage.from('visa-documents').getPublicUrl(path);
+
+    if (type === 'photo') {
+      await supabase.from('visa_processes').update({ photo_url: publicUrl }).eq('id', processId);
+    } else {
+      const proc = processes.find(p => p.id === processId);
+      const docs = [...(proc?.documents || []), { name: file.name, url: publicUrl }];
+      await supabase.from('visa_processes').update({ documents: docs }).eq('id', processId);
+    }
+    setUploading(false);
+    toast.success('Arquivo enviado!');
+    fetchProcesses();
+  };
+
+  // Drag and drop
+  const handleDragStart = (id: string) => setDraggedId(id);
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+  const handleDrop = (status: ProcessStatus) => {
+    if (draggedId) {
+      moveToStatus(draggedId, status);
+      setDraggedId(null);
+    }
+  };
+
+  const groupedByStatus = STATUSES.map(s => ({
+    ...s,
+    items: processes.filter(p => p.status === s.key),
+  }));
+
+  return (
+    <AppLayout>
+      <div className="p-4 md:p-6 space-y-4">
+        <h1 className="text-2xl font-bold text-foreground">Produção — Kanban</h1>
+
+        <div className="flex gap-3 overflow-x-auto pb-4">
+          {groupedByStatus.map(col => (
+            <div
+              key={col.key}
+              className="min-w-[280px] w-[280px] flex-shrink-0 flex flex-col bg-muted/50 rounded-lg"
+              onDragOver={handleDragOver}
+              onDrop={() => handleDrop(col.key)}
+            >
+              <div className={`${col.color} text-white px-3 py-2 rounded-t-lg flex items-center justify-between`}>
+                <span className="font-semibold text-sm">{col.label}</span>
+                <Badge variant="secondary" className="bg-white/20 text-white text-xs">{col.items.length}</Badge>
+              </div>
+              <div className="p-2 space-y-2 min-h-[200px] flex-1">
+                {col.items.map(proc => (
+                  <div
+                    key={proc.id}
+                    draggable
+                    onDragStart={() => handleDragStart(proc.id)}
+                    className="bg-card border rounded-lg p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
+                    onClick={() => openDetail(proc)}
+                  >
+                    <div className="flex items-start gap-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm text-foreground truncate">{proc.applicant_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{proc.client_name}</p>
+                        <p className="text-xs text-muted-foreground">{proc.product_name}</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">
+                          {format(new Date(proc.created_at), 'dd/MM/yyyy')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Process Detail Dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Processo — {selectedProcess?.applicant_name}</DialogTitle></DialogHeader>
+          {selectedProcess && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">Cliente:</span> <span className="font-medium">{selectedProcess.client_name}</span></div>
+                <div><span className="text-muted-foreground">Produto:</span> <span className="font-medium">{selectedProcess.product_name}</span></div>
+              </div>
+
+              <div>
+                <Label>Status</Label>
+                <Select
+                  value={selectedProcess.status}
+                  onValueChange={(val) => {
+                    moveToStatus(selectedProcess.id, val as ProcessStatus);
+                    setDetailOpen(false);
+                  }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Describe your duties</Label>
+                <Textarea value={duties} onChange={e => setDuties(e.target.value)} rows={4} />
+              </div>
+
+              {/* Photo */}
+              <div>
+                <Label>Foto do Cliente</Label>
+                {selectedProcess.photo_url && (
+                  <img src={selectedProcess.photo_url} alt="Foto" className="w-24 h-24 rounded-lg object-cover mb-2" />
+                )}
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadFile(selectedProcess.id, f, 'photo');
+                  }}
+                  disabled={uploading}
+                />
+              </div>
+
+              {/* Documents */}
+              <div>
+                <Label>Documentos</Label>
+                {selectedProcess.documents?.length > 0 && (
+                  <div className="space-y-1 mb-2">
+                    {selectedProcess.documents.map((doc: any, i: number) => (
+                      <a key={i} href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
+                        <FileText className="h-3.5 w-3.5" /> {doc.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+                <Input
+                  type="file"
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadFile(selectedProcess.id, f, 'document');
+                  }}
+                  disabled={uploading}
+                />
+              </div>
+
+              {selectedProcess.consulate && (
+                <Card>
+                  <CardContent className="p-3 text-sm space-y-1">
+                    <p><span className="text-muted-foreground">Consulado:</span> {selectedProcess.consulate}</p>
+                    <p><span className="text-muted-foreground">Data:</span> {selectedProcess.interview_date}</p>
+                    <p><span className="text-muted-foreground">Horário:</span> {selectedProcess.interview_time?.slice(0, 5)}</p>
+                    {selectedProcess.interview_notes && <p><span className="text-muted-foreground">Obs:</span> {selectedProcess.interview_notes}</p>}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild><Button variant="outline">Fechar</Button></DialogClose>
+            <Button onClick={saveDetail}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Interview Scheduling Dialog */}
+      <Dialog open={interviewOpen} onOpenChange={setInterviewOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Agendar Entrevista — {selectedProcess?.applicant_name}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Consulado *</Label>
+              <Select value={intConsulate} onValueChange={setIntConsulate}>
+                <SelectTrigger><SelectValue placeholder="Selecione o consulado" /></SelectTrigger>
+                <SelectContent>
+                  {CONSULATES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Data da Entrevista *</Label><Input type="date" value={intDate} onChange={e => setIntDate(e.target.value)} /></div>
+            <div><Label>Horário *</Label><Input type="time" value={intTime} onChange={e => setIntTime(e.target.value)} /></div>
+            <div><Label>Observações</Label><Textarea value={intNotes} onChange={e => setIntNotes(e.target.value)} /></div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+            <Button onClick={saveInterview}>Agendar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppLayout>
+  );
+}
