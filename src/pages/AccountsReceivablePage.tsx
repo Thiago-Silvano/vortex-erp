@@ -38,6 +38,7 @@ interface InstallmentRow { due_date: string; amount: number; }
 type PeriodFilter = 'day' | 'month' | 'year';
 
 export default function AccountsReceivablePage() {
+  const { activeCompany } = useCompany();
   const [items, setItems] = useState<Receivable[]>([]);
   const [clients, setClients] = useState<ClientOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
