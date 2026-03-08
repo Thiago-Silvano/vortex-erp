@@ -80,6 +80,8 @@ export default function Index() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [allSellers, setAllSellers] = useState<{id: string; full_name: string}[]>([]);
+  const [sellerId, setSellerId] = useState<string>('');
   const initialLoadRef = useRef(true);
 
   useEffect(() => {
