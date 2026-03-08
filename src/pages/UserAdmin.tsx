@@ -278,9 +278,33 @@ export default function UserAdmin() {
                 <SelectContent>
                   <SelectItem value="master">Master</SelectItem>
                   <SelectItem value="vendedor">Vendedor</SelectItem>
+                  <SelectItem value="operacional">Operacional</SelectItem>
                 </SelectContent>
               </Select>
-              {permRole === 'master' && <p className="text-xs text-muted-foreground mt-1">Master tem acesso total ao sistema</p>}
+              {permRole === 'master' && <p className="text-xs text-muted-foreground mt-1">Master tem acesso total ao sistema e pode alternar entre empresas</p>}
+              {permRole === 'operacional' && <p className="text-xs text-muted-foreground mt-1">Operacional tem acesso a produção e calendário</p>}
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium text-sm mb-3">Empresas com acesso</h3>
+              <div className="flex flex-col gap-2">
+                {companies.map(c => (
+                  <label key={c.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={permRole === 'master' || permEmpresaIds.includes(c.id)}
+                      disabled={permRole === 'master'}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setPermEmpresaIds(prev => [...prev, c.id]);
+                        } else {
+                          setPermEmpresaIds(prev => prev.filter(id => id !== c.id));
+                        }
+                      }}
+                    />
+                    <span className="text-sm">{c.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-4">
