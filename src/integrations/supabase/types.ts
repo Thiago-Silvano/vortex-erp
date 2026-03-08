@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          empresa_id: string | null
           id: string
           installment_number: number | null
           notes: string | null
@@ -37,6 +38,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          empresa_id?: string | null
           id?: string
           installment_number?: number | null
           notes?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          empresa_id?: string | null
           id?: string
           installment_number?: number | null
           notes?: string | null
@@ -69,6 +72,13 @@ export type Database = {
             columns: ["cost_center_id"]
             isOneToOne: false
             referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_payable_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -95,6 +105,7 @@ export type Database = {
           card_rate_simple_link: number | null
           created_at: string
           email: string | null
+          empresa_id: string | null
           id: string
           logo_url: string | null
           name: string
@@ -109,6 +120,7 @@ export type Database = {
           card_rate_simple_link?: number | null
           created_at?: string
           email?: string | null
+          empresa_id?: string | null
           id?: string
           logo_url?: string | null
           name?: string
@@ -123,6 +135,7 @@ export type Database = {
           card_rate_simple_link?: number | null
           created_at?: string
           email?: string | null
+          empresa_id?: string | null
           id?: string
           logo_url?: string | null
           name?: string
@@ -130,11 +143,20 @@ export type Database = {
           website?: string | null
           whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agency_settings_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calendar_events: {
         Row: {
           created_at: string
+          empresa_id: string | null
           event_date: string
           event_time: string | null
           id: string
@@ -143,6 +165,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          empresa_id?: string | null
           event_date: string
           event_time?: string | null
           id?: string
@@ -151,17 +174,27 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          empresa_id?: string | null
           event_date?: string
           event_time?: string | null
           id?: string
           passengers?: number
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       card_rates: {
         Row: {
           created_at: string
+          empresa_id: string | null
           id: string
           installments: number
           payment_type: string
@@ -169,6 +202,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          empresa_id?: string | null
           id?: string
           installments?: number
           payment_type?: string
@@ -176,12 +210,21 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          empresa_id?: string | null
           id?: string
           installments?: number
           payment_type?: string
           rate?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "card_rates_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clients: {
         Row: {
@@ -195,6 +238,7 @@ export type Database = {
           cpf: string
           created_at: string
           email: string | null
+          empresa_id: string | null
           full_name: string
           id: string
           neighborhood: string | null
@@ -216,6 +260,7 @@ export type Database = {
           cpf?: string
           created_at?: string
           email?: string | null
+          empresa_id?: string | null
           full_name?: string
           id?: string
           neighborhood?: string | null
@@ -237,6 +282,7 @@ export type Database = {
           cpf?: string
           created_at?: string
           email?: string | null
+          empresa_id?: string | null
           full_name?: string
           id?: string
           neighborhood?: string | null
@@ -247,12 +293,42 @@ export type Database = {
           state?: string | null
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "clients_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
         Relationships: []
       }
       cost_centers: {
         Row: {
           created_at: string
           description: string | null
+          empresa_id: string | null
           id: string
           name: string
           status: string
@@ -260,6 +336,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          empresa_id?: string | null
           id?: string
           name?: string
           status?: string
@@ -267,11 +344,20 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          empresa_id?: string | null
           id?: string
           name?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cost_centers_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       flight_legs: {
         Row: {
@@ -402,6 +488,7 @@ export type Database = {
           client_phone: string | null
           created_at: string
           destination_image_url: string | null
+          empresa_id: string | null
           id: string
           payment_installment_value_no_interest: number | null
           payment_installment_value_with_interest: number | null
@@ -430,6 +517,7 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           destination_image_url?: string | null
+          empresa_id?: string | null
           id?: string
           payment_installment_value_no_interest?: number | null
           payment_installment_value_with_interest?: number | null
@@ -458,6 +546,7 @@ export type Database = {
           client_phone?: string | null
           created_at?: string
           destination_image_url?: string | null
+          empresa_id?: string | null
           id?: string
           payment_installment_value_no_interest?: number | null
           payment_installment_value_with_interest?: number | null
@@ -478,7 +567,15 @@ export type Database = {
           updated_at?: string
           view_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quotes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       receivables: {
         Row: {
@@ -488,6 +585,7 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          empresa_id: string | null
           id: string
           installment_number: number
           notes: string | null
@@ -504,6 +602,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          empresa_id?: string | null
           id?: string
           installment_number?: number
           notes?: string | null
@@ -520,6 +619,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          empresa_id?: string | null
           id?: string
           installment_number?: number
           notes?: string | null
@@ -538,6 +638,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "receivables_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "receivables_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
@@ -553,6 +660,7 @@ export type Database = {
           confirmation_code: string | null
           created_at: string
           description: string | null
+          empresa_id: string | null
           id: string
           notes: string | null
           sale_id: string
@@ -566,6 +674,7 @@ export type Database = {
           confirmation_code?: string | null
           created_at?: string
           description?: string | null
+          empresa_id?: string | null
           id?: string
           notes?: string | null
           sale_id: string
@@ -579,6 +688,7 @@ export type Database = {
           confirmation_code?: string | null
           created_at?: string
           description?: string | null
+          empresa_id?: string | null
           id?: string
           notes?: string | null
           sale_id?: string
@@ -587,6 +697,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reservations_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservations_sale_id_fkey"
             columns: ["sale_id"]
@@ -747,6 +864,7 @@ export type Database = {
           commission_value: number | null
           created_at: string
           created_by: string | null
+          empresa_id: string | null
           gross_profit: number | null
           id: string
           installments: number | null
@@ -771,6 +889,7 @@ export type Database = {
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
+          empresa_id?: string | null
           gross_profit?: number | null
           id?: string
           installments?: number | null
@@ -795,6 +914,7 @@ export type Database = {
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
+          empresa_id?: string | null
           gross_profit?: number | null
           id?: string
           installments?: number | null
@@ -810,6 +930,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_quote_id_fkey"
             columns: ["quote_id"]
@@ -924,6 +1051,7 @@ export type Database = {
           country: string | null
           created_at: string
           email: string | null
+          empresa_id: string | null
           executive_name: string | null
           executive_phone: string | null
           id: string
@@ -946,6 +1074,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           email?: string | null
+          empresa_id?: string | null
           executive_name?: string | null
           executive_phone?: string | null
           id?: string
@@ -968,6 +1097,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           email?: string | null
+          empresa_id?: string | null
           executive_name?: string | null
           executive_phone?: string | null
           id?: string
@@ -980,11 +1110,20 @@ export type Database = {
           state?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_permissions: {
         Row: {
           created_at: string
+          empresa_ids: string[] | null
           id: string
           permissions: Json
           updated_at: string
@@ -993,6 +1132,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          empresa_ids?: string[] | null
           id?: string
           permissions?: Json
           updated_at?: string
@@ -1001,6 +1141,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          empresa_ids?: string[] | null
           id?: string
           permissions?: Json
           updated_at?: string
