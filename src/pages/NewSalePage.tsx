@@ -38,6 +38,7 @@ interface Passenger {
 }
 
 interface SupplierOption { id: string; name: string; }
+interface SellerOption { id: string; full_name: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
