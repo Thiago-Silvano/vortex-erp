@@ -42,6 +42,7 @@ import VistosProductsPage from "./pages/vistos/VistosProductsPage";
 import VistosSalesPage from "./pages/vistos/VistosSalesPage";
 import VistosNewSalePage from "./pages/vistos/VistosNewSalePage";
 import VistosProductionPage from "./pages/vistos/VistosProductionPage";
+import VistosReportsPage from "./pages/vistos/VistosReportsPage";
 
 const queryClient = new QueryClient();
 
