@@ -82,6 +82,7 @@ function AppSidebar() {
   const viagensFinancial: MenuItem[] = [
     { title: 'Contas a Receber', url: '/financial/receivable', icon: ArrowDownCircle, permKey: 'financial_receivable' },
     { title: 'Contas a Pagar', url: '/financial/payable', icon: ArrowUpCircle, permKey: 'financial_payable' },
+    { title: 'Comissões', url: '/financial/commissions', icon: Percent, permKey: 'financial_commissions' },
     { title: 'Fluxo de Caixa', url: '/financial/cashflow', icon: BarChart3, permKey: 'financial_cashflow' },
     { title: 'Centros de Custo', url: '/financial/cost-centers', icon: Tag, permKey: 'financial_cashflow' },
   ];
