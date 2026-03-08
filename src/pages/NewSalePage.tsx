@@ -307,6 +307,40 @@ export default function NewSalePage() {
       });
     }
 
+    // Auto-generate commission if seller is assigned
+    if (sellerId && !editSaleId) {
+      const { data: sellerData } = await (supabase.from('sellers') as any).select('*').eq('id', sellerId).single();
+      if (sellerData && sellerData.commission_type !== 'none') {
+        let commValue = 0;
+        const pct = Number(sellerData.commission_percentage) || 0;
+        if (sellerData.commission_type === 'sales_percentage') {
+          const base = sellerData.commission_base === 'net_received' ? totalSale - cardFeeValue
+            : sellerData.commission_base === 'sale_profit' ? grossProfit : totalSale;
+          commValue = base * (pct / 100);
+        } else if (sellerData.commission_type === 'profit_percentage') {
+          commValue = grossProfit * (pct / 100);
+        } else if (sellerData.commission_type === 'company_profit_percentage') {
+          commValue = commissionValue * (pct / 100);
+        } else {
+          commValue = grossProfit * (pct / 100);
+        }
+        await (supabase.from('seller_commissions') as any).insert({
+          empresa_id: activeCompany?.id || null,
+          seller_id: sellerId,
+          sale_id: saleId,
+          client_name: clientName,
+          sale_date: saleDate,
+          sale_value: totalSale,
+          cost_value: totalCost,
+          profit_value: grossProfit,
+          commission_percentage: pct,
+          commission_value: commValue,
+          commission_type: sellerData.commission_type,
+          status: 'pending',
+        });
+      }
+    }
+
     toast.success(editSaleId ? 'Venda atualizada!' : 'Venda criada com sucesso!');
     navigate('/sales');
   };
