@@ -64,29 +64,6 @@ export default function ClientsPage() {
     normalize(c.email).includes(normalize(search))
   );
 
-  const handleCpfSearch = async () => {
-    const digits = unmask(form.cpf);
-    if (digits.length !== 11) { toast.error('CPF deve ter 11 dígitos'); return; }
-    setCpfLoading(true);
-    try {
-      const res = await fetch(`https://brasilapi.com.br/api/cpf/v1/${digits}`);
-      if (res.ok) {
-        const json = await res.json();
-        setForm(p => ({
-          ...p,
-          full_name: json.nome || p.full_name,
-          birth_date: json.data_nascimento ? json.data_nascimento.slice(0, 10) : p.birth_date,
-        }));
-        toast.success('Dados do CPF preenchidos!');
-      } else {
-        toast.error('CPF não encontrado na base pública');
-      }
-    } catch {
-      toast.error('Erro ao consultar CPF');
-    } finally {
-      setCpfLoading(false);
-    }
-  };
 
   const handleEmailChange = (value: string) => {
     const lower = value.toLowerCase();
