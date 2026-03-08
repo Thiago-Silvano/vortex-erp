@@ -89,7 +89,22 @@ export default function CommissionsPage() {
   useEffect(() => { load(); }, [activeCompany, filterSeller, filterStatus, filterFrom, filterTo]);
 
   const updateStatus = async (id: string, newStatus: string) => {
-    await (supabase.from('seller_commissions') as any).update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
+    const comm = commissions.find(c => c.id === id);
+    await (supabase.from('seller_commissions') as any).update({ status: newStatus, updated_at: new Date().toISOString(), payment_date: newStatus === 'paid' ? new Date().toISOString().split('T')[0] : null }).eq('id', id);
+
+    // When marking as paid, update the related accounts_payable too
+    if (newStatus === 'paid' && comm?.sale_id) {
+      await supabase.from('accounts_payable').update({
+        status: 'paid',
+        payment_date: new Date().toISOString().split('T')[0],
+      }).eq('sale_id', comm.sale_id).eq('origin_type', 'commission');
+    }
+
+    // When cancelling, also cancel the related accounts_payable
+    if (newStatus === 'cancelled' && comm?.sale_id) {
+      await supabase.from('accounts_payable').delete().eq('sale_id', comm.sale_id).eq('origin_type', 'commission');
+    }
+
     toast.success(`Comissão ${statusLabels[newStatus]?.toLowerCase()}`);
     load();
   };
