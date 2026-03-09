@@ -276,7 +276,7 @@ export default function SavedQuotes() {
                           {q.trip.departureDate ? formatTripDate(q.trip.departureDate) : '-'}
                           {q.trip.returnDate ? ` a ${formatTripDate(q.trip.returnDate)}` : ''}
                         </td>
-                        <td className="px-3 py-2 text-center hidden sm:table-cell">
+                        <td className="px-4 py-3 text-center hidden sm:table-cell min-w-[100px]">
                           {q.status === 'concluido' && (
                             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">Vendida</span>
                           )}
@@ -287,7 +287,7 @@ export default function SavedQuotes() {
                             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Aberta</span>
                           )}
                         </td>
-                        <td className="px-3 py-2 text-center hidden sm:table-cell">
+                        <td className="px-4 py-3 text-center hidden sm:table-cell min-w-[60px]">
                           <div className="flex items-center justify-center gap-1">
                             <span className="text-sm">{q.viewCount}</span>
                             {userEmail === 'thiago@vortexviagens.com.br' && q.viewCount > 0 && (
@@ -297,7 +297,7 @@ export default function SavedQuotes() {
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-2 text-right whitespace-nowrap">
+                        <td className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">
                           <p className="font-bold text-primary">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                           {rav > 0 && (
                             <p className="text-[10px] text-muted-foreground">+ RAV</p>
