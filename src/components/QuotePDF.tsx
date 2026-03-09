@@ -794,7 +794,7 @@ export default function QuotePDF({ quote, agency }: Props) {
                 <Text style={s.catTitle}>{SERVICE_TYPE_CONFIG["aereo"].pdfLabel}</Text>
               </View>
               {aereoServices.items.map((item) => (
-                <FlightServiceCard key={item.id} item={item} showValue={!!showIndividual} />
+                <FlightServiceCard key={item.id} item={item} showValue={false} />
               ))}
             </>
           )}
@@ -823,8 +823,8 @@ export default function QuotePDF({ quote, agency }: Props) {
             </View>
 
             {/* Service card */}
-            {type === "hotel" && <HotelServiceCard item={item} showValue={!!showIndividual} />}
-            {type !== "hotel" && <GenericServiceCard item={item} type={type} showValue={!!showIndividual} />}
+            {type === "hotel" && <HotelServiceCard item={item} showValue={false} />}
+            {type !== "hotel" && <GenericServiceCard item={item} type={type} showValue={false} />}
           </View>
           <PageFooter />
         </Page>
