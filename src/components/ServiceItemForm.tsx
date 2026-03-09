@@ -12,6 +12,25 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AirportAutocomplete from '@/components/AirportAutocomplete';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCompany } from '@/contexts/CompanyContext';
+
+interface CatalogService {
+  id: string;
+  name: string;
+  category: string | null;
+  cost_center_id: string | null;
+}
+
+// Map catalog service names to ServiceType
+const mapCatalogToType = (name: string): ServiceType => {
+  const lower = name.toLowerCase();
+  if (lower.includes('aére') || lower.includes('passagen')) return 'aereo';
+  if (lower.includes('hospedagem') || lower.includes('hotel')) return 'hotel';
+  if (lower.includes('carro') || lower.includes('aluguel')) return 'carro';
+  if (lower.includes('seguro')) return 'seguro';
+  if (lower.includes('experiência') || lower.includes('passeio') || lower.includes('tour')) return 'experiencia';
+  return 'adicional';
+};
 
 interface Props {
   onAdd: (item: ServiceItem) => void;
