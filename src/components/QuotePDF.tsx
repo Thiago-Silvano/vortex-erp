@@ -728,11 +728,13 @@ export default function QuotePDF({ quote, agency }: Props) {
   const displayInstallmentNoInterest = showPerPassenger && payment?.installmentValueNoInterest ? payment.installmentValueNoInterest / passengers : payment?.installmentValueNoInterest;
   const displayInstallmentWithInterest = showPerPassenger && payment?.installmentValueWithInterest ? payment.installmentValueWithInterest / passengers : payment?.installmentValueWithInterest;
 
-  // Flatten all services with their type for individual pages
-  const allServices: { type: ServiceType; item: ServiceItem }[] = [];
+  // Separate aereo services (go on cover page) from the rest (individual pages)
+  const aereoServices = grouped.find(g => g.type === "aereo");
+  const nonAereoServices: { type: ServiceType; item: ServiceItem }[] = [];
   for (const { type, items } of grouped) {
+    if (type === "aereo") continue;
     for (const item of items) {
-      allServices.push({ type, item });
+      nonAereoServices.push({ type, item });
     }
   }
 
