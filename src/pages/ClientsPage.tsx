@@ -234,7 +234,7 @@ export default function ClientsPage() {
                 </div>
                 <div>
                   <Label>Telefone</Label>
-                  <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="+55 11 99999-9999" />
+                  <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: maskPhone(e.target.value) }))} placeholder="(00) 00000-0000" />
                 </div>
               </div>
 
