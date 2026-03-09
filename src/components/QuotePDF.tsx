@@ -823,8 +823,8 @@ export default function QuotePDF({ quote, agency }: Props) {
             </View>
 
             {/* Service card */}
-            {type === "hotel" && <HotelServiceCard item={item} showValue={!!showIndividual} />}
-            {type !== "hotel" && <GenericServiceCard item={item} type={type} showValue={!!showIndividual} />}
+            {type === "hotel" && <HotelServiceCard item={item} showValue={false} />}
+            {type !== "hotel" && <GenericServiceCard item={item} type={type} showValue={false} />}
           </View>
           <PageFooter />
         </Page>
