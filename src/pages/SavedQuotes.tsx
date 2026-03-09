@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, getQuoteById, FullQuote } from '@/lib/supabase-storage';
+import { getAllQuotes, deleteQuoteFromDB, getQuoteById, FullQuote } from '@/lib/supabase-storage';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { FileText, Pencil, Trash2, Eye, Copy, Link, ExternalLink, RotateCcw, FileDown, EyeOff, Plus, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { FileText, Pencil, Trash2, Eye, Link, ExternalLink, RotateCcw, FileDown, EyeOff, Plus, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuditLogDialog from '@/components/AuditLogDialog';
 import AppLayout from '@/components/AppLayout';
