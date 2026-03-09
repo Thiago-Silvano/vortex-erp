@@ -38,6 +38,8 @@ export default function ServicesCatalogPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [costCenterId, setCostCenterId] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
   const [status, setStatus] = useState('active');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
