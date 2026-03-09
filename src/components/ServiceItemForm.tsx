@@ -321,13 +321,12 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
           <div>
             <Label>Serviço</Label>
             {catalogServices.length > 0 ? (
-              <Select value={item.type} onValueChange={(v) => {
+              <Select value={selectedCatalogId} onValueChange={(v) => {
                 const catalogItem = catalogServices.find(s => s.id === v);
                 if (catalogItem) {
+                  setSelectedCatalogId(v);
                   const mappedType = mapCatalogToType(catalogItem.name);
                   setItem(p => ({ ...p, type: mappedType, title: catalogItem.name }));
-                } else {
-                  setItem(p => ({ ...p, type: v as ServiceType }));
                 }
               }}>
                 <SelectTrigger><SelectValue placeholder="Selecione um serviço" /></SelectTrigger>
