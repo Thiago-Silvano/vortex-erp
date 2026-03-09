@@ -15,7 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Pencil, Trash2, Search, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
-import { maskCpf, maskPhone } from '@/lib/masks';
+import { maskCpf, maskPhone, validateEmail } from '@/lib/masks';
+import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Seller {
@@ -233,17 +234,38 @@ export default function SellersPage() {
                 </div>
                 <div><Label>Telefone</Label><Input value={form.phone} onChange={e => setField('phone', maskPhone(e.target.value))} /></div>
                 <div><Label>WhatsApp</Label><Input value={form.whatsapp} onChange={e => setField('whatsapp', maskPhone(e.target.value))} /></div>
-                <div className="md:col-span-2"><Label>E-mail</Label><Input type="email" value={form.email} onChange={e => setField('email', e.target.value)} /></div>
+                <div className="md:col-span-2">
+                  <Label>E-mail</Label>
+                  <Input type="email" value={form.email} onChange={e => {
+                    const lower = e.target.value.toLowerCase();
+                    setField('email', lower);
+                  }} placeholder="exemplo@email.com" />
+                  {form.email && !validateEmail(form.email) && <p className="text-xs text-destructive mt-1">Email inválido</p>}
+                </div>
 
                 <Separator className="md:col-span-3" />
+              </CardContent>
+            </Card>
 
-                <div><Label>CEP</Label><Input value={form.cep} onChange={e => setField('cep', e.target.value)} /></div>
-                <div className="md:col-span-2"><Label>Endereço</Label><Input value={form.address} onChange={e => setField('address', e.target.value)} /></div>
-                <div><Label>Número</Label><Input value={form.address_number} onChange={e => setField('address_number', e.target.value)} /></div>
-                <div><Label>Complemento</Label><Input value={form.complement} onChange={e => setField('complement', e.target.value)} /></div>
-                <div><Label>Bairro</Label><Input value={form.neighborhood} onChange={e => setField('neighborhood', e.target.value)} /></div>
-                <div><Label>Cidade</Label><Input value={form.city} onChange={e => setField('city', e.target.value)} /></div>
-                <div><Label>Estado</Label><Input value={form.state} onChange={e => setField('state', e.target.value)} /></div>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Endereço</CardTitle></CardHeader>
+              <CardContent>
+                <CepLookup
+                  data={{
+                    cep: form.cep, address: form.address, addressNumber: form.address_number,
+                    complement: form.complement, neighborhood: form.neighborhood,
+                    city: form.city, state: form.state, country: '',
+                  }}
+                  onChange={d => {
+                    if (d.cep !== undefined) setField('cep', d.cep);
+                    if (d.address !== undefined) setField('address', d.address);
+                    if (d.addressNumber !== undefined) setField('address_number', d.addressNumber);
+                    if (d.complement !== undefined) setField('complement', d.complement);
+                    if (d.neighborhood !== undefined) setField('neighborhood', d.neighborhood);
+                    if (d.city !== undefined) setField('city', d.city);
+                    if (d.state !== undefined) setField('state', d.state);
+                  }}
+                />
 
                 <Separator className="md:col-span-3" />
 

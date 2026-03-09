@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { maskPhone, validateEmail } from '@/lib/masks';
 
 interface Product { id: string; name: string; price: number; }
 interface Applicant {
@@ -176,8 +177,12 @@ export default function VistosNewSalePage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><Label>Cliente *</Label><Input value={clientName} onChange={e => setClientName(e.target.value)} /></div>
-              <div><Label>Telefone</Label><Input value={clientPhone} onChange={e => setClientPhone(e.target.value)} /></div>
-              <div><Label>Email</Label><Input value={clientEmail} onChange={e => setClientEmail(e.target.value)} /></div>
+              <div><Label>Telefone</Label><Input value={clientPhone} onChange={e => setClientPhone(maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
+              <div>
+                <Label>Email</Label>
+                <Input value={clientEmail} onChange={e => setClientEmail(e.target.value.toLowerCase())} placeholder="exemplo@email.com" />
+                {clientEmail && !validateEmail(clientEmail) && <p className="text-xs text-destructive mt-1">Email inválido</p>}
+              </div>
               <div>
                 <Label>Produto *</Label>
                 <Select value={productId} onValueChange={handleProductChange}>
@@ -239,8 +244,12 @@ export default function VistosNewSalePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div><Label>Nome Completo *</Label><Input value={app.full_name} onChange={e => updateApplicant(idx, 'full_name', e.target.value)} /></div>
                   <div><Label>Data de Nascimento</Label><Input type="date" value={app.birth_date} onChange={e => updateApplicant(idx, 'birth_date', e.target.value)} /></div>
-                  <div><Label>Telefone</Label><Input value={app.phone} onChange={e => updateApplicant(idx, 'phone', e.target.value)} /></div>
-                  <div><Label>Email</Label><Input value={app.email} onChange={e => updateApplicant(idx, 'email', e.target.value)} /></div>
+                  <div><Label>Telefone</Label><Input value={app.phone} onChange={e => updateApplicant(idx, 'phone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
+                  <div>
+                    <Label>Email</Label>
+                    <Input value={app.email} onChange={e => updateApplicant(idx, 'email', e.target.value.toLowerCase())} placeholder="exemplo@email.com" />
+                    {app.email && !validateEmail(app.email) && <p className="text-xs text-destructive mt-1">Email inválido</p>}
+                  </div>
                   <div><Label>Nº Passaporte (opcional)</Label><Input value={app.passport_number} onChange={e => updateApplicant(idx, 'passport_number', e.target.value)} /></div>
                 </div>
               </div>

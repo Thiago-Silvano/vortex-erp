@@ -75,6 +75,7 @@ function AppSidebar() {
     { title: 'Cotações', url: '/quotes', icon: FileText, permKey: 'quotes_view' },
     { title: 'Vendas', url: '/sales', icon: ShoppingCart, permKey: 'sales_view' },
     { title: 'Vendedores', url: '/sellers', icon: UserCheck, permKey: 'sellers_view' },
+    { title: 'Serviços', url: '/services', icon: ClipboardList, permKey: 'services_view' },
     { title: 'Reservas', url: '/reservations', icon: BookOpen, permKey: 'reservations_view' },
     { title: 'Calendário', url: '/calendar', icon: CalendarDays },
   ];

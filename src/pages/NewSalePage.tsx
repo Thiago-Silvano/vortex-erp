@@ -67,6 +67,7 @@ export default function NewSalePage() {
   const [installments, setInstallments] = useState(1);
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
+  const [boletoInterestRate, setBoletoInterestRate] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
@@ -166,6 +167,32 @@ export default function NewSalePage() {
   const netProfit = grossProfit - commissionValue - cardFeeValue;
 
   useEffect(() => {
+    if (paymentMethod === 'boleto' && installments > 1 && boletoInterestRate > 0) {
+      // Price table (Tabela Price) calculation
+      const monthlyRate = boletoInterestRate / 100;
+      const pmt = totalSale * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
+      const recs: Receivable[] = [];
+      const baseDate = new Date(saleDate || new Date());
+      for (let i = 1; i <= installments; i++) {
+        const dueDate = new Date(baseDate);
+        dueDate.setMonth(dueDate.getMonth() + i);
+        recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100 });
+      }
+      setReceivables(recs);
+      return;
+    }
+    if (paymentMethod === 'boleto' && installments > 1) {
+      const perInstallment = totalSale / installments;
+      const recs: Receivable[] = [];
+      const baseDate = new Date(saleDate || new Date());
+      for (let i = 1; i <= installments; i++) {
+        const dueDate = new Date(baseDate);
+        dueDate.setMonth(dueDate.getMonth() + i);
+        recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100 });
+      }
+      setReceivables(recs);
+      return;
+    }
     if (paymentMethod !== 'credito') {
       setReceivables([{ installment_number: 1, due_date: '', amount: totalSale }]);
       return;
@@ -176,7 +203,7 @@ export default function NewSalePage() {
       recs.push({ installment_number: i, due_date: '', amount: perInstallment });
     }
     setReceivables(recs);
-  }, [installments, paymentMethod, totalSale]);
+  }, [installments, paymentMethod, totalSale, boletoInterestRate, saleDate]);
 
   const updateItem = (idx: number, field: keyof SaleItem, value: any) => {
     setItems(prev => prev.map((item, i) => {
@@ -638,6 +665,38 @@ export default function NewSalePage() {
                     <p className="text-xs text-muted-foreground mt-1">Preenchida automaticamente, editável manualmente</p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {paymentMethod === 'boleto' && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Número de Parcelas</Label>
+                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => i + 1).map(n => (
+                          <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Juros (% ao mês)</Label>
+                    <Input type="number" step="0.01" value={boletoInterestRate} onChange={e => setBoletoInterestRate(parseFloat(e.target.value) || 0)} placeholder="0.00" />
+                  </div>
+                  <div>
+                    <Label>Valor da Venda</Label>
+                    <Input value={fmt(totalSale)} disabled className="bg-muted" />
+                  </div>
+                </div>
+                {installments > 1 && boletoInterestRate > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg text-sm">
+                    <p>Valor total com juros: <strong>{fmt(receivables.reduce((s, r) => s + r.amount, 0))}</strong></p>
+                    <p>Valor de cada parcela: <strong>{fmt(receivables[0]?.amount || 0)}</strong></p>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

@@ -12,7 +12,7 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { maskCpf, validateEmail } from '@/lib/masks';
+import { maskCpf, maskPhone, validateEmail } from '@/lib/masks';
 
 interface Client {
   id: string;
@@ -234,7 +234,7 @@ export default function ClientsPage() {
                 </div>
                 <div>
                   <Label>Telefone</Label>
-                  <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="+55 11 99999-9999" />
+                  <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: maskPhone(e.target.value) }))} placeholder="(00) 00000-0000" />
                 </div>
               </div>
 
