@@ -632,14 +632,16 @@ function GenericServiceCard({ item, type, showValue = true }: { item: ServiceIte
             )}
           </View>
         </View>
-        <View style={s.cardValueBox}>
-          <Text style={s.cardValueText}>{formatCurrency(item.value * item.quantity)}</Text>
-          {item.quantity > 1 && (
-            <Text style={s.cardQty}>
-              {item.quantity}x {formatCurrency(item.value)}
-            </Text>
-          )}
-        </View>
+        {showValue && (
+          <View style={s.cardValueBox}>
+            <Text style={s.cardValueText}>{formatCurrency(item.value * item.quantity)}</Text>
+            {item.quantity > 1 && (
+              <Text style={s.cardQty}>
+                {item.quantity}x {formatCurrency(item.value)}
+              </Text>
+            )}
+          </View>
+        )}
       </View>
       {/* Extra images row */}
       {images.length > 1 && (
