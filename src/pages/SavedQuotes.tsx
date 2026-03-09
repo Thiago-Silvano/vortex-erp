@@ -76,13 +76,6 @@ export default function SavedQuotes() {
     navigate('/preview', { state: { quote: quoteData, shortId: q.shortId } });
   };
 
-  const handleDuplicate = async (id: string) => {
-    const dup = await duplicateQuote(id);
-    if (dup) {
-      await loadQuotes();
-      toast({ title: 'Cotação duplicada!', description: `Cópia criada com ID: ${dup.shortId}` });
-    }
-  };
 
   const handleReuse = async (quote: FullQuote) => {
     const fullQuote = await getQuoteById(quote.id);
