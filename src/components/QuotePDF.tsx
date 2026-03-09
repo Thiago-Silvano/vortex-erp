@@ -20,7 +20,7 @@ const GREEN = "#16a34a";
 const s = StyleSheet.create({
   // Page
   page: { fontFamily: "Helvetica", fontSize: 9, color: DARK_TEXT, backgroundColor: SAND_BG },
-  pageContent: { paddingHorizontal: 40, paddingTop: 36, paddingBottom: 60 },
+  pageContent: { paddingHorizontal: 40, paddingTop: 36, paddingBottom: 80 },
 
   // Header
   header: {
