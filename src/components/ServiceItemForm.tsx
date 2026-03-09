@@ -57,6 +57,8 @@ const emptyItem = (): Omit<ServiceItem, 'id'> => ({
 });
 
 export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin, tripDestination }: Props) {
+  const { activeCompany } = useCompany();
+  const [catalogServices, setCatalogServices] = useState<CatalogService[]>([]);
   const [item, setItem] = useState<Omit<ServiceItem, 'id'>>(
     editItem ? { ...editItem } : emptyItem()
   );
