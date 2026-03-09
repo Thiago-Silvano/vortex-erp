@@ -522,9 +522,11 @@ function FlightServiceCard({ item, showValue = true }: { item: ServiceItem; show
               </View>
             )}
           </View>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={s.cardValueText}>{formatCurrency(item.value)}</Text>
-          </View>
+          {showValue && (
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={s.cardValueText}>{formatCurrency(item.value)}</Text>
+            </View>
+          )}
         </View>
         {renderLegs(idaLegs, "Voo de Ida", idaDuration)}
         {renderLegs(voltaLegs, "Voo de Volta", voltaDuration)}
