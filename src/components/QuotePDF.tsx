@@ -345,7 +345,7 @@ function getAllImages(item: ServiceItem): string[] {
 const SERVICE_ORDER: ServiceType[] = ["aereo", "hotel", "carro", "seguro", "experiencia", "adicional"];
 
 // ── Hotel Card ──────────────────────────────────────────
-function HotelServiceCard({ item }: { item: ServiceItem }) {
+function HotelServiceCard({ item, showValue = true }: { item: ServiceItem; showValue?: boolean }) {
   const images = getAllImages(item);
   const descLines = (item.description || "").split("\n").filter((l) => l.trim());
 
