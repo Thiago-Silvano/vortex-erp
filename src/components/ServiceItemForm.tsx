@@ -12,6 +12,25 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AirportAutocomplete from '@/components/AirportAutocomplete';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCompany } from '@/contexts/CompanyContext';
+
+interface CatalogService {
+  id: string;
+  name: string;
+  category: string | null;
+  cost_center_id: string | null;
+}
+
+// Map catalog service names to ServiceType
+const mapCatalogToType = (name: string): ServiceType => {
+  const lower = name.toLowerCase();
+  if (lower.includes('aére') || lower.includes('passagen')) return 'aereo';
+  if (lower.includes('hospedagem') || lower.includes('hotel')) return 'hotel';
+  if (lower.includes('carro') || lower.includes('aluguel')) return 'carro';
+  if (lower.includes('seguro')) return 'seguro';
+  if (lower.includes('experiência') || lower.includes('passeio') || lower.includes('tour')) return 'experiencia';
+  return 'adicional';
+};
 
 interface Props {
   onAdd: (item: ServiceItem) => void;
@@ -38,6 +57,9 @@ const emptyItem = (): Omit<ServiceItem, 'id'> => ({
 });
 
 export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin, tripDestination }: Props) {
+  const { activeCompany } = useCompany();
+  const [catalogServices, setCatalogServices] = useState<CatalogService[]>([]);
+  const [selectedCatalogId, setSelectedCatalogId] = useState<string>('');
   const [item, setItem] = useState<Omit<ServiceItem, 'id'>>(
     editItem ? { ...editItem } : emptyItem()
   );
@@ -56,6 +78,17 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   const [hotelPolicies, setHotelPolicies] = useState('');
   const [hotelAccessibility, setHotelAccessibility] = useState('');
   const { toast } = useToast();
+
+  // Fetch services from catalog
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      let query = (supabase.from('services_catalog') as any).select('id, name, category, cost_center_id').eq('status', 'active').order('name');
+      if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+      const { data } = await query;
+      if (data && data.length > 0) setCatalogServices(data);
+    };
+    fetchCatalog();
+  }, [activeCompany?.id]);
 
   // Auto-fill title for aereo based on trip origin/destination
   useEffect(() => {
@@ -286,15 +319,33 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
       <CardContent className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Tipo</Label>
-            <Select value={item.type} onValueChange={(v) => setItem(p => ({ ...p, type: v as ServiceType }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.entries(SERVICE_TYPE_CONFIG).map(([key, { label, icon }]) => (
-                  <SelectItem key={key} value={key}>{icon} {label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Serviço</Label>
+            {catalogServices.length > 0 ? (
+              <Select value={selectedCatalogId} onValueChange={(v) => {
+                const catalogItem = catalogServices.find(s => s.id === v);
+                if (catalogItem) {
+                  setSelectedCatalogId(v);
+                  const mappedType = mapCatalogToType(catalogItem.name);
+                  setItem(p => ({ ...p, type: mappedType, title: catalogItem.name }));
+                }
+              }}>
+                <SelectTrigger><SelectValue placeholder="Selecione um serviço" /></SelectTrigger>
+                <SelectContent>
+                  {catalogServices.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select value={item.type} onValueChange={(v) => setItem(p => ({ ...p, type: v as ServiceType }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(SERVICE_TYPE_CONFIG).map(([key, { label, icon }]) => (
+                    <SelectItem key={key} value={key}>{icon} {label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <Label>{isHotel ? 'Nome do Hotel' : 'Título'}</Label>
