@@ -390,9 +390,11 @@ function HotelServiceCard({ item, showValue = true }: { item: ServiceItem; showV
           <View style={{ flex: 1 }}>
             <Text style={s.hotelTitle}>{sanitizeText(item.title)}</Text>
           </View>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={s.cardValueText}>{formatCurrency(item.value * item.quantity)}</Text>
-          </View>
+          {showValue && (
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={s.cardValueText}>{formatCurrency(item.value * item.quantity)}</Text>
+            </View>
+          )}
         </View>
 
         <View style={s.hotelMeta}>
