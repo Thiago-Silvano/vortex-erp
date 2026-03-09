@@ -48,7 +48,7 @@ export default function ReportProducts() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
-            <CardHeader><CardTitle className="text-base">Faturamento por Produto</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Faturamento por Serviço</CardTitle></CardHeader>
             <CardContent>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
