@@ -431,7 +431,7 @@ function HotelServiceCard({ item, showValue = true }: { item: ServiceItem; showV
 }
 
 // ── Flight Card ─────────────────────────────────────────
-function FlightServiceCard({ item }: { item: ServiceItem }) {
+function FlightServiceCard({ item, showValue = true }: { item: ServiceItem; showValue?: boolean }) {
   const images = getAllImages(item);
   const idaLegs = (item.flightLegs || []).filter((l) => l.direction !== "volta");
   const voltaLegs = (item.flightLegs || []).filter((l) => l.direction === "volta");
