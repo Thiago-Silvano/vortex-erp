@@ -318,15 +318,34 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
       <CardContent className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Tipo</Label>
-            <Select value={item.type} onValueChange={(v) => setItem(p => ({ ...p, type: v as ServiceType }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.entries(SERVICE_TYPE_CONFIG).map(([key, { label, icon }]) => (
-                  <SelectItem key={key} value={key}>{icon} {label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Serviço</Label>
+            {catalogServices.length > 0 ? (
+              <Select value={item.type} onValueChange={(v) => {
+                const catalogItem = catalogServices.find(s => s.id === v);
+                if (catalogItem) {
+                  const mappedType = mapCatalogToType(catalogItem.name);
+                  setItem(p => ({ ...p, type: mappedType, title: catalogItem.name }));
+                } else {
+                  setItem(p => ({ ...p, type: v as ServiceType }));
+                }
+              }}>
+                <SelectTrigger><SelectValue placeholder="Selecione um serviço" /></SelectTrigger>
+                <SelectContent>
+                  {catalogServices.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select value={item.type} onValueChange={(v) => setItem(p => ({ ...p, type: v as ServiceType }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(SERVICE_TYPE_CONFIG).map(([key, { label, icon }]) => (
+                    <SelectItem key={key} value={key}>{icon} {label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <Label>{isHotel ? 'Nome do Hotel' : 'Título'}</Label>
