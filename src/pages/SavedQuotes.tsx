@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, getQuoteById, FullQuote } from '@/lib/supabase-storage';
+import { getAllQuotes, deleteQuoteFromDB, getQuoteById, FullQuote } from '@/lib/supabase-storage';
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { FileText, Pencil, Trash2, Eye, Copy, Link, ExternalLink, RotateCcw, FileDown, EyeOff, Plus, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { FileText, Pencil, Trash2, Eye, Link, ExternalLink, RotateCcw, FileDown, EyeOff, Plus, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuditLogDialog from '@/components/AuditLogDialog';
 import AppLayout from '@/components/AppLayout';
@@ -76,13 +76,6 @@ export default function SavedQuotes() {
     navigate('/preview', { state: { quote: quoteData, shortId: q.shortId } });
   };
 
-  const handleDuplicate = async (id: string) => {
-    const dup = await duplicateQuote(id);
-    if (dup) {
-      await loadQuotes();
-      toast({ title: 'Cotação duplicada!', description: `Cópia criada com ID: ${dup.shortId}` });
-    }
-  };
 
   const handleReuse = async (quote: FullQuote) => {
     const fullQuote = await getQuoteById(quote.id);
@@ -310,26 +303,23 @@ export default function SavedQuotes() {
                             <p className="text-[10px] text-muted-foreground">+ RAV</p>
                           )}
                         </td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center justify-end gap-0.5">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => handleEdit(q)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="PDF" onClick={() => handlePreview(q)}>
-                              <FileDown className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Copiar link" onClick={() => handleCopyLink(q.shortId)}>
-                              <Link className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link" onClick={() => handleOpenLink(q.shortId)}>
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Duplicar" onClick={() => handleDuplicate(q.id)}>
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Reutilizar" onClick={() => handleReuse(q)}>
-                              <RotateCcw className="h-3.5 w-3.5" />
-                            </Button>
+                         <td className="px-3 py-2 whitespace-nowrap">
+                           <div className="flex items-center justify-end gap-0.5">
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => handleEdit(q)}>
+                               <Pencil className="h-3.5 w-3.5" />
+                             </Button>
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="PDF" onClick={() => handlePreview(q)}>
+                               <FileDown className="h-3.5 w-3.5" />
+                             </Button>
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Copiar link" onClick={() => handleCopyLink(q.shortId)}>
+                               <Link className="h-3.5 w-3.5" />
+                             </Button>
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link" onClick={() => handleOpenLink(q.shortId)}>
+                               <ExternalLink className="h-3.5 w-3.5" />
+                             </Button>
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Reutilizar" onClick={() => handleReuse(q)}>
+                               <RotateCcw className="h-3.5 w-3.5" />
+                             </Button>
 
                             {/* Vendida */}
                             <AlertDialog>
