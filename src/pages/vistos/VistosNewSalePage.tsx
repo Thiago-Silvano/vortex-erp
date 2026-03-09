@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { maskPhone, validateEmail } from '@/lib/masks';
 
 interface Product { id: string; name: string; price: number; }
 interface Applicant {
