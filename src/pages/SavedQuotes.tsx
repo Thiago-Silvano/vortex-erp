@@ -4,7 +4,6 @@ import { getAllQuotes, deleteQuoteFromDB, duplicateQuote, getQuoteById, FullQuot
 import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { FileText, Pencil, Trash2, Eye, Copy, Link, ExternalLink, RotateCcw, FileDown, EyeOff, Plus, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AuditLogDialog from '@/components/AuditLogDialog';
@@ -250,162 +249,177 @@ export default function SavedQuotes() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {quotes.map(q => {
-              const costTotal = q.services.reduce((sum, s) => sum + s.value * s.quantity, 0);
-              const rav = q.payment?.rav || 0;
-              const total = costTotal + rav;
-              return (
-                <Card key={q.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-base truncate">{q.client.name || 'Sem nome'}</p>
-                        {q.status === 'concluido' && (
-                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">Vendida</span>
-                        )}
-                        {q.status === 'perdido' && (
-                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-destructive/15 text-destructive">Perdida</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {q.trip.origin} → {q.trip.destination}
-                        {q.trip.departureDate && ` • ${formatTripDate(q.trip.departureDate)}`}
-                        {q.trip.returnDate && ` a ${formatTripDate(q.trip.returnDate)}`}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {q.services.length} serviço(s) • ID: {q.shortId} • {formatDate(q.updatedAt)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 mr-2">
-                      <div className="flex items-center gap-1 text-muted-foreground" title="Visualizações do link">
-                        <Eye className="h-4 w-4" />
-                        <span className="text-sm font-medium">{q.viewCount}</span>
-                        {userEmail === 'thiago@vortexviagens.com.br' && q.viewCount > 0 && (
-                          <Button variant="ghost" size="icon" className="h-6 w-6" title="Zerar visualizações" onClick={() => handleResetViews(q.id)}>
-                            <EyeOff className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-primary">
-                          R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                        {rav > 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            Custo: R$ {costTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + RAV
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-1 flex-wrap">
-                      <Button variant="ghost" size="icon" title="Editar" onClick={() => handleEdit(q)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Visualizar PDF" onClick={() => handlePreview(q)}>
-                        <FileDown className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Copiar link" onClick={() => handleCopyLink(q.shortId)}>
-                        <Link className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Abrir página do cliente" onClick={() => handleOpenLink(q.shortId)}>
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Duplicar" onClick={() => handleDuplicate(q.id)}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Reutilizar cotação" onClick={() => handleReuse(q)}>
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
+          <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Cliente</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground hidden md:table-cell">Destino</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground hidden lg:table-cell">Período</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground hidden sm:table-cell">Status</th>
+                    <th className="text-center px-3 py-2 font-medium text-muted-foreground hidden sm:table-cell">
+                      <Eye className="h-4 w-4 inline" />
+                    </th>
+                    <th className="text-right px-3 py-2 font-medium text-muted-foreground">Valor</th>
+                    <th className="text-right px-3 py-2 font-medium text-muted-foreground">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quotes.map(q => {
+                    const costTotal = q.services.reduce((sum, s) => sum + s.value * s.quantity, 0);
+                    const rav = q.payment?.rav || 0;
+                    const total = costTotal + rav;
+                    return (
+                      <tr key={q.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="px-3 py-2">
+                          <p className="font-medium truncate max-w-[180px]">{q.client.name || 'Sem nome'}</p>
+                          <p className="text-xs text-muted-foreground">ID: {q.shortId} • {q.services.length} serviço(s)</p>
+                        </td>
+                        <td className="px-3 py-2 hidden md:table-cell">
+                          <p className="truncate max-w-[160px]">{q.trip.origin} → {q.trip.destination}</p>
+                        </td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
+                          {q.trip.departureDate ? formatTripDate(q.trip.departureDate) : '-'}
+                          {q.trip.returnDate ? ` a ${formatTripDate(q.trip.returnDate)}` : ''}
+                        </td>
+                        <td className="px-3 py-2 text-center hidden sm:table-cell">
+                          {q.status === 'concluido' && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">Vendida</span>
+                          )}
+                          {q.status === 'perdido' && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-destructive/15 text-destructive">Perdida</span>
+                          )}
+                          {q.status !== 'concluido' && q.status !== 'perdido' && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Aberta</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-center hidden sm:table-cell">
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="text-sm">{q.viewCount}</span>
+                            {userEmail === 'thiago@vortexviagens.com.br' && q.viewCount > 0 && (
+                              <Button variant="ghost" size="icon" className="h-5 w-5" title="Zerar" onClick={() => handleResetViews(q.id)}>
+                                <EyeOff className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-right whitespace-nowrap">
+                          <p className="font-bold text-primary">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          {rav > 0 && (
+                            <p className="text-[10px] text-muted-foreground">+ RAV</p>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => handleEdit(q)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="PDF" onClick={() => handlePreview(q)}>
+                              <FileDown className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Copiar link" onClick={() => handleCopyLink(q.shortId)}>
+                              <Link className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link" onClick={() => handleOpenLink(q.shortId)}>
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Duplicar" onClick={() => handleDuplicate(q.id)}>
+                              <Copy className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Reutilizar" onClick={() => handleReuse(q)}>
+                              <RotateCcw className="h-3.5 w-3.5" />
+                            </Button>
 
-                      {/* Marcar como vendida / desfazer */}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title={q.status === 'concluido' ? (userRole === 'master' ? 'Desfazer venda' : 'Já marcada como vendida') : 'Marcar como vendida'}
-                            disabled={q.status === 'concluido' && userRole !== 'master'}
-                            className={q.status === 'concluido' ? 'text-success' : 'hover:text-success'}
-                          >
-                            <ThumbsUp className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{q.status === 'concluido' ? 'Desfazer venda?' : 'Marcar como vendida?'}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {q.status === 'concluido'
-                                ? `A cotação de "${q.client.name}" voltará para "Em aberto".`
-                                : `A cotação de "${q.client.name}" será marcada como vendida e o valor será contabilizado no dashboard.`}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleStatusChange(q.id, q.status === 'concluido' ? 'draft' : 'concluido')}>
-                              {q.status === 'concluido' ? 'Desfazer' : 'Confirmar Venda'}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                            {/* Vendida */}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost" size="icon" className={`h-7 w-7 ${q.status === 'concluido' ? 'text-success' : 'hover:text-success'}`}
+                                  title={q.status === 'concluido' ? 'Desfazer venda' : 'Marcar vendida'}
+                                  disabled={q.status === 'concluido' && userRole !== 'master'}
+                                >
+                                  <ThumbsUp className="h-3.5 w-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>{q.status === 'concluido' ? 'Desfazer venda?' : 'Marcar como vendida?'}</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {q.status === 'concluido'
+                                      ? `A cotação de "${q.client.name}" voltará para "Em aberto".`
+                                      : `A cotação de "${q.client.name}" será marcada como vendida.`}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleStatusChange(q.id, q.status === 'concluido' ? 'draft' : 'concluido')}>
+                                    {q.status === 'concluido' ? 'Desfazer' : 'Confirmar Venda'}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
 
-                      {/* Marcar como perdida / desfazer */}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title={q.status === 'perdido' ? (userRole === 'master' ? 'Desfazer perda' : 'Já marcada como perdida') : 'Marcar como perdida'}
-                            disabled={q.status === 'perdido' && userRole !== 'master'}
-                            className={q.status === 'perdido' ? 'text-destructive' : 'hover:text-destructive'}
-                          >
-                            <ThumbsDown className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{q.status === 'perdido' ? 'Desfazer perda?' : 'Marcar como perdida?'}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {q.status === 'perdido'
-                                ? `A cotação de "${q.client.name}" voltará para "Em aberto".`
-                                : `A cotação de "${q.client.name}" será marcada como perdida e o valor será contabilizado como perda no dashboard.`}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleStatusChange(q.id, q.status === 'perdido' ? 'draft' : 'perdido')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                              {q.status === 'perdido' ? 'Desfazer' : 'Confirmar Perda'}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                      {userEmail === 'thiago@vortexviagens.com.br' && (
-                        <AuditLogDialog quoteId={q.id} clientName={q.client.name || 'Sem nome'} />
-                      )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" title="Excluir">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir cotação?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta ação não pode ser desfeita. A cotação de "{q.client.name}" será removida permanentemente.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(q.id)}>Excluir</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                            {/* Perdida */}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost" size="icon" className={`h-7 w-7 ${q.status === 'perdido' ? 'text-destructive' : 'hover:text-destructive'}`}
+                                  title={q.status === 'perdido' ? 'Desfazer perda' : 'Marcar perdida'}
+                                  disabled={q.status === 'perdido' && userRole !== 'master'}
+                                >
+                                  <ThumbsDown className="h-3.5 w-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>{q.status === 'perdido' ? 'Desfazer perda?' : 'Marcar como perdida?'}</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {q.status === 'perdido'
+                                      ? `A cotação de "${q.client.name}" voltará para "Em aberto".`
+                                      : `A cotação de "${q.client.name}" será marcada como perdida.`}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleStatusChange(q.id, q.status === 'perdido' ? 'draft' : 'perdido')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                    {q.status === 'perdido' ? 'Desfazer' : 'Confirmar Perda'}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+
+                            {userEmail === 'thiago@vortexviagens.com.br' && (
+                              <AuditLogDialog quoteId={q.id} clientName={q.client.name || 'Sem nome'} />
+                            )}
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" title="Excluir">
+                                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir cotação?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta ação não pode ser desfeita. A cotação de "{q.client.name}" será removida permanentemente.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(q.id)}>Excluir</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
