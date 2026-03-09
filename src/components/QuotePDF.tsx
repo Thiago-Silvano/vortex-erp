@@ -649,6 +649,48 @@ function GenericServiceCard({ item, type }: { item: ServiceItem; type: ServiceTy
   );
 }
 
+// ── Shared Header Component ─────────────────────────────
+function PageHeader({ agency }: { agency: AgencySettings }) {
+  return (
+    <View style={s.header}>
+      <View style={s.headerLeft}>
+        {(agency.logoBase64 || VORTEX_LOGO_URL) && (
+          <Image src={agency.logoBase64 || VORTEX_LOGO_URL} style={s.logo} />
+        )}
+        <View>
+          <Text style={{ fontSize: 7, color: GOLD, lineHeight: 1.4 }}>
+            {[
+              agency.whatsapp && `WhatsApp: ${sanitizeText(agency.whatsapp)}`,
+              agency.email && sanitizeText(agency.email),
+              agency.website && sanitizeText(agency.website),
+            ]
+              .filter(Boolean)
+              .join("  |  ")}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ── Shared Footer Component ─────────────────────────────
+function PageFooter() {
+  return (
+    <View style={s.footer} fixed>
+      <View style={s.footerLine}>
+        <Text style={s.footerBold}>Grupo Vortex - CNPJ: 51.209.371/0001-19</Text>
+        <Text style={s.footerText}>
+          Rua Jorge Elias De Lucca, 677 - Nacoes Shopping - Sala 04 - Criciuma - SC, 88813-901
+        </Text>
+        <Text style={s.footerText}>(48) 3500-0975 | contato@vortexviagens.com.br | @vortexviagem</Text>
+        <Text style={s.footerText}>
+          Valores sujeitos a disponibilidade no momento da emissao - Tarifas podem sofrer alteracao sem aviso previo
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 // ── Main PDF Document ───────────────────────────────────
 interface Props {
   quote: QuoteData;
@@ -680,30 +722,20 @@ export default function QuotePDF({ quote, agency }: Props) {
   const displayInstallmentNoInterest = showPerPassenger && payment?.installmentValueNoInterest ? payment.installmentValueNoInterest / passengers : payment?.installmentValueNoInterest;
   const displayInstallmentWithInterest = showPerPassenger && payment?.installmentValueWithInterest ? payment.installmentValueWithInterest / passengers : payment?.installmentValueWithInterest;
 
+  // Flatten all services with their type for individual pages
+  const allServices: { type: ServiceType; item: ServiceItem }[] = [];
+  for (const { type, items } of grouped) {
+    for (const item of items) {
+      allServices.push({ type, item });
+    }
+  }
+
   return (
     <Document>
-      {/* ── Page 1: Header + Trip Info + Services ── */}
+      {/* ── Page 1: Cover - Header + Client + Trip Info ── */}
       <Page size="A4" style={s.page}>
         <View style={s.pageContent}>
-          {/* Header */}
-          <View style={s.header}>
-            <View style={s.headerLeft}>
-              {(agency.logoBase64 || VORTEX_LOGO_URL) && (
-                <Image src={agency.logoBase64 || VORTEX_LOGO_URL} style={s.logo} />
-              )}
-              <View>
-                <Text style={{ fontSize: 7, color: GOLD, lineHeight: 1.4 }}>
-                  {[
-                    agency.whatsapp && `WhatsApp: ${sanitizeText(agency.whatsapp)}`,
-                    agency.email && sanitizeText(agency.email),
-                    agency.website && sanitizeText(agency.website),
-                  ]
-                    .filter(Boolean)
-                    .join("  |  ")}
-                </Text>
-              </View>
-            </View>
-          </View>
+          <PageHeader agency={agency} />
 
           {/* Client bar */}
           <View style={s.clientBar}>
@@ -728,7 +760,7 @@ export default function QuotePDF({ quote, agency }: Props) {
               </Text>
             </View>
             <View style={s.tripCol}>
-              <Text style={s.tripLabel}>Período</Text>
+              <Text style={s.tripLabel}>Periodo</Text>
               <Text style={s.tripValue}>
                 {formatDate(quote.trip.departureDate)} a {formatDate(quote.trip.returnDate)}
               </Text>
@@ -739,40 +771,61 @@ export default function QuotePDF({ quote, agency }: Props) {
             </View>
           </View>
 
-          {/* Services by category */}
-          {grouped.map(({ type, items }) => (
-            <View key={type}>
-              <View style={s.catHeader}>
-                <Text style={s.catIcon}>{CATEGORY_ICONS[type]}</Text>
-                <Text style={s.catTitle}>{SERVICE_TYPE_CONFIG[type].pdfLabel}</Text>
-              </View>
-              {items.map((item) => {
-                if (type === "aereo") return <FlightServiceCard key={item.id} item={item} />;
-                if (type === "hotel") return <HotelServiceCard key={item.id} item={item} />;
-                return <GenericServiceCard key={item.id} item={item} type={type} />;
-              })}
+          {/* Destination image if available */}
+          {quote.destinationImageUrl && (
+            <View style={{ borderRadius: 6, overflow: "hidden", marginBottom: 14 }}>
+              <Image src={quote.destinationImageUrl} style={{ width: "100%", height: 200, objectFit: "cover" }} />
             </View>
-          ))}
+          )}
+
+          {/* Notes */}
+          {quote.client.notes && (
+            <View style={s.notesBox}>
+              <Text style={s.notesTitle}>Observacoes</Text>
+              <Text style={s.notesText}>{sanitizeText(quote.client.notes)}</Text>
+            </View>
+          )}
+        </View>
+        <PageFooter />
+      </Page>
+
+      {/* ── One page per service ── */}
+      {allServices.map(({ type, item }) => (
+        <Page key={item.id} size="A4" style={s.page}>
+          <View style={s.pageContent}>
+            <PageHeader agency={agency} />
+
+            {/* Category header */}
+            <View style={s.catHeader}>
+              <Text style={s.catIcon}>{CATEGORY_ICONS[type]}</Text>
+              <Text style={s.catTitle}>{SERVICE_TYPE_CONFIG[type].pdfLabel}</Text>
+            </View>
+
+            {/* Service card */}
+            {type === "aereo" && <FlightServiceCard item={item} />}
+            {type === "hotel" && <HotelServiceCard item={item} />}
+            {type !== "aereo" && type !== "hotel" && <GenericServiceCard item={item} type={type} />}
+          </View>
+          <PageFooter />
+        </Page>
+      ))}
+
+      {/* ── Investment Page ── */}
+      <Page size="A4" style={s.page}>
+        <View style={s.pageContent}>
+          <PageHeader agency={agency} />
 
           {/* Validity Notice */}
-          <View style={{ ...s.notesBox, marginTop: 16, borderLeftColor: GOLD }}>
-            <Text style={s.notesTitle}>Validade da Cotação</Text>
+          <View style={{ ...s.notesBox, marginTop: 8, marginBottom: 16, borderLeftColor: GOLD }}>
+            <Text style={s.notesTitle}>Validade da Cotacao</Text>
             <Text style={s.notesText}>
               <Text style={{ fontFamily: "Helvetica-Bold" }}>Valida ate 23:59 de {formatQuoteValidity()}</Text>
             </Text>
             <Text style={{ ...s.notesText, marginTop: 4 }}>Mediante reserva em nome dos passageiros. Valores sujeitos a alteracoes a partir do dia seguinte. Consulte-nos para mais informacoes sobre disponibilidade e confirmacao de tarifas.</Text>
           </View>
 
-          {/* Notes */}
-          {quote.client.notes && (
-            <View style={s.notesBox}>
-              <Text style={s.notesTitle}>Observações</Text>
-              <Text style={s.notesText}>{sanitizeText(quote.client.notes)}</Text>
-            </View>
-          )}
-
-          {/* Financial Summary - on new page */}
-          <View style={s.summaryBox} break>
+          {/* Financial Summary */}
+          <View style={s.summaryBox}>
             <Text style={s.summaryTitle}>Investimento</Text>
 
             {showIndividual &&
@@ -792,15 +845,15 @@ export default function QuotePDF({ quote, agency }: Props) {
             {payment &&
               (payment.pixValue > 0 || payment.installmentsNoInterest > 0 || payment.installmentsWithInterest > 0) && (
                 <View style={s.paymentBox}>
-                  <Text style={s.paymentTitle}>Condições de Pagamento</Text>
+                  <Text style={s.paymentTitle}>Condicoes de Pagamento</Text>
 
                   {payment.pixValue > 0 && (
                     <View style={s.paymentCardGreen}>
                       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                         <View>
-                          <Text style={s.paymentLabelGreen}>Pix à vista</Text>
+                          <Text style={s.paymentLabelGreen}>Pix a vista</Text>
                           <Text style={{ fontSize: 7, color: GREEN, marginTop: 1 }}>
-                            Pagamento instantâneo com desconto
+                            Pagamento instantaneo com desconto
                           </Text>
                         </View>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -817,7 +870,7 @@ export default function QuotePDF({ quote, agency }: Props) {
 
                   {payment.installmentsNoInterest > 0 && payment.installmentValueNoInterest > 0 && (
                     <View style={s.paymentCard}>
-                      <Text style={s.paymentLabel}>Cartão sem juros</Text>
+                      <Text style={s.paymentLabel}>Cartao sem juros</Text>
                       <Text style={s.paymentInstallment}>
                         {payment.installmentsNoInterest}x {formatCurrency(displayInstallmentNoInterest || 0)}
                       </Text>
@@ -829,7 +882,7 @@ export default function QuotePDF({ quote, agency }: Props) {
 
                   {payment.installmentsWithInterest > 0 && payment.installmentValueWithInterest > 0 && (
                     <View style={s.paymentCard}>
-                      <Text style={s.paymentLabel}>Cartão com juros</Text>
+                      <Text style={s.paymentLabel}>Cartao com juros</Text>
                       <Text style={s.paymentInstallment}>
                         {payment.installmentsWithInterest}x {formatCurrency(displayInstallmentWithInterest || 0)}
                       </Text>
@@ -842,20 +895,7 @@ export default function QuotePDF({ quote, agency }: Props) {
               )}
           </View>
         </View>
-
-        {/* Footer */}
-        <View style={s.footer} fixed>
-          <View style={s.footerLine}>
-            <Text style={s.footerBold}>Grupo Vortex - CNPJ: 51.209.371/0001-19</Text>
-            <Text style={s.footerText}>
-              Rua Jorge Elias De Lucca, 677 - Nações Shopping - Sala 04 - Criciúma - SC, 88813-901
-            </Text>
-            <Text style={s.footerText}>(48) 3500-0975 | contato@vortexviagens.com.br | @vortexviagem</Text>
-            <Text style={s.footerText}>
-              Valores sujeitos a disponibilidade no momento da emissão - Tarifas podem sofrer alteracao sem aviso prévio
-            </Text>
-          </View>
-        </View>
+        <PageFooter />
       </Page>
     </Document>
   );
