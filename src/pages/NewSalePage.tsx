@@ -23,6 +23,14 @@ interface SaleItem {
   cost_price: number;
   rav: number;
   total_value: number;
+  service_catalog_id?: string;
+  cost_center_id?: string;
+}
+
+interface ServiceCatalogOption {
+  id: string;
+  name: string;
+  cost_center_id: string | null;
 }
 
 interface Passenger {
@@ -61,6 +69,7 @@ export default function NewSalePage() {
   const [addingSupplierId, setAddingSupplierId] = useState('');
   const [items, setItems] = useState<SaleItem[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [serviceCatalog, setServiceCatalog] = useState<ServiceCatalogOption[]>([]);
   const [passengers, setPassengers] = useState<Passenger[]>([]);
 
   const [paymentMethod, setPaymentMethod] = useState('pix');
@@ -122,6 +131,7 @@ export default function NewSalePage() {
   useEffect(() => {
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setAllSuppliers(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
+    (supabase.from('services_catalog') as any).select('id, name, cost_center_id').eq('status', 'active').order('name').then(({ data }: any) => { if (data) setServiceCatalog(data); });
     (() => {
       let query = supabase.from('card_rates').select('*').order('installments');
       if (activeCompany) query = query.eq('empresa_id', activeCompany.id) as any;
@@ -323,7 +333,8 @@ export default function NewSalePage() {
     if (items.length > 0) {
       await supabase.from('sale_items').insert(items.map((item, idx) => ({
         sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav, total_value: item.total_value, sort_order: idx,
-      })));
+        service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
+      } as any)));
     }
 
     if (selectedSupplierIds.length > 0) {
@@ -579,18 +590,19 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Items */}
+        {/* Serviços da Venda */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Itens da Venda</CardTitle>
+            <CardTitle className="text-base">Serviços da Venda</CardTitle>
             <Button size="sm" variant="outline" onClick={() => setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0 }])}>
-              <Plus className="h-4 w-4 mr-1" />Adicionar Item
+              <Plus className="h-4 w-4 mr-1" />Adicionar Serviço
             </Button>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Serviço</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead className="w-36">Preço de Custo</TableHead>
                   <TableHead className="w-36">RAV</TableHead>
@@ -601,7 +613,28 @@ export default function NewSalePage() {
               <TableBody>
                 {items.map((item, idx) => (
                   <TableRow key={idx}>
-                    <TableCell><Input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} /></TableCell>
+                    <TableCell className="min-w-[180px]">
+                      <Select
+                        value={item.service_catalog_id || 'manual'}
+                        onValueChange={(v) => {
+                          const svc = serviceCatalog.find(s => s.id === v);
+                          if (svc) {
+                            updateItem(idx, 'service_catalog_id', svc.id);
+                            updateItem(idx, 'description', svc.name);
+                            if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id);
+                          }
+                        }}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="manual">Selecione um serviço</SelectItem>
+                          {serviceCatalog.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell><Input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} placeholder="Detalhes..." /></TableCell>
                     <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
                     <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
                     <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>

@@ -44,11 +44,11 @@ export default function ReportProducts() {
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Relatório de Produtos</h1>
+        <h1 className="text-2xl font-bold text-foreground">Relatório de Serviços</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
-            <CardHeader><CardTitle className="text-base">Faturamento por Produto</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Faturamento por Serviço</CardTitle></CardHeader>
             <CardContent>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
@@ -68,7 +68,7 @@ export default function ReportProducts() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Produto</TableHead>
+                    <TableHead>Serviço</TableHead>
                     <TableHead>Qtd Vendas</TableHead>
                     <TableHead>Faturamento</TableHead>
                     <TableHead>Lucro (RAV)</TableHead>

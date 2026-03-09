@@ -18,6 +18,8 @@ interface ServiceCatalog {
   id: string;
   name: string;
   cost_center_id: string | null;
+  category: string;
+  description: string;
   status: string;
   created_at: string;
 }
@@ -36,6 +38,8 @@ export default function ServicesCatalogPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [costCenterId, setCostCenterId] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
   const [status, setStatus] = useState('active');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -62,7 +66,7 @@ export default function ServicesCatalogPage() {
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
-    const payload: any = { name, cost_center_id: costCenterId || null, status };
+    const payload: any = { name, cost_center_id: costCenterId || null, category, description, status };
     if (editingId) {
       await (supabase.from('services_catalog') as any).update(payload).eq('id', editingId);
       toast.success('Serviço atualizado!');
@@ -73,7 +77,7 @@ export default function ServicesCatalogPage() {
     }
     setDialogOpen(false);
     setEditingId(null);
-    setName(''); setCostCenterId(''); setStatus('active');
+    setName(''); setCostCenterId(''); setCategory(''); setDescription(''); setStatus('active');
     fetchItems();
   };
 
@@ -81,6 +85,8 @@ export default function ServicesCatalogPage() {
     setEditingId(s.id);
     setName(s.name);
     setCostCenterId(s.cost_center_id || '');
+    setCategory(s.category || '');
+    setDescription(s.description || '');
     setStatus(s.status);
     setDialogOpen(true);
   };
@@ -111,7 +117,7 @@ export default function ServicesCatalogPage() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
-          <Button onClick={() => { setEditingId(null); setName(''); setCostCenterId(''); setStatus('active'); setDialogOpen(true); }}>
+          <Button onClick={() => { setEditingId(null); setName(''); setCostCenterId(''); setCategory(''); setDescription(''); setStatus('active'); setDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />Novo Serviço
           </Button>
         </div>
@@ -122,6 +128,7 @@ export default function ServicesCatalogPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome do Serviço</TableHead>
+                  <TableHead>Categoria</TableHead>
                   <TableHead>Centro de Custo</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-24">Ações</TableHead>
@@ -129,10 +136,11 @@ export default function ServicesCatalogPage() {
               </TableHeader>
               <TableBody>
                 {items.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>
                 ) : items.map(s => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>{s.category || '-'}</TableCell>
                     <TableCell>{getCostCenterName(s.cost_center_id)}</TableCell>
                     <TableCell><Badge variant={s.status === 'active' ? 'default' : 'secondary'}>{s.status === 'active' ? 'Ativo' : 'Inativo'}</Badge></TableCell>
                     <TableCell>
@@ -155,6 +163,14 @@ export default function ServicesCatalogPage() {
               <div>
                 <Label>Nome do Serviço *</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Emissão de passagem aérea" />
+               </div>
+              <div>
+                <Label>Categoria (opcional)</Label>
+                <Input value={category} onChange={e => setCategory(e.target.value)} placeholder="Ex: Transporte, Hospedagem, Seguros..." />
+              </div>
+              <div>
+                <Label>Descrição (opcional)</Label>
+                <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Descrição do serviço..." />
               </div>
               <div>
                 <Label>Centro de Custo</Label>

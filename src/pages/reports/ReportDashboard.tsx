@@ -43,7 +43,7 @@ export default function ReportDashboard() {
     return Array.from(map.entries()).map(([name, data]) => ({ name, ...data }));
   }, [sales]);
 
-  // Sales by product (from sale_items)
+  // Sales by service (from sale_items)
   const [saleItems, setSaleItems] = useState<any[]>([]);
   useEffect(() => {
     if (sales.length === 0) return;
@@ -119,7 +119,7 @@ export default function ReportDashboard() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-base">Vendas por Produto</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Vendas por Serviço</CardTitle></CardHeader>
             <CardContent>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
