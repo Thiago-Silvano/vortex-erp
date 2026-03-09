@@ -786,6 +786,19 @@ export default function QuotePDF({ quote, agency }: Props) {
             </View>
           )}
 
+          {/* Aereo services on cover page */}
+          {aereoServices && (
+            <>
+              <View style={s.catHeader}>
+                <Text style={s.catIcon}>{CATEGORY_ICONS["aereo"]}</Text>
+                <Text style={s.catTitle}>{SERVICE_TYPE_CONFIG["aereo"].pdfLabel}</Text>
+              </View>
+              {aereoServices.items.map((item) => (
+                <FlightServiceCard key={item.id} item={item} showValue={!!showIndividual} />
+              ))}
+            </>
+          )}
+
           {/* Notes */}
           {quote.client.notes && (
             <View style={s.notesBox}>
@@ -797,8 +810,8 @@ export default function QuotePDF({ quote, agency }: Props) {
         <PageFooter />
       </Page>
 
-      {/* ── One page per service ── */}
-      {allServices.map(({ type, item }) => (
+      {/* ── One page per non-aereo service ── */}
+      {nonAereoServices.map(({ type, item }) => (
         <Page key={item.id} size="A4" style={s.page}>
           <View style={s.pageContent}>
             <PageHeader agency={agency} />
@@ -810,9 +823,8 @@ export default function QuotePDF({ quote, agency }: Props) {
             </View>
 
             {/* Service card */}
-            {type === "aereo" && <FlightServiceCard item={item} />}
-            {type === "hotel" && <HotelServiceCard item={item} />}
-            {type !== "aereo" && type !== "hotel" && <GenericServiceCard item={item} type={type} />}
+            {type === "hotel" && <HotelServiceCard item={item} showValue={!!showIndividual} />}
+            {type !== "hotel" && <GenericServiceCard item={item} type={type} showValue={!!showIndividual} />}
           </View>
           <PageFooter />
         </Page>
