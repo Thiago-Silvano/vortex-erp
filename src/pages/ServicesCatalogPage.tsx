@@ -128,6 +128,7 @@ export default function ServicesCatalogPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome do Serviço</TableHead>
+                  <TableHead>Categoria</TableHead>
                   <TableHead>Centro de Custo</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-24">Ações</TableHead>
