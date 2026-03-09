@@ -333,7 +333,8 @@ export default function NewSalePage() {
     if (items.length > 0) {
       await supabase.from('sale_items').insert(items.map((item, idx) => ({
         sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav, total_value: item.total_value, sort_order: idx,
-      })));
+        service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
+      } as any)));
     }
 
     if (selectedSupplierIds.length > 0) {
