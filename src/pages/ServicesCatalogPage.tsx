@@ -18,6 +18,8 @@ interface ServiceCatalog {
   id: string;
   name: string;
   cost_center_id: string | null;
+  category: string;
+  description: string;
   status: string;
   created_at: string;
 }
