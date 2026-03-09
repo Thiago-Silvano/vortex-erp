@@ -85,6 +85,8 @@ export default function ServicesCatalogPage() {
     setEditingId(s.id);
     setName(s.name);
     setCostCenterId(s.cost_center_id || '');
+    setCategory(s.category || '');
+    setDescription(s.description || '');
     setStatus(s.status);
     setDialogOpen(true);
   };
