@@ -265,14 +265,14 @@ export default function SavedQuotes() {
                     const total = costTotal + rav;
                     return (
                       <tr key={q.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                        <td className="px-3 py-2">
+                        <td className="px-4 py-3 min-w-[200px]">
                           <p className="font-medium truncate max-w-[180px]">{q.client.name || 'Sem nome'}</p>
                           <p className="text-xs text-muted-foreground">ID: {q.shortId} • {q.services.length} serviço(s)</p>
                         </td>
-                        <td className="px-3 py-2 hidden md:table-cell">
+                        <td className="px-4 py-3 hidden md:table-cell min-w-[180px]">
                           <p className="truncate max-w-[160px]">{q.trip.origin} → {q.trip.destination}</p>
                         </td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
+                        <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap min-w-[140px]">
                           {q.trip.departureDate ? formatTripDate(q.trip.departureDate) : '-'}
                           {q.trip.returnDate ? ` a ${formatTripDate(q.trip.returnDate)}` : ''}
                         </td>
