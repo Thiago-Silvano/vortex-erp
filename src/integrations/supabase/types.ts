@@ -1358,6 +1358,48 @@ export type Database = {
           },
         ]
       }
+      services_catalog: {
+        Row: {
+          cost_center_id: string | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          name: string
+          status: string
+        }
+        Insert: {
+          cost_center_id?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          name?: string
+          status?: string
+        }
+        Update: {
+          cost_center_id?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          name?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_catalog_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_catalog_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
