@@ -78,6 +78,17 @@ export default function ServiceItemForm({ onAdd, editItem, onCancel, tripOrigin,
   const [hotelAccessibility, setHotelAccessibility] = useState('');
   const { toast } = useToast();
 
+  // Fetch services from catalog
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      let query = (supabase.from('services_catalog') as any).select('id, name, category, cost_center_id').eq('status', 'active').order('name');
+      if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+      const { data } = await query;
+      if (data && data.length > 0) setCatalogServices(data);
+    };
+    fetchCatalog();
+  }, [activeCompany?.id]);
+
   // Auto-fill title for aereo based on trip origin/destination
   useEffect(() => {
     if (item.type === 'aereo' && !editItem && tripOrigin && tripDestination) {
