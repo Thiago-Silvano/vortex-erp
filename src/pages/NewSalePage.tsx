@@ -69,6 +69,7 @@ export default function NewSalePage() {
   const [addingSupplierId, setAddingSupplierId] = useState('');
   const [items, setItems] = useState<SaleItem[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [serviceCatalog, setServiceCatalog] = useState<ServiceCatalogOption[]>([]);
   const [passengers, setPassengers] = useState<Passenger[]>([]);
 
   const [paymentMethod, setPaymentMethod] = useState('pix');
