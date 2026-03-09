@@ -163,6 +163,14 @@ export default function ServicesCatalogPage() {
               <div>
                 <Label>Nome do Serviço *</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Emissão de passagem aérea" />
+               </div>
+              <div>
+                <Label>Categoria (opcional)</Label>
+                <Input value={category} onChange={e => setCategory(e.target.value)} placeholder="Ex: Transporte, Hospedagem, Seguros..." />
+              </div>
+              <div>
+                <Label>Descrição (opcional)</Label>
+                <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Descrição do serviço..." />
               </div>
               <div>
                 <Label>Centro de Custo</Label>

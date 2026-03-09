@@ -68,7 +68,7 @@ export default function ReportProducts() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Produto</TableHead>
+                    <TableHead>Serviço</TableHead>
                     <TableHead>Qtd Vendas</TableHead>
                     <TableHead>Faturamento</TableHead>
                     <TableHead>Lucro (RAV)</TableHead>
