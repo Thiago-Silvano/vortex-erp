@@ -667,6 +667,38 @@ export default function NewSalePage() {
                 </div>
               </div>
             )}
+
+            {paymentMethod === 'boleto' && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Número de Parcelas</Label>
+                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => i + 1).map(n => (
+                          <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Juros (% ao mês)</Label>
+                    <Input type="number" step="0.01" value={boletoInterestRate} onChange={e => setBoletoInterestRate(parseFloat(e.target.value) || 0)} placeholder="0.00" />
+                  </div>
+                  <div>
+                    <Label>Valor da Venda</Label>
+                    <Input value={fmt(totalSale)} disabled className="bg-muted" />
+                  </div>
+                </div>
+                {installments > 1 && boletoInterestRate > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg text-sm">
+                    <p>Valor total com juros: <strong>{fmt(receivables.reduce((s, r) => s + r.amount, 0))}</strong></p>
+                    <p>Valor de cada parcela: <strong>{fmt(receivables[0]?.amount || 0)}</strong></p>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
