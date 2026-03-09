@@ -43,7 +43,7 @@ export default function ReportDashboard() {
     return Array.from(map.entries()).map(([name, data]) => ({ name, ...data }));
   }, [sales]);
 
-  // Sales by product (from sale_items)
+  // Sales by service (from sale_items)
   const [saleItems, setSaleItems] = useState<any[]>([]);
   useEffect(() => {
     if (sales.length === 0) return;
