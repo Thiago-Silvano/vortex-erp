@@ -136,10 +136,11 @@ export default function ServicesCatalogPage() {
               </TableHeader>
               <TableBody>
                 {items.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>
                 ) : items.map(s => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>{s.category || '-'}</TableCell>
                     <TableCell>{getCostCenterName(s.cost_center_id)}</TableCell>
                     <TableCell><Badge variant={s.status === 'active' ? 'default' : 'secondary'}>{s.status === 'active' ? 'Ativo' : 'Inativo'}</Badge></TableCell>
                     <TableCell>
