@@ -794,7 +794,7 @@ export default function QuotePDF({ quote, agency }: Props) {
                 <Text style={s.catTitle}>{SERVICE_TYPE_CONFIG["aereo"].pdfLabel}</Text>
               </View>
               {aereoServices.items.map((item) => (
-                <FlightServiceCard key={item.id} item={item} showValue={!!showIndividual} />
+                <FlightServiceCard key={item.id} item={item} showValue={false} />
               ))}
             </>
           )}
