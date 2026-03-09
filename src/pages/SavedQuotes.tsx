@@ -310,26 +310,23 @@ export default function SavedQuotes() {
                             <p className="text-[10px] text-muted-foreground">+ RAV</p>
                           )}
                         </td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center justify-end gap-0.5">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => handleEdit(q)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="PDF" onClick={() => handlePreview(q)}>
-                              <FileDown className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Copiar link" onClick={() => handleCopyLink(q.shortId)}>
-                              <Link className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link" onClick={() => handleOpenLink(q.shortId)}>
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Duplicar" onClick={() => handleDuplicate(q.id)}>
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Reutilizar" onClick={() => handleReuse(q)}>
-                              <RotateCcw className="h-3.5 w-3.5" />
-                            </Button>
+                         <td className="px-3 py-2 whitespace-nowrap">
+                           <div className="flex items-center justify-end gap-0.5">
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => handleEdit(q)}>
+                               <Pencil className="h-3.5 w-3.5" />
+                             </Button>
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="PDF" onClick={() => handlePreview(q)}>
+                               <FileDown className="h-3.5 w-3.5" />
+                             </Button>
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Copiar link" onClick={() => handleCopyLink(q.shortId)}>
+                               <Link className="h-3.5 w-3.5" />
+                             </Button>
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link" onClick={() => handleOpenLink(q.shortId)}>
+                               <ExternalLink className="h-3.5 w-3.5" />
+                             </Button>
+                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Reutilizar" onClick={() => handleReuse(q)}>
+                               <RotateCcw className="h-3.5 w-3.5" />
+                             </Button>
 
                             {/* Vendida */}
                             <AlertDialog>
