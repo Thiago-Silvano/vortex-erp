@@ -177,8 +177,12 @@ export default function VistosNewSalePage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><Label>Cliente *</Label><Input value={clientName} onChange={e => setClientName(e.target.value)} /></div>
-              <div><Label>Telefone</Label><Input value={clientPhone} onChange={e => setClientPhone(e.target.value)} /></div>
-              <div><Label>Email</Label><Input value={clientEmail} onChange={e => setClientEmail(e.target.value)} /></div>
+              <div><Label>Telefone</Label><Input value={clientPhone} onChange={e => setClientPhone(maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
+              <div>
+                <Label>Email</Label>
+                <Input value={clientEmail} onChange={e => setClientEmail(e.target.value.toLowerCase())} placeholder="exemplo@email.com" />
+                {clientEmail && !validateEmail(clientEmail) && <p className="text-xs text-destructive mt-1">Email inválido</p>}
+              </div>
               <div>
                 <Label>Produto *</Label>
                 <Select value={productId} onValueChange={handleProductChange}>
