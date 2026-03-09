@@ -66,7 +66,7 @@ export default function ServicesCatalogPage() {
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
-    const payload: any = { name, cost_center_id: costCenterId || null, status };
+    const payload: any = { name, cost_center_id: costCenterId || null, category, description, status };
     if (editingId) {
       await (supabase.from('services_catalog') as any).update(payload).eq('id', editingId);
       toast.success('Serviço atualizado!');
