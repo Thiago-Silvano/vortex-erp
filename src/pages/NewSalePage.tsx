@@ -23,6 +23,14 @@ interface SaleItem {
   cost_price: number;
   rav: number;
   total_value: number;
+  service_catalog_id?: string;
+  cost_center_id?: string;
+}
+
+interface ServiceCatalogOption {
+  id: string;
+  name: string;
+  cost_center_id: string | null;
 }
 
 interface Passenger {
