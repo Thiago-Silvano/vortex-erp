@@ -131,6 +131,7 @@ export default function NewSalePage() {
   useEffect(() => {
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setAllSuppliers(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
+    (supabase.from('services_catalog') as any).select('id, name, cost_center_id').eq('status', 'active').order('name').then(({ data }: any) => { if (data) setServiceCatalog(data); });
     (() => {
       let query = supabase.from('card_rates').select('*').order('installments');
       if (activeCompany) query = query.eq('empresa_id', activeCompany.id) as any;
