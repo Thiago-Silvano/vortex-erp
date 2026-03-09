@@ -77,7 +77,7 @@ export default function ServicesCatalogPage() {
     }
     setDialogOpen(false);
     setEditingId(null);
-    setName(''); setCostCenterId(''); setStatus('active');
+    setName(''); setCostCenterId(''); setCategory(''); setDescription(''); setStatus('active');
     fetchItems();
   };
 
