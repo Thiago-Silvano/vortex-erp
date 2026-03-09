@@ -589,7 +589,7 @@ function FlightServiceCard({ item, showValue = true }: { item: ServiceItem; show
 }
 
 // ── Generic Service Card ────────────────────────────────
-function GenericServiceCard({ item, type }: { item: ServiceItem; type: ServiceType }) {
+function GenericServiceCard({ item, type, showValue = true }: { item: ServiceItem; type: ServiceType; showValue?: boolean }) {
   const images = getAllImages(item);
 
   return (
