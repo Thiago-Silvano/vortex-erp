@@ -242,20 +242,20 @@ export default function SavedQuotes() {
             </Button>
           </div>
         ) : (
-          <div className="border rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="border rounded-lg overflow-x-auto">
+            <div className="inline-block min-w-full">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Cliente</th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground hidden md:table-cell">Destino</th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground hidden lg:table-cell">Período</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground hidden sm:table-cell">Status</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground hidden sm:table-cell">
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground min-w-[200px]">Cliente</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell min-w-[180px]">Destino</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell min-w-[140px]">Período</th>
+                    <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell min-w-[100px]">Status</th>
+                    <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell min-w-[60px]">
                       <Eye className="h-4 w-4 inline" />
                     </th>
-                    <th className="text-right px-3 py-2 font-medium text-muted-foreground">Valor</th>
-                    <th className="text-right px-3 py-2 font-medium text-muted-foreground">Ações</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground min-w-[120px]">Valor</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground min-w-[360px]">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
