@@ -782,41 +782,61 @@ export type Database = {
       }
       sale_items: {
         Row: {
+          cost_center_id: string | null
           cost_price: number | null
           created_at: string
           description: string
           id: string
           rav: number | null
           sale_id: string
+          service_catalog_id: string | null
           sort_order: number | null
           total_value: number | null
         }
         Insert: {
+          cost_center_id?: string | null
           cost_price?: number | null
           created_at?: string
           description?: string
           id?: string
           rav?: number | null
           sale_id: string
+          service_catalog_id?: string | null
           sort_order?: number | null
           total_value?: number | null
         }
         Update: {
+          cost_center_id?: string | null
           cost_price?: number | null
           created_at?: string
           description?: string
           id?: string
           rav?: number | null
           sale_id?: string
+          service_catalog_id?: string | null
           sort_order?: number | null
           total_value?: number | null
         }
         Relationships: [
           {
+            foreignKeyName: "sale_items_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sale_items_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_service_catalog_id_fkey"
+            columns: ["service_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "services_catalog"
             referencedColumns: ["id"]
           },
         ]
@@ -1360,24 +1380,30 @@ export type Database = {
       }
       services_catalog: {
         Row: {
+          category: string | null
           cost_center_id: string | null
           created_at: string
+          description: string | null
           empresa_id: string | null
           id: string
           name: string
           status: string
         }
         Insert: {
+          category?: string | null
           cost_center_id?: string | null
           created_at?: string
+          description?: string | null
           empresa_id?: string | null
           id?: string
           name?: string
           status?: string
         }
         Update: {
+          category?: string | null
           cost_center_id?: string | null
           created_at?: string
+          description?: string | null
           empresa_id?: string | null
           id?: string
           name?: string
