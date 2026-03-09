@@ -12,7 +12,7 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { maskCpf, validateEmail } from '@/lib/masks';
+import { maskCpf, maskPhone, validateEmail } from '@/lib/masks';
 
 interface Client {
   id: string;
