@@ -242,20 +242,20 @@ export default function SavedQuotes() {
             </Button>
           </div>
         ) : (
-          <div className="border rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="border rounded-lg overflow-x-auto">
+            <div className="inline-block min-w-full">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Cliente</th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground hidden md:table-cell">Destino</th>
-                    <th className="text-left px-3 py-2 font-medium text-muted-foreground hidden lg:table-cell">Período</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground hidden sm:table-cell">Status</th>
-                    <th className="text-center px-3 py-2 font-medium text-muted-foreground hidden sm:table-cell">
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground min-w-[200px]">Cliente</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell min-w-[180px]">Destino</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell min-w-[140px]">Período</th>
+                    <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell min-w-[100px]">Status</th>
+                    <th className="text-center px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell min-w-[60px]">
                       <Eye className="h-4 w-4 inline" />
                     </th>
-                    <th className="text-right px-3 py-2 font-medium text-muted-foreground">Valor</th>
-                    <th className="text-right px-3 py-2 font-medium text-muted-foreground">Ações</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground min-w-[120px]">Valor</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground min-w-[360px]">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -265,18 +265,18 @@ export default function SavedQuotes() {
                     const total = costTotal + rav;
                     return (
                       <tr key={q.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                        <td className="px-3 py-2">
+                        <td className="px-4 py-3 min-w-[200px]">
                           <p className="font-medium truncate max-w-[180px]">{q.client.name || 'Sem nome'}</p>
                           <p className="text-xs text-muted-foreground">ID: {q.shortId} • {q.services.length} serviço(s)</p>
                         </td>
-                        <td className="px-3 py-2 hidden md:table-cell">
+                        <td className="px-4 py-3 hidden md:table-cell min-w-[180px]">
                           <p className="truncate max-w-[160px]">{q.trip.origin} → {q.trip.destination}</p>
                         </td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
+                        <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap min-w-[140px]">
                           {q.trip.departureDate ? formatTripDate(q.trip.departureDate) : '-'}
                           {q.trip.returnDate ? ` a ${formatTripDate(q.trip.returnDate)}` : ''}
                         </td>
-                        <td className="px-3 py-2 text-center hidden sm:table-cell">
+                        <td className="px-4 py-3 text-center hidden sm:table-cell min-w-[100px]">
                           {q.status === 'concluido' && (
                             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success/15 text-success">Vendida</span>
                           )}
@@ -287,7 +287,7 @@ export default function SavedQuotes() {
                             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Aberta</span>
                           )}
                         </td>
-                        <td className="px-3 py-2 text-center hidden sm:table-cell">
+                        <td className="px-4 py-3 text-center hidden sm:table-cell min-w-[60px]">
                           <div className="flex items-center justify-center gap-1">
                             <span className="text-sm">{q.viewCount}</span>
                             {userEmail === 'thiago@vortexviagens.com.br' && q.viewCount > 0 && (
@@ -297,13 +297,13 @@ export default function SavedQuotes() {
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-2 text-right whitespace-nowrap">
+                        <td className="px-4 py-3 text-right whitespace-nowrap min-w-[120px]">
                           <p className="font-bold text-primary">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                           {rav > 0 && (
                             <p className="text-[10px] text-muted-foreground">+ RAV</p>
                           )}
                         </td>
-                         <td className="px-3 py-2 whitespace-nowrap">
+                         <td className="px-4 py-3 whitespace-nowrap min-w-[360px]">
                            <div className="flex items-center justify-end gap-0.5">
                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar" onClick={() => handleEdit(q)}>
                                <Pencil className="h-3.5 w-3.5" />
