@@ -15,7 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Pencil, Trash2, Search, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
-import { maskCpf, maskPhone } from '@/lib/masks';
+import { maskCpf, maskPhone, validateEmail } from '@/lib/masks';
+import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Seller {
