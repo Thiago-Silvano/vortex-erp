@@ -119,7 +119,7 @@ export default function ReportDashboard() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-base">Vendas por Produto</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Vendas por Serviço</CardTitle></CardHeader>
             <CardContent>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
