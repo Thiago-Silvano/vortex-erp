@@ -214,9 +214,8 @@ export default function NewSalePage() {
 
   useEffect(() => {
     if (paymentMethod === 'boleto' && installments > 1 && boletoInterestRate > 0) {
-      // Price table (Tabela Price) calculation
       const monthlyRate = boletoInterestRate / 100;
-      const pmt = totalSale * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
+      const pmt = totalSaleWithInterest * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
       const recs: Receivable[] = [];
       const baseDate = new Date(saleDate || new Date());
       for (let i = 1; i <= installments; i++) {
@@ -228,7 +227,7 @@ export default function NewSalePage() {
       return;
     }
     if (paymentMethod === 'boleto' && installments > 1) {
-      const perInstallment = totalSale / installments;
+      const perInstallment = totalSaleWithInterest / installments;
       const recs: Receivable[] = [];
       const baseDate = new Date(saleDate || new Date());
       for (let i = 1; i <= installments; i++) {
@@ -240,10 +239,10 @@ export default function NewSalePage() {
       return;
     }
     if (paymentMethod !== 'credito') {
-      setReceivables([{ installment_number: 1, due_date: '', amount: totalSale }]);
+      setReceivables([{ installment_number: 1, due_date: '', amount: totalSaleWithInterest }]);
       return;
     }
-    const perInstallment = installments > 0 ? totalSale / installments : totalSale;
+    const perInstallment = installments > 0 ? totalSaleWithInterest / installments : totalSaleWithInterest;
     const recs: Receivable[] = [];
     const baseDate = new Date(saleDate || new Date());
     for (let i = 1; i <= installments; i++) {
@@ -252,7 +251,7 @@ export default function NewSalePage() {
       recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: perInstallment });
     }
     setReceivables(recs);
-  }, [installments, paymentMethod, totalSale, boletoInterestRate, saleDate]);
+  }, [installments, paymentMethod, totalSaleWithInterest, boletoInterestRate, saleDate]);
 
   const updateItem = (idx: number, field: keyof SaleItem, value: any) => {
     setItems(prev => prev.map((item, i) => {
