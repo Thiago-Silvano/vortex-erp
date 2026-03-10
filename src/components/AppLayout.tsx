@@ -156,6 +156,7 @@ function AppSidebar() {
   const filteredFinancial = filterItems(financialItems);
   const filteredReports = filterItems(reportItems);
   const filteredWhatsApp = filterItems(whatsappItems);
+  const filteredEmail = filterItems(emailItems);
 
   const renderMenuItems = (items: MenuItem[]) => (
     <SidebarMenu>
