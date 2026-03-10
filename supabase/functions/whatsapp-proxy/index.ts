@@ -78,9 +78,10 @@ Deno.serve(async (req) => {
 
     console.log(`Proxying ${fetchMethod} ${targetUrl}`);
 
-    // Create abort controller for 10s timeout
+    // Longer timeout for /connect (30s) since it starts a browser, 10s for others
+    const timeoutMs = cleanEndpoint.startsWith('/connect') ? 30000 : 10000;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const fetchOptions: RequestInit = {
