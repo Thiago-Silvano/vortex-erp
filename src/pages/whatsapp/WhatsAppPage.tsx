@@ -391,12 +391,37 @@ export default function WhatsAppPage() {
                         {msg.sender_type === 'agent' && (
                           <p className="text-[10px] font-semibold opacity-80 mb-0.5">[{msg.sender_name}]</p>
                         )}
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                        {msg.media_url && (
-                          <a href={msg.media_url} target="_blank" rel="noopener" className="text-xs underline mt-1 block">
-                            📎 {msg.message_type === 'image' ? 'Ver imagem' : 'Ver arquivo'}
+
+                        {/* Media rendering */}
+                        {msg.media_url && msg.message_type === 'image' && (
+                          <a href={msg.media_url} target="_blank" rel="noopener noreferrer">
+                            <img src={msg.media_url} alt="Imagem" className="rounded max-w-full max-h-64 mb-1 cursor-pointer" loading="lazy" />
                           </a>
                         )}
+                        {msg.media_url && msg.message_type === 'sticker' && (
+                          <img src={msg.media_url} alt="Figurinha" className="max-w-[150px] max-h-[150px] mb-1" loading="lazy" />
+                        )}
+                        {msg.media_url && msg.message_type === 'video' && (
+                          <video controls className="rounded max-w-full max-h-64 mb-1" preload="metadata">
+                            <source src={msg.media_url} />
+                          </video>
+                        )}
+                        {msg.media_url && (msg.message_type === 'audio' || msg.message_type === 'ptt') && (
+                          <audio controls className="mb-1 max-w-full" preload="metadata">
+                            <source src={msg.media_url} />
+                          </audio>
+                        )}
+                        {msg.media_url && msg.message_type === 'document' && (
+                          <a href={msg.media_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-background/20 rounded mb-1 text-xs hover:underline">
+                            📄 {(msg as any).media_filename || 'Documento'}
+                          </a>
+                        )}
+
+                        {/* Text content (hide if it's just the emoji label for media-only messages) */}
+                        {msg.content && !(msg.media_url && ['📷 Imagem', '🎥 Vídeo', '🎵 Áudio', '🎤 Áudio', '🏷️ Figurinha', '📄 Documento', '📎 Arquivo'].includes(msg.content)) && (
+                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        )}
+
                         <div className="flex items-center justify-end gap-1 mt-1">
                           <span className="text-[10px] opacity-60">{format(new Date(msg.created_at), 'HH:mm')}</span>
                           {msg.sender_type === 'agent' && (
