@@ -494,7 +494,7 @@ export default function WhatsAppPage() {
         </div>
 
         {/* Column 2: Chat Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
           {!selectedConv ? (
             <div className="flex-1 flex items-center justify-center" style={{ background: '#f0f2f5' }}>
               <div className="text-center space-y-2">
