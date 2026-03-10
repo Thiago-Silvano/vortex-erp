@@ -319,6 +319,57 @@ export default function PropostaPublicPage() {
         <section>
           <SectionTitle>Investimento</SectionTitle>
           <div className="mt-8 rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+
+            {/* Prominent per-person installment hero */}
+            {sale.installments > 1 && receivables.length > 0 && (
+              <div className="text-center py-10 px-8" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
+                <p className="text-xs font-semibold tracking-[4px] uppercase mb-4" style={{ color: '#C8A45B' }}>
+                  Investimento por pessoa
+                </p>
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-5xl md:text-7xl font-bold" style={{ color: '#C8A45B', fontFamily: "'Georgia', serif" }}>
+                    {sale.installments}x
+                  </span>
+                  <span className="text-lg md:text-xl text-white/60 font-medium">de</span>
+                  <span className="text-4xl md:text-6xl font-bold text-white" style={{ fontFamily: "'Georgia', serif" }}>
+                    {fmt((receivables[0]?.amount || (totalSale / sale.installments)) / passengersCount)}
+                  </span>
+                </div>
+                <p className="text-sm text-white/40 mt-2">por pessoa</p>
+                <div className="w-16 h-[1px] mx-auto my-5" style={{ background: 'rgba(200,164,91,0.3)' }} />
+                <p className="text-sm text-white/30">
+                  Valor total da viagem: <span className="font-semibold text-white/50">{fmt(totalSale)}</span>
+                </p>
+                {passengersCount > 1 && (
+                  <p className="text-xs text-white/20 mt-1">
+                    {fmt(perPersonTotal)} por pessoa à vista · {passengersCount} passageiros
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Single payment (no installments) hero */}
+            {(sale.installments <= 1 || receivables.length === 0) && (
+              <div className="text-center py-10 px-8" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
+                <p className="text-xs font-semibold tracking-[4px] uppercase mb-4" style={{ color: '#C8A45B' }}>
+                  {passengersCount > 1 ? 'Investimento por pessoa' : 'Investimento total'}
+                </p>
+                <span className="text-5xl md:text-7xl font-bold text-white" style={{ fontFamily: "'Georgia', serif" }}>
+                  {fmt(perPersonTotal)}
+                </span>
+                {passengersCount > 1 && (
+                  <>
+                    <p className="text-sm text-white/40 mt-2">por pessoa</p>
+                    <div className="w-16 h-[1px] mx-auto my-5" style={{ background: 'rgba(200,164,91,0.3)' }} />
+                    <p className="text-sm text-white/30">
+                      Valor total: <span className="font-semibold text-white/50">{fmt(totalSale)}</span> · {passengersCount} passageiros
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Items breakdown */}
             {items.map((item, idx) => {
               const name = item.service_catalog_id ? catalogNames[item.service_catalog_id] || item.description : item.description;
               return (
@@ -330,13 +381,6 @@ export default function PropostaPublicPage() {
                 </div>
               );
             })}
-            <div className="flex justify-between py-6 px-8 items-center" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
-              <span className="text-lg font-bold text-white" style={{ fontFamily: "'Georgia', serif" }}>Total da viagem</span>
-              <div className="text-right">
-                <span className="text-3xl font-bold" style={{ color: '#C8A45B', fontFamily: "'Georgia', serif" }}>{fmt(totalSale)}</span>
-                {passengersCount > 1 && <p className="text-xs text-white/50 mt-1">{fmt(perPersonTotal)} por pessoa</p>}
-              </div>
-            </div>
           </div>
         </section>
 
@@ -353,18 +397,6 @@ export default function PropostaPublicPage() {
                   <p className="font-bold text-sm" style={{ color: '#0D1B2A' }}>{methodLabels[sale.payment_method || ''] || sale.payment_method}</p>
                 </div>
               </div>
-
-              {sale.installments > 1 && receivables.length > 0 && (
-                <div className="text-center py-5 mb-5 rounded-xl" style={{ background: '#faf9f6', border: '1px solid #f0ede8' }}>
-                  <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#999' }}>Pagamento em</p>
-                  <p className="text-4xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>{sale.installments}x</p>
-                  <p className="text-lg font-semibold mt-1" style={{ color: '#C8A45B' }}>{fmt(receivables[0]?.amount || (totalSale / sale.installments))}</p>
-                  {passengersCount > 1 && (
-                    <p className="text-xs mt-2" style={{ color: '#999' }}>{fmt((receivables[0]?.amount || (totalSale / sale.installments)) / passengersCount)} por pessoa</p>
-                  )}
-                  <p className="text-[10px] mt-1" style={{ color: '#bbb' }}>Valor total: {fmt(totalSale)}</p>
-                </div>
-              )}
 
               {receivables.length > 0 && (
                 <div className="space-y-1.5 pt-4" style={{ borderTop: '1px solid #f0ede8' }}>

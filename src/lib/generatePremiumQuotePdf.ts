@@ -464,6 +464,45 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     boxY += 6;
   }
 
+  // ── Per-person installment hero (before total) ──
+  const paxCount = data.passengersCount || 1;
+  const installmentAmount = data.payment.receivables.length > 0
+    ? data.payment.receivables[0].amount
+    : data.totalTrip / Math.max(data.payment.installments, 1);
+  const perPersonInstallment = installmentAmount / paxCount;
+
+  if (data.payment.installments > 1) {
+    boxY += 4;
+    // Dark box for installment hero
+    doc.setFillColor(DEEP_BLUE[0], DEEP_BLUE[1], DEEP_BLUE[2]);
+    doc.rect(boxX, boxY, boxW, 28, 'F');
+
+    // Gold accent top
+    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+    doc.rect(boxX, boxY, boxW, 1, 'F');
+
+    // "Investimento por pessoa"
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+    doc.text('INVESTIMENTO POR PESSOA', boxX + boxW / 2, boxY + 6, { align: 'center' });
+
+    // "12x de R$ 450,00"
+    const installText = `${data.payment.installments}x de ${fmt(perPersonInstallment)}`;
+    doc.setFont('times', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    doc.text(installText, boxX + boxW / 2, boxY + 17, { align: 'center' });
+
+    // "por pessoa"
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text('por pessoa', boxX + boxW / 2, boxY + 23, { align: 'center' });
+
+    boxY += 32;
+  }
+
   // Total highlight
   boxY += 2;
   doc.setFillColor(GOLD_LIGHT[0], GOLD_LIGHT[1], GOLD_LIGHT[2]);
@@ -482,7 +521,16 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   setColor(doc, GOLD);
   doc.text(fmt(data.totalTrip), boxX + boxW - 4, boxY + 8, { align: 'right' });
 
-  y = boxY + 20;
+  if (paxCount > 1) {
+    boxY += 14;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    setColor(doc, TEXT_MUTED);
+    doc.text(`${fmt(data.totalTrip / paxCount)} por pessoa a vista  ·  ${paxCount} passageiros`, boxX + 8, boxY + 2);
+    boxY += 4;
+  }
+
+  y = boxY + 10;
 
   // ─── Section: Forma de Pagamento ─────────────────────────
   y = checkPageBreak(doc, y, 30, m);
@@ -491,8 +539,8 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
 
   const methodLabels: Record<string, string> = {
     pix: 'PIX',
-    credito: 'Cartão de Crédito',
-    boleto: 'Boleto Bancário',
+    credito: 'Cartao de Credito',
+    boleto: 'Boleto Bancario',
     dinheiro: 'Dinheiro',
   };
 
