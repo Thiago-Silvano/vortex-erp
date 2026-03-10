@@ -116,6 +116,22 @@ export default function WhatsAppPage() {
     return () => { supabase.removeChannel(channel); };
   }, [selectedConv?.id, activeCompany?.id]);
 
+  // Polling fallback: refresh conversations every 5s and messages every 3s
+  useEffect(() => {
+    const convInterval = setInterval(() => {
+      fetchConversations();
+    }, 5000);
+    return () => clearInterval(convInterval);
+  }, [activeCompany?.id]);
+
+  useEffect(() => {
+    if (!selectedConv) return;
+    const msgInterval = setInterval(() => {
+      fetchMessages(selectedConv.id);
+    }, 3000);
+    return () => clearInterval(msgInterval);
+  }, [selectedConv?.id]);
+
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedConv) return;
     const senderName = userEmail.split('@')[0] || 'Agente';
