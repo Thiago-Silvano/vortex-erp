@@ -1098,7 +1098,7 @@ export default function NewSalePage() {
                   </div>
                   <div>
                     <Label>Valor da Venda</Label>
-                    <Input value={fmt(totalSale)} disabled className="bg-muted" />
+                    <Input value={fmt(totalSaleWithInterest)} disabled className="bg-muted" />
                   </div>
                 </div>
                 {installments > 1 && boletoInterestRate > 0 && (
