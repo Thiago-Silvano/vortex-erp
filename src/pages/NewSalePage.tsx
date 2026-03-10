@@ -536,7 +536,7 @@ export default function NewSalePage() {
           sale_id: saleId,
           client_name: clientName,
           sale_date: saleDate,
-          sale_value: totalSale,
+          sale_value: totalSaleWithInterest,
           cost_value: totalCost,
           profit_value: grossProfit,
           commission_percentage: pct,
