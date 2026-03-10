@@ -700,7 +700,7 @@ function drawFlightDirection(
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     setColor(doc, TEXT_MUTED);
-    doc.text(`Tempo total: ${legs[0].departureTime} → ${legs[legs.length - 1].arrivalTime}`, m, y);
+    doc.text(`Tempo total: ${legs[0].departureTime} - ${legs[legs.length - 1].arrivalTime}`, m, y);
     y += 5;
   }
 
