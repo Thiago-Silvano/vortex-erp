@@ -189,7 +189,7 @@ export default function WhatsAppSettingsPage() {
 
     try {
       await handleSaveServerUrl();
-      const result = await callProxy('/status', 'GET', activeCompany.id);
+      const result = await callProxy('/connect', 'GET', activeCompany.id);
 
       if (result?.ok) {
         setTestResult({ ok: true, message: 'Servidor conectado ✅' });
