@@ -465,6 +465,7 @@ export type Database = {
           smtp_ssl: boolean
           smtp_user: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -483,6 +484,7 @@ export type Database = {
           smtp_ssl?: boolean
           smtp_user?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -501,12 +503,13 @@ export type Database = {
           smtp_ssl?: boolean
           smtp_user?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "email_settings_empresa_id_fkey"
             columns: ["empresa_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -578,6 +581,7 @@ export type Database = {
           tracking_id: string | null
           tracking_opened_at: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           bcc_emails?: string[] | null
@@ -603,6 +607,7 @@ export type Database = {
           tracking_id?: string | null
           tracking_opened_at?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           bcc_emails?: string[] | null
@@ -628,6 +633,7 @@ export type Database = {
           tracking_id?: string | null
           tracking_opened_at?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
