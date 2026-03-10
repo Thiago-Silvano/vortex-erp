@@ -181,7 +181,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
     setColor(doc, TEXT_MUTED);
-    const dateStr = `${formatDateLong(data.departureDate)}  —  ${formatDateLong(data.returnDate)}`;
+    const dateStr = `${formatDateLong(data.departureDate)}  -  ${formatDateLong(data.returnDate)}`;
     doc.text(dateStr, pw / 2, coverY, { align: 'center' });
     coverY += 10;
   }
