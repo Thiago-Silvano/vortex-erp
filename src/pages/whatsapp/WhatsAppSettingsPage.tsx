@@ -32,6 +32,13 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
  * The proxy now always returns HTTP 200 with { ok, data?, error? } so we can read the body.
  */
 async function callProxy(endpoint: string, method: string, empresaId: string, payload?: any) {
+  if (!empresaId) {
+    console.error('[WhatsApp Proxy] empresa_id ausente! Abortando chamada para', endpoint);
+    throw new Error('empresa_id não definido. Selecione uma empresa.');
+  }
+
+  console.log(`[WhatsApp Proxy] Chamando ${method} ${endpoint} com empresa_id=${empresaId}`);
+
   const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
     body: { endpoint, method, empresa_id: empresaId, payload },
   });
@@ -41,7 +48,14 @@ async function callProxy(endpoint: string, method: string, empresaId: string, pa
     throw new Error(error.message || 'Erro ao chamar o servidor');
   }
 
-  console.log(`[WhatsApp Proxy] ${method} ${endpoint} →`, data);
+  // Handle empresa_id missing error from server
+  const errMsg = data?.error || data?.data?.error || '';
+  if (typeof errMsg === 'string' && errMsg.toLowerCase().includes('empresa_id')) {
+    console.error('[WhatsApp Proxy] Servidor retornou erro de empresa_id:', errMsg);
+    throw new Error('Erro de identificação da empresa. Recarregue a página e tente novamente.');
+  }
+
+  console.log(`[WhatsApp Proxy] ${method} ${endpoint} → resposta:`, data);
   return data;
 }
 
@@ -53,6 +67,12 @@ export default function WhatsAppSettingsPage() {
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [pollingQr, setPollingQr] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const empresaIdRef = useRef<string | null>(null);
+
+  // Keep empresaIdRef always in sync with activeCompany
+  useEffect(() => {
+    empresaIdRef.current = activeCompany?.id || null;
+  }, [activeCompany?.id]);
 
   // ─── Fetch session from DB ───
   const fetchSession = useCallback(async () => {
@@ -81,6 +101,16 @@ export default function WhatsAppSettingsPage() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [activeCompany?.id, fetchSession]);
+
+  // Stop polling and reset when activeCompany changes
+  useEffect(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+      setPollingQr(false);
+    }
+    setTestResult(null);
+  }, [activeCompany?.id]);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -125,6 +155,9 @@ export default function WhatsAppSettingsPage() {
     const maxAttempts = 30; // 30 × 3s = 90s
 
     const poll = async () => {
+      // Always use the most current empresa_id (from ref), fallback to initial
+      const currentEmpresaId = empresaIdRef.current || empresaId;
+      
       attempts++;
       if (attempts > maxAttempts) {
         stopPolling();
@@ -134,16 +167,14 @@ export default function WhatsAppSettingsPage() {
       }
 
       try {
-        const result = await callProxy('/status', 'GET', empresaId);
+        console.log(`[QR Poll] Attempt ${attempts}/${maxAttempts} - empresa_id=${currentEmpresaId}`);
+        const result = await callProxy('/status', 'GET', currentEmpresaId);
         const d = result?.data || result;
         console.log('[QR Poll] /status response:', d);
 
         if (d?.qr) {
-          // QR code received
           await updateSession({ qr_code: d.qr, status: 'waiting_qr' });
-          // Don't stop polling — keep polling until connected
         } else if (d?.connected === true) {
-          // Connected!
           await updateSession({
             status: 'connected',
             qr_code: '',
@@ -153,14 +184,18 @@ export default function WhatsAppSettingsPage() {
           stopPolling();
           toast.success('WhatsApp conectado com sucesso!');
         }
-        // if status === "waiting" or anything else, just continue polling
-      } catch (e) {
+      } catch (e: any) {
         console.error('[QR Poll] Error:', e);
-        // Continue polling even on error
+        const msg = e?.message || '';
+        if (msg.includes('empresa_id') || msg.includes('identificação')) {
+          stopPolling();
+          toast.error('Erro: empresa não identificada. Recarregue a página.');
+          return;
+        }
+        // Continue polling on other errors
       }
     };
 
-    // First poll immediately
     poll();
     pollingRef.current = setInterval(poll, 3000);
   }, [stopPolling, updateSession]);
