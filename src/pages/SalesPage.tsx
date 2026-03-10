@@ -6,10 +6,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Search, Plus } from 'lucide-react';
+import { Eye, Search, Plus, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCompany } from '@/contexts/CompanyContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 interface SaleRow {
   id: string;
@@ -25,14 +36,74 @@ interface SaleRow {
 export default function SalesPage() {
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [search, setSearch] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
+  const [isMaster, setIsMaster] = useState(false);
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
 
-  useEffect(() => {
+  const fetchSales = () => {
     let query = supabase.from('sales').select('*').order('created_at', { ascending: false });
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     query.then(({ data }) => { if (data) setSales(data as SaleRow[]); });
+  };
+
+  useEffect(() => {
+    fetchSales();
   }, [activeCompany?.id]);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const isAdminEmail = user.email === 'thiago@vortexviagens.com.br';
+      const { data: permsData } = await supabase
+        .from('user_permissions')
+        .select('user_role')
+        .eq('user_id', user.id)
+        .single();
+      const role = (permsData as any)?.user_role || (isAdminEmail ? 'master' : 'vendedor');
+      setIsMaster(role === 'master' || isAdminEmail);
+    });
+  }, []);
+
+  const canDelete = (sale: SaleRow) => {
+    if (sale.status === 'draft') return true;
+    if (sale.status === 'active' && isMaster) return true;
+    return false;
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const saleId = deleteTarget.id;
+
+    try {
+      // Delete all related records in cascade
+      await supabase.from('receivables').delete().eq('sale_id', saleId);
+      await supabase.from('accounts_payable').delete().eq('sale_id', saleId);
+      await supabase.from('seller_commissions').delete().eq('sale_id', saleId);
+      await supabase.from('sale_items').delete().eq('sale_id', saleId);
+      await supabase.from('sale_suppliers').delete().eq('sale_id', saleId);
+      await (supabase.from('sale_passengers' as any) as any).delete().eq('sale_id', saleId);
+      await supabase.from('reservations').delete().eq('sale_id', saleId);
+
+      // Delete calendar events related to this sale (by client name + date)
+      if (deleteTarget.client_name && activeCompany?.id) {
+        await supabase.from('calendar_events')
+          .delete()
+          .eq('empresa_id', activeCompany.id)
+          .ilike('title', `%${deleteTarget.client_name}%`);
+      }
+
+      // Delete the sale itself
+      const { error } = await supabase.from('sales').delete().eq('id', saleId);
+      if (error) throw error;
+
+      toast.success(deleteTarget.status === 'draft' ? 'Rascunho excluído!' : 'Venda e todos os lançamentos relacionados foram excluídos!');
+      setDeleteTarget(null);
+      fetchSales();
+    } catch (err: any) {
+      toast.error('Erro ao excluir: ' + (err.message || ''));
+    }
+  };
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const filtered = sales.filter(s => normalize(s.client_name).includes(normalize(search)));
@@ -61,7 +132,7 @@ export default function SalesPage() {
                   <TableHead>Total</TableHead>
                   <TableHead>Lucro Líq.</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-16">Ações</TableHead>
+                  <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -76,7 +147,14 @@ export default function SalesPage() {
                     <TableCell>{fmt(Number(s.net_profit))}</TableCell>
                     <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}</Badge></TableCell>
                     <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
+                        {canDelete(s) && (
+                          <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(s)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -84,6 +162,28 @@ export default function SalesPage() {
             </Table>
           </CardContent>
         </Card>
+
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {deleteTarget?.status === 'draft' ? 'Excluir Rascunho' : 'Excluir Venda'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteTarget?.status === 'draft'
+                  ? `Tem certeza que deseja excluir o rascunho de "${deleteTarget?.client_name}"? Esta ação não pode ser desfeita.`
+                  : `Tem certeza que deseja excluir a venda de "${deleteTarget?.client_name}"? Todos os lançamentos financeiros (contas a receber, contas a pagar, comissões), reservas e eventos no calendário relacionados serão permanentemente excluídos. Esta ação não pode ser desfeita.`
+                }
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );

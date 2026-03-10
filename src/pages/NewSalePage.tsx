@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import { toast } from 'sonner';
@@ -566,7 +566,7 @@ export default function NewSalePage() {
         ];
       });
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: y,
         head: [['Tipo', 'Descrição', 'Valor']],
         body: tableBody,
@@ -1113,11 +1113,10 @@ export default function NewSalePage() {
           serviceCatalog={serviceCatalog}
           marginMode="none"
           marginPercent={20}
-          onImport={(importedItems, tripInfo) => {
+          onImport={(importedItems, _tripInfo) => {
             // Add imported items to existing items
             setItems(prev => [...prev, ...importedItems]);
-            // Fill client name if empty
-            if (!clientName && tripInfo.client_name) setClientName(tripInfo.client_name);
+            // Do NOT fill client name from PDF import
             toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
           }}
         />
