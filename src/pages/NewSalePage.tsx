@@ -94,6 +94,8 @@ export default function NewSalePage() {
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
+  const [allClients, setAllClients] = useState<ClientOption[]>([]);
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
