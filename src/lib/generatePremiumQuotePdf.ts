@@ -129,6 +129,15 @@ function checkPageBreak(doc: jsPDF, y: number, needed: number, margin: number): 
   return y;
 }
 
+// Wrap doc.text to auto-sanitize all strings
+function safeText(doc: jsPDF, text: string | string[], x: number, y: number, options?: any) {
+  if (Array.isArray(text)) {
+    doc.text(text.map(t => sanitize(t)), x, y, options);
+  } else {
+    doc.text(sanitize(text), x, y, options);
+  }
+}
+
 // ─── Main Generator ─────────────────────────────────────────
 export function generatePremiumQuotePdf(data: PremiumPdfData) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
