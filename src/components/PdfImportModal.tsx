@@ -70,6 +70,7 @@ interface ImportedItem {
   total_value: number;
   service_catalog_id?: string;
   cost_center_id?: string;
+  metadata?: any;
 }
 
 interface PdfImportModalProps {
@@ -217,11 +218,48 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
     return 0;
   };
 
+  const detectServiceType = (serviceType: string): string | undefined => {
+    const lower = serviceType.toLowerCase();
+    if (lower.includes('aére') || lower.includes('passagem') || lower.includes('voo') || lower.includes('flight')) return 'aereo';
+    if (lower.includes('hotel') || lower.includes('hospedagem')) return 'hotel';
+    if (lower.includes('carro') || lower.includes('aluguel')) return 'carro';
+    if (lower.includes('seguro')) return 'seguro';
+    if (lower.includes('experiência') || lower.includes('passeio') || lower.includes('ingresso')) return 'experiencia';
+    return 'adicional';
+  };
+
   const handleConfirm = () => {
     const items: ImportedItem[] = services.map(s => {
       const matchedCatalog = serviceCatalog.find(c => c.name.toLowerCase().includes(s.service_type.toLowerCase()) || s.service_type.toLowerCase().includes(c.name.toLowerCase()));
       const cost = s.cost_price * (s.quantity || 1);
       const rav = calcRav(cost);
+      const detectedType = detectServiceType(s.service_type);
+
+      const metadata: any = { type: detectedType, detailedDescription: s.details || '' };
+
+      if (detectedType === 'aereo' && s.flight_legs?.length) {
+        metadata.flightLegs = s.flight_legs.map(leg => ({
+          origin: leg.origin || '',
+          destination: leg.destination || '',
+          departureDate: leg.departure_date || '',
+          departureTime: leg.departure_time || '',
+          arrivalDate: leg.arrival_date || '',
+          arrivalTime: leg.arrival_time || '',
+          connectionDuration: leg.connection_duration || '',
+          direction: leg.direction || 'ida',
+          flightCode: leg.flight_number ? `${leg.airline || ''} ${leg.flight_number}`.trim() : (leg.airline || ''),
+        }));
+        if (s.baggage) {
+          metadata.baggage = {
+            personalItem: s.baggage.personal_item ?? 1,
+            carryOn: s.baggage.carry_on ?? 1,
+            checkedBag: s.baggage.checked_bag ?? 1,
+          };
+        }
+        metadata.totalTravelDurationOutbound = s.total_travel_duration_outbound || '';
+        metadata.totalTravelDurationReturn = s.total_travel_duration_return || '';
+      }
+
       return {
         description: s.description,
         cost_price: cost,
@@ -229,6 +267,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
         total_value: cost + rav,
         service_catalog_id: matchedCatalog?.id,
         cost_center_id: matchedCatalog?.cost_center_id || undefined,
+        metadata,
       };
     });
 

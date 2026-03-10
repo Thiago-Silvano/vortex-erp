@@ -1242,7 +1242,15 @@ export default function NewSalePage() {
           marginMode="none"
           marginPercent={20}
           onImport={(importedItems, _tripInfo) => {
-            setItems(prev => [...prev, ...importedItems]);
+            setItems(prev => [...prev, ...importedItems.map(item => ({
+              description: item.description,
+              cost_price: item.cost_price,
+              rav: item.rav,
+              total_value: item.total_value,
+              service_catalog_id: item.service_catalog_id,
+              cost_center_id: item.cost_center_id,
+              metadata: item.metadata || {},
+            }))]);
             toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
           }}
         />
