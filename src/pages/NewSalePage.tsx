@@ -931,7 +931,12 @@ export default function NewSalePage() {
         {/* Actions */}
         <div className="flex justify-end gap-3 pb-8">
           <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
-          <Button onClick={handleSave}>{editSaleId ? 'Atualizar Venda' : 'Salvar Venda'}</Button>
+          <Button variant="secondary" onClick={handleSaveDraft}>
+            💾 Salvar Rascunho
+          </Button>
+          <Button onClick={handleSave}>
+            ✅ {editSaleId ? 'Atualizar Venda' : 'Converter em Venda'}
+          </Button>
         </div>
 
         <PdfImportModal
