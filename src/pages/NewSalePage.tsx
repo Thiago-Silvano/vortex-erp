@@ -879,6 +879,15 @@ export default function NewSalePage() {
             toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
           }}
         />
+
+        <QuickClientModal
+          open={quickClientOpen}
+          onClose={() => setQuickClientOpen(false)}
+          initialName={clientName}
+          onClientCreated={(client) => {
+            setClientName(client.full_name);
+          }}
+        />
       </div>
     </AppLayout>
   );
