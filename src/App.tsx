@@ -106,6 +106,7 @@ const App = () => (
           <Route path="/whatsapp/finished" element={<ProtectedRoute><WhatsAppFinishedPage /></ProtectedRoute>} />
           <Route path="/whatsapp/quick-replies" element={<ProtectedRoute><WhatsAppQuickRepliesPage /></ProtectedRoute>} />
           <Route path="/whatsapp/automations" element={<ProtectedRoute><WhatsAppAutomationsPage /></ProtectedRoute>} />
+          <Route path="/whatsapp/settings" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -120,18 +120,31 @@ export default function WhatsAppPage() {
     if (!newMessage.trim() || !selectedConv) return;
     const senderName = userEmail.split('@')[0] || 'Agente';
 
-    await supabase.from('whatsapp_messages').insert({
-      conversation_id: selectedConv.id,
-      sender_type: 'agent',
-      sender_name: senderName,
-      content: newMessage.trim(),
-      message_type: 'text',
-    });
-
-    await supabase.from('whatsapp_conversations').update({
-      last_message: newMessage.trim(),
-      last_message_at: new Date().toISOString(),
-    }).eq('id', selectedConv.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      await supabase.functions.invoke('whatsapp-send', {
+        body: {
+          conversation_id: selectedConv.id,
+          content: newMessage.trim(),
+          message_type: 'text',
+          sender_name: senderName,
+          empresa_id: activeCompany?.id,
+        },
+      });
+    } catch {
+      // Fallback: save locally if edge function fails
+      await supabase.from('whatsapp_messages').insert({
+        conversation_id: selectedConv.id,
+        sender_type: 'agent',
+        sender_name: senderName,
+        content: newMessage.trim(),
+        message_type: 'text',
+      });
+      await supabase.from('whatsapp_conversations').update({
+        last_message: newMessage.trim(),
+        last_message_at: new Date().toISOString(),
+      }).eq('id', selectedConv.id);
+    }
 
     setNewMessage('');
     fetchMessages(selectedConv.id);
