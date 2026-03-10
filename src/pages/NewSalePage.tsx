@@ -507,6 +507,8 @@ export default function NewSalePage() {
     if (editSaleId) {
       await supabase.from('receivables').delete().eq('sale_id', editSaleId);
       await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      await supabase.from('seller_commissions').delete().eq('sale_id', editSaleId);
+      await supabase.from('reservations').delete().eq('sale_id', editSaleId);
     }
 
     const saleId = await saveSaleCore(payload, userEmail);
@@ -517,6 +519,7 @@ export default function NewSalePage() {
       await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
+        empresa_id: activeCompany?.id || null,
       } as any)));
     }
 
@@ -526,6 +529,7 @@ export default function NewSalePage() {
       await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
         sale_id: saleId, supplier_id: sid, amount: costPerSupplier,
         due_date: saleDate, description: `Venda - ${clientName}`, status: 'open', origin_type: 'sale',
+        empresa_id: activeCompany?.id || null,
       })));
     }
 
@@ -533,20 +537,46 @@ export default function NewSalePage() {
       await supabase.from('quotes').update({ status: 'concluido' }).eq('id', quoteId);
     }
 
+    // Auto-generate reservations for each supplier
+    if (selectedSupplierIds.length > 0) {
+      await supabase.from('reservations').insert(selectedSupplierIds.map(sid => {
+        const sup = allSuppliers.find(s => s.id === sid);
+        return {
+          sale_id: saleId,
+          supplier_id: sid,
+          description: `${sup?.name || 'Fornecedor'} - ${clientName}`,
+          status: 'pending',
+          check_in: tripStartDate || null,
+          check_out: tripEndDate || null,
+          empresa_id: activeCompany?.id || null,
+        };
+      }));
+    }
+
     // Auto-create calendar event with main passenger info
-    if (passengers.length > 0 && !editSaleId) {
+    if (passengers.length > 0) {
+      // Clean old events if editing
+      if (editSaleId && activeCompany?.id) {
+        // Delete events created for this sale (by matching client name)
+        await supabase.from('calendar_events')
+          .delete()
+          .eq('empresa_id', activeCompany.id)
+          .ilike('title', `%${clientName}%`);
+      }
       const mainPassenger = passengers.find(p => p.is_main) || passengers[0];
       const eventTitle = `${mainPassenger.first_name} ${mainPassenger.last_name}`.trim() || clientName;
-      const eventDate = saleDate;
+      const eventDate = tripStartDate || saleDate;
       await supabase.from('calendar_events').insert({
         title: eventTitle,
         event_date: eventDate,
         passengers: passengers.length,
+        empresa_id: activeCompany?.id || null,
+        event_type: 'embarque',
       });
     }
 
     // Auto-generate commission if seller is assigned
-    if (sellerId && sellerId !== 'none' && !editSaleId) {
+    if (sellerId && sellerId !== 'none') {
       const { data: sellerData } = await (supabase.from('sellers') as any).select('*').eq('id', sellerId).single();
       if (sellerData && sellerData.commission_type !== 'none') {
         let commValue = 0;
@@ -591,7 +621,7 @@ export default function NewSalePage() {
       }
     }
 
-    toast.success(editSaleId ? 'Venda atualizada!' : 'Venda convertida com sucesso! Financeiro gerado.');
+    toast.success(editSaleId ? 'Venda atualizada! Financeiro regenerado.' : 'Venda convertida com sucesso! Financeiro gerado.');
     navigate('/sales');
   };
 
