@@ -744,7 +744,7 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base">Informações da Venda</CardTitle></CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {quoteId && (
                 <div>
                   <Label>Código da Cotação</Label>
@@ -783,6 +783,10 @@ export default function NewSalePage() {
                 </div>
               </div>
               <div>
+                <Label>Nº Passageiros</Label>
+                <Input type="number" min="1" value={passengersCount} onChange={e => setPassengersCount(parseInt(e.target.value) || 1)} />
+              </div>
+              <div>
                 <Label>Data da Venda</Label>
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
               </div>
@@ -795,6 +799,19 @@ export default function NewSalePage() {
                     {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label>Início da Viagem</Label>
+                <Input type="date" value={tripStartDate} onChange={e => setTripStartDate(e.target.value)} />
+              </div>
+              <div>
+                <Label>Final da Viagem</Label>
+                <Input type="date" value={tripEndDate} onChange={e => setTripEndDate(e.target.value)} />
+              </div>
+              <div>
+                <Label>Nº de Noites</Label>
+                <Input type="number" min="0" value={tripNights} onChange={e => setTripNights(parseInt(e.target.value) || 0)} />
+                <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente</p>
               </div>
             </div>
             {/* Destination Image */}
