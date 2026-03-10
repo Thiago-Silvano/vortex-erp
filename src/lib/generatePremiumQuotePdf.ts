@@ -308,7 +308,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       setColor(doc, TEXT_MUTED);
 
       const details: string[] = [];
-      details.push(`${formatDateBR(hotel.checkIn)} — ${formatDateBR(hotel.checkOut)}`);
+      details.push(`${formatDateBR(hotel.checkIn)} - ${formatDateBR(hotel.checkOut)}`);
       details.push(`${hotel.nights} noites`);
       if (hotel.meal) details.push(hotel.meal);
       doc.text(details.join('  ·  '), m + 8, y);
