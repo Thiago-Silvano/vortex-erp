@@ -98,13 +98,20 @@ Deno.serve(async (req) => {
       try {
         const agentLabel = `[${sender_name || user.email?.split('@')[0] || 'Agente'}]`;
         const fullMessage = `${agentLabel}\n${content}`;
+        const targetUrl = `${session.server_url.replace(/\/+$/, '')}/send-message`;
 
-        const deliveryResponse = await fetch(`${session.server_url}/send-message`, {
+        console.log(`Sending to ${targetUrl} for phone ${conv.phone}`);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const deliveryResponse = await fetch(targetUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
-            number: conv.phone, // expected by VPS server.js
-            phone: conv.phone,  // backwards compatibility
+            number: conv.phone,
+            phone: conv.phone,
             message: fullMessage,
             message_type: message_type || 'text',
             media_url,
@@ -112,21 +119,27 @@ Deno.serve(async (req) => {
           }),
         });
 
+        clearTimeout(timeoutId);
+
+        const responseText = await deliveryResponse.text();
+        console.log(`Node.js response: ${deliveryResponse.status} - ${responseText}`);
+
         if (!deliveryResponse.ok) {
-          const errText = await deliveryResponse.text();
-          throw new Error(`Delivery failed (${deliveryResponse.status}): ${errText}`);
+          throw new Error(`Delivery failed (${deliveryResponse.status}): ${responseText}`);
         }
 
         if (msgData?.id) {
           await supabase.from('whatsapp_messages').update({ delivery_status: 'sent' }).eq('id', msgData.id);
         }
       } catch (e) {
-        console.error('Failed to forward to Node.js server:', e);
-        // Message is saved, but delivery failed - mark accordingly
+        const errMsg = e instanceof Error ? e.message : String(e);
+        console.error('Failed to forward to Node.js server:', errMsg);
         if (msgData?.id) {
           await supabase.from('whatsapp_messages').update({ delivery_status: 'failed' }).eq('id', msgData.id);
         }
       }
+    } else {
+      console.error('No server_url configured for session');
     }
 
     return new Response(JSON.stringify({ ok: true, message_id: msgData?.id }), {
