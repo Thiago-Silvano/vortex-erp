@@ -82,6 +82,7 @@ export default function WhatsAppPage() {
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || ''));
@@ -198,6 +199,53 @@ export default function WhatsAppPage() {
   const handleMessageChange = (val: string) => {
     setNewMessage(val);
     setShowQuickReplies(val.startsWith('/'));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedConv || !activeCompany?.id) return;
+
+    const senderName = userEmail.split('@')[0] || 'Agente';
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${activeCompany.id}/${selectedConv.id}/${Date.now()}.${fileExt}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('whatsapp-media')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('whatsapp-media')
+        .getPublicUrl(filePath);
+
+      const mediaUrl = urlData.publicUrl;
+      const isImage = file.type.startsWith('image/');
+      const messageType = isImage ? 'image' : 'document';
+
+      await supabase.functions.invoke('whatsapp-send', {
+        body: {
+          conversation_id: selectedConv.id,
+          content: file.name,
+          message_type: messageType,
+          media_url: mediaUrl,
+          media_filename: file.name,
+          sender_name: senderName,
+          empresa_id: activeCompany.id,
+        },
+      });
+
+      fetchMessages(selectedConv.id);
+      fetchConversations();
+      toast.success('Arquivo enviado!');
+    } catch (err) {
+      console.error('File upload error:', err);
+      toast.error('Erro ao enviar arquivo');
+    }
+
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const applyQuickReply = (content: string) => {
@@ -378,7 +426,14 @@ export default function WhatsAppPage() {
 
               {/* Message input */}
               <div className="p-3 border-t flex gap-2">
-                <Button size="icon" variant="ghost" className="shrink-0" title="Anexar arquivo">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                />
+                <Button size="icon" variant="ghost" className="shrink-0" title="Anexar arquivo" onClick={() => fileInputRef.current?.click()}>
                   <Paperclip className="h-4 w-4" />
                 </Button>
                 <Input
