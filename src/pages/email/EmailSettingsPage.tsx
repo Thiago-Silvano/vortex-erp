@@ -8,19 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Save, TestTube, Mail, Server, Lock, Link2 } from 'lucide-react';
+import { Save, TestTube, Mail, Server, Lock, User } from 'lucide-react';
 import { toast } from 'sonner';
 
-const CONNECTION_FIELDS = [
-  'smtp_host', 'smtp_port', 'smtp_user', 'smtp_password', 'smtp_ssl',
-  'imap_host', 'imap_port', 'imap_user', 'imap_password', 'imap_ssl',
-] as const;
-
 export default function EmailSettingsPage() {
-  const { activeCompany, companies, isMaster, userCompanyIds } = useCompany();
+  const { activeCompany } = useCompany();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [settings, setSettings] = useState({
     smtp_host: '', smtp_port: 587, smtp_user: '', smtp_password: '', smtp_ssl: true,
     imap_host: '', imap_port: 993, imap_user: '', imap_password: '', imap_ssl: true,
@@ -28,10 +25,19 @@ export default function EmailSettingsPage() {
   });
   const [settingsId, setSettingsId] = useState<string | null>(null);
 
+  // Get current user
   useEffect(() => {
-    if (!activeCompany) return;
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+      setUserEmail(data.user?.email || null);
+    });
+  }, []);
+
+  // Load settings for this user
+  useEffect(() => {
+    if (!userId) return;
     setLoading(true);
-    supabase.from('email_settings').select('*').eq('empresa_id', activeCompany.id).maybeSingle()
+    supabase.from('email_settings').select('*').eq('user_id', userId as any).maybeSingle()
       .then(({ data }) => {
         if (data) {
           const d = data as any;
@@ -48,15 +54,14 @@ export default function EmailSettingsPage() {
         }
         setLoading(false);
       });
-  }, [activeCompany]);
+  }, [userId]);
 
   const handleSave = async () => {
-    if (!activeCompany) return;
+    if (!userId || !activeCompany) return;
     setSaving(true);
 
-    const record = { ...settings, empresa_id: activeCompany.id };
+    const record = { ...settings, user_id: userId, empresa_id: activeCompany.id };
 
-    // Save current company
     let success = false;
     if (settingsId) {
       const { error } = await supabase.from('email_settings').update(record as any).eq('id', settingsId);
@@ -71,51 +76,19 @@ export default function EmailSettingsPage() {
       }
     }
 
-    // If master, sync connection settings to all other companies
-    if (success && isMaster) {
-      const connectionData: Record<string, any> = {};
-      for (const key of CONNECTION_FIELDS) {
-        connectionData[key] = settings[key];
-      }
-
-      const otherCompanyIds = userCompanyIds.filter(id => id !== activeCompany.id);
-
-      for (const companyId of otherCompanyIds) {
-        const { data: existing } = await supabase
-          .from('email_settings')
-          .select('id')
-          .eq('empresa_id', companyId)
-          .maybeSingle();
-
-        if (existing) {
-          await supabase.from('email_settings').update(connectionData as any).eq('id', (existing as any).id);
-        } else {
-          await supabase.from('email_settings').insert({
-            ...connectionData,
-            empresa_id: companyId,
-            from_name: '',
-            from_email: '',
-          } as any);
-        }
-      }
-
-      toast.success(`Configurações salvas e sincronizadas para ${otherCompanyIds.length + 1} empresa(s)`);
-    } else if (success) {
-      toast.success('Configurações salvas');
-    }
-
+    if (success) toast.success('Suas configurações de email foram salvas');
     setSaving(false);
   };
 
   const handleTest = async () => {
-    if (!activeCompany) return;
+    if (!userId) return;
     setTesting(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
-          empresa_id: activeCompany.id,
+          user_id: userId,
           test: true,
-          to: settings.from_email,
+          to: settings.from_email || settings.smtp_user,
         },
       });
       if (error) throw error;
@@ -135,50 +108,51 @@ export default function EmailSettingsPage() {
       <div className="p-6 max-w-3xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Configurações de Email</h1>
-          <p className="text-muted-foreground text-sm">Configure servidores SMTP e IMAP para {activeCompany?.name}</p>
+          <p className="text-muted-foreground text-sm">
+            Configure sua conta de email pessoal para envio e recebimento
+          </p>
+          {userEmail && (
+            <Badge variant="outline" className="mt-2 gap-1">
+              <User className="h-3 w-3" /> Configuração para: {userEmail}
+            </Badge>
+          )}
         </div>
 
-        {/* Remetente - PER COMPANY */}
+        {/* Remetente */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Mail className="h-5 w-5" /> Remetente
-              <Badge variant="outline" className="ml-auto text-xs font-normal">Por empresa</Badge>
+              <Mail className="h-5 w-5" /> Identidade do Remetente
             </CardTitle>
-            <CardDescription>Identidade do email de saída — cada empresa pode ter um remetente diferente</CardDescription>
+            <CardDescription>Nome e email que aparecerão como remetente das suas mensagens</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Nome do remetente</Label>
-                <Input value={settings.from_name} onChange={e => u('from_name', e.target.value)} placeholder="Vortex Viagens" />
+                <Input value={settings.from_name} onChange={e => u('from_name', e.target.value)} placeholder="Seu Nome" />
               </div>
               <div>
                 <Label>Email do remetente</Label>
-                <Input value={settings.from_email} onChange={e => u('from_email', e.target.value)} placeholder="contato@vortexviagens.com.br" />
+                <Input value={settings.from_email} onChange={e => u('from_email', e.target.value)} placeholder="voce@empresa.com.br" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* SMTP - SHARED */}
+        {/* SMTP */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Server className="h-5 w-5" /> Servidor SMTP (Envio)
-              {isMaster && <Badge className="ml-auto text-xs font-normal gap-1"><Link2 className="h-3 w-3" /> Compartilhado</Badge>}
             </CardTitle>
-            <CardDescription>
-              {isMaster
-                ? 'Estas configurações serão sincronizadas automaticamente para todas as empresas'
-                : 'Configurações para envio de emails'}
-            </CardDescription>
+            <CardDescription>Configurações para envio de emails. Ex: smtp.gmail.com porta 465 ou smtp.hostinger.com porta 587</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Servidor SMTP</Label>
-                <Input value={settings.smtp_host} onChange={e => u('smtp_host', e.target.value)} placeholder="smtp.hostinger.com" />
+                <Input value={settings.smtp_host} onChange={e => u('smtp_host', e.target.value)} placeholder="smtp.gmail.com" />
               </div>
               <div>
                 <Label>Porta</Label>
@@ -188,7 +162,7 @@ export default function EmailSettingsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Usuário</Label>
-                <Input value={settings.smtp_user} onChange={e => u('smtp_user', e.target.value)} placeholder="contato@vortexviagens.com.br" />
+                <Input value={settings.smtp_user} onChange={e => u('smtp_user', e.target.value)} placeholder="voce@empresa.com.br" />
               </div>
               <div>
                 <Label>Senha</Label>
@@ -202,24 +176,19 @@ export default function EmailSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* IMAP - SHARED */}
+        {/* IMAP */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Lock className="h-5 w-5" /> Servidor IMAP (Recebimento)
-              {isMaster && <Badge className="ml-auto text-xs font-normal gap-1"><Link2 className="h-3 w-3" /> Compartilhado</Badge>}
             </CardTitle>
-            <CardDescription>
-              {isMaster
-                ? 'Estas configurações serão sincronizadas automaticamente para todas as empresas'
-                : 'Configurações para receber emails'}
-            </CardDescription>
+            <CardDescription>Configurações para receber emails. Ex: imap.gmail.com porta 993</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Servidor IMAP</Label>
-                <Input value={settings.imap_host} onChange={e => u('imap_host', e.target.value)} placeholder="imap.hostinger.com" />
+                <Input value={settings.imap_host} onChange={e => u('imap_host', e.target.value)} placeholder="imap.gmail.com" />
               </div>
               <div>
                 <Label>Porta</Label>
@@ -229,7 +198,7 @@ export default function EmailSettingsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Usuário</Label>
-                <Input value={settings.imap_user} onChange={e => u('imap_user', e.target.value)} placeholder="contato@vortexviagens.com.br" />
+                <Input value={settings.imap_user} onChange={e => u('imap_user', e.target.value)} placeholder="voce@empresa.com.br" />
               </div>
               <div>
                 <Label>Senha</Label>

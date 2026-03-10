@@ -21,7 +21,6 @@ class MiniIMAP {
       ? Deno.connectTls({ hostname: host, port })
       : Deno.connect({ hostname: host, port });
     
-    // 10 second connection timeout
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error("Connection timeout (10s)")), 10000)
     );
@@ -29,7 +28,6 @@ class MiniIMAP {
     this.conn = await Promise.race([connectPromise, timeoutPromise]);
     console.log("Connected successfully");
     
-    // Read greeting
     const greeting = await this.readUntilLine();
     console.log("IMAP Greeting:", greeting.substring(0, 100));
   }
@@ -42,15 +40,12 @@ class MiniIMAP {
   }
 
   private async readUntilLine(): Promise<string> {
-    const timeout = setTimeout(() => {}, 15000); // just for reference
-    
     while (true) {
       const text = this.decoder.decode(this.buffer);
       const lineEnd = text.indexOf("\r\n");
       if (lineEnd >= 0) {
         const line = text.substring(0, lineEnd);
         this.buffer = this.encoder.encode(text.substring(lineEnd + 2));
-        clearTimeout(timeout);
         return line;
       }
       
@@ -190,21 +185,37 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { empresa_id } = await req.json();
-    if (!empresa_id) {
-      return new Response(JSON.stringify({ error: "empresa_id obrigatório" }),
+    const { user_id, empresa_id } = await req.json();
+
+    // Look up settings by user_id (new) or empresa_id (legacy)
+    let settings: any = null;
+    let effectiveUserId = user_id;
+    let effectiveEmpresaId = empresa_id;
+
+    if (user_id) {
+      const { data, error } = await supabase
+        .from("email_settings").select("*").eq("user_id", user_id).single();
+      if (!error && data) {
+        settings = data;
+        effectiveEmpresaId = effectiveEmpresaId || settings.empresa_id;
+      }
+    }
+
+    if (!settings && empresa_id) {
+      const { data, error } = await supabase
+        .from("email_settings").select("*").eq("empresa_id", empresa_id).maybeSingle();
+      if (!error && data) {
+        settings = data;
+        effectiveUserId = effectiveUserId || settings.user_id;
+      }
+    }
+
+    if (!settings) {
+      return new Response(JSON.stringify({ error: "Configurações IMAP não encontradas. Configure seu email." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { data: settings, error: settErr } = await supabase
-      .from("email_settings").select("*").eq("empresa_id", empresa_id).single();
-
-    if (settErr || !settings) {
-      return new Response(JSON.stringify({ error: "Configurações IMAP não encontradas" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const s = settings as any;
+    const s = settings;
     if (!s.imap_host || !s.imap_user || !s.imap_password) {
       return new Response(JSON.stringify({ error: "Configurações IMAP incompletas" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -213,7 +224,7 @@ Deno.serve(async (req) => {
     const port = s.imap_port || 993;
     const useTls = s.imap_ssl !== false;
 
-    console.log(`Starting IMAP sync for ${s.imap_host}:${port} tls=${useTls}`);
+    console.log(`Starting IMAP sync for ${s.imap_host}:${port} user=${s.imap_user}`);
 
     const imap = new MiniIMAP();
     await imap.connect(s.imap_host, port, useTls);
@@ -235,26 +246,34 @@ Deno.serve(async (req) => {
     const startSeq = Math.max(1, total - 19);
     const headers = await imap.fetchHeadersBatch(`${startSeq}:${total}`);
 
+    // Deduplicate: check by message_id + user_id
     let newCount = 0;
     for (const msg of headers) {
-      const { data: existing } = await supabase
+      let existingQuery = supabase
         .from("emails").select("id")
-        .eq("message_id", msg.messageId).eq("empresa_id", empresa_id)
-        .maybeSingle();
+        .eq("message_id", msg.messageId);
+
+      if (effectiveUserId) {
+        existingQuery = existingQuery.eq("user_id", effectiveUserId);
+      } else if (effectiveEmpresaId) {
+        existingQuery = existingQuery.eq("empresa_id", effectiveEmpresaId);
+      }
+
+      const { data: existing } = await existingQuery.maybeSingle();
       if (existing) continue;
 
       let clientId: string | null = null;
-      if (msg.from) {
+      if (msg.from && effectiveEmpresaId) {
         const { data: cd } = await supabase.from("clients").select("id")
-          .eq("empresa_id", empresa_id).eq("email", msg.from).maybeSingle();
+          .eq("empresa_id", effectiveEmpresaId).eq("email", msg.from).maybeSingle();
         if (cd) clientId = cd.id;
       }
 
       let sentAt: string;
       try { sentAt = new Date(msg.date).toISOString(); } catch { sentAt = new Date().toISOString(); }
 
-      await supabase.from("emails").insert({
-        empresa_id, message_id: msg.messageId,
+      const insertRecord: any = {
+        message_id: msg.messageId,
         from_email: msg.from, from_name: msg.fromName,
         to_emails: msg.to.length > 0 ? msg.to : [s.imap_user],
         cc_emails: msg.cc.length > 0 ? msg.cc : null,
@@ -262,7 +281,12 @@ Deno.serve(async (req) => {
         folder: "inbox", status: "received",
         is_read: false, is_starred: false,
         sent_at: sentAt, client_id: clientId,
-      } as any);
+      };
+
+      if (effectiveUserId) insertRecord.user_id = effectiveUserId;
+      if (effectiveEmpresaId) insertRecord.empresa_id = effectiveEmpresaId;
+
+      await supabase.from("emails").insert(insertRecord);
       newCount++;
     }
 
