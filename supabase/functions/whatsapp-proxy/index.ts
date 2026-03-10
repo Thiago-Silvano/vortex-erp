@@ -65,10 +65,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Remove trailing slash
+    // Clean server URL: remove trailing slashes and any accidental endpoint suffixes
     serverUrl = serverUrl.replace(/\/+$/, '');
+    // Strip known endpoint paths from the base URL if user accidentally saved them
+    serverUrl = serverUrl.replace(/\/(connect|disconnect|send-message|status)\/?$/i, '');
 
-    const targetUrl = `${serverUrl}${endpoint}`;
+    // Clean endpoint: ensure single leading slash
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+    const targetUrl = `${serverUrl}${cleanEndpoint}`;
     const fetchMethod = method || 'GET';
 
     console.log(`Proxying ${fetchMethod} ${targetUrl}`);
