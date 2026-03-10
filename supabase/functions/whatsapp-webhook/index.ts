@@ -54,18 +54,40 @@ Deno.serve(async (req) => {
     }
 
     if (event === 'message_received') {
-      const { empresa_id, phone, sender_name, content, message_type, media_url, media_filename } = data;
+      const { empresa_id: incomingEmpresaId, phone, sender_name, content, message_type, media_url, media_filename } = data;
+
+      let empresaId: string | null = incomingEmpresaId || null;
+
+      // Fallback: infer company from connected session when webhook caller didn't send empresa_id
+      if (!empresaId) {
+        const { data: connectedSessions } = await supabase
+          .from('whatsapp_sessions')
+          .select('empresa_id')
+          .eq('status', 'connected')
+          .not('empresa_id', 'is', null)
+          .order('updated_at', { ascending: false })
+          .limit(1);
+
+        empresaId = connectedSessions?.[0]?.empresa_id ?? null;
+      }
+
+      if (!empresaId) {
+        return new Response(JSON.stringify({ error: 'Missing empresa_id in webhook payload' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       // Find or create conversation
       const { data: existingConv } = await supabase
         .from('whatsapp_conversations')
         .select('*')
-        .eq('empresa_id', empresa_id)
+        .eq('empresa_id', empresaId)
         .eq('phone', phone)
         .neq('status', 'finished')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       let conversationId: string;
 
@@ -82,15 +104,15 @@ Deno.serve(async (req) => {
         const { data: clientData } = await supabase
           .from('clients')
           .select('id, full_name')
-          .eq('empresa_id', empresa_id)
+          .eq('empresa_id', empresaId)
           .or(`phone.ilike.%${normalizedPhone.slice(-8)}%`)
           .limit(1)
-          .single();
+          .maybeSingle();
 
         const clientName = clientData?.full_name || sender_name || 'Cliente desconhecido';
 
-        const { data: newConv } = await supabase.from('whatsapp_conversations').insert({
-          empresa_id,
+        const { data: newConv, error: convError } = await supabase.from('whatsapp_conversations').insert({
+          empresa_id: empresaId,
           phone,
           client_name: clientName,
           client_id: clientData?.id || null,
@@ -100,7 +122,14 @@ Deno.serve(async (req) => {
           unread_count: 1,
         }).select('id').single();
 
-        conversationId = newConv!.id;
+        if (convError || !newConv?.id) {
+          return new Response(JSON.stringify({ error: convError?.message || 'Failed to create conversation' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        conversationId = newConv.id;
       }
 
       // Insert message
@@ -118,7 +147,7 @@ Deno.serve(async (req) => {
       const { data: automations } = await supabase
         .from('whatsapp_automations')
         .select('*')
-        .eq('empresa_id', empresa_id)
+        .eq('empresa_id', empresaId)
         .eq('is_active', true);
 
       if (automations && content) {
@@ -146,7 +175,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      return new Response(JSON.stringify({ ok: true, conversation_id: conversationId }), {
+      return new Response(JSON.stringify({ ok: true, conversation_id: conversationId, empresa_id: empresaId }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
