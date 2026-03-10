@@ -1894,8 +1894,10 @@ export type Database = {
           delivery_status: string | null
           id: string
           media_filename: string | null
+          media_mimetype: string | null
           media_url: string | null
           message_type: string
+          reply_to_message_id: string | null
           sender_name: string | null
           sender_type: string
           sender_user_id: string | null
@@ -1907,8 +1909,10 @@ export type Database = {
           delivery_status?: string | null
           id?: string
           media_filename?: string | null
+          media_mimetype?: string | null
           media_url?: string | null
           message_type?: string
+          reply_to_message_id?: string | null
           sender_name?: string | null
           sender_type?: string
           sender_user_id?: string | null
@@ -1920,8 +1924,10 @@ export type Database = {
           delivery_status?: string | null
           id?: string
           media_filename?: string | null
+          media_mimetype?: string | null
           media_url?: string | null
           message_type?: string
+          reply_to_message_id?: string | null
           sender_name?: string | null
           sender_type?: string
           sender_user_id?: string | null
