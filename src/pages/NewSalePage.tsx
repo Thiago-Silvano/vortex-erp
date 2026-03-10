@@ -366,10 +366,26 @@ export default function NewSalePage() {
     }
 
     if (items.length > 0) {
-      await supabase.from('sale_items').insert(items.map((item, idx) => ({
+      const { data: insertedItems } = await supabase.from('sale_items').insert(items.map((item, idx) => ({
         sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav, total_value: item.total_value, sort_order: idx,
         service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
-      } as any)));
+      } as any))).select('id');
+
+      // Save item images
+      if (insertedItems) {
+        for (let idx = 0; idx < insertedItems.length; idx++) {
+          const images = itemImages[idx];
+          if (images && images.length > 0) {
+            await (supabase.from('sale_item_images' as any) as any).insert(
+              images.map((url: string, sortIdx: number) => ({
+                sale_item_id: insertedItems[idx].id,
+                image_url: url,
+                sort_order: sortIdx,
+              }))
+            );
+          }
+        }
+      }
     }
 
     if (selectedSupplierIds.length > 0) {
