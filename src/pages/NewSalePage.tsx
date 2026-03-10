@@ -99,6 +99,8 @@ export default function NewSalePage() {
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [destinationImageUrl, setDestinationImageUrl] = useState('');
+  const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
