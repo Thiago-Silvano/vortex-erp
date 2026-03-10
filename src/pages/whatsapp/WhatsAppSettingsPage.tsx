@@ -124,7 +124,7 @@ export default function WhatsAppSettingsPage() {
       }
 
       try {
-        const result = await callProxy('/status', 'GET', empresaId);
+        const result = await callProxy('/connect', 'GET', empresaId);
         const data = result?.data;
         console.log('[QR Poll] Status response:', data);
 
