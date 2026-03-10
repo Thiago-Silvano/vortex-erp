@@ -125,6 +125,13 @@ function AppSidebar() {
   const financialItems = isVistos ? vistosFinancial : viagensFinancial;
   const reportItems = isVistos ? [] : viagensReports;
 
+  const whatsappItems: MenuItem[] = [
+    { title: 'WhatsApp', url: '/whatsapp', icon: MessageSquare, permKey: 'whatsapp_view' },
+    { title: 'Finalizadas', url: '/whatsapp/finished', icon: CheckCircle, permKey: 'whatsapp_view' },
+    { title: 'Automações', url: '/whatsapp/automations', icon: Zap, permKey: 'whatsapp_view' },
+    { title: 'Msg. Rápidas', url: '/whatsapp/quick-replies', icon: MessageCircle, permKey: 'whatsapp_view' },
+  ];
+
   const adminItems: MenuItem[] = [
     { title: 'Configurações', url: '/settings', icon: Settings, permKey: 'settings_access' },
     { title: 'Usuários', url: '/users', icon: Users },
@@ -132,6 +139,7 @@ function AppSidebar() {
 
   const isFinancialActive = location.pathname.startsWith('/financial');
   const isReportsActive = location.pathname.startsWith('/reports');
+  const isWhatsAppActive = location.pathname.startsWith('/whatsapp');
 
   const filteredFinancial = filterItems(financialItems);
   const filteredReports = filterItems(reportItems);
