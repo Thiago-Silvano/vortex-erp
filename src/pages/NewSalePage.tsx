@@ -566,7 +566,7 @@ export default function NewSalePage() {
         ];
       });
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: y,
         head: [['Tipo', 'Descrição', 'Valor']],
         body: tableBody,
