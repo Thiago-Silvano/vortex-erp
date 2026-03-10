@@ -1228,6 +1228,7 @@ export type Database = {
           invoice_url: string | null
           net_profit: number | null
           notes: string | null
+          passengers_count: number | null
           payment_method: string | null
           quote_id: string | null
           sale_date: string
@@ -1237,6 +1238,9 @@ export type Database = {
           status: string
           total_sale: number | null
           total_supplier_cost: number | null
+          trip_end_date: string | null
+          trip_nights: number | null
+          trip_start_date: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -1258,6 +1262,7 @@ export type Database = {
           invoice_url?: string | null
           net_profit?: number | null
           notes?: string | null
+          passengers_count?: number | null
           payment_method?: string | null
           quote_id?: string | null
           sale_date?: string
@@ -1267,6 +1272,9 @@ export type Database = {
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null
+          trip_end_date?: string | null
+          trip_nights?: number | null
+          trip_start_date?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1288,6 +1296,7 @@ export type Database = {
           invoice_url?: string | null
           net_profit?: number | null
           notes?: string | null
+          passengers_count?: number | null
           payment_method?: string | null
           quote_id?: string | null
           sale_date?: string
@@ -1297,6 +1306,9 @@ export type Database = {
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null
+          trip_end_date?: string | null
+          trip_nights?: number | null
+          trip_start_date?: string | null
           updated_at?: string
           updated_by?: string | null
         }
