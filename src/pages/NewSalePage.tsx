@@ -488,6 +488,169 @@ export default function NewSalePage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  const handleExportPdf = async () => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o PDF'); return; }
+
+    // Fetch agency settings for header
+    let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
+    const agQuery = activeCompany?.id
+      ? supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1)
+      : supabase.from('agency_settings').select('*').limit(1);
+    const { data: agData } = await agQuery;
+    if (agData && agData.length > 0) agency = agData[0] as any;
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let y = 15;
+
+    // Header bar
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(0, 0, pageWidth, 35, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(agency.name || 'Proposta de Viagem', margin, 16);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const contactParts = [agency.whatsapp, agency.email, agency.website].filter(Boolean);
+    if (contactParts.length > 0) doc.text(contactParts.join('  |  '), margin, 24);
+    doc.text('PROPOSTA COMERCIAL', margin, 31);
+
+    y = 42;
+    doc.setTextColor(15, 23, 42);
+
+    // Client info
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DADOS DO CLIENTE', margin, y);
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Cliente: ${clientName}`, margin, y); y += 5;
+    doc.text(`Data: ${saleDate ? format(new Date(saleDate + 'T12:00:00'), 'dd/MM/yyyy') : '-'}`, margin, y); y += 5;
+    const sellerName = allSellers.find(s => s.id === sellerId)?.full_name;
+    if (sellerName) { doc.text(`Consultor: ${sellerName}`, margin, y); y += 5; }
+
+    // Passengers
+    if (passengers.length > 0) {
+      y += 4;
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PASSAGEIROS', margin, y); y += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      passengers.forEach((pax, i) => {
+        const paxName = `${pax.first_name} ${pax.last_name}`.trim() || `Passageiro ${i + 1}`;
+        const docInfo = pax.document_number ? ` — ${pax.document_type === 'cpf' ? 'CPF' : 'Passaporte'}: ${pax.document_number}` : '';
+        const birthInfo = pax.birth_date ? ` — Nasc.: ${format(new Date(pax.birth_date + 'T12:00:00'), 'dd/MM/yyyy')}` : '';
+        doc.text(`${pax.is_main ? '★ ' : ''}${paxName}${docInfo}${birthInfo}`, margin, y);
+        y += 5;
+        if (y > 270) { doc.addPage(); y = 15; }
+      });
+    }
+
+    // Services table
+    if (items.length > 0) {
+      y += 4;
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('SERVIÇOS', margin, y); y += 2;
+
+      const tableBody = items.map((item, idx) => {
+        const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
+        return [
+          catalogName || `Serviço ${idx + 1}`,
+          item.description,
+          fmt(item.total_value),
+        ];
+      });
+
+      (doc as any).autoTable({
+        startY: y,
+        head: [['Tipo', 'Descrição', 'Valor']],
+        body: tableBody,
+        margin: { left: margin, right: margin },
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [241, 245, 249] },
+        columnStyles: { 2: { halign: 'right', cellWidth: 35 } },
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 6;
+    }
+
+    // Suppliers
+    if (selectedSupplierIds.length > 0) {
+      if (y > 250) { doc.addPage(); y = 15; }
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('FORNECEDORES', margin, y); y += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      selectedSupplierIds.forEach(sid => {
+        const sup = allSuppliers.find(s => s.id === sid);
+        if (sup) { doc.text(`• ${sup.name}`, margin, y); y += 5; }
+      });
+    }
+
+    // Total
+    if (y > 250) { doc.addPage(); y = 15; }
+    y += 4;
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(margin, y, pageWidth - margin * 2, 20, 3, 3, 'F');
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('VALOR TOTAL:', margin + 5, y + 13);
+    doc.setFontSize(14);
+    doc.text(fmt(totalSale), pageWidth - margin - 5, y + 13, { align: 'right' });
+    y += 26;
+
+    // Payment info
+    if (y > 250) { doc.addPage(); y = 15; }
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const methodLabel = paymentMethod === 'pix' ? 'PIX' : paymentMethod === 'credito' ? `Cartão de Crédito (${installments}x)` : paymentMethod === 'boleto' ? `Boleto (${installments}x)` : paymentMethod;
+    doc.text(`Forma de pagamento: ${methodLabel}`, margin, y); y += 5;
+
+    if (receivables.length > 1) {
+      receivables.forEach(r => {
+        const dueLabel = r.due_date ? format(new Date(r.due_date + 'T12:00:00'), 'dd/MM/yyyy') : '-';
+        doc.text(`  Parcela ${r.installment_number}: ${fmt(r.amount)} — Vencimento: ${dueLabel}`, margin, y);
+        y += 5;
+        if (y > 270) { doc.addPage(); y = 15; }
+      });
+    }
+
+    // Notes
+    if (notes) {
+      y += 4;
+      if (y > 250) { doc.addPage(); y = 15; }
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('OBSERVAÇÕES', margin, y); y += 6;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      const lines = doc.splitTextToSize(notes, pageWidth - margin * 2);
+      doc.text(lines, margin, y);
+      y += lines.length * 4;
+    }
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.setTextColor(148, 163, 184);
+      doc.text('Valores sujeitos a disponibilidade e alterações sem aviso prévio.', margin, 287);
+      doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, 287, { align: 'right' });
+    }
+
+    doc.save(`proposta-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+    toast.success('PDF da proposta gerado!');
+  };
+
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
