@@ -125,6 +125,10 @@ export default function NewSalePage() {
     setSaleInterest(Number((sale as any).sale_interest) || 0);
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
+    setPassengersCount(Number((sale as any).passengers_count) || 1);
+    setTripNights(Number((sale as any).trip_nights) || 0);
+    setTripStartDate((sale as any).trip_start_date || '');
+    setTripEndDate((sale as any).trip_end_date || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
     if ((sale as any).invoice_url) {
