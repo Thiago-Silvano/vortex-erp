@@ -1024,6 +1024,38 @@ export type Database = {
           },
         ]
       }
+      sale_item_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          sale_item_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          sale_item_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          sale_item_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_item_images_sale_item_id_fkey"
+            columns: ["sale_item_id"]
+            isOneToOne: false
+            referencedRelation: "sale_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sale_items: {
         Row: {
           cost_center_id: string | null
@@ -1188,6 +1220,7 @@ export type Database = {
           commission_value: number | null
           created_at: string
           created_by: string | null
+          destination_image_url: string | null
           empresa_id: string | null
           gross_profit: number | null
           id: string
@@ -1216,6 +1249,7 @@ export type Database = {
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
+          destination_image_url?: string | null
           empresa_id?: string | null
           gross_profit?: number | null
           id?: string
@@ -1244,6 +1278,7 @@ export type Database = {
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
+          destination_image_url?: string | null
           empresa_id?: string | null
           gross_profit?: number | null
           id?: string

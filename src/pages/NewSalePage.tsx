@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2 } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
@@ -99,6 +99,8 @@ export default function NewSalePage() {
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [destinationImageUrl, setDestinationImageUrl] = useState('');
+  const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
@@ -118,13 +120,26 @@ export default function NewSalePage() {
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
     setInvoiceUrl((sale as any).invoice_url || '');
+    setDestinationImageUrl((sale as any).destination_image_url || '');
     if ((sale as any).invoice_url) {
       const parts = (sale as any).invoice_url.split('/');
       setInvoiceFileName(decodeURIComponent(parts[parts.length - 1]) || 'nota-fiscal.pdf');
     }
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
-    if (saleItems) setItems(saleItems.map(i => ({ id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav), total_value: Number(i.total_value) })));
+    if (saleItems) {
+      setItems(saleItems.map(i => ({ id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav), total_value: Number(i.total_value), service_catalog_id: i.service_catalog_id || undefined, cost_center_id: i.cost_center_id || undefined })));
+      
+      // Load images for each item
+      const imgMap: Record<number, string[]> = {};
+      for (let idx = 0; idx < saleItems.length; idx++) {
+        const { data: imgs } = await (supabase.from('sale_item_images' as any) as any).select('*').eq('sale_item_id', saleItems[idx].id).order('sort_order');
+        if (imgs && imgs.length > 0) {
+          imgMap[idx] = imgs.map((img: any) => img.image_url);
+        }
+      }
+      setItemImages(imgMap);
+    }
 
     const { data: saleSups } = await supabase.from('sale_suppliers').select('supplier_id').eq('sale_id', id);
     if (saleSups) setSelectedSupplierIds(saleSups.map(s => s.supplier_id));
@@ -302,6 +317,46 @@ export default function NewSalePage() {
     e.target.value = '';
   };
 
+  const handleDestinationImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop();
+    const fileName = `destinations/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
+    if (error) { toast.error('Erro ao enviar imagem'); return; }
+    const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+    setDestinationImageUrl(data.publicUrl);
+    toast.success('Imagem do destino enviada!');
+    e.target.value = '';
+  };
+
+  const handleItemImageUpload = async (itemIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop();
+      const fileName = `sale-items/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
+      if (error) continue;
+      const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+      newUrls.push(data.publicUrl);
+    }
+    if (newUrls.length > 0) {
+      setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...newUrls] }));
+      toast.success(`${newUrls.length} imagem(ns) adicionada(s)!`);
+    }
+    e.target.value = '';
+  };
+
+  const removeItemImage = (itemIdx: number, imgIdx: number) => {
+    setItemImages(prev => {
+      const updated = [...(prev[itemIdx] || [])];
+      updated.splice(imgIdx, 1);
+      return { ...prev, [itemIdx]: updated };
+    });
+  };
+
   const buildSalePayload = async (status: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     const userEmail = user?.email || '';
@@ -329,6 +384,7 @@ export default function NewSalePage() {
         empresa_id: activeCompany?.id || null,
         seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
         invoice_url: invoiceUrl || null,
+        destination_image_url: destinationImageUrl || null,
       } as any,
       userEmail,
     };
@@ -350,10 +406,26 @@ export default function NewSalePage() {
     }
 
     if (items.length > 0) {
-      await supabase.from('sale_items').insert(items.map((item, idx) => ({
+      const { data: insertedItems } = await supabase.from('sale_items').insert(items.map((item, idx) => ({
         sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav, total_value: item.total_value, sort_order: idx,
         service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
-      } as any)));
+      } as any))).select('id');
+
+      // Save item images
+      if (insertedItems) {
+        for (let idx = 0; idx < insertedItems.length; idx++) {
+          const images = itemImages[idx];
+          if (images && images.length > 0) {
+            await (supabase.from('sale_item_images' as any) as any).insert(
+              images.map((url: string, sortIdx: number) => ({
+                sale_item_id: insertedItems[idx].id,
+                image_url: url,
+                sort_order: sortIdx,
+              }))
+            );
+          }
+        }
+      }
     }
 
     if (selectedSupplierIds.length > 0) {
@@ -696,6 +768,26 @@ export default function NewSalePage() {
                 </Select>
               </div>
             </div>
+            {/* Destination Image */}
+            <div className="col-span-full mt-2">
+              <Label>Imagem do Destino (para proposta)</Label>
+              <div className="flex items-center gap-3 mt-1">
+                {destinationImageUrl ? (
+                  <div className="relative">
+                    <img src={destinationImageUrl} alt="Destino" className="h-20 w-32 object-cover rounded border" />
+                    <Button size="icon" variant="destructive" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => setDestinationImageUrl('')}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50">
+                    <ImagePlus className="h-4 w-4" />
+                    Adicionar imagem
+                    <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
+                  </label>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -838,38 +930,63 @@ export default function NewSalePage() {
               </TableHeader>
               <TableBody>
                 {items.map((item, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="min-w-[180px]">
-                      <Select
-                        value={item.service_catalog_id || 'manual'}
-                        onValueChange={(v) => {
-                          const svc = serviceCatalog.find(s => s.id === v);
-                          if (svc) {
-                            updateItem(idx, 'service_catalog_id', svc.id);
-                            updateItem(idx, 'description', svc.name);
-                            if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id);
-                          }
-                        }}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="manual">Selecione um serviço</SelectItem>
-                          {serviceCatalog.map(s => (
-                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  <React.Fragment key={idx}>
+                    <TableRow>
+                      <TableCell className="min-w-[180px]">
+                        <Select
+                          value={item.service_catalog_id || 'manual'}
+                          onValueChange={(v) => {
+                            const svc = serviceCatalog.find(s => s.id === v);
+                            if (svc) {
+                              updateItem(idx, 'service_catalog_id', svc.id);
+                              updateItem(idx, 'description', svc.name);
+                              if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id);
+                            }
+                          }}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="manual">Selecione um serviço</SelectItem>
+                            {serviceCatalog.map(s => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell><Input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} placeholder="Detalhes..." /></TableCell>
+                      <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
+                      <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
+                      <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
+                      <TableCell>
+                        <Button size="icon" variant="ghost" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className="border-b-2">
+                      <TableCell colSpan={6} className="py-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
+                            <ImagePlus className="h-3 w-3" />
+                            Imagens
+                            <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                          </label>
+                          {(itemImages[idx] || []).map((url, imgIdx) => (
+                            <div key={imgIdx} className="relative group">
+                              <img src={url} alt="" className="h-10 w-14 object-cover rounded border" />
+                              <button
+                                type="button"
+                                onClick={() => removeItemImage(idx, imgIdx)}
+                                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                            </div>
                           ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell><Input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} placeholder="Detalhes..." /></TableCell>
-                    <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
-                    <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
-                    <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
-                    <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
