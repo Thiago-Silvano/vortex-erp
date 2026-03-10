@@ -79,10 +79,10 @@ export default function PropostaPublicPage() {
     setLoading(true);
 
     // Fetch sale by short_id
-    const { data: saleData, error } = await supabase
+    const { data: saleData, error } = await (supabase
       .from('sales')
-      .select('*')
-      .eq('short_id' as any, shortId)
+      .select('*') as any)
+      .eq('short_id', shortId)
       .single();
 
     if (error || !saleData) {
