@@ -604,6 +604,31 @@ export default function NewSalePage() {
     toast.success('PDF da proposta premium gerado!');
   };
 
+  const handleGenerateLink = async () => {
+    if (!editSaleId) {
+      toast.error('Salve a venda primeiro antes de gerar o link da proposta.');
+      return;
+    }
+
+    // Fetch the short_id for this sale
+    const { data, error } = await (supabase.from('sales').select('short_id' as any).eq('id', editSaleId).single() as any);
+    if (error || !data?.short_id) {
+      toast.error('Erro ao buscar código da proposta.');
+      return;
+    }
+
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/proposta/${data.short_id}`;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('Link da proposta copiado!');
+    } catch {
+      // Fallback: show in prompt
+      window.prompt('Copie o link da proposta:', link);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
