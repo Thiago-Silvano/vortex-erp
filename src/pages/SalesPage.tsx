@@ -76,6 +76,14 @@ export default function SalesPage() {
     const saleId = deleteTarget.id;
 
     try {
+      // Delete sale_item_images first (FK dependency)
+      const { data: saleItems } = await supabase.from('sale_items').select('id').eq('sale_id', saleId);
+      if (saleItems) {
+        for (const si of saleItems) {
+          await (supabase.from('sale_item_images' as any) as any).delete().eq('sale_item_id', si.id);
+        }
+      }
+
       // Delete all related records in cascade
       await supabase.from('receivables').delete().eq('sale_id', saleId);
       await supabase.from('accounts_payable').delete().eq('sale_id', saleId);
