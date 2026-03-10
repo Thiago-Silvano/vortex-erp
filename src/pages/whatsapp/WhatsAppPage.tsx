@@ -149,8 +149,11 @@ export default function WhatsAppPage() {
   }, [location.state, fetchConversations]);
 
   useEffect(() => {
-    if (selectedConv) fetchMessages(selectedConv.id);
-  }, [selectedConv?.id, fetchMessages]);
+    if (selectedConv) {
+      fetchMessages(selectedConv.id);
+      markAsRead(selectedConv.id);
+    }
+  }, [selectedConv?.id, fetchMessages, markAsRead]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -162,6 +165,7 @@ export default function WhatsAppPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_messages' }, (payload) => {
         if (selectedConv && (payload.new as any)?.conversation_id === selectedConv.id) {
           fetchMessages(selectedConv.id);
+          markAsRead(selectedConv.id);
         }
         fetchConversations();
       })
@@ -170,7 +174,7 @@ export default function WhatsAppPage() {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [selectedConv?.id, activeCompany?.id, fetchConversations, fetchMessages]);
+  }, [selectedConv?.id, activeCompany?.id, fetchConversations, fetchMessages, markAsRead]);
 
   useEffect(() => {
     const convInterval = setInterval(() => { fetchConversations(); }, 5000);
