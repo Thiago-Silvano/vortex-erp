@@ -699,8 +699,8 @@ export default function WhatsAppPage() {
                   className="flex-1 rounded-lg border-none text-sm"
                   style={{ background: '#fff', color: '#111b21' }}
                 />
-                <button className="shrink-0 p-2 rounded-full hover:bg-gray-200" onClick={handleSend} disabled={!newMessage.trim()}>
-                  <Send className="h-5 w-5" style={{ color: newMessage.trim() ? '#25d366' : '#8696a0' }} />
+                <button className="shrink-0 p-2 rounded-full hover:bg-gray-200" onClick={handleSend} disabled={!newMessage.trim() || isSending}>
+                  <Send className="h-5 w-5" style={{ color: newMessage.trim() && !isSending ? '#25d366' : '#8696a0' }} />
                 </button>
               </div>
             </>
