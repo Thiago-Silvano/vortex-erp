@@ -410,6 +410,10 @@ export default function NewSalePage() {
         invoice_url: invoiceUrl || null,
         destination_image_url: destinationImageUrl || null,
         sale_interest: saleInterest,
+        passengers_count: passengersCount,
+        trip_nights: tripNights,
+        trip_start_date: tripStartDate || null,
+        trip_end_date: tripEndDate || null,
       } as any,
       userEmail,
     };
