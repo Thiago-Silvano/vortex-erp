@@ -1193,7 +1193,10 @@ export default function NewSalePage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Total da Venda</p>
-                <p className="text-xl font-bold">{fmt(totalSale)}</p>
+                <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
+                {saleInterest > 0 && (
+                  <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)} + Juros: {fmt(saleInterest)})</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Custo Fornecedor</p>
