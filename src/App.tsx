@@ -48,6 +48,7 @@ import WhatsAppPage from "./pages/whatsapp/WhatsAppPage";
 import WhatsAppFinishedPage from "./pages/whatsapp/WhatsAppFinishedPage";
 import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage";
 import WhatsAppAutomationsPage from "./pages/whatsapp/WhatsAppAutomationsPage";
+import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
 
 const queryClient = new QueryClient();
 
