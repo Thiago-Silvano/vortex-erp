@@ -112,6 +112,11 @@ const App = () => (
           <Route path="/whatsapp/quick-replies" element={<ProtectedRoute><WhatsAppQuickRepliesPage /></ProtectedRoute>} />
           <Route path="/whatsapp/automations" element={<ProtectedRoute><WhatsAppAutomationsPage /></ProtectedRoute>} />
           <Route path="/whatsapp/settings" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
+
+          {/* Email routes */}
+          <Route path="/email" element={<ProtectedRoute><EmailInboxPage /></ProtectedRoute>} />
+          <Route path="/email/templates" element={<ProtectedRoute><EmailTemplatesPage /></ProtectedRoute>} />
+          <Route path="/email/settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
