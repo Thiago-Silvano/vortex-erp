@@ -319,7 +319,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <Button
                         onClick={() => navigate('/email')}
                         variant="outline"
-                        className="h-10 rounded-[20px] gap-2 font-medium border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10"
+                        className="h-10 rounded-[20px] gap-2 font-medium border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6]/10"
                       >
                         <Mail className="h-4 w-4" />
                         Email
