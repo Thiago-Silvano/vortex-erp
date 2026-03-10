@@ -97,17 +97,27 @@ Deno.serve(async (req) => {
         const agentLabel = `[${sender_name || user.email?.split('@')[0] || 'Agente'}]`;
         const fullMessage = `${agentLabel}\n${content}`;
 
-        await fetch(`${session.server_url}/send-message`, {
+        const deliveryResponse = await fetch(`${session.server_url}/send-message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            phone: conv.phone,
+            number: conv.phone, // expected by VPS server.js
+            phone: conv.phone,  // backwards compatibility
             message: fullMessage,
             message_type: message_type || 'text',
             media_url,
             message_id: msgData?.id,
           }),
         });
+
+        if (!deliveryResponse.ok) {
+          const errText = await deliveryResponse.text();
+          throw new Error(`Delivery failed (${deliveryResponse.status}): ${errText}`);
+        }
+
+        if (msgData?.id) {
+          await supabase.from('whatsapp_messages').update({ delivery_status: 'sent' }).eq('id', msgData.id);
+        }
       } catch (e) {
         console.error('Failed to forward to Node.js server:', e);
         // Message is saved, but delivery failed - mark accordingly
