@@ -7,12 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Save, TestTube, Mail, Server, Lock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Save, TestTube, Mail, Server, Lock, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+const CONNECTION_FIELDS = [
+  'smtp_host', 'smtp_port', 'smtp_user', 'smtp_password', 'smtp_ssl',
+  'imap_host', 'imap_port', 'imap_user', 'imap_password', 'imap_ssl',
+] as const;
+
 export default function EmailSettingsPage() {
-  const { activeCompany } = useCompany();
+  const { activeCompany, companies, isMaster, userCompanyIds } = useCompany();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -48,20 +53,57 @@ export default function EmailSettingsPage() {
   const handleSave = async () => {
     if (!activeCompany) return;
     setSaving(true);
+
     const record = { ...settings, empresa_id: activeCompany.id };
 
+    // Save current company
+    let success = false;
     if (settingsId) {
       const { error } = await supabase.from('email_settings').update(record as any).eq('id', settingsId);
       if (error) toast.error('Erro ao salvar: ' + error.message);
-      else toast.success('Configurações salvas');
+      else success = true;
     } else {
       const { data, error } = await supabase.from('email_settings').insert(record as any).select().single();
       if (error) toast.error('Erro ao salvar: ' + error.message);
       else {
         setSettingsId((data as any).id);
-        toast.success('Configurações salvas');
+        success = true;
       }
     }
+
+    // If master, sync connection settings to all other companies
+    if (success && isMaster) {
+      const connectionData: Record<string, any> = {};
+      for (const key of CONNECTION_FIELDS) {
+        connectionData[key] = settings[key];
+      }
+
+      const otherCompanyIds = userCompanyIds.filter(id => id !== activeCompany.id);
+
+      for (const companyId of otherCompanyIds) {
+        const { data: existing } = await supabase
+          .from('email_settings')
+          .select('id')
+          .eq('empresa_id', companyId)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase.from('email_settings').update(connectionData as any).eq('id', (existing as any).id);
+        } else {
+          await supabase.from('email_settings').insert({
+            ...connectionData,
+            empresa_id: companyId,
+            from_name: '',
+            from_email: '',
+          } as any);
+        }
+      }
+
+      toast.success(`Configurações salvas e sincronizadas para ${otherCompanyIds.length + 1} empresa(s)`);
+    } else if (success) {
+      toast.success('Configurações salvas');
+    }
+
     setSaving(false);
   };
 
@@ -96,10 +138,14 @@ export default function EmailSettingsPage() {
           <p className="text-muted-foreground text-sm">Configure servidores SMTP e IMAP para {activeCompany?.name}</p>
         </div>
 
+        {/* Remetente - PER COMPANY */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg"><Mail className="h-5 w-5" /> Remetente</CardTitle>
-            <CardDescription>Identidade do email de saída</CardDescription>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Mail className="h-5 w-5" /> Remetente
+              <Badge variant="outline" className="ml-auto text-xs font-normal">Por empresa</Badge>
+            </CardTitle>
+            <CardDescription>Identidade do email de saída — cada empresa pode ter um remetente diferente</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -115,10 +161,18 @@ export default function EmailSettingsPage() {
           </CardContent>
         </Card>
 
+        {/* SMTP - SHARED */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg"><Server className="h-5 w-5" /> Servidor SMTP (Envio)</CardTitle>
-            <CardDescription>Configurações para envio de emails</CardDescription>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Server className="h-5 w-5" /> Servidor SMTP (Envio)
+              {isMaster && <Badge className="ml-auto text-xs font-normal gap-1"><Link2 className="h-3 w-3" /> Compartilhado</Badge>}
+            </CardTitle>
+            <CardDescription>
+              {isMaster
+                ? 'Estas configurações serão sincronizadas automaticamente para todas as empresas'
+                : 'Configurações para envio de emails'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -148,10 +202,18 @@ export default function EmailSettingsPage() {
           </CardContent>
         </Card>
 
+        {/* IMAP - SHARED */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg"><Lock className="h-5 w-5" /> Servidor IMAP (Recebimento)</CardTitle>
-            <CardDescription>Configurações para receber emails (Fase 2)</CardDescription>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Lock className="h-5 w-5" /> Servidor IMAP (Recebimento)
+              {isMaster && <Badge className="ml-auto text-xs font-normal gap-1"><Link2 className="h-3 w-3" /> Compartilhado</Badge>}
+            </CardTitle>
+            <CardDescription>
+              {isMaster
+                ? 'Estas configurações serão sincronizadas automaticamente para todas as empresas'
+                : 'Configurações para receber emails'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
