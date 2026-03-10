@@ -39,8 +39,10 @@ async function callProxy(endpoint: string, method: string, empresaId: string, pa
   });
 
   if (error) {
+    // Try to extract response body for better error handling
+    const errBody = typeof error === 'object' ? JSON.stringify(error) : String(error);
     console.error('Erro na chamada ao proxy WhatsApp:', error);
-    throw new Error(error.message || 'Erro ao chamar o servidor');
+    throw new Error(errBody);
   }
 
   console.log(`[WhatsApp Proxy] ${method} ${endpoint} →`, data);
