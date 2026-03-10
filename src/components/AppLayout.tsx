@@ -12,7 +12,8 @@ import {
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
   Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
-  MessageSquare, CheckCircle, Zap, MessageCircle,
+  MessageSquare, CheckCircle, Zap, MessageCircle, Mail, Send, FileEdit, Archive,
+} from 'lucide-react';
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
