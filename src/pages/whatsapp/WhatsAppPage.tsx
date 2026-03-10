@@ -426,7 +426,14 @@ export default function WhatsAppPage() {
 
               {/* Message input */}
               <div className="p-3 border-t flex gap-2">
-                <Button size="icon" variant="ghost" className="shrink-0" title="Anexar arquivo">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                />
+                <Button size="icon" variant="ghost" className="shrink-0" title="Anexar arquivo" onClick={() => fileInputRef.current?.click()}>
                   <Paperclip className="h-4 w-4" />
                 </Button>
                 <Input
