@@ -88,6 +88,7 @@ export default function NewSalePage() {
   const [invoiceUrl, setInvoiceUrl] = useState('');
   const [invoiceFileName, setInvoiceFileName] = useState('');
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
+  const [pdfImportOpen, setPdfImportOpen] = useState(false);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
