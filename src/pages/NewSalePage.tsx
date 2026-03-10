@@ -462,7 +462,12 @@ export default function NewSalePage() {
               )}
               <div className={quoteId ? '' : 'md:col-span-2'}>
                 <Label>Nome do Cliente *</Label>
-                <Input value={clientName} onChange={e => setClientName(e.target.value)} />
+                <div className="flex gap-2">
+                  <Input value={clientName} onChange={e => setClientName(e.target.value)} className="flex-1" />
+                  <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label>Data da Venda</Label>
