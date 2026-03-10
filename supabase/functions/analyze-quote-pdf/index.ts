@@ -23,20 +23,29 @@ Your job is to identify every service/item in the document and return structured
 
 Available service categories from the agency catalog: ${catalogList || "Passagem aérea, Hospedagem, Seguro viagem, Aluguel de carro, Traslado, Experiência, Outros"}
 
-For each service found, extract:
-- service_type: the best matching category from the catalog above
-- description: detailed description (airline + route + dates for flights, hotel name + dates for hotels, etc.)
-- cost_price: the price/cost found in the document (number only, no currency symbol)
-- quantity: number of units (default 1)
-- dates: any relevant dates found
-- details: any additional details (flight numbers, room type, etc.)
+IMPORTANT RULES FOR FLIGHTS / AIR TICKETS:
+- Group ALL flight segments (legs) into a SINGLE service item with service_type "Passagem aérea" (or best match from catalog).
+- Extract EACH flight leg/segment separately in the "flight_legs" array.
+- For each leg include: origin (airport code like GRU, FLN, MIA), destination (airport code), departure_date (YYYY-MM-DD), departure_time (HH:MM), arrival_date (YYYY-MM-DD), arrival_time (HH:MM), airline, flight_number, direction ("ida" for outbound, "volta" for return).
+- Calculate connection_duration between consecutive legs of the same direction (format: "Xh Ymin").
+- Calculate total_travel_duration for each direction (format: "Xh Ymin").
+- The description should summarize the full itinerary, e.g. "FLN → GRU → MIA | LATAM | 15/03 - 22/03".
+- The cost_price should be the TOTAL price for all flights combined.
 
-Also extract general trip info if available:
+RULES FOR BAGGAGE:
+- If baggage info is found, include it in "baggage" object with fields: personal_item (number of items), carry_on (number), checked_bag (number).
+
+FOR OTHER SERVICES (hotels, car rentals, insurance, transfers, tours, cruises, experiences):
+- Each service is a separate item.
+- Extract: service_type, description, cost_price, quantity, start_date (YYYY-MM-DD), end_date (YYYY-MM-DD), location, supplier, details.
+
+Also extract general trip info:
 - client_name: passenger/client name if found
 - origin: departure city/airport
-- destination: arrival city/destination
+- destination: arrival city/destination  
 - departure_date: departure date (YYYY-MM-DD)
 - return_date: return date (YYYY-MM-DD)
+- passengers: number of passengers if found
 
 Return ONLY valid JSON in this exact format:
 {
@@ -45,7 +54,8 @@ Return ONLY valid JSON in this exact format:
     "origin": "",
     "destination": "",
     "departure_date": "",
-    "return_date": ""
+    "return_date": "",
+    "passengers": 1
   },
   "services": [
     {
@@ -53,13 +63,41 @@ Return ONLY valid JSON in this exact format:
       "description": "detailed description",
       "cost_price": 0,
       "quantity": 1,
-      "dates": "relevant dates",
-      "details": "additional info"
+      "start_date": "",
+      "end_date": "",
+      "location": "",
+      "supplier": "",
+      "details": "additional info",
+      "flight_legs": [
+        {
+          "origin": "FLN",
+          "destination": "GRU",
+          "departure_date": "2026-03-15",
+          "departure_time": "10:30",
+          "arrival_date": "2026-03-15",
+          "arrival_time": "11:45",
+          "airline": "LATAM",
+          "flight_number": "LA3456",
+          "direction": "ida",
+          "connection_duration": ""
+        }
+      ],
+      "baggage": {
+        "personal_item": 1,
+        "carry_on": 1,
+        "checked_bag": 1
+      },
+      "total_travel_duration_outbound": "",
+      "total_travel_duration_return": ""
     }
   ]
 }
 
-If you cannot read or identify certain values, leave them empty or 0. Always try your best to extract every service found in the document. Prices should be numbers without currency symbols.`;
+Notes:
+- flight_legs and baggage should ONLY be present for flight/air ticket services. Omit for other service types.
+- If you cannot read certain values, leave them empty or 0.
+- Prices should be numbers without currency symbols.
+- Always try your best to extract every service found.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -76,7 +114,7 @@ If you cannot read or identify certain values, leave them empty or 0. Always try
             content: [
               {
                 type: "text",
-                text: "Analyze this PDF document from a travel supplier. Extract all services, prices, dates and trip information. Return the structured JSON as specified."
+                text: "Analyze this PDF document from a travel supplier. Extract all services with detailed flight itineraries, hotel info, car rentals, insurance, transfers, tours. Group all flight legs into one service. Return the structured JSON as specified."
               },
               {
                 type: "image_url",
@@ -111,12 +149,10 @@ If you cannot read or identify certain values, leave them empty or 0. Always try
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    // Extract JSON from the response (handle markdown code blocks)
     let jsonStr = content;
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();
     
-    // Try to find JSON object directly
     const objMatch = jsonStr.match(/\{[\s\S]*\}/);
     if (objMatch) jsonStr = objMatch[0];
 

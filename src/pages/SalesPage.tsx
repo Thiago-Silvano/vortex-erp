@@ -74,7 +74,7 @@ export default function SalesPage() {
                     <TableCell className="capitalize">{s.payment_method}</TableCell>
                     <TableCell>{fmt(Number(s.total_sale))}</TableCell>
                     <TableCell>{fmt(Number(s.net_profit))}</TableCell>
-                    <TableCell><Badge variant={s.status === 'active' ? 'default' : 'secondary'}>{s.status === 'active' ? 'Ativa' : s.status}</Badge></TableCell>
+                    <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}</Badge></TableCell>
                     <TableCell>
                       <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
                     </TableCell>
