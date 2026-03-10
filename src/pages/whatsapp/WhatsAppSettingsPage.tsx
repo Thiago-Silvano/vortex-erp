@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -53,6 +53,8 @@ export default function WhatsAppSettingsPage() {
   const [serverUrl, setServerUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [pollingQr, setPollingQr] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchSession = async () => {
     if (!activeCompany?.id) return;
@@ -80,6 +82,82 @@ export default function WhatsAppSettingsPage() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [activeCompany?.id]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
+  // Stop polling when connected or disconnected
+  useEffect(() => {
+    if (session?.status === 'connected' && pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+      setPollingQr(false);
+      toast.success('WhatsApp conectado com sucesso!');
+    }
+  }, [session?.status]);
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+    setPollingQr(false);
+  }, []);
+
+  const pollForQrCode = useCallback(async (empresaId: string) => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    setPollingQr(true);
+
+    let attempts = 0;
+    const maxAttempts = 30; // 30 * 3s = 90s max polling
+
+    const poll = async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        stopPolling();
+        toast.error('Tempo esgotado aguardando QR Code. Tente novamente.');
+        return;
+      }
+
+      try {
+        const result = await callProxy('/status', 'GET', empresaId);
+        const data = result?.data;
+        console.log('[QR Poll] Status response:', data);
+
+        if (data?.qr) {
+          // QR code received - save to session
+          await supabase.from('whatsapp_sessions').update({
+            qr_code: data.qr,
+            status: 'waiting_qr',
+            updated_at: new Date().toISOString(),
+          }).eq('empresa_id', empresaId);
+          fetchSession();
+        } else if (data?.connected || data?.status === 'connected' || data?.authenticated) {
+          // Already connected
+          await supabase.from('whatsapp_sessions').update({
+            status: 'connected',
+            qr_code: '',
+            phone_number: data.phone || data.phone_number || '',
+            connected_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }).eq('empresa_id', empresaId);
+          stopPolling();
+          fetchSession();
+        }
+      } catch (e) {
+        console.error('[QR Poll] Error:', e);
+      }
+    };
+
+    // First poll immediately
+    await poll();
+    // Then every 3 seconds
+    pollingRef.current = setInterval(poll, 3000);
+  }, [stopPolling]);
 
   const handleSaveServerUrl = async () => {
     if (!activeCompany?.id) return;
@@ -110,10 +188,8 @@ export default function WhatsAppSettingsPage() {
     setTestResult(null);
 
     try {
-      // Save URL first to ensure proxy can find it
       await handleSaveServerUrl();
-
-      const result = await callProxy('/connect', 'GET', activeCompany.id);
+      const result = await callProxy('/status', 'GET', activeCompany.id);
 
       if (result?.ok) {
         setTestResult({ ok: true, message: 'Servidor conectado ✅' });
@@ -137,13 +213,39 @@ export default function WhatsAppSettingsPage() {
     }
     setLoading(true);
     try {
-      // Save server URL first
       await handleSaveServerUrl();
+
+      // Update status to connecting
+      await supabase.from('whatsapp_sessions').update({
+        status: 'connecting',
+        qr_code: '',
+        updated_at: new Date().toISOString(),
+      }).eq('empresa_id', activeCompany.id);
+      fetchSession();
 
       const result = await callProxy('/connect', 'GET', activeCompany.id);
 
       if (result?.ok !== false) {
-        toast.success('Solicitação de conexão enviada! Aguarde o QR Code aparecer.');
+        // Check if QR code came directly in the response
+        const qr = result?.data?.qr || result?.data?.qrCode || result?.data?.qr_code;
+        if (qr) {
+          await supabase.from('whatsapp_sessions').update({
+            qr_code: qr,
+            status: 'waiting_qr',
+            updated_at: new Date().toISOString(),
+          }).eq('empresa_id', activeCompany.id);
+          fetchSession();
+          toast.success('QR Code recebido! Escaneie com seu WhatsApp.');
+        } else {
+          // Start polling for QR code
+          toast.success('Conexão iniciada! Buscando QR Code...');
+          await supabase.from('whatsapp_sessions').update({
+            status: 'waiting_qr',
+            updated_at: new Date().toISOString(),
+          }).eq('empresa_id', activeCompany.id);
+          fetchSession();
+          pollForQrCode(activeCompany.id);
+        }
       } else {
         toast.error('Erro do servidor: ' + (result?.error || 'desconhecido'));
       }
