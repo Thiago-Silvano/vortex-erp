@@ -198,12 +198,12 @@ export default function WhatsAppPage() {
     };
   }, [selectedConv?.id, activeCompany?.id, fetchConversations, fetchMessages, markAsRead]);
 
-  // Single fallback polling interval (longer, just as safety net)
+  // Fallback polling interval (every 5s as safety net for realtime failures)
   useEffect(() => {
     const interval = setInterval(() => {
       fetchConversations();
       if (selectedConv) fetchMessages(selectedConv.id);
-    }, 15000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [fetchConversations, fetchMessages, selectedConv?.id]);
 
