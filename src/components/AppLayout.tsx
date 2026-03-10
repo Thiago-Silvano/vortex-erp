@@ -310,10 +310,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </span>
             )}
 
-            {/* WhatsApp buttons - desktop */}
+            {/* Communication channel buttons - desktop */}
             {!isMobile && (
               <div className="ml-auto flex items-center gap-2">
                 <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => navigate('/email')}
+                        variant="outline"
+                        className="h-10 rounded-[20px] gap-2 font-medium border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10"
+                      >
+                        <Mail className="h-4 w-4" />
+                        Email
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Abrir módulo Email</TooltipContent>
+                  </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
