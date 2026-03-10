@@ -32,6 +32,13 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
  * The proxy now always returns HTTP 200 with { ok, data?, error? } so we can read the body.
  */
 async function callProxy(endpoint: string, method: string, empresaId: string, payload?: any) {
+  if (!empresaId) {
+    console.error('[WhatsApp Proxy] empresa_id ausente! Abortando chamada para', endpoint);
+    throw new Error('empresa_id não definido. Selecione uma empresa.');
+  }
+
+  console.log(`[WhatsApp Proxy] Chamando ${method} ${endpoint} com empresa_id=${empresaId}`);
+
   const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
     body: { endpoint, method, empresa_id: empresaId, payload },
   });
@@ -41,7 +48,14 @@ async function callProxy(endpoint: string, method: string, empresaId: string, pa
     throw new Error(error.message || 'Erro ao chamar o servidor');
   }
 
-  console.log(`[WhatsApp Proxy] ${method} ${endpoint} →`, data);
+  // Handle empresa_id missing error from server
+  const errMsg = data?.error || data?.data?.error || '';
+  if (typeof errMsg === 'string' && errMsg.toLowerCase().includes('empresa_id')) {
+    console.error('[WhatsApp Proxy] Servidor retornou erro de empresa_id:', errMsg);
+    throw new Error('Erro de identificação da empresa. Recarregue a página e tente novamente.');
+  }
+
+  console.log(`[WhatsApp Proxy] ${method} ${endpoint} → resposta:`, data);
   return data;
 }
 
