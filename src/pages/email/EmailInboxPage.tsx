@@ -224,8 +224,8 @@ export default function EmailInboxPage() {
               onChange={e => setSearch(e.target.value)}
               className="h-8 border-0 shadow-none focus-visible:ring-0 bg-transparent"
             />
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => { fetchEmails(); fetchCounts(); }}>
-              <RefreshCw className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={syncEmails} disabled={syncing}>
+              <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />
             </Button>
           </div>
           <ScrollArea className="flex-1">
