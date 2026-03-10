@@ -135,7 +135,7 @@ export default function WhatsAppPage() {
     if (data) setQuickReplies(data);
   }, [activeCompany?.id]);
 
-  useEffect(() => { fetchConversations(); fetchQuickReplies(); }, [fetchConversations, fetchQuickReplies]);
+  useEffect(() => { fetchConversations(); fetchQuickReplies(); setSelectedConv(null); setMessages([]); }, [fetchConversations, fetchQuickReplies]);
 
   useEffect(() => {
     const state = location.state as { openConversationId?: string } | null;
