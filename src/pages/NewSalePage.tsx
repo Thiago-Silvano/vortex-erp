@@ -857,6 +857,21 @@ export default function NewSalePage() {
           <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
           <Button onClick={handleSave}>{editSaleId ? 'Atualizar Venda' : 'Salvar Venda'}</Button>
         </div>
+
+        <PdfImportModal
+          open={pdfImportOpen}
+          onClose={() => setPdfImportOpen(false)}
+          serviceCatalog={serviceCatalog}
+          marginMode="none"
+          marginPercent={20}
+          onImport={(importedItems, tripInfo) => {
+            // Add imported items to existing items
+            setItems(prev => [...prev, ...importedItems]);
+            // Fill client name if empty
+            if (!clientName && tripInfo.client_name) setClientName(tripInfo.client_name);
+            toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
+          }}
+        />
       </div>
     </AppLayout>
   );
