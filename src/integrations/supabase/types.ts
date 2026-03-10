@@ -409,6 +409,250 @@ export type Database = {
           },
         ]
       }
+      email_attachments: {
+        Row: {
+          created_at: string
+          email_id: string
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string
+        }
+        Insert: {
+          created_at?: string
+          email_id: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string
+        }
+        Update: {
+          created_at?: string
+          email_id?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_attachments_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "emails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_settings: {
+        Row: {
+          created_at: string
+          empresa_id: string | null
+          from_email: string
+          from_name: string
+          id: string
+          imap_host: string
+          imap_password: string
+          imap_port: number
+          imap_ssl: boolean
+          imap_user: string
+          smtp_host: string
+          smtp_password: string
+          smtp_port: number
+          smtp_ssl: boolean
+          smtp_user: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id?: string | null
+          from_email?: string
+          from_name?: string
+          id?: string
+          imap_host?: string
+          imap_password?: string
+          imap_port?: number
+          imap_ssl?: boolean
+          imap_user?: string
+          smtp_host?: string
+          smtp_password?: string
+          smtp_port?: number
+          smtp_ssl?: boolean
+          smtp_user?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string | null
+          from_email?: string
+          from_name?: string
+          id?: string
+          imap_host?: string
+          imap_password?: string
+          imap_port?: number
+          imap_ssl?: boolean
+          imap_user?: string
+          smtp_host?: string
+          smtp_password?: string
+          smtp_port?: number
+          smtp_ssl?: boolean
+          smtp_user?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_settings_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          body_html: string
+          category: string
+          created_at: string
+          empresa_id: string | null
+          id: string
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body_html?: string
+          category?: string
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          category?: string
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emails: {
+        Row: {
+          bcc_emails: string[] | null
+          body_html: string
+          body_text: string
+          cc_emails: string[] | null
+          client_id: string | null
+          created_at: string
+          empresa_id: string | null
+          folder: string
+          from_email: string
+          from_name: string
+          id: string
+          is_read: boolean
+          is_starred: boolean
+          message_id: string | null
+          reply_to_email_id: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          subject: string
+          to_emails: string[]
+          tracking_id: string | null
+          tracking_opened_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          bcc_emails?: string[] | null
+          body_html?: string
+          body_text?: string
+          cc_emails?: string[] | null
+          client_id?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          folder?: string
+          from_email?: string
+          from_name?: string
+          id?: string
+          is_read?: boolean
+          is_starred?: boolean
+          message_id?: string | null
+          reply_to_email_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          subject?: string
+          to_emails?: string[]
+          tracking_id?: string | null
+          tracking_opened_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bcc_emails?: string[] | null
+          body_html?: string
+          body_text?: string
+          cc_emails?: string[] | null
+          client_id?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          folder?: string
+          from_email?: string
+          from_name?: string
+          id?: string
+          is_read?: boolean
+          is_starred?: boolean
+          message_id?: string | null
+          reply_to_email_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          subject?: string
+          to_emails?: string[]
+          tracking_id?: string | null
+          tracking_opened_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emails_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emails_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emails_reply_to_email_id_fkey"
+            columns: ["reply_to_email_id"]
+            isOneToOne: false
+            referencedRelation: "emails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flight_legs: {
         Row: {
           arrival_date: string | null
