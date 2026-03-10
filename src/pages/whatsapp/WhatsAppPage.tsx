@@ -198,47 +198,65 @@ export default function WhatsAppPage() {
     };
   }, [selectedConv?.id, activeCompany?.id, fetchConversations, fetchMessages, markAsRead]);
 
-  // Single fallback polling interval (longer, just as safety net)
+  // Fallback polling interval (every 5s as safety net for realtime failures)
   useEffect(() => {
     const interval = setInterval(() => {
       fetchConversations();
       if (selectedConv) fetchMessages(selectedConv.id);
-    }, 15000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [fetchConversations, fetchMessages, selectedConv?.id]);
 
+  const [isSending, setIsSending] = useState(false);
+
   const handleSend = async () => {
-    if (!newMessage.trim() || !selectedConv) return;
+    if (!newMessage.trim() || !selectedConv || isSending) return;
     const senderName = userEmail.split('@')[0] || 'Agente';
+    const messageContent = newMessage.trim();
+
+    setNewMessage('');
+    setReplyingTo(null);
+    setIsSending(true);
 
     try {
-      await supabase.functions.invoke('whatsapp-send', {
+      const { data: result, error } = await supabase.functions.invoke('whatsapp-send', {
         body: {
           conversation_id: selectedConv.id,
-          content: newMessage.trim(),
+          content: messageContent,
           message_type: 'text',
           sender_name: senderName,
           empresa_id: activeCompany?.id,
           reply_to_message_id: replyingTo?.id || null,
         },
       });
-    } catch {
+
+      if (error) {
+        console.error('Send error:', error);
+        toast.error('Erro ao enviar mensagem: ' + (error.message || 'Tente novamente'));
+      } else if (result?.error) {
+        console.error('Send error:', result.error);
+        toast.error('Erro: ' + result.error);
+      }
+    } catch (err) {
+      console.error('Send exception:', err);
+      toast.error('Falha ao enviar mensagem');
+      // Fallback: insert directly into DB
       await supabase.from('whatsapp_messages').insert({
         conversation_id: selectedConv.id,
         sender_type: 'agent',
         sender_name: senderName,
-        content: newMessage.trim(),
+        content: messageContent,
         message_type: 'text',
         reply_to_message_id: replyingTo?.id || null,
       });
       await supabase.from('whatsapp_conversations').update({
-        last_message: newMessage.trim(),
+        last_message: messageContent,
         last_message_at: new Date().toISOString(),
       }).eq('id', selectedConv.id);
+    } finally {
+      setIsSending(false);
     }
 
-    setNewMessage('');
-    setReplyingTo(null);
     fetchMessages(selectedConv.id);
     fetchConversations();
   };
@@ -528,10 +546,10 @@ export default function WhatsAppPage() {
               </div>
 
               {/* Messages area */}
-              <div className="flex-1 overflow-y-auto" style={{ background: '#efeae2' }}>
+              <div className="flex-1 overflow-y-auto relative" style={{ background: '#efeae2' }}>
                 {/* WhatsApp wallpaper overlay */}
-                <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'200\' height=\'200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'a\' patternUnits=\'userSpaceOnUse\' width=\'40\' height=\'40\'%3E%3Cpath d=\'M0 20h40M20 0v40\' fill=\'none\' stroke=\'%23000\' stroke-width=\'.5\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect fill=\'url(%23a)\' width=\'200\' height=\'200\'/%3E%3C/svg%3E")', pointerEvents: 'none' }} />
-                <div className="relative space-y-1 max-w-3xl mx-auto px-4 py-3">
+                <div className="absolute inset-0 opacity-[0.06] z-0" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'200\' height=\'200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'a\' patternUnits=\'userSpaceOnUse\' width=\'40\' height=\'40\'%3E%3Cpath d=\'M0 20h40M20 0v40\' fill=\'none\' stroke=\'%23000\' stroke-width=\'.5\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect fill=\'url(%23a)\' width=\'200\' height=\'200\'/%3E%3C/svg%3E")', pointerEvents: 'none' }} />
+                <div className="relative z-10 space-y-1 max-w-3xl mx-auto px-4 py-3">
                   {messages.map(msg => {
                     const isAgent = msg.sender_type === 'agent';
                     const repliedMsg = getReplyPreview(msg.reply_to_message_id);
@@ -681,8 +699,8 @@ export default function WhatsAppPage() {
                   className="flex-1 rounded-lg border-none text-sm"
                   style={{ background: '#fff', color: '#111b21' }}
                 />
-                <button className="shrink-0 p-2 rounded-full hover:bg-gray-200" onClick={handleSend} disabled={!newMessage.trim()}>
-                  <Send className="h-5 w-5" style={{ color: newMessage.trim() ? '#25d366' : '#8696a0' }} />
+                <button className="shrink-0 p-2 rounded-full hover:bg-gray-200" onClick={handleSend} disabled={!newMessage.trim() || isSending}>
+                  <Send className="h-5 w-5" style={{ color: newMessage.trim() && !isSending ? '#25d366' : '#8696a0' }} />
                 </button>
               </div>
             </>
