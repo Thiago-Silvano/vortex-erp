@@ -768,6 +768,26 @@ export default function NewSalePage() {
                 </Select>
               </div>
             </div>
+            {/* Destination Image */}
+            <div className="col-span-full mt-2">
+              <Label>Imagem do Destino (para proposta)</Label>
+              <div className="flex items-center gap-3 mt-1">
+                {destinationImageUrl ? (
+                  <div className="relative">
+                    <img src={destinationImageUrl} alt="Destino" className="h-20 w-32 object-cover rounded border" />
+                    <Button size="icon" variant="destructive" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => setDestinationImageUrl('')}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50">
+                    <ImagePlus className="h-4 w-4" />
+                    Adicionar imagem
+                    <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
+                  </label>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
