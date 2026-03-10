@@ -205,10 +205,11 @@ export default function NewSalePage() {
   }, [cardPaymentType, installments, ecRates, linkRates, paymentMethod]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
+  const totalSaleWithInterest = totalSale + saleInterest;
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
-  const grossProfit = totalSale - totalCost;
+  const grossProfit = totalSaleWithInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
-  const cardFeeValue = paymentMethod === 'credito' ? totalSale * (feeRate / 100) : 0;
+  const cardFeeValue = paymentMethod === 'credito' ? totalSaleWithInterest * (feeRate / 100) : 0;
   const netProfit = grossProfit - commissionValue - cardFeeValue;
 
   useEffect(() => {
