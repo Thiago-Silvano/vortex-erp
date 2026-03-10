@@ -349,7 +349,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     }
     if (returnLegs.length > 0) {
       y = checkPageBreak(doc, y, 40, m);
-      y = drawFlightDirection(doc, '✈️  VOLTA', returnLegs, y, m, pw, cw);
+      y = drawFlightDirection(doc, 'VOLTA', returnLegs, y, m, pw, cw);
       y += 4;
     }
 
