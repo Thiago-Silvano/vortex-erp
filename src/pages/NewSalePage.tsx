@@ -137,7 +137,14 @@ export default function NewSalePage() {
     })));
   };
 
+  const fetchClients = () => {
+    let q = supabase.from('clients').select('id, full_name').order('full_name');
+    if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
+    q.then(({ data }) => { if (data) setAllClients(data); });
+  };
+
   useEffect(() => {
+    fetchClients();
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setAllSuppliers(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
     (supabase.from('services_catalog') as any).select('id, name, cost_center_id').eq('status', 'active').order('name').then(({ data }: any) => { if (data) setServiceCatalog(data); });
