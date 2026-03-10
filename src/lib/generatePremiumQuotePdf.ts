@@ -410,7 +410,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
         if (svc.date) meta.push(formatDateBR(svc.date));
         if (svc.quantity) meta.push(`${svc.quantity} pessoa(s)`);
         if (svc.description) meta.push(svc.description);
-        doc.text(meta.join('  ·  '), m + 5, y);
+        doc.text(s(meta.join('  ·  ')), m + 5, y);
         y += 4;
       }
       y += 2;
