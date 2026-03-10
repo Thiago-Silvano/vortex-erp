@@ -1113,11 +1113,10 @@ export default function NewSalePage() {
           serviceCatalog={serviceCatalog}
           marginMode="none"
           marginPercent={20}
-          onImport={(importedItems, tripInfo) => {
+          onImport={(importedItems, _tripInfo) => {
             // Add imported items to existing items
             setItems(prev => [...prev, ...importedItems]);
-            // Fill client name if empty
-            if (!clientName && tripInfo.client_name) setClientName(tripInfo.client_name);
+            // Do NOT fill client name from PDF import
             toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
           }}
         />
