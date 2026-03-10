@@ -447,10 +447,20 @@ export default function WhatsAppPage() {
                           {conv.last_message_at ? format(new Date(conv.last_message_at), 'HH:mm', { locale: ptBR }) : ''}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs truncate" style={{ color: conv.unread_count > 0 ? '#111b21' : '#667781', fontWeight: conv.unread_count > 0 ? 500 : 400 }}>{conv.last_message}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs truncate flex-1 min-w-0" style={{ color: conv.unread_count > 0 ? '#111b21' : '#667781', fontWeight: conv.unread_count > 0 ? 500 : 400 }}>{conv.last_message}</p>
                         {conv.unread_count > 0 && (
-                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[11px] font-medium ml-2 shrink-0 px-1" style={{ background: '#25d366', color: '#fff' }}>
+                          <span
+                            className="inline-flex items-center justify-center rounded-full text-[11px] font-bold shrink-0"
+                            style={{
+                              background: '#25d366',
+                              color: '#fff',
+                              minWidth: '20px',
+                              height: '20px',
+                              padding: '0 5px',
+                              lineHeight: '20px',
+                            }}
+                          >
                             {conv.unread_count}
                           </span>
                         )}
