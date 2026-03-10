@@ -118,6 +118,7 @@ export default function NewSalePage() {
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setCommissionRate(Number(sale.commission_rate) || 0);
+    setSaleInterest(Number((sale as any).sale_interest) || 0);
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
     setInvoiceUrl((sale as any).invoice_url || '');
