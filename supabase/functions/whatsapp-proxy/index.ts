@@ -65,9 +65,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Clean server URL: remove trailing slashes and any accidental endpoint suffixes
+    // Clean server URL: remove trailing slashes, endpoint suffixes and any query strings appended to base URL
+    serverUrl = serverUrl.replace(/\/(connect|disconnect|send-message|status)(\?[^]*)?$/i, '');
     serverUrl = serverUrl.replace(/\/+$/, '');
-    serverUrl = serverUrl.replace(/\/(connect|disconnect|send-message|status)\/?$/i, '');
 
     // Clean endpoint: ensure single leading slash
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;

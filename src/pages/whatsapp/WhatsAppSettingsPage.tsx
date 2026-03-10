@@ -170,9 +170,10 @@ export default function WhatsAppSettingsPage() {
     if (!activeCompany?.id) return;
     setLoading(true);
     try {
-      // Clean URL: remove trailing slashes and accidental endpoint suffixes
-      let cleanUrl = serverUrl.trim().replace(/\/+$/, '');
-      cleanUrl = cleanUrl.replace(/\/(connect|disconnect|send-message|status)\/?$/i, '');
+      // Clean URL: remove trailing slashes, endpoint suffixes and any query strings
+      let cleanUrl = serverUrl.trim();
+      cleanUrl = cleanUrl.replace(/\/(connect|disconnect|send-message|status)(\?[^]*)?$/i, '');
+      cleanUrl = cleanUrl.replace(/\/+$/, '');
 
       const { error } = await supabase.from('whatsapp_sessions').upsert({
         empresa_id: activeCompany.id,
