@@ -1971,6 +1971,53 @@ export type Database = {
           },
         ]
       }
+      whatsapp_sessions: {
+        Row: {
+          connected_at: string | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          phone_number: string | null
+          qr_code: string | null
+          server_url: string | null
+          session_data: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          connected_at?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          phone_number?: string | null
+          qr_code?: string | null
+          server_url?: string | null
+          session_data?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          connected_at?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          phone_number?: string | null
+          qr_code?: string | null
+          server_url?: string | null
+          session_data?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_sessions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

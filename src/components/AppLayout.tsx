@@ -130,6 +130,7 @@ function AppSidebar() {
     { title: 'Finalizadas', url: '/whatsapp/finished', icon: CheckCircle, permKey: 'whatsapp_view' },
     { title: 'Automações', url: '/whatsapp/automations', icon: Zap, permKey: 'whatsapp_view' },
     { title: 'Msg. Rápidas', url: '/whatsapp/quick-replies', icon: MessageCircle, permKey: 'whatsapp_view' },
+    { title: 'Configurações', url: '/whatsapp/settings', icon: Cog, permKey: 'whatsapp_view' },
   ];
 
   const adminItems: MenuItem[] = [

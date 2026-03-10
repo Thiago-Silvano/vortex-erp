@@ -48,6 +48,7 @@ import WhatsAppPage from "./pages/whatsapp/WhatsAppPage";
 import WhatsAppFinishedPage from "./pages/whatsapp/WhatsAppFinishedPage";
 import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage";
 import WhatsAppAutomationsPage from "./pages/whatsapp/WhatsAppAutomationsPage";
+import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,7 @@ const App = () => (
           <Route path="/whatsapp/finished" element={<ProtectedRoute><WhatsAppFinishedPage /></ProtectedRoute>} />
           <Route path="/whatsapp/quick-replies" element={<ProtectedRoute><WhatsAppQuickRepliesPage /></ProtectedRoute>} />
           <Route path="/whatsapp/automations" element={<ProtectedRoute><WhatsAppAutomationsPage /></ProtectedRoute>} />
+          <Route path="/whatsapp/settings" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
