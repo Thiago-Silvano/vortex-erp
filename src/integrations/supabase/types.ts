@@ -1024,6 +1024,38 @@ export type Database = {
           },
         ]
       }
+      sale_internal_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_url: string
+          id: string
+          sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string
+          file_url: string
+          id?: string
+          sale_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_url?: string
+          id?: string
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_internal_files_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sale_item_images: {
         Row: {
           created_at: string
@@ -1063,6 +1095,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          metadata: Json | null
           rav: number | null
           sale_id: string
           service_catalog_id: string | null
@@ -1075,6 +1108,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          metadata?: Json | null
           rav?: number | null
           sale_id: string
           service_catalog_id?: string | null
@@ -1087,6 +1121,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          metadata?: Json | null
           rav?: number | null
           sale_id?: string
           service_catalog_id?: string | null

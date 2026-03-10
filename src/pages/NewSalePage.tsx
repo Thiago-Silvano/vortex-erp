@@ -13,12 +13,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
+import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, maskCpf, maskEmail } from '@/lib/masks';
@@ -32,6 +33,7 @@ interface SaleItem {
   total_value: number;
   service_catalog_id?: string;
   cost_center_id?: string;
+  metadata?: ServiceMetadata;
 }
 
 interface ServiceCatalogOption {
@@ -59,6 +61,7 @@ interface ClientOption { id: string; full_name: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
+interface InternalFile { id?: string; file_name: string; file_url: string; }
 
 export default function NewSalePage() {
   const location = useLocation();
@@ -106,6 +109,11 @@ export default function NewSalePage() {
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [destinationImageUrl, setDestinationImageUrl] = useState('');
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
+  const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
+  // Service edit modal
+  const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
@@ -138,9 +146,13 @@ export default function NewSalePage() {
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
     if (saleItems) {
-      setItems(saleItems.map(i => ({ id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav), total_value: Number(i.total_value), service_catalog_id: i.service_catalog_id || undefined, cost_center_id: i.cost_center_id || undefined })));
+      setItems(saleItems.map(i => ({
+        id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav),
+        total_value: Number(i.total_value), service_catalog_id: i.service_catalog_id || undefined,
+        cost_center_id: i.cost_center_id || undefined,
+        metadata: (i as any).metadata || {},
+      })));
       
-      // Load images for each item
       const imgMap: Record<number, string[]> = {};
       for (let idx = 0; idx < saleItems.length; idx++) {
         const { data: imgs } = await (supabase.from('sale_item_images' as any) as any).select('*').eq('sale_item_id', saleItems[idx].id).order('sort_order');
@@ -163,6 +175,10 @@ export default function NewSalePage() {
       document_type: p.document_type || 'cpf', document_number: p.document_number || '',
       document_expiry: p.document_expiry || '', email: p.email || '', phone: p.phone || '', is_main: p.is_main || false,
     })));
+
+    // Load internal files
+    const { data: files } = await (supabase.from('sale_internal_files' as any) as any).select('*').eq('sale_id', id).order('created_at');
+    if (files) setInternalFiles(files.map((f: any) => ({ id: f.id, file_name: f.file_name, file_url: f.file_url })));
   };
 
   const fetchClients = () => {
@@ -206,7 +222,6 @@ export default function NewSalePage() {
     }
   }, [quoteData]);
 
-  // Auto-calc nights from dates
   useEffect(() => {
     if (tripStartDate && tripEndDate) {
       const start = new Date(tripStartDate);
@@ -320,19 +335,12 @@ export default function NewSalePage() {
   const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      toast.error('Apenas arquivos PDF são aceitos');
-      return;
-    }
+    if (file.type !== 'application/pdf') { toast.error('Apenas arquivos PDF são aceitos'); return; }
     setUploadingInvoice(true);
     const ext = file.name.split('.').pop();
     const fileName = `invoices/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
-    if (error) {
-      toast.error('Erro ao enviar nota fiscal');
-      setUploadingInvoice(false);
-      return;
-    }
+    if (error) { toast.error('Erro ao enviar nota fiscal'); setUploadingInvoice(false); return; }
     const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
     setInvoiceUrl(data.publicUrl);
     setInvoiceFileName(file.name);
@@ -381,6 +389,27 @@ export default function NewSalePage() {
     });
   };
 
+  const handleInternalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    setUploadingFile(true);
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop();
+      const fileName = `internal-files/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
+      if (error) { toast.error(`Erro ao enviar ${file.name}`); continue; }
+      const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+      setInternalFiles(prev => [...prev, { file_name: file.name, file_url: data.publicUrl }]);
+    }
+    setUploadingFile(false);
+    toast.success('Arquivo(s) adicionado(s)!');
+    e.target.value = '';
+  };
+
+  const removeInternalFile = (idx: number) => {
+    setInternalFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const buildSalePayload = async (status: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     const userEmail = user?.email || '';
@@ -425,7 +454,6 @@ export default function NewSalePage() {
     if (editSaleId) {
       const { error } = await supabase.from('sales').update({ ...salePayload, updated_by: userEmail } as any).eq('id', editSaleId);
       if (error) { toast.error('Erro ao atualizar venda'); return null; }
-      // Clean up old sale_item_images before deleting sale_items
       const { data: oldItems } = await supabase.from('sale_items').select('id').eq('sale_id', editSaleId);
       if (oldItems) {
         for (const oi of oldItems) {
@@ -435,6 +463,8 @@ export default function NewSalePage() {
       await supabase.from('sale_items').delete().eq('sale_id', editSaleId);
       await supabase.from('sale_suppliers').delete().eq('sale_id', editSaleId);
       await (supabase.from('sale_passengers' as any) as any).delete().eq('sale_id', editSaleId);
+      // Clean old internal files
+      await (supabase.from('sale_internal_files' as any) as any).delete().eq('sale_id', editSaleId);
     } else {
       const { data, error } = await supabase.from('sales').insert(salePayload as any).select('id').single();
       if (error || !data) { toast.error('Erro ao criar venda'); return null; }
@@ -443,20 +473,19 @@ export default function NewSalePage() {
 
     if (items.length > 0) {
       const { data: insertedItems } = await supabase.from('sale_items').insert(items.map((item, idx) => ({
-        sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav, total_value: item.total_value, sort_order: idx,
+        sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
+        total_value: item.total_value, sort_order: idx,
         service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
+        metadata: item.metadata || {},
       } as any))).select('id');
 
-      // Save item images
       if (insertedItems) {
         for (let idx = 0; idx < insertedItems.length; idx++) {
           const images = itemImages[idx];
           if (images && images.length > 0) {
             await (supabase.from('sale_item_images' as any) as any).insert(
               images.map((url: string, sortIdx: number) => ({
-                sale_item_id: insertedItems[idx].id,
-                image_url: url,
-                sort_order: sortIdx,
+                sale_item_id: insertedItems[idx].id, image_url: url, sort_order: sortIdx,
               }))
             );
           }
@@ -477,33 +506,33 @@ export default function NewSalePage() {
       })));
     }
 
+    // Save internal files
+    if (internalFiles.length > 0) {
+      await (supabase.from('sale_internal_files' as any) as any).insert(
+        internalFiles.map(f => ({ sale_id: saleId, file_name: f.file_name, file_url: f.file_url }))
+      );
+    }
+
     return saleId;
   };
 
-  // Save as draft - NO financial records generated
   const handleSaveDraft = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
     const { payload, userEmail } = await buildSalePayload('draft');
-    
-    // For drafts, clean up old financial records if editing
     if (editSaleId) {
       await supabase.from('receivables').delete().eq('sale_id', editSaleId);
       await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
     }
-
     const saleId = await saveSaleCore(payload, userEmail);
     if (!saleId) return;
-
     toast.success('Rascunho salvo! Nenhum lançamento financeiro foi gerado.');
     navigate('/sales');
   };
 
-  // Convert to sale - generates all financial records
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
     const { payload, userEmail } = await buildSalePayload('active');
 
-    // Clean up old financial records if editing
     if (editSaleId) {
       await supabase.from('receivables').delete().eq('sale_id', editSaleId);
       await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
@@ -514,7 +543,6 @@ export default function NewSalePage() {
     const saleId = await saveSaleCore(payload, userEmail);
     if (!saleId) return;
 
-    // Generate receivables
     if (receivables.length > 0) {
       await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
@@ -523,7 +551,6 @@ export default function NewSalePage() {
       } as any)));
     }
 
-    // Generate accounts payable for suppliers
     if (totalCost > 0 && selectedSupplierIds.length > 0) {
       const costPerSupplier = totalCost / selectedSupplierIds.length;
       await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
@@ -537,45 +564,31 @@ export default function NewSalePage() {
       await supabase.from('quotes').update({ status: 'concluido' }).eq('id', quoteId);
     }
 
-    // Auto-generate reservations for each supplier
     if (selectedSupplierIds.length > 0) {
       await supabase.from('reservations').insert(selectedSupplierIds.map(sid => {
         const sup = allSuppliers.find(s => s.id === sid);
         return {
-          sale_id: saleId,
-          supplier_id: sid,
+          sale_id: saleId, supplier_id: sid,
           description: `${sup?.name || 'Fornecedor'} - ${clientName}`,
-          status: 'pending',
-          check_in: tripStartDate || null,
-          check_out: tripEndDate || null,
+          status: 'pending', check_in: tripStartDate || null, check_out: tripEndDate || null,
           empresa_id: activeCompany?.id || null,
         };
       }));
     }
 
-    // Auto-create calendar event with main passenger info
     if (passengers.length > 0) {
-      // Clean old events if editing
       if (editSaleId && activeCompany?.id) {
-        // Delete events created for this sale (by matching client name)
-        await supabase.from('calendar_events')
-          .delete()
-          .eq('empresa_id', activeCompany.id)
-          .ilike('title', `%${clientName}%`);
+        await supabase.from('calendar_events').delete().eq('empresa_id', activeCompany.id).ilike('title', `%${clientName}%`);
       }
       const mainPassenger = passengers.find(p => p.is_main) || passengers[0];
       const eventTitle = `${mainPassenger.first_name} ${mainPassenger.last_name}`.trim() || clientName;
       const eventDate = tripStartDate || saleDate;
       await supabase.from('calendar_events').insert({
-        title: eventTitle,
-        event_date: eventDate,
-        passengers: passengers.length,
-        empresa_id: activeCompany?.id || null,
-        event_type: 'embarque',
+        title: eventTitle, event_date: eventDate, passengers: passengers.length,
+        empresa_id: activeCompany?.id || null, event_type: 'embarque',
       });
     }
 
-    // Auto-generate commission if seller is assigned
     if (sellerId && sellerId !== 'none') {
       const { data: sellerData } = await (supabase.from('sellers') as any).select('*').eq('id', sellerId).single();
       if (sellerData && sellerData.commission_type !== 'none') {
@@ -593,29 +606,17 @@ export default function NewSalePage() {
           commValue = grossProfit * (pct / 100);
         }
         await (supabase.from('seller_commissions') as any).insert({
-          empresa_id: activeCompany?.id || null,
-          seller_id: sellerId,
-          sale_id: saleId,
-          client_name: clientName,
-          sale_date: saleDate,
-          sale_value: totalSaleWithInterest,
-          cost_value: totalCost,
-          profit_value: grossProfit,
-          commission_percentage: pct,
-          commission_value: commValue,
-          commission_type: sellerData.commission_type,
-          status: 'pending',
+          empresa_id: activeCompany?.id || null, seller_id: sellerId, sale_id: saleId,
+          client_name: clientName, sale_date: saleDate, sale_value: totalSaleWithInterest,
+          cost_value: totalCost, profit_value: grossProfit, commission_percentage: pct,
+          commission_value: commValue, commission_type: sellerData.commission_type, status: 'pending',
         }).select('id').single();
 
         if (commValue > 0) {
           await supabase.from('accounts_payable').insert({
-            sale_id: saleId,
-            amount: commValue,
-            due_date: saleDate,
+            sale_id: saleId, amount: commValue, due_date: saleDate,
             description: `Comissão - ${sellerData.full_name} - ${clientName}`,
-            status: 'open',
-            origin_type: 'commission',
-            empresa_id: activeCompany?.id || null,
+            status: 'open', origin_type: 'commission', empresa_id: activeCompany?.id || null,
           } as any);
         }
       }
@@ -629,8 +630,6 @@ export default function NewSalePage() {
 
   const handleExportPdf = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o PDF'); return; }
-
-    // Fetch agency settings
     let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
     const agQuery = activeCompany?.id
       ? supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1)
@@ -638,35 +637,33 @@ export default function NewSalePage() {
     const { data: agData } = await agQuery;
     if (agData && agData.length > 0) agency = agData[0] as any;
 
-    // Fetch quote data if available (for flights/hotels)
     let flightLegs: any[] = [];
     let quoteDetails: any = null;
     if (quoteId) {
       const { data: qData } = await supabase.from('quotes').select('*').eq('id', quoteId).single();
       if (qData) quoteDetails = qData;
-
       const { data: qServices } = await supabase.from('services').select('*').eq('quote_id', quoteId).order('sort_order');
       if (qServices) {
         for (const svc of qServices) {
           if (svc.type === 'aereo') {
             const { data: legs } = await supabase.from('flight_legs').select('*').eq('service_id', svc.id).order('sort_order');
             if (legs) flightLegs.push(...legs.map((l: any) => ({
-              origin: l.origin,
-              destination: l.destination,
-              departureDate: l.departure_date,
-              departureTime: l.departure_time,
-              arrivalDate: l.arrival_date,
-              arrivalTime: l.arrival_time,
-              connectionDuration: l.connection_duration,
-              direction: l.direction as 'ida' | 'volta',
-              flightCode: '',
+              origin: l.origin, destination: l.destination, departureDate: l.departure_date,
+              departureTime: l.departure_time, arrivalDate: l.arrival_date, arrivalTime: l.arrival_time,
+              connectionDuration: l.connection_duration, direction: l.direction as 'ida' | 'volta', flightCode: '',
             })));
           }
         }
       }
     }
 
-    // Convert logo URL to base64 if available
+    // Also collect flight legs from item metadata
+    for (const item of items) {
+      if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
+        flightLegs.push(...item.metadata.flightLegs);
+      }
+    }
+
     let logoBase64: string | undefined;
     if (agency.logo_url) {
       try {
@@ -682,22 +679,32 @@ export default function NewSalePage() {
 
     const sellerName = allSellers.find(s => s.id === sellerId)?.full_name;
 
+    // Collect hotels from metadata
+    const hotels: any[] = [];
+    for (const item of items) {
+      if (item.metadata?.type === 'hotel' && item.metadata.hotel) {
+        const h = item.metadata.hotel;
+        hotels.push({
+          name: h.hotelName,
+          description: h.description,
+          checkIn: h.checkInDate,
+          checkOut: h.checkOutDate,
+          stars: h.stars,
+          amenities: h.amenities,
+        });
+      }
+    }
+
     const pdfData: PremiumPdfData = {
-      agency: {
-        name: agency.name,
-        whatsapp: agency.whatsapp || '',
-        email: agency.email || '',
-        website: agency.website || '',
-        logoBase64,
-      },
+      agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
       client: { name: clientName },
       seller: sellerName,
       destination: quoteDetails?.trip_destination || '',
       origin: quoteDetails?.trip_origin || '',
-      departureDate: quoteDetails?.trip_departure_date || '',
-      returnDate: quoteDetails?.trip_return_date || '',
-      nights: quoteDetails?.trip_nights || undefined,
-      passengersCount: passengers.length || quoteDetails?.client_passengers || 1,
+      departureDate: quoteDetails?.trip_departure_date || tripStartDate || '',
+      returnDate: quoteDetails?.trip_return_date || tripEndDate || '',
+      nights: tripNights || quoteDetails?.trip_nights || undefined,
+      passengersCount: passengers.length || passengersCount || 1,
       passengers: passengers.map((p, i) => ({
         name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
         document: p.document_number || undefined,
@@ -705,21 +712,17 @@ export default function NewSalePage() {
         isMain: p.is_main,
       })),
       flightLegs,
-      hotels: [], // Hotels parsed from service items if available
+      hotels,
       services: items.map((item, idx) => {
-        const catalogName = item.service_catalog_id
-          ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || ''
-          : '';
+        const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
         return {
           name: catalogName || `Serviço ${idx + 1}`,
-          description: item.description,
+          description: item.metadata?.detailedDescription || item.description,
           value: item.total_value,
         };
       }),
       allItems: items.map((item, idx) => {
-        const catalogName = item.service_catalog_id
-          ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || ''
-          : '';
+        const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
         return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
       }),
       totalProducts: totalSale,
@@ -728,11 +731,7 @@ export default function NewSalePage() {
       payment: {
         method: paymentMethod,
         installments,
-        receivables: receivables.map(r => ({
-          number: r.installment_number,
-          amount: r.amount,
-          dueDate: r.due_date || undefined,
-        })),
+        receivables: receivables.map(r => ({ number: r.installment_number, amount: r.amount, dueDate: r.due_date || undefined })),
       },
       notes: notes || undefined,
     };
@@ -743,28 +742,23 @@ export default function NewSalePage() {
   };
 
   const handleGenerateLink = async () => {
-    if (!editSaleId) {
-      toast.error('Salve a venda primeiro antes de gerar o link da proposta.');
-      return;
-    }
-
-    // Fetch the short_id for this sale
+    if (!editSaleId) { toast.error('Salve a venda primeiro antes de gerar o link da proposta.'); return; }
     const { data, error } = await (supabase.from('sales').select('short_id' as any).eq('id', editSaleId).single() as any);
-    if (error || !data?.short_id) {
-      toast.error('Erro ao buscar código da proposta.');
-      return;
-    }
-
+    if (error || !data?.short_id) { toast.error('Erro ao buscar código da proposta.'); return; }
     const baseUrl = window.location.origin;
     const link = `${baseUrl}/proposta/${data.short_id}`;
-
     try {
       await navigator.clipboard.writeText(link);
       toast.success('Link da proposta copiado!');
     } catch {
-      // Fallback: show in prompt
       window.prompt('Copie o link da proposta:', link);
     }
+  };
+
+  const getServiceTypeLabel = (metadata?: ServiceMetadata) => {
+    if (!metadata?.type) return null;
+    const labels: Record<string, string> = { aereo: '✈️', hotel: '🏨', carro: '🚗', seguro: '🛡️', experiencia: '🎟️', adicional: '📋' };
+    return labels[metadata.type] || null;
   };
 
   return (
@@ -851,7 +845,6 @@ export default function NewSalePage() {
                 <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente</p>
               </div>
             </div>
-            {/* Destination Image */}
             <div className="col-span-full mt-2">
               <Label>Imagem do Destino (para proposta)</Label>
               <div className="flex items-center gap-3 mt-1">
@@ -878,14 +871,10 @@ export default function NewSalePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Passageiros da Reserva</CardTitle>
-            <Button size="sm" variant="outline" onClick={addPassenger}>
-              <Plus className="h-4 w-4 mr-1" />Adicionar
-            </Button>
+            <Button size="sm" variant="outline" onClick={addPassenger}><Plus className="h-4 w-4 mr-1" />Adicionar</Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            {passengers.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">Nenhum passageiro adicionado</p>
-            )}
+            {passengers.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum passageiro adicionado</p>}
             {passengers.map((pax, idx) => (
               <div key={idx} className="border rounded-lg p-4 space-y-3 relative">
                 <div className="flex items-center justify-between">
@@ -893,65 +882,26 @@ export default function NewSalePage() {
                     <Checkbox checked={pax.is_main} onCheckedChange={(checked) => updatePassenger(idx, 'is_main', !!checked)} />
                     <Label className="text-sm font-medium">Passageiro principal</Label>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs">Nome</Label>
-                    <Input value={pax.first_name} onChange={e => updatePassenger(idx, 'first_name', e.target.value)} placeholder="Nome" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Sobrenome</Label>
-                    <Input value={pax.last_name} onChange={e => updatePassenger(idx, 'last_name', e.target.value)} placeholder="Sobrenome" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Data de Nascimento</Label>
-                    <Input type="date" value={pax.birth_date} onChange={e => updatePassenger(idx, 'birth_date', e.target.value)} />
-                  </div>
+                  <div><Label className="text-xs">Nome</Label><Input value={pax.first_name} onChange={e => updatePassenger(idx, 'first_name', e.target.value)} placeholder="Nome" /></div>
+                  <div><Label className="text-xs">Sobrenome</Label><Input value={pax.last_name} onChange={e => updatePassenger(idx, 'last_name', e.target.value)} placeholder="Sobrenome" /></div>
+                  <div><Label className="text-xs">Data de Nascimento</Label><Input type="date" value={pax.birth_date} onChange={e => updatePassenger(idx, 'birth_date', e.target.value)} /></div>
                   <div>
                     <Label className="text-xs">Tipo de Documento</Label>
                     <Select value={pax.document_type} onValueChange={v => updatePassenger(idx, 'document_type', v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cpf">CPF</SelectItem>
-                        <SelectItem value="passaporte">Passaporte</SelectItem>
-                      </SelectContent>
+                      <SelectContent><SelectItem value="cpf">CPF</SelectItem><SelectItem value="passaporte">Passaporte</SelectItem></SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label className="text-xs">Nº do Documento</Label>
-                    <Input
-                      value={pax.document_number}
-                      onChange={e => {
-                        const val = pax.document_type === 'cpf' ? maskCpf(e.target.value) : e.target.value;
-                        updatePassenger(idx, 'document_number', val);
-                      }}
-                      placeholder={pax.document_type === 'cpf' ? '000.000.000-00' : 'Nº passaporte'}
-                    />
+                    <Input value={pax.document_number} onChange={e => { const val = pax.document_type === 'cpf' ? maskCpf(e.target.value) : e.target.value; updatePassenger(idx, 'document_number', val); }} placeholder={pax.document_type === 'cpf' ? '000.000.000-00' : 'Nº passaporte'} />
                   </div>
-                  <div>
-                    <Label className="text-xs">Vencimento Doc.</Label>
-                    <Input type="date" value={pax.document_expiry} onChange={e => updatePassenger(idx, 'document_expiry', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-xs">E-mail</Label>
-                    <Input
-                      value={pax.email}
-                      onChange={e => updatePassenger(idx, 'email', maskEmail(e.target.value))}
-                      placeholder="email@exemplo.com"
-                      type="email"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Telefone</Label>
-                    <Input
-                      value={pax.phone}
-                      onChange={e => updatePassenger(idx, 'phone', maskPhone(e.target.value))}
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
+                  <div><Label className="text-xs">Vencimento Doc.</Label><Input type="date" value={pax.document_expiry} onChange={e => updatePassenger(idx, 'document_expiry', e.target.value)} /></div>
+                  <div><Label className="text-xs">E-mail</Label><Input value={pax.email} onChange={e => updatePassenger(idx, 'email', maskEmail(e.target.value))} placeholder="email@exemplo.com" type="email" /></div>
+                  <div><Label className="text-xs">Telefone</Label><Input value={pax.phone} onChange={e => updatePassenger(idx, 'phone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
                 </div>
               </div>
             ))}
@@ -995,7 +945,7 @@ export default function NewSalePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Serviços da Venda</CardTitle>
-            <Button size="sm" variant="outline" onClick={() => setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0 }])}>
+            <Button size="sm" variant="outline" onClick={() => setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {} }])}>
               <Plus className="h-4 w-4 mr-1" />Adicionar Serviço
             </Button>
           </CardHeader>
@@ -1030,13 +980,24 @@ export default function NewSalePage() {
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="manual">Selecione um serviço</SelectItem>
-                            {serviceCatalog.map(s => (
-                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                            ))}
+                            {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell><Input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} placeholder="Detalhes..." /></TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start text-left font-normal"
+                          onClick={() => setEditingItemIdx(idx)}
+                        >
+                          <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
+                          <span className="truncate">
+                            {getServiceTypeLabel(item.metadata)}
+                            {item.description || 'Editar detalhes...'}
+                          </span>
+                        </Button>
+                      </TableCell>
                       <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
                       <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
                       <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
@@ -1050,20 +1011,14 @@ export default function NewSalePage() {
                       <TableCell colSpan={6} className="py-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
-                            <ImagePlus className="h-3 w-3" />
-                            Imagens
+                            <ImagePlus className="h-3 w-3" />Imagens
                             <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
                           </label>
                           {(itemImages[idx] || []).map((url, imgIdx) => (
                             <div key={imgIdx} className="relative group">
                               <img src={url} alt="" className="h-10 w-14 object-cover rounded border" />
-                              <button
-                                type="button"
-                                onClick={() => removeItemImage(idx, imgIdx)}
-                                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                ×
-                              </button>
+                              <button type="button" onClick={() => removeItemImage(idx, imgIdx)}
+                                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
                             </div>
                           ))}
                         </div>
@@ -1094,31 +1049,17 @@ export default function NewSalePage() {
               ))}
             </div>
 
-            {/* Sale Interest */}
             <div className="pt-4 border-t">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
                   <Label>Juros na venda? (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={saleInterest || ''}
-                    onChange={e => setSaleInterest(parseFloat(e.target.value) || 0)}
-                    placeholder="0,00"
-                  />
+                  <Input type="number" step="0.01" min="0" value={saleInterest || ''} onChange={e => setSaleInterest(parseFloat(e.target.value) || 0)} placeholder="0,00" />
                   <p className="text-xs text-muted-foreground mt-1">Valor somado internamente. Não aparece para o cliente.</p>
                 </div>
                 {saleInterest > 0 && (
                   <>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total dos serviços</p>
-                      <p className="text-sm font-medium">{fmt(totalSale)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total com juros</p>
-                      <p className="text-sm font-bold text-primary">{fmt(totalSaleWithInterest)}</p>
-                    </div>
+                    <div><p className="text-sm text-muted-foreground">Total dos serviços</p><p className="text-sm font-medium">{fmt(totalSale)}</p></div>
+                    <div><p className="text-sm text-muted-foreground">Total com juros</p><p className="text-sm font-bold text-primary">{fmt(totalSaleWithInterest)}</p></div>
                   </>
                 )}
               </div>
@@ -1131,21 +1072,14 @@ export default function NewSalePage() {
                     <Label>Tipo de Pagamento</Label>
                     <Select value={cardPaymentType} onValueChange={setCardPaymentType}>
                       <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ec">EC (Máquina)</SelectItem>
-                        <SelectItem value="link">Link de Pagamento</SelectItem>
-                      </SelectContent>
+                      <SelectContent><SelectItem value="ec">EC (Máquina)</SelectItem><SelectItem value="link">Link de Pagamento</SelectItem></SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Parcelamento</Label>
                     <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 18 }, (_, i) => i + 1).map(n => (
-                          <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
-                        ))}
-                      </SelectContent>
+                      <SelectContent>{Array.from({ length: 18 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div>
@@ -1164,11 +1098,7 @@ export default function NewSalePage() {
                     <Label>Número de Parcelas</Label>
                     <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 24 }, (_, i) => i + 1).map(n => (
-                          <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
-                        ))}
-                      </SelectContent>
+                      <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div>
@@ -1196,20 +1126,12 @@ export default function NewSalePage() {
           <CardHeader><CardTitle className="text-base">Controle de Recebíveis</CardTitle></CardHeader>
           <CardContent className="p-0">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-24">Parcela</TableHead>
-                  <TableHead>Data de Recebimento</TableHead>
-                  <TableHead className="w-40">Valor</TableHead>
-                </TableRow>
-              </TableHeader>
+              <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead></TableRow></TableHeader>
               <TableBody>
                 {receivables.map((r, idx) => (
                   <TableRow key={idx}>
                     <TableCell className="font-medium">{r.installment_number}ª</TableCell>
-                    <TableCell>
-                      <Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} />
-                    </TableCell>
+                    <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
                     <TableCell className="font-medium">{fmt(r.amount)}</TableCell>
                   </TableRow>
                 ))}
@@ -1224,32 +1146,16 @@ export default function NewSalePage() {
           <CardContent className="space-y-3">
             <div>
               <Label className="text-sm">Enviar PDF da Nota Fiscal</Label>
-              <Input
-                type="file"
-                accept="application/pdf"
-                onChange={handleInvoiceUpload}
-                disabled={uploadingInvoice}
-              />
+              <Input type="file" accept="application/pdf" onChange={handleInvoiceUpload} disabled={uploadingInvoice} />
               {uploadingInvoice && <p className="text-xs text-muted-foreground mt-1">Enviando...</p>}
             </div>
             {invoiceUrl && (
               <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
                 <FileText className="h-4 w-4 text-primary shrink-0" />
-                <a
-                  href={invoiceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary underline hover:text-primary/80 truncate flex items-center gap-1"
-                >
-                  {invoiceFileName || 'nota-fiscal.pdf'}
-                  <ExternalLink className="h-3 w-3 shrink-0" />
+                <a href={invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline hover:text-primary/80 truncate flex items-center gap-1">
+                  {invoiceFileName || 'nota-fiscal.pdf'}<ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 ml-auto"
-                  onClick={() => { setInvoiceUrl(''); setInvoiceFileName(''); }}
-                >
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 ml-auto" onClick={() => { setInvoiceUrl(''); setInvoiceFileName(''); }}>
                   <Trash2 className="h-3 w-3 text-destructive" />
                 </Button>
               </div>
@@ -1257,11 +1163,36 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Notes */}
+        {/* Notes + Internal Files */}
         <Card>
           <CardHeader><CardTitle className="text-base">Observação da Venda</CardTitle></CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações internas sobre a venda..." rows={3} />
+            
+            {/* Internal Files */}
+            <div className="border-t pt-4">
+              <Label className="text-sm font-medium flex items-center gap-2 mb-2"><Paperclip className="h-4 w-4" />Arquivos Internos</Label>
+              <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50 w-fit">
+                <Upload className="h-4 w-4" />
+                {uploadingFile ? 'Enviando...' : 'Adicionar arquivos'}
+                <input type="file" multiple className="hidden" onChange={handleInternalFileUpload} disabled={uploadingFile} />
+              </label>
+              {internalFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {internalFiles.map((f, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                      <FileText className="h-4 w-4 text-primary shrink-0" />
+                      <a href={f.file_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline hover:text-primary/80 truncate flex items-center gap-1">
+                        {f.file_name}<ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 ml-auto" onClick={() => removeInternalFile(idx)}>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -1273,28 +1204,17 @@ export default function NewSalePage() {
               <div>
                 <p className="text-sm text-muted-foreground">Total da Venda</p>
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
-                {saleInterest > 0 && (
-                  <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)} + Juros: {fmt(saleInterest)})</p>
-                )}
+                {saleInterest > 0 && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)} + Juros: {fmt(saleInterest)})</p>}
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Custo Fornecedor</p>
-                <p className="text-xl font-bold">{fmt(totalCost)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Lucro Bruto</p>
-                <p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p>
-              </div>
+              <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
+              <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
               <div>
                 <Label className="text-sm text-muted-foreground">Comissão (%)</Label>
                 <Input type="number" step="0.01" value={commissionRate} onChange={e => setCommissionRate(parseFloat(e.target.value) || 0)} className="mt-1 w-24" />
                 <p className="text-sm mt-1">{fmt(commissionValue)}</p>
               </div>
               {paymentMethod === 'credito' && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p>
-                  <p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p>
-                </div>
+                <div><p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p><p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p></div>
               )}
               <div>
                 <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
@@ -1307,20 +1227,12 @@ export default function NewSalePage() {
         {/* Actions */}
         <div className="flex justify-end gap-3 pb-8">
           <Button variant="destructive" onClick={handleCancel}>Cancelar</Button>
-          <Button variant="outline" onClick={handleExportPdf}>
-            <Download className="h-4 w-4 mr-1" /> Gerar PDF Proposta
-          </Button>
+          <Button variant="outline" onClick={handleExportPdf}><Download className="h-4 w-4 mr-1" /> Gerar PDF Proposta</Button>
           {editSaleId && (
-            <Button variant="outline" onClick={handleGenerateLink}>
-              <Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta
-            </Button>
+            <Button variant="outline" onClick={handleGenerateLink}><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          <Button variant="secondary" onClick={handleSaveDraft}>
-            💾 Salvar Rascunho
-          </Button>
-          <Button onClick={handleSave}>
-            ✅ {editSaleId ? 'Atualizar Venda' : 'Converter em Venda'}
-          </Button>
+          <Button variant="secondary" onClick={handleSaveDraft}>💾 Salvar Rascunho</Button>
+          <Button onClick={handleSave}>✅ {editSaleId ? 'Gerar Venda' : 'Converter em Venda'}</Button>
         </div>
 
         <PdfImportModal
@@ -1330,9 +1242,7 @@ export default function NewSalePage() {
           marginMode="none"
           marginPercent={20}
           onImport={(importedItems, _tripInfo) => {
-            // Add imported items to existing items
             setItems(prev => [...prev, ...importedItems]);
-            // Do NOT fill client name from PDF import
             toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
           }}
         />
@@ -1341,11 +1251,20 @@ export default function NewSalePage() {
           open={quickClientOpen}
           onClose={() => setQuickClientOpen(false)}
           initialName={clientName}
-          onClientCreated={(client) => {
-            setClientName(client.full_name);
-            fetchClients();
-          }}
+          onClientCreated={(client) => { setClientName(client.full_name); fetchClients(); }}
         />
+
+        {editingItemIdx !== null && (
+          <ServiceEditModal
+            open={editingItemIdx !== null}
+            onClose={() => setEditingItemIdx(null)}
+            description={items[editingItemIdx]?.description || ''}
+            metadata={items[editingItemIdx]?.metadata || {}}
+            onSave={(desc, meta) => {
+              setItems(prev => prev.map((item, i) => i === editingItemIdx ? { ...item, description: desc, metadata: meta } : item));
+            }}
+          />
+        )}
       </div>
     </AppLayout>
   );
