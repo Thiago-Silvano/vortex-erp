@@ -71,7 +71,9 @@ Deno.serve(async (req) => {
 
     // Clean endpoint: ensure single leading slash
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    const targetUrl = `${serverUrl}${cleanEndpoint}`;
+    // Append empresa_id as query param so Node.js server knows which session to manage
+    const separator = cleanEndpoint.includes('?') ? '&' : '?';
+    const targetUrl = `${serverUrl}${cleanEndpoint}${separator}empresa_id=${empresa_id}`;
     const fetchMethod = method || 'GET';
 
     console.log(`Proxying ${fetchMethod} ${targetUrl}`);

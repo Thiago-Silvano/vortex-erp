@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
       try {
         const agentLabel = `[${sender_name || user.email?.split('@')[0] || 'Agente'}]`;
         const fullMessage = `${agentLabel}\n${content}`;
-        const targetUrl = `${session.server_url.replace(/\/+$/, '')}/send-message`;
+        const targetUrl = `${session.server_url.replace(/\/+$/, '')}/send-message?empresa_id=${conv.empresa_id}`;
 
         console.log(`Sending to ${targetUrl} for phone ${conv.phone}`);
 
@@ -110,6 +110,7 @@ Deno.serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal,
           body: JSON.stringify({
+            empresa_id: conv.empresa_id,
             number: conv.phone,
             phone: conv.phone,
             message: fullMessage,
