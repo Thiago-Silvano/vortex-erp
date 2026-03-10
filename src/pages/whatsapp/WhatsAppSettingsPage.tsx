@@ -102,6 +102,16 @@ export default function WhatsAppSettingsPage() {
     return () => { supabase.removeChannel(channel); };
   }, [activeCompany?.id, fetchSession]);
 
+  // Stop polling and reset when activeCompany changes
+  useEffect(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+      setPollingQr(false);
+    }
+    setTestResult(null);
+  }, [activeCompany?.id]);
+
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {
