@@ -437,7 +437,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       setColor(doc, TEXT_MAIN);
-      doc.text(item.name, boxX + 4, boxY);
+      doc.text(s(item.name), boxX + 4, boxY);
       doc.text(fmt(item.value), boxX + boxW - 4, boxY, { align: 'right' });
       boxY += 6;
     });
