@@ -240,7 +240,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   const summaryItems: Array<{ label: string; value: string; icon: string }> = [];
   if (data.destination) summaryItems.push({ label: 'Destino', value: data.destination, icon: '' });
   if (data.departureDate && data.returnDate)
-    summaryItems.push({ label: 'Datas', value: `${formatDateBR(data.departureDate)} - ${formatDateBR(data.returnDate)}`, icon: '' });
+    summaryItems.push({ label: 'Periodo', value: `${formatDateBR(data.departureDate)} - ${formatDateBR(data.returnDate)}`, icon: '' });
   if (data.nights) summaryItems.push({ label: 'Duracao', value: `${data.nights} noites`, icon: '' });
   if (data.passengersCount) summaryItems.push({ label: 'Passageiros', value: `${data.passengersCount} ${data.passengersCount > 1 ? 'adultos' : 'adulto'}`, icon: '' });
 
