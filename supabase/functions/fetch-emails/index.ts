@@ -6,268 +6,178 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Minimal IMAP client using Deno native TLS
+// Minimal IMAP client using Deno native APIs
 class MiniIMAP {
   private conn!: Deno.TlsConn | Deno.Conn;
-  private reader!: ReadableStreamDefaultReader<Uint8Array>;
-  private buffer = "";
+  private buffer = new Uint8Array(0);
   private tagCounter = 0;
   private encoder = new TextEncoder();
   private decoder = new TextDecoder();
 
   async connect(host: string, port: number, tls: boolean) {
-    if (tls) {
-      this.conn = await Deno.connectTls({ hostname: host, port });
-    } else {
-      this.conn = await Deno.connect({ hostname: host, port });
-    }
-    this.reader = this.conn.readable.getReader();
+    console.log(`Connecting to ${host}:${port} tls=${tls}...`);
+    
+    const connectPromise = tls
+      ? Deno.connectTls({ hostname: host, port })
+      : Deno.connect({ hostname: host, port });
+    
+    // 10 second connection timeout
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Connection timeout (10s)")), 10000)
+    );
+    
+    this.conn = await Promise.race([connectPromise, timeoutPromise]);
+    console.log("Connected successfully");
+    
     // Read greeting
-    await this.readResponse("*");
+    const greeting = await this.readUntilLine();
+    console.log("IMAP Greeting:", greeting.substring(0, 100));
   }
 
-  private async readMore(): Promise<string> {
-    const { value, done } = await this.reader.read();
-    if (done) throw new Error("Connection closed");
-    return this.decoder.decode(value);
+  private async readChunk(): Promise<Uint8Array> {
+    const buf = new Uint8Array(8192);
+    const n = await this.conn.read(buf);
+    if (n === null) throw new Error("Connection closed");
+    return buf.subarray(0, n);
   }
 
-  private async readResponse(tag: string): Promise<string> {
+  private async readUntilLine(): Promise<string> {
+    const timeout = setTimeout(() => {}, 15000); // just for reference
+    
+    while (true) {
+      const text = this.decoder.decode(this.buffer);
+      const lineEnd = text.indexOf("\r\n");
+      if (lineEnd >= 0) {
+        const line = text.substring(0, lineEnd);
+        this.buffer = this.encoder.encode(text.substring(lineEnd + 2));
+        clearTimeout(timeout);
+        return line;
+      }
+      
+      const chunk = await this.readChunk();
+      const newBuf = new Uint8Array(this.buffer.length + chunk.length);
+      newBuf.set(this.buffer);
+      newBuf.set(chunk, this.buffer.length);
+      this.buffer = newBuf;
+    }
+  }
+
+  private async readUntilTag(tag: string): Promise<string> {
     let response = "";
     while (true) {
-      // Read more data if buffer doesn't have complete lines
-      while (!this.buffer.includes("\r\n")) {
-        this.buffer += await this.readMore();
-      }
-
-      // Process complete lines
-      const lines = this.buffer.split("\r\n");
-      this.buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
-      for (const line of lines) {
-        response += line + "\r\n";
-        // Check if this is the tagged response (completion)
-        if (line.startsWith(tag + " ")) {
-          return response;
-        }
+      const line = await this.readUntilLine();
+      response += line + "\r\n";
+      if (line.startsWith(tag + " ")) {
+        return response;
       }
     }
   }
 
-  private async readLiteralResponse(tag: string): Promise<string> {
-    let response = "";
-    while (true) {
-      while (!this.buffer.includes("\r\n")) {
-        this.buffer += await this.readMore();
-      }
-
-      const lines = this.buffer.split("\r\n");
-      this.buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        response += line + "\r\n";
-
-        // Check for literal continuation {size}
-        const literalMatch = line.match(/\{(\d+)\}$/);
-        if (literalMatch) {
-          const size = parseInt(literalMatch[1]);
-          // Read exactly 'size' bytes of literal data
-          let literalData = "";
-          while (literalData.length < size) {
-            if (this.buffer.length > 0) {
-              const take = Math.min(this.buffer.length, size - literalData.length);
-              literalData += this.buffer.substring(0, take);
-              this.buffer = this.buffer.substring(take);
-            } else {
-              this.buffer += await this.readMore();
-            }
-          }
-          response += literalData;
-        }
-
-        if (line.startsWith(tag + " ")) {
-          return response;
-        }
-      }
-    }
-  }
-
-  private async command(cmd: string, literal = false): Promise<string> {
+  private async send(cmd: string): Promise<string> {
     this.tagCounter++;
-    const tag = `A${this.tagCounter}`;
+    const tag = `A${String(this.tagCounter).padStart(4, "0")}`;
     const fullCmd = `${tag} ${cmd}\r\n`;
     await this.conn.write(this.encoder.encode(fullCmd));
-    if (literal) {
-      return await this.readLiteralResponse(tag);
-    }
-    return await this.readResponse(tag);
+    return await this.readUntilTag(tag);
   }
 
   async login(user: string, pass: string): Promise<boolean> {
-    // Escape password (double-quote special chars)
+    console.log("IMAP LOGIN...");
     const escapedPass = pass.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-    const resp = await this.command(`LOGIN "${user}" "${escapedPass}"`);
-    return resp.includes("OK");
+    const resp = await this.send(`LOGIN "${user}" "${escapedPass}"`);
+    const ok = resp.includes(" OK ");
+    console.log("LOGIN:", ok ? "OK" : "FAILED");
+    return ok;
   }
 
   async select(mailbox: string): Promise<number> {
-    const resp = await this.command(`SELECT "${mailbox}"`);
-    const existsMatch = resp.match(/\*\s+(\d+)\s+EXISTS/i);
-    return existsMatch ? parseInt(existsMatch[1]) : 0;
+    console.log("IMAP SELECT", mailbox);
+    const resp = await this.send(`SELECT "${mailbox}"`);
+    const m = resp.match(/\*\s+(\d+)\s+EXISTS/i);
+    const count = m ? parseInt(m[1]) : 0;
+    console.log("EXISTS:", count);
+    return count;
   }
 
-  async fetchHeaders(seqRange: string): Promise<Array<{
-    seq: number;
-    messageId: string;
-    from: string;
-    fromName: string;
-    to: string[];
-    cc: string[];
-    subject: string;
-    date: string;
+  async fetchHeadersBatch(seqRange: string): Promise<Array<{
+    seq: number; messageId: string; from: string; fromName: string;
+    to: string[]; cc: string[]; subject: string; date: string;
   }>> {
-    const resp = await this.command(
-      `FETCH ${seqRange} (BODY.PEEK[HEADER.FIELDS (FROM TO CC SUBJECT DATE MESSAGE-ID)])`,
-      true
+    console.log("FETCH headers", seqRange);
+    const resp = await this.send(
+      `FETCH ${seqRange} (BODY.PEEK[HEADER.FIELDS (FROM TO CC SUBJECT DATE MESSAGE-ID)])`
     );
 
     const messages: Array<any> = [];
-    // Parse each FETCH response
-    const fetchBlocks = resp.split(/\*\s+(\d+)\s+FETCH/);
+    const blocks = resp.split(/\*\s+(\d+)\s+FETCH/);
 
-    for (let i = 1; i < fetchBlocks.length; i += 2) {
-      const seq = parseInt(fetchBlocks[i]);
-      const block = fetchBlocks[i + 1] || "";
+    for (let i = 1; i < blocks.length; i += 2) {
+      const seq = parseInt(blocks[i]);
+      const block = blocks[i + 1] || "";
+      const headers = parseHeaders(block);
 
-      const headers: Record<string, string> = {};
-      // Extract header block between the literal data
-      const headerLines = block.split(/\r?\n/);
-      let currentKey = "";
-
-      for (const line of headerLines) {
-        if (line.startsWith(" ") || line.startsWith("\t")) {
-          // Continuation of previous header
-          if (currentKey) {
-            headers[currentKey] = (headers[currentKey] || "") + " " + line.trim();
-          }
-        } else {
-          const match = line.match(/^([A-Za-z-]+):\s*(.*)/);
-          if (match) {
-            currentKey = match[1].toLowerCase();
-            headers[currentKey] = match[2].trim();
-          }
-        }
-      }
-
-      // Parse from address
       const fromRaw = headers["from"] || "";
-      let fromEmail = "";
-      let fromName = "";
-      const fromMatch = fromRaw.match(/<([^>]+)>/);
-      if (fromMatch) {
-        fromEmail = fromMatch[1];
+      let fromEmail = "", fromName = "";
+      const fm = fromRaw.match(/<([^>]+)>/);
+      if (fm) {
+        fromEmail = fm[1];
         fromName = fromRaw.replace(/<[^>]+>/, "").replace(/"/g, "").trim();
       } else {
         fromEmail = fromRaw.trim();
-        fromName = fromEmail.split("@")[0];
       }
 
-      // Decode MIME encoded words in subject and fromName
-      const subject = decodeMimeWords(headers["subject"] || "(sem assunto)");
       fromName = decodeMimeWords(fromName) || fromEmail.split("@")[0];
-
-      // Parse to addresses
-      const toRaw = headers["to"] || "";
-      const to = parseAddresses(toRaw);
-
-      // Parse cc
-      const ccRaw = headers["cc"] || "";
-      const cc = parseAddresses(ccRaw);
-
-      const messageId = headers["message-id"] || `seq-${seq}-${Date.now()}`;
+      const subject = decodeMimeWords(headers["subject"] || "(sem assunto)");
+      const to = extractEmails(headers["to"] || "");
+      const cc = extractEmails(headers["cc"] || "");
+      const messageId = (headers["message-id"] || "").replace(/[<>]/g, "") || `seq-${seq}-${Date.now()}`;
       const date = headers["date"] || new Date().toISOString();
 
       messages.push({ seq, messageId, from: fromEmail, fromName, to, cc, subject, date });
     }
 
+    console.log(`Parsed ${messages.length} message headers`);
     return messages;
   }
 
-  async fetchBody(seq: number): Promise<{ html: string; text: string }> {
-    const resp = await this.command(`FETCH ${seq} (BODY.PEEK[TEXT])`, true);
-
-    // Extract body content
-    let bodyContent = "";
-    const literalMatch = resp.match(/\{(\d+)\}/);
-    if (literalMatch) {
-      const startIdx = resp.indexOf(literalMatch[0]) + literalMatch[0].length;
-      bodyContent = resp.substring(startIdx).trim();
-    } else {
-      // Try to extract between BODY[TEXT] markers
-      const bodyStart = resp.indexOf("BODY[TEXT]");
-      if (bodyStart > -1) {
-        bodyContent = resp.substring(bodyStart + 10).trim();
-      }
-    }
-
-    // Remove trailing ")" and tag response
-    const tagIdx = bodyContent.lastIndexOf("\r\nA");
-    if (tagIdx > -1) {
-      bodyContent = bodyContent.substring(0, tagIdx);
-    }
-
-    // Simple content type detection
-    if (bodyContent.includes("<html") || bodyContent.includes("<div") || bodyContent.includes("<p>")) {
-      return { html: bodyContent, text: stripHtml(bodyContent) };
-    }
-
-    return { html: bodyContent.replace(/\n/g, "<br>"), text: bodyContent };
-  }
-
   async logout() {
-    try {
-      await this.command("LOGOUT");
-    } catch {
-      // ignore
-    }
-    try {
-      this.conn.close();
-    } catch {
-      // ignore
+    try { await this.send("LOGOUT"); } catch { /* ignore */ }
+    try { this.conn.close(); } catch { /* ignore */ }
+  }
+}
+
+function parseHeaders(block: string): Record<string, string> {
+  const headers: Record<string, string> = {};
+  let currentKey = "";
+  for (const line of block.split(/\r?\n/)) {
+    if (line.startsWith(" ") || line.startsWith("\t")) {
+      if (currentKey) headers[currentKey] = (headers[currentKey] || "") + " " + line.trim();
+    } else {
+      const m = line.match(/^([A-Za-z-]+):\s*(.*)/i);
+      if (m) { currentKey = m[1].toLowerCase(); headers[currentKey] = m[2].trim(); }
     }
   }
+  return headers;
 }
 
 function decodeMimeWords(str: string): string {
-  return str.replace(/=\?([^?]+)\?([BbQq])\?([^?]+)\?=/g, (_, charset, encoding, data) => {
+  return str.replace(/=\?([^?]+)\?([BbQq])\?([^?]+)\?=/g, (_, charset, enc, data) => {
     try {
-      if (encoding.toUpperCase() === "B") {
-        const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
-        return new TextDecoder(charset).decode(bytes);
-      } else {
-        // Quoted-printable
-        const decoded = data.replace(/_/g, " ").replace(/=([0-9A-Fa-f]{2})/g, (_: any, hex: string) =>
-          String.fromCharCode(parseInt(hex, 16))
-        );
-        const bytes = Uint8Array.from(decoded, (c: string) => c.charCodeAt(0));
+      if (enc.toUpperCase() === "B") {
+        const bytes = Uint8Array.from(atob(data), (c: string) => c.charCodeAt(0));
         return new TextDecoder(charset).decode(bytes);
       }
-    } catch {
-      return data;
-    }
+      const decoded = data.replace(/_/g, " ").replace(/=([0-9A-Fa-f]{2})/g, (_: string, h: string) =>
+        String.fromCharCode(parseInt(h, 16))
+      );
+      const bytes = Uint8Array.from(decoded, (c: string) => c.charCodeAt(0));
+      return new TextDecoder(charset).decode(bytes);
+    } catch { return data; }
   });
 }
 
-function parseAddresses(raw: string): string[] {
-  if (!raw.trim()) return [];
-  const addresses: string[] = [];
-  const matches = raw.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
-  if (matches) return matches;
-  return addresses;
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").trim();
+function extractEmails(raw: string): string[] {
+  return (raw.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || []);
 }
 
 Deno.serve(async (req) => {
@@ -281,126 +191,90 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { empresa_id } = await req.json();
-
     if (!empresa_id) {
-      return new Response(
-        JSON.stringify({ error: "empresa_id obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "empresa_id obrigatório" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const { data: settings, error: settErr } = await supabase
-      .from("email_settings")
-      .select("*")
-      .eq("empresa_id", empresa_id)
-      .single();
+      .from("email_settings").select("*").eq("empresa_id", empresa_id).single();
 
     if (settErr || !settings) {
-      return new Response(
-        JSON.stringify({ error: "Configurações IMAP não encontradas" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Configurações IMAP não encontradas" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const s = settings as any;
     if (!s.imap_host || !s.imap_user || !s.imap_password) {
-      return new Response(
-        JSON.stringify({ error: "Configurações IMAP incompletas" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Configurações IMAP incompletas" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const port = s.imap_port || 993;
     const useTls = s.imap_ssl !== false;
 
+    console.log(`Starting IMAP sync for ${s.imap_host}:${port} tls=${useTls}`);
+
     const imap = new MiniIMAP();
     await imap.connect(s.imap_host, port, useTls);
-
+    
     const loginOk = await imap.login(s.imap_user, s.imap_password);
     if (!loginOk) {
       await imap.logout();
-      return new Response(
-        JSON.stringify({ error: "Falha na autenticação IMAP" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Falha na autenticação IMAP" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const totalMessages = await imap.select("INBOX");
-
-    if (totalMessages === 0) {
+    const total = await imap.select("INBOX");
+    if (total === 0) {
       await imap.logout();
-      return new Response(
-        JSON.stringify({ success: true, fetched: 0, message: "Caixa vazia" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: true, fetched: 0, message: "Caixa vazia" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Fetch last 20 messages headers
-    const startSeq = Math.max(1, totalMessages - 19);
-    const headers = await imap.fetchHeaders(`${startSeq}:${totalMessages}`);
+    const startSeq = Math.max(1, total - 19);
+    const headers = await imap.fetchHeadersBatch(`${startSeq}:${total}`);
 
     let newCount = 0;
-
     for (const msg of headers) {
-      // Check if already exists
       const { data: existing } = await supabase
-        .from("emails")
-        .select("id")
-        .eq("message_id", msg.messageId)
-        .eq("empresa_id", empresa_id)
+        .from("emails").select("id")
+        .eq("message_id", msg.messageId).eq("empresa_id", empresa_id)
         .maybeSingle();
-
       if (existing) continue;
 
-      // Try to link to client
       let clientId: string | null = null;
       if (msg.from) {
-        const { data: clientData } = await supabase
-          .from("clients")
-          .select("id")
-          .eq("empresa_id", empresa_id)
-          .eq("email", msg.from)
-          .maybeSingle();
-        if (clientData) clientId = clientData.id;
+        const { data: cd } = await supabase.from("clients").select("id")
+          .eq("empresa_id", empresa_id).eq("email", msg.from).maybeSingle();
+        if (cd) clientId = cd.id;
       }
 
       let sentAt: string;
-      try {
-        sentAt = new Date(msg.date).toISOString();
-      } catch {
-        sentAt = new Date().toISOString();
-      }
+      try { sentAt = new Date(msg.date).toISOString(); } catch { sentAt = new Date().toISOString(); }
 
-      // Insert with headers only (body fetched on demand or from subject preview)
       await supabase.from("emails").insert({
-        empresa_id,
-        message_id: msg.messageId,
-        from_email: msg.from,
-        from_name: msg.fromName,
+        empresa_id, message_id: msg.messageId,
+        from_email: msg.from, from_name: msg.fromName,
         to_emails: msg.to.length > 0 ? msg.to : [s.imap_user],
         cc_emails: msg.cc.length > 0 ? msg.cc : null,
-        subject: msg.subject,
-        body_text: "",
-        body_html: "",
-        folder: "inbox",
-        status: "received",
-        is_read: false,
-        is_starred: false,
-        sent_at: sentAt,
-        client_id: clientId,
+        subject: msg.subject, body_text: "", body_html: "",
+        folder: "inbox", status: "received",
+        is_read: false, is_starred: false,
+        sent_at: sentAt, client_id: clientId,
       } as any);
-
       newCount++;
     }
 
     await imap.logout();
+    console.log(`Sync complete: ${newCount} new emails`);
 
     return new Response(
       JSON.stringify({ success: true, fetched: newCount, message: `${newCount} novos emails sincronizados` }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
-    console.error("IMAP Error:", error);
+    console.error("IMAP Error:", error.message, error.stack);
     return new Response(
       JSON.stringify({ error: error.message || "Erro ao sincronizar emails" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
