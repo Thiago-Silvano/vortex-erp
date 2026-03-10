@@ -1897,6 +1897,7 @@ export type Database = {
           media_mimetype: string | null
           media_url: string | null
           message_type: string
+          read_at: string | null
           reply_to_message_id: string | null
           sender_name: string | null
           sender_type: string
@@ -1912,6 +1913,7 @@ export type Database = {
           media_mimetype?: string | null
           media_url?: string | null
           message_type?: string
+          read_at?: string | null
           reply_to_message_id?: string | null
           sender_name?: string | null
           sender_type?: string
@@ -1927,6 +1929,7 @@ export type Database = {
           media_mimetype?: string | null
           media_url?: string | null
           message_type?: string
+          read_at?: string | null
           reply_to_message_id?: string | null
           sender_name?: string | null
           sender_type?: string

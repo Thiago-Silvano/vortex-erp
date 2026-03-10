@@ -110,6 +110,19 @@ export default function WhatsAppPage() {
     return [];
   }, [activeCompany?.id]);
 
+  const markAsRead = useCallback(async (convId: string) => {
+    // Update read_at on all unread client messages
+    await supabase.from('whatsapp_messages')
+      .update({ read_at: new Date().toISOString() } as any)
+      .eq('conversation_id', convId)
+      .eq('sender_type', 'client')
+      .is('read_at', null);
+    // Reset unread_count on the conversation
+    await supabase.from('whatsapp_conversations')
+      .update({ unread_count: 0 })
+      .eq('id', convId);
+  }, []);
+
   const fetchMessages = useCallback(async (convId: string) => {
     const { data } = await supabase.from('whatsapp_messages').select('*').eq('conversation_id', convId).order('created_at');
     if (data) setMessages(data as Message[]);
@@ -136,8 +149,11 @@ export default function WhatsAppPage() {
   }, [location.state, fetchConversations]);
 
   useEffect(() => {
-    if (selectedConv) fetchMessages(selectedConv.id);
-  }, [selectedConv?.id, fetchMessages]);
+    if (selectedConv) {
+      fetchMessages(selectedConv.id);
+      markAsRead(selectedConv.id);
+    }
+  }, [selectedConv?.id, fetchMessages, markAsRead]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -149,6 +165,7 @@ export default function WhatsAppPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_messages' }, (payload) => {
         if (selectedConv && (payload.new as any)?.conversation_id === selectedConv.id) {
           fetchMessages(selectedConv.id);
+          markAsRead(selectedConv.id);
         }
         fetchConversations();
       })
@@ -157,7 +174,7 @@ export default function WhatsAppPage() {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [selectedConv?.id, activeCompany?.id, fetchConversations, fetchMessages]);
+  }, [selectedConv?.id, activeCompany?.id, fetchConversations, fetchMessages, markAsRead]);
 
   useEffect(() => {
     const convInterval = setInterval(() => { fetchConversations(); }, 5000);
@@ -431,11 +448,11 @@ export default function WhatsAppPage() {
                         </span>
                       </div>
                       <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs truncate" style={{ color: '#667781' }}>{conv.last_message}</p>
+                        <p className="text-xs truncate" style={{ color: conv.unread_count > 0 ? '#111b21' : '#667781', fontWeight: conv.unread_count > 0 ? 500 : 400 }}>{conv.last_message}</p>
                         {conv.unread_count > 0 && (
-                          <Badge className="text-[10px] px-1.5 py-0 h-4 rounded-full ml-2 shrink-0" style={{ background: '#25d366', color: '#fff' }}>
+                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[11px] font-medium ml-2 shrink-0 px-1" style={{ background: '#25d366', color: '#fff' }}>
                             {conv.unread_count}
-                          </Badge>
+                          </span>
                         )}
                       </div>
                     </div>
