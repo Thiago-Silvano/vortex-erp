@@ -82,6 +82,7 @@ export default function WhatsAppPage() {
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email || ''));
