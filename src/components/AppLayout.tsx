@@ -137,6 +137,12 @@ function AppSidebar() {
     { title: 'Configurações', url: '/whatsapp/settings', icon: Cog, permKey: 'whatsapp_view' },
   ];
 
+  const emailItems: MenuItem[] = [
+    { title: 'Inbox', url: '/email', icon: Mail },
+    { title: 'Templates', url: '/email/templates', icon: FileText },
+    { title: 'Configurações', url: '/email/settings', icon: Cog },
+  ];
+
   const adminItems: MenuItem[] = [
     { title: 'Configurações', url: '/settings', icon: Settings, permKey: 'settings_access' },
     { title: 'Usuários', url: '/users', icon: Users },
