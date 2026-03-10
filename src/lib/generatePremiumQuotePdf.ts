@@ -262,7 +262,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       setColor(doc, TEXT_MUTED);
-      doc.text(`${item.icon}  ${item.label}`, cx + 5, cy + 7);
+      doc.text(item.label, cx + 5, cy + 7);
 
       // Value
       doc.setFont('helvetica', 'bold');
