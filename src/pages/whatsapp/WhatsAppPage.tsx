@@ -630,7 +630,7 @@ export default function WhatsAppPage() {
                   })}
                   <div ref={messagesEndRef} />
                 </div>
-              </ScrollArea>
+              </div>
 
               {/* Reply preview bar */}
               {replyingTo && (
