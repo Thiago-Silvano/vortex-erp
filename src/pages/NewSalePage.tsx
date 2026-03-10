@@ -71,6 +71,10 @@ export default function NewSalePage() {
   const [clientName, setClientName] = useState(quoteData?.clientName || '');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [notes, setNotes] = useState('');
+  const [passengersCount, setPassengersCount] = useState(1);
+  const [tripNights, setTripNights] = useState(0);
+  const [tripStartDate, setTripStartDate] = useState('');
+  const [tripEndDate, setTripEndDate] = useState('');
 
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([]);
   const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);

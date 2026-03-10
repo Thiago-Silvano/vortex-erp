@@ -16,6 +16,10 @@ interface SaleData {
   destination_image_url?: string;
   quote_id?: string;
   empresa_id?: string;
+  passengers_count?: number;
+  trip_nights?: number;
+  trip_start_date?: string;
+  trip_end_date?: string;
 }
 
 interface SaleItemData {
@@ -228,16 +232,16 @@ export default function PropostaPublicPage() {
   const totalSale = items.reduce((s, i) => s + i.total_value, 0);
   const destination = quoteData?.trip_destination || '';
   const origin = quoteData?.trip_origin || '';
-  const departureDate = quoteData?.trip_departure_date;
-  const returnDate = quoteData?.trip_return_date;
-  const nights = quoteData?.trip_nights;
-  const passengersCount = quoteData?.client_passengers || passengers.length;
+  const departureDate = quoteData?.trip_departure_date || (sale as any).trip_start_date;
+  const returnDate = quoteData?.trip_return_date || (sale as any).trip_end_date;
+  const nights = (sale as any).trip_nights || quoteData?.trip_nights || 0;
+  const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
 
   const methodLabels: Record<string, string> = {
     pix: 'PIX',
-    credito: 'Cartao de Credito',
-    boleto: 'Boleto Bancario',
+    credito: 'Cartão de Crédito',
+    boleto: 'Boleto Bancário',
     dinheiro: 'Dinheiro',
   };
 
@@ -248,14 +252,19 @@ export default function PropostaPublicPage() {
     nights > 0 && { icon: Moon, label: 'Noites', value: String(nights) },
   ].filter(Boolean) as { icon: any; label: string; value: string }[];
 
+  // Per-person values
+  const perPersonTotal = passengersCount > 1 ? totalSale / passengersCount : totalSale;
+
   return (
-    <div className="min-h-screen" style={{ background: '#f5f3ef', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+    <div className="min-h-screen" style={{ background: '#F5F0E8', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
       {lightbox && <ImageLightbox images={lightbox.images} initialIndex={lightbox.index} onClose={() => setLightbox(null)} />}
 
       {/* ── Hero ── */}
       <div className="relative" style={{ minHeight: heroImage ? 520 : 340 }}>
         {heroImage && (
-          <img src={heroImage} alt={destination || 'Destino'} className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0" style={{ border: '4px solid #C8A45B' }}>
+            <img src={heroImage} alt={destination || 'Destino'} className="w-full h-full object-cover" />
+          </div>
         )}
         <div className="absolute inset-0" style={{
           background: heroImage
@@ -267,13 +276,13 @@ export default function PropostaPublicPage() {
         <div className="relative z-10 w-full max-w-5xl mx-auto px-6 md:px-10 pt-6 pb-10 flex flex-col" style={{ minHeight: heroImage ? 520 : 340 }}>
           <div className="flex items-start justify-between">
             <div>
-              {agency?.logo_url && <img src={agency.logo_url} alt={agency.name} className="h-9 brightness-0 invert opacity-80" />}
+              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-12 opacity-90" />
             </div>
             <div className="text-right text-xs text-white/40">
               {agency && (
                 <>
-                  <p className="font-medium">{agency.name}</p>
                   {agency.whatsapp && <p>{agency.whatsapp}</p>}
+                  {agency.email && <p>{agency.email}</p>}
                 </>
               )}
             </div>
@@ -329,18 +338,19 @@ export default function PropostaPublicPage() {
         {/* Services */}
         {items.length > 0 && (
           <section>
-            <SectionTitle>O que esta incluso</SectionTitle>
+            <SectionTitle>O que está incluso</SectionTitle>
             <div className="mt-8 space-y-5">
               {items.map((item, idx) => {
                 const name = item.service_catalog_id ? catalogNames[item.service_catalog_id] || item.description : item.description;
                 return (
                   <ServiceCard
                     key={idx}
-                    name={name || `Servico ${idx + 1}`}
+                    name={name || `Serviço ${idx + 1}`}
                     description={item.description}
                     catalogName={item.service_catalog_id ? catalogNames[item.service_catalog_id] : null}
                     value={item.total_value}
                     images={item.images}
+                    passengersCount={passengersCount}
                     onImageClick={(imgIdx) => setLightbox({ images: item.images, index: imgIdx })}
                   />
                 );
@@ -360,7 +370,7 @@ export default function PropostaPublicPage() {
                   background: idx % 2 === 0 ? '#fff' : '#faf9f6',
                   borderBottom: '1px solid #f0ede8'
                 }}>
-                  <span className="text-sm" style={{ color: '#2d2d2d' }}>{name || `Servico ${idx + 1}`}</span>
+                  <span className="text-sm" style={{ color: '#2d2d2d' }}>{name || `Serviço ${idx + 1}`}</span>
                   <span className="text-sm font-semibold tabular-nums" style={{ color: '#2d2d2d' }}>{fmt(item.total_value)}</span>
                 </div>
               );
@@ -371,9 +381,14 @@ export default function PropostaPublicPage() {
               <span className="text-lg font-bold text-white" style={{ fontFamily: "'Georgia', serif" }}>
                 Total da viagem
               </span>
-              <span className="text-3xl font-bold" style={{ color: '#C8A45B', fontFamily: "'Georgia', serif" }}>
-                {fmt(totalSale)}
-              </span>
+              <div className="text-right">
+                <span className="text-3xl font-bold" style={{ color: '#C8A45B', fontFamily: "'Georgia', serif" }}>
+                  {fmt(totalSale)}
+                </span>
+                {passengersCount > 1 && (
+                  <p className="text-xs text-white/50 mt-1">{fmt(perPersonTotal)} por pessoa</p>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -392,11 +407,28 @@ export default function PropostaPublicPage() {
                   <p className="font-bold text-sm" style={{ color: '#0D1B2A' }}>
                     {methodLabels[sale.payment_method || ''] || sale.payment_method}
                   </p>
-                  {sale.installments > 1 && (
-                    <p className="text-xs mt-0.5" style={{ color: '#999' }}>{sale.installments}x parcelas</p>
-                  )}
                 </div>
               </div>
+
+              {/* Highlighted installment display */}
+              {sale.installments > 1 && receivables.length > 0 && (
+                <div className="text-center py-5 mb-5 rounded-xl" style={{ background: '#faf9f6', border: '1px solid #f0ede8' }}>
+                  <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#999' }}>Pagamento em</p>
+                  <p className="text-4xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                    {sale.installments}x
+                  </p>
+                  <p className="text-lg font-semibold mt-1" style={{ color: '#C8A45B' }}>
+                    {fmt(receivables[0]?.amount || (totalSale / sale.installments))}
+                  </p>
+                  {passengersCount > 1 && (
+                    <p className="text-xs mt-2" style={{ color: '#999' }}>
+                      {fmt((receivables[0]?.amount || (totalSale / sale.installments)) / passengersCount)} por pessoa
+                    </p>
+                  )}
+                  <p className="text-[10px] mt-1" style={{ color: '#bbb' }}>Valor total: {fmt(totalSale)}</p>
+                </div>
+              )}
+
               {receivables.length > 0 && (
                 <div className="space-y-1.5 pt-4" style={{ borderTop: '1px solid #f0ede8' }}>
                   {receivables.map((r, idx) => (
@@ -414,7 +446,7 @@ export default function PropostaPublicPage() {
           {/* Notes */}
           {sale.notes && (
             <section>
-              <SectionTitle>Observacoes</SectionTitle>
+              <SectionTitle>Observações</SectionTitle>
               <div className="mt-8 p-6 rounded-2xl text-sm leading-relaxed" style={{
                 background: '#fff',
                 boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
@@ -432,17 +464,14 @@ export default function PropostaPublicPage() {
       <footer className="py-12 px-6" style={{ background: '#0D1B2A' }}>
         <div className="max-w-5xl mx-auto text-center">
           <div className="w-20 h-[2px] mx-auto mb-8" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
-          {agency?.logo_url && (
-            <img src={agency.logo_url} alt={agency.name} className="h-9 mx-auto mb-5 brightness-0 invert opacity-50" />
-          )}
+          <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-9 mx-auto mb-5 opacity-50" />
           {agency && (
             <div className="text-xs text-white/25 space-y-1">
-              <p className="font-medium">{agency.name}</p>
               <p>{[agency.whatsapp, agency.email, agency.website].filter(Boolean).join('  ·  ')}</p>
             </div>
           )}
           <p className="text-[10px] mt-6 text-white/10">
-            Valores sujeitos a disponibilidade e alteracoes sem aviso previo.
+            Valores sujeitos a disponibilidade e alterações sem aviso prévio.
           </p>
         </div>
       </footer>
@@ -477,6 +506,7 @@ function ServiceCard({
   catalogName,
   value,
   images,
+  passengersCount,
   onImageClick,
 }: {
   name: string;
@@ -484,6 +514,7 @@ function ServiceCard({
   catalogName: string | null;
   value: number;
   images: string[];
+  passengersCount: number;
   onImageClick: (idx: number) => void;
 }) {
   const [currentImg, setCurrentImg] = useState(0);
@@ -494,15 +525,14 @@ function ServiceCard({
   const hasImages = images.length > 0;
 
   return (
-    <div className="rounded-2xl overflow-hidden flex flex-col md:flex-row" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-      {/* Image area */}
+    <div className="rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+      {/* Image area - full width on top */}
       {hasImages && (
         <div
-          className="relative flex-shrink-0 cursor-pointer group"
-          style={{ width: '100%', maxWidth: hasImages ? undefined : 0 }}
+          className="relative cursor-pointer group"
           onClick={() => onImageClick(currentImg)}
         >
-          <div className="relative overflow-hidden" style={{ height: 220 }}>
+          <div className="relative overflow-hidden" style={{ height: 280 }}>
             <img
               src={images[currentImg]}
               alt={name}
@@ -513,16 +543,16 @@ function ServiceCard({
             {images.length > 1 && (
               <>
                 <button onClick={prevImg}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   style={{ background: 'rgba(0,0,0,0.5)', color: '#fff' }}>
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button onClick={nextImg}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   style={{ background: 'rgba(0,0,0,0.5)', color: '#fff' }}>
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                   {images.map((_, idx) => (
                     <button key={idx} onClick={e => { e.stopPropagation(); setCurrentImg(idx); }}
                       className="w-2 h-2 rounded-full transition-all"
@@ -533,7 +563,7 @@ function ServiceCard({
               </>
             )}
             {images.length > 1 && (
-              <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: 'rgba(0,0,0,0.5)' }}>
+              <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: 'rgba(0,0,0,0.5)' }}>
                 {currentImg + 1}/{images.length}
               </div>
             )}
@@ -541,22 +571,31 @@ function ServiceCard({
         </div>
       )}
 
-      {/* Content */}
-      <div className={`flex-1 p-6 flex flex-col justify-center ${hasImages ? 'md:p-8' : ''}`}>
+      {/* Content - below image in same box */}
+      <div className="p-6 md:p-8">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h3 className="font-bold text-lg mb-1" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
               {catalogName || name}
             </h3>
             {catalogName && description !== catalogName && description && (
-              <p className="text-sm leading-relaxed" style={{ color: '#888' }}>{description}</p>
+              <p className="text-sm leading-relaxed mt-2" style={{ color: '#888' }}>{description}</p>
             )}
           </div>
-          {value > 0 && (
-            <span className="text-lg font-bold whitespace-nowrap" style={{ color: '#C8A45B' }}>
-              {fmt(value)}
-            </span>
-          )}
+          <div className="text-right flex-shrink-0">
+            {value > 0 && (
+              <>
+                <span className="text-lg font-bold whitespace-nowrap" style={{ color: '#C8A45B' }}>
+                  {fmt(value)}
+                </span>
+                {passengersCount > 1 && (
+                  <p className="text-[11px] mt-0.5" style={{ color: '#aaa' }}>
+                    {fmt(value / passengersCount)} /pessoa
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
