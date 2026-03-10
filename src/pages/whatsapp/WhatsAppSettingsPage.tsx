@@ -74,8 +74,8 @@ export default function WhatsAppSettingsPage() {
   useEffect(() => {
     if (!activeCompany?.id) return;
     const channel = supabase
-      .channel('wa-session')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_sessions' }, () => {
+      .channel(`wa-session-${activeCompany.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_sessions', filter: `empresa_id=eq.${activeCompany.id}` }, () => {
         fetchSession();
       })
       .subscribe();
