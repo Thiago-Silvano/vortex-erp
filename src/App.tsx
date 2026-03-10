@@ -118,6 +118,8 @@ const App = () => (
           <Route path="/email" element={<ProtectedRoute><EmailInboxPage /></ProtectedRoute>} />
           <Route path="/email/templates" element={<ProtectedRoute><EmailTemplatesPage /></ProtectedRoute>} />
           <Route path="/email/settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
+          {/* Public proposal page (no auth required) */}
+          <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
