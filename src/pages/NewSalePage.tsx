@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Upload, FileText, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp } from 'lucide-react';
+import PdfImportModal from '@/components/PdfImportModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, maskCpf, maskEmail } from '@/lib/masks';
@@ -87,6 +88,7 @@ export default function NewSalePage() {
   const [invoiceUrl, setInvoiceUrl] = useState('');
   const [invoiceFileName, setInvoiceFileName] = useState('');
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
+  const [pdfImportOpen, setPdfImportOpen] = useState(false);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
@@ -438,7 +440,12 @@ export default function NewSalePage() {
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">{editSaleId ? 'Editar Venda' : 'Nova Venda'}</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">{editSaleId ? 'Editar Venda' : 'Nova Venda'}</h1>
+          <Button variant="outline" onClick={() => setPdfImportOpen(true)}>
+            <FileUp className="h-4 w-4 mr-2" />📄 Importar Orçamento (PDF)
+          </Button>
+        </div>
 
         {/* Basic Info */}
         <Card>
@@ -850,6 +857,21 @@ export default function NewSalePage() {
           <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
           <Button onClick={handleSave}>{editSaleId ? 'Atualizar Venda' : 'Salvar Venda'}</Button>
         </div>
+
+        <PdfImportModal
+          open={pdfImportOpen}
+          onClose={() => setPdfImportOpen(false)}
+          serviceCatalog={serviceCatalog}
+          marginMode="none"
+          marginPercent={20}
+          onImport={(importedItems, tripInfo) => {
+            // Add imported items to existing items
+            setItems(prev => [...prev, ...importedItems]);
+            // Fill client name if empty
+            if (!clientName && tripInfo.client_name) setClientName(tripInfo.client_name);
+            toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
+          }}
+        />
       </div>
     </AppLayout>
   );

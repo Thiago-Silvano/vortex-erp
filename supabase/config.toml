@@ -1,1 +1,4 @@
 project_id = "skicawqysqozkmmsipvm"
+
+[functions.analyze-quote-pdf]
+verify_jwt = false
