@@ -71,6 +71,10 @@ export default function NewSalePage() {
   const [clientName, setClientName] = useState(quoteData?.clientName || '');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [notes, setNotes] = useState('');
+  const [passengersCount, setPassengersCount] = useState(1);
+  const [tripNights, setTripNights] = useState(0);
+  const [tripStartDate, setTripStartDate] = useState('');
+  const [tripEndDate, setTripEndDate] = useState('');
 
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([]);
   const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);
@@ -121,6 +125,10 @@ export default function NewSalePage() {
     setSaleInterest(Number((sale as any).sale_interest) || 0);
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
+    setPassengersCount(Number((sale as any).passengers_count) || 1);
+    setTripNights(Number((sale as any).trip_nights) || 0);
+    setTripStartDate((sale as any).trip_start_date || '');
+    setTripEndDate((sale as any).trip_end_date || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
     if ((sale as any).invoice_url) {
@@ -197,6 +205,17 @@ export default function NewSalePage() {
       setItems(mapped);
     }
   }, [quoteData]);
+
+  // Auto-calc nights from dates
+  useEffect(() => {
+    if (tripStartDate && tripEndDate) {
+      const start = new Date(tripStartDate);
+      const end = new Date(tripEndDate);
+      const diffMs = end.getTime() - start.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays > 0) setTripNights(diffDays);
+    }
+  }, [tripStartDate, tripEndDate]);
 
   useEffect(() => {
     if (paymentMethod !== 'credito' || !cardPaymentType) return;
@@ -391,6 +410,10 @@ export default function NewSalePage() {
         invoice_url: invoiceUrl || null,
         destination_image_url: destinationImageUrl || null,
         sale_interest: saleInterest,
+        passengers_count: passengersCount,
+        trip_nights: tripNights,
+        trip_start_date: tripStartDate || null,
+        trip_end_date: tripEndDate || null,
       } as any,
       userEmail,
     };
@@ -721,7 +744,7 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base">Informações da Venda</CardTitle></CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {quoteId && (
                 <div>
                   <Label>Código da Cotação</Label>
@@ -760,6 +783,10 @@ export default function NewSalePage() {
                 </div>
               </div>
               <div>
+                <Label>Nº Passageiros</Label>
+                <Input type="number" min="1" value={passengersCount} onChange={e => setPassengersCount(parseInt(e.target.value) || 1)} />
+              </div>
+              <div>
                 <Label>Data da Venda</Label>
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
               </div>
@@ -772,6 +799,19 @@ export default function NewSalePage() {
                     {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label>Início da Viagem</Label>
+                <Input type="date" value={tripStartDate} onChange={e => setTripStartDate(e.target.value)} />
+              </div>
+              <div>
+                <Label>Final da Viagem</Label>
+                <Input type="date" value={tripEndDate} onChange={e => setTripEndDate(e.target.value)} />
+              </div>
+              <div>
+                <Label>Nº de Noites</Label>
+                <Input type="number" min="0" value={tripNights} onChange={e => setTripNights(parseInt(e.target.value) || 0)} />
+                <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente</p>
               </div>
             </div>
             {/* Destination Image */}
