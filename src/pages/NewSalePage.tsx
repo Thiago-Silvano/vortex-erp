@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp } from 'lucide-react';
 import PdfImportModal from '@/components/PdfImportModal';
+import QuickClientModal from '@/components/QuickClientModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, maskCpf, maskEmail } from '@/lib/masks';
@@ -89,6 +90,7 @@ export default function NewSalePage() {
   const [invoiceFileName, setInvoiceFileName] = useState('');
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+  const [quickClientOpen, setQuickClientOpen] = useState(false);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
@@ -460,7 +462,12 @@ export default function NewSalePage() {
               )}
               <div className={quoteId ? '' : 'md:col-span-2'}>
                 <Label>Nome do Cliente *</Label>
-                <Input value={clientName} onChange={e => setClientName(e.target.value)} />
+                <div className="flex gap-2">
+                  <Input value={clientName} onChange={e => setClientName(e.target.value)} className="flex-1" />
+                  <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label>Data da Venda</Label>
@@ -870,6 +877,15 @@ export default function NewSalePage() {
             // Fill client name if empty
             if (!clientName && tripInfo.client_name) setClientName(tripInfo.client_name);
             toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
+          }}
+        />
+
+        <QuickClientModal
+          open={quickClientOpen}
+          onClose={() => setQuickClientOpen(false)}
+          initialName={clientName}
+          onClientCreated={(client) => {
+            setClientName(client.full_name);
           }}
         />
       </div>
