@@ -47,11 +47,14 @@ Deno.serve(async (req) => {
     }
 
     // Initialize SMTP client
+    const port = smtp_port || 587;
+    // Port 465 = implicit TLS, Port 587 = STARTTLS (tls must be false, denomailer upgrades automatically)
+    const useTls = port === 465;
     const client = new SMTPClient({
       connection: {
         hostname: smtp_host,
-        port: smtp_port || 587,
-        tls: smtp_ssl !== false,
+        port,
+        tls: useTls,
         auth: {
           username: smtp_user,
           password: smtp_password,
