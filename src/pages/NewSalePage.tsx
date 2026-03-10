@@ -520,8 +520,8 @@ export default function NewSalePage() {
         let commValue = 0;
         const pct = Number(sellerData.commission_percentage) || 0;
         if (sellerData.commission_type === 'sales_percentage') {
-          const base = sellerData.commission_base === 'net_received' ? totalSale - cardFeeValue
-            : sellerData.commission_base === 'sale_profit' ? grossProfit : totalSale;
+          const base = sellerData.commission_base === 'net_received' ? totalSaleWithInterest - cardFeeValue
+            : sellerData.commission_base === 'sale_profit' ? grossProfit : totalSaleWithInterest;
           commValue = base * (pct / 100);
         } else if (sellerData.commission_type === 'profit_percentage') {
           commValue = grossProfit * (pct / 100);
