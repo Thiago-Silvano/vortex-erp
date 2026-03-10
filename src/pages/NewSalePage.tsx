@@ -475,7 +475,29 @@ export default function NewSalePage() {
               <div className={quoteId ? '' : 'md:col-span-2'}>
                 <Label>Nome do Cliente *</Label>
                 <div className="flex gap-2">
-                  <Input value={clientName} onChange={e => setClientName(e.target.value)} className="flex-1" />
+                  <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={clientPopoverOpen} className="flex-1 justify-between font-normal">
+                        {clientName || 'Selecione ou digite o cliente...'}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar cliente..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                          <CommandGroup>
+                            {allClients.map(c => (
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { setClientName(c.full_name); setClientPopoverOpen(false); }}>
+                                {c.full_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
                     <Plus className="h-4 w-4" />
                   </Button>
