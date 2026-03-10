@@ -346,7 +346,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       if (hotel.description) {
         doc.setFontSize(8);
         setColor(doc, TEXT_MUTED);
-        const descLines = doc.splitTextToSize(hotel.description, cw - 12);
+        const descLines = doc.splitTextToSize(s(hotel.description), cw - 12);
         doc.text(descLines, m + 8, y);
         y += descLines.length * 3.5 + 2;
       }
