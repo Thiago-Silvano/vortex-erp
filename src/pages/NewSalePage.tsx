@@ -1193,7 +1193,7 @@ export default function NewSalePage() {
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pb-8">
-          <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
+          <Button variant="destructive" onClick={handleCancel}>Cancelar</Button>
           <Button variant="outline" onClick={handleExportPdf}>
             <Download className="h-4 w-4 mr-1" /> Gerar PDF Proposta
           </Button>
