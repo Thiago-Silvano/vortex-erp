@@ -151,6 +151,7 @@ function AppSidebar() {
   const isFinancialActive = location.pathname.startsWith('/financial');
   const isReportsActive = location.pathname.startsWith('/reports');
   const isWhatsAppActive = location.pathname.startsWith('/whatsapp');
+  const isEmailActive = location.pathname.startsWith('/email');
 
   const filteredFinancial = filterItems(financialItems);
   const filteredReports = filterItems(reportItems);
