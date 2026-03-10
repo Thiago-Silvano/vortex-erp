@@ -14,7 +14,6 @@ import {
   Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
   MessageSquare, CheckCircle, Zap, MessageCircle, Mail, Send, FileEdit, Archive,
 } from 'lucide-react';
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useCompany } from '@/contexts/CompanyContext';
