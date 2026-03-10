@@ -5,6 +5,31 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-whatsapp-secret',
 };
 
+// Map whatsapp-web.js message types to mime type prefixes
+function guessMimeType(messageType: string): string {
+  switch (messageType) {
+    case 'image': return 'image/jpeg';
+    case 'video': return 'video/mp4';
+    case 'audio':
+    case 'ptt': return 'audio/ogg';
+    case 'document': return 'application/octet-stream';
+    case 'sticker': return 'image/webp';
+    default: return 'application/octet-stream';
+  }
+}
+
+function getExtension(messageType: string): string {
+  switch (messageType) {
+    case 'image': return 'jpg';
+    case 'video': return 'mp4';
+    case 'audio':
+    case 'ptt': return 'ogg';
+    case 'sticker': return 'webp';
+    case 'document': return 'bin';
+    default: return 'bin';
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -54,11 +79,22 @@ Deno.serve(async (req) => {
     }
 
     if (event === 'message_received') {
-      const { empresa_id: incomingEmpresaId, phone, sender_name, content, message_type, media_url, media_filename } = data;
+      const {
+        empresa_id: incomingEmpresaId,
+        phone,
+        sender_name,
+        content,
+        message_type,
+        media_url,       // legacy: direct URL
+        media,           // NEW: base64 data from Node.js
+        media_filename,
+        media_mimetype,  // optional mimetype from Node.js
+        reply_to,        // NEW: quoted message serialized id
+      } = data;
 
       let empresaId: string | null = incomingEmpresaId || null;
 
-      // Fallback: infer company from connected session when webhook caller didn't send empresa_id
+      // Fallback: infer company from connected session
       if (!empresaId) {
         const { data: connectedSessions } = await supabase
           .from('whatsapp_sessions')
@@ -78,6 +114,58 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Handle media: upload base64 to storage if provided
+      let finalMediaUrl: string | null = media_url || null;
+      let finalMimetype: string | null = media_mimetype || null;
+
+      if (media && typeof media === 'string' && media.length > 0) {
+        try {
+          const mimeType = media_mimetype || guessMimeType(message_type || 'document');
+          const ext = getExtension(message_type || 'document');
+          const fileName = `${empresaId}/${phone}/${Date.now()}.${ext}`;
+
+          // Decode base64 to Uint8Array
+          const binaryString = atob(media);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+
+          const { error: uploadError } = await supabase.storage
+            .from('whatsapp-media')
+            .upload(fileName, bytes, {
+              contentType: mimeType,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            console.error('Storage upload error:', uploadError);
+          } else {
+            const { data: urlData } = supabase.storage
+              .from('whatsapp-media')
+              .getPublicUrl(fileName);
+            finalMediaUrl = urlData.publicUrl;
+            finalMimetype = mimeType;
+          }
+        } catch (uploadErr) {
+          console.error('Media upload failed:', uploadErr);
+        }
+      }
+
+      // Determine display content
+      let displayContent = content || '';
+      if (!displayContent && finalMediaUrl) {
+        const typeLabel: Record<string, string> = {
+          image: '📷 Imagem',
+          video: '🎥 Vídeo',
+          audio: '🎵 Áudio',
+          ptt: '🎤 Áudio',
+          sticker: '🏷️ Figurinha',
+          document: '📄 Documento',
+        };
+        displayContent = typeLabel[message_type || 'document'] || '📎 Arquivo';
+      }
+
       // Find or create conversation
       const { data: existingConv } = await supabase
         .from('whatsapp_conversations')
@@ -94,12 +182,11 @@ Deno.serve(async (req) => {
       if (existingConv) {
         conversationId = existingConv.id;
         await supabase.from('whatsapp_conversations').update({
-          last_message: content?.substring(0, 200) || '',
+          last_message: displayContent.substring(0, 200) || '',
           last_message_at: new Date().toISOString(),
           unread_count: (existingConv.unread_count || 0) + 1,
         }).eq('id', conversationId);
       } else {
-        // Try to find client by phone
         const normalizedPhone = phone.replace(/\D/g, '');
         const { data: clientData } = await supabase
           .from('clients')
@@ -117,7 +204,7 @@ Deno.serve(async (req) => {
           client_name: clientName,
           client_id: clientData?.id || null,
           status: 'new_lead',
-          last_message: content?.substring(0, 200) || '',
+          last_message: displayContent.substring(0, 200) || '',
           last_message_at: new Date().toISOString(),
           unread_count: 1,
         }).select('id').single();
@@ -137,10 +224,12 @@ Deno.serve(async (req) => {
         conversation_id: conversationId,
         sender_type: 'client',
         sender_name: sender_name || '',
-        content: content || '',
+        content: displayContent,
         message_type: message_type || 'text',
-        media_url: media_url || null,
+        media_url: finalMediaUrl,
         media_filename: media_filename || null,
+        media_mimetype: finalMimetype,
+        reply_to_message_id: reply_to || null,
       });
 
       // Check automations
@@ -150,11 +239,10 @@ Deno.serve(async (req) => {
         .eq('empresa_id', empresaId)
         .eq('is_active', true);
 
-      if (automations && content) {
-        const lowerContent = content.toLowerCase();
+      if (automations && displayContent) {
+        const lowerContent = displayContent.toLowerCase();
         for (const auto of automations) {
           if (lowerContent.includes(auto.trigger_keyword.toLowerCase())) {
-            // Insert auto-reply message
             await supabase.from('whatsapp_messages').insert({
               conversation_id: conversationId,
               sender_type: 'agent',
@@ -162,14 +250,10 @@ Deno.serve(async (req) => {
               content: auto.response_message,
               message_type: 'text',
             });
-            // Update conversation last message
             await supabase.from('whatsapp_conversations').update({
               last_message: auto.response_message.substring(0, 200),
               last_message_at: new Date().toISOString(),
             }).eq('id', conversationId);
-
-            // Signal Node.js server to send the auto-reply
-            // The server should poll or subscribe to new agent messages
             break;
           }
         }
@@ -193,6 +277,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
+    console.error('Webhook error:', err);
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
