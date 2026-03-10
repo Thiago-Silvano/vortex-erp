@@ -159,34 +159,53 @@ export default function WhatsAppPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Realtime subscription - single source of truth for live updates
   useEffect(() => {
     if (!activeCompany?.id) return;
+
+    // Debounce helpers to prevent multiple rapid fetches
+    let convTimer: ReturnType<typeof setTimeout> | null = null;
+    let msgTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedFetchConvs = () => {
+      if (convTimer) clearTimeout(convTimer);
+      convTimer = setTimeout(() => fetchConversations(), 300);
+    };
+    const debouncedFetchMsgs = (convId: string) => {
+      if (msgTimer) clearTimeout(msgTimer);
+      msgTimer = setTimeout(() => { fetchMessages(convId); markAsRead(convId); }, 300);
+    };
+
     const channel = supabase
       .channel(`whatsapp-realtime-${activeCompany.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_messages' }, (payload) => {
-        if (selectedConv && (payload.new as any)?.conversation_id === selectedConv.id) {
-          fetchMessages(selectedConv.id);
-          markAsRead(selectedConv.id);
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'whatsapp_messages' }, (payload) => {
+        const newMsg = payload.new as any;
+        if (selectedConv && newMsg?.conversation_id === selectedConv.id) {
+          debouncedFetchMsgs(selectedConv.id);
         }
-        fetchConversations();
+        debouncedFetchConvs();
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_conversations', filter: `empresa_id=eq.${activeCompany.id}` }, () => {
-        fetchConversations();
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'whatsapp_conversations', filter: `empresa_id=eq.${activeCompany.id}` }, () => {
+        debouncedFetchConvs();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'whatsapp_conversations', filter: `empresa_id=eq.${activeCompany.id}` }, () => {
+        debouncedFetchConvs();
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      if (convTimer) clearTimeout(convTimer);
+      if (msgTimer) clearTimeout(msgTimer);
+      supabase.removeChannel(channel);
+    };
   }, [selectedConv?.id, activeCompany?.id, fetchConversations, fetchMessages, markAsRead]);
 
+  // Single fallback polling interval (longer, just as safety net)
   useEffect(() => {
-    const convInterval = setInterval(() => { fetchConversations(); }, 5000);
-    return () => clearInterval(convInterval);
-  }, [fetchConversations]);
-
-  useEffect(() => {
-    if (!selectedConv) return;
-    const msgInterval = setInterval(() => { fetchMessages(selectedConv.id); }, 3000);
-    return () => clearInterval(msgInterval);
-  }, [selectedConv?.id, fetchMessages]);
+    const interval = setInterval(() => {
+      fetchConversations();
+      if (selectedConv) fetchMessages(selectedConv.id);
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [fetchConversations, fetchMessages, selectedConv?.id]);
 
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedConv) return;
