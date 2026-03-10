@@ -218,7 +218,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   setColor(doc, DEEP_BLUE);
-  doc.text(data.client.name, pw / 2, coverY, { align: 'center' });
+  doc.text(s(data.client.name), pw / 2, coverY, { align: 'center' });
   coverY += 7;
 
   if (data.passengersCount && data.passengersCount > 1) {
