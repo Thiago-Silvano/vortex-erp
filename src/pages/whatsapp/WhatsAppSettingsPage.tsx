@@ -223,7 +223,39 @@ export default function WhatsAppSettingsPage() {
       }).eq('empresa_id', activeCompany.id);
       fetchSession();
 
-      const result = await callProxy('/connect', 'GET', activeCompany.id);
+      let result: any;
+      try {
+        result = await callProxy('/connect', 'GET', activeCompany.id);
+      } catch (e: any) {
+        // If server says browser already running, treat as "starting" and poll
+        const errMsg = e?.message || '';
+        if (errMsg.includes('already running') || errMsg.includes('browser')) {
+          toast.info('Sessão já iniciada no servidor. Buscando QR Code...');
+          await supabase.from('whatsapp_sessions').update({
+            status: 'waiting_qr',
+            updated_at: new Date().toISOString(),
+          }).eq('empresa_id', activeCompany.id);
+          fetchSession();
+          pollForQrCode(activeCompany.id);
+          setLoading(false);
+          return;
+        }
+        throw e;
+      }
+
+      // Also handle "already running" in response data
+      const errorMsg = result?.data?.error || result?.error || '';
+      if (typeof errorMsg === 'string' && (errorMsg.includes('already running') || errorMsg.includes('browser'))) {
+        toast.info('Sessão já iniciada no servidor. Buscando QR Code...');
+        await supabase.from('whatsapp_sessions').update({
+          status: 'waiting_qr',
+          updated_at: new Date().toISOString(),
+        }).eq('empresa_id', activeCompany.id);
+        fetchSession();
+        pollForQrCode(activeCompany.id);
+        setLoading(false);
+        return;
+      }
 
       if (result?.ok !== false) {
         // Check if QR code came directly in the response
