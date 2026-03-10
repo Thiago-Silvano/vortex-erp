@@ -144,8 +144,8 @@ export default function EmailInboxPage() {
 
   const getTrackingBadge = (email: EmailRow) => {
     if (email.folder !== 'sent') return null;
-    if (email.tracking_opened_at) return <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">Aberto</Badge>;
-    if (email.status === 'sent') return <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">Enviado</Badge>;
+    if (email.tracking_opened_at) return <Badge variant="outline" className="text-xs bg-accent/20 text-accent-foreground border-accent/30">Aberto</Badge>;
+    if (email.status === 'sent') return <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">Enviado</Badge>;
     return null;
   };
 
