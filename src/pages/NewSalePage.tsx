@@ -317,6 +317,46 @@ export default function NewSalePage() {
     e.target.value = '';
   };
 
+  const handleDestinationImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop();
+    const fileName = `destinations/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
+    if (error) { toast.error('Erro ao enviar imagem'); return; }
+    const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+    setDestinationImageUrl(data.publicUrl);
+    toast.success('Imagem do destino enviada!');
+    e.target.value = '';
+  };
+
+  const handleItemImageUpload = async (itemIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop();
+      const fileName = `sale-items/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
+      if (error) continue;
+      const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+      newUrls.push(data.publicUrl);
+    }
+    if (newUrls.length > 0) {
+      setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...newUrls] }));
+      toast.success(`${newUrls.length} imagem(ns) adicionada(s)!`);
+    }
+    e.target.value = '';
+  };
+
+  const removeItemImage = (itemIdx: number, imgIdx: number) => {
+    setItemImages(prev => {
+      const updated = [...(prev[itemIdx] || [])];
+      updated.splice(imgIdx, 1);
+      return { ...prev, [itemIdx]: updated };
+    });
+  };
+
   const buildSalePayload = async (status: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     const userEmail = user?.email || '';
