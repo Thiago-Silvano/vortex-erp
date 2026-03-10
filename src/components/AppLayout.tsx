@@ -201,6 +201,7 @@ function AppSidebar() {
           <SidebarGroupContent>{renderMenuItems(filterItems(mainItems))}</SidebarGroupContent>
         </SidebarGroup>
 
+        {renderCollapsibleGroup('Conversas', MessageSquare, filteredWhatsApp, isWhatsAppActive)}
         {renderCollapsibleGroup('Financeiro', DollarSign, filteredFinancial, isFinancialActive)}
         {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
 
