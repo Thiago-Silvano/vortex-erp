@@ -94,6 +94,8 @@ Deno.serve(async (req) => {
     }).eq('id', conversation_id);
 
     // Forward to Node.js server for actual WhatsApp delivery
+    let deliveryError: string | null = null;
+
     if (session.server_url) {
       try {
         const agentLabel = `[${sender_name || user.email?.split('@')[0] || 'Agente'}]`;
@@ -126,6 +128,12 @@ Deno.serve(async (req) => {
         console.log(`Node.js response: ${deliveryResponse.status} - ${responseText}`);
 
         if (!deliveryResponse.ok) {
+          let errorDetail = responseText;
+          try {
+            const parsed = JSON.parse(responseText);
+            errorDetail = parsed.error || responseText;
+          } catch {}
+          deliveryError = errorDetail;
           throw new Error(`Delivery failed (${deliveryResponse.status}): ${responseText}`);
         }
 
@@ -138,9 +146,19 @@ Deno.serve(async (req) => {
         if (msgData?.id) {
           await supabase.from('whatsapp_messages').update({ delivery_status: 'failed' }).eq('id', msgData.id);
         }
+        if (!deliveryError) {
+          deliveryError = errMsg.includes('abort') ? 'Servidor inacessível (timeout)' : errMsg;
+        }
       }
     } else {
       console.error('No server_url configured for session');
+      deliveryError = 'URL do servidor não configurada';
+    }
+
+    if (deliveryError) {
+      return new Response(JSON.stringify({ ok: false, error: deliveryError, message_id: msgData?.id }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(JSON.stringify({ ok: true, message_id: msgData?.id }), {
