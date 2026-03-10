@@ -390,6 +390,7 @@ export default function NewSalePage() {
         seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
         invoice_url: invoiceUrl || null,
         destination_image_url: destinationImageUrl || null,
+        sale_interest: saleInterest,
       } as any,
       userEmail,
     };
