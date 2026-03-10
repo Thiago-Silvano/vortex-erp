@@ -43,6 +43,12 @@ import VistosNewSalePage from "./pages/vistos/VistosNewSalePage";
 import VistosProductionPage from "./pages/vistos/VistosProductionPage";
 import VistosReportsPage from "./pages/vistos/VistosReportsPage";
 
+// WhatsApp pages
+import WhatsAppPage from "./pages/whatsapp/WhatsAppPage";
+import WhatsAppFinishedPage from "./pages/whatsapp/WhatsAppFinishedPage";
+import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage";
+import WhatsAppAutomationsPage from "./pages/whatsapp/WhatsAppAutomationsPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -93,6 +99,12 @@ const App = () => (
           <Route path="/vistos/sales/edit" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
           <Route path="/vistos/production" element={<ProtectedRoute><VistosProductionPage /></ProtectedRoute>} />
           <Route path="/vistos/reports" element={<ProtectedRoute><VistosReportsPage /></ProtectedRoute>} />
+
+          {/* WhatsApp routes */}
+          <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppPage /></ProtectedRoute>} />
+          <Route path="/whatsapp/finished" element={<ProtectedRoute><WhatsAppFinishedPage /></ProtectedRoute>} />
+          <Route path="/whatsapp/quick-replies" element={<ProtectedRoute><WhatsAppQuickRepliesPage /></ProtectedRoute>} />
+          <Route path="/whatsapp/automations" element={<ProtectedRoute><WhatsAppAutomationsPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
