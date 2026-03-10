@@ -285,7 +285,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       // Hotel icon
       doc.setFontSize(10);
       setColor(doc, GOLD);
-      doc.text('🏨', m, y + 5);
+      doc.text('', m, y + 5);
 
       // Hotel name
       doc.setFont('times', 'bold');
