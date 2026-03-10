@@ -50,6 +50,11 @@ import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage"
 import WhatsAppAutomationsPage from "./pages/whatsapp/WhatsAppAutomationsPage";
 import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
 
+// Email pages
+import EmailInboxPage from "./pages/email/EmailInboxPage";
+import EmailTemplatesPage from "./pages/email/EmailTemplatesPage";
+import EmailSettingsPage from "./pages/email/EmailSettingsPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -107,6 +112,11 @@ const App = () => (
           <Route path="/whatsapp/quick-replies" element={<ProtectedRoute><WhatsAppQuickRepliesPage /></ProtectedRoute>} />
           <Route path="/whatsapp/automations" element={<ProtectedRoute><WhatsAppAutomationsPage /></ProtectedRoute>} />
           <Route path="/whatsapp/settings" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
+
+          {/* Email routes */}
+          <Route path="/email" element={<ProtectedRoute><EmailInboxPage /></ProtectedRoute>} />
+          <Route path="/email/templates" element={<ProtectedRoute><EmailTemplatesPage /></ProtectedRoute>} />
+          <Route path="/email/settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

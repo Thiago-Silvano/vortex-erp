@@ -12,7 +12,7 @@ import {
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
   Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
-  MessageSquare, CheckCircle, Zap, MessageCircle,
+  MessageSquare, CheckCircle, Zap, MessageCircle, Mail, Send, FileEdit, Archive,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -136,6 +136,12 @@ function AppSidebar() {
     { title: 'Configurações', url: '/whatsapp/settings', icon: Cog, permKey: 'whatsapp_view' },
   ];
 
+  const emailItems: MenuItem[] = [
+    { title: 'Inbox', url: '/email', icon: Mail },
+    { title: 'Templates', url: '/email/templates', icon: FileText },
+    { title: 'Configurações', url: '/email/settings', icon: Cog },
+  ];
+
   const adminItems: MenuItem[] = [
     { title: 'Configurações', url: '/settings', icon: Settings, permKey: 'settings_access' },
     { title: 'Usuários', url: '/users', icon: Users },
@@ -144,10 +150,12 @@ function AppSidebar() {
   const isFinancialActive = location.pathname.startsWith('/financial');
   const isReportsActive = location.pathname.startsWith('/reports');
   const isWhatsAppActive = location.pathname.startsWith('/whatsapp');
+  const isEmailActive = location.pathname.startsWith('/email');
 
   const filteredFinancial = filterItems(financialItems);
   const filteredReports = filterItems(reportItems);
   const filteredWhatsApp = filterItems(whatsappItems);
+  const filteredEmail = filterItems(emailItems);
 
   const renderMenuItems = (items: MenuItem[]) => (
     <SidebarMenu>
@@ -206,6 +214,7 @@ function AppSidebar() {
         </SidebarGroup>
 
         {renderCollapsibleGroup('Conversas', MessageSquare, filteredWhatsApp, isWhatsAppActive)}
+        {renderCollapsibleGroup('Email', Mail, filteredEmail, isEmailActive)}
         {renderCollapsibleGroup('Financeiro', DollarSign, filteredFinancial, isFinancialActive)}
         {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
 
