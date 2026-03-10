@@ -155,6 +155,9 @@ export default function WhatsAppSettingsPage() {
     const maxAttempts = 30; // 30 × 3s = 90s
 
     const poll = async () => {
+      // Always use the most current empresa_id (from ref), fallback to initial
+      const currentEmpresaId = empresaIdRef.current || empresaId;
+      
       attempts++;
       if (attempts > maxAttempts) {
         stopPolling();
@@ -164,16 +167,14 @@ export default function WhatsAppSettingsPage() {
       }
 
       try {
-        const result = await callProxy('/status', 'GET', empresaId);
+        console.log(`[QR Poll] Attempt ${attempts}/${maxAttempts} - empresa_id=${currentEmpresaId}`);
+        const result = await callProxy('/status', 'GET', currentEmpresaId);
         const d = result?.data || result;
         console.log('[QR Poll] /status response:', d);
 
         if (d?.qr) {
-          // QR code received
           await updateSession({ qr_code: d.qr, status: 'waiting_qr' });
-          // Don't stop polling — keep polling until connected
         } else if (d?.connected === true) {
-          // Connected!
           await updateSession({
             status: 'connected',
             qr_code: '',
@@ -183,14 +184,18 @@ export default function WhatsAppSettingsPage() {
           stopPolling();
           toast.success('WhatsApp conectado com sucesso!');
         }
-        // if status === "waiting" or anything else, just continue polling
-      } catch (e) {
+      } catch (e: any) {
         console.error('[QR Poll] Error:', e);
-        // Continue polling even on error
+        const msg = e?.message || '';
+        if (msg.includes('empresa_id') || msg.includes('identificação')) {
+          stopPolling();
+          toast.error('Erro: empresa não identificada. Recarregue a página.');
+          return;
+        }
+        // Continue polling on other errors
       }
     };
 
-    // First poll immediately
     poll();
     pollingRef.current = setInterval(poll, 3000);
   }, [stopPolling, updateSession]);
