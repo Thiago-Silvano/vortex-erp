@@ -1015,7 +1015,36 @@ export default function NewSalePage() {
               ))}
             </div>
 
-            {paymentMethod === 'credito' && (
+            {/* Sale Interest */}
+            <div className="pt-4 border-t">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                  <Label>Juros na venda? (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={saleInterest || ''}
+                    onChange={e => setSaleInterest(parseFloat(e.target.value) || 0)}
+                    placeholder="0,00"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Valor somado internamente. Não aparece para o cliente.</p>
+                </div>
+                {saleInterest > 0 && (
+                  <>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total dos serviços</p>
+                      <p className="text-sm font-medium">{fmt(totalSale)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total com juros</p>
+                      <p className="text-sm font-bold text-primary">{fmt(totalSaleWithInterest)}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
               <div className="space-y-4 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
