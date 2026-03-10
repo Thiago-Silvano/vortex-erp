@@ -110,6 +110,7 @@ Deno.serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal,
           body: JSON.stringify({
+            empresa_id: conv.empresa_id,
             number: conv.phone,
             phone: conv.phone,
             message: fullMessage,
