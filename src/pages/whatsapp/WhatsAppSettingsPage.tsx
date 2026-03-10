@@ -67,6 +67,12 @@ export default function WhatsAppSettingsPage() {
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [pollingQr, setPollingQr] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const empresaIdRef = useRef<string | null>(null);
+
+  // Keep empresaIdRef always in sync with activeCompany
+  useEffect(() => {
+    empresaIdRef.current = activeCompany?.id || null;
+  }, [activeCompany?.id]);
 
   // ─── Fetch session from DB ───
   const fetchSession = useCallback(async () => {
