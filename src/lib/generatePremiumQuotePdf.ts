@@ -82,6 +82,17 @@ export interface PremiumPdfData {
 }
 
 // ─── Helpers ────────────────────────────────────────────────
+// Sanitize text for jsPDF (remove characters outside Latin-1 / WinAnsiEncoding)
+const sanitize = (text: string): string =>
+  text
+    .replace(/[\u2013\u2014]/g, '-')   // en/em dash
+    .replace(/[\u2018\u2019]/g, "'")   // smart quotes
+    .replace(/[\u201C\u201D]/g, '"')   // smart double quotes
+    .replace(/[\u2026]/g, '...')       // ellipsis
+    .replace(/[\u25B8\u25BA]/g, '-')   // triangles
+    .replace(/[\u{1F300}-\u{1FFFF}]/gu, '') // all emoji
+    .replace(/[^\x00-\xFF]/g, '');     // anything outside Latin-1
+
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
