@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
@@ -604,6 +604,31 @@ export default function NewSalePage() {
     toast.success('PDF da proposta premium gerado!');
   };
 
+  const handleGenerateLink = async () => {
+    if (!editSaleId) {
+      toast.error('Salve a venda primeiro antes de gerar o link da proposta.');
+      return;
+    }
+
+    // Fetch the short_id for this sale
+    const { data, error } = await (supabase.from('sales').select('short_id' as any).eq('id', editSaleId).single() as any);
+    if (error || !data?.short_id) {
+      toast.error('Erro ao buscar código da proposta.');
+      return;
+    }
+
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/proposta/${data.short_id}`;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('Link da proposta copiado!');
+    } catch {
+      // Fallback: show in prompt
+      window.prompt('Copie o link da proposta:', link);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -1050,8 +1075,13 @@ export default function NewSalePage() {
         <div className="flex justify-end gap-3 pb-8">
           <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
           <Button variant="outline" onClick={handleExportPdf}>
-            <Download className="h-4 w-4 mr-1" />📄 Gerar PDF Proposta
+            <Download className="h-4 w-4 mr-1" /> Gerar PDF Proposta
           </Button>
+          {editSaleId && (
+            <Button variant="outline" onClick={handleGenerateLink}>
+              <Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta
+            </Button>
+          )}
           <Button variant="secondary" onClick={handleSaveDraft}>
             💾 Salvar Rascunho
           </Button>

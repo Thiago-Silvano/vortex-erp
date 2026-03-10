@@ -82,6 +82,17 @@ export interface PremiumPdfData {
 }
 
 // ─── Helpers ────────────────────────────────────────────────
+// Sanitize text for jsPDF (remove characters outside Latin-1 / WinAnsiEncoding)
+const sanitize = (text: string): string =>
+  text
+    .replace(/[\u2013\u2014]/g, '-')   // en/em dash
+    .replace(/[\u2018\u2019]/g, "'")   // smart quotes
+    .replace(/[\u201C\u201D]/g, '"')   // smart double quotes
+    .replace(/[\u2026]/g, '...')       // ellipsis
+    .replace(/[\u25B8\u25BA]/g, '-')   // triangles
+    .replace(/[\u{1F300}-\u{1FFFF}]/gu, '') // all emoji
+    .replace(/[^\x00-\xFF]/g, '');     // anything outside Latin-1
+
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -118,8 +129,20 @@ function checkPageBreak(doc: jsPDF, y: number, needed: number, margin: number): 
   return y;
 }
 
+// Wrap doc.text to auto-sanitize all strings
+function safeText(doc: jsPDF, text: string | string[], x: number, y: number, options?: any) {
+  if (Array.isArray(text)) {
+    doc.text(text.map(t => sanitize(t)), x, y, options);
+  } else {
+    doc.text(sanitize(text), x, y, options);
+  }
+}
+
 // ─── Main Generator ─────────────────────────────────────────
 export function generatePremiumQuotePdf(data: PremiumPdfData) {
+  // Sanitize all string data upfront to avoid encoding issues
+  const s = sanitize;
+  
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pw = doc.internal.pageSize.getWidth(); // 210
   const ph = doc.internal.pageSize.getHeight(); // 297
@@ -151,8 +174,8 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   setColor(doc, TEXT_MUTED);
-  doc.text(data.agency.name, pw - m, 28, { align: 'right' });
-  if (data.agency.whatsapp) doc.text(data.agency.whatsapp, pw - m, 33, { align: 'right' });
+  doc.text(s(data.agency.name), pw - m, 28, { align: 'right' });
+  if (data.agency.whatsapp) doc.text(s(data.agency.whatsapp), pw - m, 33, { align: 'right' });
   if (data.agency.email) doc.text(data.agency.email, pw - m, 38, { align: 'right' });
 
   // Divider after header
@@ -171,7 +194,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     doc.setFont('times', 'bold');
     doc.setFontSize(36);
     setColor(doc, DEEP_BLUE);
-    const destLines = doc.splitTextToSize(data.destination, cw);
+    const destLines = doc.splitTextToSize(s(data.destination), cw);
     doc.text(destLines, pw / 2, titleY + 18, { align: 'center' });
   }
 
@@ -181,7 +204,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
     setColor(doc, TEXT_MUTED);
-    const dateStr = `${formatDateLong(data.departureDate)}  —  ${formatDateLong(data.returnDate)}`;
+    const dateStr = `${formatDateLong(data.departureDate)}  -  ${formatDateLong(data.returnDate)}`;
     doc.text(dateStr, pw / 2, coverY, { align: 'center' });
     coverY += 10;
   }
@@ -195,7 +218,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   setColor(doc, DEEP_BLUE);
-  doc.text(data.client.name, pw / 2, coverY, { align: 'center' });
+  doc.text(s(data.client.name), pw / 2, coverY, { align: 'center' });
   coverY += 7;
 
   if (data.passengersCount && data.passengersCount > 1) {
@@ -211,7 +234,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     setColor(doc, TEXT_MUTED);
-    doc.text(`Consultor: ${data.seller}`, pw / 2, coverY, { align: 'center' });
+    doc.text(s(`Consultor: ${data.seller}`), pw / 2, coverY, { align: 'center' });
   }
 
   // Bottom accent
@@ -238,11 +261,11 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   y += 2;
 
   const summaryItems: Array<{ label: string; value: string; icon: string }> = [];
-  if (data.destination) summaryItems.push({ label: 'Destino', value: data.destination, icon: '📍' });
+  if (data.destination) summaryItems.push({ label: 'Destino', value: data.destination, icon: '' });
   if (data.departureDate && data.returnDate)
-    summaryItems.push({ label: 'Datas', value: `${formatDateBR(data.departureDate)} — ${formatDateBR(data.returnDate)}`, icon: '📅' });
-  if (data.nights) summaryItems.push({ label: 'Duração', value: `${data.nights} noites`, icon: '🌙' });
-  if (data.passengersCount) summaryItems.push({ label: 'Passageiros', value: `${data.passengersCount} ${data.passengersCount > 1 ? 'adultos' : 'adulto'}`, icon: '👤' });
+    summaryItems.push({ label: 'Periodo', value: `${formatDateBR(data.departureDate)} - ${formatDateBR(data.returnDate)}`, icon: '' });
+  if (data.nights) summaryItems.push({ label: 'Duracao', value: `${data.nights} noites`, icon: '' });
+  if (data.passengersCount) summaryItems.push({ label: 'Passageiros', value: `${data.passengersCount} ${data.passengersCount > 1 ? 'adultos' : 'adulto'}`, icon: '' });
 
   // Draw summary cards in a grid
   if (summaryItems.length > 0) {
@@ -262,7 +285,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       setColor(doc, TEXT_MUTED);
-      doc.text(`${item.icon}  ${item.label}`, cx + 5, cy + 7);
+      doc.text(item.label, cx + 5, cy + 7);
 
       // Value
       doc.setFont('helvetica', 'bold');
@@ -285,20 +308,20 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       // Hotel icon
       doc.setFontSize(10);
       setColor(doc, GOLD);
-      doc.text('🏨', m, y + 5);
+      doc.text('', m, y + 5);
 
       // Hotel name
       doc.setFont('times', 'bold');
       doc.setFontSize(14);
       setColor(doc, DEEP_BLUE);
-      doc.text(hotel.name, m + 8, y + 5);
+      doc.text(s(hotel.name), m + 8, y + 5);
       y += 9;
 
       if (hotel.room) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         setColor(doc, TEXT_MAIN);
-        doc.text(hotel.room, m + 8, y);
+        doc.text(s(hotel.room), m + 8, y);
         y += 5;
       }
 
@@ -308,7 +331,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       setColor(doc, TEXT_MUTED);
 
       const details: string[] = [];
-      details.push(`${formatDateBR(hotel.checkIn)} — ${formatDateBR(hotel.checkOut)}`);
+      details.push(`${formatDateBR(hotel.checkIn)} - ${formatDateBR(hotel.checkOut)}`);
       details.push(`${hotel.nights} noites`);
       if (hotel.meal) details.push(hotel.meal);
       doc.text(details.join('  ·  '), m + 8, y);
@@ -323,7 +346,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       if (hotel.description) {
         doc.setFontSize(8);
         setColor(doc, TEXT_MUTED);
-        const descLines = doc.splitTextToSize(hotel.description, cw - 12);
+        const descLines = doc.splitTextToSize(s(hotel.description), cw - 12);
         doc.text(descLines, m + 8, y);
         y += descLines.length * 3.5 + 2;
       }
@@ -344,12 +367,12 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     const returnLegs = data.flightLegs.filter(l => l.direction === 'volta');
 
     if (outbound.length > 0) {
-      y = drawFlightDirection(doc, '✈️  IDA', outbound, y, m, pw, cw);
+      y = drawFlightDirection(doc, 'IDA', outbound, y, m, pw, cw);
       y += 4;
     }
     if (returnLegs.length > 0) {
       y = checkPageBreak(doc, y, 40, m);
-      y = drawFlightDirection(doc, '✈️  VOLTA', returnLegs, y, m, pw, cw);
+      y = drawFlightDirection(doc, 'VOLTA', returnLegs, y, m, pw, cw);
       y += 4;
     }
 
@@ -369,7 +392,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       setColor(doc, DEEP_BLUE);
-      doc.text(`▸  ${svc.name}`, m, y);
+      doc.text(s(`-  ${svc.name}`), m, y);
 
       if (svc.value > 0) {
         doc.setFont('helvetica', 'normal');
@@ -387,7 +410,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
         if (svc.date) meta.push(formatDateBR(svc.date));
         if (svc.quantity) meta.push(`${svc.quantity} pessoa(s)`);
         if (svc.description) meta.push(svc.description);
-        doc.text(meta.join('  ·  '), m + 5, y);
+        doc.text(s(meta.join('  ·  ')), m + 5, y);
         y += 4;
       }
       y += 2;
@@ -414,7 +437,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       setColor(doc, TEXT_MAIN);
-      doc.text(item.name, boxX + 4, boxY);
+      doc.text(s(item.name), boxX + 4, boxY);
       doc.text(fmt(item.value), boxX + boxW - 4, boxY, { align: 'right' });
       boxY += 6;
     });
@@ -512,7 +535,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     setColor(doc, TEXT_MUTED);
-    const noteLines = doc.splitTextToSize(data.notes, cw);
+    const noteLines = doc.splitTextToSize(s(data.notes), cw);
     noteLines.forEach((line: string) => {
       y = checkPageBreak(doc, y, 5, m);
       doc.text(line, m, y);
@@ -680,7 +703,7 @@ function drawFlightDirection(
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     setColor(doc, TEXT_MUTED);
-    doc.text(`Tempo total: ${legs[0].departureTime} → ${legs[legs.length - 1].arrivalTime}`, m, y);
+    doc.text(`Tempo total: ${legs[0].departureTime} - ${legs[legs.length - 1].arrivalTime}`, m, y);
     y += 5;
   }
 

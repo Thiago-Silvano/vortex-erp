@@ -1199,6 +1199,7 @@ export type Database = {
           quote_id: string | null
           sale_date: string
           seller_id: string | null
+          short_id: string
           status: string
           total_sale: number | null
           total_supplier_cost: number | null
@@ -1226,6 +1227,7 @@ export type Database = {
           quote_id?: string | null
           sale_date?: string
           seller_id?: string | null
+          short_id?: string
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null
@@ -1253,6 +1255,7 @@ export type Database = {
           quote_id?: string | null
           sale_date?: string
           seller_id?: string | null
+          short_id?: string
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null

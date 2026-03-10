@@ -54,6 +54,7 @@ import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
 import EmailInboxPage from "./pages/email/EmailInboxPage";
 import EmailTemplatesPage from "./pages/email/EmailTemplatesPage";
 import EmailSettingsPage from "./pages/email/EmailSettingsPage";
+import PropostaPublicPage from "./pages/PropostaPublicPage";
 
 const queryClient = new QueryClient();
 
@@ -117,6 +118,8 @@ const App = () => (
           <Route path="/email" element={<ProtectedRoute><EmailInboxPage /></ProtectedRoute>} />
           <Route path="/email/templates" element={<ProtectedRoute><EmailTemplatesPage /></ProtectedRoute>} />
           <Route path="/email/settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
+          {/* Public proposal page (no auth required) */}
+          <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
