@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { conversation_id, content, message_type, media_url, media_filename, sender_name, empresa_id } = body;
+    const { conversation_id, content, message_type, media_url, media_filename, media_mimetype, sender_name, empresa_id, reply_to_message_id } = body;
 
     if (!conversation_id || !content) {
       return new Response(JSON.stringify({ error: 'Missing conversation_id or content' }), {
@@ -81,6 +81,8 @@ Deno.serve(async (req) => {
       message_type: message_type || 'text',
       media_url: media_url || null,
       media_filename: media_filename || null,
+      media_mimetype: media_mimetype || null,
+      reply_to_message_id: reply_to_message_id || null,
       delivery_status: 'pending',
     }).select('id').single();
 
