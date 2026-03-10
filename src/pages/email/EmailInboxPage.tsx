@@ -217,7 +217,7 @@ export default function EmailInboxPage() {
                   className={cn(
                     'flex items-start gap-3 p-3 cursor-pointer border-b transition-colors hover:bg-muted/50',
                     selectedEmail?.id === email.id && 'bg-primary/5',
-                    !email.is_read && 'bg-blue-50/50'
+                    !email.is_read && 'bg-primary/5'
                   )}
                 >
                   <button onClick={e => handleStar(email, e)} className="mt-1 shrink-0">
