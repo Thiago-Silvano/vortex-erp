@@ -175,9 +175,11 @@ export default function PropostaPublicPage() {
 
   const totalSale = sale.total_sale || 0;
   const destination = quoteData?.trip_destination || '';
+  const origin = quoteData?.trip_origin || '';
   const departureDate = quoteData?.trip_departure_date;
   const returnDate = quoteData?.trip_return_date;
   const nights = quoteData?.trip_nights;
+  const passengersCount = quoteData?.client_passengers || passengers.length;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
 
   const methodLabels: Record<string, string> = {
@@ -189,8 +191,8 @@ export default function PropostaPublicPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#f8f7f4' }}>
-      {/* Hero Section */}
-      <div className="relative" style={{ minHeight: heroImage ? 420 : 280 }}>
+      {/* Hero Section - Full destination image background */}
+      <div className="relative" style={{ minHeight: heroImage ? 500 : 320 }}>
         {heroImage && (
           <img
             src={heroImage}
@@ -200,23 +202,20 @@ export default function PropostaPublicPage() {
         )}
         <div className="absolute inset-0" style={{
           background: heroImage
-            ? 'linear-gradient(to bottom, rgba(13,27,42,0.4) 0%, rgba(13,27,42,0.85) 70%, rgba(13,27,42,1) 100%)'
+            ? 'linear-gradient(to bottom, rgba(13,27,42,0.3) 0%, rgba(13,27,42,0.6) 50%, rgba(13,27,42,0.95) 100%)'
             : 'linear-gradient(135deg, #0D1B2A 0%, #1B3A4B 100%)',
         }} />
 
         {/* Gold accent top */}
         <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }} />
 
-        <div className="relative z-10 max-w-3xl mx-auto px-6 pt-8 pb-12">
-          {/* Header */}
-          <div className="flex items-start justify-between mb-12">
+        <div className="relative z-10 max-w-3xl mx-auto px-6 pt-6 pb-10 flex flex-col h-full" style={{ minHeight: heroImage ? 500 : 320 }}>
+          {/* Top bar: Logo + Agency */}
+          <div className="flex items-start justify-between mb-auto">
             <div>
               {agency?.logo_url && (
-                <img src={agency.logo_url} alt={agency.name} className="h-8 mb-3 brightness-0 invert opacity-80" />
+                <img src={agency.logo_url} alt={agency.name} className="h-8 brightness-0 invert opacity-80" />
               )}
-              <p className="text-[10px] font-semibold tracking-[4px] uppercase" style={{ color: '#C8A45B' }}>
-                Proposta de Viagem
-              </p>
             </div>
             <div className="text-right text-[11px] text-white/40" style={{ fontFamily: 'sans-serif' }}>
               {agency && (
@@ -228,42 +227,67 @@ export default function PropostaPublicPage() {
             </div>
           </div>
 
-          {/* Title */}
-          <div className="text-center" style={{ marginTop: heroImage ? 60 : 20 }}>
+          {/* Center content over image */}
+          <div className="text-center my-auto py-8">
+            <p className="text-[11px] font-semibold tracking-[5px] uppercase mb-3" style={{ color: '#C8A45B' }}>
+              Viagem personalizada para
+            </p>
+            <h1 className="text-3xl md:text-5xl font-bold mb-4 text-white" style={{ fontFamily: "'Georgia', serif", textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
+              {sale.client_name}
+            </h1>
+            <div className="w-16 h-[2px] mx-auto mb-4" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
             {destination && (
-              <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white" style={{ fontFamily: "'Georgia', serif", textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}>
+              <p className="text-lg md:text-xl font-medium text-white/90 mb-2" style={{ fontFamily: "'Georgia', serif" }}>
                 {destination}
-              </h1>
-            )}
-            {departureDate && returnDate && (
-              <p className="text-sm mb-5 text-white/60">
-                {formatDateLong(departureDate)} — {formatDateLong(returnDate)}
               </p>
             )}
-            <div className="w-12 h-[2px] mx-auto mb-5" style={{ background: '#C8A45B' }} />
-            <p className="text-xl font-semibold text-white">{sale.client_name}</p>
-            {passengers.length > 1 && (
-              <p className="text-sm mt-1 text-white/40">{passengers.length} passageiros</p>
+            {departureDate && returnDate && (
+              <p className="text-sm text-white/60">
+                {formatDateLong(departureDate)} — {formatDateLong(returnDate)}
+              </p>
             )}
           </div>
         </div>
       </div>
 
+      {/* Trip info bar below hero */}
+      {(origin || destination || passengersCount || nights) && (
+        <div style={{ background: '#0D1B2A' }}>
+          <div className="max-w-3xl mx-auto px-6 py-5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {origin && (
+                <div className="text-center">
+                  <p className="text-[10px] font-semibold tracking-[3px] uppercase mb-1" style={{ color: '#C8A45B' }}>Origem</p>
+                  <p className="text-sm font-medium text-white">{origin}</p>
+                </div>
+              )}
+              {destination && (
+                <div className="text-center">
+                  <p className="text-[10px] font-semibold tracking-[3px] uppercase mb-1" style={{ color: '#C8A45B' }}>Destino</p>
+                  <p className="text-sm font-medium text-white">{destination}</p>
+                </div>
+              )}
+              {passengersCount > 0 && (
+                <div className="text-center">
+                  <p className="text-[10px] font-semibold tracking-[3px] uppercase mb-1" style={{ color: '#C8A45B' }}>Passageiros</p>
+                  <p className="text-sm font-medium text-white">{passengersCount}</p>
+                </div>
+              )}
+              {nights > 0 && (
+                <div className="text-center">
+                  <p className="text-[10px] font-semibold tracking-[3px] uppercase mb-1" style={{ color: '#C8A45B' }}>Noites</p>
+                  <p className="text-sm font-medium text-white">{nights}</p>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Gold bottom accent */}
+          <div className="h-[2px]" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
+        </div>
+      )}
+
       {/* Content */}
       <main className="max-w-3xl mx-auto px-6 py-12 space-y-14">
-
-        {/* Summary Cards */}
-        {(destination || departureDate || nights) && (
-          <section className="animate-fadeIn">
-            <SectionTitle>Resumo da viagem</SectionTitle>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-              {destination && <SummaryCard label="Destino" value={destination} />}
-              {departureDate && returnDate && <SummaryCard label="Período" value={`${formatDateBR(departureDate)} - ${formatDateBR(returnDate)}`} />}
-              {nights && <SummaryCard label="Duração" value={`${nights} noites`} />}
-              {passengers.length > 0 && <SummaryCard label="Passageiros" value={`${passengers.length}`} />}
-            </div>
-          </section>
-        )}
 
         {/* Services with Images */}
         {items.length > 0 && (
