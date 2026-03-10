@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,9 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown } from 'lucide-react';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import { toast } from 'sonner';
@@ -50,6 +52,7 @@ interface Passenger {
 
 interface SupplierOption { id: string; name: string; }
 interface SellerOption { id: string; full_name: string; }
+interface ClientOption { id: string; full_name: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
@@ -91,6 +94,8 @@ export default function NewSalePage() {
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
+  const [allClients, setAllClients] = useState<ClientOption[]>([]);
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
@@ -132,7 +137,14 @@ export default function NewSalePage() {
     })));
   };
 
+  const fetchClients = () => {
+    let q = supabase.from('clients').select('id, full_name').order('full_name');
+    if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
+    q.then(({ data }) => { if (data) setAllClients(data); });
+  };
+
   useEffect(() => {
+    fetchClients();
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setAllSuppliers(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
     (supabase.from('services_catalog') as any).select('id, name, cost_center_id').eq('status', 'active').order('name').then(({ data }: any) => { if (data) setServiceCatalog(data); });
@@ -463,7 +475,29 @@ export default function NewSalePage() {
               <div className={quoteId ? '' : 'md:col-span-2'}>
                 <Label>Nome do Cliente *</Label>
                 <div className="flex gap-2">
-                  <Input value={clientName} onChange={e => setClientName(e.target.value)} className="flex-1" />
+                  <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={clientPopoverOpen} className="flex-1 justify-between font-normal">
+                        {clientName || 'Selecione ou digite o cliente...'}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar cliente..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                          <CommandGroup>
+                            {allClients.map(c => (
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { setClientName(c.full_name); setClientPopoverOpen(false); }}>
+                                {c.full_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -886,6 +920,7 @@ export default function NewSalePage() {
           initialName={clientName}
           onClientCreated={(client) => {
             setClientName(client.full_name);
+            fetchClients();
           }}
         />
       </div>
