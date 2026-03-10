@@ -930,38 +930,63 @@ export default function NewSalePage() {
               </TableHeader>
               <TableBody>
                 {items.map((item, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="min-w-[180px]">
-                      <Select
-                        value={item.service_catalog_id || 'manual'}
-                        onValueChange={(v) => {
-                          const svc = serviceCatalog.find(s => s.id === v);
-                          if (svc) {
-                            updateItem(idx, 'service_catalog_id', svc.id);
-                            updateItem(idx, 'description', svc.name);
-                            if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id);
-                          }
-                        }}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="manual">Selecione um serviço</SelectItem>
-                          {serviceCatalog.map(s => (
-                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  <React.Fragment key={idx}>
+                    <TableRow>
+                      <TableCell className="min-w-[180px]">
+                        <Select
+                          value={item.service_catalog_id || 'manual'}
+                          onValueChange={(v) => {
+                            const svc = serviceCatalog.find(s => s.id === v);
+                            if (svc) {
+                              updateItem(idx, 'service_catalog_id', svc.id);
+                              updateItem(idx, 'description', svc.name);
+                              if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id);
+                            }
+                          }}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="manual">Selecione um serviço</SelectItem>
+                            {serviceCatalog.map(s => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell><Input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} placeholder="Detalhes..." /></TableCell>
+                      <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
+                      <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
+                      <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
+                      <TableCell>
+                        <Button size="icon" variant="ghost" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className="border-b-2">
+                      <TableCell colSpan={6} className="py-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
+                            <ImagePlus className="h-3 w-3" />
+                            Imagens
+                            <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                          </label>
+                          {(itemImages[idx] || []).map((url, imgIdx) => (
+                            <div key={imgIdx} className="relative group">
+                              <img src={url} alt="" className="h-10 w-14 object-cover rounded border" />
+                              <button
+                                type="button"
+                                onClick={() => removeItemImage(idx, imgIdx)}
+                                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                            </div>
                           ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell><Input value={item.description} onChange={e => updateItem(idx, 'description', e.target.value)} placeholder="Detalhes..." /></TableCell>
-                    <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
-                    <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
-                    <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
-                    <TableCell>
-                      <Button size="icon" variant="ghost" onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
