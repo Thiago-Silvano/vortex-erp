@@ -50,6 +50,7 @@ export default function EmailInboxPage() {
   const { activeCompany } = useCompany();
   const [emails, setEmails] = useState<EmailRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [activeFolder, setActiveFolder] = useState<EmailFolder>('inbox');
   const [selectedEmail, setSelectedEmail] = useState<EmailRow | null>(null);
   const [search, setSearch] = useState('');
@@ -85,8 +86,34 @@ export default function EmailInboxPage() {
     setFolderCounts(counts);
   };
 
+  const syncEmails = async () => {
+    if (!activeCompany || syncing) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-emails', {
+        body: { empresa_id: activeCompany.id },
+      });
+      if (error) throw error;
+      const fetched = data?.fetched || 0;
+      if (fetched > 0) {
+        toast.success(`${fetched} novos emails sincronizados`);
+      } else {
+        toast.info('Nenhum email novo encontrado');
+      }
+      fetchEmails();
+      fetchCounts();
+    } catch (err: any) {
+      toast.error('Erro ao sincronizar: ' + (err.message || 'Erro'));
+    }
+    setSyncing(false);
+  };
+
   useEffect(() => { fetchEmails(); }, [activeCompany, activeFolder]);
-  useEffect(() => { fetchCounts(); }, [activeCompany]);
+  useEffect(() => {
+    fetchCounts();
+    // Auto-sync on first load
+    if (activeCompany) syncEmails();
+  }, [activeCompany]);
 
   const filteredEmails = useMemo(() => {
     if (!search) return emails;
