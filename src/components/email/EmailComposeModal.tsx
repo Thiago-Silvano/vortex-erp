@@ -81,19 +81,22 @@ export default function EmailComposeModal({
     setSending(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
+      const currentUserId = userData?.user?.id;
+      if (!currentUserId) throw new Error('Usuário não autenticado');
+
       const toEmails = to.split(',').map(e => e.trim()).filter(Boolean);
       const ccEmails = cc ? cc.split(',').map(e => e.trim()).filter(Boolean) : [];
       const bccEmails = bcc ? bcc.split(',').map(e => e.trim()).filter(Boolean) : [];
 
-      // Get email settings for from address
+      // Get email settings for this user
       const { data: settings } = await supabase
         .from('email_settings')
         .select('from_name, from_email')
-        .eq('empresa_id', activeCompany.id)
+        .eq('user_id', currentUserId as any)
         .single();
 
       const fromEmail = (settings as any)?.from_email || userData?.user?.email || '';
-      const fromName = (settings as any)?.from_name || activeCompany.name;
+      const fromName = (settings as any)?.from_name || '';
 
       // Look up client by email
       let clientId = null;
@@ -108,6 +111,7 @@ export default function EmailComposeModal({
       // Save email record
       const emailRecord = {
         empresa_id: activeCompany.id,
+        user_id: currentUserId,
         client_id: clientId,
         from_name: fromName,
         from_email: fromEmail,
@@ -121,7 +125,7 @@ export default function EmailComposeModal({
         status: 'sending',
         is_read: true,
         sent_at: new Date().toISOString(),
-        sent_by: userData?.user?.id,
+        sent_by: currentUserId,
         reply_to_email_id: replyTo?.id || null,
         tracking_id: crypto.randomUUID(),
       };
@@ -146,11 +150,11 @@ export default function EmailComposeModal({
         }
       }
 
-      // Call Edge Function to send via SMTP
+      // Call Edge Function to send via SMTP — now using user_id
       const { error: sendErr } = await supabase.functions.invoke('send-email', {
         body: {
           email_id: (savedEmail as any).id,
-          empresa_id: activeCompany.id,
+          user_id: currentUserId,
         },
       });
 

@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   Inbox, Send, FileEdit, Archive, FileText, Search, Plus, Star,
   StarOff, Mail, MailOpen, Reply, Forward, Users, Paperclip, RefreshCw,
-  ChevronLeft, Trash2, MoreHorizontal,
+  ChevronLeft, Trash2, MoreHorizontal, AlertTriangle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -48,6 +48,8 @@ const FOLDERS = [
 
 export default function EmailInboxPage() {
   const { activeCompany } = useCompany();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [hasSettings, setHasSettings] = useState<boolean | null>(null);
   const [emails, setEmails] = useState<EmailRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -58,13 +60,25 @@ export default function EmailInboxPage() {
   const [replyTo, setReplyTo] = useState<EmailRow | null>(null);
   const [folderCounts, setFolderCounts] = useState<Record<string, number>>({});
 
+  // Get current user and check settings
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data.user?.id || null;
+      setUserId(uid);
+      if (uid) {
+        supabase.from('email_settings').select('id').eq('user_id', uid as any).maybeSingle()
+          .then(({ data: s }) => setHasSettings(!!s));
+      }
+    });
+  }, []);
+
   const fetchEmails = async () => {
-    if (!activeCompany) return;
+    if (!userId) return;
     setLoading(true);
     const { data } = await supabase
       .from('emails')
       .select('*')
-      .eq('empresa_id', activeCompany.id)
+      .eq('user_id', userId as any)
       .eq('folder', activeFolder)
       .order('created_at', { ascending: false })
       .limit(100);
@@ -73,11 +87,11 @@ export default function EmailInboxPage() {
   };
 
   const fetchCounts = async () => {
-    if (!activeCompany) return;
+    if (!userId) return;
     const { data } = await supabase
       .from('emails')
       .select('folder, is_read')
-      .eq('empresa_id', activeCompany.id)
+      .eq('user_id', userId as any)
       .eq('is_read', false);
     const counts: Record<string, number> = {};
     (data || []).forEach((e: any) => {
@@ -87,11 +101,11 @@ export default function EmailInboxPage() {
   };
 
   const syncEmails = async () => {
-    if (!activeCompany || syncing) return;
+    if (!userId || syncing) return;
     setSyncing(true);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-emails', {
-        body: { empresa_id: activeCompany.id },
+        body: { user_id: userId, empresa_id: activeCompany?.id },
       });
       if (error) throw error;
       const fetched = data?.fetched || 0;
@@ -108,12 +122,12 @@ export default function EmailInboxPage() {
     setSyncing(false);
   };
 
-  useEffect(() => { fetchEmails(); }, [activeCompany, activeFolder]);
+  useEffect(() => { fetchEmails(); }, [userId, activeFolder]);
   useEffect(() => {
+    if (!userId) return;
     fetchCounts();
-    // Auto-sync on first load
-    if (activeCompany) syncEmails();
-  }, [activeCompany]);
+    if (hasSettings) syncEmails();
+  }, [userId, hasSettings]);
 
   const filteredEmails = useMemo(() => {
     if (!search) return emails;
@@ -175,6 +189,26 @@ export default function EmailInboxPage() {
     if (email.status === 'sent') return <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">Enviado</Badge>;
     return null;
   };
+
+  // Show setup prompt if no settings configured
+  if (hasSettings === false) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-3.5rem)]">
+          <div className="text-center max-w-md space-y-4">
+            <AlertTriangle className="h-16 w-16 mx-auto text-muted-foreground/40" />
+            <h2 className="text-xl font-semibold">Configure seu email</h2>
+            <p className="text-muted-foreground">
+              Para usar o módulo de email, configure sua conta IMAP/SMTP pessoal nas configurações.
+            </p>
+            <Button onClick={() => window.location.href = '/email/settings'} className="gap-2">
+              <Mail className="h-4 w-4" /> Configurar Email
+            </Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

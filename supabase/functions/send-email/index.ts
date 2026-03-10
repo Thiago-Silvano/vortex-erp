@@ -18,18 +18,33 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json();
-    const { empresa_id, email_id, test, to } = body;
+    const { user_id, empresa_id, email_id, test, to } = body;
 
-    // Get SMTP settings for the company
-    const { data: settings, error: settErr } = await supabase
-      .from("email_settings")
-      .select("*")
-      .eq("empresa_id", empresa_id)
-      .single();
+    // Support both user_id (new) and empresa_id (legacy) lookups
+    let settings: any = null;
 
-    if (settErr || !settings) {
+    if (user_id) {
+      const { data, error } = await supabase
+        .from("email_settings")
+        .select("*")
+        .eq("user_id", user_id)
+        .single();
+      if (!error && data) settings = data;
+    }
+
+    // Fallback to empresa_id lookup for backwards compat
+    if (!settings && empresa_id) {
+      const { data, error } = await supabase
+        .from("email_settings")
+        .select("*")
+        .eq("empresa_id", empresa_id)
+        .maybeSingle();
+      if (!error && data) settings = data;
+    }
+
+    if (!settings) {
       return new Response(
-        JSON.stringify({ error: "Configurações SMTP não encontradas" }),
+        JSON.stringify({ error: "Configurações SMTP não encontradas. Configure seu email em Configurações → Email." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -37,7 +52,7 @@ Deno.serve(async (req) => {
     const {
       smtp_host, smtp_port, smtp_user, smtp_password, smtp_ssl,
       from_name, from_email,
-    } = settings as any;
+    } = settings;
 
     if (!smtp_host || !smtp_user || !smtp_password) {
       return new Response(
@@ -47,7 +62,6 @@ Deno.serve(async (req) => {
     }
 
     const port = smtp_port || 587;
-    // Port 465 = direct SSL (secure: true), Port 587 = STARTTLS (secure: false)
     const transporter = nodemailer.createTransport({
       host: smtp_host,
       port,
