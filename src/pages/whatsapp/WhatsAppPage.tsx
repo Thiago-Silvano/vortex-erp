@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Send, Paperclip, Search, Plus, User, Phone, ShoppingCart, Clock, UserPlus } from 'lucide-react';
+import { MessageSquare, Send, Paperclip, Search, User, Phone, ShoppingCart, UserPlus, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface Conversation {
   id: string;
@@ -39,23 +39,40 @@ interface Message {
 
 const statusLabels: Record<string, string> = {
   new_lead: 'Novo Lead',
+  contato_inicial: 'Contato Inicial',
+  proposta_enviada: 'Proposta Enviada',
+  negociacao: 'Negociação',
   in_progress: 'Em Atendimento',
   waiting_client: 'Aguardando Cliente',
   waiting_quote: 'Aguardando Orçamento',
+  venda_concluida: 'Venda Concluída',
+  perdido: 'Perdido',
   finished: 'Finalizado',
 };
 
 const statusColors: Record<string, string> = {
   new_lead: 'bg-blue-500',
+  contato_inicial: 'bg-cyan-500',
+  proposta_enviada: 'bg-purple-500',
+  negociacao: 'bg-amber-500',
   in_progress: 'bg-green-500',
   waiting_client: 'bg-yellow-500',
   waiting_quote: 'bg-orange-500',
+  venda_concluida: 'bg-emerald-600',
+  perdido: 'bg-red-500',
   finished: 'bg-muted-foreground',
+};
+
+const priorityLabels: Record<string, string> = {
+  low: 'Baixa',
+  normal: 'Normal',
+  high: 'Alta',
 };
 
 export default function WhatsAppPage() {
   const { activeCompany } = useCompany();
   const navigate = useNavigate();
+  const location = useLocation();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -74,7 +91,11 @@ export default function WhatsAppPage() {
     let q = supabase.from('whatsapp_conversations').select('*').order('last_message_at', { ascending: false });
     if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
     const { data } = await q;
-    if (data) setConversations(data as Conversation[]);
+    if (data) {
+      setConversations(data as Conversation[]);
+      return data as Conversation[];
+    }
+    return [];
   };
 
   const fetchMessages = async (convId: string) => {
@@ -90,6 +111,19 @@ export default function WhatsAppPage() {
   };
 
   useEffect(() => { fetchConversations(); fetchQuickReplies(); }, [activeCompany?.id]);
+
+  // Auto-open conversation from navigation state
+  useEffect(() => {
+    const state = location.state as { openConversationId?: string } | null;
+    if (state?.openConversationId) {
+      fetchConversations().then(convs => {
+        const conv = convs.find(c => c.id === state.openConversationId);
+        if (conv) setSelectedConv(conv);
+      });
+      // Clear state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (selectedConv) fetchMessages(selectedConv.id);
@@ -116,19 +150,15 @@ export default function WhatsAppPage() {
     return () => { supabase.removeChannel(channel); };
   }, [selectedConv?.id, activeCompany?.id]);
 
-  // Polling fallback: refresh conversations every 5s and messages every 3s
+  // Polling fallback
   useEffect(() => {
-    const convInterval = setInterval(() => {
-      fetchConversations();
-    }, 5000);
+    const convInterval = setInterval(() => { fetchConversations(); }, 5000);
     return () => clearInterval(convInterval);
   }, [activeCompany?.id]);
 
   useEffect(() => {
     if (!selectedConv) return;
-    const msgInterval = setInterval(() => {
-      fetchMessages(selectedConv.id);
-    }, 3000);
+    const msgInterval = setInterval(() => { fetchMessages(selectedConv.id); }, 3000);
     return () => clearInterval(msgInterval);
   }, [selectedConv?.id]);
 
@@ -137,7 +167,6 @@ export default function WhatsAppPage() {
     const senderName = userEmail.split('@')[0] || 'Agente';
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       await supabase.functions.invoke('whatsapp-send', {
         body: {
           conversation_id: selectedConv.id,
@@ -148,7 +177,6 @@ export default function WhatsAppPage() {
         },
       });
     } catch {
-      // Fallback: save locally if edge function fails
       await supabase.from('whatsapp_messages').insert({
         conversation_id: selectedConv.id,
         sender_type: 'agent',
@@ -169,11 +197,7 @@ export default function WhatsAppPage() {
 
   const handleMessageChange = (val: string) => {
     setNewMessage(val);
-    if (val.startsWith('/')) {
-      setShowQuickReplies(true);
-    } else {
-      setShowQuickReplies(false);
-    }
+    setShowQuickReplies(val.startsWith('/'));
   };
 
   const applyQuickReply = (content: string) => {
@@ -188,10 +212,35 @@ export default function WhatsAppPage() {
     fetchConversations();
   };
 
+  const updateConvPriority = async (priority: string) => {
+    if (!selectedConv) return;
+    await supabase.from('whatsapp_conversations').update({ priority }).eq('id', selectedConv.id);
+    setSelectedConv({ ...selectedConv, priority });
+    fetchConversations();
+  };
+
+  const handleCreateClient = async () => {
+    if (!selectedConv || !activeCompany?.id) return;
+    try {
+      const { error } = await supabase.from('clients').insert({
+        full_name: selectedConv.client_name || 'Cliente WhatsApp',
+        phone: selectedConv.phone,
+        empresa_id: activeCompany.id,
+        cpf: '',
+      });
+      if (error) throw error;
+      toast.success('Cliente criado com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao criar cliente: ' + (err.message || ''));
+    }
+  };
+
+  const getWaLink = (phone: string) => `https://wa.me/${phone.replace(/\D/g, '')}`;
+
   const filteredConversations = conversations.filter(c =>
     c.client_name.toLowerCase().includes(search.toLowerCase()) ||
     c.phone.includes(search) ||
-    c.last_message.toLowerCase().includes(search.toLowerCase())
+    (c.last_message || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const filteredQuickReplies = quickReplies.filter(qr =>
@@ -347,9 +396,9 @@ export default function WhatsAppPage() {
           )}
         </div>
 
-        {/* Column 3: Client Info */}
+        {/* Column 3: CRM Panel */}
         {selectedConv && (
-          <div className="w-72 border-l bg-muted/20 p-4 space-y-4 hidden lg:block">
+          <div className="w-72 border-l bg-muted/20 p-4 space-y-4 hidden lg:block overflow-y-auto">
             <div className="text-center space-y-2">
               <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
                 <User className="h-8 w-8 text-primary" />
@@ -360,29 +409,61 @@ export default function WhatsAppPage() {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Status</span>
-                <Badge variant="outline" className="text-xs">{statusLabels[selectedConv.status]}</Badge>
+            <div className="space-y-3">
+              {/* Lead status */}
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground font-medium">Status do Lead</span>
+                <Select value={selectedConv.status} onValueChange={updateConvStatus}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(statusLabels).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
+              {/* Responsible */}
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Responsável</span>
                 <span className="text-foreground text-xs">{selectedConv.assigned_user_name || '—'}</span>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Prioridade</span>
-                <Badge variant="outline" className="text-xs capitalize">{selectedConv.priority}</Badge>
+
+              {/* Priority */}
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground font-medium">Prioridade</span>
+                <Select value={selectedConv.priority} onValueChange={updateConvPriority}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(priorityLabels).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
+            {/* Quick actions */}
             <div className="space-y-2 pt-4 border-t">
+              <p className="text-xs text-muted-foreground font-medium mb-2">Ações Rápidas</p>
+              
               {!selectedConv.client_id && (
-                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => toast.info('Cadastrar cliente com telefone: ' + selectedConv.phone)}>
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={handleCreateClient}>
                   <UserPlus className="h-3 w-3 mr-1" /> Criar Cliente
                 </Button>
               )}
+              
               <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => navigate('/sales/new', { state: { quoteData: { clientName: selectedConv.client_name } } })}>
                 <ShoppingCart className="h-3 w-3 mr-1" /> Criar Venda
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => window.open(getWaLink(selectedConv.phone), '_blank')}
+              >
+                <ExternalLink className="h-3 w-3 mr-1" /> Abrir no WhatsApp Web
               </Button>
             </div>
           </div>
