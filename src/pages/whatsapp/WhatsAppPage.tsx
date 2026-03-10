@@ -448,11 +448,11 @@ export default function WhatsAppPage() {
                         </span>
                       </div>
                       <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs truncate" style={{ color: '#667781' }}>{conv.last_message}</p>
+                        <p className="text-xs truncate" style={{ color: conv.unread_count > 0 ? '#111b21' : '#667781', fontWeight: conv.unread_count > 0 ? 500 : 400 }}>{conv.last_message}</p>
                         {conv.unread_count > 0 && (
-                          <Badge className="text-[10px] px-1.5 py-0 h-4 rounded-full ml-2 shrink-0" style={{ background: '#25d366', color: '#fff' }}>
+                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[11px] font-medium ml-2 shrink-0 px-1" style={{ background: '#25d366', color: '#fff' }}>
                             {conv.unread_count}
-                          </Badge>
+                          </span>
                         )}
                       </div>
                     </div>
