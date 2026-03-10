@@ -120,13 +120,26 @@ export default function NewSalePage() {
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
     setInvoiceUrl((sale as any).invoice_url || '');
+    setDestinationImageUrl((sale as any).destination_image_url || '');
     if ((sale as any).invoice_url) {
       const parts = (sale as any).invoice_url.split('/');
       setInvoiceFileName(decodeURIComponent(parts[parts.length - 1]) || 'nota-fiscal.pdf');
     }
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
-    if (saleItems) setItems(saleItems.map(i => ({ id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav), total_value: Number(i.total_value) })));
+    if (saleItems) {
+      setItems(saleItems.map(i => ({ id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav), total_value: Number(i.total_value), service_catalog_id: i.service_catalog_id || undefined, cost_center_id: i.cost_center_id || undefined })));
+      
+      // Load images for each item
+      const imgMap: Record<number, string[]> = {};
+      for (let idx = 0; idx < saleItems.length; idx++) {
+        const { data: imgs } = await (supabase.from('sale_item_images' as any) as any).select('*').eq('sale_item_id', saleItems[idx].id).order('sort_order');
+        if (imgs && imgs.length > 0) {
+          imgMap[idx] = imgs.map((img: any) => img.image_url);
+        }
+      }
+      setItemImages(imgMap);
+    }
 
     const { data: saleSups } = await supabase.from('sale_suppliers').select('supplier_id').eq('sale_id', id);
     if (saleSups) setSelectedSupplierIds(saleSups.map(s => s.supplier_id));
