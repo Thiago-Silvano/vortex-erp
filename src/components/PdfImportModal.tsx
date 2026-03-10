@@ -70,6 +70,7 @@ interface ImportedItem {
   total_value: number;
   service_catalog_id?: string;
   cost_center_id?: string;
+  metadata?: any;
 }
 
 interface PdfImportModalProps {
