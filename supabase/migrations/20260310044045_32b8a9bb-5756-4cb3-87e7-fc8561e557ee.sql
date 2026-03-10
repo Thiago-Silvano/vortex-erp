@@ -1,0 +1,1 @@
+UPDATE whatsapp_sessions SET server_url = 'http://76.13.165.192:3000', status = 'disconnected' WHERE server_url LIKE '%/connect';

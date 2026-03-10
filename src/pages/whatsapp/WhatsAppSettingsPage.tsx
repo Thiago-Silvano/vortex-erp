@@ -27,22 +27,18 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   connecting: { label: 'Conectando...', color: 'bg-blue-500', icon: Loader2 },
 };
 
-/** Calls the whatsapp-proxy edge function which proxies to the external Node.js server */
+/**
+ * Calls the whatsapp-proxy edge function.
+ * The proxy now always returns HTTP 200 with { ok, data?, error? } so we can read the body.
+ */
 async function callProxy(endpoint: string, method: string, empresaId: string, payload?: any) {
   const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
-    body: {
-      endpoint,
-      method,
-      empresa_id: empresaId,
-      payload,
-    },
+    body: { endpoint, method, empresa_id: empresaId, payload },
   });
 
   if (error) {
-    // Try to extract response body for better error handling
-    const errBody = typeof error === 'object' ? JSON.stringify(error) : String(error);
-    console.error('Erro na chamada ao proxy WhatsApp:', error);
-    throw new Error(errBody);
+    console.error('[WhatsApp Proxy] Invoke error:', error);
+    throw new Error(error.message || 'Erro ao chamar o servidor');
   }
 
   console.log(`[WhatsApp Proxy] ${method} ${endpoint} →`, data);
@@ -58,7 +54,8 @@ export default function WhatsAppSettingsPage() {
   const [pollingQr, setPollingQr] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchSession = async () => {
+  // ─── Fetch session from DB ───
+  const fetchSession = useCallback(async () => {
     if (!activeCompany?.id) return;
     const { data } = await supabase
       .from('whatsapp_sessions')
@@ -69,11 +66,11 @@ export default function WhatsAppSettingsPage() {
       setSession(data as Session);
       setServerUrl((data as Session).server_url || '');
     }
-  };
+  }, [activeCompany?.id]);
 
-  useEffect(() => { fetchSession(); }, [activeCompany?.id]);
+  useEffect(() => { fetchSession(); }, [fetchSession]);
 
-  // Realtime subscription for session updates
+  // Realtime subscription for session updates (other users may change status)
   useEffect(() => {
     if (!activeCompany?.id) return;
     const channel = supabase
@@ -83,7 +80,7 @@ export default function WhatsAppSettingsPage() {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [activeCompany?.id]);
+  }, [activeCompany?.id, fetchSession]);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -92,13 +89,12 @@ export default function WhatsAppSettingsPage() {
     };
   }, []);
 
-  // Stop polling when connected or disconnected
+  // Stop polling when session becomes connected
   useEffect(() => {
     if (session?.status === 'connected' && pollingRef.current) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
       setPollingQr(false);
-      toast.success('WhatsApp conectado com sucesso!');
     }
   }, [session?.status]);
 
@@ -110,77 +106,92 @@ export default function WhatsAppSettingsPage() {
     setPollingQr(false);
   }, []);
 
-  const pollForQrCode = useCallback(async (empresaId: string) => {
+  // ─── Update session in DB ───
+  const updateSession = useCallback(async (fields: Record<string, any>) => {
+    if (!activeCompany?.id) return;
+    await supabase.from('whatsapp_sessions').update({
+      ...fields,
+      updated_at: new Date().toISOString(),
+    }).eq('empresa_id', activeCompany.id);
+    await fetchSession();
+  }, [activeCompany?.id, fetchSession]);
+
+  // ─── Poll GET /status every 3s (max 90s) ───
+  const startStatusPolling = useCallback((empresaId: string) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     setPollingQr(true);
 
     let attempts = 0;
-    const maxAttempts = 30; // 30 * 3s = 90s max polling
+    const maxAttempts = 30; // 30 × 3s = 90s
 
     const poll = async () => {
       attempts++;
       if (attempts > maxAttempts) {
         stopPolling();
         toast.error('Tempo esgotado aguardando QR Code. Tente novamente.');
+        await updateSession({ status: 'disconnected', qr_code: '' });
         return;
       }
 
       try {
-        const result = await callProxy('/connect', 'GET', empresaId);
-        const data = result?.data;
-        console.log('[QR Poll] Status response:', data);
+        const result = await callProxy('/status', 'GET', empresaId);
+        const d = result?.data || result;
+        console.log('[QR Poll] /status response:', d);
 
-        if (data?.qr) {
-          // QR code received - save to session
-          await supabase.from('whatsapp_sessions').update({
-            qr_code: data.qr,
-            status: 'waiting_qr',
-            updated_at: new Date().toISOString(),
-          }).eq('empresa_id', empresaId);
-          fetchSession();
-        } else if (data?.connected || data?.status === 'connected' || data?.authenticated) {
-          // Already connected
-          await supabase.from('whatsapp_sessions').update({
+        if (d?.qr) {
+          // QR code received
+          await updateSession({ qr_code: d.qr, status: 'waiting_qr' });
+          // Don't stop polling — keep polling until connected
+        } else if (d?.connected === true) {
+          // Connected!
+          await updateSession({
             status: 'connected',
             qr_code: '',
-            phone_number: data.phone || data.phone_number || '',
+            phone_number: d.phone || d.phone_number || '',
             connected_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }).eq('empresa_id', empresaId);
+          });
           stopPolling();
-          fetchSession();
+          toast.success('WhatsApp conectado com sucesso!');
         }
+        // if status === "waiting" or anything else, just continue polling
       } catch (e) {
         console.error('[QR Poll] Error:', e);
+        // Continue polling even on error
       }
     };
 
     // First poll immediately
-    await poll();
-    // Then every 3 seconds
+    poll();
     pollingRef.current = setInterval(poll, 3000);
-  }, [stopPolling]);
+  }, [stopPolling, updateSession]);
 
+  // ─── Save server URL ───
   const handleSaveServerUrl = async () => {
     if (!activeCompany?.id) return;
     setLoading(true);
     try {
+      // Clean URL: remove trailing slashes and accidental endpoint suffixes
+      let cleanUrl = serverUrl.trim().replace(/\/+$/, '');
+      cleanUrl = cleanUrl.replace(/\/(connect|disconnect|send-message|status)\/?$/i, '');
+
       const { error } = await supabase.from('whatsapp_sessions').upsert({
         empresa_id: activeCompany.id,
-        server_url: serverUrl.trim(),
+        server_url: cleanUrl,
         status: session?.status || 'disconnected',
         updated_at: new Date().toISOString(),
       }, { onConflict: 'empresa_id' });
 
       if (error) throw error;
+      setServerUrl(cleanUrl);
       toast.success('URL do servidor salva!');
-      fetchSession();
+      await fetchSession();
     } catch (e: any) {
       toast.error('Erro ao salvar: ' + e.message);
     }
     setLoading(false);
   };
 
+  // ─── Test connection (just GET /status) ───
   const handleTestConnection = async () => {
     if (!serverUrl.trim() || !activeCompany?.id) {
       toast.error('Configure a URL do servidor primeiro');
@@ -191,14 +202,26 @@ export default function WhatsAppSettingsPage() {
 
     try {
       await handleSaveServerUrl();
-      const result = await callProxy('/connect', 'GET', activeCompany.id);
+      const result = await callProxy('/status', 'GET', activeCompany.id);
 
-      if (result?.ok) {
-        setTestResult({ ok: true, message: 'Servidor conectado ✅' });
-        toast.success('Servidor conectado com sucesso!');
+      if (result?.ok === false && result?.error) {
+        setTestResult({ ok: false, message: `Servidor inacessível: ${result.error}` });
+        toast.error('Servidor inacessível');
       } else {
-        setTestResult({ ok: false, message: `Servidor respondeu com erro: ${result?.error || result?.data?.message || 'desconhecido'}` });
-        toast.error('Servidor respondeu com erro');
+        const d = result?.data || result;
+        if (d?.connected === true) {
+          setTestResult({ ok: true, message: 'Servidor conectado e WhatsApp ativo ✅' });
+          await updateSession({
+            status: 'connected',
+            qr_code: '',
+            phone_number: d.phone || d.phone_number || '',
+            connected_at: new Date().toISOString(),
+          });
+          toast.success('WhatsApp já está conectado!');
+        } else {
+          setTestResult({ ok: true, message: 'Servidor acessível ✅ (WhatsApp não conectado)' });
+          toast.success('Servidor acessível!');
+        }
       }
     } catch (e: any) {
       console.error('Erro ao testar conexão:', e);
@@ -208,6 +231,7 @@ export default function WhatsAppSettingsPage() {
     setLoading(false);
   };
 
+  // ─── Connect WhatsApp ───
   const handleConnect = async () => {
     if (!serverUrl.trim() || !activeCompany?.id) {
       toast.error('Configure a URL do servidor primeiro');
@@ -217,72 +241,53 @@ export default function WhatsAppSettingsPage() {
     try {
       await handleSaveServerUrl();
 
-      // Update status to connecting
-      await supabase.from('whatsapp_sessions').update({
-        status: 'connecting',
-        qr_code: '',
-        updated_at: new Date().toISOString(),
-      }).eq('empresa_id', activeCompany.id);
-      fetchSession();
+      // Step 1: Check /status first — don't call /connect if already connected
+      const statusResult = await callProxy('/status', 'GET', activeCompany.id);
+      const statusData = statusResult?.data || statusResult;
 
-      let result: any;
-      try {
-        result = await callProxy('/connect', 'GET', activeCompany.id);
-      } catch (e: any) {
-        // If server says browser already running, treat as "starting" and poll
-        const errMsg = e?.message || '';
-        if (errMsg.includes('already running') || errMsg.includes('browser')) {
-          toast.info('Sessão já iniciada no servidor. Buscando QR Code...');
-          await supabase.from('whatsapp_sessions').update({
-            status: 'waiting_qr',
-            updated_at: new Date().toISOString(),
-          }).eq('empresa_id', activeCompany.id);
-          fetchSession();
-          pollForQrCode(activeCompany.id);
-          setLoading(false);
-          return;
-        }
-        throw e;
-      }
-
-      // Also handle "already running" in response data
-      const errorMsg = result?.data?.error || result?.error || '';
-      if (typeof errorMsg === 'string' && (errorMsg.includes('already running') || errorMsg.includes('browser'))) {
-        toast.info('Sessão já iniciada no servidor. Buscando QR Code...');
-        await supabase.from('whatsapp_sessions').update({
-          status: 'waiting_qr',
-          updated_at: new Date().toISOString(),
-        }).eq('empresa_id', activeCompany.id);
-        fetchSession();
-        pollForQrCode(activeCompany.id);
+      if (statusData?.connected === true) {
+        await updateSession({
+          status: 'connected',
+          qr_code: '',
+          phone_number: statusData.phone || statusData.phone_number || '',
+          connected_at: new Date().toISOString(),
+        });
+        toast.success('WhatsApp já está conectado!');
         setLoading(false);
         return;
       }
 
-      if (result?.ok !== false) {
-        // Check if QR code came directly in the response
-        const qr = result?.data?.qr || result?.data?.qrCode || result?.data?.qr_code;
-        if (qr) {
-          await supabase.from('whatsapp_sessions').update({
-            qr_code: qr,
-            status: 'waiting_qr',
-            updated_at: new Date().toISOString(),
-          }).eq('empresa_id', activeCompany.id);
-          fetchSession();
-          toast.success('QR Code recebido! Escaneie com seu WhatsApp.');
-        } else {
-          // Start polling for QR code
-          toast.success('Conexão iniciada! Buscando QR Code...');
-          await supabase.from('whatsapp_sessions').update({
-            status: 'waiting_qr',
-            updated_at: new Date().toISOString(),
-          }).eq('empresa_id', activeCompany.id);
-          fetchSession();
-          pollForQrCode(activeCompany.id);
-        }
-      } else {
-        toast.error('Erro do servidor: ' + (result?.error || 'desconhecido'));
+      // Step 2: If there's already a QR code, just show it and start polling
+      if (statusData?.qr) {
+        await updateSession({ qr_code: statusData.qr, status: 'waiting_qr' });
+        toast.info('QR Code disponível! Escaneie com seu WhatsApp.');
+        startStatusPolling(activeCompany.id);
+        setLoading(false);
+        return;
       }
+
+      // Step 3: Call /connect to initiate new session
+      await updateSession({ status: 'connecting', qr_code: '' });
+
+      const connectResult = await callProxy('/connect', 'GET', activeCompany.id);
+      const connectData = connectResult?.data || connectResult;
+
+      // Handle "browser already running" error — just poll /status
+      const errMsg = connectResult?.error || connectData?.error || '';
+      if (typeof errMsg === 'string' && errMsg.includes('already running')) {
+        toast.info('Sessão já iniciada no servidor. Buscando QR Code...');
+      } else if (connectResult?.ok === false && connectResult?.error) {
+        toast.error('Erro do servidor: ' + connectResult.error);
+        await updateSession({ status: 'disconnected' });
+        setLoading(false);
+        return;
+      } else {
+        toast.success('Conexão iniciada! Buscando QR Code...');
+      }
+
+      // Step 4: Start polling /status for QR code
+      await updateSession({ status: 'waiting_qr' });
+      startStatusPolling(activeCompany.id);
     } catch (e: any) {
       console.error('Erro ao conectar ao servidor WhatsApp:', e);
       toast.error('Servidor inacessível: ' + e.message);
@@ -290,22 +295,20 @@ export default function WhatsAppSettingsPage() {
     setLoading(false);
   };
 
+  // ─── Disconnect ───
   const handleDisconnect = async () => {
     if (!activeCompany?.id) return;
     setLoading(true);
+    stopPolling();
     try {
       await callProxy('/disconnect', 'GET', activeCompany.id);
-
-      await supabase.from('whatsapp_sessions').update({
+      await updateSession({
         status: 'disconnected',
         qr_code: '',
         connected_at: null,
-        updated_at: new Date().toISOString(),
-      }).eq('empresa_id', activeCompany.id);
-
+      });
       toast.success('WhatsApp desconectado');
       setTestResult(null);
-      fetchSession();
     } catch (e: any) {
       console.error('Erro ao desconectar:', e);
       toast.error('Erro: ' + e.message);
@@ -359,14 +362,11 @@ export default function WhatsAppSettingsPage() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">Abra o WhatsApp → Aparelhos conectados → Conectar um aparelho</p>
-                <Button variant="outline" size="sm" onClick={fetchSession}>
-                  <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
-                </Button>
               </div>
             )}
 
             {/* Polling indicator - waiting for QR */}
-            {(session?.status === 'waiting_qr' || session?.status === 'connecting') && !session?.qr_code && pollingQr && (
+            {pollingQr && !session?.qr_code && (
               <div className="flex flex-col items-center gap-4 py-6 bg-muted/30 rounded-lg">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground font-medium">Aguardando QR Code do servidor...</p>
@@ -374,6 +374,14 @@ export default function WhatsAppSettingsPage() {
                 <Button variant="outline" size="sm" onClick={stopPolling}>
                   Cancelar
                 </Button>
+              </div>
+            )}
+
+            {/* Polling active with QR showing */}
+            {pollingQr && session?.qr_code && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Verificando status da conexão...
               </div>
             )}
 
@@ -392,7 +400,7 @@ export default function WhatsAppSettingsPage() {
                 Testar Conexão
               </Button>
               {session?.status !== 'connected' && (
-                <Button onClick={handleConnect} disabled={loading || !serverUrl.trim()}>
+                <Button onClick={handleConnect} disabled={loading || !serverUrl.trim() || pollingQr}>
                   {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <QrCode className="h-4 w-4 mr-2" />}
                   Conectar WhatsApp
                 </Button>
@@ -424,7 +432,7 @@ export default function WhatsAppSettingsPage() {
                 placeholder="http://76.13.165.192:3000"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Endpoints esperados: GET /connect, GET /disconnect, POST /send-message
+                Endpoints: GET /connect, GET /status, GET /disconnect, POST /send-message
               </p>
             </div>
             <Button onClick={handleSaveServerUrl} disabled={loading} variant="outline">
@@ -440,12 +448,12 @@ export default function WhatsAppSettingsPage() {
           </CardHeader>
           <CardContent>
             <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
-              <li>Configure a URL do seu servidor Node.js que executa a biblioteca whatsapp-web.js</li>
+              <li>Configure a URL do seu servidor Node.js (ex: http://76.13.165.192:3000)</li>
               <li>Clique em "Testar Conexão" para verificar se o servidor está acessível</li>
               <li>Clique em "Conectar WhatsApp" — o servidor gerará um QR Code</li>
               <li>Escaneie o QR Code com seu celular (WhatsApp → Aparelhos conectados)</li>
-              <li>A sessão ficará salva no servidor e o sistema passará a receber e enviar mensagens automaticamente</li>
-              <li>O servidor Node.js deve enviar eventos (mensagens recebidas, status) para o webhook:
+              <li>A sessão ficará salva no servidor VPS — vários computadores podem usar o ERP simultaneamente</li>
+              <li>O servidor Node.js deve enviar eventos para o webhook:
                 <code className="block mt-1 bg-muted px-2 py-1 rounded text-xs font-mono">
                   POST {import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook
                 </code>
