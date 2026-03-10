@@ -194,7 +194,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     doc.setFont('times', 'bold');
     doc.setFontSize(36);
     setColor(doc, DEEP_BLUE);
-    const destLines = doc.splitTextToSize(data.destination, cw);
+    const destLines = doc.splitTextToSize(s(data.destination), cw);
     doc.text(destLines, pw / 2, titleY + 18, { align: 'center' });
   }
 
