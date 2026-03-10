@@ -425,6 +425,13 @@ export default function NewSalePage() {
     if (editSaleId) {
       const { error } = await supabase.from('sales').update({ ...salePayload, updated_by: userEmail } as any).eq('id', editSaleId);
       if (error) { toast.error('Erro ao atualizar venda'); return null; }
+      // Clean up old sale_item_images before deleting sale_items
+      const { data: oldItems } = await supabase.from('sale_items').select('id').eq('sale_id', editSaleId);
+      if (oldItems) {
+        for (const oi of oldItems) {
+          await (supabase.from('sale_item_images' as any) as any).delete().eq('sale_item_id', oi.id);
+        }
+      }
       await supabase.from('sale_items').delete().eq('sale_id', editSaleId);
       await supabase.from('sale_suppliers').delete().eq('sale_id', editSaleId);
       await (supabase.from('sale_passengers' as any) as any).delete().eq('sale_id', editSaleId);
