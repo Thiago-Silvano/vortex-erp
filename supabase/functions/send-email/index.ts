@@ -1,10 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import nodemailer from "npm:nodemailer";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -46,29 +46,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize SMTP client
     const port = smtp_port || 587;
-    // Port 465 = implicit TLS, Port 587 = STARTTLS (tls must be false, denomailer upgrades automatically)
-    const useTls = port === 465;
-    const client = new SMTPClient({
-      connection: {
-        hostname: smtp_host,
-        port,
-        tls: useTls,
-        auth: {
-          username: smtp_user,
-          password: smtp_password,
-        },
+    // Port 465 = direct SSL (secure: true), Port 587 = STARTTLS (secure: false)
+    const transporter = nodemailer.createTransport({
+      host: smtp_host,
+      port,
+      secure: port === 465,
+      auth: {
+        user: smtp_user,
+        pass: smtp_password,
       },
     });
 
+    const senderAddress = `${from_name || "ERP"} <${from_email || smtp_user}>`;
+
     // Test mode
     if (test) {
-      await client.send({
-        from: `${from_name} <${from_email || smtp_user}>`,
+      await transporter.sendMail({
+        from: senderAddress,
         to: to || from_email || smtp_user,
         subject: "✅ Teste de Email - ERP Vortex",
-        content: "auto",
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px;">
             <h2 style="color: #0D1B2A;">Teste de Email</h2>
@@ -79,14 +76,13 @@ Deno.serve(async (req) => {
           </div>
         `,
       });
-      await client.close();
       return new Response(
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Normal send mode - get email from database
+    // Normal send mode
     if (!email_id) {
       return new Response(
         JSON.stringify({ error: "email_id obrigatório" }),
@@ -116,16 +112,15 @@ Deno.serve(async (req) => {
 
     const htmlBody = (email.body_html || email.body_text?.replace(/\n/g, "<br>") || "") + trackingPixel;
 
-    const sendOpts: any = {
-      from: `${from_name || "ERP"} <${from_email || smtp_user}>`,
-      to: email.to_emails || [],
+    const mailOptions: any = {
+      from: senderAddress,
+      to: Array.isArray(email.to_emails) ? email.to_emails.join(", ") : email.to_emails,
       subject: email.subject || "(sem assunto)",
-      content: "auto",
       html: htmlBody,
     };
 
-    if (email.cc_emails?.length) sendOpts.cc = email.cc_emails;
-    if (email.bcc_emails?.length) sendOpts.bcc = email.bcc_emails;
+    if (email.cc_emails?.length) mailOptions.cc = email.cc_emails.join(", ");
+    if (email.bcc_emails?.length) mailOptions.bcc = email.bcc_emails.join(", ");
 
     // Get attachments
     const { data: attachments } = await supabase
@@ -133,19 +128,19 @@ Deno.serve(async (req) => {
       .select("*")
       .eq("email_id", email_id);
 
-    // Note: denomailer supports attachments but we'd need to download them first
-    // For now, we include attachment links in the email body
     if (attachments && attachments.length > 0) {
       let attachmentHtml = '<hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;"><p style="font-size: 12px; color: #666;">Anexos:</p><ul>';
       for (const att of attachments as any[]) {
         attachmentHtml += `<li><a href="${att.file_url}" target="_blank">${att.file_name}</a></li>`;
       }
       attachmentHtml += "</ul>";
-      sendOpts.html += attachmentHtml;
+      mailOptions.html += attachmentHtml;
     }
 
-    await client.send(sendOpts);
-    await client.close();
+    await transporter.sendMail(mailOptions);
+
+    // Update email status
+    await supabase.from("emails").update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", email_id);
 
     return new Response(
       JSON.stringify({ success: true }),
