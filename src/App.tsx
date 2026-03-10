@@ -50,6 +50,11 @@ import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage"
 import WhatsAppAutomationsPage from "./pages/whatsapp/WhatsAppAutomationsPage";
 import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
 
+// Email pages
+import EmailInboxPage from "./pages/email/EmailInboxPage";
+import EmailTemplatesPage from "./pages/email/EmailTemplatesPage";
+import EmailSettingsPage from "./pages/email/EmailSettingsPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
