@@ -331,6 +331,18 @@ export default function WhatsAppSettingsPage() {
               </div>
             )}
 
+            {/* Polling indicator - waiting for QR */}
+            {(session?.status === 'waiting_qr' || session?.status === 'connecting') && !session?.qr_code && pollingQr && (
+              <div className="flex flex-col items-center gap-4 py-6 bg-muted/30 rounded-lg">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground font-medium">Aguardando QR Code do servidor...</p>
+                <p className="text-xs text-muted-foreground">O servidor está gerando o QR Code. Isso pode levar alguns segundos.</p>
+                <Button variant="outline" size="sm" onClick={stopPolling}>
+                  Cancelar
+                </Button>
+              </div>
+            )}
+
             {/* Test result message */}
             {testResult && (
               <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${testResult.ok ? 'bg-green-500/10 text-green-700' : 'bg-destructive/10 text-destructive'}`}>
