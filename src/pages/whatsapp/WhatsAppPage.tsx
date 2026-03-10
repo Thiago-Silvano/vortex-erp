@@ -110,6 +110,19 @@ export default function WhatsAppPage() {
     return [];
   }, [activeCompany?.id]);
 
+  const markAsRead = useCallback(async (convId: string) => {
+    // Update read_at on all unread client messages
+    await supabase.from('whatsapp_messages')
+      .update({ read_at: new Date().toISOString() } as any)
+      .eq('conversation_id', convId)
+      .eq('sender_type', 'client')
+      .is('read_at', null);
+    // Reset unread_count on the conversation
+    await supabase.from('whatsapp_conversations')
+      .update({ unread_count: 0 })
+      .eq('id', convId);
+  }, []);
+
   const fetchMessages = useCallback(async (convId: string) => {
     const { data } = await supabase.from('whatsapp_messages').select('*').eq('conversation_id', convId).order('created_at');
     if (data) setMessages(data as Message[]);
