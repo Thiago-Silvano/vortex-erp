@@ -225,7 +225,7 @@ export default function PropostaPublicPage() {
     );
   }
 
-  const totalSale = sale.total_sale || 0;
+  const totalSale = items.reduce((s, i) => s + i.total_value, 0);
   const destination = quoteData?.trip_destination || '';
   const origin = quoteData?.trip_origin || '';
   const departureDate = quoteData?.trip_departure_date;

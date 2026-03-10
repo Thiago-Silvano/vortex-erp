@@ -1231,6 +1231,7 @@ export type Database = {
           payment_method: string | null
           quote_id: string | null
           sale_date: string
+          sale_interest: number | null
           seller_id: string | null
           short_id: string
           status: string
@@ -1260,6 +1261,7 @@ export type Database = {
           payment_method?: string | null
           quote_id?: string | null
           sale_date?: string
+          sale_interest?: number | null
           seller_id?: string | null
           short_id?: string
           status?: string
@@ -1289,6 +1291,7 @@ export type Database = {
           payment_method?: string | null
           quote_id?: string | null
           sale_date?: string
+          sale_interest?: number | null
           seller_id?: string | null
           short_id?: string
           status?: string

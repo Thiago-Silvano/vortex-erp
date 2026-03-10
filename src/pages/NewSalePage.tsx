@@ -85,6 +85,7 @@ export default function NewSalePage() {
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
   const [boletoInterestRate, setBoletoInterestRate] = useState(0);
+  const [saleInterest, setSaleInterest] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
@@ -117,6 +118,7 @@ export default function NewSalePage() {
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setCommissionRate(Number(sale.commission_rate) || 0);
+    setSaleInterest(Number((sale as any).sale_interest) || 0);
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
     setInvoiceUrl((sale as any).invoice_url || '');
@@ -204,17 +206,17 @@ export default function NewSalePage() {
   }, [cardPaymentType, installments, ecRates, linkRates, paymentMethod]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
+  const totalSaleWithInterest = totalSale + saleInterest;
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
-  const grossProfit = totalSale - totalCost;
+  const grossProfit = totalSaleWithInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
-  const cardFeeValue = paymentMethod === 'credito' ? totalSale * (feeRate / 100) : 0;
+  const cardFeeValue = paymentMethod === 'credito' ? totalSaleWithInterest * (feeRate / 100) : 0;
   const netProfit = grossProfit - commissionValue - cardFeeValue;
 
   useEffect(() => {
     if (paymentMethod === 'boleto' && installments > 1 && boletoInterestRate > 0) {
-      // Price table (Tabela Price) calculation
       const monthlyRate = boletoInterestRate / 100;
-      const pmt = totalSale * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
+      const pmt = totalSaleWithInterest * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
       const recs: Receivable[] = [];
       const baseDate = new Date(saleDate || new Date());
       for (let i = 1; i <= installments; i++) {
@@ -226,7 +228,7 @@ export default function NewSalePage() {
       return;
     }
     if (paymentMethod === 'boleto' && installments > 1) {
-      const perInstallment = totalSale / installments;
+      const perInstallment = totalSaleWithInterest / installments;
       const recs: Receivable[] = [];
       const baseDate = new Date(saleDate || new Date());
       for (let i = 1; i <= installments; i++) {
@@ -238,10 +240,10 @@ export default function NewSalePage() {
       return;
     }
     if (paymentMethod !== 'credito') {
-      setReceivables([{ installment_number: 1, due_date: '', amount: totalSale }]);
+      setReceivables([{ installment_number: 1, due_date: '', amount: totalSaleWithInterest }]);
       return;
     }
-    const perInstallment = installments > 0 ? totalSale / installments : totalSale;
+    const perInstallment = installments > 0 ? totalSaleWithInterest / installments : totalSaleWithInterest;
     const recs: Receivable[] = [];
     const baseDate = new Date(saleDate || new Date());
     for (let i = 1; i <= installments; i++) {
@@ -250,7 +252,7 @@ export default function NewSalePage() {
       recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: perInstallment });
     }
     setReceivables(recs);
-  }, [installments, paymentMethod, totalSale, boletoInterestRate, saleDate]);
+  }, [installments, paymentMethod, totalSaleWithInterest, boletoInterestRate, saleDate]);
 
   const updateItem = (idx: number, field: keyof SaleItem, value: any) => {
     setItems(prev => prev.map((item, i) => {
@@ -373,7 +375,7 @@ export default function NewSalePage() {
         card_charge_type: '',
         card_payment_type: paymentMethod === 'credito' ? cardPaymentType : '',
         card_fee_rate: paymentMethod === 'credito' ? feeRate : 0,
-        total_sale: totalSale,
+        total_sale: totalSaleWithInterest,
         total_supplier_cost: totalCost,
         gross_profit: grossProfit,
         commission_rate: commissionRate,
@@ -388,6 +390,7 @@ export default function NewSalePage() {
         seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
         invoice_url: invoiceUrl || null,
         destination_image_url: destinationImageUrl || null,
+        sale_interest: saleInterest,
       } as any,
       userEmail,
     };
@@ -519,8 +522,8 @@ export default function NewSalePage() {
         let commValue = 0;
         const pct = Number(sellerData.commission_percentage) || 0;
         if (sellerData.commission_type === 'sales_percentage') {
-          const base = sellerData.commission_base === 'net_received' ? totalSale - cardFeeValue
-            : sellerData.commission_base === 'sale_profit' ? grossProfit : totalSale;
+          const base = sellerData.commission_base === 'net_received' ? totalSaleWithInterest - cardFeeValue
+            : sellerData.commission_base === 'sale_profit' ? grossProfit : totalSaleWithInterest;
           commValue = base * (pct / 100);
         } else if (sellerData.commission_type === 'profit_percentage') {
           commValue = grossProfit * (pct / 100);
@@ -535,7 +538,7 @@ export default function NewSalePage() {
           sale_id: saleId,
           client_name: clientName,
           sale_date: saleDate,
-          sale_value: totalSale,
+          sale_value: totalSaleWithInterest,
           cost_value: totalCost,
           profit_value: grossProfit,
           commission_percentage: pct,
@@ -1014,6 +1017,36 @@ export default function NewSalePage() {
               ))}
             </div>
 
+            {/* Sale Interest */}
+            <div className="pt-4 border-t">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                  <Label>Juros na venda? (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={saleInterest || ''}
+                    onChange={e => setSaleInterest(parseFloat(e.target.value) || 0)}
+                    placeholder="0,00"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Valor somado internamente. Não aparece para o cliente.</p>
+                </div>
+                {saleInterest > 0 && (
+                  <>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total dos serviços</p>
+                      <p className="text-sm font-medium">{fmt(totalSale)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total com juros</p>
+                      <p className="text-sm font-bold text-primary">{fmt(totalSaleWithInterest)}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
             {paymentMethod === 'credito' && (
               <div className="space-y-4 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1067,7 +1100,7 @@ export default function NewSalePage() {
                   </div>
                   <div>
                     <Label>Valor da Venda</Label>
-                    <Input value={fmt(totalSale)} disabled className="bg-muted" />
+                    <Input value={fmt(totalSaleWithInterest)} disabled className="bg-muted" />
                   </div>
                 </div>
                 {installments > 1 && boletoInterestRate > 0 && (
@@ -1162,7 +1195,10 @@ export default function NewSalePage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Total da Venda</p>
-                <p className="text-xl font-bold">{fmt(totalSale)}</p>
+                <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
+                {saleInterest > 0 && (
+                  <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)} + Juros: {fmt(saleInterest)})</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Custo Fornecedor</p>
