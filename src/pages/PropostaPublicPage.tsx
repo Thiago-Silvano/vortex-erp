@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Moon, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Moon, Users, Plane } from 'lucide-react';
 
 interface SaleData {
   id: string;
@@ -28,27 +28,12 @@ interface SaleItemData {
   total_value: number;
   service_catalog_id: string | null;
   images: string[];
+  metadata?: any;
 }
 
-interface PassengerData {
-  first_name: string;
-  last_name: string;
-  is_main: boolean;
-}
-
-interface ReceivableData {
-  installment_number: number;
-  amount: number;
-  due_date: string | null;
-}
-
-interface AgencyData {
-  name: string;
-  whatsapp: string;
-  email: string;
-  website: string;
-  logo_url: string | null;
-}
+interface PassengerData { first_name: string; last_name: string; is_main: boolean; }
+interface ReceivableData { installment_number: number; amount: number; due_date: string | null; }
+interface AgencyData { name: string; whatsapp: string; email: string; website: string; logo_url: string | null; }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -70,7 +55,6 @@ const formatDateLong = (d?: string | null) => {
 // ─── Lightbox Carousel ─────────────────────────────────────
 function ImageLightbox({ images, initialIndex, onClose }: { images: string[]; initialIndex: number; onClose: () => void }) {
   const [idx, setIdx] = useState(initialIndex);
-
   const next = useCallback(() => setIdx(p => (p + 1) % images.length), [images.length]);
   const prev = useCallback(() => setIdx(p => (p - 1 + images.length) % images.length), [images.length]);
 
@@ -100,12 +84,7 @@ function ImageLightbox({ images, initialIndex, onClose }: { images: string[]; in
           </button>
         </>
       )}
-      <img
-        src={images[idx]}
-        alt=""
-        onClick={e => e.stopPropagation()}
-        className="relative z-10 max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
-      />
+      <img src={images[idx]} alt="" onClick={e => e.stopPropagation()} className="relative z-10 max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl" />
       {images.length > 1 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
           {images.map((_, i) => (
@@ -140,19 +119,8 @@ export default function PropostaPublicPage() {
 
   const loadProposal = async () => {
     setLoading(true);
-
-    const { data: saleData, error } = await (supabase
-      .from('sales')
-      .select('*') as any)
-      .eq('short_id', shortId)
-      .single();
-
-    if (error || !saleData) {
-      setNotFound(true);
-      setLoading(false);
-      return;
-    }
-
+    const { data: saleData, error } = await (supabase.from('sales').select('*') as any).eq('short_id', shortId).single();
+    if (error || !saleData) { setNotFound(true); setLoading(false); return; }
     setSale(saleData as any);
 
     const saleId = saleData.id;
@@ -162,31 +130,22 @@ export default function PropostaPublicPage() {
       supabase.from('sale_items').select('*').eq('sale_id', saleId).order('sort_order'),
       supabase.from('sale_passengers' as any).select('*').eq('sale_id', saleId).order('sort_order') as any,
       supabase.from('receivables').select('*').eq('sale_id', saleId).order('installment_number'),
-      empresaId
-        ? supabase.from('agency_settings').select('*').eq('empresa_id', empresaId).limit(1)
-        : supabase.from('agency_settings').select('*').limit(1),
+      empresaId ? supabase.from('agency_settings').select('*').eq('empresa_id', empresaId).limit(1) : supabase.from('agency_settings').select('*').limit(1),
       supabase.from('services_catalog').select('id, name'),
     ]);
 
     const nameMap: Record<string, string> = {};
-    if (catalogRes.data) {
-      catalogRes.data.forEach((c: any) => { nameMap[c.id] = c.name; });
-    }
+    if (catalogRes.data) catalogRes.data.forEach((c: any) => { nameMap[c.id] = c.name; });
     setCatalogNames(nameMap);
 
     const loadedItems: SaleItemData[] = [];
     if (itemsRes.data) {
       for (const item of itemsRes.data) {
-        const { data: imgs } = await (supabase.from('sale_item_images' as any) as any)
-          .select('image_url')
-          .eq('sale_item_id', item.id)
-          .order('sort_order');
+        const { data: imgs } = await (supabase.from('sale_item_images' as any) as any).select('image_url').eq('sale_item_id', item.id).order('sort_order');
         loadedItems.push({
-          id: item.id,
-          description: item.description,
-          total_value: Number(item.total_value),
-          service_catalog_id: item.service_catalog_id,
-          images: imgs?.map((i: any) => i.image_url) || [],
+          id: item.id, description: item.description, total_value: Number(item.total_value),
+          service_catalog_id: item.service_catalog_id, images: imgs?.map((i: any) => i.image_url) || [],
+          metadata: (item as any).metadata || {},
         });
       }
     }
@@ -200,7 +159,6 @@ export default function PropostaPublicPage() {
       const { data: qData } = await supabase.from('quotes').select('*').eq('id', (saleData as any).quote_id).single();
       if (qData) setQuoteData(qData);
     }
-
     setLoading(false);
   };
 
@@ -222,8 +180,8 @@ export default function PropostaPublicPage() {
           <div className="w-16 h-16 rounded-full border-2 border-[#C8A45B]/30 flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl" style={{ color: '#C8A45B' }}>?</span>
           </div>
-          <h1 className="text-2xl font-bold mb-2 text-white">Proposta nao encontrada</h1>
-          <p className="text-white/50">Este link pode ter expirado ou ser invalido.</p>
+          <h1 className="text-2xl font-bold mb-2 text-white">Proposta não encontrada</h1>
+          <p className="text-white/50">Este link pode ter expirado ou ser inválido.</p>
         </div>
       </div>
     );
@@ -239,10 +197,7 @@ export default function PropostaPublicPage() {
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
 
   const methodLabels: Record<string, string> = {
-    pix: 'PIX',
-    credito: 'Cartão de Crédito',
-    boleto: 'Boleto Bancário',
-    dinheiro: 'Dinheiro',
+    pix: 'PIX', credito: 'Cartão de Crédito', boleto: 'Boleto Bancário', dinheiro: 'Dinheiro',
   };
 
   const infoItems = [
@@ -252,7 +207,6 @@ export default function PropostaPublicPage() {
     nights > 0 && { icon: Moon, label: 'Noites', value: String(nights) },
   ].filter(Boolean) as { icon: any; label: string; value: string }[];
 
-  // Per-person values
   const perPersonTotal = passengersCount > 1 ? totalSale / passengersCount : totalSale;
 
   return (
@@ -276,7 +230,8 @@ export default function PropostaPublicPage() {
         <div className="relative z-10 w-full max-w-5xl mx-auto px-6 md:px-10 pt-6 pb-10 flex flex-col" style={{ minHeight: heroImage ? 520 : 340 }}>
           <div className="flex items-start justify-between">
             <div>
-              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-12 opacity-90" />
+              {/* Logo 7x bigger: was h-12, now h-[84px] */}
+              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[84px] opacity-90" />
             </div>
             <div className="text-right text-xs text-white/40">
               {agency && (
@@ -314,7 +269,7 @@ export default function PropostaPublicPage() {
       {infoItems.length > 0 && (
         <div style={{ background: '#0D1B2A' }}>
           <div className="w-full max-w-5xl mx-auto px-6 md:px-10 py-6">
-            <div className={`grid gap-6`} style={{ gridTemplateColumns: `repeat(${infoItems.length}, 1fr)` }}>
+            <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${infoItems.length}, 1fr)` }}>
               {infoItems.map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(200,164,91,0.15)' }}>
@@ -346,10 +301,11 @@ export default function PropostaPublicPage() {
                   <ServiceCard
                     key={idx}
                     name={name || `Serviço ${idx + 1}`}
-                    description={item.description}
+                    description={item.metadata?.detailedDescription || item.description}
                     catalogName={item.service_catalog_id ? catalogNames[item.service_catalog_id] : null}
                     value={item.total_value}
                     images={item.images}
+                    metadata={item.metadata}
                     passengersCount={passengersCount}
                     onImageClick={(imgIdx) => setLightbox({ images: item.images, index: imgIdx })}
                   />
@@ -367,35 +323,25 @@ export default function PropostaPublicPage() {
               const name = item.service_catalog_id ? catalogNames[item.service_catalog_id] || item.description : item.description;
               return (
                 <div key={idx} className="flex justify-between items-center py-4 px-8" style={{
-                  background: idx % 2 === 0 ? '#fff' : '#faf9f6',
-                  borderBottom: '1px solid #f0ede8'
+                  background: idx % 2 === 0 ? '#fff' : '#faf9f6', borderBottom: '1px solid #f0ede8'
                 }}>
                   <span className="text-sm" style={{ color: '#2d2d2d' }}>{name || `Serviço ${idx + 1}`}</span>
                   <span className="text-sm font-semibold tabular-nums" style={{ color: '#2d2d2d' }}>{fmt(item.total_value)}</span>
                 </div>
               );
             })}
-            <div className="flex justify-between py-6 px-8 items-center" style={{
-              background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)',
-            }}>
-              <span className="text-lg font-bold text-white" style={{ fontFamily: "'Georgia', serif" }}>
-                Total da viagem
-              </span>
+            <div className="flex justify-between py-6 px-8 items-center" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
+              <span className="text-lg font-bold text-white" style={{ fontFamily: "'Georgia', serif" }}>Total da viagem</span>
               <div className="text-right">
-                <span className="text-3xl font-bold" style={{ color: '#C8A45B', fontFamily: "'Georgia', serif" }}>
-                  {fmt(totalSale)}
-                </span>
-                {passengersCount > 1 && (
-                  <p className="text-xs text-white/50 mt-1">{fmt(perPersonTotal)} por pessoa</p>
-                )}
+                <span className="text-3xl font-bold" style={{ color: '#C8A45B', fontFamily: "'Georgia', serif" }}>{fmt(totalSale)}</span>
+                {passengersCount > 1 && <p className="text-xs text-white/50 mt-1">{fmt(perPersonTotal)} por pessoa</p>}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Payment + Notes side by side on wide */}
+        {/* Payment + Notes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Payment */}
           <section>
             <SectionTitle>Forma de pagamento</SectionTitle>
             <div className="mt-8 p-6 rounded-2xl" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
@@ -404,26 +350,17 @@ export default function PropostaPublicPage() {
                   <span className="text-white text-sm font-bold">$</span>
                 </div>
                 <div>
-                  <p className="font-bold text-sm" style={{ color: '#0D1B2A' }}>
-                    {methodLabels[sale.payment_method || ''] || sale.payment_method}
-                  </p>
+                  <p className="font-bold text-sm" style={{ color: '#0D1B2A' }}>{methodLabels[sale.payment_method || ''] || sale.payment_method}</p>
                 </div>
               </div>
 
-              {/* Highlighted installment display */}
               {sale.installments > 1 && receivables.length > 0 && (
                 <div className="text-center py-5 mb-5 rounded-xl" style={{ background: '#faf9f6', border: '1px solid #f0ede8' }}>
                   <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#999' }}>Pagamento em</p>
-                  <p className="text-4xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-                    {sale.installments}x
-                  </p>
-                  <p className="text-lg font-semibold mt-1" style={{ color: '#C8A45B' }}>
-                    {fmt(receivables[0]?.amount || (totalSale / sale.installments))}
-                  </p>
+                  <p className="text-4xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>{sale.installments}x</p>
+                  <p className="text-lg font-semibold mt-1" style={{ color: '#C8A45B' }}>{fmt(receivables[0]?.amount || (totalSale / sale.installments))}</p>
                   {passengersCount > 1 && (
-                    <p className="text-xs mt-2" style={{ color: '#999' }}>
-                      {fmt((receivables[0]?.amount || (totalSale / sale.installments)) / passengersCount)} por pessoa
-                    </p>
+                    <p className="text-xs mt-2" style={{ color: '#999' }}>{fmt((receivables[0]?.amount || (totalSale / sale.installments)) / passengersCount)} por pessoa</p>
                   )}
                   <p className="text-[10px] mt-1" style={{ color: '#bbb' }}>Valor total: {fmt(totalSale)}</p>
                 </div>
@@ -443,16 +380,10 @@ export default function PropostaPublicPage() {
             </div>
           </section>
 
-          {/* Notes */}
           {sale.notes && (
             <section>
               <SectionTitle>Observações</SectionTitle>
-              <div className="mt-8 p-6 rounded-2xl text-sm leading-relaxed" style={{
-                background: '#fff',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-                color: '#666',
-                whiteSpace: 'pre-wrap'
-              }}>
+              <div className="mt-8 p-6 rounded-2xl text-sm leading-relaxed" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', color: '#666', whiteSpace: 'pre-wrap' }}>
                 {sale.notes}
               </div>
             </section>
@@ -464,23 +395,18 @@ export default function PropostaPublicPage() {
       <footer className="py-12 px-6" style={{ background: '#0D1B2A' }}>
         <div className="max-w-5xl mx-auto text-center">
           <div className="w-20 h-[2px] mx-auto mb-8" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
-          <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-9 mx-auto mb-5 opacity-50" />
+          <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-16 mx-auto mb-5 opacity-50" />
           {agency && (
             <div className="text-xs text-white/25 space-y-1">
               <p>{[agency.whatsapp, agency.email, agency.website].filter(Boolean).join('  ·  ')}</p>
             </div>
           )}
-          <p className="text-[10px] mt-6 text-white/10">
-            Valores sujeitos a disponibilidade e alterações sem aviso prévio.
-          </p>
+          <p className="text-[10px] mt-6 text-white/10">Valores sujeitos a disponibilidade e alterações sem aviso prévio.</p>
         </div>
       </footer>
 
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
       `}</style>
     </div>
@@ -493,73 +419,47 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3">
       <div className="w-1 h-8 rounded-full" style={{ background: 'linear-gradient(to bottom, #C8A45B, #E8D5A3)' }} />
-      <h2 className="text-2xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-        {children}
-      </h2>
+      <h2 className="text-2xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>{children}</h2>
     </div>
   );
 }
 
 function ServiceCard({
-  name,
-  description,
-  catalogName,
-  value,
-  images,
-  passengersCount,
-  onImageClick,
+  name, description, catalogName, value, images, metadata, passengersCount, onImageClick,
 }: {
   name: string;
   description: string;
   catalogName: string | null;
   value: number;
   images: string[];
+  metadata?: any;
   passengersCount: number;
   onImageClick: (idx: number) => void;
 }) {
   const [currentImg, setCurrentImg] = useState(0);
-
   const nextImg = (e: React.MouseEvent) => { e.stopPropagation(); setCurrentImg(prev => (prev + 1) % images.length); };
   const prevImg = (e: React.MouseEvent) => { e.stopPropagation(); setCurrentImg(prev => (prev - 1 + images.length) % images.length); };
-
   const hasImages = images.length > 0;
+
+  const isAereo = metadata?.type === 'aereo';
+  const isHotel = metadata?.type === 'hotel';
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-      {/* Image area - full width on top */}
+      {/* Image area */}
       {hasImages && (
-        <div
-          className="relative cursor-pointer group"
-          onClick={() => onImageClick(currentImg)}
-        >
+        <div className="relative cursor-pointer group" onClick={() => onImageClick(currentImg)}>
           <div className="relative overflow-hidden" style={{ height: 280 }}>
-            <img
-              src={images[currentImg]}
-              alt={name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
+            <img src={images[currentImg]} alt={name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-            {/* Arrows */}
             {images.length > 1 && (
               <>
-                <button onClick={prevImg}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(0,0,0,0.5)', color: '#fff' }}>
+                <button onClick={prevImg} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.5)', color: '#fff' }}>
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <button onClick={nextImg}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'rgba(0,0,0,0.5)', color: '#fff' }}>
+                <button onClick={nextImg} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.5)', color: '#fff' }}>
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                  {images.map((_, idx) => (
-                    <button key={idx} onClick={e => { e.stopPropagation(); setCurrentImg(idx); }}
-                      className="w-2 h-2 rounded-full transition-all"
-                      style={{ background: idx === currentImg ? '#C8A45B' : 'rgba(255,255,255,0.5)', transform: idx === currentImg ? 'scale(1.3)' : 'scale(1)' }}
-                    />
-                  ))}
-                </div>
               </>
             )}
             {images.length > 1 && (
@@ -568,35 +468,126 @@ function ServiceCard({
               </div>
             )}
           </div>
+          {/* Thumbnails */}
+          {images.length > 1 && (
+            <div className="flex gap-2 p-3 overflow-x-auto" style={{ background: '#faf9f6' }}>
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={e => { e.stopPropagation(); setCurrentImg(idx); }}
+                  className="flex-shrink-0 rounded-lg overflow-hidden transition-all"
+                  style={{
+                    width: 64, height: 48,
+                    border: idx === currentImg ? '2px solid #C8A45B' : '2px solid transparent',
+                    opacity: idx === currentImg ? 1 : 0.6,
+                  }}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Content - below image in same box */}
+      {/* Content */}
       <div className="p-6 md:p-8">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h3 className="font-bold text-lg mb-1" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
               {catalogName || name}
             </h3>
-            {catalogName && description !== catalogName && description && (
+            {/* Detailed description */}
+            {metadata?.detailedDescription && (
+              <p className="text-sm leading-relaxed mt-2" style={{ color: '#888' }}>{metadata.detailedDescription}</p>
+            )}
+            {!metadata?.detailedDescription && catalogName && description !== catalogName && description && (
               <p className="text-sm leading-relaxed mt-2" style={{ color: '#888' }}>{description}</p>
             )}
           </div>
           <div className="text-right flex-shrink-0">
             {value > 0 && (
               <>
-                <span className="text-lg font-bold whitespace-nowrap" style={{ color: '#C8A45B' }}>
-                  {fmt(value)}
-                </span>
-                {passengersCount > 1 && (
-                  <p className="text-[11px] mt-0.5" style={{ color: '#aaa' }}>
-                    {fmt(value / passengersCount)} /pessoa
-                  </p>
-                )}
+                <span className="text-lg font-bold whitespace-nowrap" style={{ color: '#C8A45B' }}>{fmt(value)}</span>
+                {passengersCount > 1 && <p className="text-[11px] mt-0.5" style={{ color: '#aaa' }}>{fmt(value / passengersCount)} /pessoa</p>}
               </>
             )}
           </div>
         </div>
+
+        {/* Flight details */}
+        {isAereo && metadata.flightLegs && metadata.flightLegs.length > 0 && (
+          <div className="mt-5 pt-5" style={{ borderTop: '1px solid #f0ede8' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Plane className="h-4 w-4" style={{ color: '#C8A45B' }} />
+              <span className="text-xs font-semibold tracking-[2px] uppercase" style={{ color: '#C8A45B' }}>Itinerário</span>
+            </div>
+            <div className="space-y-3">
+              {metadata.flightLegs.map((leg: any, idx: number) => (
+                <div key={idx} className="flex items-center gap-4 p-3 rounded-xl" style={{ background: '#faf9f6' }}>
+                  <div className="px-2 py-1 rounded text-[10px] font-bold uppercase" style={{ background: leg.direction === 'ida' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
+                    {leg.direction === 'ida' ? 'IDA' : 'VOLTA'}
+                  </div>
+                  <div className="flex-1 flex items-center gap-3 text-sm">
+                    <div className="text-center">
+                      <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.origin}</p>
+                      {leg.departureTime && <p className="text-xs" style={{ color: '#999' }}>{leg.departureTime}</p>}
+                      {leg.departureDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.departureDate)}</p>}
+                    </div>
+                    <div className="flex-1 flex items-center gap-1">
+                      <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
+                      {leg.flightCode && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: '#f0ede8', color: '#999' }}>{leg.flightCode}</span>}
+                      <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.destination}</p>
+                      {leg.arrivalTime && <p className="text-xs" style={{ color: '#999' }}>{leg.arrivalTime}</p>}
+                      {leg.arrivalDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.arrivalDate)}</p>}
+                    </div>
+                  </div>
+                  {leg.connectionDuration && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#fff3cd', color: '#856404' }}>
+                      Conexão: {leg.connectionDuration}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Baggage info */}
+            {metadata.baggage && (
+              <div className="flex gap-4 mt-3 text-xs" style={{ color: '#999' }}>
+                {metadata.baggage.personalItem > 0 && <span>🎒 Item pessoal: {metadata.baggage.personalItem}</span>}
+                {metadata.baggage.carryOn > 0 && <span>💼 Bagagem de mão: {metadata.baggage.carryOn}</span>}
+                {metadata.baggage.checkedBag > 0 && <span>🧳 Despachada: {metadata.baggage.checkedBag}</span>}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Hotel details */}
+        {isHotel && metadata.hotel && (
+          <div className="mt-5 pt-5" style={{ borderTop: '1px solid #f0ede8' }}>
+            <div className="flex items-center gap-2 mb-3">
+              {metadata.hotel.stars > 0 && <span className="text-sm">{'⭐'.repeat(metadata.hotel.stars)}</span>}
+              {metadata.hotel.category && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#f0ede8', color: '#666' }}>{metadata.hotel.category}</span>}
+            </div>
+            {metadata.hotel.description && (
+              <p className="text-sm leading-relaxed mb-3" style={{ color: '#888' }}>{metadata.hotel.description}</p>
+            )}
+            <div className="flex flex-wrap gap-4 text-xs" style={{ color: '#999' }}>
+              {metadata.hotel.checkInDate && <span>📅 Check-in: {formatDateBR(metadata.hotel.checkInDate)} {metadata.hotel.checkInTime && `às ${metadata.hotel.checkInTime}`}</span>}
+              {metadata.hotel.checkOutDate && <span>📅 Check-out: {formatDateBR(metadata.hotel.checkOutDate)} {metadata.hotel.checkOutTime && `às ${metadata.hotel.checkOutTime}`}</span>}
+              {metadata.hotel.address && <span>📍 {metadata.hotel.address}{metadata.hotel.city ? `, ${metadata.hotel.city}` : ''}</span>}
+            </div>
+            {metadata.hotel.amenities && metadata.hotel.amenities.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {metadata.hotel.amenities.map((a: string, i: number) => (
+                  <span key={i} className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: 'rgba(200,164,91,0.1)', color: '#C8A45B' }}>{a}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
