@@ -104,7 +104,7 @@ function setColor(doc: jsPDF, color: readonly [number, number, number]) {
   doc.setTextColor(color[0], color[1], color[2]);
 }
 
-function drawLine(doc: jsPDF, x1: number, y: number, x2: number, color = BORDER_COLOR, width = 0.3) {
+function drawLine(doc: jsPDF, x1: number, y: number, x2: number, color: readonly number[] = BORDER_COLOR, width = 0.3) {
   doc.setDrawColor(color[0], color[1], color[2]);
   doc.setLineWidth(width);
   doc.line(x1, y, x2, y);
