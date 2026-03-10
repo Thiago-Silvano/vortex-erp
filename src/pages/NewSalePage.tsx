@@ -344,6 +344,7 @@ export default function NewSalePage() {
         empresa_id: activeCompany?.id || null,
         seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
         invoice_url: invoiceUrl || null,
+        destination_image_url: destinationImageUrl || null,
       } as any,
       userEmail,
     };
