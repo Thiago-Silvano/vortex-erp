@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Wifi, WifiOff, QrCode, RefreshCw, Settings2, Smartphone, Loader2, Unplug } from 'lucide-react';
+import { Wifi, WifiOff, QrCode, RefreshCw, Settings2, Smartphone, Loader2, Unplug, Zap, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Session {
@@ -27,11 +27,32 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   connecting: { label: 'Conectando...', color: 'bg-blue-500', icon: Loader2 },
 };
 
+/** Calls the whatsapp-proxy edge function which proxies to the external Node.js server */
+async function callProxy(endpoint: string, method: string, empresaId: string, payload?: any) {
+  const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
+    body: {
+      endpoint,
+      method,
+      empresa_id: empresaId,
+      payload,
+    },
+  });
+
+  if (error) {
+    console.error('Erro na chamada ao proxy WhatsApp:', error);
+    throw new Error(error.message || 'Erro ao chamar o servidor');
+  }
+
+  console.log(`[WhatsApp Proxy] ${method} ${endpoint} →`, data);
+  return data;
+}
+
 export default function WhatsAppSettingsPage() {
   const { activeCompany } = useCompany();
   const [session, setSession] = useState<Session | null>(null);
   const [serverUrl, setServerUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   const fetchSession = async () => {
     if (!activeCompany?.id) return;
@@ -80,8 +101,37 @@ export default function WhatsAppSettingsPage() {
     setLoading(false);
   };
 
+  const handleTestConnection = async () => {
+    if (!serverUrl.trim() || !activeCompany?.id) {
+      toast.error('Configure a URL do servidor primeiro');
+      return;
+    }
+    setLoading(true);
+    setTestResult(null);
+
+    try {
+      // Save URL first to ensure proxy can find it
+      await handleSaveServerUrl();
+
+      const result = await callProxy('/connect', 'GET', activeCompany.id);
+
+      if (result?.ok) {
+        setTestResult({ ok: true, message: 'Servidor conectado ✅' });
+        toast.success('Servidor conectado com sucesso!');
+      } else {
+        setTestResult({ ok: false, message: `Servidor respondeu com erro: ${result?.error || result?.data?.message || 'desconhecido'}` });
+        toast.error('Servidor respondeu com erro');
+      }
+    } catch (e: any) {
+      console.error('Erro ao testar conexão:', e);
+      setTestResult({ ok: false, message: 'Servidor inacessível ❌' });
+      toast.error('Servidor inacessível');
+    }
+    setLoading(false);
+  };
+
   const handleConnect = async () => {
-    if (!serverUrl.trim()) {
+    if (!serverUrl.trim() || !activeCompany?.id) {
       toast.error('Configure a URL do servidor primeiro');
       return;
     }
@@ -89,38 +139,39 @@ export default function WhatsAppSettingsPage() {
     try {
       // Save server URL first
       await handleSaveServerUrl();
-      // Request QR code from the Node.js server
-      const res = await fetch(`${serverUrl.trim()}/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ empresa_id: activeCompany?.id }),
-      });
-      if (!res.ok) throw new Error('Servidor não respondeu');
-      toast.success('Solicitação de conexão enviada! Aguarde o QR Code aparecer.');
+
+      const result = await callProxy('/connect', 'GET', activeCompany.id);
+
+      if (result?.ok !== false) {
+        toast.success('Solicitação de conexão enviada! Aguarde o QR Code aparecer.');
+      } else {
+        toast.error('Erro do servidor: ' + (result?.error || 'desconhecido'));
+      }
     } catch (e: any) {
-      toast.error('Erro ao conectar: ' + e.message);
+      console.error('Erro ao conectar ao servidor WhatsApp:', e);
+      toast.error('Servidor inacessível: ' + e.message);
     }
     setLoading(false);
   };
 
   const handleDisconnect = async () => {
-    if (!serverUrl.trim() || !activeCompany?.id) return;
+    if (!activeCompany?.id) return;
     setLoading(true);
     try {
-      await fetch(`${serverUrl.trim()}/disconnect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ empresa_id: activeCompany.id }),
-      });
+      await callProxy('/disconnect', 'GET', activeCompany.id);
+
       await supabase.from('whatsapp_sessions').update({
         status: 'disconnected',
         qr_code: '',
         connected_at: null,
         updated_at: new Date().toISOString(),
       }).eq('empresa_id', activeCompany.id);
+
       toast.success('WhatsApp desconectado');
+      setTestResult(null);
       fetchSession();
     } catch (e: any) {
+      console.error('Erro ao desconectar:', e);
       toast.error('Erro: ' + e.message);
     }
     setLoading(false);
@@ -178,8 +229,20 @@ export default function WhatsAppSettingsPage() {
               </div>
             )}
 
+            {/* Test result message */}
+            {testResult && (
+              <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${testResult.ok ? 'bg-green-500/10 text-green-700' : 'bg-destructive/10 text-destructive'}`}>
+                {testResult.ok ? <Wifi className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+                {testResult.message}
+              </div>
+            )}
+
             {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
+              <Button variant="outline" onClick={handleTestConnection} disabled={loading || !serverUrl.trim()}>
+                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Zap className="h-4 w-4 mr-2" />}
+                Testar Conexão
+              </Button>
               {session?.status !== 'connected' && (
                 <Button onClick={handleConnect} disabled={loading || !serverUrl.trim()}>
                   {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <QrCode className="h-4 w-4 mr-2" />}
@@ -200,7 +263,7 @@ export default function WhatsAppSettingsPage() {
           <CardHeader>
             <CardTitle>Servidor de WhatsApp Web</CardTitle>
             <CardDescription>
-              Configure a URL do seu servidor Node.js que executa o whatsapp-web.js / Baileys.
+              Configure a URL do seu servidor Node.js que executa o whatsapp-web.js.
               Este servidor é responsável por manter a sessão do WhatsApp Web.
             </CardDescription>
           </CardHeader>
@@ -210,10 +273,10 @@ export default function WhatsAppSettingsPage() {
               <Input
                 value={serverUrl}
                 onChange={e => setServerUrl(e.target.value)}
-                placeholder="https://seu-servidor.com ou http://localhost:3001"
+                placeholder="http://76.13.165.192:3000"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                O servidor deve expor os endpoints: /connect, /disconnect, /send-message
+                Endpoints esperados: GET /connect, GET /disconnect, POST /send-message
               </p>
             </div>
             <Button onClick={handleSaveServerUrl} disabled={loading} variant="outline">
@@ -229,7 +292,8 @@ export default function WhatsAppSettingsPage() {
           </CardHeader>
           <CardContent>
             <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
-              <li>Configure a URL do seu servidor Node.js que executa a biblioteca de automação do WhatsApp Web</li>
+              <li>Configure a URL do seu servidor Node.js que executa a biblioteca whatsapp-web.js</li>
+              <li>Clique em "Testar Conexão" para verificar se o servidor está acessível</li>
               <li>Clique em "Conectar WhatsApp" — o servidor gerará um QR Code</li>
               <li>Escaneie o QR Code com seu celular (WhatsApp → Aparelhos conectados)</li>
               <li>A sessão ficará salva no servidor e o sistema passará a receber e enviar mensagens automaticamente</li>
