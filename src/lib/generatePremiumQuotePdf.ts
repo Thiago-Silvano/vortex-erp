@@ -344,7 +344,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     const returnLegs = data.flightLegs.filter(l => l.direction === 'volta');
 
     if (outbound.length > 0) {
-      y = drawFlightDirection(doc, '✈️  IDA', outbound, y, m, pw, cw);
+      y = drawFlightDirection(doc, 'IDA', outbound, y, m, pw, cw);
       y += 4;
     }
     if (returnLegs.length > 0) {
