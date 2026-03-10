@@ -234,7 +234,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     setColor(doc, TEXT_MUTED);
-    doc.text(`Consultor: ${data.seller}`, pw / 2, coverY, { align: 'center' });
+    doc.text(s(`Consultor: ${data.seller}`), pw / 2, coverY, { align: 'center' });
   }
 
   // Bottom accent
