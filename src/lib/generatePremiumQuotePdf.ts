@@ -140,6 +140,9 @@ function safeText(doc: jsPDF, text: string | string[], x: number, y: number, opt
 
 // ─── Main Generator ─────────────────────────────────────────
 export function generatePremiumQuotePdf(data: PremiumPdfData) {
+  // Sanitize all string data upfront to avoid encoding issues
+  const s = sanitize;
+  
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pw = doc.internal.pageSize.getWidth(); // 210
   const ph = doc.internal.pageSize.getHeight(); // 297
