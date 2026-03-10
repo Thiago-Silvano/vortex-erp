@@ -299,50 +299,50 @@ export default function NewSalePage() {
     e.target.value = '';
   };
 
-  const handleSave = async () => {
-    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
-
+  const buildSalePayload = async (status: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     const userEmail = user?.email || '';
-
-    const salePayload: any = {
-      quote_id: quoteId || null,
-      client_name: clientName,
-      sale_date: saleDate,
-      payment_method: paymentMethod,
-      installments: paymentMethod === 'credito' ? installments : 1,
-      card_charge_type: '',
-      card_payment_type: paymentMethod === 'credito' ? cardPaymentType : '',
-      card_fee_rate: paymentMethod === 'credito' ? feeRate : 0,
-      total_sale: totalSale,
-      total_supplier_cost: totalCost,
-      gross_profit: grossProfit,
-      commission_rate: commissionRate,
-      commission_value: commissionValue,
-      card_fee_value: cardFeeValue,
-      net_profit: netProfit,
-      notes,
-      status: 'active',
-      created_by: userEmail,
-      updated_by: userEmail,
-      empresa_id: activeCompany?.id || null,
-      seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
-      invoice_url: invoiceUrl || null,
+    return {
+      payload: {
+        quote_id: quoteId || null,
+        client_name: clientName,
+        sale_date: saleDate,
+        payment_method: paymentMethod,
+        installments: paymentMethod === 'credito' ? installments : 1,
+        card_charge_type: '',
+        card_payment_type: paymentMethod === 'credito' ? cardPaymentType : '',
+        card_fee_rate: paymentMethod === 'credito' ? feeRate : 0,
+        total_sale: totalSale,
+        total_supplier_cost: totalCost,
+        gross_profit: grossProfit,
+        commission_rate: commissionRate,
+        commission_value: commissionValue,
+        card_fee_value: cardFeeValue,
+        net_profit: netProfit,
+        notes,
+        status,
+        created_by: userEmail,
+        updated_by: userEmail,
+        empresa_id: activeCompany?.id || null,
+        seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
+        invoice_url: invoiceUrl || null,
+      } as any,
+      userEmail,
     };
+  };
 
+  const saveSaleCore = async (salePayload: any, userEmail: string) => {
     let saleId = editSaleId;
 
     if (editSaleId) {
       const { error } = await supabase.from('sales').update({ ...salePayload, updated_by: userEmail } as any).eq('id', editSaleId);
-      if (error) { toast.error('Erro ao atualizar venda'); return; }
+      if (error) { toast.error('Erro ao atualizar venda'); return null; }
       await supabase.from('sale_items').delete().eq('sale_id', editSaleId);
       await supabase.from('sale_suppliers').delete().eq('sale_id', editSaleId);
-      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
-      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
       await (supabase.from('sale_passengers' as any) as any).delete().eq('sale_id', editSaleId);
     } else {
       const { data, error } = await supabase.from('sales').insert(salePayload as any).select('id').single();
-      if (error || !data) { toast.error('Erro ao criar venda'); return; }
+      if (error || !data) { toast.error('Erro ao criar venda'); return null; }
       saleId = data.id;
     }
 
@@ -357,7 +357,6 @@ export default function NewSalePage() {
       await supabase.from('sale_suppliers').insert(selectedSupplierIds.map(sid => ({ sale_id: saleId, supplier_id: sid })));
     }
 
-    // Save passengers
     if (passengers.length > 0) {
       await (supabase.from('sale_passengers' as any) as any).insert(passengers.map((p, idx) => ({
         sale_id: saleId, first_name: p.first_name, last_name: p.last_name,
@@ -367,6 +366,42 @@ export default function NewSalePage() {
       })));
     }
 
+    return saleId;
+  };
+
+  // Save as draft - NO financial records generated
+  const handleSaveDraft = async () => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
+    const { payload, userEmail } = await buildSalePayload('draft');
+    
+    // For drafts, clean up old financial records if editing
+    if (editSaleId) {
+      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+    }
+
+    const saleId = await saveSaleCore(payload, userEmail);
+    if (!saleId) return;
+
+    toast.success('Rascunho salvo! Nenhum lançamento financeiro foi gerado.');
+    navigate('/sales');
+  };
+
+  // Convert to sale - generates all financial records
+  const handleSave = async () => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
+    const { payload, userEmail } = await buildSalePayload('active');
+
+    // Clean up old financial records if editing
+    if (editSaleId) {
+      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+    }
+
+    const saleId = await saveSaleCore(payload, userEmail);
+    if (!saleId) return;
+
+    // Generate receivables
     if (receivables.length > 0) {
       await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
@@ -374,6 +409,7 @@ export default function NewSalePage() {
       } as any)));
     }
 
+    // Generate accounts payable for suppliers
     if (totalCost > 0 && selectedSupplierIds.length > 0) {
       const costPerSupplier = totalCost / selectedSupplierIds.length;
       await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
@@ -390,7 +426,7 @@ export default function NewSalePage() {
     if (passengers.length > 0 && !editSaleId) {
       const mainPassenger = passengers.find(p => p.is_main) || passengers[0];
       const eventTitle = `${mainPassenger.first_name} ${mainPassenger.last_name}`.trim() || clientName;
-      const eventDate = saleDate; // departure date = sale date as default
+      const eventDate = saleDate;
       await supabase.from('calendar_events').insert({
         title: eventTitle,
         event_date: eventDate,
@@ -415,7 +451,7 @@ export default function NewSalePage() {
         } else {
           commValue = grossProfit * (pct / 100);
         }
-        const { data: commData } = await (supabase.from('seller_commissions') as any).insert({
+        await (supabase.from('seller_commissions') as any).insert({
           empresa_id: activeCompany?.id || null,
           seller_id: sellerId,
           sale_id: saleId,
@@ -430,7 +466,6 @@ export default function NewSalePage() {
           status: 'pending',
         }).select('id').single();
 
-        // Create accounts payable for the commission (pay to seller)
         if (commValue > 0) {
           await supabase.from('accounts_payable').insert({
             sale_id: saleId,
@@ -445,7 +480,7 @@ export default function NewSalePage() {
       }
     }
 
-    toast.success(editSaleId ? 'Venda atualizada!' : 'Venda criada com sucesso!');
+    toast.success(editSaleId ? 'Venda atualizada!' : 'Venda convertida com sucesso! Financeiro gerado.');
     navigate('/sales');
   };
 
