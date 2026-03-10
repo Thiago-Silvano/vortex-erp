@@ -67,19 +67,17 @@ Deno.serve(async (req) => {
 
     // Clean server URL: remove trailing slashes and any accidental endpoint suffixes
     serverUrl = serverUrl.replace(/\/+$/, '');
-    // Strip known endpoint paths from the base URL if user accidentally saved them
     serverUrl = serverUrl.replace(/\/(connect|disconnect|send-message|status)\/?$/i, '');
 
     // Clean endpoint: ensure single leading slash
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-
     const targetUrl = `${serverUrl}${cleanEndpoint}`;
     const fetchMethod = method || 'GET';
 
     console.log(`Proxying ${fetchMethod} ${targetUrl}`);
 
-    // Longer timeout for /connect (30s) since it starts a browser, 10s for others
-    const timeoutMs = cleanEndpoint.startsWith('/connect') ? 30000 : 10000;
+    // Longer timeout for /connect (30s), shorter for others (15s)
+    const timeoutMs = cleanEndpoint === '/connect' ? 30000 : 15000;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -111,7 +109,7 @@ Deno.serve(async (req) => {
         status: response.status,
         data,
       }), {
-        status: response.ok ? 200 : response.status,
+        status: 200, // Always return 200 from proxy, let client check data.ok
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (fetchError) {
@@ -122,16 +120,16 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({
         ok: false,
-        error: isTimeout ? 'Servidor inacessível (timeout de 10s)' : `Servidor inacessível: ${errorMsg}`,
+        error: isTimeout ? 'Servidor inacessível (timeout)' : `Servidor inacessível: ${errorMsg}`,
       }), {
-        status: 502,
+        status: 200, // Return 200 so client can read the error JSON
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
   } catch (err) {
     console.error('Proxy error:', err);
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
+    return new Response(JSON.stringify({ ok: false, error: String(err) }), {
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
