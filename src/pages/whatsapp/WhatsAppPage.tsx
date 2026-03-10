@@ -160,8 +160,9 @@ export default function WhatsAppPage() {
   }, [messages]);
 
   useEffect(() => {
+    if (!activeCompany?.id) return;
     const channel = supabase
-      .channel('whatsapp-realtime')
+      .channel(`whatsapp-realtime-${activeCompany.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_messages' }, (payload) => {
         if (selectedConv && (payload.new as any)?.conversation_id === selectedConv.id) {
           fetchMessages(selectedConv.id);
@@ -169,7 +170,7 @@ export default function WhatsAppPage() {
         }
         fetchConversations();
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_conversations' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_conversations', filter: `empresa_id=eq.${activeCompany.id}` }, () => {
         fetchConversations();
       })
       .subscribe();
