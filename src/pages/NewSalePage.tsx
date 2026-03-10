@@ -1075,8 +1075,13 @@ export default function NewSalePage() {
         <div className="flex justify-end gap-3 pb-8">
           <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
           <Button variant="outline" onClick={handleExportPdf}>
-            <Download className="h-4 w-4 mr-1" />📄 Gerar PDF Proposta
+            <Download className="h-4 w-4 mr-1" /> Gerar PDF Proposta
           </Button>
+          {editSaleId && (
+            <Button variant="outline" onClick={handleGenerateLink}>
+              <Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta
+            </Button>
+          )}
           <Button variant="secondary" onClick={handleSaveDraft}>
             💾 Salvar Rascunho
           </Button>
