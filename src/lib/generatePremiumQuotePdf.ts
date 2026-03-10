@@ -392,7 +392,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       setColor(doc, DEEP_BLUE);
-      doc.text(`-  ${svc.name}`, m, y);
+      doc.text(s(`-  ${svc.name}`), m, y);
 
       if (svc.value > 0) {
         doc.setFont('helvetica', 'normal');
