@@ -494,7 +494,7 @@ export default function WhatsAppPage() {
         </div>
 
         {/* Column 2: Chat Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
           {!selectedConv ? (
             <div className="flex-1 flex items-center justify-center" style={{ background: '#f0f2f5' }}>
               <div className="text-center space-y-2">
@@ -528,7 +528,7 @@ export default function WhatsAppPage() {
               </div>
 
               {/* Messages area */}
-              <ScrollArea className="flex-1" style={{ background: '#efeae2' }}>
+              <div className="flex-1 overflow-y-auto" style={{ background: '#efeae2' }}>
                 {/* WhatsApp wallpaper overlay */}
                 <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'200\' height=\'200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'a\' patternUnits=\'userSpaceOnUse\' width=\'40\' height=\'40\'%3E%3Cpath d=\'M0 20h40M20 0v40\' fill=\'none\' stroke=\'%23000\' stroke-width=\'.5\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect fill=\'url(%23a)\' width=\'200\' height=\'200\'/%3E%3C/svg%3E")', pointerEvents: 'none' }} />
                 <div className="relative space-y-1 max-w-3xl mx-auto px-4 py-3">
@@ -630,7 +630,7 @@ export default function WhatsAppPage() {
                   })}
                   <div ref={messagesEndRef} />
                 </div>
-              </ScrollArea>
+              </div>
 
               {/* Reply preview bar */}
               {replyingTo && (
