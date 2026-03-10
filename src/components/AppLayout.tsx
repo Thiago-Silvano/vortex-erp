@@ -301,10 +301,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </span>
             )}
 
-            {/* WhatsApp button - desktop */}
+            {/* WhatsApp buttons - desktop */}
             {!isMobile && (
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
                 <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => navigate('/whatsapp')}
+                        variant="outline"
+                        className="h-10 rounded-[20px] gap-2 font-medium border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        WhatsApp
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Abrir módulo WhatsApp</TooltipContent>
+                  </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -315,7 +328,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#25D366')}
                       >
                         <MessageSquare className="h-4 w-4" />
-                        Novo WhatsApp
+                        Nova Conversa
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Iniciar nova conversa no WhatsApp</TooltipContent>
