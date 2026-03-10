@@ -321,7 +321,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         setColor(doc, TEXT_MAIN);
-        doc.text(hotel.room, m + 8, y);
+        doc.text(s(hotel.room), m + 8, y);
         y += 5;
       }
 
