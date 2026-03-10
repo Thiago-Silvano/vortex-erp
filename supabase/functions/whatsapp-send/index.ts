@@ -81,6 +81,8 @@ Deno.serve(async (req) => {
       message_type: message_type || 'text',
       media_url: media_url || null,
       media_filename: media_filename || null,
+      media_mimetype: media_mimetype || null,
+      reply_to_message_id: reply_to_message_id || null,
       delivery_status: 'pending',
     }).select('id').single();
 
