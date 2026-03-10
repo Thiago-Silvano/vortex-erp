@@ -920,6 +920,7 @@ export default function NewSalePage() {
           initialName={clientName}
           onClientCreated={(client) => {
             setClientName(client.full_name);
+            fetchClients();
           }}
         />
       </div>
