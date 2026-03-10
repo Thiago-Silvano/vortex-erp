@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp } from 'lucide-react';
 import PdfImportModal from '@/components/PdfImportModal';
+import QuickClientModal from '@/components/QuickClientModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, maskCpf, maskEmail } from '@/lib/masks';
