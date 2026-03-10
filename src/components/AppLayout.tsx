@@ -233,11 +233,13 @@ function AppSidebar() {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const accessibleCompanies = companies.filter(c => userCompanyIds.includes(c.id));
   const showSelector = isMaster && accessibleCompanies.length > 1;
 
   const [pendingCompany, setPendingCompany] = useState<typeof activeCompany>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showNewWAModal, setShowNewWAModal] = useState(false);
 
   const handleCompanyChange = (val: string) => {
     const comp = companies.find(c => c.id === val);
@@ -261,6 +263,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const cancelSwitch = () => {
     setShowConfirm(false);
     setPendingCompany(null);
+  };
+
+  const handleWAConversationCreated = (convId: string) => {
+    navigate('/whatsapp', { state: { openConversationId: convId } });
   };
 
   return (
@@ -294,10 +300,51 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {activeCompany.name}
               </span>
             )}
+
+            {/* WhatsApp button - desktop */}
+            {!isMobile && (
+              <div className="ml-auto">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => setShowNewWAModal(true)}
+                        className="h-10 rounded-[20px] gap-2 text-white font-medium"
+                        style={{ backgroundColor: '#25D366' }}
+                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1ebe5d')}
+                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#25D366')}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        Novo WhatsApp
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Iniciar nova conversa no WhatsApp</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
           </header>
           <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
+
+      {/* WhatsApp floating button - mobile */}
+      {isMobile && (
+        <button
+          onClick={() => setShowNewWAModal(true)}
+          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
+          style={{ backgroundColor: '#25D366' }}
+          title="Iniciar nova conversa no WhatsApp"
+        >
+          <MessageSquare className="h-6 w-6" />
+        </button>
+      )}
+
+      <NewWhatsAppConversationModal
+        open={showNewWAModal}
+        onOpenChange={setShowNewWAModal}
+        onConversationCreated={handleWAConversationCreated}
+      />
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent>
