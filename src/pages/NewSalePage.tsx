@@ -243,8 +243,11 @@ export default function NewSalePage() {
     }
     const perInstallment = installments > 0 ? totalSale / installments : totalSale;
     const recs: Receivable[] = [];
+    const baseDate = new Date(saleDate || new Date());
     for (let i = 1; i <= installments; i++) {
-      recs.push({ installment_number: i, due_date: '', amount: perInstallment });
+      const dueDate = new Date(baseDate);
+      dueDate.setDate(dueDate.getDate() + i * 30);
+      recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: perInstallment });
     }
     setReceivables(recs);
   }, [installments, paymentMethod, totalSale, boletoInterestRate, saleDate]);
