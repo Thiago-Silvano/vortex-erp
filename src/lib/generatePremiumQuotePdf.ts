@@ -535,7 +535,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     setColor(doc, TEXT_MUTED);
-    const noteLines = doc.splitTextToSize(data.notes, cw);
+    const noteLines = doc.splitTextToSize(s(data.notes), cw);
     noteLines.forEach((line: string) => {
       y = checkPageBreak(doc, y, 5, m);
       doc.text(line, m, y);
