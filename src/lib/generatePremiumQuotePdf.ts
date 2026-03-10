@@ -174,8 +174,8 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   setColor(doc, TEXT_MUTED);
-  doc.text(data.agency.name, pw - m, 28, { align: 'right' });
-  if (data.agency.whatsapp) doc.text(data.agency.whatsapp, pw - m, 33, { align: 'right' });
+  doc.text(s(data.agency.name), pw - m, 28, { align: 'right' });
+  if (data.agency.whatsapp) doc.text(s(data.agency.whatsapp), pw - m, 33, { align: 'right' });
   if (data.agency.email) doc.text(data.agency.email, pw - m, 38, { align: 'right' });
 
   // Divider after header
