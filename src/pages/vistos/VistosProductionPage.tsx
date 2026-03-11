@@ -344,15 +344,46 @@ export default function VistosProductionPage() {
               {/* Documents */}
               <div>
                 <Label>Documentos</Label>
-                {selectedProcess.documents?.length > 0 && (
-                  <div className="space-y-1 mb-2">
-                    {selectedProcess.documents.map((doc: any, i: number) => (
-                      <a key={i} href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
-                        <FileText className="h-3.5 w-3.5" /> {doc.name}
-                      </a>
-                    ))}
-                  </div>
-                )}
+              {selectedProcess.documents?.length > 0 && (
+                <div className="space-y-1 mb-2">
+                  {selectedProcess.documents.map((doc: any, i: number) => (
+                    <a key={i} href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
+                      <FileText className="h-3.5 w-3.5" /> {doc.name}
+                    </a>
+                  ))}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 gap-1.5"
+                    onClick={async () => {
+                      // Find client phone
+                      const { data: clients } = await supabase
+                        .from('clients')
+                        .select('phone, full_name')
+                        .eq('empresa_id', activeCompany?.id)
+                        .or(`full_name.eq.${selectedProcess.client_name},full_name.eq.${selectedProcess.applicant_name}`);
+                      
+                      const client = clients?.find(c => c.phone?.trim());
+                      if (!client?.phone) {
+                        toast.error('Nenhum telefone encontrado para o cliente. Cadastre o telefone primeiro.');
+                        return;
+                      }
+
+                      const cleanPhone = client.phone.replace(/\D/g, '');
+                      const docsList = selectedProcess.documents.map((d: any) => d.url).join('\n');
+                      const message = `Olá ${selectedProcess.applicant_name}, segue os documentos do seu processo de visto:\n\n${selectedProcess.documents.map((d: any) => `📄 ${d.name}: ${d.url}`).join('\n')}`;
+                      
+                      setWaSendPhone(cleanPhone);
+                      setWaSendName(client.full_name);
+                      setWaSendMessage(message);
+                      setDetailOpen(false);
+                      setWaSendOpen(true);
+                    }}
+                  >
+                    <Send className="h-3.5 w-3.5" />Enviar Documentos via WhatsApp
+                  </Button>
+                </div>
+              )}
                 <Input
                   type="file"
                   onChange={e => {
