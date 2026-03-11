@@ -383,7 +383,23 @@ export default function WhatsAppPage() {
     if (selectedConv) fetchMessages(selectedConv.id);
   };
 
-  const scrollToMessage = (msgId: string) => {
+  const handleDeleteConversation = async (conv: Conversation) => {
+    try {
+      // Delete all messages first, then the conversation
+      await supabase.from('whatsapp_messages').delete().eq('conversation_id', conv.id);
+      await supabase.from('whatsapp_conversations').delete().eq('id', conv.id);
+      if (selectedConv?.id === conv.id) {
+        setSelectedConv(null);
+        setMessages([]);
+      }
+      fetchConversations();
+      toast.success('Conversa apagada com sucesso');
+    } catch (err) {
+      toast.error('Erro ao apagar conversa');
+    }
+    setDeleteConvTarget(null);
+  };
+
     const el = document.getElementById(`msg-${msgId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
