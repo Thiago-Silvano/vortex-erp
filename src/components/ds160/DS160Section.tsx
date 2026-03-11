@@ -222,6 +222,11 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
                       Gerar PDF
                     </Button>
                   )}
+                  {isMaster && form.status !== 'deleted' && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-destructive hover:bg-destructive/10 border-destructive/30" onClick={() => setDeleteFormId(form.id)}>
+                      <Trash2 className="h-3 w-3" />Excluir
+                    </Button>
+                  )}
                 </div>
               </div>
             );
