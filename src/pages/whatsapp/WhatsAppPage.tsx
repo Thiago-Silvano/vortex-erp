@@ -842,6 +842,27 @@ export default function WhatsAppPage() {
           <img src={imagePreview} alt="Preview" className="max-w-[90vw] max-h-[90vh] object-contain rounded" />
         </div>
       )}
+
+      {/* Delete conversation confirmation */}
+      <AlertDialog open={!!deleteConvTarget} onOpenChange={(open) => !open && setDeleteConvTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar conversa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja apagar a conversa com <strong>{deleteConvTarget?.client_name || deleteConvTarget?.phone}</strong>? Todas as mensagens serão removidas permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteConvTarget && handleDeleteConversation(deleteConvTarget)}
+            >
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
