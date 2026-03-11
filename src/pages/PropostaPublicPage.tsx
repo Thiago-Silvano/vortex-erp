@@ -487,7 +487,7 @@ export default function PropostaPublicPage() {
       <footer className="py-12 px-6" style={{ background: '#0D1B2A' }}>
         <div className="max-w-5xl mx-auto text-center">
           <div className="w-20 h-[2px] mx-auto mb-8" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
-          <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-16 mx-auto mb-5 opacity-50" />
+          <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-48 mx-auto mb-5 opacity-50" />
           {agency && (
             <div className="text-xs text-white/25 space-y-1">
               <p>{[agency.whatsapp, agency.email, agency.website].filter(Boolean).join('  ·  ')}</p>

@@ -539,12 +539,12 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     boxY += 4;
   }
 
-  y = boxY + 10;
+  y = boxY + 18;
 
   // ─── Section: Forma de Pagamento ─────────────────────────
-  y = checkPageBreak(doc, y, 30, m);
+  y = checkPageBreak(doc, y, 40, m);
   y = drawSectionTitle(doc, 'Opcoes de pagamento', y, m, pw);
-  y += 4;
+  y += 6;
 
   const methodLabels: Record<string, string> = {
     pix: 'PIX',
