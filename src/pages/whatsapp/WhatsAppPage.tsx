@@ -14,6 +14,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MessageSquare, Send, Paperclip, Search, User, Phone, ShoppingCart, UserPlus, ExternalLink, Reply, Trash2, ChevronDown, X, Check, CheckCheck } from 'lucide-react';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -92,6 +108,8 @@ export default function WhatsAppPage() {
   const [userEmail, setUserEmail] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [deleteConvTarget, setDeleteConvTarget] = useState<Conversation | null>(null);
+  const { isMaster } = useCompany();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -365,7 +383,23 @@ export default function WhatsAppPage() {
     if (selectedConv) fetchMessages(selectedConv.id);
   };
 
-  const scrollToMessage = (msgId: string) => {
+  const handleDeleteConversation = async (conv: Conversation) => {
+    try {
+      // Delete all messages first, then the conversation
+      await supabase.from('whatsapp_messages').delete().eq('conversation_id', conv.id);
+      await supabase.from('whatsapp_conversations').delete().eq('id', conv.id);
+      if (selectedConv?.id === conv.id) {
+        setSelectedConv(null);
+        setMessages([]);
+      }
+      fetchConversations();
+      toast.success('Conversa apagada com sucesso');
+    } catch (err) {
+      toast.error('Erro ao apagar conversa');
+    }
+    setDeleteConvTarget(null);
+  };
+
     const el = document.getElementById(`msg-${msgId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -465,49 +499,71 @@ export default function WhatsAppPage() {
           <ScrollArea className="flex-1">
             {filteredConversations.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Nenhuma conversa</p>
-            ) : filteredConversations.map(conv => (
-              <div
-                key={conv.id}
-                className={`px-3 py-3 border-b cursor-pointer hover:bg-gray-50 transition-colors ${selectedConv?.id === conv.id ? 'bg-gray-100' : ''}`}
-                onClick={() => setSelectedConv(conv)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2 flex-1 min-w-0">
-                    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center shrink-0">
-                      <User className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm truncate" style={{ color: '#111b21' }}>
-                          {conv.client_name || 'Cliente desconhecido'}
-                        </span>
-                        <span className="text-[11px] shrink-0 ml-2" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
-                          {conv.last_message_at ? format(new Date(conv.last_message_at), 'HH:mm', { locale: ptBR }) : ''}
-                        </span>
+            ) : filteredConversations.map(conv => {
+              const convItem = (
+                <div
+                  className={`px-3 py-3 border-b cursor-pointer hover:bg-gray-50 transition-colors ${selectedConv?.id === conv.id ? 'bg-gray-100' : ''}`}
+                  onClick={() => setSelectedConv(conv)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center shrink-0">
+                        <User className="h-5 w-5 text-white" />
                       </div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-xs truncate flex-1 min-w-0" style={{ color: conv.unread_count > 0 ? '#111b21' : '#667781', fontWeight: conv.unread_count > 0 ? 500 : 400 }}>{conv.last_message}</p>
-                        {conv.unread_count > 0 && (
-                          <span
-                            className="inline-flex items-center justify-center rounded-full text-[11px] font-bold shrink-0"
-                            style={{
-                              background: '#25d366',
-                              color: '#fff',
-                              minWidth: '20px',
-                              height: '20px',
-                              padding: '0 5px',
-                              lineHeight: '20px',
-                            }}
-                          >
-                            {conv.unread_count}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm truncate" style={{ color: '#111b21' }}>
+                            {conv.client_name || 'Cliente desconhecido'}
                           </span>
-                        )}
+                          <span className="text-[11px] shrink-0 ml-2" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
+                            {conv.last_message_at ? format(new Date(conv.last_message_at), 'HH:mm', { locale: ptBR }) : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs truncate flex-1 min-w-0" style={{ color: conv.unread_count > 0 ? '#111b21' : '#667781', fontWeight: conv.unread_count > 0 ? 500 : 400 }}>{conv.last_message}</p>
+                          {conv.unread_count > 0 && (
+                            <span
+                              className="inline-flex items-center justify-center rounded-full text-[11px] font-bold shrink-0"
+                              style={{
+                                background: '#25d366',
+                                color: '#fff',
+                                minWidth: '20px',
+                                height: '20px',
+                                padding: '0 5px',
+                                lineHeight: '20px',
+                              }}
+                            >
+                              {conv.unread_count}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+
+              if (isMaster) {
+                return (
+                  <ContextMenu key={conv.id}>
+                    <ContextMenuTrigger asChild>
+                      {convItem}
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeleteConvTarget(conv)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Apagar conversa
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                );
+              }
+
+              return <div key={conv.id}>{convItem}</div>;
+            })}
           </ScrollArea>
         </div>
 
@@ -786,6 +842,27 @@ export default function WhatsAppPage() {
           <img src={imagePreview} alt="Preview" className="max-w-[90vw] max-h-[90vh] object-contain rounded" />
         </div>
       )}
+
+      {/* Delete conversation confirmation */}
+      <AlertDialog open={!!deleteConvTarget} onOpenChange={(open) => !open && setDeleteConvTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar conversa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja apagar a conversa com <strong>{deleteConvTarget?.client_name || deleteConvTarget?.phone}</strong>? Todas as mensagens serão removidas permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteConvTarget && handleDeleteConversation(deleteConvTarget)}
+            >
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
