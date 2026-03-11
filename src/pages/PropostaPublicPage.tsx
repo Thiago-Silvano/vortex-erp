@@ -542,7 +542,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function ServiceCard({
-  name, description, catalogName, value, images, metadata, passengersCount, onImageClick,
+  name, description, catalogName, value, images, metadata, passengersCount, showValue = true, onImageClick,
 }: {
   name: string;
   description: string;
@@ -551,6 +551,7 @@ function ServiceCard({
   images: string[];
   metadata?: any;
   passengersCount: number;
+  showValue?: boolean;
   onImageClick: (idx: number) => void;
 }) {
   const [currentImg, setCurrentImg] = useState(0);
