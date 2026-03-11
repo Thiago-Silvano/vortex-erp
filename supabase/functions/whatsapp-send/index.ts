@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
           signal: controller.signal,
           body: JSON.stringify({
             empresa_id: conv.empresa_id,
-            number: conv.phone,
+            number: conv.phone?.replace(/\D/g, '') || conv.phone,
             phone: conv.phone,
             message: fullMessage,
             message_type: message_type || 'text',
