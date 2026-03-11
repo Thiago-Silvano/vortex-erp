@@ -120,6 +120,14 @@ export default function NewSalePage() {
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
+    { method: 'pix', label: 'PIX / À Vista', installments: 1, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'credito_3x', label: 'Cartão 3x', installments: 3, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'credito_6x', label: 'Cartão 6x', installments: 6, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'credito_10x', label: 'Cartão 10x', installments: 10, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'credito_12x', label: 'Cartão 12x', installments: 12, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'boleto', label: 'Boleto Bancário', installments: 1, installmentValue: 0, totalValue: 0, enabled: false },
+  ]);
 
   // Service edit modal
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
