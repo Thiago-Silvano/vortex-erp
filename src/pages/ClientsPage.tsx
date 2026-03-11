@@ -285,9 +285,8 @@ export default function ClientsPage() {
                         return;
                       }
                       const cleanPhone = form.phone.replace(/\D/g, '');
-                      setWaPhone(cleanPhone);
-                      setWaName(form.full_name);
-                      setWaModalOpen(true);
+                      setDialogOpen(false);
+                      navigate('/whatsapp', { state: { openPhone: cleanPhone, openName: form.full_name } });
                     }}
                   >
                     <MessageCircle className="h-4 w-4" />Chamar no WhatsApp
