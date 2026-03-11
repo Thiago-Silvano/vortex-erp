@@ -118,8 +118,11 @@ export default function NewSalePage() {
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [destinationImageUrl, setDestinationImageUrl] = useState('');
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
+  const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
+  const [uploadingDestImage, setUploadingDestImage] = useState(false);
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
     { method: 'pix', label: 'PIX / À Vista', installments: 1, installmentValue: 0, totalValue: 0, enabled: false },
     { method: 'credito_3x', label: 'Cartão 3x', installments: 3, installmentValue: 0, totalValue: 0, enabled: false },
