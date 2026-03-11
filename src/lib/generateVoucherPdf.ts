@@ -663,5 +663,22 @@ function drawFlightDirection(
     }
   });
 
+  // Total travel duration
+  if (legs.length > 0 && legs[0]?.departureDate && legs[0]?.departureTime && legs[legs.length - 1]?.arrivalDate && legs[legs.length - 1]?.arrivalTime) {
+    const dep = new Date(`${legs[0].departureDate}T${legs[0].departureTime}:00`);
+    const arr = new Date(`${legs[legs.length - 1].arrivalDate}T${legs[legs.length - 1].arrivalTime}:00`);
+    if (!isNaN(dep.getTime()) && !isNaN(arr.getTime()) && arr.getTime() > dep.getTime()) {
+      const totalMin = Math.round((arr.getTime() - dep.getTime()) / 60000);
+      const h = Math.floor(totalMin / 60);
+      const mins = totalMin % 60;
+      const durStr = mins > 0 ? `${h}h ${mins}min` : `${h}h`;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      setColor(doc, TEXT_MUTED);
+      doc.text(`Tempo total: ${durStr}`, m, y);
+      y += 5;
+    }
+  }
+
   return y;
 }

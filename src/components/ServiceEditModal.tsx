@@ -236,6 +236,20 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 </div>
               ))}
 
+              {/* Total travel duration preview */}
+              {flightLegs.length > 0 && (() => {
+                const outbound = flightLegs.filter(l => l.direction === 'ida');
+                const returnL = flightLegs.filter(l => l.direction === 'volta');
+                const durOut = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
+                const durRet = calcTotalTravelDuration(returnL);
+                return (durOut || durRet) ? (
+                  <div className="border-t pt-3 flex flex-wrap gap-4 text-sm">
+                    {durOut && <span className="text-muted-foreground">⏱ Tempo total IDA: <strong className="text-foreground">{durOut}</strong></span>}
+                    {durRet && <span className="text-muted-foreground">⏱ Tempo total VOLTA: <strong className="text-foreground">{durRet}</strong></span>}
+                  </div>
+                ) : null;
+              })()}
+
               {/* Baggage */}
               <div className="border-t pt-4">
                 <h3 className="font-semibold text-sm mb-3">Bagagem</h3>
