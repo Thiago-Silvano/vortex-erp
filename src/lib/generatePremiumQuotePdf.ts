@@ -474,8 +474,8 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     });
   }
 
-  // Subtotals
-  if (data.totalProducts > 0 && data.allItems.length > 1) {
+  // Subtotals - hide when showIndividualValues is true
+  if (data.totalProducts > 0 && data.allItems.length > 1 && data.showIndividualValues !== true) {
     drawLine(doc, boxX, boxY, boxX + boxW, BORDER_COLOR, 0.2);
     boxY += 5;
     doc.setFont('helvetica', 'normal');
