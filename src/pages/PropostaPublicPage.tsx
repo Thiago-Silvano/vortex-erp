@@ -381,8 +381,8 @@ export default function PropostaPublicPage() {
               </div>
             )}
 
-            {/* Items breakdown */}
-            {items.map((item, idx) => {
+            {/* Items breakdown - only show if show_individual_values is true */}
+            {(sale as any).show_individual_values !== false && items.map((item, idx) => {
               const name = item.service_catalog_id ? catalogNames[item.service_catalog_id] || item.description : item.description;
               return (
                 <div key={idx} className="flex justify-between items-center py-4 px-8" style={{
