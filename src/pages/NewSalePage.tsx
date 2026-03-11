@@ -863,8 +863,10 @@ export default function NewSalePage() {
     if (agData && agData.length > 0) agency = agData[0] as any;
 
     let flightLegs: any[] = [];
+    let flightGroups: any[][] = [];
     for (const item of items) {
       if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
+        flightGroups.push([...item.metadata.flightLegs]);
         flightLegs.push(...item.metadata.flightLegs);
       }
     }
