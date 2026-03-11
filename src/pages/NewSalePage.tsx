@@ -86,6 +86,7 @@ export default function NewSalePage() {
   const [tripNights, setTripNights] = useState(0);
   const [tripStartDate, setTripStartDate] = useState('');
   const [tripEndDate, setTripEndDate] = useState('');
+  const [nightsManuallySet, setNightsManuallySet] = useState(false);
   const [destinationName, setDestinationName] = useState('');
 
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([]);
