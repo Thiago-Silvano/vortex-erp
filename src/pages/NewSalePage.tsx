@@ -255,6 +255,7 @@ export default function NewSalePage() {
   }, [quoteData]);
 
   useEffect(() => {
+    if (nightsManuallySet) return;
     if (tripStartDate && tripEndDate) {
       const start = new Date(tripStartDate);
       const end = new Date(tripEndDate);
@@ -262,7 +263,7 @@ export default function NewSalePage() {
       const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
       if (diffDays > 0) setTripNights(diffDays);
     }
-  }, [tripStartDate, tripEndDate]);
+  }, [tripStartDate, tripEndDate, nightsManuallySet]);
 
   useEffect(() => {
     if (paymentMethod !== 'credito' || !cardPaymentType) return;
