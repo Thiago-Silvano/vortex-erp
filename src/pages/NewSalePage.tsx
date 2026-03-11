@@ -76,7 +76,8 @@ export default function NewSalePage() {
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
   const quoteData = (location.state as any)?.quoteData;
-  const editSaleId = (location.state as any)?.editSaleId;
+  const initialEditSaleId = (location.state as any)?.editSaleId;
+  const [editSaleId, setEditSaleId] = useState<string | undefined>(initialEditSaleId);
 
   const [quoteId, setQuoteId] = useState(quoteData?.id || '');
   const [clientName, setClientName] = useState(quoteData?.clientName || '');
