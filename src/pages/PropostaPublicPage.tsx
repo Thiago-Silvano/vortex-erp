@@ -241,8 +241,8 @@ export default function PropostaPublicPage() {
         <div className="relative z-10 w-full max-w-5xl mx-auto px-6 md:px-10 pt-6 pb-10 flex flex-col" style={{ minHeight: heroImage ? 520 : 340 }}>
           <div className="flex items-start justify-between">
             <div>
-              {/* Logo 7x bigger: was h-12, now h-[84px] */}
-              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[84px] opacity-90" />
+              {/* Logo tripled */}
+              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[252px] opacity-90" />
             </div>
             <div className="text-right text-xs text-white/40">
               {agency && (
