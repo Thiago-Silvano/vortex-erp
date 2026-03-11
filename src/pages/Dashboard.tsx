@@ -3,22 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, CheckCircle, TrendingUp, TrendingDown } from 'lucide-react';
+import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useCompany } from '@/contexts/CompanyContext';
 
 interface DashboardStats {
-  openCount: number;
-  openValue: number;
-  completedCount: number;
-  soldValue: number;
-  lostValue: number;
+  totalSales: number;
+  totalRevenue: number;
+  grossProfit: number;
+  netProfit: number;
+  totalCosts: number;
+  clientsCount: number;
 }
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
-  const [stats, setStats] = useState<DashboardStats>({ openCount: 0, openValue: 0, completedCount: 0, soldValue: 0, lostValue: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ totalSales: 0, totalRevenue: 0, grossProfit: 0, netProfit: 0, totalCosts: 0, clientsCount: 0 });
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
 
@@ -34,74 +35,71 @@ export default function Dashboard() {
   const loadStats = async () => {
     setLoading(true);
     try {
-      let query = supabase.from('quotes').select('status, payment_rav, id');
+      let query = supabase.from('sales').select('id, client_name, total_sale, total_supplier_cost, gross_profit, net_profit, status');
       if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
-      const { data: quotes } = await query;
-      if (!quotes) { setLoading(false); return; }
+      const { data: sales } = await query;
+      if (!sales) { setLoading(false); return; }
 
-      // Fetch services totals for each quote
-      const quoteIds = quotes.map(q => q.id);
-      const { data: services } = await supabase.from('services').select('quote_id, value, quantity').in('quote_id', quoteIds);
+      const activeSales = sales.filter(s => s.status !== 'cancelled');
 
-      const quoteTotals: Record<string, number> = {};
-      services?.forEach(s => {
-        quoteTotals[s.quote_id] = (quoteTotals[s.quote_id] || 0) + Number(s.value) * s.quantity;
-      });
+      const totalSales = activeSales.length;
+      const totalRevenue = activeSales.reduce((s, v) => s + Number(v.total_sale || 0), 0);
+      const grossProfit = activeSales.reduce((s, v) => s + Number(v.gross_profit || 0), 0);
+      const netProfit = activeSales.reduce((s, v) => s + Number(v.net_profit || 0), 0);
+      const totalCosts = activeSales.reduce((s, v) => s + Number(v.total_supplier_cost || 0), 0);
+      const clientsCount = new Set(activeSales.map(s => s.client_name)).size;
 
-      let openCount = 0, openValue = 0, completedCount = 0, soldValue = 0, lostValue = 0;
-
-      quotes.forEach(q => {
-        const servicesCost = quoteTotals[q.id] || 0;
-        const rav = Number(q.payment_rav) || 0;
-        const total = servicesCost + rav;
-
-        if (q.status === 'concluido') {
-          completedCount++;
-          soldValue += total;
-        } else if (q.status === 'perdido') {
-          lostValue += total;
-        } else {
-          openCount++;
-          openValue += total;
-        }
-      });
-
-      setStats({ openCount, openValue, completedCount, soldValue, lostValue });
+      setStats({ totalSales, totalRevenue, grossProfit, netProfit, totalCosts, clientsCount });
     } catch (err) {
       console.error(err);
     }
     setLoading(false);
   };
 
+  const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
   const statCards = [
     {
-      label: 'Cotações em Aberto',
-      value: stats.openCount.toString(),
-      subtitle: `R$ ${stats.openValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      icon: FileText,
+      label: 'Total de Vendas',
+      value: stats.totalSales.toString(),
+      icon: ShoppingCart,
       color: 'bg-primary text-primary-foreground',
       iconColor: 'text-primary-foreground/80',
     },
     {
-      label: 'Cotações Concluídas',
-      value: stats.completedCount.toString(),
-      icon: CheckCircle,
+      label: 'Total Faturado',
+      value: fmt(stats.totalRevenue),
+      icon: DollarSign,
       color: 'bg-yellow-500 text-white',
       iconColor: 'text-white/80',
     },
     {
-      label: 'Valor Vendido',
-      value: `R$ ${stats.soldValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      label: 'Lucro Bruto',
+      value: fmt(stats.grossProfit),
       icon: TrendingUp,
       color: 'bg-emerald-600 text-white',
       iconColor: 'text-white/80',
     },
     {
-      label: 'Valor Perdido',
-      value: `R$ ${stats.lostValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      label: 'Lucro Líquido',
+      value: fmt(stats.netProfit),
+      icon: BarChart3,
+      color: 'bg-blue-600 text-white',
+      iconColor: 'text-white/80',
+    },
+    {
+      label: 'Custos Totais',
+      value: fmt(stats.totalCosts),
       icon: TrendingDown,
       color: 'bg-destructive text-destructive-foreground',
       iconColor: 'text-destructive-foreground/80',
+    },
+    {
+      label: 'Clientes Atendidos',
+      value: stats.clientsCount.toString(),
+      icon: Users,
+      color: 'bg-violet-600 text-white',
+      iconColor: 'text-white/80',
     },
   ];
 
@@ -113,31 +111,28 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-foreground">
               {userName ? `Bem-vindo, ${userName}.` : 'Dashboard'}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">Visão geral das suas cotações</p>
+            <p className="text-muted-foreground text-sm mt-1">Visão geral das suas vendas</p>
           </div>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[1, 2, 3, 4, 5, 6].map(i => (
               <Card key={i} className="animate-pulse">
-                <CardContent className="p-6 h-32" />
+                <CardContent className="p-6 h-28" />
               </Card>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {statCards.map((card) => (
               <Card key={card.label} className={`${card.color} border-0 shadow-md hover:shadow-lg transition-shadow`}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <card.icon className={`h-8 w-8 ${card.iconColor}`} />
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <card.icon className={`h-5 w-5 ${card.iconColor}`} />
                   </div>
-                  <p className="text-2xl font-bold">{card.value}</p>
-                  <p className="text-sm opacity-80 mt-1">{card.label}</p>
-                  {'subtitle' in card && card.subtitle && (
-                    <p className="text-xs opacity-60 mt-0.5">{card.subtitle}</p>
-                  )}
+                  <p className="text-lg font-bold leading-tight">{card.value}</p>
+                  <p className="text-xs opacity-80 mt-1">{card.label}</p>
                 </CardContent>
               </Card>
             ))}

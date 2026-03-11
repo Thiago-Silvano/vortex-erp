@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN IF NOT EXISTS show_individual_values boolean NOT NULL DEFAULT true;

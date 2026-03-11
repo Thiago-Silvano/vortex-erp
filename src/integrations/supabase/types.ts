@@ -1277,6 +1277,7 @@ export type Database = {
           sale_interest: number | null
           seller_id: string | null
           short_id: string
+          show_individual_values: boolean
           status: string
           total_sale: number | null
           total_supplier_cost: number | null
@@ -1312,6 +1313,7 @@ export type Database = {
           sale_interest?: number | null
           seller_id?: string | null
           short_id?: string
+          show_individual_values?: boolean
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null
@@ -1347,6 +1349,7 @@ export type Database = {
           sale_interest?: number | null
           seller_id?: string | null
           short_id?: string
+          show_individual_values?: boolean
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null
