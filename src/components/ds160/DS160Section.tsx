@@ -83,6 +83,8 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           to: clientEmail,
           clientName,
           formLink,
+          user_id: user.user?.id,
+          empresa_id: activeCompany?.id,
         },
       });
       toast.success('Link do DS-160 enviado por email!');
