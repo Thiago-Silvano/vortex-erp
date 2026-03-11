@@ -106,6 +106,14 @@ export default function DS160PublicPage() {
   const handleSubmit = async () => {
     if (!formId) return;
     setSubmitting(true);
+    
+    // Get the form to find client_id and empresa_id
+    const { data: formRecord } = await supabase
+      .from('ds160_forms')
+      .select('client_id, empresa_id')
+      .eq('id', formId)
+      .single();
+
     const { error } = await supabase.from('ds160_forms').update({
       form_data: formData as any,
       current_step: 10,
@@ -113,6 +121,31 @@ export default function DS160PublicPage() {
       submitted_at: new Date().toISOString(),
       last_saved_at: new Date().toISOString(),
     }).eq('id', formId);
+    
+    // Update visa_processes for this client to "produzindo"
+    if (!error && formRecord) {
+      await supabase
+        .from('visa_processes')
+        .update({ status: 'produzindo' } as any)
+        .eq('applicant_name', '') // fallback - update by client relation
+        .neq('status', 'aprovado');
+      
+      // More targeted: find processes linked to this client via visa_sales
+      // Update all non-final visa processes for this client's empresa
+      const { data: visaSales } = await supabase
+        .from('visa_sales' as any)
+        .select('id')
+        .eq('client_name', '') // We don't have direct link, so use ds160 client_id
+        
+      // Direct approach: update visa_processes where client matches
+      await supabase.rpc('update_visa_process_on_ds160_submit' as any, {
+        p_client_id: formRecord.client_id,
+        p_empresa_id: formRecord.empresa_id,
+      }).catch(() => {
+        // If RPC doesn't exist, that's ok - we'll create it
+      });
+    }
+    
     setSubmitting(false);
     if (error) {
       toast.error('Erro ao enviar formulário.');

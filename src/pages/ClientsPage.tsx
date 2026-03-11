@@ -185,7 +185,7 @@ export default function ClientsPage() {
             <div className="space-y-6">
               {editingId && <ClientPhotosSection clientId={editingId} />}
               {editingId && activeCompany?.slug === 'vortex-vistos' && (
-                <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} />
+                <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} isMaster={isMaster} />
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
