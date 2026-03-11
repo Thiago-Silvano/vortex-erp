@@ -1023,95 +1023,128 @@ export default function NewSalePage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Serviços da Venda</CardTitle>
             <Button size="sm" variant="outline" onClick={() => setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {} }])}>
-              <Plus className="h-4 w-4 mr-1" />Adicionar Serviço
+              <Plus className="h-4 w-4 mr-1" />Adicionar
             </Button>
           </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Serviço</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead className="w-40 min-w-[160px]">Preço de Custo</TableHead>
-                  <TableHead className="w-40 min-w-[160px]">RAV</TableHead>
-                  <TableHead className="w-40 min-w-[160px]">Valor Total</TableHead>
-                  <TableHead className="w-12" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((item, idx) => (
-                  <React.Fragment key={idx}>
-                    <TableRow>
-                      <TableCell className="min-w-[180px]">
-                        <Select
-                          value={item.service_catalog_id || 'manual'}
-                          onValueChange={(v) => {
-                            const svc = serviceCatalog.find(s => s.id === v);
-                            if (svc) {
-                              updateItem(idx, 'service_catalog_id', svc.id);
-                              updateItem(idx, 'description', svc.name);
-                              if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id);
-                            }
-                          }}
-                        >
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="manual">Selecione um serviço</SelectItem>
-                            {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start text-left font-normal"
-                          onClick={() => setEditingItemIdx(idx)}
-                        >
-                          <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
-                          <span className="truncate">
-                            {getServiceTypeLabel(item.metadata)}
-                            {item.description || 'Editar detalhes...'}
-                          </span>
-                        </Button>
-                      </TableCell>
-                      <TableCell className="min-w-[160px]"><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
-                      <TableCell className="min-w-[160px]"><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
-                      <TableCell className="min-w-[160px]"><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
-                      <TableCell>
-                        <Button size="icon" variant="ghost" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow className="border-b-2">
-                      <TableCell colSpan={6} className="py-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {uploadingItemImages[idx] ? (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1">
-                              <span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />
-                              Carregando...
-                            </span>
-                          ) : (
-                            <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
-                              <ImagePlus className="h-3 w-3" />Imagens
-                              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
-                            </label>
-                          )}
-                          {(itemImages[idx] || []).map((url, imgIdx) => (
-                            <div key={imgIdx} className="relative group">
-                              <img src={url} alt="" className="h-10 w-14 object-cover rounded border" />
-                              <button type="button" onClick={() => removeItemImage(idx, imgIdx)}
-                                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-                            </div>
-                          ))}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </React.Fragment>
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent className="space-y-4 sm:p-0">
+            {/* Desktop Table */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Serviço</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead className="w-32">Custo</TableHead>
+                    <TableHead className="w-24">RAV</TableHead>
+                    <TableHead className="w-32">Total</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item, idx) => (
+                    <React.Fragment key={idx}>
+                      <TableRow>
+                        <TableCell className="min-w-[150px]">
+                          <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
+                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="manual">Selecione um serviço</SelectItem>
+                              {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal" onClick={() => setEditingItemIdx(idx)}>
+                            <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{getServiceTypeLabel(item.metadata)}{item.description || 'Editar detalhes...'}</span>
+                          </Button>
+                        </TableCell>
+                        <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
+                        <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
+                        <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
+                        <TableCell>
+                          <Button size="icon" variant="ghost" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow className="border-b-2">
+                        <TableCell colSpan={6} className="py-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {uploadingItemImages[idx] ? (
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />Carregando...</span>
+                            ) : (
+                              <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
+                                <ImagePlus className="h-3 w-3" />Imagens<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                              </label>
+                            )}
+                            {(itemImages[idx] || []).map((url, imgIdx) => (
+                              <div key={imgIdx} className="relative group">
+                                <img src={url} alt="" className="h-10 w-14 object-cover rounded border" />
+                                <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="sm:hidden space-y-3">
+              {items.map((item, idx) => (
+                <div key={idx} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder="Serviço..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manual">Selecione</SelectItem>
+                        {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal" onClick={() => setEditingItemIdx(idx)}>
+                    <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">{getServiceTypeLabel(item.metadata)}{item.description || 'Editar detalhes...'}</span>
+                  </Button>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs">Custo</Label>
+                      <Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">RAV</Label>
+                      <Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Total</Label>
+                      <Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted h-8 text-sm" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {uploadingItemImages[idx] ? (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />...</span>
+                    ) : (
+                      <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
+                        <ImagePlus className="h-3 w-3" />Imagens<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                      </label>
+                    )}
+                    {(itemImages[idx] || []).map((url, imgIdx) => (
+                      <div key={imgIdx} className="relative group">
+                        <img src={url} alt="" className="h-8 w-12 object-cover rounded border" />
+                        <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">×</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
