@@ -61,6 +61,15 @@ interface ClientOption { id: string; full_name: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
+
+interface ProposalPaymentOption {
+  method: string;
+  label: string;
+  installments: number;
+  installmentValue: number;
+  totalValue: number;
+  enabled: boolean;
+}
 interface InternalFile { id?: string; file_name: string; file_url: string; }
 
 export default function NewSalePage() {
