@@ -1063,10 +1063,17 @@ export default function NewSalePage() {
                     <TableRow className="border-b-2">
                       <TableCell colSpan={6} className="py-2">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
-                            <ImagePlus className="h-3 w-3" />Imagens
-                            <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
-                          </label>
+                          {uploadingItemImages[idx] ? (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1">
+                              <span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />
+                              Carregando...
+                            </span>
+                          ) : (
+                            <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
+                              <ImagePlus className="h-3 w-3" />Imagens
+                              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                            </label>
+                          )}
                           {(itemImages[idx] || []).map((url, imgIdx) => (
                             <div key={imgIdx} className="relative group">
                               <img src={url} alt="" className="h-10 w-14 object-cover rounded border" />
