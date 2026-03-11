@@ -63,12 +63,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       // Get user permissions
       const { data: permsData } = await supabase
         .from('user_permissions')
-        .select('user_role, empresa_ids')
+        .select('user_role, empresa_ids, default_empresa_id')
         .eq('user_id', user.id)
         .single();
 
       const role = (permsData as any)?.user_role || (isAdminEmail ? 'master' : 'vendedor');
       const empresaIds: string[] = (permsData as any)?.empresa_ids || [];
+      const defaultEmpresaId: string | null = (permsData as any)?.default_empresa_id || null;
       const masterUser = role === 'master' || isAdminEmail;
 
       setIsMaster(masterUser);
