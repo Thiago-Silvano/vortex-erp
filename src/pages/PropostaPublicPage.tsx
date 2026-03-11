@@ -199,7 +199,7 @@ export default function PropostaPublicPage() {
   }
 
   const totalSale = items.reduce((s, i) => s + i.total_value, 0);
-  const destination = quoteData?.trip_destination || '';
+  const destination = (sale as any).destination_name || quoteData?.trip_destination || '';
   const origin = quoteData?.trip_origin || '';
   const departureDate = quoteData?.trip_departure_date || (sale as any).trip_start_date;
   const returnDate = quoteData?.trip_return_date || (sale as any).trip_end_date;

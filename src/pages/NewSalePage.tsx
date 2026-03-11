@@ -489,6 +489,7 @@ export default function NewSalePage() {
         trip_nights: tripNights,
         trip_start_date: tripStartDate || null,
         trip_end_date: tripEndDate || null,
+        destination_name: destinationName || '',
       } as any,
       userEmail,
     };
