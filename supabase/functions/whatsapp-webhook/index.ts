@@ -182,17 +182,19 @@ Deno.serve(async (req) => {
         displayContent = typeLabel[message_type || 'document'] || '📎 Arquivo';
       }
 
+      // Normalize phone: strip @lid, @c.us, @s.whatsapp.net suffixes
+      const cleanPhone = phone.replace(/@.*$/, '').replace(/\D/g, '');
+
       // Find or create conversation atomically (prevents duplicates)
       let clientName = sender_name || 'Cliente desconhecido';
       let clientId: string | null = null;
 
       // Try to find client
-      const normalizedPhone = phone.replace(/\D/g, '');
       const { data: clientData } = await supabase
         .from('clients')
         .select('id, full_name')
         .eq('empresa_id', empresaId)
-        .or(`phone.ilike.%${normalizedPhone.slice(-8)}%`)
+        .or(`phone.ilike.%${cleanPhone.slice(-8)}%`)
         .limit(1)
         .maybeSingle();
 
@@ -203,7 +205,7 @@ Deno.serve(async (req) => {
 
       const { data: convResult, error: convError } = await supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
-        p_phone: phone,
+        p_phone: cleanPhone,
         p_client_name: clientName,
         p_client_id: clientId,
         p_last_message: displayContent.substring(0, 200) || '',
