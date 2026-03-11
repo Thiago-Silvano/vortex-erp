@@ -643,6 +643,28 @@ export default function WhatsAppSettingsPage() {
                 Resetar Sessão
               </Button>
             </div>
+
+            {/* Auto-Reconnect Toggle */}
+            <Separator className="my-4" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <RefreshCw className={`h-4 w-4 ${autoReconnectEnabled ? 'text-green-600' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="text-sm font-medium">Auto-Reconexão</p>
+                  <p className="text-xs text-muted-foreground">
+                    Tenta reconectar automaticamente quando a sessão cair
+                    {reconnectAttempts > 0 && ` (${reconnectAttempts}/5 tentativas)`}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant={autoReconnectEnabled ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAutoReconnectEnabled(!autoReconnectEnabled)}
+              >
+                {autoReconnectEnabled ? 'Ativado' : 'Desativado'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
