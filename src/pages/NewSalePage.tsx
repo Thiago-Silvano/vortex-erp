@@ -21,7 +21,7 @@ import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { maskPhone, maskCpf, maskEmail } from '@/lib/masks';
+import { maskPhone, maskCpf, maskEmail, maskCurrency, parseCurrency } from '@/lib/masks';
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
 interface SaleItem {
