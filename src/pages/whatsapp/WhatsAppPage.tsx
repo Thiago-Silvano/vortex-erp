@@ -173,8 +173,10 @@ export default function WhatsAppPage() {
   }, [selectedConv?.id, fetchMessages, markAsRead]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    }, 100);
+  }, [messages, selectedConv?.id]);
 
   // Realtime subscription - single source of truth for live updates
   useEffect(() => {

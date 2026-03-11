@@ -21,6 +21,7 @@ interface SaleData {
   trip_start_date?: string;
   trip_end_date?: string;
   proposal_payment_options?: ProposalPaymentOption[];
+  show_individual_values?: boolean;
 }
 
 interface ProposalPaymentOption {
