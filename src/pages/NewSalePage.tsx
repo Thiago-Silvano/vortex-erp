@@ -1374,7 +1374,9 @@ export default function NewSalePage() {
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink}><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          <Button variant="secondary" onClick={handleSaveDraft}>💾 Salvar Rascunho</Button>
+          <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft}>
+            {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : '💾 Salvar Rascunho'}
+          </Button>
           <Button onClick={handleSave}>✅ {editSaleId ? 'Gerar Venda' : 'Converter em Venda'}</Button>
         </div>
 
