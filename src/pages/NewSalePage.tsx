@@ -1559,7 +1559,11 @@ export default function NewSalePage() {
         {/* Actions */}
         <div className="flex flex-wrap justify-end gap-2 pb-8">
           <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
-          <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher</Button>
+          {saleStatus === 'active' ? (
+            <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher</Button>
+          ) : (
+            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Rascunho</Button>
+          )}
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
