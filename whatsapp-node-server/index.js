@@ -351,6 +351,23 @@ app.get('/connect', async (req, res) => {
       });
     }
 
+    // Se já está conectando (sem QR ainda), não criar outra sessão
+    if (existing?.status === 'connecting' || existing?.status === 'waiting_qr') {
+      log(empresaId, 'Sessão já está sendo inicializada, aguardando...');
+      // Esperar até 15s por QR ou conexão da sessão existente
+      const startWait = Date.now();
+      while (Date.now() - startWait < 15000) {
+        await new Promise(r => setTimeout(r, 1000));
+        if (existing.status === 'connected') {
+          return res.json({ connected: true, phone: existing.phone || '', phone_number: existing.phone || '', message: 'Conectado com sucesso' });
+        }
+        if (existing.qr) {
+          return res.json({ connected: false, qr: existing.qr, status: 'waiting_qr', message: 'QR Code gerado' });
+        }
+      }
+      return res.json({ connected: false, status: existing.status, qr: '', message: 'Aguardando inicialização...' });
+    }
+
     // Criar nova sessão
     log(empresaId, 'Criando nova sessão...');
     const session = await createWhatsAppClient(empresaId);
