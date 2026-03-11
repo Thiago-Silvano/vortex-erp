@@ -453,22 +453,24 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   y = drawSectionTitle(doc, 'Condicao financeira', y, m, pw);
   y += 4;
 
-  // Total
-  doc.setFillColor(GOLD_LIGHT[0], GOLD_LIGHT[1], GOLD_LIGHT[2]);
-  doc.rect(m, y - 1, cw, 14, 'F');
-  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.rect(m, y - 1, 2, 14, 'F');
+  // Total - only show if showIndividualValues is not true
+  if (data.showIndividualValues !== true) {
+    doc.setFillColor(GOLD_LIGHT[0], GOLD_LIGHT[1], GOLD_LIGHT[2]);
+    doc.rect(m, y - 1, cw, 14, 'F');
+    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+    doc.rect(m, y - 1, 2, 14, 'F');
 
-  doc.setFont('times', 'bold');
-  doc.setFontSize(12);
-  setColor(doc, DEEP_BLUE);
-  doc.text('Total da viagem', m + 8, y + 8);
+    doc.setFont('times', 'bold');
+    doc.setFontSize(12);
+    setColor(doc, DEEP_BLUE);
+    doc.text('Total da viagem', m + 8, y + 8);
 
-  doc.setFont('times', 'bold');
-  doc.setFontSize(14);
-  setColor(doc, GOLD);
-  doc.text(fmt(data.totalTrip), m + cw - 4, y + 8, { align: 'right' });
-  y += 18;
+    doc.setFont('times', 'bold');
+    doc.setFontSize(14);
+    setColor(doc, GOLD);
+    doc.text(fmt(data.totalTrip), m + cw - 4, y + 8, { align: 'right' });
+    y += 18;
+  }
 
   // Payment method
   const methodLabels: Record<string, string> = {
