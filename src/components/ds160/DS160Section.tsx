@@ -83,6 +83,8 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           to: clientEmail,
           clientName,
           formLink,
+          user_id: user.user?.id,
+          empresa_id: activeCompany?.id,
         },
       });
       toast.success('Link do DS-160 enviado por email!');
@@ -106,8 +108,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     }
     try {
       const formLink = `${baseUrl}/ds160/${form.token}`;
+      const { data: user } = await supabase.auth.getUser();
       await supabase.functions.invoke('send-ds160-link', {
-        body: { to: clientEmail, clientName, formLink },
+        body: { to: clientEmail, clientName, formLink, user_id: user.user?.id, empresa_id: activeCompany?.id },
       });
       toast.success('Link reenviado!');
     } catch {

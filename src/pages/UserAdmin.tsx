@@ -58,7 +58,7 @@ export default function UserAdmin() {
   const [permRole, setPermRole] = useState('vendedor');
   const [permChecks, setPermChecks] = useState<Record<string, boolean>>({});
   const [permEmpresaIds, setPermEmpresaIds] = useState<string[]>([]);
-
+  const [permDefaultCompany, setPermDefaultCompany] = useState('none');
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -128,6 +128,7 @@ export default function UserAdmin() {
       setPermRole(perm.user_role);
       setPermChecks(perm.permissions);
       setPermEmpresaIds(perm.empresa_ids || []);
+      setPermDefaultCompany((perm as any).default_empresa_id || 'none');
     } else {
       // Default for master email
       if (user.email === 'thiago@vortexviagens.com.br') {
@@ -147,7 +148,12 @@ export default function UserAdmin() {
   const handleSavePermissions = async () => {
     if (!permUser) return;
     setSaving(true);
-    const payload = { user_id: permUser.id, user_role: permRole, permissions: permChecks, empresa_ids: permEmpresaIds, updated_at: new Date().toISOString() };
+    const payload: any = { user_id: permUser.id, user_role: permRole, permissions: permChecks, empresa_ids: permEmpresaIds, updated_at: new Date().toISOString() };
+    if (permRole === 'master' && permDefaultCompany !== 'none') {
+      payload.default_empresa_id = permDefaultCompany;
+    } else {
+      payload.default_empresa_id = null;
+    }
     
     if (permissions[permUser.id]) {
       await supabase.from('user_permissions').update(payload as any).eq('user_id', permUser.id) as any;
@@ -284,6 +290,23 @@ export default function UserAdmin() {
               {permRole === 'master' && <p className="text-xs text-muted-foreground mt-1">Master tem acesso total ao sistema e pode alternar entre empresas</p>}
               {permRole === 'operacional' && <p className="text-xs text-muted-foreground mt-1">Operacional tem acesso a produção e calendário</p>}
             </div>
+
+            {permRole === 'master' && (
+              <div>
+                <Label>Empresa padrão ao logar</Label>
+                <Select
+                  value={permDefaultCompany}
+                  onValueChange={setPermDefaultCompany}
+                >
+                  <SelectTrigger><SelectValue placeholder="Primeira disponível" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Primeira disponível</SelectItem>
+                    {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Empresa que será selecionada automaticamente ao fazer login</p>
+              </div>
+            )}
 
             <div className="border rounded-lg p-4">
               <h3 className="font-medium text-sm mb-3">Empresas com acesso</h3>

@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, MessageCircle } from 'lucide-react';
+import NewWhatsAppConversationModal from '@/components/NewWhatsAppConversationModal';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -52,6 +53,9 @@ export default function ClientsPage() {
   const [form, setForm] = useState<Omit<Client, 'id'>>(emptyClient());
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [emailError, setEmailError] = useState('');
+  const [waModalOpen, setWaModalOpen] = useState(false);
+  const [waPhone, setWaPhone] = useState('');
+  const [waName, setWaName] = useState('');
 
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
@@ -83,7 +87,6 @@ export default function ClientsPage() {
 
   const handleSave = async () => {
     if (!form.full_name.trim()) { toast.error('Nome é obrigatório'); return; }
-    if (!form.cpf.trim()) { toast.error('CPF é obrigatório'); return; }
     if (form.email && !validateEmail(form.email)) { toast.error('Email inválido'); return; }
 
     if (editingId) {
@@ -189,7 +192,7 @@ export default function ClientsPage() {
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>CPF *</Label>
+                  <Label>CPF</Label>
                   <Input
                     value={form.cpf}
                     onChange={e => setForm(p => ({ ...p, cpf: maskCpf(e.target.value) }))}
@@ -274,6 +277,24 @@ export default function ClientsPage() {
               </Card>
 
               <div className="flex justify-end gap-3">
+                {editingId && (
+                  <Button
+                    variant="outline"
+                    className="gap-1.5 text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+                    onClick={() => {
+                      if (!form.phone?.trim()) {
+                        toast.error('Cadastre um telefone para o cliente antes de chamar no WhatsApp');
+                        return;
+                      }
+                      const cleanPhone = form.phone.replace(/\D/g, '');
+                      setWaPhone(cleanPhone);
+                      setWaName(form.full_name);
+                      setWaModalOpen(true);
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4" />Chamar no WhatsApp
+                  </Button>
+                )}
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                 <Button onClick={handleSave}>{editingId ? 'Atualizar' : 'Cadastrar'}</Button>
               </div>
@@ -294,6 +315,14 @@ export default function ClientsPage() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+
+      <NewWhatsAppConversationModal
+        open={waModalOpen}
+        onOpenChange={setWaModalOpen}
+        onConversationCreated={() => setWaModalOpen(false)}
+        initialPhone={waPhone}
+        initialName={waName}
+      />
     </AppLayout>
   );
 }

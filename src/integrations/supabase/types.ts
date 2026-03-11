@@ -1970,6 +1970,7 @@ export type Database = {
       user_permissions: {
         Row: {
           created_at: string
+          default_empresa_id: string | null
           empresa_ids: string[] | null
           id: string
           permissions: Json
@@ -1979,6 +1980,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_empresa_id?: string | null
           empresa_ids?: string[] | null
           id?: string
           permissions?: Json
@@ -1988,6 +1990,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_empresa_id?: string | null
           empresa_ids?: string[] | null
           id?: string
           permissions?: Json
@@ -1995,7 +1998,15 @@ export type Database = {
           user_id?: string
           user_role?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_default_empresa_id_fkey"
+            columns: ["default_empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       visa_applicants: {
         Row: {
