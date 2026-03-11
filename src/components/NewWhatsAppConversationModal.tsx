@@ -109,7 +109,7 @@ function normalizeToE164(countryCode: string, rawNumber: string): string {
   return countryCode + digits;
 }
 
-export default function NewWhatsAppConversationModal({ open, onOpenChange, onConversationCreated }: Props) {
+export default function NewWhatsAppConversationModal({ open, onOpenChange, onConversationCreated, initialPhone, initialName }: Props) {
   const { activeCompany } = useCompany();
   const [countryCode, setCountryCode] = useState('55');
   const [phone, setPhone] = useState('');
@@ -118,6 +118,16 @@ export default function NewWhatsAppConversationModal({ open, onOpenChange, onCon
   const [sellerId, setSellerId] = useState('');
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Pre-fill from props
+  useEffect(() => {
+    if (open && initialPhone) {
+      setPhone(initialPhone);
+    }
+    if (open && initialName) {
+      setContactName(initialName);
+    }
+  }, [open, initialPhone, initialName]);
 
   useEffect(() => {
     if (!open || !activeCompany?.id) return;
