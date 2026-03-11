@@ -771,10 +771,10 @@ export default function NewSalePage() {
           value: item.total_value,
         };
       }),
-      allItems: items.map((item, idx) => {
+      allItems: showIndividualValues ? items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
         return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
-      }),
+      }) : [],
       totalProducts: totalSale,
       totalTaxes: 0,
       totalTrip: totalSale,
