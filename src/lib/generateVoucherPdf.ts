@@ -78,6 +78,7 @@ export interface VoucherPdfData {
   passengersCount?: number;
   passengers: PassengerVoucher[];
   flightLegs: FlightLegVoucher[];
+  flightGroups?: FlightLegVoucher[][];
   hotels: HotelVoucher[];
   services: ServiceVoucher[];
   allItems: Array<{ name: string; value: number; description?: string }>;
