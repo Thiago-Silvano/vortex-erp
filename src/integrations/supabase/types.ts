@@ -2537,7 +2537,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      find_or_create_conversation: {
+        Args: {
+          p_client_id?: string
+          p_client_name: string
+          p_empresa_id: string
+          p_last_message?: string
+          p_last_message_at?: string
+          p_phone: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       service_type:
