@@ -407,6 +407,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         onConversationCreated={handleWAConversationCreated}
       />
 
+      <PhotoCaptureModal
+        open={showPhotoModal}
+        onOpenChange={setShowPhotoModal}
+      />
+
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
