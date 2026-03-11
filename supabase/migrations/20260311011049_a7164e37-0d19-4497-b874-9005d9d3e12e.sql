@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN proposal_payment_options jsonb DEFAULT '[]'::jsonb;
