@@ -1305,6 +1305,14 @@ export default function NewSalePage() {
               {items.map((item, idx) => (
                 <div key={idx} className="border rounded-lg p-3 space-y-2">
                   <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === items.length - 1} onClick={() => moveItem(idx, 'down')}>
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                    </div>
                     <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                       <SelectTrigger className="flex-1"><SelectValue placeholder="Serviço..." /></SelectTrigger>
                       <SelectContent>
@@ -1312,7 +1320,7 @@ export default function NewSalePage() {
                         {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => removeItem(idx)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
