@@ -379,16 +379,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* WhatsApp floating button - mobile */}
+      {/* Floating buttons - mobile */}
       {isMobile && (
-        <button
-          onClick={() => setShowNewWAModal(true)}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
-          style={{ backgroundColor: '#25D366' }}
-          title="Iniciar nova conversa no WhatsApp"
-        >
-          <MessageSquare className="h-6 w-6" />
-        </button>
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+          <button
+            onClick={() => setShowPhotoModal(true)}
+            className="h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
+            style={{ backgroundColor: '#8B5CF6' }}
+            title="Capturar foto"
+          >
+            <Camera className="h-6 w-6" />
+          </button>
+          <button
+            onClick={() => setShowNewWAModal(true)}
+            className="h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
+            style={{ backgroundColor: '#25D366' }}
+            title="Iniciar nova conversa no WhatsApp"
+          >
+            <MessageSquare className="h-6 w-6" />
+          </button>
+        </div>
       )}
 
       <NewWhatsAppConversationModal
