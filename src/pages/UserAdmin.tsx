@@ -285,6 +285,24 @@ export default function UserAdmin() {
               {permRole === 'operacional' && <p className="text-xs text-muted-foreground mt-1">Operacional tem acesso a produção e calendário</p>}
             </div>
 
+            {permRole === 'master' && (
+              <div>
+                <Label>Empresa padrão ao logar</Label>
+                <Select
+                  value={permDefaultCompany}
+                  onValueChange={setPermDefaultCompany}
+                >
+                  <SelectTrigger><SelectValue placeholder="Primeira disponível" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Primeira disponível</SelectItem>
+                    {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Empresa que será selecionada automaticamente ao fazer login</p>
+              </div>
+            )}
+            </div>
+
             <div className="border rounded-lg p-4">
               <h3 className="font-medium text-sm mb-3">Empresas com acesso</h3>
               <div className="flex flex-col gap-2">
