@@ -1227,6 +1227,7 @@ export default function NewSalePage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-16" />
                     <TableHead>Serviço</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead className="w-32">Custo</TableHead>
@@ -1239,6 +1240,17 @@ export default function NewSalePage() {
                   {items.map((item, idx) => (
                     <React.Fragment key={idx}>
                       <TableRow>
+                        <TableCell className="px-1">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <Button size="icon" variant="ghost" className="h-6 w-6" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
+                              <ArrowUp className="h-3 w-3" />
+                            </Button>
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            <Button size="icon" variant="ghost" className="h-6 w-6" disabled={idx === items.length - 1} onClick={() => moveItem(idx, 'down')}>
+                              <ArrowDown className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
                         <TableCell className="min-w-[150px]">
                           <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -1258,7 +1270,7 @@ export default function NewSalePage() {
                         <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
                         <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
                         <TableCell>
-                          <Button size="icon" variant="ghost" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                          <Button size="icon" variant="ghost" onClick={() => removeItem(idx)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </TableCell>
