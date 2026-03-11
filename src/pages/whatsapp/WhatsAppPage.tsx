@@ -108,6 +108,8 @@ export default function WhatsAppPage() {
   const [userEmail, setUserEmail] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [deleteConvTarget, setDeleteConvTarget] = useState<Conversation | null>(null);
+  const { isMaster } = useCompany();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
