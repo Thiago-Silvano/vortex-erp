@@ -241,8 +241,8 @@ export default function PropostaPublicPage() {
         <div className="relative z-10 w-full max-w-5xl mx-auto px-6 md:px-10 pt-6 pb-10 flex flex-col" style={{ minHeight: heroImage ? 520 : 340 }}>
           <div className="flex items-start justify-between">
             <div>
-              {/* Logo 7x bigger: was h-12, now h-[84px] */}
-              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[84px] opacity-90" />
+              {/* Logo tripled */}
+              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[252px] opacity-90" />
             </div>
             <div className="text-right text-xs text-white/40">
               {agency && (
@@ -487,7 +487,7 @@ export default function PropostaPublicPage() {
       <footer className="py-12 px-6" style={{ background: '#0D1B2A' }}>
         <div className="max-w-5xl mx-auto text-center">
           <div className="w-20 h-[2px] mx-auto mb-8" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
-          <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-16 mx-auto mb-5 opacity-50" />
+          <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-48 mx-auto mb-5 opacity-50" />
           {agency && (
             <div className="text-xs text-white/25 space-y-1">
               <p>{[agency.whatsapp, agency.email, agency.website].filter(Boolean).join('  ·  ')}</p>

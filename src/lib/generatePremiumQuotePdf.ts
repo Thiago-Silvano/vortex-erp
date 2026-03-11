@@ -171,22 +171,21 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
   doc.rect(0, 0, pw, 3, 'F');
 
-  // Logo area
+  // Logo area - centered, no agency name text
   let logoY = 35;
   if (data.agency.logoBase64) {
     try {
-      doc.addImage(data.agency.logoBase64, 'PNG', m, 20, 40, 20);
-      logoY = 48;
+      doc.addImage(data.agency.logoBase64, 'PNG', pw / 2 - 25, 12, 50, 25);
+      logoY = 42;
     } catch { /* fallback */ }
   }
 
-  // Agency name (top right)
+  // Contact info (top right)
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   setColor(doc, TEXT_MUTED);
-  doc.text(s(data.agency.name), pw - m, 28, { align: 'right' });
-  if (data.agency.whatsapp) doc.text(s(data.agency.whatsapp), pw - m, 33, { align: 'right' });
-  if (data.agency.email) doc.text(data.agency.email, pw - m, 38, { align: 'right' });
+  if (data.agency.whatsapp) doc.text(s(data.agency.whatsapp), pw - m, 28, { align: 'right' });
+  if (data.agency.email) doc.text(data.agency.email, pw - m, 33, { align: 'right' });
 
   // Divider after header
   drawLine(doc, m, logoY + 5, pw - m, GOLD, 0.5);
@@ -540,12 +539,12 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     boxY += 4;
   }
 
-  y = boxY + 10;
+  y = boxY + 18;
 
   // ─── Section: Forma de Pagamento ─────────────────────────
-  y = checkPageBreak(doc, y, 30, m);
+  y = checkPageBreak(doc, y, 40, m);
   y = drawSectionTitle(doc, 'Opcoes de pagamento', y, m, pw);
-  y += 4;
+  y += 6;
 
   const methodLabels: Record<string, string> = {
     pix: 'PIX',
