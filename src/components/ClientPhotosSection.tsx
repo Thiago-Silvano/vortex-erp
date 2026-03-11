@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Download, Eye, ImageIcon } from 'lucide-react';
+import { Download, Eye, ImageIcon, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 interface ClientPhoto {
@@ -56,6 +57,14 @@ export default function ClientPhotosSection({ clientId }: ClientPhotosSectionPro
                     <Download className="h-4 w-4" />
                   </Button>
                 </a>
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-white hover:text-white hover:bg-red-500/40" onClick={async () => {
+                  const { error } = await (supabase.from('client_photos' as any).delete().eq('id', photo.id) as any);
+                  if (error) { toast.error('Erro ao excluir foto'); return; }
+                  setPhotos(prev => prev.filter(p => p.id !== photo.id));
+                  toast.success('Foto excluída');
+                }}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
               <div className="p-1">
                 <p className="text-[10px] truncate text-muted-foreground">{photo.file_name}</p>
