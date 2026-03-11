@@ -2224,6 +2224,41 @@ export type Database = {
           },
         ]
       }
+      whatsapp_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          empresa_id: string | null
+          event_type: string
+          id: string
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          empresa_id?: string | null
+          event_type?: string
+          id?: string
+          message?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          empresa_id?: string | null
+          event_type?: string
+          id?: string
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_logs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_messages: {
         Row: {
           content: string
@@ -2324,36 +2359,45 @@ export type Database = {
           created_at: string
           empresa_id: string | null
           id: string
+          last_message_received_at: string | null
+          last_message_sent_at: string | null
           phone_number: string | null
           qr_code: string | null
           server_url: string | null
           session_data: Json | null
           status: string
           updated_at: string
+          webhook_status: string | null
         }
         Insert: {
           connected_at?: string | null
           created_at?: string
           empresa_id?: string | null
           id?: string
+          last_message_received_at?: string | null
+          last_message_sent_at?: string | null
           phone_number?: string | null
           qr_code?: string | null
           server_url?: string | null
           session_data?: Json | null
           status?: string
           updated_at?: string
+          webhook_status?: string | null
         }
         Update: {
           connected_at?: string | null
           created_at?: string
           empresa_id?: string | null
           id?: string
+          last_message_received_at?: string | null
+          last_message_sent_at?: string | null
           phone_number?: string | null
           qr_code?: string | null
           server_url?: string | null
           session_data?: Json | null
           status?: string
           updated_at?: string
+          webhook_status?: string | null
         }
         Relationships: [
           {
