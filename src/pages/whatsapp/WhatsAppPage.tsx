@@ -713,7 +713,7 @@ export default function WhatsAppPage() {
                 <div className="px-4 py-2 border-t flex items-center gap-3" style={{ background: '#f0f2f5' }}>
                   <div className="flex-1 rounded px-3 py-2 border-l-4" style={{ background: '#fff', borderLeftColor: '#25d366' }}>
                     <p className="text-[11px] font-semibold" style={{ color: '#06cf9c' }}>
-                      {replyingTo.sender_type === 'agent' ? replyingTo.sender_name : (selectedConv?.client_name || 'Cliente')}
+                      {replyingTo.sender_type === 'agent' ? replyingTo.sender_name?.toUpperCase() : (selectedConv?.client_name || 'Cliente').toUpperCase()}
                     </p>
                     <p className="text-xs truncate" style={{ color: '#667781' }}>
                       {replyingTo.content?.substring(0, 100) || '📎 Mídia'}
