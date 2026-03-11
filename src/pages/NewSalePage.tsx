@@ -400,6 +400,7 @@ export default function NewSalePage() {
   const handleItemImageUpload = async (itemIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+    setUploadingItemImages(prev => ({ ...prev, [itemIdx]: true }));
     const newUrls: string[] = [];
     for (const file of Array.from(files)) {
       const ext = file.name.split('.').pop();
@@ -413,6 +414,7 @@ export default function NewSalePage() {
       setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...newUrls] }));
       toast.success(`${newUrls.length} imagem(ns) adicionada(s)!`);
     }
+    setUploadingItemImages(prev => ({ ...prev, [itemIdx]: false }));
     e.target.value = '';
   };
 
