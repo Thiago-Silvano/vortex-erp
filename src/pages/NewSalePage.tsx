@@ -118,8 +118,11 @@ export default function NewSalePage() {
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [destinationImageUrl, setDestinationImageUrl] = useState('');
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
+  const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
+  const [uploadingDestImage, setUploadingDestImage] = useState(false);
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
     { method: 'pix', label: 'PIX / À Vista', installments: 1, installmentValue: 0, totalValue: 0, enabled: false },
     { method: 'credito_3x', label: 'Cartão 3x', installments: 3, installmentValue: 0, totalValue: 0, enabled: false },
@@ -382,12 +385,14 @@ export default function NewSalePage() {
   const handleDestinationImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadingDestImage(true);
     const ext = file.name.split('.').pop();
     const fileName = `destinations/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
-    if (error) { toast.error('Erro ao enviar imagem'); return; }
+    if (error) { toast.error('Erro ao enviar imagem'); setUploadingDestImage(false); return; }
     const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
     setDestinationImageUrl(data.publicUrl);
+    setUploadingDestImage(false);
     toast.success('Imagem do destino enviada!');
     e.target.value = '';
   };
@@ -395,6 +400,7 @@ export default function NewSalePage() {
   const handleItemImageUpload = async (itemIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+    setUploadingItemImages(prev => ({ ...prev, [itemIdx]: true }));
     const newUrls: string[] = [];
     for (const file of Array.from(files)) {
       const ext = file.name.split('.').pop();
@@ -408,6 +414,7 @@ export default function NewSalePage() {
       setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...newUrls] }));
       toast.success(`${newUrls.length} imagem(ns) adicionada(s)!`);
     }
+    setUploadingItemImages(prev => ({ ...prev, [itemIdx]: false }));
     e.target.value = '';
   };
 
@@ -549,15 +556,22 @@ export default function NewSalePage() {
 
   const handleSaveDraft = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
-    const { payload, userEmail } = await buildSalePayload('draft');
-    if (editSaleId) {
-      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
-      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+    setSavingDraft(true);
+    try {
+      const { payload, userEmail } = await buildSalePayload('draft');
+      if (editSaleId) {
+        await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+        await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      }
+      const saleId = await saveSaleCore(payload, userEmail);
+      if (!saleId) { setSavingDraft(false); return; }
+      toast.success('Rascunho salvo! Nenhum lançamento financeiro foi gerado.');
+      navigate('/sales');
+    } catch (err) {
+      toast.error('Erro ao salvar rascunho');
+    } finally {
+      setSavingDraft(false);
     }
-    const saleId = await saveSaleCore(payload, userEmail);
-    if (!saleId) return;
-    toast.success('Rascunho salvo! Nenhum lançamento financeiro foi gerado.');
-    navigate('/sales');
   };
 
   const handleSave = async () => {
@@ -887,6 +901,11 @@ export default function NewSalePage() {
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
+                ) : uploadingDestImage ? (
+                  <div className="flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground">
+                    <span className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                    Carregando...
+                  </div>
                 ) : (
                   <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50">
                     <ImagePlus className="h-4 w-4" />
@@ -1042,10 +1061,17 @@ export default function NewSalePage() {
                     <TableRow className="border-b-2">
                       <TableCell colSpan={6} className="py-2">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
-                            <ImagePlus className="h-3 w-3" />Imagens
-                            <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
-                          </label>
+                          {uploadingItemImages[idx] ? (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1">
+                              <span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />
+                              Carregando...
+                            </span>
+                          ) : (
+                            <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
+                              <ImagePlus className="h-3 w-3" />Imagens
+                              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                            </label>
+                          )}
                           {(itemImages[idx] || []).map((url, imgIdx) => (
                             <div key={imgIdx} className="relative group">
                               <img src={url} alt="" className="h-10 w-14 object-cover rounded border" />
@@ -1346,7 +1372,9 @@ export default function NewSalePage() {
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink}><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          <Button variant="secondary" onClick={handleSaveDraft}>💾 Salvar Rascunho</Button>
+          <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft}>
+            {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : '💾 Salvar Rascunho'}
+          </Button>
           <Button onClick={handleSave}>✅ {editSaleId ? 'Gerar Venda' : 'Converter em Venda'}</Button>
         </div>
 
