@@ -120,16 +120,18 @@ export default function SalesPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Vendas</h1>
-          <Button onClick={() => navigate('/sales/new')}><Plus className="h-4 w-4 mr-2" />Nova Venda</Button>
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Vendas</h1>
+          <Button onClick={() => navigate('/sales/new')} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Nova Venda</Button>
         </div>
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Buscar por cliente..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <Card>
+
+        {/* Desktop Table */}
+        <Card className="hidden sm:block">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -170,6 +172,39 @@ export default function SalesPage() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Mobile Cards */}
+        <div className="sm:hidden space-y-3">
+          {filtered.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</p>
+          ) : filtered.map(s => (
+            <Card key={s.id} className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{s.client_name}</p>
+                  <p className="text-xs text-muted-foreground">{s.sale_date ? format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'} · <span className="capitalize">{s.payment_method}</span></p>
+                </div>
+                <Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'} className="shrink-0 ml-2">
+                  {s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex gap-4 text-sm">
+                  <span>Total: <strong>{fmt(Number(s.total_sale))}</strong></span>
+                  <span>Lucro: <strong>{fmt(Number(s.net_profit))}</strong></span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
+                  {canDelete(s) && (
+                    <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(s)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
 
         <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
           <AlertDialogContent>

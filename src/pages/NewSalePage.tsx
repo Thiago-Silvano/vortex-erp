@@ -14,9 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
+import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
@@ -678,8 +676,8 @@ export default function NewSalePage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const handleExportPdf = async () => {
-    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o PDF'); return; }
+  const handleExportVoucher = async () => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o voucher'); return; }
     let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
     const agQuery = activeCompany?.id
       ? supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1)
@@ -688,10 +686,15 @@ export default function NewSalePage() {
     if (agData && agData.length > 0) agency = agData[0] as any;
 
     let flightLegs: any[] = [];
-    let quoteDetails: any = null;
+    // Collect flight legs from item metadata
+    for (const item of items) {
+      if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
+        flightLegs.push(...item.metadata.flightLegs);
+      }
+    }
+
+    // Also from quote if linked
     if (quoteId) {
-      const { data: qData } = await supabase.from('quotes').select('*').eq('id', quoteId).single();
-      if (qData) quoteDetails = qData;
       const { data: qServices } = await supabase.from('services').select('*').eq('quote_id', quoteId).order('sort_order');
       if (qServices) {
         for (const svc of qServices) {
@@ -704,13 +707,6 @@ export default function NewSalePage() {
             })));
           }
         }
-      }
-    }
-
-    // Also collect flight legs from item metadata
-    for (const item of items) {
-      if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
-        flightLegs.push(...item.metadata.flightLegs);
       }
     }
 
@@ -745,19 +741,43 @@ export default function NewSalePage() {
       }
     }
 
-    const pdfData: PremiumPdfData = {
+    // Load reservations
+    let reservations: any[] = [];
+    if (editSaleId) {
+      const { data: resData } = await supabase.from('reservations').select('*, suppliers(name)').eq('sale_id', editSaleId);
+      if (resData) {
+        reservations = resData.map((r: any) => ({
+          description: r.description || '',
+          confirmationCode: r.confirmation_code || '',
+          supplier: r.suppliers?.name || '',
+          checkIn: r.check_in || '',
+          checkOut: r.check_out || '',
+          status: r.status || '',
+        }));
+      }
+    }
+
+    // Get sale short_id
+    let shortId = '';
+    if (editSaleId) {
+      const { data: saleData } = await (supabase.from('sales').select('short_id').eq('id', editSaleId).single() as any);
+      if (saleData) shortId = saleData.short_id;
+    }
+
+    const voucherData: VoucherPdfData = {
       agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
       client: { name: clientName },
       seller: sellerName,
-      destination: quoteDetails?.trip_destination || '',
-      origin: quoteDetails?.trip_origin || '',
-      departureDate: quoteDetails?.trip_departure_date || tripStartDate || '',
-      returnDate: quoteDetails?.trip_return_date || tripEndDate || '',
-      nights: tripNights || quoteDetails?.trip_nights || undefined,
+      destination: items.some(i => i.metadata?.type === 'hotel') ? items.find(i => i.metadata?.type === 'hotel')?.metadata?.hotel?.hotelName || '' : '',
+      origin: '',
+      departureDate: tripStartDate || '',
+      returnDate: tripEndDate || '',
+      nights: tripNights || undefined,
       passengersCount: passengers.length || passengersCount || 1,
       passengers: passengers.map((p, i) => ({
         name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
         document: p.document_number || undefined,
+        documentType: p.document_type || undefined,
         birthDate: p.birth_date || undefined,
         isMain: p.is_main,
       })),
@@ -766,7 +786,7 @@ export default function NewSalePage() {
       services: items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
         return {
-          name: catalogName || `Serviço ${idx + 1}`,
+          name: catalogName || item.description || `Serviço ${idx + 1}`,
           description: item.metadata?.detailedDescription || item.description,
           value: item.total_value,
         };
@@ -776,21 +796,21 @@ export default function NewSalePage() {
         return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
       }) : [],
       showIndividualValues,
-      totalProducts: totalSale,
-      totalTaxes: 0,
-      totalTrip: totalSale,
+      totalTrip: totalSaleWithInterest,
+      reservations,
       payment: {
         method: paymentMethod,
         installments,
         receivables: receivables.map(r => ({ number: r.installment_number, amount: r.amount, dueDate: r.due_date || undefined })),
       },
-      proposalPaymentOptions: proposalPaymentOptions.filter(o => o.enabled),
       notes: notes || undefined,
+      saleDate,
+      shortId,
     };
 
-    const doc = generatePremiumQuotePdf(pdfData);
-    doc.save(`proposta-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('PDF da proposta premium gerado!');
+    const doc = generateVoucherPdf(voucherData);
+    doc.save(`voucher-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+    toast.success('Voucher gerado com sucesso!');
   };
 
   const handleGenerateLink = async () => {
@@ -815,7 +835,7 @@ export default function NewSalePage() {
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">{editSaleId ? 'Editar Venda' : 'Nova Venda'}</h1>
           <Button variant="outline" onClick={() => setPdfImportOpen(true)}>
@@ -1003,95 +1023,128 @@ export default function NewSalePage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Serviços da Venda</CardTitle>
             <Button size="sm" variant="outline" onClick={() => setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {} }])}>
-              <Plus className="h-4 w-4 mr-1" />Adicionar Serviço
+              <Plus className="h-4 w-4 mr-1" />Adicionar
             </Button>
           </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Serviço</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead className="w-40 min-w-[160px]">Preço de Custo</TableHead>
-                  <TableHead className="w-40 min-w-[160px]">RAV</TableHead>
-                  <TableHead className="w-40 min-w-[160px]">Valor Total</TableHead>
-                  <TableHead className="w-12" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((item, idx) => (
-                  <React.Fragment key={idx}>
-                    <TableRow>
-                      <TableCell className="min-w-[180px]">
-                        <Select
-                          value={item.service_catalog_id || 'manual'}
-                          onValueChange={(v) => {
-                            const svc = serviceCatalog.find(s => s.id === v);
-                            if (svc) {
-                              updateItem(idx, 'service_catalog_id', svc.id);
-                              updateItem(idx, 'description', svc.name);
-                              if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id);
-                            }
-                          }}
-                        >
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="manual">Selecione um serviço</SelectItem>
-                            {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start text-left font-normal"
-                          onClick={() => setEditingItemIdx(idx)}
-                        >
-                          <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
-                          <span className="truncate">
-                            {getServiceTypeLabel(item.metadata)}
-                            {item.description || 'Editar detalhes...'}
-                          </span>
-                        </Button>
-                      </TableCell>
-                      <TableCell className="min-w-[160px]"><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
-                      <TableCell className="min-w-[160px]"><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
-                      <TableCell className="min-w-[160px]"><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
-                      <TableCell>
-                        <Button size="icon" variant="ghost" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow className="border-b-2">
-                      <TableCell colSpan={6} className="py-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {uploadingItemImages[idx] ? (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1">
-                              <span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />
-                              Carregando...
-                            </span>
-                          ) : (
-                            <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
-                              <ImagePlus className="h-3 w-3" />Imagens
-                              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
-                            </label>
-                          )}
-                          {(itemImages[idx] || []).map((url, imgIdx) => (
-                            <div key={imgIdx} className="relative group">
-                              <img src={url} alt="" className="h-10 w-14 object-cover rounded border" />
-                              <button type="button" onClick={() => removeItemImage(idx, imgIdx)}
-                                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-                            </div>
-                          ))}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </React.Fragment>
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent className="space-y-4 sm:p-0">
+            {/* Desktop Table */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Serviço</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead className="w-32">Custo</TableHead>
+                    <TableHead className="w-24">RAV</TableHead>
+                    <TableHead className="w-32">Total</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item, idx) => (
+                    <React.Fragment key={idx}>
+                      <TableRow>
+                        <TableCell className="min-w-[150px]">
+                          <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
+                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="manual">Selecione um serviço</SelectItem>
+                              {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal" onClick={() => setEditingItemIdx(idx)}>
+                            <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{getServiceTypeLabel(item.metadata)}{item.description || 'Editar detalhes...'}</span>
+                          </Button>
+                        </TableCell>
+                        <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
+                        <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
+                        <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
+                        <TableCell>
+                          <Button size="icon" variant="ghost" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow className="border-b-2">
+                        <TableCell colSpan={6} className="py-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {uploadingItemImages[idx] ? (
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />Carregando...</span>
+                            ) : (
+                              <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
+                                <ImagePlus className="h-3 w-3" />Imagens<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                              </label>
+                            )}
+                            {(itemImages[idx] || []).map((url, imgIdx) => (
+                              <div key={imgIdx} className="relative group">
+                                <img src={url} alt="" className="h-10 w-14 object-cover rounded border" />
+                                <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="sm:hidden space-y-3">
+              {items.map((item, idx) => (
+                <div key={idx} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder="Serviço..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manual">Selecione</SelectItem>
+                        {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal" onClick={() => setEditingItemIdx(idx)}>
+                    <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">{getServiceTypeLabel(item.metadata)}{item.description || 'Editar detalhes...'}</span>
+                  </Button>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs">Custo</Label>
+                      <Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">RAV</Label>
+                      <Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Total</Label>
+                      <Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted h-8 text-sm" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {uploadingItemImages[idx] ? (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />...</span>
+                    ) : (
+                      <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
+                        <ImagePlus className="h-3 w-3" />Imagens<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                      </label>
+                    )}
+                    {(itemImages[idx] || []).map((url, imgIdx) => (
+                      <div key={imgIdx} className="relative group">
+                        <img src={url} alt="" className="h-8 w-12 object-cover rounded border" />
+                        <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">×</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -1382,16 +1435,16 @@ export default function NewSalePage() {
         </Card>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pb-8">
-          <Button variant="destructive" onClick={handleCancel}>Cancelar</Button>
-          <Button variant="outline" onClick={handleExportPdf}><Download className="h-4 w-4 mr-1" /> Gerar PDF Proposta</Button>
+        <div className="flex flex-wrap justify-end gap-2 pb-8">
+          <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
+          <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher</Button>
           {editSaleId && (
-            <Button variant="outline" onClick={handleGenerateLink}><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
+            <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft}>
-            {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : '💾 Salvar Rascunho'}
+          <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
+            {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Rascunho'}
           </Button>
-          <Button onClick={handleSave}>✅ {editSaleId ? 'Gerar Venda' : 'Converter em Venda'}</Button>
+          <Button onClick={handleSave} className="w-full sm:w-auto">{editSaleId ? 'Gerar Venda' : 'Converter em Venda'}</Button>
         </div>
 
         <PdfImportModal
