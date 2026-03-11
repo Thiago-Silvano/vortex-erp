@@ -461,6 +461,7 @@ export default function NewSalePage() {
         card_fee_value: cardFeeValue,
         net_profit: netProfit,
         notes,
+        proposal_payment_options: proposalPaymentOptions.filter(o => o.enabled),
         status,
         created_by: userEmail,
         updated_by: userEmail,
