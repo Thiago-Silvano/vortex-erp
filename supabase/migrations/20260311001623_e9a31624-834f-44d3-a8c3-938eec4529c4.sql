@@ -1,0 +1,1 @@
+UPDATE public.email_settings SET user_id = 'c936efdf-bbe1-4cf7-8b94-22859c10027e' WHERE id = '591e3987-9b37-437d-a835-50be33b7d1ac';
