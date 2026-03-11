@@ -78,12 +78,16 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       const accessibleIds = masterUser ? comps.map(c => c.id) : empresaIds;
       setUserCompanyIds(accessibleIds);
 
-      // Restore last active company from localStorage
+      // Restore last active company from localStorage, or use default
       const savedCompanyId = localStorage.getItem('activeCompanyId');
       const savedCompany = comps.find(c => c.id === savedCompanyId && accessibleIds.includes(c.id));
       
       if (savedCompany) {
         setActiveCompanyState(savedCompany);
+      } else if (masterUser && defaultEmpresaId) {
+        const defaultComp = comps.find(c => c.id === defaultEmpresaId && accessibleIds.includes(c.id));
+        if (defaultComp) setActiveCompanyState(defaultComp);
+        else if (accessibleIds.length > 0) setActiveCompanyState(comps.find(c => accessibleIds.includes(c.id)) || comps[0]);
       } else if (accessibleIds.length > 0) {
         const defaultComp = comps.find(c => accessibleIds.includes(c.id)) || comps[0];
         setActiveCompanyState(defaultComp);

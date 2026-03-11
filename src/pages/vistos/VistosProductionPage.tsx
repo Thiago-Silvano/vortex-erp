@@ -437,6 +437,14 @@ export default function VistosProductionPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <NewWhatsAppConversationModal
+        open={waSendOpen}
+        onOpenChange={setWaSendOpen}
+        onConversationCreated={() => setWaSendOpen(false)}
+        initialPhone={waSendPhone}
+        initialName={waSendName}
+      />
     </AppLayout>
   );
 }
