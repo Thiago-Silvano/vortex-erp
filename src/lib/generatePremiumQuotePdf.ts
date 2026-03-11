@@ -43,6 +43,15 @@ export interface ServicePdf {
   type?: string;
 }
 
+export interface ProposalPaymentOptionPdf {
+  method: string;
+  label: string;
+  installments: number;
+  installmentValue: number;
+  totalValue: number;
+  enabled: boolean;
+}
+
 export interface PremiumPdfData {
   agency: {
     name: string;
@@ -77,6 +86,7 @@ export interface PremiumPdfData {
     installments: number;
     receivables: Array<{ number: number; amount: number; dueDate?: string }>;
   };
+  proposalPaymentOptions?: ProposalPaymentOptionPdf[];
   notes?: string;
   destinationImageBase64?: string;
 }
