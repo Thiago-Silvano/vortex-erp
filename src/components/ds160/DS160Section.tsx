@@ -4,7 +4,8 @@ import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Send, Copy, ExternalLink, RefreshCw, FileText, Loader2, Bell } from 'lucide-react';
+import { Send, Copy, ExternalLink, RefreshCw, FileText, Loader2, Bell, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { generateDS160Pdf } from '@/lib/generateDS160Pdf';
@@ -26,15 +27,17 @@ interface Props {
   clientId: string;
   clientName: string;
   clientEmail: string;
+  isMaster?: boolean;
 }
 
-export default function DS160Section({ clientId, clientName, clientEmail }: Props) {
+export default function DS160Section({ clientId, clientName, clientEmail, isMaster }: Props) {
   const { activeCompany } = useCompany();
   const [forms, setForms] = useState<DS160Form[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [deleteFormId, setDeleteFormId] = useState<string | null>(null);
 
   const fetchForms = async () => {
     const { data } = await supabase
@@ -129,11 +132,26 @@ export default function DS160Section({ clientId, clientName, clientEmail }: Prop
       case 'sent': return { label: 'Link enviado', variant: 'outline' as const };
       case 'in_progress': return { label: 'Em preenchimento', variant: 'default' as const };
       case 'submitted': return { label: 'Concluído', variant: 'default' as const };
+      case 'deleted': return { label: 'Excluído', variant: 'destructive' as const };
       default: return { label: s, variant: 'secondary' as const };
     }
   };
 
   const formatDate = (d: string | null) => d ? format(new Date(d), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—';
+
+  const handleDeleteForm = async () => {
+    if (!deleteFormId) return;
+    const { error } = await supabase.from('ds160_forms').update({
+      status: 'deleted',
+    } as any).eq('id', deleteFormId);
+    if (error) {
+      toast.error('Erro ao excluir formulário');
+    } else {
+      toast.success('Formulário excluído com sucesso');
+      fetchForms();
+    }
+    setDeleteFormId(null);
+  };
 
   // Check for newly submitted forms (notification)
   const submittedNotDismissed = forms.filter(f => f.status === 'submitted' && !dismissed.has(f.id));
@@ -204,12 +222,31 @@ export default function DS160Section({ clientId, clientName, clientEmail }: Prop
                       Gerar PDF
                     </Button>
                   )}
+                  {isMaster && form.status !== 'deleted' && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-destructive hover:bg-destructive/10 border-destructive/30" onClick={() => setDeleteFormId(form.id)}>
+                      <Trash2 className="h-3 w-3" />Excluir
+                    </Button>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       )}
+      <AlertDialog open={!!deleteFormId} onOpenChange={(o) => !o && setDeleteFormId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir formulário DS-160?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O link será desativado e o cliente verá uma mensagem de que o formulário foi excluído. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteForm} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

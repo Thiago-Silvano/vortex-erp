@@ -36,6 +36,7 @@ export default function DS160PublicPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [deleted, setDeleted] = useState(false);
   const [formId, setFormId] = useState<string | null>(null);
   const [clientName, setClientName] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
@@ -58,6 +59,12 @@ export default function DS160PublicPage() {
 
     if (error || !data) {
       setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    if (data.status === 'deleted') {
+      setDeleted(true);
       setLoading(false);
       return;
     }
@@ -99,6 +106,13 @@ export default function DS160PublicPage() {
   const handleSubmit = async () => {
     if (!formId) return;
     setSubmitting(true);
+    
+    const { data: formRecord } = await supabase
+      .from('ds160_forms')
+      .select('client_id, empresa_id')
+      .eq('id', formId)
+      .single();
+
     const { error } = await supabase.from('ds160_forms').update({
       form_data: formData as any,
       current_step: 10,
@@ -106,6 +120,27 @@ export default function DS160PublicPage() {
       submitted_at: new Date().toISOString(),
       last_saved_at: new Date().toISOString(),
     }).eq('id', formId);
+    
+    // Update visa_processes for this client to "produzindo"
+    if (!error && formRecord) {
+      // Get client name to match
+      const { data: client } = await supabase
+        .from('clients')
+        .select('full_name')
+        .eq('id', formRecord.client_id)
+        .single();
+      
+      if (client) {
+        // Update processes matching this client's name and empresa
+        await supabase
+          .from('visa_processes')
+          .update({ status: 'produzindo' as any })
+          .eq('client_name', client.full_name)
+          .eq('empresa_id', formRecord.empresa_id || '')
+          .in('status', ['falta_passaporte'] as any[]);
+      }
+    }
+    
     setSubmitting(false);
     if (error) {
       toast.error('Erro ao enviar formulário.');
@@ -154,6 +189,18 @@ export default function DS160PublicPage() {
           <Shield className="h-16 w-16 text-red-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-slate-800 mb-2">Link inválido</h1>
           <p className="text-slate-500">Este link de formulário não existe ou já expirou. Entre em contato com a Vortex Vistos.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (deleted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <Shield className="h-16 w-16 text-red-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Formulário excluído</h1>
+          <p className="text-slate-500">Este formulário foi excluído pela Vortex Vistos. Entre em contato com a equipe para mais informações.</p>
         </div>
       </div>
     );
