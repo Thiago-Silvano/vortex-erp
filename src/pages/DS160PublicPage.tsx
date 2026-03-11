@@ -63,6 +63,12 @@ export default function DS160PublicPage() {
       return;
     }
 
+    if (data.status === 'deleted') {
+      setDeleted(true);
+      setLoading(false);
+      return;
+    }
+
     if (data.status === 'submitted') {
       setSubmitted(true);
       setLoading(false);
