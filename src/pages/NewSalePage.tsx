@@ -86,6 +86,7 @@ export default function NewSalePage() {
   const [tripNights, setTripNights] = useState(0);
   const [tripStartDate, setTripStartDate] = useState('');
   const [tripEndDate, setTripEndDate] = useState('');
+  const [nightsManuallySet, setNightsManuallySet] = useState(false);
   const [destinationName, setDestinationName] = useState('');
 
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([]);
@@ -158,6 +159,7 @@ export default function NewSalePage() {
     setNotes(sale.notes || '');
     setPassengersCount(Number((sale as any).passengers_count) || 1);
     setTripNights(Number((sale as any).trip_nights) || 0);
+    if (Number((sale as any).trip_nights) > 0) setNightsManuallySet(true);
     setTripStartDate((sale as any).trip_start_date || '');
     setTripEndDate((sale as any).trip_end_date || '');
     setDestinationName((sale as any).destination_name || '');
@@ -254,6 +256,7 @@ export default function NewSalePage() {
   }, [quoteData]);
 
   useEffect(() => {
+    if (nightsManuallySet) return;
     if (tripStartDate && tripEndDate) {
       const start = new Date(tripStartDate);
       const end = new Date(tripEndDate);
@@ -261,7 +264,7 @@ export default function NewSalePage() {
       const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
       if (diffDays > 0) setTripNights(diffDays);
     }
-  }, [tripStartDate, tripEndDate]);
+  }, [tripStartDate, tripEndDate, nightsManuallySet]);
 
   useEffect(() => {
     if (paymentMethod !== 'credito' || !cardPaymentType) return;
@@ -1091,8 +1094,8 @@ export default function NewSalePage() {
               </div>
               <div>
                 <Label>Nº de Noites</Label>
-                <Input type="number" min="0" value={tripNights} onChange={e => setTripNights(parseInt(e.target.value) || 0)} />
-                <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente</p>
+                <Input type="number" min="0" value={tripNights} onChange={e => { setTripNights(parseInt(e.target.value) || 0); setNightsManuallySet(true); }} />
+                <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente pelas datas (editável)</p>
               </div>
               <div className="md:col-span-2">
                 <Label>Nome do Destino</Label>
