@@ -394,8 +394,8 @@ export default function PropostaPublicPage() {
                     <span className="text-sm font-medium" style={{ color: '#2d2d2d' }}>{name || `Serviço ${idx + 1}`}</span>
                     <span className="text-sm font-semibold tabular-nums" style={{ color: '#C8A45B' }}>{fmt(item.total_value)}</span>
                   </div>
-                  {item.metadata?.detailedDescription && (
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: '#999' }}>{item.metadata.detailedDescription}</p>
+                  {item.description && (
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: '#999' }}>{item.description}</p>
                   )}
                 </div>
               );
