@@ -464,11 +464,37 @@ app.post('/send-message', async (req, res) => {
     return res.status(400).json({ error: 'phone/number é obrigatório' });
   }
 
-  const normalizedPhone = normalizePhone(targetPhone);
-  const chatId = `${normalizedPhone}@c.us`;
+  // Determinar o chatId correto
+  let chatId;
+  if (targetPhone.includes('@lid')) {
+    // Já é um LID - usar diretamente
+    chatId = targetPhone;
+    log(empresaId, `Usando LID direto: ${chatId}`);
+  } else if (targetPhone.includes('@')) {
+    // Já tem formato de ID (ex: xxx@c.us)
+    chatId = targetPhone;
+  } else {
+    const normalizedPhone = normalizePhone(targetPhone);
+    chatId = `${normalizedPhone}@c.us`;
+  }
 
   try {
-    log(empresaId, `Enviando para ${normalizedPhone}: ${message?.substring(0, 50) || '[mídia]'}`);
+    log(empresaId, `Enviando para ${chatId}: ${message?.substring(0, 50) || '[mídia]'}`);
+
+    // Tentar resolver o ID correto do número antes de enviar
+    // Isso lida com o problema "No LID for user"
+    let resolvedChatId = chatId;
+    if (chatId.endsWith('@c.us')) {
+      try {
+        const numberId = await session.client.getNumberId(chatId.replace('@c.us', ''));
+        if (numberId) {
+          resolvedChatId = numberId._serialized;
+          log(empresaId, `Número resolvido: ${chatId} -> ${resolvedChatId}`);
+        }
+      } catch (resolveErr) {
+        log(empresaId, `Não foi possível resolver número, usando original: ${resolveErr.message}`);
+      }
+    }
 
     let sentMsg;
 
@@ -487,18 +513,16 @@ app.post('/send-message', async (req, res) => {
           media.filename = filename;
         }
 
-        sentMsg = await session.client.sendMessage(chatId, media, {
+        sentMsg = await session.client.sendMessage(resolvedChatId, media, {
           caption: message || '',
           sendMediaAsDocument: message_type === 'document',
         });
       } catch (mediaErr) {
         log(empresaId, `Erro ao enviar mídia, tentando como texto: ${mediaErr.message}`);
-        // Fallback: enviar como texto com link
-        sentMsg = await session.client.sendMessage(chatId, `${message || ''}\n${media_url}`);
+        sentMsg = await session.client.sendMessage(resolvedChatId, `${message || ''}\n${media_url}`);
       }
     } else {
-      // Mensagem de texto
-      sentMsg = await session.client.sendMessage(chatId, message || '');
+      sentMsg = await session.client.sendMessage(resolvedChatId, message || '');
     }
 
     log(empresaId, `Mensagem enviada com sucesso para ${normalizedPhone}`);
