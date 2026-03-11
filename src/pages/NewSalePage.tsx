@@ -917,7 +917,7 @@ export default function NewSalePage() {
         return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
       }) : [],
       showIndividualValues,
-      totalProducts: totalSupplierCost,
+      totalProducts: totalCost,
       totalTaxes: 0,
       totalTrip: totalSaleWithInterest,
       proposalPaymentOptions: proposalPaymentOptions.filter(o => o.enabled),
