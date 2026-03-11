@@ -556,15 +556,22 @@ export default function NewSalePage() {
 
   const handleSaveDraft = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
-    const { payload, userEmail } = await buildSalePayload('draft');
-    if (editSaleId) {
-      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
-      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+    setSavingDraft(true);
+    try {
+      const { payload, userEmail } = await buildSalePayload('draft');
+      if (editSaleId) {
+        await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+        await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      }
+      const saleId = await saveSaleCore(payload, userEmail);
+      if (!saleId) { setSavingDraft(false); return; }
+      toast.success('Rascunho salvo! Nenhum lançamento financeiro foi gerado.');
+      navigate('/sales');
+    } catch (err) {
+      toast.error('Erro ao salvar rascunho');
+    } finally {
+      setSavingDraft(false);
     }
-    const saleId = await saveSaleCore(payload, userEmail);
-    if (!saleId) return;
-    toast.success('Rascunho salvo! Nenhum lançamento financeiro foi gerado.');
-    navigate('/sales');
   };
 
   const handleSave = async () => {
