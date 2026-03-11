@@ -610,8 +610,8 @@ export default function NewSalePage() {
       }
       const saleId = await saveSaleCore(payload, userEmail);
       if (!saleId) { setSavingDraft(false); return; }
-      toast.success('Rascunho salvo! Nenhum lançamento financeiro foi gerado.');
-      navigate('/sales');
+      if (!editSaleId) setEditSaleId(saleId);
+      toast.success('Rascunho salvo!');
     } catch (err) {
       toast.error('Erro ao salvar rascunho');
     } finally {
