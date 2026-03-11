@@ -154,6 +154,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     if (type === 'aereo') {
       meta.flightLegs = flightLegs;
       meta.baggage = baggage;
+      const outbound = flightLegs.filter(l => l.direction === 'ida');
+      const returnL = flightLegs.filter(l => l.direction === 'volta');
+      meta.totalTravelDurationOutbound = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
+      meta.totalTravelDurationReturn = calcTotalTravelDuration(returnL);
     }
     if (type === 'hotel') {
       meta.hotel = hotel;
