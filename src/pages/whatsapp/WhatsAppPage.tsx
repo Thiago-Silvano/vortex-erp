@@ -772,7 +772,7 @@ export default function WhatsAppPage() {
               <div className="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center mx-auto">
                 <User className="h-8 w-8 text-white" />
               </div>
-              <h3 className="font-semibold" style={{ color: '#111b21' }}>{selectedConv.client_name || 'Desconhecido'}</h3>
+              <h3 className="font-semibold" style={{ color: '#111b21' }}>{(selectedConv.client_name || 'Desconhecido').toUpperCase()}</h3>
               <p className="text-xs flex items-center justify-center gap-1" style={{ color: '#667781' }}>
                 <Phone className="h-3 w-3" /> {selectedConv.phone}
               </p>
