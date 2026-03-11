@@ -400,6 +400,7 @@ export default function WhatsAppPage() {
     setDeleteConvTarget(null);
   };
 
+  const scrollToMessage = (msgId: string) => {
     const el = document.getElementById(`msg-${msgId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
