@@ -521,6 +521,7 @@ app.post('/send-message', async (req, res) => {
   const {
     phone,
     number,       // alias para phone (ERP envia ambos)
+    whatsapp_id,  // Original WhatsApp ID (e.g., 107533314330705@lid or 5548991165568@c.us)
     message,
     message_type,
     media_url,
@@ -530,8 +531,8 @@ app.post('/send-message', async (req, res) => {
   } = req.body;
 
   const targetPhone = phone || number;
-  if (!targetPhone) {
-    return res.status(400).json({ error: 'phone/number é obrigatório' });
+  if (!targetPhone && !whatsapp_id) {
+    return res.status(400).json({ error: 'phone/number ou whatsapp_id é obrigatório' });
   }
 
   // Determinar possíveis IDs de destino (c.us, lid e chats já existentes)
