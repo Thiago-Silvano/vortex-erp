@@ -36,6 +36,7 @@ export default function DS160PublicPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [deleted, setDeleted] = useState(false);
   const [formId, setFormId] = useState<string | null>(null);
   const [clientName, setClientName] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
