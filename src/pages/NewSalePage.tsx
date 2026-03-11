@@ -140,8 +140,8 @@ export default function NewSalePage() {
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
 
   useEffect(() => {
-    if (editSaleId) loadSale(editSaleId);
-  }, [editSaleId]);
+    if (initialEditSaleId) loadSale(initialEditSaleId);
+  }, [initialEditSaleId]);
 
   const loadSale = async (id: string) => {
     const { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
