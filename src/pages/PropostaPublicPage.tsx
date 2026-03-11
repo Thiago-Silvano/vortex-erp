@@ -319,6 +319,7 @@ export default function PropostaPublicPage() {
                     images={item.images}
                     metadata={item.metadata}
                     passengersCount={passengersCount}
+                    showValue={(sale as any).show_individual_values !== false}
                     onImageClick={(imgIdx) => setLightbox({ images: item.images, index: imgIdx })}
                   />
                 );
