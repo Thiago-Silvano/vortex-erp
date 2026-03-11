@@ -1402,16 +1402,16 @@ export default function NewSalePage() {
         </Card>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pb-8">
-          <Button variant="destructive" onClick={handleCancel}>Cancelar</Button>
-          <Button variant="outline" onClick={handleExportPdf}><Download className="h-4 w-4 mr-1" /> Gerar PDF Proposta</Button>
+        <div className="flex flex-wrap justify-end gap-2 pb-8">
+          <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
+          <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher</Button>
           {editSaleId && (
-            <Button variant="outline" onClick={handleGenerateLink}><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
+            <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft}>
-            {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : '💾 Salvar Rascunho'}
+          <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
+            {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Rascunho'}
           </Button>
-          <Button onClick={handleSave}>✅ {editSaleId ? 'Gerar Venda' : 'Converter em Venda'}</Button>
+          <Button onClick={handleSave} className="w-full sm:w-auto">{editSaleId ? 'Gerar Venda' : 'Converter em Venda'}</Button>
         </div>
 
         <PdfImportModal
