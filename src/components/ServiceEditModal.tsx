@@ -49,6 +49,24 @@ export interface ServiceMetadata {
   baggage?: BaggageInfo;
   hotel?: HotelInfo;
   detailedDescription?: string;
+  totalTravelDurationOutbound?: string;
+  totalTravelDurationReturn?: string;
+}
+
+function calcTotalTravelDuration(legs: FlightLeg[]): string {
+  if (legs.length === 0) return '';
+  const first = legs[0];
+  const last = legs[legs.length - 1];
+  if (!first.departureDate || !first.departureTime || !last.arrivalDate || !last.arrivalTime) return '';
+  const dep = new Date(`${first.departureDate}T${first.departureTime}:00`);
+  const arr = new Date(`${last.arrivalDate}T${last.arrivalTime}:00`);
+  if (isNaN(dep.getTime()) || isNaN(arr.getTime())) return '';
+  let diffMs = arr.getTime() - dep.getTime();
+  if (diffMs < 0) return '';
+  const totalMinutes = Math.round(diffMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
 }
 
 interface Props {
