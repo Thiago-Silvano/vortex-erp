@@ -128,6 +128,7 @@ export default function UserAdmin() {
       setPermRole(perm.user_role);
       setPermChecks(perm.permissions);
       setPermEmpresaIds(perm.empresa_ids || []);
+      setPermDefaultCompany((perm as any).default_empresa_id || 'none');
     } else {
       // Default for master email
       if (user.email === 'thiago@vortexviagens.com.br') {
