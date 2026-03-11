@@ -315,6 +315,14 @@ export default function ClientsPage() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+
+      <NewWhatsAppConversationModal
+        open={waModalOpen}
+        onOpenChange={setWaModalOpen}
+        onConversationCreated={() => setWaModalOpen(false)}
+        initialPhone={waPhone}
+        initialName={waName}
+      />
     </AppLayout>
   );
 }
