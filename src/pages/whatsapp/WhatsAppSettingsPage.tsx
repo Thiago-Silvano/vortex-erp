@@ -103,7 +103,10 @@ export default function WhatsAppSettingsPage() {
   const [pollingQr, setPollingQr] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+  const [autoReconnectEnabled, setAutoReconnectEnabled] = useState(true);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoReconnectRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const empresaIdRef = useRef<string | null>(null);
 
   useEffect(() => {
