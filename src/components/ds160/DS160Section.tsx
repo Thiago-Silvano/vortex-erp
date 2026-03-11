@@ -233,6 +233,20 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           })}
         </div>
       )}
+      <AlertDialog open={!!deleteFormId} onOpenChange={(o) => !o && setDeleteFormId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir formulário DS-160?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O link será desativado e o cliente verá uma mensagem de que o formulário foi excluído. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteForm} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

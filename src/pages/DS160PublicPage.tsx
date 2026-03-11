@@ -166,6 +166,18 @@ export default function DS160PublicPage() {
     );
   }
 
+  if (deleted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <Shield className="h-16 w-16 text-red-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Formulário excluído</h1>
+          <p className="text-slate-500">Este formulário foi excluído pela Vortex Vistos. Entre em contato com a equipe para mais informações.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-6">
