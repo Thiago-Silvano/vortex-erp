@@ -676,7 +676,7 @@ export default function WhatsAppPage() {
                                 onClick={() => scrollToMessage(repliedMsg.id)}
                               >
                                 <p className="text-[11px] font-semibold" style={{ color: repliedMsg.sender_type === 'agent' ? '#53bdeb' : '#06cf9c' }}>
-                                  {repliedMsg.sender_type === 'agent' ? repliedMsg.sender_name : (selectedConv?.client_name || 'Cliente')}
+                                  {repliedMsg.sender_type === 'agent' ? repliedMsg.sender_name?.toUpperCase() : (selectedConv?.client_name || 'Cliente').toUpperCase()}
                                 </p>
                                 <p className="text-[11px] truncate" style={{ color: '#667781' }}>
                                   {repliedMsg.content?.substring(0, 80) || '📎 Mídia'}
