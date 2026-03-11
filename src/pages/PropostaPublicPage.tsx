@@ -411,42 +411,53 @@ export default function PropostaPublicPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <section className={proposalOptions.length > 0 ? 'md:col-span-2' : ''}>
             <SectionTitle>Opções de pagamento</SectionTitle>
-            {proposalOptions.length > 0 ? (
+            {proposalOptions.length > 0 ? (() => {
+              const maxInstallments = Math.max(...proposalOptions.map(o => o.installments));
+              return (
               <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {proposalOptions.map((opt, idx) => (
-                  <div key={idx} className="rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-                    <div className="py-6 px-6 text-center" style={{ background: idx === 0 ? 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' : '#fff' }}>
-                      <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: idx === 0 ? '#C8A45B' : '#999' }}>
+                {proposalOptions.map((opt, idx) => {
+                  const isHighlighted = opt.installments === maxInstallments;
+                  return (
+                  <div key={idx} className="rounded-2xl overflow-hidden relative" style={{ background: '#fff', boxShadow: isHighlighted ? '0 8px 32px rgba(200,164,91,0.25)' : '0 4px 24px rgba(0,0,0,0.06)', border: isHighlighted ? '2px solid #C8A45B' : 'none' }}>
+                    {isHighlighted && (
+                      <div className="text-center py-1.5 text-[10px] font-bold tracking-[2px] uppercase text-white" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }}>
+                        Mais popular
+                      </div>
+                    )}
+                    <div className="py-6 px-6 text-center" style={{ background: isHighlighted ? 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' : '#fff' }}>
+                      <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: isHighlighted ? '#C8A45B' : '#999' }}>
                         {opt.label}
                       </p>
                       {opt.installments > 1 ? (
                         <div className="flex items-baseline justify-center gap-1.5">
-                          <span className="text-3xl font-bold" style={{ color: idx === 0 ? '#C8A45B' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                          <span className="text-3xl font-bold" style={{ color: isHighlighted ? '#C8A45B' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
                             {opt.installments}x
                           </span>
-                          <span className="text-sm" style={{ color: idx === 0 ? 'rgba(255,255,255,0.5)' : '#999' }}>de</span>
-                          <span className="text-2xl font-bold" style={{ color: idx === 0 ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                          <span className="text-sm" style={{ color: isHighlighted ? 'rgba(255,255,255,0.5)' : '#999' }}>de</span>
+                          <span className="text-2xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
                             {fmt(opt.installmentValue)}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-3xl font-bold" style={{ color: idx === 0 ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                        <span className="text-3xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
                           {fmt(opt.totalValue)}
                         </span>
                       )}
                       {passengersCount > 1 && (
-                        <p className="text-xs mt-2" style={{ color: idx === 0 ? 'rgba(255,255,255,0.3)' : '#bbb' }}>
+                        <p className="text-xs mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.3)' : '#bbb' }}>
                           {fmt((opt.installments > 1 ? opt.installmentValue : opt.totalValue) / passengersCount)} /pessoa
                         </p>
                       )}
                     </div>
-                    {idx === 0 && (
+                    {isHighlighted && (
                       <div className="h-1" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }} />
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
-            ) : (
+              );
+            })() : (
               <div className="mt-8 p-6 rounded-2xl" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
                 <div className="flex items-center gap-4 mb-5">
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
