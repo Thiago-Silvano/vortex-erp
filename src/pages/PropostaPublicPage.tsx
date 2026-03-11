@@ -20,6 +20,16 @@ interface SaleData {
   trip_nights?: number;
   trip_start_date?: string;
   trip_end_date?: string;
+  proposal_payment_options?: ProposalPaymentOption[];
+}
+
+interface ProposalPaymentOption {
+  method: string;
+  label: string;
+  installments: number;
+  installmentValue: number;
+  totalValue: number;
+  enabled: boolean;
 }
 
 interface SaleItemData {
