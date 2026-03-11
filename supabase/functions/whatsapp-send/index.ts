@@ -129,12 +129,18 @@ Deno.serve(async (req) => {
         const responseText = await deliveryResponse.text();
         console.log(`Node.js response: ${deliveryResponse.status} - ${responseText}`);
 
+        let responseJson: any = null;
+        try {
+          responseJson = JSON.parse(responseText);
+        } catch {
+          responseJson = null;
+        }
+
         if (!deliveryResponse.ok) {
           let errorDetail = responseText;
-          try {
-            const parsed = JSON.parse(responseText);
-            errorDetail = parsed.error || responseText;
-          } catch {}
+          if (responseJson?.error) {
+            errorDetail = responseJson.error;
+          }
           deliveryError = errorDetail;
           throw new Error(`Delivery failed (${deliveryResponse.status}): ${responseText}`);
         }
@@ -142,6 +148,16 @@ Deno.serve(async (req) => {
         if (msgData?.id) {
           await supabase.from('whatsapp_messages').update({ delivery_status: 'sent' }).eq('id', msgData.id);
         }
+
+        // Persist resolved WhatsApp ID returned by Node.js (helps avoid duplicate conversations with LID payloads)
+        const sentTo = responseJson?.sent_to;
+        if (sentTo && typeof sentTo === 'string') {
+          await supabase
+            .from('whatsapp_conversations')
+            .update({ whatsapp_id: sentTo })
+            .eq('id', conversation_id);
+        }
+
         // Update last_message_sent_at
         await supabase.from('whatsapp_sessions').update({
           last_message_sent_at: new Date().toISOString(),

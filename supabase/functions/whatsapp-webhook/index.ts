@@ -43,6 +43,14 @@ async function addLog(supabase: any, empresaId: string | null, eventType: string
   }
 }
 
+function normalizeName(value: string | null | undefined): string {
+  return (value || '').trim().toLowerCase();
+}
+
+function isLikelyLidNumeric(value: string): boolean {
+  return /^\d{14,20}$/.test(value);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -184,11 +192,13 @@ Deno.serve(async (req) => {
       }
 
       // Normalize phone: strip @lid, @c.us, @s.whatsapp.net suffixes
-      const cleanPhone = phone.replace(/@.*$/, '').replace(/\D/g, '');
+      const cleanPhone = String(phone || '').replace(/@.*$/, '').replace(/\D/g, '');
+      const looksLikeLid = isLikelyLidNumeric(cleanPhone);
 
       // Find or create conversation atomically (prevents duplicates)
       let clientName = sender_name || 'Cliente desconhecido';
       let clientId: string | null = null;
+      let phoneForConversation = cleanPhone;
 
       // Try to find client
       const { data: clientData } = await supabase
@@ -204,12 +214,48 @@ Deno.serve(async (req) => {
         clientId = clientData.id;
       }
 
+      // Fallback for legacy payloads (without original_from):
+      // if incoming phone looks like LID, try to map by unique active conversation with same client name.
+      const normalizedIncomingName = normalizeName(clientName);
+      const hasReliableName = normalizedIncomingName !== '' && normalizedIncomingName !== 'cliente' && normalizedIncomingName !== 'cliente desconhecido';
+
+      if (looksLikeLid && !original_from && hasReliableName) {
+        const { data: recentConversations } = await supabase
+          .from('whatsapp_conversations')
+          .select('id, phone, client_name, last_message_at, created_at')
+          .eq('empresa_id', empresaId)
+          .neq('status', 'finished')
+          .order('last_message_at', { ascending: false })
+          .limit(50);
+
+        const matchingConversations = (recentConversations || []).filter((conv: any) => {
+          const convName = normalizeName(conv.client_name);
+          const convPhone = String(conv.phone || '').replace(/\D/g, '');
+          return convName === normalizedIncomingName && /^\d{10,13}$/.test(convPhone);
+        });
+
+        if (matchingConversations.length === 1) {
+          phoneForConversation = String(matchingConversations[0].phone || '').replace(/\D/g, '');
+          await addLog(
+            supabase,
+            empresaId,
+            'lid_fallback_match',
+            `LID legado (${cleanPhone}) associado por nome à conversa existente de ${clientName}`,
+            {
+              incoming_lid_phone: cleanPhone,
+              mapped_phone: phoneForConversation,
+              matched_conversation_id: matchingConversations[0].id,
+            }
+          );
+        }
+      }
+
       // Determine the whatsapp_id (original sender ID for reliable sending)
-      const whatsappId = original_from || null;
+      const whatsappId = original_from || (looksLikeLid ? `${cleanPhone}@lid` : null);
 
       const { data: convResult, error: convError } = await supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
-        p_phone: cleanPhone,
+        p_phone: phoneForConversation,
         p_client_name: clientName,
         p_client_id: clientId,
         p_last_message: displayContent.substring(0, 200) || '',
