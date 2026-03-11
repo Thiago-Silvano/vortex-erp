@@ -98,8 +98,9 @@ Deno.serve(async (req) => {
 
     if (session.server_url) {
       try {
-        const agentLabel = `[${sender_name || user.email?.split('@')[0] || 'Agente'}]`;
-        const fullMessage = `${agentLabel}\n${content}`;
+        const rawAgentName = sender_name || user.email?.split('@')[0] || 'Agente';
+        const normalizedAgentName = rawAgentName.replace(/^\[+|\]+$/g, '').trim().toUpperCase();
+        const fullMessage = `*${normalizedAgentName}*\n${content}`;
         const targetUrl = `${session.server_url.replace(/\/+$/, '')}/send-message?empresa_id=${conv.empresa_id}`;
 
         console.log(`Sending to ${targetUrl} for phone ${conv.phone}`);
