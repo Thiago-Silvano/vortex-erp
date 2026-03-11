@@ -1188,6 +1188,16 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base">💳 Opções de Pagamento para Proposta</CardTitle></CardHeader>
           <CardContent className="space-y-3">
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <Checkbox
+                id="showIndividualValues"
+                checked={showIndividualValues}
+                onCheckedChange={(checked) => setShowIndividualValues(!!checked)}
+              />
+              <Label htmlFor="showIndividualValues" className="text-sm cursor-pointer">
+                Mostrar valor individual de cada serviço nas propostas (PDF e interativa)
+              </Label>
+            </div>
             <p className="text-sm text-muted-foreground">Selecione quais formas de pagamento deseja ofertar ao cliente na proposta (PDF e interativa).</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {proposalPaymentOptions.map((opt, idx) => (
