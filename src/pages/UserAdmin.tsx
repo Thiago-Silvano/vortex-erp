@@ -58,7 +58,7 @@ export default function UserAdmin() {
   const [permRole, setPermRole] = useState('vendedor');
   const [permChecks, setPermChecks] = useState<Record<string, boolean>>({});
   const [permEmpresaIds, setPermEmpresaIds] = useState<string[]>([]);
-
+  const [permDefaultCompany, setPermDefaultCompany] = useState('none');
   const fetchUsers = async () => {
     setLoading(true);
     try {
