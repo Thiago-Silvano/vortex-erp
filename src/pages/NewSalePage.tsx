@@ -1030,9 +1030,9 @@ export default function NewSalePage() {
                           </span>
                         </Button>
                       </TableCell>
-                      <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
-                      <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
-                      <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
+                      <TableCell className="min-w-[160px]"><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
+                      <TableCell className="min-w-[160px]"><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
+                      <TableCell className="min-w-[160px]"><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
                       <TableCell>
                         <Button size="icon" variant="ghost" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
                           <Trash2 className="h-4 w-4 text-destructive" />
