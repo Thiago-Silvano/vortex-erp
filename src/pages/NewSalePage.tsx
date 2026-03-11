@@ -337,6 +337,38 @@ export default function NewSalePage() {
     }));
   };
 
+  const moveItem = (idx: number, direction: 'up' | 'down') => {
+    setItems(prev => {
+      const newItems = [...prev];
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= newItems.length) return prev;
+      [newItems[idx], newItems[targetIdx]] = [newItems[targetIdx], newItems[idx]];
+      // Also swap images
+      setItemImages(prevImgs => {
+        const newImgs = { ...prevImgs };
+        const temp = newImgs[idx];
+        newImgs[idx] = newImgs[targetIdx];
+        newImgs[targetIdx] = temp;
+        return newImgs;
+      });
+      return newItems;
+    });
+  };
+
+  const removeItem = (idx: number) => {
+    setItems(prev => prev.filter((_, i) => i !== idx));
+    setItemImages(prev => {
+      const newImgs: Record<number, string[]> = {};
+      Object.keys(prev).forEach(key => {
+        const k = parseInt(key);
+        if (k === idx) return;
+        const newKey = k > idx ? k - 1 : k;
+        newImgs[newKey] = prev[k];
+      });
+      return newImgs;
+    });
+  };
+
   const addSupplier = () => {
     if (!addingSupplierId || selectedSupplierIds.includes(addingSupplierId)) return;
     setSelectedSupplierIds(prev => [...prev, addingSupplierId]);
