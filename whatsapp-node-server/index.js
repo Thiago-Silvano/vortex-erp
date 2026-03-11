@@ -704,6 +704,7 @@ app.post('/send-message', async (req, res) => {
 
     res.json({
       success: true,
+      sent_to: sentTo || null,
       message_id: sentMsg?.id?.id || null,
       timestamp: sentMsg?.timestamp || null,
     });
