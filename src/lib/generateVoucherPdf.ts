@@ -602,36 +602,36 @@ function drawFlightDirection(
   }
 
   legs.forEach((leg, idx) => {
-    y = checkPageBreak(doc, y, 25, m);
+    y = checkPageBreak(doc, y, 18, m);
 
     const originX = m + 5;
     const destX = m + cw - 5;
     const midX = pw / 2;
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
+    doc.setFontSize(11);
     setColor(doc, DEEP_BLUE);
     doc.text(leg.origin || '---', originX, y);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(7);
     setColor(doc, TEXT_MAIN);
-    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 5);
+    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 4);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
+    doc.setFontSize(11);
     setColor(doc, DEEP_BLUE);
     doc.text(leg.destination || '---', destX, y, { align: 'right' });
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(7);
     setColor(doc, TEXT_MAIN);
-    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 5, { align: 'right' });
+    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 4, { align: 'right' });
 
     // Dashed line
-    const lineY = y - 3;
-    const lineStart = originX + 22;
-    const lineEnd = destX - 22;
+    const lineY = y - 1;
+    const lineStart = originX + 18;
+    const lineEnd = destX - 18;
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
     let dx = lineStart;
@@ -641,16 +641,16 @@ function drawFlightDirection(
     }
     // Arrow
     doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.triangle(lineEnd - 3, lineY - 1.5, lineEnd - 3, lineY + 1.5, lineEnd, lineY, 'F');
+    doc.triangle(lineEnd - 3, lineY - 1, lineEnd - 3, lineY + 1, lineEnd, lineY, 'F');
 
     if (leg.flightCode) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
+      doc.setFontSize(5);
       setColor(doc, TEXT_MUTED);
-      doc.text(leg.flightCode, midX, lineY - 3, { align: 'center' });
+      doc.text(leg.flightCode, midX, lineY - 2, { align: 'center' });
     }
 
-    y += 11;
+    y += 7;
 
     if (idx < legs.length - 1 && leg.connectionDuration) {
       doc.setFillColor(LIGHT_GRAY[0], LIGHT_GRAY[1], LIGHT_GRAY[2]);
