@@ -44,7 +44,7 @@ const emptyClient = (): Omit<Client, 'id'> => ({
 });
 
 export default function ClientsPage() {
-  const { activeCompany } = useCompany();
+  const { activeCompany, isMaster } = useCompany();
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
