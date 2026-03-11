@@ -925,7 +925,7 @@ export default function NewSalePage() {
       agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
       client: { name: clientName },
       seller: sellerName,
-      destination: items.find(i => i.metadata?.type === 'hotel')?.metadata?.hotel?.hotelName || '',
+      destination: destinationName || items.find(i => i.metadata?.type === 'hotel')?.metadata?.hotel?.hotelName || '',
       origin: '',
       departureDate: tripStartDate || undefined,
       returnDate: tripEndDate || undefined,
