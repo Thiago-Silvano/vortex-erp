@@ -130,18 +130,25 @@ export default function DS160PublicPage() {
         .single();
       
       if (client) {
-        let query = supabase
-          .from('visa_processes')
-          .update({ status: 'produzindo' as any })
-          .eq('client_name', client.full_name)
-          .in('status', ['falta_passaporte'] as any[]);
+        // Try matching by client_name first
+        let baseFilter = formRecord.empresa_id 
+          ? supabase.from('visa_processes').select('id').eq('empresa_id', formRecord.empresa_id)
+          : supabase.from('visa_processes').select('id');
         
-        if (formRecord.empresa_id) {
-          query = query.eq('empresa_id', formRecord.empresa_id);
+        const { data: byClientName } = await (baseFilter as any)
+          .or(`client_name.eq.${client.full_name},applicant_name.eq.${client.full_name}`)
+          .in('status', ['falta_passaporte', 'produzindo'] as any[]);
+        
+        if (byClientName && byClientName.length > 0) {
+          const ids = byClientName.map((r: any) => r.id);
+          const { error: vpError } = await supabase
+            .from('visa_processes')
+            .update({ status: 'produzindo' as any })
+            .in('id', ids);
+          console.log('visa_processes updated:', { error: vpError, count: ids.length, clientName: client.full_name });
+        } else {
+          console.log('No visa_processes found for client:', client.full_name);
         }
-        
-        const { error: vpError, count } = await query;
-        console.log('visa_processes update result:', { error: vpError, count, clientName: client.full_name, empresaId: formRecord.empresa_id });
       }
     }
     
