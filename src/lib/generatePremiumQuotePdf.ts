@@ -77,7 +77,7 @@ export interface PremiumPdfData {
   flightLegs: FlightLegPdf[];
   hotels: HotelPdf[];
   services: ServicePdf[];
-  allItems: Array<{ name: string; value: number }>;
+  allItems: Array<{ name: string; value: number; description?: string }>;
   showIndividualValues?: boolean;
   totalProducts: number;
   totalTaxes: number;
@@ -390,21 +390,21 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     y += 6;
   }
 
-  // ─── Section: Experiências e Serviços ────────────────────
-  if (data.services.length > 0) {
+  // ─── Section: Experiências e Serviços (hide when showIndividualValues is true) ────────────────────
+  if (data.services.length > 0 && data.showIndividualValues !== true) {
     y = checkPageBreak(doc, y, 30, m);
     y = drawSectionTitle(doc, 'Experiências e serviços', y, m, pw);
     y += 4;
 
     data.services.forEach((svc) => {
-      y = checkPageBreak(doc, y, 12, m);
+      y = checkPageBreak(doc, y, 16, m);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       setColor(doc, DEEP_BLUE);
       doc.text(s(`-  ${svc.name}`), m, y);
 
-      if (svc.value > 0 && data.showIndividualValues !== false) {
+      if (svc.value > 0) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         setColor(doc, TEXT_MAIN);
@@ -412,16 +412,14 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       }
       y += 5;
 
-      if (svc.description || svc.date || svc.quantity) {
+      if (svc.description) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         setColor(doc, TEXT_MUTED);
-        const meta: string[] = [];
-        if (svc.date) meta.push(formatDateBR(svc.date));
-        if (svc.quantity) meta.push(`${svc.quantity} pessoa(s)`);
-        if (svc.description) meta.push(svc.description);
-        doc.text(s(meta.join('  ·  ')), m + 5, y);
-        y += 4;
+        const descLines = doc.splitTextToSize(s(svc.description), cw - 10);
+        const maxLines = Math.min(descLines.length, 6);
+        doc.text(descLines.slice(0, maxLines), m + 5, y);
+        y += maxLines * 3.5 + 2;
       }
       y += 2;
     });
@@ -440,16 +438,27 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   const boxW = cw;
   let boxY = y;
 
-  // Items list
+  // Items list - when showIndividualValues, show service name instead of generic type
   if (data.allItems.length > 0) {
     data.allItems.forEach((item) => {
-      boxY = checkPageBreak(doc, boxY, 8, m);
+      boxY = checkPageBreak(doc, boxY, 14, m);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       setColor(doc, TEXT_MAIN);
       doc.text(s(item.name), boxX + 4, boxY);
       doc.text(fmt(item.value), boxX + boxW - 4, boxY, { align: 'right' });
       boxY += 6;
+
+      // Show description for each item in resumo financeiro
+      if ((item as any).description) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        setColor(doc, TEXT_MUTED);
+        const descLines = doc.splitTextToSize(s((item as any).description), boxW - 12);
+        const maxLines = Math.min(descLines.length, 3);
+        doc.text(descLines.slice(0, maxLines), boxX + 6, boxY);
+        boxY += maxLines * 3 + 2;
+      }
     });
   }
 
@@ -747,11 +756,7 @@ function drawFlightDirection(
   }
 
   legs.forEach((leg, idx) => {
-    y = checkPageBreak(doc, y, 25, m);
-
-    // Flight segment layout:
-    // ORIGIN  ────── FLIGHT CODE ──────  DESTINATION
-    //  HH:MM                                HH:MM
+    y = checkPageBreak(doc, y, 18, m);
 
     const segW = cw;
     const originX = m + 5;
@@ -760,70 +765,66 @@ function drawFlightDirection(
 
     // Origin code
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
+    doc.setFontSize(14);
     setColor(doc, DEEP_BLUE);
     doc.text(leg.origin || '---', originX, y);
 
     // Departure time
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     setColor(doc, TEXT_MAIN);
-    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 6);
+    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 5);
 
     // Destination code
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
+    doc.setFontSize(14);
     setColor(doc, DEEP_BLUE);
     doc.text(leg.destination || '---', destX, y, { align: 'right' });
 
     // Arrival time
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     setColor(doc, TEXT_MAIN);
-    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 6, { align: 'right' });
+    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 5, { align: 'right' });
 
     // Flight line with arrow
-    const lineY = y - 3;
-    const lineStart = originX + 25;
-    const lineEnd = destX - 25;
+    const lineY = y - 2;
+    const lineStart = originX + 20;
+    const lineEnd = destX - 20;
 
-    // Dashed line
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.setLineWidth(0.4);
-
-    // Draw dashes
+    doc.setLineWidth(0.3);
     const dashLen = 3;
     const gapLen = 2;
     let dx = lineStart;
-    while (dx < lineEnd - 5) {
-      doc.line(dx, lineY, Math.min(dx + dashLen, lineEnd - 5), lineY);
+    while (dx < lineEnd - 4) {
+      doc.line(dx, lineY, Math.min(dx + dashLen, lineEnd - 4), lineY);
       dx += dashLen + gapLen;
     }
 
     // Arrow head
     doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.triangle(lineEnd - 3, lineY - 1.5, lineEnd - 3, lineY + 1.5, lineEnd, lineY, 'F');
+    doc.triangle(lineEnd - 2, lineY - 1, lineEnd - 2, lineY + 1, lineEnd, lineY, 'F');
 
-    // Flight code in the middle
+    // Flight code
     if (leg.flightCode) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
+      doc.setFontSize(6);
       setColor(doc, TEXT_MUTED);
-      doc.text(leg.flightCode, midX, lineY - 3, { align: 'center' });
+      doc.text(leg.flightCode, midX, lineY - 2, { align: 'center' });
     }
 
-    y += 12;
+    y += 9;
 
-    // Connection info between legs
+    // Connection info
     if (idx < legs.length - 1 && leg.connectionDuration) {
       doc.setFillColor(LIGHT_GRAY[0], LIGHT_GRAY[1], LIGHT_GRAY[2]);
-      doc.rect(midX - 20, y - 2, 40, 7, 'F');
-
+      doc.rect(midX - 18, y - 2, 36, 6, 'F');
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
+      doc.setFontSize(6);
       setColor(doc, TEXT_MUTED);
-      doc.text(`Conexão: ${leg.connectionDuration}`, midX, y + 2, { align: 'center' });
-      y += 10;
+      doc.text(`Conexão: ${leg.connectionDuration}`, midX, y + 1, { align: 'center' });
+      y += 7;
     }
   });
 

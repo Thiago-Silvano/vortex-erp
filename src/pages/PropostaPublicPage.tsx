@@ -382,15 +382,21 @@ export default function PropostaPublicPage() {
               </div>
             )}
 
-            {/* Items breakdown - only show if show_individual_values is true */}
-            {(sale as any).show_individual_values !== false && items.map((item, idx) => {
-              const name = item.service_catalog_id ? catalogNames[item.service_catalog_id] || item.description : item.description;
+            {/* Items breakdown - show service names when show_individual_values is true */}
+            {(sale as any).show_individual_values === true && items.map((item, idx) => {
+              const catalogName = item.service_catalog_id ? catalogNames[item.service_catalog_id] : null;
+              const name = catalogName || item.description;
               return (
-                <div key={idx} className="flex justify-between items-center py-4 px-8" style={{
+                <div key={idx} className="py-4 px-8" style={{
                   background: idx % 2 === 0 ? '#fff' : '#faf9f6', borderBottom: '1px solid #f0ede8'
                 }}>
-                  <span className="text-sm" style={{ color: '#2d2d2d' }}>{name || `Serviço ${idx + 1}`}</span>
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: '#2d2d2d' }}>{fmt(item.total_value)}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium" style={{ color: '#2d2d2d' }}>{name || `Serviço ${idx + 1}`}</span>
+                    <span className="text-sm font-semibold tabular-nums" style={{ color: '#C8A45B' }}>{fmt(item.total_value)}</span>
+                  </div>
+                  {item.metadata?.detailedDescription && (
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: '#999' }}>{item.metadata.detailedDescription}</p>
+                  )}
                 </div>
               );
             })}

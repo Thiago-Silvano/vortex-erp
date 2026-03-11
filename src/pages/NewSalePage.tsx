@@ -21,7 +21,7 @@ import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { maskPhone, maskCpf, maskEmail } from '@/lib/masks';
+import { maskPhone, maskCpf, maskEmail, maskCurrency, parseCurrency } from '@/lib/masks';
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
 interface SaleItem {
@@ -831,7 +831,7 @@ export default function NewSalePage() {
       }),
       allItems: showIndividualValues ? items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
-        return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
+        return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value, description: item.metadata?.detailedDescription || item.description || '' };
       }) : [],
       showIndividualValues,
       totalTrip: totalSaleWithInterest,
@@ -949,7 +949,7 @@ export default function NewSalePage() {
       }),
       allItems: showIndividualValues ? items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
-        return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
+        return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value, description: item.metadata?.detailedDescription || item.description || '' };
       }) : [],
       showIndividualValues,
       totalProducts: totalCost,
@@ -1223,16 +1223,16 @@ export default function NewSalePage() {
           </CardHeader>
           <CardContent className="space-y-4 sm:p-0">
             {/* Desktop Table */}
-            <div className="hidden sm:block">
+            <div className="hidden sm:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-16" />
-                    <TableHead>Serviço</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead className="w-32">Custo</TableHead>
-                    <TableHead className="w-24">RAV</TableHead>
-                    <TableHead className="w-32">Total</TableHead>
+                    <TableHead className="w-12" />
+                    <TableHead className="min-w-[140px]">Serviço</TableHead>
+                    <TableHead className="min-w-[100px]">Descrição</TableHead>
+                    <TableHead className="w-36">Custo</TableHead>
+                    <TableHead className="w-32">RAV</TableHead>
+                    <TableHead className="w-36">Total</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
@@ -1251,7 +1251,7 @@ export default function NewSalePage() {
                             </Button>
                           </div>
                         </TableCell>
-                        <TableCell className="min-w-[150px]">
+                        <TableCell>
                           <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
@@ -1261,14 +1261,32 @@ export default function NewSalePage() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal" onClick={() => setEditingItemIdx(idx)}>
+                          <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal max-w-[120px]" onClick={() => setEditingItemIdx(idx)}>
                             <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">{getServiceTypeLabel(item.metadata)}{item.description || 'Editar detalhes...'}</span>
+                            <span className="truncate text-xs">{getServiceTypeLabel(item.metadata)}{item.description || 'Editar...'}</span>
                           </Button>
                         </TableCell>
-                        <TableCell><Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} /></TableCell>
-                        <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
-                        <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
+                        <TableCell>
+                          <Input
+                            value={maskCurrency(item.cost_price)}
+                            onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))}
+                            className="text-right"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={maskCurrency(item.rav)}
+                            onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))}
+                            className="text-right"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={maskCurrency(item.total_value)}
+                            disabled
+                            className="bg-muted text-right"
+                          />
+                        </TableCell>
                         <TableCell>
                           <Button size="icon" variant="ghost" onClick={() => removeItem(idx)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -1331,15 +1349,15 @@ export default function NewSalePage() {
                   <div className="grid grid-cols-3 gap-2">
                     <div>
                       <Label className="text-xs">Custo</Label>
-                      <Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+                      <Input value={maskCurrency(item.cost_price)} onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))} className="h-8 text-sm text-right" />
                     </div>
                     <div>
                       <Label className="text-xs">RAV</Label>
-                      <Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+                      <Input value={maskCurrency(item.rav)} onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))} className="h-8 text-sm text-right" />
                     </div>
                     <div>
                       <Label className="text-xs">Total</Label>
-                      <Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted h-8 text-sm" />
+                      <Input value={maskCurrency(item.total_value)} disabled className="bg-muted h-8 text-sm text-right" />
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
