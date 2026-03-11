@@ -211,7 +211,62 @@ async function createWhatsAppClient(empresaId) {
 
       const contact = await msg.getContact();
       const senderName = contact?.pushname || contact?.name || '';
-      const phone = msg.from.replace('@c.us', '').replace('@g.us', '');
+      
+      // Resolve real phone number - LID numbers are NOT real phone numbers
+      let phone = msg.from.replace('@c.us', '').replace('@g.us', '').replace('@lid', '');
+      
+      // If the sender is a LID (not a real phone), try to get the real number from the contact
+      const isLid = msg.from.endsWith('@lid') || (phone.length > 13 && !/^55\d{10,11}$/.test(phone));
+      if (isLid) {
+        log(empresaId, `Detectado LID: ${msg.from}, tentando resolver número real...`);
+        
+        // Try contact.number first (most reliable)
+        if (contact?.number) {
+          const contactNumber = String(contact.number).replace(/\D/g, '');
+          if (contactNumber && contactNumber.length >= 8 && contactNumber.length <= 15) {
+            log(empresaId, `LID resolvido via contact.number: ${phone} -> ${contactNumber}`);
+            phone = contactNumber;
+          }
+        }
+        
+        // Try getNumberId as fallback
+        if (isLid && phone === msg.from.replace(/@.*$/, '')) {
+          try {
+            const numberId = await client.getNumberId(msg.from);
+            if (numberId?.user) {
+              log(empresaId, `LID resolvido via getNumberId: ${phone} -> ${numberId.user}`);
+              phone = numberId.user;
+            }
+          } catch (e) {
+            log(empresaId, `getNumberId falhou para LID: ${e.message}`);
+          }
+        }
+        
+        // If still unresolved, try to find in existing chats by matching the LID
+        if (phone.length > 13) {
+          try {
+            const chats = await client.getChats();
+            for (const chat of chats) {
+              if (chat.isGroup) continue;
+              const chatContact = await chat.getContact();
+              if (chatContact?.id?._serialized === msg.from && chatContact?.number) {
+                const realNumber = String(chatContact.number).replace(/\D/g, '');
+                if (realNumber.length >= 8 && realNumber.length <= 15) {
+                  log(empresaId, `LID resolvido via chat scan: ${phone} -> ${realNumber}`);
+                  phone = realNumber;
+                  break;
+                }
+              }
+            }
+          } catch (e) {
+            log(empresaId, `Chat scan para LID falhou: ${e.message}`);
+          }
+        }
+        
+        if (phone.length > 13) {
+          log(empresaId, `AVISO: Não foi possível resolver LID ${msg.from} para número real. Usando como está.`);
+        }
+      }
 
       log(empresaId, `Mensagem de ${phone}: ${msg.body?.substring(0, 50) || '[mídia]'}`);
 
