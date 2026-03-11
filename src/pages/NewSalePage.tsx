@@ -1418,9 +1418,20 @@ export default function NewSalePage() {
                       </label>
                     )}
                     {(itemImages[idx] || []).map((url, imgIdx) => (
-                      <div key={imgIdx} className="relative group">
-                        <img src={url} alt="" className="h-8 w-12 object-cover rounded border" />
-                        <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">×</button>
+                      <div key={imgIdx} className="relative group flex flex-col items-center">
+                        {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
+                          <span className="text-[9px] font-semibold text-primary mb-0.5">CAPA</span>
+                        )}
+                        <div className="relative">
+                          <img src={url} alt="" className={`h-8 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} />
+                          <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">×</button>
+                        </div>
+                        {(itemImages[idx] || []).length > 1 && (
+                          <div className="flex gap-0.5 mt-0.5">
+                            <button type="button" disabled={imgIdx === 0} onClick={() => moveItemImage(idx, imgIdx, 'left')} className="text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-30">◀</button>
+                            <button type="button" disabled={imgIdx === (itemImages[idx] || []).length - 1} onClick={() => moveItemImage(idx, imgIdx, 'right')} className="text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-30">▶</button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
