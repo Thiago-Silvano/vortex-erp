@@ -515,7 +515,7 @@ export default function WhatsAppPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-sm truncate" style={{ color: '#111b21' }}>
-                            {conv.client_name || 'Cliente desconhecido'}
+                            {(conv.client_name || 'Cliente desconhecido').toUpperCase()}
                           </span>
                           <span className="text-[11px] shrink-0 ml-2" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
                             {conv.last_message_at ? format(new Date(conv.last_message_at), 'HH:mm', { locale: ptBR }) : ''}
