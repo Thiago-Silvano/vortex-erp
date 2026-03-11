@@ -309,6 +309,7 @@ async function createWhatsAppClient(empresaId) {
       await sendWebhook('message_received', {
         empresa_id: empresaId,
         phone: phone,
+        original_from: msg.from, // Original WhatsApp ID (e.g., xxx@lid or xxx@c.us)
         sender_name: senderName,
         content: msg.body || '',
         message_type: messageType,

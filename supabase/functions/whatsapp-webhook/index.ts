@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
       const {
         empresa_id: incomingEmpresaId,
         phone,
+        original_from,
         sender_name,
         content,
         message_type,
