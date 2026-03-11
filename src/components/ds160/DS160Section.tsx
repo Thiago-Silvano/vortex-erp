@@ -132,6 +132,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       case 'sent': return { label: 'Link enviado', variant: 'outline' as const };
       case 'in_progress': return { label: 'Em preenchimento', variant: 'default' as const };
       case 'submitted': return { label: 'Concluído', variant: 'default' as const };
+      case 'deleted': return { label: 'Excluído', variant: 'destructive' as const };
       default: return { label: s, variant: 'secondary' as const };
     }
   };
