@@ -123,7 +123,6 @@ export default function DS160PublicPage() {
     
     // Update visa_processes for this client to "produzindo"
     if (!error && formRecord) {
-      // Get client name to match
       const { data: client } = await supabase
         .from('clients')
         .select('full_name')
@@ -131,13 +130,18 @@ export default function DS160PublicPage() {
         .single();
       
       if (client) {
-        // Update processes matching this client's name and empresa
-        await supabase
+        let query = supabase
           .from('visa_processes')
           .update({ status: 'produzindo' as any })
           .eq('client_name', client.full_name)
-          .eq('empresa_id', formRecord.empresa_id || '')
           .in('status', ['falta_passaporte'] as any[]);
+        
+        if (formRecord.empresa_id) {
+          query = query.eq('empresa_id', formRecord.empresa_id);
+        }
+        
+        const { error: vpError, count } = await query;
+        console.log('visa_processes update result:', { error: vpError, count, clientName: client.full_name, empresaId: formRecord.empresa_id });
       }
     }
     
