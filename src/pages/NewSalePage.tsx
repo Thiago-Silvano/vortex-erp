@@ -1349,15 +1349,15 @@ export default function NewSalePage() {
                   <div className="grid grid-cols-3 gap-2">
                     <div>
                       <Label className="text-xs">Custo</Label>
-                      <Input type="number" step="0.01" value={item.cost_price} onChange={e => updateItem(idx, 'cost_price', parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+                      <Input value={maskCurrency(item.cost_price)} onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))} className="h-8 text-sm text-right" />
                     </div>
                     <div>
                       <Label className="text-xs">RAV</Label>
-                      <Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+                      <Input value={maskCurrency(item.rav)} onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))} className="h-8 text-sm text-right" />
                     </div>
                     <div>
                       <Label className="text-xs">Total</Label>
-                      <Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted h-8 text-sm" />
+                      <Input value={maskCurrency(item.total_value)} disabled className="bg-muted h-8 text-sm text-right" />
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">

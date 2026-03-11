@@ -77,7 +77,7 @@ export interface PremiumPdfData {
   flightLegs: FlightLegPdf[];
   hotels: HotelPdf[];
   services: ServicePdf[];
-  allItems: Array<{ name: string; value: number }>;
+  allItems: Array<{ name: string; value: number; description?: string }>;
   showIndividualValues?: boolean;
   totalProducts: number;
   totalTaxes: number;
