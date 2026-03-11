@@ -368,24 +368,35 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   }
 
   // ─── Section: Itinerário Aéreo ───────────────────────────
-  if (data.flightLegs.length > 0) {
+  const flightGroups = data.flightGroups && data.flightGroups.length > 0
+    ? data.flightGroups
+    : data.flightLegs.length > 0 ? [data.flightLegs] : [];
+
+  if (flightGroups.length > 0) {
     y = checkPageBreak(doc, y, 60, m);
     y = drawSectionTitle(doc, 'Itinerário aéreo', y, m, pw);
     y += 4;
 
-    // Group legs by direction
-    const outbound = data.flightLegs.filter(l => l.direction !== 'volta');
-    const returnLegs = data.flightLegs.filter(l => l.direction === 'volta');
+    flightGroups.forEach((groupLegs, groupIdx) => {
+      if (groupIdx > 0) {
+        y = checkPageBreak(doc, y, 10, m);
+        drawLine(doc, m + 20, y, pw - m - 20, BORDER_COLOR, 0.2);
+        y += 6;
+      }
 
-    if (outbound.length > 0) {
-      y = drawFlightDirection(doc, 'IDA', outbound, y, m, pw, cw);
-      y += 4;
-    }
-    if (returnLegs.length > 0) {
-      y = checkPageBreak(doc, y, 40, m);
-      y = drawFlightDirection(doc, 'VOLTA', returnLegs, y, m, pw, cw);
-      y += 4;
-    }
+      const outbound = groupLegs.filter(l => l.direction !== 'volta');
+      const returnLegs = groupLegs.filter(l => l.direction === 'volta');
+
+      if (outbound.length > 0) {
+        y = drawFlightDirection(doc, 'IDA', outbound, y, m, pw, cw);
+        y += 4;
+      }
+      if (returnLegs.length > 0) {
+        y = checkPageBreak(doc, y, 40, m);
+        y = drawFlightDirection(doc, 'VOLTA', returnLegs, y, m, pw, cw);
+        y += 4;
+      }
+    });
 
     drawLine(doc, m, y, pw - m);
     y += 6;
