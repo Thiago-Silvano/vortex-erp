@@ -473,6 +473,7 @@ export default function NewSalePage() {
         net_profit: netProfit,
         notes,
         proposal_payment_options: proposalPaymentOptions.filter(o => o.enabled),
+        show_individual_values: showIndividualValues,
         status,
         created_by: userEmail,
         updated_by: userEmail,
