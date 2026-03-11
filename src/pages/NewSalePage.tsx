@@ -134,6 +134,7 @@ export default function NewSalePage() {
 
   // Service edit modal
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
+  const [showIndividualValues, setShowIndividualValues] = useState(true);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
