@@ -438,16 +438,27 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   const boxW = cw;
   let boxY = y;
 
-  // Items list
+  // Items list - when showIndividualValues, show service name instead of generic type
   if (data.allItems.length > 0) {
     data.allItems.forEach((item) => {
-      boxY = checkPageBreak(doc, boxY, 8, m);
+      boxY = checkPageBreak(doc, boxY, 14, m);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       setColor(doc, TEXT_MAIN);
       doc.text(s(item.name), boxX + 4, boxY);
       doc.text(fmt(item.value), boxX + boxW - 4, boxY, { align: 'right' });
       boxY += 6;
+
+      // Show description for each item in resumo financeiro
+      if ((item as any).description) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        setColor(doc, TEXT_MUTED);
+        const descLines = doc.splitTextToSize(s((item as any).description), boxW - 12);
+        const maxLines = Math.min(descLines.length, 3);
+        doc.text(descLines.slice(0, maxLines), boxX + 6, boxY);
+        boxY += maxLines * 3 + 2;
+      }
     });
   }
 
