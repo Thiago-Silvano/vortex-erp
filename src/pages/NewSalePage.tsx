@@ -902,11 +902,18 @@ export default function NewSalePage() {
                     </Button>
                   </div>
                 ) : (
-                  <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50">
-                    <ImagePlus className="h-4 w-4" />
-                    Adicionar imagem
-                    <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
-                  </label>
+                  {uploadingDestImage ? (
+                    <div className="flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground">
+                      <span className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                      Carregando...
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50">
+                      <ImagePlus className="h-4 w-4" />
+                      Adicionar imagem
+                      <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
+                    </label>
+                  )}
                 )}
               </div>
             </div>
