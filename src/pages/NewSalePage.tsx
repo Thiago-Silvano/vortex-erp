@@ -76,7 +76,8 @@ export default function NewSalePage() {
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
   const quoteData = (location.state as any)?.quoteData;
-  const editSaleId = (location.state as any)?.editSaleId;
+  const initialEditSaleId = (location.state as any)?.editSaleId;
+  const [editSaleId, setEditSaleId] = useState<string | undefined>(initialEditSaleId);
 
   const [quoteId, setQuoteId] = useState(quoteData?.id || '');
   const [clientName, setClientName] = useState(quoteData?.clientName || '');
@@ -139,8 +140,8 @@ export default function NewSalePage() {
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
 
   useEffect(() => {
-    if (editSaleId) loadSale(editSaleId);
-  }, [editSaleId]);
+    if (initialEditSaleId) loadSale(initialEditSaleId);
+  }, [initialEditSaleId]);
 
   const loadSale = async (id: string) => {
     const { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
@@ -609,8 +610,8 @@ export default function NewSalePage() {
       }
       const saleId = await saveSaleCore(payload, userEmail);
       if (!saleId) { setSavingDraft(false); return; }
-      toast.success('Rascunho salvo! Nenhum lançamento financeiro foi gerado.');
-      navigate('/sales');
+      if (!editSaleId) setEditSaleId(saleId);
+      toast.success('Rascunho salvo!');
     } catch (err) {
       toast.error('Erro ao salvar rascunho');
     } finally {
@@ -628,7 +629,10 @@ export default function NewSalePage() {
         await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
       }
       const saleId = await saveSaleCore(payload, userEmail);
-      if (saleId) toast.success('Rascunho salvo automaticamente.');
+      if (saleId) {
+        if (!editSaleId) setEditSaleId(saleId);
+        toast.success('Rascunho salvo automaticamente.');
+      }
     } catch { /* silent */ }
     finally { setSavingDraft(false); }
   };
