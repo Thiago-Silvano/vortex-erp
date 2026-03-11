@@ -403,10 +403,51 @@ export default function EmailInboxPage() {
 
                 <Separator className="mb-4" />
 
-                <div
-                  className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: selectedEmail.body_html || selectedEmail.body_text?.replace(/\n/g, '<br>') || '' }}
-                />
+                {loadingBody ? (
+                  <div className="flex items-center gap-2 text-muted-foreground py-8">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span className="text-sm">Carregando conteúdo...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: emailBody?.html || emailBody?.text?.replace(/\n/g, '<br>') || '<p class="text-muted-foreground">(Sem conteúdo)</p>'
+                      }}
+                    />
+
+                    {emailAttachments.length > 0 && (
+                      <div className="mt-6 pt-4 border-t">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Paperclip className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{emailAttachments.length} anexo(s)</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {emailAttachments.map(att => (
+                            <div key={att.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted/30 text-sm">
+                              <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <span className="truncate max-w-[200px]">{att.file_name}</span>
+                              {att.file_size && (
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                  {att.file_size > 1024 * 1024
+                                    ? `${(att.file_size / 1024 / 1024).toFixed(1)} MB`
+                                    : `${Math.round(att.file_size / 1024)} KB`}
+                                </span>
+                              )}
+                              {att.file_url && (
+                                <a href={att.file_url} target="_blank" rel="noopener noreferrer"
+                                  className="text-xs text-primary hover:underline shrink-0">
+                                  Baixar
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </ScrollArea>
 
