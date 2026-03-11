@@ -987,9 +987,9 @@ export default function NewSalePage() {
                 <TableRow>
                   <TableHead>Serviço</TableHead>
                   <TableHead>Descrição</TableHead>
-                  <TableHead className="w-36">Preço de Custo</TableHead>
-                  <TableHead className="w-36">RAV</TableHead>
-                  <TableHead className="w-36">Valor Total</TableHead>
+                  <TableHead className="w-40 min-w-[160px]">Preço de Custo</TableHead>
+                  <TableHead className="w-40 min-w-[160px]">RAV</TableHead>
+                  <TableHead className="w-40 min-w-[160px]">Valor Total</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
