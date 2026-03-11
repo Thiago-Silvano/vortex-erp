@@ -95,7 +95,7 @@ const priorityLabels: Record<string, string> = {
 };
 
 export default function WhatsAppPage() {
-  const { activeCompany } = useCompany();
+  const { activeCompany, isMaster } = useCompany();
   const navigate = useNavigate();
   const location = useLocation();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -109,7 +109,6 @@ export default function WhatsAppPage() {
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [deleteConvTarget, setDeleteConvTarget] = useState<Conversation | null>(null);
-  const { isMaster } = useCompany();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
