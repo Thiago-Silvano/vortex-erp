@@ -25,7 +25,9 @@ import {
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import NewWhatsAppConversationModal from '@/components/NewWhatsAppConversationModal';
+import PhotoCaptureModal from '@/components/PhotoCaptureModal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Camera } from 'lucide-react';
 
 interface MenuItem {
   title: string;
