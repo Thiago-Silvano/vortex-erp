@@ -764,6 +764,7 @@ export default function NewSalePage() {
         installments,
         receivables: receivables.map(r => ({ number: r.installment_number, amount: r.amount, dueDate: r.due_date || undefined })),
       },
+      proposalPaymentOptions: proposalPaymentOptions.filter(o => o.enabled),
       notes: notes || undefined,
     };
 
