@@ -615,6 +615,21 @@ export default function NewSalePage() {
     }
   };
 
+  const handleSilentSaveDraft = async () => {
+    if (!clientName.trim()) return;
+    setSavingDraft(true);
+    try {
+      const { payload, userEmail } = await buildSalePayload('draft');
+      if (editSaleId) {
+        await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+        await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      }
+      const saleId = await saveSaleCore(payload, userEmail);
+      if (saleId) toast.success('Rascunho salvo automaticamente.');
+    } catch { /* silent */ }
+    finally { setSavingDraft(false); }
+  };
+
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
     const { payload, userEmail } = await buildSalePayload('active');
