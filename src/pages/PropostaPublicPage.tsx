@@ -622,14 +622,16 @@ function ServiceCard({
               <p className="text-sm leading-relaxed mt-2" style={{ color: '#888' }}>{description}</p>
             )}
           </div>
-          <div className="text-right flex-shrink-0">
-            {value > 0 && (
-              <>
-                <span className="text-lg font-bold whitespace-nowrap" style={{ color: '#C8A45B' }}>{fmt(value)}</span>
-                {passengersCount > 1 && <p className="text-[11px] mt-0.5" style={{ color: '#aaa' }}>{fmt(value / passengersCount)} /pessoa</p>}
-              </>
-            )}
-          </div>
+          {showValue && (
+            <div className="text-right flex-shrink-0">
+              {value > 0 && (
+                <>
+                  <span className="text-lg font-bold whitespace-nowrap" style={{ color: '#C8A45B' }}>{fmt(value)}</span>
+                  {passengersCount > 1 && <p className="text-[11px] mt-0.5" style={{ color: '#aaa' }}>{fmt(value / passengersCount)} /pessoa</p>}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Flight details */}

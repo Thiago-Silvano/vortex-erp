@@ -775,6 +775,7 @@ export default function NewSalePage() {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
         return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
       }) : [],
+      showIndividualValues,
       totalProducts: totalSale,
       totalTaxes: 0,
       totalTrip: totalSale,
