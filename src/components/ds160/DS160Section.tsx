@@ -27,6 +27,7 @@ interface Props {
   clientId: string;
   clientName: string;
   clientEmail: string;
+  isMaster?: boolean;
 }
 
 export default function DS160Section({ clientId, clientName, clientEmail }: Props) {
