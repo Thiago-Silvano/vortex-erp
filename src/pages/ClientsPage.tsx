@@ -277,6 +277,24 @@ export default function ClientsPage() {
               </Card>
 
               <div className="flex justify-end gap-3">
+                {editingId && (
+                  <Button
+                    variant="outline"
+                    className="gap-1.5 text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+                    onClick={() => {
+                      if (!form.phone?.trim()) {
+                        toast.error('Cadastre um telefone para o cliente antes de chamar no WhatsApp');
+                        return;
+                      }
+                      const cleanPhone = form.phone.replace(/\D/g, '');
+                      setWaPhone(cleanPhone);
+                      setWaName(form.full_name);
+                      setWaModalOpen(true);
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4" />Chamar no WhatsApp
+                  </Button>
+                )}
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                 <Button onClick={handleSave}>{editingId ? 'Atualizar' : 'Cadastrar'}</Button>
               </div>
