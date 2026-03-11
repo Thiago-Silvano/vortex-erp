@@ -83,7 +83,6 @@ export default function ClientsPage() {
 
   const handleSave = async () => {
     if (!form.full_name.trim()) { toast.error('Nome é obrigatório'); return; }
-    if (!form.cpf.trim()) { toast.error('CPF é obrigatório'); return; }
     if (form.email && !validateEmail(form.email)) { toast.error('Email inválido'); return; }
 
     if (editingId) {
