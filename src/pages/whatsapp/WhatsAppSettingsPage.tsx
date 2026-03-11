@@ -103,7 +103,10 @@ export default function WhatsAppSettingsPage() {
   const [pollingQr, setPollingQr] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+  const [autoReconnectEnabled, setAutoReconnectEnabled] = useState(true);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoReconnectRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const empresaIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -155,14 +158,113 @@ export default function WhatsAppSettingsPage() {
   }, [activeCompany?.id]);
 
   useEffect(() => {
-    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (autoReconnectRef.current) clearInterval(autoReconnectRef.current);
+    };
   }, []);
 
   useEffect(() => {
-    if (session?.status === 'connected' && pollingRef.current) {
-      clearInterval(pollingRef.current); pollingRef.current = null; setPollingQr(false);
+    if (session?.status === 'connected') {
+      if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; setPollingQr(false); }
+      setReconnectAttempts(0);
     }
   }, [session?.status]);
+
+  // ─── Auto-Reconnect Monitor ───
+  useEffect(() => {
+    if (autoReconnectRef.current) { clearInterval(autoReconnectRef.current); autoReconnectRef.current = null; }
+    if (!autoReconnectEnabled || !activeCompany?.id) return;
+
+    const MAX_ATTEMPTS = 5;
+    const CHECK_INTERVAL = 60000; // check every 60s
+
+    autoReconnectRef.current = setInterval(async () => {
+      const empresaId = empresaIdRef.current;
+      if (!empresaId) return;
+
+      try {
+        // Check current DB status
+        const { data: currentSession } = await supabase
+          .from('whatsapp_sessions')
+          .select('status, server_url, phone_number')
+          .eq('empresa_id', empresaId)
+          .single();
+
+        if (!currentSession?.server_url || currentSession.status === 'connected' || currentSession.status === 'waiting_qr' || currentSession.status === 'connecting') return;
+
+        // Session is disconnected — check if VPS server is actually connected
+        const result = await callProxy('/status', 'GET', empresaId);
+        const d = result?.data || result;
+
+        if (d?.connected === true) {
+          // Server says connected but DB says disconnected — sync it
+          console.log('[Auto-Reconnect] Server connected, syncing DB status...');
+          await supabase.from('whatsapp_sessions').update({
+            status: 'connected',
+            connected_at: new Date().toISOString(),
+            qr_code: '',
+            updated_at: new Date().toISOString(),
+            phone_number: d.phone || d.phone_number || currentSession?.phone_number || '',
+          } as any).eq('empresa_id', empresaId);
+          await addLocalLog(empresaId, 'session_connected', 'Auto-reconexão: status sincronizado com o servidor');
+          setReconnectAttempts(0);
+          fetchSession();
+          return;
+        }
+
+        // Server is also disconnected — try to reconnect
+        setReconnectAttempts(prev => {
+          if (prev >= MAX_ATTEMPTS) {
+            console.log('[Auto-Reconnect] Max attempts reached, pausing...');
+            return prev;
+          }
+          return prev + 1;
+        });
+
+        // Check if we haven't exceeded max attempts
+        const { data: latestSession } = await supabase
+          .from('whatsapp_sessions')
+          .select('status')
+          .eq('empresa_id', empresaId)
+          .single();
+
+        if (latestSession?.status === 'connected') return;
+
+        console.log('[Auto-Reconnect] Attempting reconnection...');
+        await addLocalLog(empresaId, 'session_update', 'Auto-reconexão: tentando reconectar automaticamente...');
+
+        const connectResult = await callProxy('/connect', 'GET', empresaId);
+        const connectData = connectResult?.data || connectResult;
+
+        if (connectData?.qr) {
+          await supabase.from('whatsapp_sessions').update({
+            status: 'waiting_qr',
+            qr_code: connectData.qr,
+            updated_at: new Date().toISOString(),
+          } as any).eq('empresa_id', empresaId);
+          await addLocalLog(empresaId, 'qr_generated', 'Auto-reconexão: novo QR Code gerado. Escaneie para reconectar.');
+          fetchSession();
+        } else if (connectData?.connected === true) {
+          await supabase.from('whatsapp_sessions').update({
+            status: 'connected',
+            connected_at: new Date().toISOString(),
+            qr_code: '',
+            updated_at: new Date().toISOString(),
+          } as any).eq('empresa_id', empresaId);
+          await addLocalLog(empresaId, 'session_connected', 'Auto-reconexão: WhatsApp reconectado com sucesso!');
+          setReconnectAttempts(0);
+          fetchSession();
+        }
+      } catch (e) {
+        console.error('[Auto-Reconnect] Error:', e);
+      }
+    }, CHECK_INTERVAL);
+
+    return () => {
+      if (autoReconnectRef.current) { clearInterval(autoReconnectRef.current); autoReconnectRef.current = null; }
+    };
+  }, [autoReconnectEnabled, activeCompany?.id, fetchSession]);
 
   const stopPolling = useCallback(() => {
     if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
@@ -539,6 +641,28 @@ export default function WhatsAppSettingsPage() {
               >
                 {resetting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RotateCcw className="h-4 w-4 mr-2" />}
                 Resetar Sessão
+              </Button>
+            </div>
+
+            {/* Auto-Reconnect Toggle */}
+            <Separator className="my-4" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <RefreshCw className={`h-4 w-4 ${autoReconnectEnabled ? 'text-green-600' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="text-sm font-medium">Auto-Reconexão</p>
+                  <p className="text-xs text-muted-foreground">
+                    Tenta reconectar automaticamente quando a sessão cair
+                    {reconnectAttempts > 0 && ` (${reconnectAttempts}/5 tentativas)`}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant={autoReconnectEnabled ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAutoReconnectEnabled(!autoReconnectEnabled)}
+              >
+                {autoReconnectEnabled ? 'Ativado' : 'Desativado'}
               </Button>
             </div>
           </CardContent>
