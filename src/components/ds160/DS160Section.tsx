@@ -138,6 +138,20 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   const formatDate = (d: string | null) => d ? format(new Date(d), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—';
 
+  const handleDeleteForm = async () => {
+    if (!deleteFormId) return;
+    const { error } = await supabase.from('ds160_forms').update({
+      status: 'deleted',
+    } as any).eq('id', deleteFormId);
+    if (error) {
+      toast.error('Erro ao excluir formulário');
+    } else {
+      toast.success('Formulário excluído com sucesso');
+      fetchForms();
+    }
+    setDeleteFormId(null);
+  };
+
   // Check for newly submitted forms (notification)
   const submittedNotDismissed = forms.filter(f => f.status === 'submitted' && !dismissed.has(f.id));
 
