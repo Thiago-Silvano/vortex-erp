@@ -1276,7 +1276,7 @@ export default function NewSalePage() {
                         </TableCell>
                       </TableRow>
                       <TableRow className="border-b-2">
-                        <TableCell colSpan={6} className="py-2">
+                        <TableCell colSpan={7} className="py-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             {uploadingItemImages[idx] ? (
                               <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />Carregando...</span>
