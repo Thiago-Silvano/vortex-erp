@@ -160,6 +160,7 @@ export default function NewSalePage() {
     setTripNights(Number((sale as any).trip_nights) || 0);
     setTripStartDate((sale as any).trip_start_date || '');
     setTripEndDate((sale as any).trip_end_date || '');
+    setDestinationName((sale as any).destination_name || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
     // Load proposal payment options
