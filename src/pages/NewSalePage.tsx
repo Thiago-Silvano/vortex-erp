@@ -1041,6 +1041,11 @@ export default function NewSalePage() {
                 <Input type="number" min="0" value={tripNights} onChange={e => setTripNights(parseInt(e.target.value) || 0)} />
                 <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente</p>
               </div>
+              <div className="md:col-span-2">
+                <Label>Nome do Destino</Label>
+                <Input value={destinationName} onChange={e => setDestinationName(e.target.value)} placeholder="Ex: Orlando, Paris, Cancún..." />
+                <p className="text-xs text-muted-foreground mt-1">Exibido nas propostas e orçamentos</p>
+              </div>
             </div>
             <div className="col-span-full mt-2">
               <Label>Imagem do Destino (para proposta)</Label>
