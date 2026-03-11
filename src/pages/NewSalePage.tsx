@@ -615,6 +615,21 @@ export default function NewSalePage() {
     }
   };
 
+  const handleSilentSaveDraft = async () => {
+    if (!clientName.trim()) return;
+    setSavingDraft(true);
+    try {
+      const { payload, userEmail } = await buildSalePayload('draft');
+      if (editSaleId) {
+        await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+        await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      }
+      const saleId = await saveSaleCore(payload, userEmail);
+      if (saleId) toast.success('Rascunho salvo automaticamente.');
+    } catch { /* silent */ }
+    finally { setSavingDraft(false); }
+  };
+
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
     const { payload, userEmail } = await buildSalePayload('active');
@@ -724,9 +739,11 @@ export default function NewSalePage() {
     if (agData && agData.length > 0) agency = agData[0] as any;
 
     let flightLegs: any[] = [];
-    // Collect flight legs from item metadata
+    let flightGroups: any[][] = [];
+    // Collect flight legs from item metadata - grouped per service
     for (const item of items) {
       if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
+        flightGroups.push([...item.metadata.flightLegs]);
         flightLegs.push(...item.metadata.flightLegs);
       }
     }
@@ -820,6 +837,7 @@ export default function NewSalePage() {
         isMain: p.is_main,
       })),
       flightLegs,
+      flightGroups,
       hotels,
       services: items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
@@ -861,8 +879,10 @@ export default function NewSalePage() {
     if (agData && agData.length > 0) agency = agData[0] as any;
 
     let flightLegs: any[] = [];
+    let flightGroups: any[][] = [];
     for (const item of items) {
       if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
+        flightGroups.push([...item.metadata.flightLegs]);
         flightLegs.push(...item.metadata.flightLegs);
       }
     }
@@ -938,6 +958,7 @@ export default function NewSalePage() {
         isMain: p.is_main,
       })),
       flightLegs,
+      flightGroups,
       hotels,
       services: items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
@@ -1688,7 +1709,6 @@ export default function NewSalePage() {
             metadata={items[editingItemIdx]?.metadata || {}}
             onSave={(desc, meta) => {
               setItems(prev => {
-                // Check if there's an older duplicate item with same service_catalog_id but less metadata
                 const editedItem = prev[editingItemIdx];
                 const updated = prev.map((item, i) => {
                   if (i === editingItemIdx) {
@@ -1696,18 +1716,19 @@ export default function NewSalePage() {
                   }
                   return item;
                 });
-                // Remove duplicate items with same catalog id but no metadata (sparse items from import)
                 if (editedItem?.service_catalog_id) {
                   return updated.filter((item, i) => {
                     if (i === editingItemIdx) return true;
                     if (item.service_catalog_id === editedItem.service_catalog_id && (!item.metadata?.type && meta.type)) {
-                      return false; // Remove old sparse duplicate
+                      return false;
                     }
                     return true;
                   });
                 }
                 return updated;
               });
+              // Auto-save draft after service detail save
+              setTimeout(() => handleSilentSaveDraft(), 300);
             }}
           />
         )}

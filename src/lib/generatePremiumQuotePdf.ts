@@ -75,6 +75,7 @@ export interface PremiumPdfData {
     isMain?: boolean;
   }>;
   flightLegs: FlightLegPdf[];
+  flightGroups?: FlightLegPdf[][];
   hotels: HotelPdf[];
   services: ServicePdf[];
   allItems: Array<{ name: string; value: number; description?: string }>;
@@ -367,24 +368,35 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   }
 
   // ─── Section: Itinerário Aéreo ───────────────────────────
-  if (data.flightLegs.length > 0) {
+  const flightGroups = data.flightGroups && data.flightGroups.length > 0
+    ? data.flightGroups
+    : data.flightLegs.length > 0 ? [data.flightLegs] : [];
+
+  if (flightGroups.length > 0) {
     y = checkPageBreak(doc, y, 60, m);
     y = drawSectionTitle(doc, 'Itinerário aéreo', y, m, pw);
     y += 4;
 
-    // Group legs by direction
-    const outbound = data.flightLegs.filter(l => l.direction !== 'volta');
-    const returnLegs = data.flightLegs.filter(l => l.direction === 'volta');
+    flightGroups.forEach((groupLegs, groupIdx) => {
+      if (groupIdx > 0) {
+        y = checkPageBreak(doc, y, 10, m);
+        drawLine(doc, m + 20, y, pw - m - 20, BORDER_COLOR, 0.2);
+        y += 6;
+      }
 
-    if (outbound.length > 0) {
-      y = drawFlightDirection(doc, 'IDA', outbound, y, m, pw, cw);
-      y += 4;
-    }
-    if (returnLegs.length > 0) {
-      y = checkPageBreak(doc, y, 40, m);
-      y = drawFlightDirection(doc, 'VOLTA', returnLegs, y, m, pw, cw);
-      y += 4;
-    }
+      const outbound = groupLegs.filter(l => l.direction !== 'volta');
+      const returnLegs = groupLegs.filter(l => l.direction === 'volta');
+
+      if (outbound.length > 0) {
+        y = drawFlightDirection(doc, 'IDA', outbound, y, m, pw, cw);
+        y += 4;
+      }
+      if (returnLegs.length > 0) {
+        y = checkPageBreak(doc, y, 40, m);
+        y = drawFlightDirection(doc, 'VOLTA', returnLegs, y, m, pw, cw);
+        y += 4;
+      }
+    });
 
     drawLine(doc, m, y, pw - m);
     y += 6;
@@ -756,7 +768,7 @@ function drawFlightDirection(
   }
 
   legs.forEach((leg, idx) => {
-    y = checkPageBreak(doc, y, 18, m);
+    y = checkPageBreak(doc, y, 14, m);
 
     const segW = cw;
     const originX = m + 5;
@@ -765,32 +777,32 @@ function drawFlightDirection(
 
     // Origin code
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
+    doc.setFontSize(11);
     setColor(doc, DEEP_BLUE);
     doc.text(leg.origin || '---', originX, y);
 
     // Departure time
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     setColor(doc, TEXT_MAIN);
-    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 5);
+    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 4);
 
     // Destination code
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
+    doc.setFontSize(11);
     setColor(doc, DEEP_BLUE);
     doc.text(leg.destination || '---', destX, y, { align: 'right' });
 
     // Arrival time
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     setColor(doc, TEXT_MAIN);
-    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 5, { align: 'right' });
+    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 4, { align: 'right' });
 
     // Flight line with arrow
-    const lineY = y - 2;
-    const lineStart = originX + 20;
-    const lineEnd = destX - 20;
+    const lineY = y - 1;
+    const lineStart = originX + 18;
+    const lineEnd = destX - 18;
 
     doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
     doc.setLineWidth(0.3);
@@ -809,22 +821,22 @@ function drawFlightDirection(
     // Flight code
     if (leg.flightCode) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6);
+      doc.setFontSize(5);
       setColor(doc, TEXT_MUTED);
       doc.text(leg.flightCode, midX, lineY - 2, { align: 'center' });
     }
 
-    y += 9;
+    y += 7;
 
     // Connection info
     if (idx < legs.length - 1 && leg.connectionDuration) {
       doc.setFillColor(LIGHT_GRAY[0], LIGHT_GRAY[1], LIGHT_GRAY[2]);
-      doc.rect(midX - 18, y - 2, 36, 6, 'F');
+      doc.rect(midX - 16, y - 2, 32, 5, 'F');
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6);
+      doc.setFontSize(5);
       setColor(doc, TEXT_MUTED);
       doc.text(`Conexão: ${leg.connectionDuration}`, midX, y + 1, { align: 'center' });
-      y += 7;
+      y += 6;
     }
   });
 
