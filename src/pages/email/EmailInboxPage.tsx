@@ -67,6 +67,9 @@ export default function EmailInboxPage() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<EmailRow | null>(null);
   const [folderCounts, setFolderCounts] = useState<Record<string, number>>({});
+  const [loadingBody, setLoadingBody] = useState(false);
+  const [emailBody, setEmailBody] = useState<{ html: string; text: string } | null>(null);
+  const [emailAttachments, setEmailAttachments] = useState<EmailAttachment[]>([]);
 
   // Get current user and check settings
   useEffect(() => {
