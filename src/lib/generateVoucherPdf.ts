@@ -80,7 +80,7 @@ export interface VoucherPdfData {
   flightLegs: FlightLegVoucher[];
   hotels: HotelVoucher[];
   services: ServiceVoucher[];
-  allItems: Array<{ name: string; value: number }>;
+  allItems: Array<{ name: string; value: number; description?: string }>;
   showIndividualValues?: boolean;
   totalTrip: number;
   reservations: ReservationVoucher[];
