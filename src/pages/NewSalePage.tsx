@@ -385,12 +385,14 @@ export default function NewSalePage() {
   const handleDestinationImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadingDestImage(true);
     const ext = file.name.split('.').pop();
     const fileName = `destinations/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from('quote-images').upload(fileName, file);
-    if (error) { toast.error('Erro ao enviar imagem'); return; }
+    if (error) { toast.error('Erro ao enviar imagem'); setUploadingDestImage(false); return; }
     const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
     setDestinationImageUrl(data.publicUrl);
+    setUploadingDestImage(false);
     toast.success('Imagem do destino enviada!');
     e.target.value = '';
   };
