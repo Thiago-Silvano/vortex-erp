@@ -134,6 +134,7 @@ export default function NewSalePage() {
 
   // Service edit modal
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
+  const [showIndividualValues, setShowIndividualValues] = useState(true);
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
@@ -162,6 +163,9 @@ export default function NewSalePage() {
     // Load proposal payment options
     if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
       setProposalPaymentOptions((sale as any).proposal_payment_options);
+    }
+    if ((sale as any).show_individual_values !== undefined) {
+      setShowIndividualValues((sale as any).show_individual_values);
     }
     if ((sale as any).invoice_url) {
       const parts = (sale as any).invoice_url.split('/');
@@ -469,6 +473,7 @@ export default function NewSalePage() {
         net_profit: netProfit,
         notes,
         proposal_payment_options: proposalPaymentOptions.filter(o => o.enabled),
+        show_individual_values: showIndividualValues,
         status,
         created_by: userEmail,
         updated_by: userEmail,
@@ -766,10 +771,10 @@ export default function NewSalePage() {
           value: item.total_value,
         };
       }),
-      allItems: items.map((item, idx) => {
+      allItems: showIndividualValues ? items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
         return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
-      }),
+      }) : [],
       totalProducts: totalSale,
       totalTaxes: 0,
       totalTrip: totalSale,
@@ -1183,6 +1188,16 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base">💳 Opções de Pagamento para Proposta</CardTitle></CardHeader>
           <CardContent className="space-y-3">
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <Checkbox
+                id="showIndividualValues"
+                checked={showIndividualValues}
+                onCheckedChange={(checked) => setShowIndividualValues(!!checked)}
+              />
+              <Label htmlFor="showIndividualValues" className="text-sm cursor-pointer">
+                Mostrar valor individual de cada serviço nas propostas (PDF e interativa)
+              </Label>
+            </div>
             <p className="text-sm text-muted-foreground">Selecione quais formas de pagamento deseja ofertar ao cliente na proposta (PDF e interativa).</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {proposalPaymentOptions.map((opt, idx) => (
