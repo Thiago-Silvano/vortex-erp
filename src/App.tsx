@@ -55,6 +55,7 @@ import EmailInboxPage from "./pages/email/EmailInboxPage";
 import EmailTemplatesPage from "./pages/email/EmailTemplatesPage";
 import EmailSettingsPage from "./pages/email/EmailSettingsPage";
 import PropostaPublicPage from "./pages/PropostaPublicPage";
+import DS160PublicPage from "./pages/DS160PublicPage";
 
 const queryClient = new QueryClient();
 
@@ -118,8 +119,9 @@ const App = () => (
           <Route path="/email" element={<ProtectedRoute><EmailInboxPage /></ProtectedRoute>} />
           <Route path="/email/templates" element={<ProtectedRoute><EmailTemplatesPage /></ProtectedRoute>} />
           <Route path="/email/settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
-          {/* Public proposal page (no auth required) */}
+          {/* Public pages (no auth required) */}
           <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
+          <Route path="/ds160/:token" element={<DS160PublicPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

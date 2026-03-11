@@ -454,6 +454,78 @@ export type Database = {
           },
         ]
       }
+      ds160_forms: {
+        Row: {
+          client_id: string
+          created_at: string
+          current_step: number
+          empresa_id: string | null
+          expires_at: string | null
+          form_data: Json
+          id: string
+          ip_address: string | null
+          last_saved_at: string | null
+          pdf_url: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          submitted_at: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          current_step?: number
+          empresa_id?: string | null
+          expires_at?: string | null
+          form_data?: Json
+          id?: string
+          ip_address?: string | null
+          last_saved_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          current_step?: number
+          empresa_id?: string | null
+          expires_at?: string | null
+          form_data?: Json
+          id?: string
+          ip_address?: string | null
+          last_saved_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds160_forms_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ds160_forms_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_attachments: {
         Row: {
           created_at: string

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import ClientPhotosSection from '@/components/ClientPhotosSection';
+import DS160Section from '@/components/ds160/DS160Section';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -183,6 +184,9 @@ export default function ClientsPage() {
             </DialogHeader>
             <div className="space-y-6">
               {editingId && <ClientPhotosSection clientId={editingId} />}
+              {editingId && activeCompany?.slug === 'vortex-vistos' && (
+                <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} />
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>CPF *</Label>
