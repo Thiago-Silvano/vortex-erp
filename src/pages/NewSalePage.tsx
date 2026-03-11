@@ -143,6 +143,7 @@ export default function NewSalePage() {
   const loadSale = async (id: string) => {
     const { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
     if (!sale) return;
+    setSaleStatus(sale.status === 'active' ? 'active' : 'draft');
     setQuoteId(sale.quote_id || '');
     setClientName(sale.client_name);
     setSaleDate(sale.sale_date);
