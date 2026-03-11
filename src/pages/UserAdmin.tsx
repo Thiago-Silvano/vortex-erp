@@ -148,7 +148,12 @@ export default function UserAdmin() {
   const handleSavePermissions = async () => {
     if (!permUser) return;
     setSaving(true);
-    const payload = { user_id: permUser.id, user_role: permRole, permissions: permChecks, empresa_ids: permEmpresaIds, updated_at: new Date().toISOString() };
+    const payload: any = { user_id: permUser.id, user_role: permRole, permissions: permChecks, empresa_ids: permEmpresaIds, updated_at: new Date().toISOString() };
+    if (permRole === 'master' && permDefaultCompany !== 'none') {
+      payload.default_empresa_id = permDefaultCompany;
+    } else {
+      payload.default_empresa_id = null;
+    }
     
     if (permissions[permUser.id]) {
       await supabase.from('user_permissions').update(payload as any).eq('user_id', permUser.id) as any;
