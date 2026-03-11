@@ -66,6 +66,12 @@ export default function VistosProductionPage() {
   const [duties, setDuties] = useState('');
   const [uploading, setUploading] = useState(false);
 
+  // WhatsApp send documents
+  const [waSendOpen, setWaSendOpen] = useState(false);
+  const [waSendPhone, setWaSendPhone] = useState('');
+  const [waSendName, setWaSendName] = useState('');
+  const [waSendMessage, setWaSendMessage] = useState('');
+
   const fetchProcesses = async () => {
     if (!activeCompany?.id) return;
     const { data } = await supabase
