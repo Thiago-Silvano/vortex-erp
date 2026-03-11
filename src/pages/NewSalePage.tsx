@@ -1094,8 +1094,8 @@ export default function NewSalePage() {
               </div>
               <div>
                 <Label>Nº de Noites</Label>
-                <Input type="number" min="0" value={tripNights} onChange={e => setTripNights(parseInt(e.target.value) || 0)} />
-                <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente</p>
+                <Input type="number" min="0" value={tripNights} onChange={e => { setTripNights(parseInt(e.target.value) || 0); setNightsManuallySet(true); }} />
+                <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente pelas datas (editável)</p>
               </div>
               <div className="md:col-span-2">
                 <Label>Nome do Destino</Label>
