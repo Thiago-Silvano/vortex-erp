@@ -264,7 +264,14 @@ export default function NewSalePage() {
   const cardFeeValue = paymentMethod === 'credito' ? totalSaleWithInterest * (feeRate / 100) : 0;
   const netProfit = grossProfit - commissionValue - cardFeeValue;
 
+  // Auto-recalculate proposal payment options when total changes
   useEffect(() => {
+    setProposalPaymentOptions(prev => prev.map(opt => {
+      const val = totalSaleWithInterest;
+      const perInstallment = opt.installments > 0 ? Math.round((val / opt.installments) * 100) / 100 : val;
+      return { ...opt, totalValue: val, installmentValue: perInstallment };
+    }));
+  }, [totalSaleWithInterest]);
     if (paymentMethod === 'boleto' && installments > 1 && boletoInterestRate > 0) {
       const monthlyRate = boletoInterestRate / 100;
       const pmt = totalSaleWithInterest * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
