@@ -724,9 +724,11 @@ export default function NewSalePage() {
     if (agData && agData.length > 0) agency = agData[0] as any;
 
     let flightLegs: any[] = [];
-    // Collect flight legs from item metadata
+    let flightGroups: any[][] = [];
+    // Collect flight legs from item metadata - grouped per service
     for (const item of items) {
       if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
+        flightGroups.push([...item.metadata.flightLegs]);
         flightLegs.push(...item.metadata.flightLegs);
       }
     }
