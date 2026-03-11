@@ -140,6 +140,10 @@ Deno.serve(async (req) => {
         if (msgData?.id) {
           await supabase.from('whatsapp_messages').update({ delivery_status: 'sent' }).eq('id', msgData.id);
         }
+        // Update last_message_sent_at
+        await supabase.from('whatsapp_sessions').update({
+          last_message_sent_at: new Date().toISOString(),
+        }).eq('empresa_id', conv.empresa_id);
       } catch (e) {
         const errMsg = e instanceof Error ? e.message : String(e);
         console.error('Failed to forward to Node.js server:', errMsg);
