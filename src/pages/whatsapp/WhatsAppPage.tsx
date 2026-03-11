@@ -155,15 +155,40 @@ export default function WhatsAppPage() {
   useEffect(() => { fetchConversations(); fetchQuickReplies(); setSelectedConv(null); setMessages([]); }, [fetchConversations, fetchQuickReplies]);
 
   useEffect(() => {
-    const state = location.state as { openConversationId?: string } | null;
+    const state = location.state as { openConversationId?: string; openPhone?: string; openName?: string } | null;
     if (state?.openConversationId) {
       fetchConversations().then(convs => {
         const conv = convs.find(c => c.id === state.openConversationId);
         if (conv) setSelectedConv(conv);
       });
       window.history.replaceState({}, document.title);
+    } else if (state?.openPhone && activeCompany?.id) {
+      const phone = state.openPhone;
+      const name = state.openName || 'Cliente';
+      window.history.replaceState({}, document.title);
+      // Find existing conversation by phone (last 8 digits match)
+      fetchConversations().then(async (convs) => {
+        const last8 = phone.slice(-8);
+        const existing = convs.find(c => c.phone.replace(/\D/g, '').slice(-8) === last8);
+        if (existing) {
+          setSelectedConv(existing);
+        } else {
+          // Create new conversation
+          const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
+          const { data, error } = await supabase.from('whatsapp_conversations').insert({
+            phone: fullPhone,
+            client_name: name,
+            empresa_id: activeCompany.id,
+            status: 'active',
+          } as any).select('*').single();
+          if (data && !error) {
+            setConversations(prev => [data as Conversation, ...prev]);
+            setSelectedConv(data as Conversation);
+          }
+        }
+      });
     }
-  }, [location.state, fetchConversations]);
+  }, [location.state, fetchConversations, activeCompany?.id]);
 
   useEffect(() => {
     if (selectedConv) {
