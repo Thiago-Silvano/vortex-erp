@@ -130,7 +130,6 @@ async function createWhatsAppClient(empresaId) {
         '--disable-gpu',
       ],
     },
-    webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/niceincontrol/niceincontrol.github.io/main/niceincontrol/niceincontrol.json' },
   });
 
   sessionData.client = client;
@@ -464,7 +463,7 @@ app.post('/send-message', async (req, res) => {
     return res.status(400).json({ error: 'phone/number é obrigatório' });
   }
 
-  // Determinar possíveis IDs de destino (c.us e lid)
+  // Determinar possíveis IDs de destino (c.us, lid e chats já existentes)
   const buildCandidateIds = async () => {
     const candidates = [];
     const pushCandidate = (value) => {
@@ -474,22 +473,27 @@ app.post('/send-message', async (req, res) => {
     };
 
     const rawTarget = String(targetPhone).trim();
+    const numericTarget = rawTarget.replace(/\D/g, '');
+    const numericTail = numericTarget ? numericTarget.slice(-8) : '';
+
     if (rawTarget.includes('@')) {
       pushCandidate(rawTarget);
     }
 
-    const numericTarget = rawTarget.replace(/\D/g, '');
     if (numericTarget) {
       pushCandidate(`${numericTarget}@c.us`);
+      pushCandidate(`${numericTarget}@s.whatsapp.net`);
 
-      try {
-        const numberId = await session.client.getNumberId(numericTarget);
-        if (numberId?._serialized) {
-          pushCandidate(numberId._serialized);
-          log(empresaId, `Número resolvido via getNumberId: ${numericTarget} -> ${numberId._serialized}`);
+      for (const lookupTarget of [numericTarget, `${numericTarget}@c.us`]) {
+        try {
+          const numberId = await session.client.getNumberId(lookupTarget);
+          if (numberId?._serialized) {
+            pushCandidate(numberId._serialized);
+            log(empresaId, `Número resolvido via getNumberId: ${lookupTarget} -> ${numberId._serialized}`);
+          }
+        } catch (resolveErr) {
+          log(empresaId, `Não foi possível resolver via getNumberId (${lookupTarget}): ${resolveErr.message}`);
         }
-      } catch (resolveErr) {
-        log(empresaId, `Não foi possível resolver via getNumberId: ${resolveErr.message}`);
       }
     }
 
@@ -500,9 +504,49 @@ app.post('/send-message', async (req, res) => {
           pushCandidate(contact.id._serialized);
           log(empresaId, `Contato LID resolvido: ${rawTarget} -> ${contact.id._serialized}`);
         }
+        if (contact?.number) {
+          pushCandidate(`${String(contact.number).replace(/\D/g, '')}@c.us`);
+        }
       } catch (contactErr) {
         log(empresaId, `Falha ao resolver contato LID: ${contactErr.message}`);
       }
+    }
+
+    if (numericTarget) {
+      try {
+        const contactByNumber = await session.client.getContactById(`${numericTarget}@c.us`);
+        if (contactByNumber?.id?._serialized) {
+          pushCandidate(contactByNumber.id._serialized);
+          log(empresaId, `Contato por número resolvido: ${numericTarget}@c.us -> ${contactByNumber.id._serialized}`);
+        }
+      } catch (contactErr) {
+        log(empresaId, `Falha ao resolver contato por número: ${contactErr.message}`);
+      }
+    }
+
+    try {
+      const chats = await session.client.getChats();
+      for (const chat of chats) {
+        if (!chat || chat.isGroup) continue;
+
+        const serialized = chat?.id?._serialized;
+        if (!serialized) continue;
+
+        const chatUser = String(chat?.id?.user || '').replace(/\D/g, '');
+        const chatNumber = String(chat?.contact?.number || '').replace(/\D/g, '');
+        const matchesRaw = serialized === rawTarget;
+        const matchesNumeric = numericTarget && (
+          chatUser === numericTarget ||
+          chatNumber === numericTarget ||
+          (numericTail && (chatUser.endsWith(numericTail) || chatNumber.endsWith(numericTail)))
+        );
+
+        if (matchesRaw || matchesNumeric) {
+          pushCandidate(serialized);
+        }
+      }
+    } catch (chatErr) {
+      log(empresaId, `Falha ao varrer chats para fallback: ${chatErr.message}`);
     }
 
     return candidates.length ? candidates : [rawTarget];
