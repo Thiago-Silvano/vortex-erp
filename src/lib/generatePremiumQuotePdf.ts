@@ -544,7 +544,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
 
   // ─── Section: Forma de Pagamento ─────────────────────────
   y = checkPageBreak(doc, y, 30, m);
-  y = drawSectionTitle(doc, 'Forma de pagamento', y, m, pw);
+  y = drawSectionTitle(doc, 'Opcoes de pagamento', y, m, pw);
   y += 4;
 
   const methodLabels: Record<string, string> = {
@@ -554,32 +554,79 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     dinheiro: 'Dinheiro',
   };
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  setColor(doc, DEEP_BLUE);
-  const methodText = methodLabels[data.payment.method] || data.payment.method;
-  doc.text(methodText, m, y);
+  // Show proposal payment options if available
+  if (data.proposalPaymentOptions && data.proposalPaymentOptions.length > 0) {
+    const paxCount = data.passengersCount || 1;
 
-  if (data.payment.installments > 1) {
-    doc.setFont('helvetica', 'normal');
-    setColor(doc, TEXT_MAIN);
-    doc.text(`  ·  ${data.payment.installments}x`, m + doc.getTextWidth(methodText) + 2, y);
-  }
-  y += 7;
+    data.proposalPaymentOptions.forEach((opt, idx) => {
+      y = checkPageBreak(doc, y, 22, m);
 
-  if (data.payment.receivables.length > 0) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    setColor(doc, TEXT_MUTED);
+      // Option box
+      const optBoxH = 18;
+      doc.setFillColor(idx % 2 === 0 ? LIGHT_GRAY[0] : WHITE[0], idx % 2 === 0 ? LIGHT_GRAY[1] : WHITE[1], idx % 2 === 0 ? LIGHT_GRAY[2] : WHITE[2]);
+      doc.rect(m, y - 3, cw, optBoxH, 'F');
 
-    data.payment.receivables.forEach((r) => {
-      y = checkPageBreak(doc, y, 6, m);
-      const dueLabel = r.dueDate ? formatDateBR(r.dueDate) : '-';
-      doc.text(`Parcela ${r.number}`, m + 4, y);
-      doc.text(fmt(r.amount), m + 50, y);
-      doc.text(`Venc: ${dueLabel}`, m + 90, y);
-      y += 5;
+      // Gold left accent
+      doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+      doc.rect(m, y - 3, 2, optBoxH, 'F');
+
+      // Label
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      setColor(doc, DEEP_BLUE);
+      doc.text(s(opt.label), m + 8, y + 3);
+
+      // Installment value
+      const installText = opt.installments > 1
+        ? `${opt.installments}x de ${fmt(opt.installmentValue)}`
+        : fmt(opt.totalValue);
+      doc.setFont('times', 'bold');
+      doc.setFontSize(13);
+      setColor(doc, GOLD);
+      doc.text(installText, m + cw - 4, y + 3, { align: 'right' });
+
+      // Per person
+      if (paxCount > 1) {
+        const perPerson = opt.installments > 1
+          ? fmt(opt.installmentValue / paxCount)
+          : fmt(opt.totalValue / paxCount);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        setColor(doc, TEXT_MUTED);
+        doc.text(`${perPerson} /pessoa`, m + cw - 4, y + 10, { align: 'right' });
+      }
+
+      y += optBoxH + 2;
     });
+  } else {
+    // Fallback: show single payment method
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    setColor(doc, DEEP_BLUE);
+    const methodText = methodLabels[data.payment.method] || data.payment.method;
+    doc.text(methodText, m, y);
+
+    if (data.payment.installments > 1) {
+      doc.setFont('helvetica', 'normal');
+      setColor(doc, TEXT_MAIN);
+      doc.text(`  ·  ${data.payment.installments}x`, m + doc.getTextWidth(methodText) + 2, y);
+    }
+    y += 7;
+
+    if (data.payment.receivables.length > 0) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      setColor(doc, TEXT_MUTED);
+
+      data.payment.receivables.forEach((r) => {
+        y = checkPageBreak(doc, y, 6, m);
+        const dueLabel = r.dueDate ? formatDateBR(r.dueDate) : '-';
+        doc.text(`Parcela ${r.number}`, m + 4, y);
+        doc.text(fmt(r.amount), m + 50, y);
+        doc.text(`Venc: ${dueLabel}`, m + 90, y);
+        y += 5;
+      });
+    }
   }
 
   y += 4;
