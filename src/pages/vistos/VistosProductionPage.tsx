@@ -33,6 +33,7 @@ interface Process {
   interview_notes: string;
   created_at: string;
   product_name?: string;
+  _client_id?: string | null;
 }
 
 const STATUSES: { key: ProcessStatus; label: string; color: string }[] = [
