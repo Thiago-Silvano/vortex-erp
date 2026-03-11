@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import ClientPhotosSection from '@/components/ClientPhotosSection';
@@ -11,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search, Pencil, Trash2, MessageCircle } from 'lucide-react';
-import NewWhatsAppConversationModal from '@/components/NewWhatsAppConversationModal';
+
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -46,6 +47,7 @@ const emptyClient = (): Omit<Client, 'id'> => ({
 
 export default function ClientsPage() {
   const { activeCompany, isMaster } = useCompany();
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -53,9 +55,6 @@ export default function ClientsPage() {
   const [form, setForm] = useState<Omit<Client, 'id'>>(emptyClient());
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [emailError, setEmailError] = useState('');
-  const [waModalOpen, setWaModalOpen] = useState(false);
-  const [waPhone, setWaPhone] = useState('');
-  const [waName, setWaName] = useState('');
 
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
@@ -287,9 +286,8 @@ export default function ClientsPage() {
                         return;
                       }
                       const cleanPhone = form.phone.replace(/\D/g, '');
-                      setWaPhone(cleanPhone);
-                      setWaName(form.full_name);
-                      setWaModalOpen(true);
+                      setDialogOpen(false);
+                      navigate('/whatsapp', { state: { openPhone: cleanPhone, openName: form.full_name } });
                     }}
                   >
                     <MessageCircle className="h-4 w-4" />Chamar no WhatsApp
@@ -316,13 +314,6 @@ export default function ClientsPage() {
         </AlertDialog>
       </div>
 
-      <NewWhatsAppConversationModal
-        open={waModalOpen}
-        onOpenChange={setWaModalOpen}
-        onConversationCreated={() => setWaModalOpen(false)}
-        initialPhone={waPhone}
-        initialName={waName}
-      />
     </AppLayout>
   );
 }
