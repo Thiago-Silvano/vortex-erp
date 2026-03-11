@@ -1152,7 +1152,90 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Receivables */}
+        {/* Proposal Payment Options */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">💳 Opções de Pagamento para Proposta</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Selecione quais formas de pagamento deseja ofertar ao cliente na proposta (PDF e interativa).</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {proposalPaymentOptions.map((opt, idx) => (
+                <div key={opt.method} className={`border rounded-lg p-4 transition-colors ${opt.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={opt.enabled}
+                      onCheckedChange={(checked) => {
+                        setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, enabled: !!checked } : o));
+                      }}
+                    />
+                    <div className="flex-1">
+                      <Label className="font-medium">{opt.label}</Label>
+                      {opt.enabled && (
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Parcelas</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="24"
+                              value={opt.installments}
+                              onChange={e => {
+                                const inst = parseInt(e.target.value) || 1;
+                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
+                                  ...o,
+                                  installments: inst,
+                                  installmentValue: Math.round((o.totalValue / inst) * 100) / 100,
+                                } : o));
+                              }}
+                              className="h-8"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Valor/Parcela</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={opt.installmentValue}
+                              onChange={e => {
+                                const val = parseFloat(e.target.value) || 0;
+                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
+                                  ...o,
+                                  installmentValue: val,
+                                  totalValue: val * o.installments,
+                                } : o));
+                              }}
+                              className="h-8"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {opt.enabled && (
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">Total</p>
+                        <p className="text-sm font-bold text-primary">{fmt(opt.totalValue)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setProposalPaymentOptions(prev => [...prev, {
+                method: `custom_${Date.now()}`,
+                label: 'Personalizado',
+                installments: 1,
+                installmentValue: totalSaleWithInterest,
+                totalValue: totalSaleWithInterest,
+                enabled: true,
+              }])}
+            >
+              <Plus className="h-4 w-4 mr-1" />Adicionar opção
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader><CardTitle className="text-base">Controle de Recebíveis</CardTitle></CardHeader>
           <CardContent className="p-0">
