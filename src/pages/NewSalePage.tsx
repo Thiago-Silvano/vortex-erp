@@ -676,8 +676,8 @@ export default function NewSalePage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const handleExportPdf = async () => {
-    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o PDF'); return; }
+  const handleExportVoucher = async () => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o voucher'); return; }
     let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
     const agQuery = activeCompany?.id
       ? supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1)
@@ -686,10 +686,15 @@ export default function NewSalePage() {
     if (agData && agData.length > 0) agency = agData[0] as any;
 
     let flightLegs: any[] = [];
-    let quoteDetails: any = null;
+    // Collect flight legs from item metadata
+    for (const item of items) {
+      if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
+        flightLegs.push(...item.metadata.flightLegs);
+      }
+    }
+
+    // Also from quote if linked
     if (quoteId) {
-      const { data: qData } = await supabase.from('quotes').select('*').eq('id', quoteId).single();
-      if (qData) quoteDetails = qData;
       const { data: qServices } = await supabase.from('services').select('*').eq('quote_id', quoteId).order('sort_order');
       if (qServices) {
         for (const svc of qServices) {
@@ -702,13 +707,6 @@ export default function NewSalePage() {
             })));
           }
         }
-      }
-    }
-
-    // Also collect flight legs from item metadata
-    for (const item of items) {
-      if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
-        flightLegs.push(...item.metadata.flightLegs);
       }
     }
 
@@ -743,19 +741,43 @@ export default function NewSalePage() {
       }
     }
 
-    const pdfData: PremiumPdfData = {
+    // Load reservations
+    let reservations: any[] = [];
+    if (editSaleId) {
+      const { data: resData } = await supabase.from('reservations').select('*, suppliers(name)').eq('sale_id', editSaleId);
+      if (resData) {
+        reservations = resData.map((r: any) => ({
+          description: r.description || '',
+          confirmationCode: r.confirmation_code || '',
+          supplier: r.suppliers?.name || '',
+          checkIn: r.check_in || '',
+          checkOut: r.check_out || '',
+          status: r.status || '',
+        }));
+      }
+    }
+
+    // Get sale short_id
+    let shortId = '';
+    if (editSaleId) {
+      const { data: saleData } = await (supabase.from('sales').select('short_id').eq('id', editSaleId).single() as any);
+      if (saleData) shortId = saleData.short_id;
+    }
+
+    const voucherData: VoucherPdfData = {
       agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
       client: { name: clientName },
       seller: sellerName,
-      destination: quoteDetails?.trip_destination || '',
-      origin: quoteDetails?.trip_origin || '',
-      departureDate: quoteDetails?.trip_departure_date || tripStartDate || '',
-      returnDate: quoteDetails?.trip_return_date || tripEndDate || '',
-      nights: tripNights || quoteDetails?.trip_nights || undefined,
+      destination: items.some(i => i.metadata?.type === 'hotel') ? items.find(i => i.metadata?.type === 'hotel')?.metadata?.hotel?.hotelName || '' : '',
+      origin: '',
+      departureDate: tripStartDate || '',
+      returnDate: tripEndDate || '',
+      nights: tripNights || undefined,
       passengersCount: passengers.length || passengersCount || 1,
       passengers: passengers.map((p, i) => ({
         name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
         document: p.document_number || undefined,
+        documentType: p.document_type || undefined,
         birthDate: p.birth_date || undefined,
         isMain: p.is_main,
       })),
@@ -764,7 +786,7 @@ export default function NewSalePage() {
       services: items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
         return {
-          name: catalogName || `Serviço ${idx + 1}`,
+          name: catalogName || item.description || `Serviço ${idx + 1}`,
           description: item.metadata?.detailedDescription || item.description,
           value: item.total_value,
         };
@@ -774,21 +796,21 @@ export default function NewSalePage() {
         return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
       }) : [],
       showIndividualValues,
-      totalProducts: totalSale,
-      totalTaxes: 0,
-      totalTrip: totalSale,
+      totalTrip: totalSaleWithInterest,
+      reservations,
       payment: {
         method: paymentMethod,
         installments,
         receivables: receivables.map(r => ({ number: r.installment_number, amount: r.amount, dueDate: r.due_date || undefined })),
       },
-      proposalPaymentOptions: proposalPaymentOptions.filter(o => o.enabled),
       notes: notes || undefined,
+      saleDate,
+      shortId,
     };
 
-    const doc = generatePremiumQuotePdf(pdfData);
-    doc.save(`proposta-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('PDF da proposta premium gerado!');
+    const doc = generateVoucherPdf(voucherData);
+    doc.save(`voucher-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+    toast.success('Voucher gerado com sucesso!');
   };
 
   const handleGenerateLink = async () => {
