@@ -130,7 +130,6 @@ async function createWhatsAppClient(empresaId) {
         '--disable-gpu',
       ],
     },
-    webVersionCache: { type: 'remote', remotePath: 'https://raw.githubusercontent.com/niceincontrol/niceincontrol.github.io/main/niceincontrol/niceincontrol.json' },
   });
 
   sessionData.client = client;
