@@ -49,6 +49,24 @@ export interface ServiceMetadata {
   baggage?: BaggageInfo;
   hotel?: HotelInfo;
   detailedDescription?: string;
+  totalTravelDurationOutbound?: string;
+  totalTravelDurationReturn?: string;
+}
+
+function calcTotalTravelDuration(legs: FlightLeg[]): string {
+  if (legs.length === 0) return '';
+  const first = legs[0];
+  const last = legs[legs.length - 1];
+  if (!first.departureDate || !first.departureTime || !last.arrivalDate || !last.arrivalTime) return '';
+  const dep = new Date(`${first.departureDate}T${first.departureTime}:00`);
+  const arr = new Date(`${last.arrivalDate}T${last.arrivalTime}:00`);
+  if (isNaN(dep.getTime()) || isNaN(arr.getTime())) return '';
+  let diffMs = arr.getTime() - dep.getTime();
+  if (diffMs < 0) return '';
+  const totalMinutes = Math.round(diffMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
 }
 
 interface Props {
@@ -136,6 +154,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     if (type === 'aereo') {
       meta.flightLegs = flightLegs;
       meta.baggage = baggage;
+      const outbound = flightLegs.filter(l => l.direction === 'ida');
+      const returnL = flightLegs.filter(l => l.direction === 'volta');
+      meta.totalTravelDurationOutbound = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
+      meta.totalTravelDurationReturn = calcTotalTravelDuration(returnL);
     }
     if (type === 'hotel') {
       meta.hotel = hotel;
@@ -213,6 +235,20 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   </div>
                 </div>
               ))}
+
+              {/* Total travel duration preview */}
+              {flightLegs.length > 0 && (() => {
+                const outbound = flightLegs.filter(l => l.direction === 'ida');
+                const returnL = flightLegs.filter(l => l.direction === 'volta');
+                const durOut = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
+                const durRet = calcTotalTravelDuration(returnL);
+                return (durOut || durRet) ? (
+                  <div className="border-t pt-3 flex flex-wrap gap-4 text-sm">
+                    {durOut && <span className="text-muted-foreground">⏱ Tempo total IDA: <strong className="text-foreground">{durOut}</strong></span>}
+                    {durRet && <span className="text-muted-foreground">⏱ Tempo total VOLTA: <strong className="text-foreground">{durRet}</strong></span>}
+                  </div>
+                ) : null;
+              })()}
 
               {/* Baggage */}
               <div className="border-t pt-4">

@@ -649,35 +649,57 @@ function ServiceCard({
               <span className="text-xs font-semibold tracking-[2px] uppercase" style={{ color: '#C8A45B' }}>Itinerário</span>
             </div>
             <div className="space-y-3">
-              {metadata.flightLegs.map((leg: any, idx: number) => (
-                <div key={idx} className="flex items-center gap-4 p-3 rounded-xl" style={{ background: '#faf9f6' }}>
-                  <div className="px-2 py-1 rounded text-[10px] font-bold uppercase" style={{ background: leg.direction === 'ida' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
-                    {leg.direction === 'ida' ? 'IDA' : 'VOLTA'}
+              {(() => {
+                const legs = metadata.flightLegs as any[];
+                const outbound = legs.filter((l: any) => l.direction === 'ida' || l.direction !== 'volta');
+                const returnLegs = legs.filter((l: any) => l.direction === 'volta');
+                const groups: { label: string; legs: any[]; duration?: string }[] = [];
+                if (outbound.length > 0) groups.push({ label: 'IDA', legs: outbound, duration: metadata.totalTravelDurationOutbound });
+                if (returnLegs.length > 0) groups.push({ label: 'VOLTA', legs: returnLegs, duration: metadata.totalTravelDurationReturn });
+                if (groups.length === 0) groups.push({ label: 'IDA', legs, duration: metadata.totalTravelDurationOutbound });
+
+                return groups.map((group, gIdx) => (
+                  <div key={gIdx}>
+                    {group.duration && (
+                      <div className="flex items-center gap-2 mb-2 mt-1">
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ background: group.label === 'IDA' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
+                          {group.label}
+                        </span>
+                        <span className="text-xs" style={{ color: '#999' }}>⏱ Tempo total: <strong style={{ color: '#0D1B2A' }}>{group.duration}</strong></span>
+                      </div>
+                    )}
+                    {group.legs.map((leg: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-4 p-3 rounded-xl mb-2" style={{ background: '#faf9f6' }}>
+                        <div className="px-2 py-1 rounded text-[10px] font-bold uppercase" style={{ background: leg.direction === 'ida' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
+                          {leg.direction === 'ida' ? 'IDA' : 'VOLTA'}
+                        </div>
+                        <div className="flex-1 flex items-center gap-3 text-sm">
+                          <div className="text-center">
+                            <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.origin}</p>
+                            {leg.departureTime && <p className="text-xs" style={{ color: '#999' }}>{leg.departureTime}</p>}
+                            {leg.departureDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.departureDate)}</p>}
+                          </div>
+                          <div className="flex-1 flex items-center gap-1">
+                            <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
+                            {leg.flightCode && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: '#f0ede8', color: '#999' }}>{leg.flightCode}</span>}
+                            <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
+                          </div>
+                          <div className="text-center">
+                            <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.destination}</p>
+                            {leg.arrivalTime && <p className="text-xs" style={{ color: '#999' }}>{leg.arrivalTime}</p>}
+                            {leg.arrivalDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.arrivalDate)}</p>}
+                          </div>
+                        </div>
+                        {leg.connectionDuration && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#fff3cd', color: '#856404' }}>
+                            Conexão: {leg.connectionDuration}
+                          </span>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex-1 flex items-center gap-3 text-sm">
-                    <div className="text-center">
-                      <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.origin}</p>
-                      {leg.departureTime && <p className="text-xs" style={{ color: '#999' }}>{leg.departureTime}</p>}
-                      {leg.departureDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.departureDate)}</p>}
-                    </div>
-                    <div className="flex-1 flex items-center gap-1">
-                      <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
-                      {leg.flightCode && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: '#f0ede8', color: '#999' }}>{leg.flightCode}</span>}
-                      <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.destination}</p>
-                      {leg.arrivalTime && <p className="text-xs" style={{ color: '#999' }}>{leg.arrivalTime}</p>}
-                      {leg.arrivalDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.arrivalDate)}</p>}
-                    </div>
-                  </div>
-                  {leg.connectionDuration && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#fff3cd', color: '#856404' }}>
-                      Conexão: {leg.connectionDuration}
-                    </span>
-                  )}
-                </div>
-              ))}
+                ));
+              })()}
             </div>
             {/* Baggage info */}
             {metadata.baggage && (
