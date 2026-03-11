@@ -977,7 +977,7 @@ export default function NewSalePage() {
       }),
       allItems: showIndividualValues ? items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
-        return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value, description: item.metadata?.detailedDescription || item.description || '' };
+        return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value, description: item.description || '' };
       }) : [],
       showIndividualValues,
       totalProducts: totalCost,
