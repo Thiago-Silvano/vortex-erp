@@ -107,7 +107,6 @@ export default function DS160PublicPage() {
     if (!formId) return;
     setSubmitting(true);
     
-    // Get the form to find client_id and empresa_id
     const { data: formRecord } = await supabase
       .from('ds160_forms')
       .select('client_id, empresa_id')
@@ -124,26 +123,27 @@ export default function DS160PublicPage() {
     
     // Update visa_processes for this client to "produzindo"
     if (!error && formRecord) {
-      await supabase
-        .from('visa_processes')
-        .update({ status: 'produzindo' } as any)
-        .eq('applicant_name', '') // fallback - update by client relation
-        .neq('status', 'aprovado');
+      // Find visa_applicants matching this client, then update their processes
+      const { data: applicants } = await supabase
+        .from('visa_applicants')
+        .select('id');
       
-      // More targeted: find processes linked to this client via visa_sales
-      // Update all non-final visa processes for this client's empresa
-      const { data: visaSales } = await supabase
-        .from('visa_sales' as any)
-        .select('id')
-        .eq('client_name', '') // We don't have direct link, so use ds160 client_id
-        
-      // Direct approach: update visa_processes where client matches
-      await supabase.rpc('update_visa_process_on_ds160_submit' as any, {
-        p_client_id: formRecord.client_id,
-        p_empresa_id: formRecord.empresa_id,
-      }).catch(() => {
-        // If RPC doesn't exist, that's ok - we'll create it
-      });
+      // Get client name to match
+      const { data: client } = await supabase
+        .from('clients')
+        .select('full_name')
+        .eq('id', formRecord.client_id)
+        .single();
+      
+      if (client) {
+        // Update processes matching this client's name and empresa
+        await supabase
+          .from('visa_processes')
+          .update({ status: 'produzindo' as any })
+          .eq('client_name', client.full_name)
+          .eq('empresa_id', formRecord.empresa_id || '')
+          .in('status', ['falta_passaporte'] as any[]);
+      }
     }
     
     setSubmitting(false);
