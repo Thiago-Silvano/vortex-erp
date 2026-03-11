@@ -123,11 +123,6 @@ export default function DS160PublicPage() {
     
     // Update visa_processes for this client to "produzindo"
     if (!error && formRecord) {
-      // Find visa_applicants matching this client, then update their processes
-      const { data: applicants } = await supabase
-        .from('visa_applicants')
-        .select('id');
-      
       // Get client name to match
       const { data: client } = await supabase
         .from('clients')
