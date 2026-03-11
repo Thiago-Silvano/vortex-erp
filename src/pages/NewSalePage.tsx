@@ -1709,7 +1709,6 @@ export default function NewSalePage() {
             metadata={items[editingItemIdx]?.metadata || {}}
             onSave={(desc, meta) => {
               setItems(prev => {
-                // Check if there's an older duplicate item with same service_catalog_id but less metadata
                 const editedItem = prev[editingItemIdx];
                 const updated = prev.map((item, i) => {
                   if (i === editingItemIdx) {
@@ -1717,18 +1716,19 @@ export default function NewSalePage() {
                   }
                   return item;
                 });
-                // Remove duplicate items with same catalog id but no metadata (sparse items from import)
                 if (editedItem?.service_catalog_id) {
                   return updated.filter((item, i) => {
                     if (i === editingItemIdx) return true;
                     if (item.service_catalog_id === editedItem.service_catalog_id && (!item.metadata?.type && meta.type)) {
-                      return false; // Remove old sparse duplicate
+                      return false;
                     }
                     return true;
                   });
                 }
                 return updated;
               });
+              // Auto-save draft after service detail save
+              setTimeout(() => handleSilentSaveDraft(), 300);
             }}
           />
         )}
