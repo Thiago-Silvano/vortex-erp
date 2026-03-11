@@ -1404,7 +1404,7 @@ export default function NewSalePage() {
                 onCheckedChange={(checked) => setShowIndividualValues(!!checked)}
               />
               <Label htmlFor="showIndividualValues" className="text-sm cursor-pointer">
-                Mostrar valor individual de cada serviço nas propostas (PDF e interativa)
+                Mostrar valores individuais de serviços e ocultar o valor total na proposta (PDF e interativa)
               </Label>
             </div>
             <p className="text-sm text-muted-foreground">Selecione quais formas de pagamento deseja ofertar ao cliente na proposta (PDF e interativa).</p>

@@ -513,31 +513,33 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     boxY += 32;
   }
 
-  // Total highlight
-  boxY += 2;
-  doc.setFillColor(GOLD_LIGHT[0], GOLD_LIGHT[1], GOLD_LIGHT[2]);
-  doc.rect(boxX, boxY - 1, boxW, 14, 'F');
-  // Gold left accent
-  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.rect(boxX, boxY - 1, 2, 14, 'F');
+  // Total highlight - only show if showIndividualValues is not true
+  if (data.showIndividualValues !== true) {
+    boxY += 2;
+    doc.setFillColor(GOLD_LIGHT[0], GOLD_LIGHT[1], GOLD_LIGHT[2]);
+    doc.rect(boxX, boxY - 1, boxW, 14, 'F');
+    // Gold left accent
+    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+    doc.rect(boxX, boxY - 1, 2, 14, 'F');
 
-  doc.setFont('times', 'bold');
-  doc.setFontSize(13);
-  setColor(doc, DEEP_BLUE);
-  doc.text('Total da viagem', boxX + 8, boxY + 8);
+    doc.setFont('times', 'bold');
+    doc.setFontSize(13);
+    setColor(doc, DEEP_BLUE);
+    doc.text('Total da viagem', boxX + 8, boxY + 8);
 
-  doc.setFont('times', 'bold');
-  doc.setFontSize(16);
-  setColor(doc, GOLD);
-  doc.text(fmt(data.totalTrip), boxX + boxW - 4, boxY + 8, { align: 'right' });
+    doc.setFont('times', 'bold');
+    doc.setFontSize(16);
+    setColor(doc, GOLD);
+    doc.text(fmt(data.totalTrip), boxX + boxW - 4, boxY + 8, { align: 'right' });
 
-  if (paxCount > 1) {
-    boxY += 14;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    setColor(doc, TEXT_MUTED);
-    doc.text(`${fmt(data.totalTrip / paxCount)} por pessoa a vista  ·  ${paxCount} passageiros`, boxX + 8, boxY + 2);
-    boxY += 4;
+    if (paxCount > 1) {
+      boxY += 14;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      setColor(doc, TEXT_MUTED);
+      doc.text(`${fmt(data.totalTrip / paxCount)} por pessoa a vista  ·  ${paxCount} passageiros`, boxX + 8, boxY + 2);
+      boxY += 4;
+    }
   }
 
   y = boxY + 18;
