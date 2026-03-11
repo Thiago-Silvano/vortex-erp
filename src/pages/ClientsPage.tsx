@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import ClientPhotosSection from '@/components/ClientPhotosSection';
+import DS160Section from '@/components/ds160/DS160Section';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
