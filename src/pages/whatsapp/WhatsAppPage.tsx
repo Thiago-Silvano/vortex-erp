@@ -661,7 +661,7 @@ export default function WhatsAppPage() {
                             {/* Agent name for agent messages */}
                             {isAgent && msg.sender_name && (
                               <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#1fa855' }}>
-                                {msg.sender_name}
+                                {msg.sender_name?.toUpperCase()}
                               </p>
                             )}
 
