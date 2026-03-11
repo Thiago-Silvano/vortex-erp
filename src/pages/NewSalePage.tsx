@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip } from 'lucide-react';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
+import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
@@ -133,6 +134,7 @@ export default function NewSalePage() {
   // Service edit modal
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
   const [showIndividualValues, setShowIndividualValues] = useState(true);
+  const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
 
   useEffect(() => {
     if (editSaleId) loadSale(editSaleId);
@@ -141,6 +143,7 @@ export default function NewSalePage() {
   const loadSale = async (id: string) => {
     const { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
     if (!sale) return;
+    setSaleStatus(sale.status === 'active' ? 'active' : 'draft');
     setQuoteId(sale.quote_id || '');
     setClientName(sale.client_name);
     setSaleDate(sale.sale_date);
@@ -813,6 +816,125 @@ export default function NewSalePage() {
     toast.success('Voucher gerado com sucesso!');
   };
 
+  const handleExportDraftPdf = async () => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o PDF'); return; }
+    let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
+    const agQuery = activeCompany?.id
+      ? supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1)
+      : supabase.from('agency_settings').select('*').limit(1);
+    const { data: agData } = await agQuery;
+    if (agData && agData.length > 0) agency = agData[0] as any;
+
+    let flightLegs: any[] = [];
+    for (const item of items) {
+      if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
+        flightLegs.push(...item.metadata.flightLegs);
+      }
+    }
+    if (quoteId) {
+      const { data: qServices } = await supabase.from('services').select('*').eq('quote_id', quoteId).order('sort_order');
+      if (qServices) {
+        for (const svc of qServices) {
+          if (svc.type === 'aereo') {
+            const { data: legs } = await supabase.from('flight_legs').select('*').eq('service_id', svc.id).order('sort_order');
+            if (legs) flightLegs.push(...legs.map((l: any) => ({
+              origin: l.origin, destination: l.destination, departureDate: l.departure_date,
+              departureTime: l.departure_time, arrivalDate: l.arrival_date, arrivalTime: l.arrival_time,
+              connectionDuration: l.connection_duration, direction: l.direction as 'ida' | 'volta', flightCode: '',
+            })));
+          }
+        }
+      }
+    }
+
+    let logoBase64: string | undefined;
+    if (agency.logo_url) {
+      try {
+        const resp = await fetch(agency.logo_url);
+        const blob = await resp.blob();
+        logoBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } catch { /* skip */ }
+    }
+
+    let destinationImageBase64: string | undefined;
+    if (destinationImageUrl) {
+      try {
+        const resp = await fetch(destinationImageUrl);
+        const blob = await resp.blob();
+        destinationImageBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } catch { /* skip */ }
+    }
+
+    const sellerName = allSellers.find(s => s.id === sellerId)?.full_name;
+
+    const hotels: any[] = [];
+    for (const item of items) {
+      if (item.metadata?.type === 'hotel' && item.metadata.hotel) {
+        const h = item.metadata.hotel;
+        hotels.push({
+          name: h.hotelName, description: h.description, checkIn: h.checkInDate,
+          checkOut: h.checkOutDate, nights: tripNights || 0,
+        });
+      }
+    }
+
+    const pdfData: PremiumPdfData = {
+      agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
+      client: { name: clientName },
+      seller: sellerName,
+      destination: items.find(i => i.metadata?.type === 'hotel')?.metadata?.hotel?.hotelName || '',
+      origin: '',
+      departureDate: tripStartDate || undefined,
+      returnDate: tripEndDate || undefined,
+      nights: tripNights || undefined,
+      passengersCount: passengers.length || passengersCount || 1,
+      passengers: passengers.map((p, i) => ({
+        name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
+        document: p.document_number || undefined,
+        birthDate: p.birth_date || undefined,
+        isMain: p.is_main,
+      })),
+      flightLegs,
+      hotels,
+      services: items.map((item, idx) => {
+        const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
+        return {
+          name: catalogName || item.description || `Serviço ${idx + 1}`,
+          description: item.metadata?.detailedDescription || item.description,
+          value: item.total_value,
+        };
+      }),
+      allItems: showIndividualValues ? items.map((item, idx) => {
+        const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
+        return { name: catalogName || item.description || `Serviço ${idx + 1}`, value: item.total_value };
+      }) : [],
+      showIndividualValues,
+      totalProducts: totalCost,
+      totalTaxes: 0,
+      totalTrip: totalSaleWithInterest,
+      proposalPaymentOptions: proposalPaymentOptions.filter(o => o.enabled),
+      payment: {
+        method: paymentMethod,
+        installments,
+        receivables: receivables.map(r => ({ number: r.installment_number, amount: r.amount, dueDate: r.due_date || undefined })),
+      },
+      notes: notes || undefined,
+      destinationImageBase64,
+    };
+
+    const doc = generatePremiumQuotePdf(pdfData);
+    doc.save(`rascunho-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+    toast.success('PDF do rascunho gerado com sucesso!');
+  };
+
   const handleGenerateLink = async () => {
     if (!editSaleId) { toast.error('Salve a venda primeiro antes de gerar o link da proposta.'); return; }
     const { data, error } = await (supabase.from('sales').select('short_id' as any).eq('id', editSaleId).single() as any);
@@ -1437,7 +1559,11 @@ export default function NewSalePage() {
         {/* Actions */}
         <div className="flex flex-wrap justify-end gap-2 pb-8">
           <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
-          <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher</Button>
+          {saleStatus === 'active' ? (
+            <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher</Button>
+          ) : (
+            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Rascunho</Button>
+          )}
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
