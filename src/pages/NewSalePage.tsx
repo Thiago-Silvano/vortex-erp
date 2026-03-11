@@ -156,6 +156,10 @@ export default function NewSalePage() {
     setTripEndDate((sale as any).trip_end_date || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
+    // Load proposal payment options
+    if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
+      setProposalPaymentOptions((sale as any).proposal_payment_options);
+    }
     if ((sale as any).invoice_url) {
       const parts = (sale as any).invoice_url.split('/');
       setInvoiceFileName(decodeURIComponent(parts[parts.length - 1]) || 'nota-fiscal.pdf');
