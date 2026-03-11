@@ -515,7 +515,7 @@ export default function WhatsAppPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-sm truncate" style={{ color: '#111b21' }}>
-                            {conv.client_name || 'Cliente desconhecido'}
+                            {(conv.client_name || 'Cliente desconhecido').toUpperCase()}
                           </span>
                           <span className="text-[11px] shrink-0 ml-2" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
                             {conv.last_message_at ? format(new Date(conv.last_message_at), 'HH:mm', { locale: ptBR }) : ''}
@@ -587,7 +587,7 @@ export default function WhatsAppPage() {
                     <User className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm" style={{ color: '#111b21' }}>{selectedConv.client_name || 'Cliente desconhecido'}</h3>
+                    <h3 className="font-semibold text-sm" style={{ color: '#111b21' }}>{(selectedConv.client_name || 'Cliente desconhecido').toUpperCase()}</h3>
                     <p className="text-xs" style={{ color: '#667781' }}>{selectedConv.phone}</p>
                   </div>
                 </div>
@@ -676,7 +676,7 @@ export default function WhatsAppPage() {
                                 onClick={() => scrollToMessage(repliedMsg.id)}
                               >
                                 <p className="text-[11px] font-semibold" style={{ color: repliedMsg.sender_type === 'agent' ? '#53bdeb' : '#06cf9c' }}>
-                                  {repliedMsg.sender_type === 'agent' ? repliedMsg.sender_name : (selectedConv?.client_name || 'Cliente')}
+                                  {repliedMsg.sender_type === 'agent' ? repliedMsg.sender_name?.toUpperCase() : (selectedConv?.client_name || 'Cliente').toUpperCase()}
                                 </p>
                                 <p className="text-[11px] truncate" style={{ color: '#667781' }}>
                                   {repliedMsg.content?.substring(0, 80) || '📎 Mídia'}
@@ -713,7 +713,7 @@ export default function WhatsAppPage() {
                 <div className="px-4 py-2 border-t flex items-center gap-3" style={{ background: '#f0f2f5' }}>
                   <div className="flex-1 rounded px-3 py-2 border-l-4" style={{ background: '#fff', borderLeftColor: '#25d366' }}>
                     <p className="text-[11px] font-semibold" style={{ color: '#06cf9c' }}>
-                      {replyingTo.sender_type === 'agent' ? replyingTo.sender_name : (selectedConv?.client_name || 'Cliente')}
+                      {replyingTo.sender_type === 'agent' ? replyingTo.sender_name?.toUpperCase() : (selectedConv?.client_name || 'Cliente').toUpperCase()}
                     </p>
                     <p className="text-xs truncate" style={{ color: '#667781' }}>
                       {replyingTo.content?.substring(0, 100) || '📎 Mídia'}
@@ -772,7 +772,7 @@ export default function WhatsAppPage() {
               <div className="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center mx-auto">
                 <User className="h-8 w-8 text-white" />
               </div>
-              <h3 className="font-semibold" style={{ color: '#111b21' }}>{selectedConv.client_name || 'Desconhecido'}</h3>
+              <h3 className="font-semibold" style={{ color: '#111b21' }}>{(selectedConv.client_name || 'Desconhecido').toUpperCase()}</h3>
               <p className="text-xs flex items-center justify-center gap-1" style={{ color: '#667781' }}>
                 <Phone className="h-3 w-3" /> {selectedConv.phone}
               </p>
