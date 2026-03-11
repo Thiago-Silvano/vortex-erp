@@ -334,7 +334,7 @@ export default function PropostaPublicPage() {
           <div className="mt-8 rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
 
             {/* Prominent per-person installment hero */}
-            {sale.installments > 1 && receivables.length > 0 && (
+            {sale.installments > 1 && receivables.length > 0 && !((sale as any).show_individual_values === true) && (
               <div className="text-center py-10 px-8" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
                 <p className="text-xs font-semibold tracking-[4px] uppercase mb-4" style={{ color: '#C8A45B' }}>
                   Investimento por pessoa
@@ -362,7 +362,7 @@ export default function PropostaPublicPage() {
             )}
 
             {/* Single payment (no installments) hero */}
-            {(sale.installments <= 1 || receivables.length === 0) && (
+            {(sale.installments <= 1 || receivables.length === 0) && !((sale as any).show_individual_values === true) && (
               <div className="text-center py-10 px-8" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
                 <p className="text-xs font-semibold tracking-[4px] uppercase mb-4" style={{ color: '#C8A45B' }}>
                   {passengersCount > 1 ? 'Investimento por pessoa' : 'Investimento total'}
