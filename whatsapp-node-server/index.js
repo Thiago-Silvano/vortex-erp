@@ -544,7 +544,26 @@ app.post('/send-message', async (req, res) => {
       }
     };
 
-    const rawTarget = String(targetPhone).trim();
+    // Priority 1: Use whatsapp_id if available (original sender ID)
+    if (whatsapp_id) {
+      pushCandidate(whatsapp_id);
+      // If it's a LID, also try to resolve it
+      if (whatsapp_id.endsWith('@lid')) {
+        try {
+          const contact = await session.client.getContactById(whatsapp_id);
+          if (contact?.id?._serialized && contact.id._serialized !== whatsapp_id) {
+            pushCandidate(contact.id._serialized);
+          }
+          if (contact?.number) {
+            pushCandidate(`${String(contact.number).replace(/\D/g, '')}@c.us`);
+          }
+        } catch (e) {
+          log(empresaId, `Falha ao resolver whatsapp_id LID: ${e.message}`);
+        }
+      }
+    }
+
+    const rawTarget = String(targetPhone || '').trim();
     const numericTarget = rawTarget.replace(/\D/g, '');
     const numericTail = numericTarget ? numericTarget.slice(-8) : '';
 
