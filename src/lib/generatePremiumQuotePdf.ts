@@ -78,6 +78,7 @@ export interface PremiumPdfData {
   hotels: HotelPdf[];
   services: ServicePdf[];
   allItems: Array<{ name: string; value: number }>;
+  showIndividualValues?: boolean;
   totalProducts: number;
   totalTaxes: number;
   totalTrip: number;
