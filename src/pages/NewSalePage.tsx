@@ -272,6 +272,8 @@ export default function NewSalePage() {
       return { ...opt, totalValue: val, installmentValue: perInstallment };
     }));
   }, [totalSaleWithInterest]);
+
+  useEffect(() => {
     if (paymentMethod === 'boleto' && installments > 1 && boletoInterestRate > 0) {
       const monthlyRate = boletoInterestRate / 100;
       const pmt = totalSaleWithInterest * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
