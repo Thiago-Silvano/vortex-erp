@@ -53,6 +53,9 @@ export default function ClientsPage() {
   const [form, setForm] = useState<Omit<Client, 'id'>>(emptyClient());
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [emailError, setEmailError] = useState('');
+  const [waModalOpen, setWaModalOpen] = useState(false);
+  const [waPhone, setWaPhone] = useState('');
+  const [waName, setWaName] = useState('');
 
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
