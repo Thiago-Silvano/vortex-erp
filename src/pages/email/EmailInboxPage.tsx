@@ -39,6 +39,14 @@ interface EmailRow {
   tracking_opened_at: string | null;
 }
 
+interface EmailAttachment {
+  id: string;
+  file_name: string;
+  mime_type: string;
+  file_url: string;
+  file_size: number | null;
+}
+
 const FOLDERS = [
   { key: 'inbox' as EmailFolder, label: 'Inbox', icon: Inbox },
   { key: 'sent' as EmailFolder, label: 'Enviados', icon: Send },
