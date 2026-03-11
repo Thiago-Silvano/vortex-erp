@@ -14,6 +14,8 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConversationCreated?: (convId: string) => void;
+  initialPhone?: string;
+  initialName?: string;
 }
 
 interface Seller {
