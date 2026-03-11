@@ -187,7 +187,7 @@ export default function WhatsAppSettingsPage() {
         // Check current DB status
         const { data: currentSession } = await supabase
           .from('whatsapp_sessions')
-          .select('status, server_url')
+          .select('status, server_url, phone_number')
           .eq('empresa_id', empresaId)
           .single();
 
