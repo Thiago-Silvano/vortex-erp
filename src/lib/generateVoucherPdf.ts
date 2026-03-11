@@ -412,14 +412,14 @@ export function generateVoucherPdf(data: VoucherPdfData) {
     y += 6;
   }
 
-  // ─── Services ──────────────────────────────────────────
-  if (data.services.length > 0 && data.showIndividualValues !== false) {
+  // ─── Services (hide when showIndividualValues is true) ──
+  if (data.services.length > 0 && data.showIndividualValues !== true) {
     y = checkPageBreak(doc, y, 30, m);
     y = drawSectionTitle(doc, 'Servicos contratados', y, m, pw);
     y += 4;
 
     data.services.forEach((svc) => {
-      y = checkPageBreak(doc, y, 12, m);
+      y = checkPageBreak(doc, y, 14, m);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
@@ -438,8 +438,10 @@ export function generateVoucherPdf(data: VoucherPdfData) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7);
         setColor(doc, TEXT_MUTED);
-        doc.text(s(svc.description), m + 5, y);
-        y += 3;
+        const descLines = doc.splitTextToSize(s(svc.description), cw - 10);
+        const maxLines = Math.min(descLines.length, 4);
+        doc.text(descLines.slice(0, maxLines), m + 5, y);
+        y += maxLines * 3 + 2;
       }
       y += 2;
     });
