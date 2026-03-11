@@ -25,7 +25,9 @@ import {
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import NewWhatsAppConversationModal from '@/components/NewWhatsAppConversationModal';
+import PhotoCaptureModal from '@/components/PhotoCaptureModal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Camera } from 'lucide-react';
 
 interface MenuItem {
   title: string;
@@ -249,6 +251,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [pendingCompany, setPendingCompany] = useState<typeof activeCompany>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showNewWAModal, setShowNewWAModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const handleCompanyChange = (val: string) => {
     const comp = companies.find(c => c.id === val);
@@ -330,6 +333,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        onClick={() => setShowPhotoModal(true)}
+                        variant="outline"
+                        className="h-10 rounded-[20px] gap-2 font-medium border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+                      >
+                        <Camera className="h-4 w-4" />
+                        Foto
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Capturar foto e vincular ao cliente</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
                         onClick={() => navigate('/whatsapp')}
                         variant="outline"
                         className="h-10 rounded-[20px] gap-2 font-medium border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10"
@@ -363,22 +379,37 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* WhatsApp floating button - mobile */}
+      {/* Floating buttons - mobile */}
       {isMobile && (
-        <button
-          onClick={() => setShowNewWAModal(true)}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
-          style={{ backgroundColor: '#25D366' }}
-          title="Iniciar nova conversa no WhatsApp"
-        >
-          <MessageSquare className="h-6 w-6" />
-        </button>
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+          <button
+            onClick={() => setShowPhotoModal(true)}
+            className="h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
+            style={{ backgroundColor: '#8B5CF6' }}
+            title="Capturar foto"
+          >
+            <Camera className="h-6 w-6" />
+          </button>
+          <button
+            onClick={() => setShowNewWAModal(true)}
+            className="h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
+            style={{ backgroundColor: '#25D366' }}
+            title="Iniciar nova conversa no WhatsApp"
+          >
+            <MessageSquare className="h-6 w-6" />
+          </button>
+        </div>
       )}
 
       <NewWhatsAppConversationModal
         open={showNewWAModal}
         onOpenChange={setShowNewWAModal}
         onConversationCreated={handleWAConversationCreated}
+      />
+
+      <PhotoCaptureModal
+        open={showPhotoModal}
+        onOpenChange={setShowPhotoModal}
       />
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>

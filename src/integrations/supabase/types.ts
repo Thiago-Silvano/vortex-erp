@@ -229,6 +229,51 @@ export type Database = {
           },
         ]
       }
+      client_photos: {
+        Row: {
+          client_id: string
+          created_at: string
+          empresa_id: string | null
+          file_name: string
+          file_url: string
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          empresa_id?: string | null
+          file_name?: string
+          file_url: string
+          id?: string
+          uploaded_by?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          empresa_id?: string | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_photos_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_photos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
