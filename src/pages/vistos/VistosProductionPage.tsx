@@ -203,6 +203,18 @@ export default function VistosProductionPage() {
 
     if (type === 'photo') {
       await supabase.from('visa_processes').update({ photo_url: publicUrl }).eq('id', processId);
+      
+      // Also save to client_photos for sync
+      const proc = processes.find(p => p.id === processId);
+      if (proc?._client_id) {
+        await supabase.from('client_photos').insert({
+          client_id: proc._client_id,
+          file_url: publicUrl,
+          file_name: file.name,
+          uploaded_by: 'produção',
+          empresa_id: activeCompany?.id,
+        } as any);
+      }
     } else {
       const proc = processes.find(p => p.id === processId);
       const docs = [...(proc?.documents || []), { name: file.name, url: publicUrl }];
