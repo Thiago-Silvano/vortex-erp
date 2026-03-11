@@ -307,7 +307,6 @@ export default function UserAdmin() {
                 <p className="text-xs text-muted-foreground mt-1">Empresa que será selecionada automaticamente ao fazer login</p>
               </div>
             )}
-            </div>
 
             <div className="border rounded-lg p-4">
               <h3 className="font-medium text-sm mb-3">Empresas com acesso</h3>
