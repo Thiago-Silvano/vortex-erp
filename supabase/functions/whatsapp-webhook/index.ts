@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
       const {
         empresa_id: incomingEmpresaId,
         phone,
+        original_from,
         sender_name,
         content,
         message_type,
@@ -203,6 +204,9 @@ Deno.serve(async (req) => {
         clientId = clientData.id;
       }
 
+      // Determine the whatsapp_id (original sender ID for reliable sending)
+      const whatsappId = original_from || null;
+
       const { data: convResult, error: convError } = await supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
         p_phone: cleanPhone,
@@ -210,6 +214,7 @@ Deno.serve(async (req) => {
         p_client_id: clientId,
         p_last_message: displayContent.substring(0, 200) || '',
         p_last_message_at: new Date().toISOString(),
+        p_whatsapp_id: whatsappId,
       });
 
       if (convError || !convResult) {

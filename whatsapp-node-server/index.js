@@ -309,6 +309,7 @@ async function createWhatsAppClient(empresaId) {
       await sendWebhook('message_received', {
         empresa_id: empresaId,
         phone: phone,
+        original_from: msg.from, // Original WhatsApp ID (e.g., xxx@lid or xxx@c.us)
         sender_name: senderName,
         content: msg.body || '',
         message_type: messageType,
@@ -520,6 +521,7 @@ app.post('/send-message', async (req, res) => {
   const {
     phone,
     number,       // alias para phone (ERP envia ambos)
+    whatsapp_id,  // Original WhatsApp ID (e.g., 107533314330705@lid or 5548991165568@c.us)
     message,
     message_type,
     media_url,
@@ -529,8 +531,8 @@ app.post('/send-message', async (req, res) => {
   } = req.body;
 
   const targetPhone = phone || number;
-  if (!targetPhone) {
-    return res.status(400).json({ error: 'phone/number é obrigatório' });
+  if (!targetPhone && !whatsapp_id) {
+    return res.status(400).json({ error: 'phone/number ou whatsapp_id é obrigatório' });
   }
 
   // Determinar possíveis IDs de destino (c.us, lid e chats já existentes)
@@ -542,7 +544,26 @@ app.post('/send-message', async (req, res) => {
       }
     };
 
-    const rawTarget = String(targetPhone).trim();
+    // Priority 1: Use whatsapp_id if available (original sender ID)
+    if (whatsapp_id) {
+      pushCandidate(whatsapp_id);
+      // If it's a LID, also try to resolve it
+      if (whatsapp_id.endsWith('@lid')) {
+        try {
+          const contact = await session.client.getContactById(whatsapp_id);
+          if (contact?.id?._serialized && contact.id._serialized !== whatsapp_id) {
+            pushCandidate(contact.id._serialized);
+          }
+          if (contact?.number) {
+            pushCandidate(`${String(contact.number).replace(/\D/g, '')}@c.us`);
+          }
+        } catch (e) {
+          log(empresaId, `Falha ao resolver whatsapp_id LID: ${e.message}`);
+        }
+      }
+    }
+
+    const rawTarget = String(targetPhone || '').trim();
     const numericTarget = rawTarget.replace(/\D/g, '');
     const numericTail = numericTarget ? numericTarget.slice(-8) : '';
 

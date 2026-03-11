@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     // Get conversation details
     const { data: conv } = await supabase
       .from('whatsapp_conversations')
-      .select('phone, empresa_id')
+      .select('phone, empresa_id, whatsapp_id')
       .eq('id', conversation_id)
       .single();
 
@@ -116,6 +116,7 @@ Deno.serve(async (req) => {
             empresa_id: conv.empresa_id,
             number: conv.phone?.replace(/\D/g, '') || conv.phone,
             phone: conv.phone,
+            whatsapp_id: (conv as any).whatsapp_id || null,
             message: fullMessage,
             message_type: message_type || 'text',
             media_url,
