@@ -1379,6 +1379,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           destination_image_url: string | null
+          destination_name: string | null
           empresa_id: string | null
           gross_profit: number | null
           id: string
@@ -1415,6 +1416,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           destination_image_url?: string | null
+          destination_name?: string | null
           empresa_id?: string | null
           gross_profit?: number | null
           id?: string
@@ -1451,6 +1453,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           destination_image_url?: string | null
+          destination_name?: string | null
           empresa_id?: string | null
           gross_profit?: number | null
           id?: string

@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
 import PdfImportModal from '@/components/PdfImportModal';
@@ -86,6 +86,7 @@ export default function NewSalePage() {
   const [tripNights, setTripNights] = useState(0);
   const [tripStartDate, setTripStartDate] = useState('');
   const [tripEndDate, setTripEndDate] = useState('');
+  const [destinationName, setDestinationName] = useState('');
 
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([]);
   const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);
@@ -159,6 +160,7 @@ export default function NewSalePage() {
     setTripNights(Number((sale as any).trip_nights) || 0);
     setTripStartDate((sale as any).trip_start_date || '');
     setTripEndDate((sale as any).trip_end_date || '');
+    setDestinationName((sale as any).destination_name || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
     // Load proposal payment options
@@ -335,6 +337,38 @@ export default function NewSalePage() {
     }));
   };
 
+  const moveItem = (idx: number, direction: 'up' | 'down') => {
+    setItems(prev => {
+      const newItems = [...prev];
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= newItems.length) return prev;
+      [newItems[idx], newItems[targetIdx]] = [newItems[targetIdx], newItems[idx]];
+      // Also swap images
+      setItemImages(prevImgs => {
+        const newImgs = { ...prevImgs };
+        const temp = newImgs[idx];
+        newImgs[idx] = newImgs[targetIdx];
+        newImgs[targetIdx] = temp;
+        return newImgs;
+      });
+      return newItems;
+    });
+  };
+
+  const removeItem = (idx: number) => {
+    setItems(prev => prev.filter((_, i) => i !== idx));
+    setItemImages(prev => {
+      const newImgs: Record<number, string[]> = {};
+      Object.keys(prev).forEach(key => {
+        const k = parseInt(key);
+        if (k === idx) return;
+        const newKey = k > idx ? k - 1 : k;
+        newImgs[newKey] = prev[k];
+      });
+      return newImgs;
+    });
+  };
+
   const addSupplier = () => {
     if (!addingSupplierId || selectedSupplierIds.includes(addingSupplierId)) return;
     setSelectedSupplierIds(prev => [...prev, addingSupplierId]);
@@ -487,6 +521,7 @@ export default function NewSalePage() {
         trip_nights: tripNights,
         trip_start_date: tripStartDate || null,
         trip_end_date: tripEndDate || null,
+        destination_name: destinationName || '',
       } as any,
       userEmail,
     };
@@ -890,7 +925,7 @@ export default function NewSalePage() {
       agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
       client: { name: clientName },
       seller: sellerName,
-      destination: items.find(i => i.metadata?.type === 'hotel')?.metadata?.hotel?.hotelName || '',
+      destination: destinationName || items.find(i => i.metadata?.type === 'hotel')?.metadata?.hotel?.hotelName || '',
       origin: '',
       departureDate: tripStartDate || undefined,
       returnDate: tripEndDate || undefined,
@@ -1037,6 +1072,11 @@ export default function NewSalePage() {
                 <Label>Nº de Noites</Label>
                 <Input type="number" min="0" value={tripNights} onChange={e => setTripNights(parseInt(e.target.value) || 0)} />
                 <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente</p>
+              </div>
+              <div className="md:col-span-2">
+                <Label>Nome do Destino</Label>
+                <Input value={destinationName} onChange={e => setDestinationName(e.target.value)} placeholder="Ex: Orlando, Paris, Cancún..." />
+                <p className="text-xs text-muted-foreground mt-1">Exibido nas propostas e orçamentos</p>
               </div>
             </div>
             <div className="col-span-full mt-2">
@@ -1187,6 +1227,7 @@ export default function NewSalePage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-16" />
                     <TableHead>Serviço</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead className="w-32">Custo</TableHead>
@@ -1199,6 +1240,17 @@ export default function NewSalePage() {
                   {items.map((item, idx) => (
                     <React.Fragment key={idx}>
                       <TableRow>
+                        <TableCell className="px-1">
+                          <div className="flex flex-col items-center gap-0.5">
+                            <Button size="icon" variant="ghost" className="h-6 w-6" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
+                              <ArrowUp className="h-3 w-3" />
+                            </Button>
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            <Button size="icon" variant="ghost" className="h-6 w-6" disabled={idx === items.length - 1} onClick={() => moveItem(idx, 'down')}>
+                              <ArrowDown className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
                         <TableCell className="min-w-[150px]">
                           <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -1218,13 +1270,13 @@ export default function NewSalePage() {
                         <TableCell><Input type="number" step="0.01" value={item.rav} onChange={e => updateItem(idx, 'rav', parseFloat(e.target.value) || 0)} /></TableCell>
                         <TableCell><Input type="number" step="0.01" value={item.total_value} disabled className="bg-muted" /></TableCell>
                         <TableCell>
-                          <Button size="icon" variant="ghost" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                          <Button size="icon" variant="ghost" onClick={() => removeItem(idx)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </TableCell>
                       </TableRow>
                       <TableRow className="border-b-2">
-                        <TableCell colSpan={6} className="py-2">
+                        <TableCell colSpan={7} className="py-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             {uploadingItemImages[idx] ? (
                               <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />Carregando...</span>
@@ -1253,6 +1305,14 @@ export default function NewSalePage() {
               {items.map((item, idx) => (
                 <div key={idx} className="border rounded-lg p-3 space-y-2">
                   <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === items.length - 1} onClick={() => moveItem(idx, 'down')}>
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                    </div>
                     <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                       <SelectTrigger className="flex-1"><SelectValue placeholder="Serviço..." /></SelectTrigger>
                       <SelectContent>
@@ -1260,7 +1320,7 @@ export default function NewSalePage() {
                         {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => { setItems(prev => prev.filter((_, i) => i !== idx)); setItemImages(prev => { const n = {...prev}; delete n[idx]; return n; }); }}>
+                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => removeItem(idx)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
