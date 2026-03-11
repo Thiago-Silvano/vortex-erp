@@ -61,6 +61,15 @@ interface ClientOption { id: string; full_name: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
+
+interface ProposalPaymentOption {
+  method: string;
+  label: string;
+  installments: number;
+  installmentValue: number;
+  totalValue: number;
+  enabled: boolean;
+}
 interface InternalFile { id?: string; file_name: string; file_url: string; }
 
 export default function NewSalePage() {
@@ -111,6 +120,14 @@ export default function NewSalePage() {
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
+    { method: 'pix', label: 'PIX / À Vista', installments: 1, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'credito_3x', label: 'Cartão 3x', installments: 3, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'credito_6x', label: 'Cartão 6x', installments: 6, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'credito_10x', label: 'Cartão 10x', installments: 10, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'credito_12x', label: 'Cartão 12x', installments: 12, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'boleto', label: 'Boleto Bancário', installments: 1, installmentValue: 0, totalValue: 0, enabled: false },
+  ]);
 
   // Service edit modal
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
@@ -139,6 +156,10 @@ export default function NewSalePage() {
     setTripEndDate((sale as any).trip_end_date || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
+    // Load proposal payment options
+    if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
+      setProposalPaymentOptions((sale as any).proposal_payment_options);
+    }
     if ((sale as any).invoice_url) {
       const parts = (sale as any).invoice_url.split('/');
       setInvoiceFileName(decodeURIComponent(parts[parts.length - 1]) || 'nota-fiscal.pdf');
@@ -246,6 +267,15 @@ export default function NewSalePage() {
   const commissionValue = grossProfit * (commissionRate / 100);
   const cardFeeValue = paymentMethod === 'credito' ? totalSaleWithInterest * (feeRate / 100) : 0;
   const netProfit = grossProfit - commissionValue - cardFeeValue;
+
+  // Auto-recalculate proposal payment options when total changes
+  useEffect(() => {
+    setProposalPaymentOptions(prev => prev.map(opt => {
+      const val = totalSaleWithInterest;
+      const perInstallment = opt.installments > 0 ? Math.round((val / opt.installments) * 100) / 100 : val;
+      return { ...opt, totalValue: val, installmentValue: perInstallment };
+    }));
+  }, [totalSaleWithInterest]);
 
   useEffect(() => {
     if (paymentMethod === 'boleto' && installments > 1 && boletoInterestRate > 0) {
@@ -431,6 +461,7 @@ export default function NewSalePage() {
         card_fee_value: cardFeeValue,
         net_profit: netProfit,
         notes,
+        proposal_payment_options: proposalPaymentOptions.filter(o => o.enabled),
         status,
         created_by: userEmail,
         updated_by: userEmail,
@@ -733,6 +764,7 @@ export default function NewSalePage() {
         installments,
         receivables: receivables.map(r => ({ number: r.installment_number, amount: r.amount, dueDate: r.due_date || undefined })),
       },
+      proposalPaymentOptions: proposalPaymentOptions.filter(o => o.enabled),
       notes: notes || undefined,
     };
 
@@ -1121,7 +1153,90 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Receivables */}
+        {/* Proposal Payment Options */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">💳 Opções de Pagamento para Proposta</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Selecione quais formas de pagamento deseja ofertar ao cliente na proposta (PDF e interativa).</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {proposalPaymentOptions.map((opt, idx) => (
+                <div key={opt.method} className={`border rounded-lg p-4 transition-colors ${opt.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={opt.enabled}
+                      onCheckedChange={(checked) => {
+                        setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, enabled: !!checked } : o));
+                      }}
+                    />
+                    <div className="flex-1">
+                      <Label className="font-medium">{opt.label}</Label>
+                      {opt.enabled && (
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Parcelas</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="24"
+                              value={opt.installments}
+                              onChange={e => {
+                                const inst = parseInt(e.target.value) || 1;
+                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
+                                  ...o,
+                                  installments: inst,
+                                  installmentValue: Math.round((o.totalValue / inst) * 100) / 100,
+                                } : o));
+                              }}
+                              className="h-8"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Valor/Parcela</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={opt.installmentValue}
+                              onChange={e => {
+                                const val = parseFloat(e.target.value) || 0;
+                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
+                                  ...o,
+                                  installmentValue: val,
+                                  totalValue: val * o.installments,
+                                } : o));
+                              }}
+                              className="h-8"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {opt.enabled && (
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">Total</p>
+                        <p className="text-sm font-bold text-primary">{fmt(opt.totalValue)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setProposalPaymentOptions(prev => [...prev, {
+                method: `custom_${Date.now()}`,
+                label: 'Personalizado',
+                installments: 1,
+                installmentValue: totalSaleWithInterest,
+                totalValue: totalSaleWithInterest,
+                enabled: true,
+              }])}
+            >
+              <Plus className="h-4 w-4 mr-1" />Adicionar opção
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader><CardTitle className="text-base">Controle de Recebíveis</CardTitle></CardHeader>
           <CardContent className="p-0">

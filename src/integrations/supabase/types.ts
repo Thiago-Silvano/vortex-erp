@@ -1271,6 +1271,7 @@ export type Database = {
           notes: string | null
           passengers_count: number | null
           payment_method: string | null
+          proposal_payment_options: Json | null
           quote_id: string | null
           sale_date: string
           sale_interest: number | null
@@ -1305,6 +1306,7 @@ export type Database = {
           notes?: string | null
           passengers_count?: number | null
           payment_method?: string | null
+          proposal_payment_options?: Json | null
           quote_id?: string | null
           sale_date?: string
           sale_interest?: number | null
@@ -1339,6 +1341,7 @@ export type Database = {
           notes?: string | null
           passengers_count?: number | null
           payment_method?: string | null
+          proposal_payment_options?: Json | null
           quote_id?: string | null
           sale_date?: string
           sale_interest?: number | null
