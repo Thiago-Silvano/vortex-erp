@@ -182,56 +182,42 @@ Deno.serve(async (req) => {
         displayContent = typeLabel[message_type || 'document'] || '📎 Arquivo';
       }
 
-      // Find or create conversation
-      const { data: existingConv } = await supabase
-        .from('whatsapp_conversations')
-        .select('*')
+      // Find or create conversation atomically (prevents duplicates)
+      let clientName = sender_name || 'Cliente desconhecido';
+      let clientId: string | null = null;
+
+      // Try to find client
+      const normalizedPhone = phone.replace(/\D/g, '');
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('id, full_name')
         .eq('empresa_id', empresaId)
-        .eq('phone', phone)
-        .neq('status', 'finished')
-        .order('created_at', { ascending: false })
+        .or(`phone.ilike.%${normalizedPhone.slice(-8)}%`)
         .limit(1)
         .maybeSingle();
 
-      let conversationId: string;
-
-      if (existingConv) {
-        conversationId = existingConv.id;
-        await supabase.from('whatsapp_conversations').update({
-          last_message: displayContent.substring(0, 200) || '',
-          last_message_at: new Date().toISOString(),
-          unread_count: (existingConv.unread_count || 0) + 1,
-        }).eq('id', conversationId);
-      } else {
-        const normalizedPhone = phone.replace(/\D/g, '');
-        const { data: clientData } = await supabase
-          .from('clients')
-          .select('id, full_name')
-          .eq('empresa_id', empresaId)
-          .or(`phone.ilike.%${normalizedPhone.slice(-8)}%`)
-          .limit(1)
-          .maybeSingle();
-
-        const clientName = clientData?.full_name || sender_name || 'Cliente desconhecido';
-
-        const { data: newConv, error: convError } = await supabase.from('whatsapp_conversations').insert({
-          empresa_id: empresaId,
-          phone,
-          client_name: clientName,
-          client_id: clientData?.id || null,
-          status: 'new_lead',
-          last_message: displayContent.substring(0, 200) || '',
-          last_message_at: new Date().toISOString(),
-          unread_count: 1,
-        }).select('id').single();
-
-        if (convError || !newConv?.id) {
-          return new Response(JSON.stringify({ error: convError?.message || 'Failed to create conversation' }), {
-            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        conversationId = newConv.id;
+      if (clientData) {
+        clientName = clientData.full_name || clientName;
+        clientId = clientData.id;
       }
+
+      const { data: convResult, error: convError } = await supabase.rpc('find_or_create_conversation', {
+        p_empresa_id: empresaId,
+        p_phone: phone,
+        p_client_name: clientName,
+        p_client_id: clientId,
+        p_last_message: displayContent.substring(0, 200) || '',
+        p_last_message_at: new Date().toISOString(),
+      });
+
+      if (convError || !convResult) {
+        console.error('find_or_create_conversation error:', convError);
+        return new Response(JSON.stringify({ error: convError?.message || 'Failed to find/create conversation' }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const conversationId: string = convResult;
 
       await supabase.from('whatsapp_messages').insert({
         conversation_id: conversationId,
