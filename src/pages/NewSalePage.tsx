@@ -469,6 +469,16 @@ export default function NewSalePage() {
     });
   };
 
+  const moveItemImage = (itemIdx: number, imgIdx: number, direction: 'left' | 'right') => {
+    setItemImages(prev => {
+      const images = [...(prev[itemIdx] || [])];
+      const targetIdx = direction === 'left' ? imgIdx - 1 : imgIdx + 1;
+      if (targetIdx < 0 || targetIdx >= images.length) return prev;
+      [images[imgIdx], images[targetIdx]] = [images[targetIdx], images[imgIdx]];
+      return { ...prev, [itemIdx]: images };
+    });
+  };
+
   const handleInternalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
