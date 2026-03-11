@@ -319,6 +319,7 @@ export default function PropostaPublicPage() {
                     images={item.images}
                     metadata={item.metadata}
                     passengersCount={passengersCount}
+                    showValue={(sale as any).show_individual_values !== false}
                     onImageClick={(imgIdx) => setLightbox({ images: item.images, index: imgIdx })}
                   />
                 );
@@ -541,7 +542,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function ServiceCard({
-  name, description, catalogName, value, images, metadata, passengersCount, onImageClick,
+  name, description, catalogName, value, images, metadata, passengersCount, showValue = true, onImageClick,
 }: {
   name: string;
   description: string;
@@ -550,6 +551,7 @@ function ServiceCard({
   images: string[];
   metadata?: any;
   passengersCount: number;
+  showValue?: boolean;
   onImageClick: (idx: number) => void;
 }) {
   const [currentImg, setCurrentImg] = useState(0);
@@ -621,14 +623,16 @@ function ServiceCard({
               <p className="text-sm leading-relaxed mt-2" style={{ color: '#888' }}>{description}</p>
             )}
           </div>
-          <div className="text-right flex-shrink-0">
-            {value > 0 && (
-              <>
-                <span className="text-lg font-bold whitespace-nowrap" style={{ color: '#C8A45B' }}>{fmt(value)}</span>
-                {passengersCount > 1 && <p className="text-[11px] mt-0.5" style={{ color: '#aaa' }}>{fmt(value / passengersCount)} /pessoa</p>}
-              </>
-            )}
-          </div>
+          {showValue && (
+            <div className="text-right flex-shrink-0">
+              {value > 0 && (
+                <>
+                  <span className="text-lg font-bold whitespace-nowrap" style={{ color: '#C8A45B' }}>{fmt(value)}</span>
+                  {passengersCount > 1 && <p className="text-[11px] mt-0.5" style={{ color: '#aaa' }}>{fmt(value / passengersCount)} /pessoa</p>}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Flight details */}

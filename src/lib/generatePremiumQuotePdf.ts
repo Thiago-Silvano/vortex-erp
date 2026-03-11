@@ -78,6 +78,7 @@ export interface PremiumPdfData {
   hotels: HotelPdf[];
   services: ServicePdf[];
   allItems: Array<{ name: string; value: number }>;
+  showIndividualValues?: boolean;
   totalProducts: number;
   totalTaxes: number;
   totalTrip: number;
@@ -403,7 +404,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       setColor(doc, DEEP_BLUE);
       doc.text(s(`-  ${svc.name}`), m, y);
 
-      if (svc.value > 0) {
+      if (svc.value > 0 && data.showIndividualValues !== false) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         setColor(doc, TEXT_MAIN);
