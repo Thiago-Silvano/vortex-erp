@@ -5,7 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-whatsapp-secret',
 };
 
-// Map whatsapp-web.js message types to mime type prefixes
 function guessMimeType(messageType: string): string {
   switch (messageType) {
     case 'image': return 'image/jpeg';
@@ -30,6 +29,20 @@ function getExtension(messageType: string): string {
   }
 }
 
+async function addLog(supabase: any, empresaId: string | null, eventType: string, message: string, details: any = {}) {
+  if (!empresaId) return;
+  try {
+    await supabase.from('whatsapp_logs').insert({
+      empresa_id: empresaId,
+      event_type: eventType,
+      message,
+      details,
+    });
+  } catch (e) {
+    console.error('Failed to insert log:', e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -44,7 +57,6 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { event, data } = body;
 
-    // event types: message_received, status_update, session_update, qr_code
     if (event === 'qr_code') {
       const { empresa_id, qr_code } = data;
       await supabase.from('whatsapp_sessions').upsert({
@@ -53,6 +65,8 @@ Deno.serve(async (req) => {
         status: 'waiting_qr',
         updated_at: new Date().toISOString(),
       }, { onConflict: 'empresa_id' });
+
+      await addLog(supabase, empresa_id, 'qr_generated', 'QR-Code gerado pelo servidor');
 
       return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -64,6 +78,7 @@ Deno.serve(async (req) => {
       if (status === 'connected') {
         updateData.connected_at = new Date().toISOString();
         updateData.qr_code = '';
+        updateData.webhook_status = 'active';
       }
       if (status === 'disconnected') {
         updateData.connected_at = null;
@@ -75,6 +90,14 @@ Deno.serve(async (req) => {
         ...updateData,
       }, { onConflict: 'empresa_id' });
 
+      if (status === 'connected') {
+        await addLog(supabase, empresa_id, 'session_connected', `WhatsApp conectado com sucesso. Número detectado: ${phone_number || 'não informado'}`, { phone_number });
+      } else if (status === 'disconnected') {
+        await addLog(supabase, empresa_id, 'session_disconnected', 'Sessão do WhatsApp desconectada');
+      } else {
+        await addLog(supabase, empresa_id, 'session_update', `Status da sessão atualizado: ${status}`, { status });
+      }
+
       return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -85,16 +108,15 @@ Deno.serve(async (req) => {
         sender_name,
         content,
         message_type,
-        media_url,       // legacy: direct URL
-        media,           // NEW: base64 data from Node.js
+        media_url,
+        media,
         media_filename,
-        media_mimetype,  // optional mimetype from Node.js
-        reply_to,        // NEW: quoted message serialized id
+        media_mimetype,
+        reply_to,
       } = data;
 
       let empresaId: string | null = incomingEmpresaId || null;
 
-      // Fallback: infer company from connected session
       if (!empresaId) {
         const { data: connectedSessions } = await supabase
           .from('whatsapp_sessions')
@@ -103,7 +125,6 @@ Deno.serve(async (req) => {
           .not('empresa_id', 'is', null)
           .order('updated_at', { ascending: false })
           .limit(1);
-
         empresaId = connectedSessions?.[0]?.empresa_id ?? null;
       }
 
@@ -114,7 +135,13 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Handle media: upload base64 to storage if provided
+      // Update last_message_received_at and webhook_status
+      await supabase.from('whatsapp_sessions').update({
+        last_message_received_at: new Date().toISOString(),
+        webhook_status: 'active',
+      }).eq('empresa_id', empresaId);
+
+      // Handle media upload
       let finalMediaUrl: string | null = media_url || null;
       let finalMimetype: string | null = media_mimetype || null;
 
@@ -124,7 +151,6 @@ Deno.serve(async (req) => {
           const ext = getExtension(message_type || 'document');
           const fileName = `${empresaId}/${phone}/${Date.now()}.${ext}`;
 
-          // Decode base64 to Uint8Array
           const binaryString = atob(media);
           const bytes = new Uint8Array(binaryString.length);
           for (let i = 0; i < binaryString.length; i++) {
@@ -133,17 +159,12 @@ Deno.serve(async (req) => {
 
           const { error: uploadError } = await supabase.storage
             .from('whatsapp-media')
-            .upload(fileName, bytes, {
-              contentType: mimeType,
-              upsert: false,
-            });
+            .upload(fileName, bytes, { contentType: mimeType, upsert: false });
 
           if (uploadError) {
             console.error('Storage upload error:', uploadError);
           } else {
-            const { data: urlData } = supabase.storage
-              .from('whatsapp-media')
-              .getPublicUrl(fileName);
+            const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(fileName);
             finalMediaUrl = urlData.publicUrl;
             finalMimetype = mimeType;
           }
@@ -152,16 +173,11 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Determine display content
       let displayContent = content || '';
       if (!displayContent && finalMediaUrl) {
         const typeLabel: Record<string, string> = {
-          image: '📷 Imagem',
-          video: '🎥 Vídeo',
-          audio: '🎵 Áudio',
-          ptt: '🎤 Áudio',
-          sticker: '🏷️ Figurinha',
-          document: '📄 Documento',
+          image: '📷 Imagem', video: '🎥 Vídeo', audio: '🎵 Áudio',
+          ptt: '🎤 Áudio', sticker: '🏷️ Figurinha', document: '📄 Documento',
         };
         displayContent = typeLabel[message_type || 'document'] || '📎 Arquivo';
       }
@@ -211,15 +227,12 @@ Deno.serve(async (req) => {
 
         if (convError || !newConv?.id) {
           return new Response(JSON.stringify({ error: convError?.message || 'Failed to create conversation' }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
-
         conversationId = newConv.id;
       }
 
-      // Insert message
       await supabase.from('whatsapp_messages').insert({
         conversation_id: conversationId,
         sender_type: 'client',
@@ -231,6 +244,8 @@ Deno.serve(async (req) => {
         media_mimetype: finalMimetype,
         reply_to_message_id: reply_to || null,
       });
+
+      await addLog(supabase, empresaId, 'message_received', `Mensagem recebida de ${phone}`, { phone, message_type: message_type || 'text' });
 
       // Check automations
       const { data: automations } = await supabase
