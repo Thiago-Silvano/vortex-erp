@@ -251,6 +251,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [pendingCompany, setPendingCompany] = useState<typeof activeCompany>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showNewWAModal, setShowNewWAModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const handleCompanyChange = (val: string) => {
     const comp = companies.find(c => c.id === val);
