@@ -464,68 +464,100 @@ app.post('/send-message', async (req, res) => {
     return res.status(400).json({ error: 'phone/number é obrigatório' });
   }
 
-  // Determinar o chatId correto
-  let chatId;
-  if (targetPhone.includes('@lid')) {
-    // Já é um LID - usar diretamente
-    chatId = targetPhone;
-    log(empresaId, `Usando LID direto: ${chatId}`);
-  } else if (targetPhone.includes('@')) {
-    // Já tem formato de ID (ex: xxx@c.us)
-    chatId = targetPhone;
-  } else {
-    const normalizedPhone = normalizePhone(targetPhone);
-    chatId = `${normalizedPhone}@c.us`;
-  }
+  // Determinar possíveis IDs de destino (c.us e lid)
+  const buildCandidateIds = async () => {
+    const candidates = [];
+    const pushCandidate = (value) => {
+      if (value && !candidates.includes(value)) {
+        candidates.push(value);
+      }
+    };
 
-  try {
-    log(empresaId, `Enviando para ${chatId}: ${message?.substring(0, 50) || '[mídia]'}`);
+    const rawTarget = String(targetPhone).trim();
+    if (rawTarget.includes('@')) {
+      pushCandidate(rawTarget);
+    }
 
-    // Tentar resolver o ID correto do número antes de enviar
-    // Isso lida com o problema "No LID for user"
-    let resolvedChatId = chatId;
-    if (chatId.endsWith('@c.us')) {
+    const numericTarget = rawTarget.replace(/\D/g, '');
+    if (numericTarget) {
+      pushCandidate(`${numericTarget}@c.us`);
+
       try {
-        const numberId = await session.client.getNumberId(chatId.replace('@c.us', ''));
-        if (numberId) {
-          resolvedChatId = numberId._serialized;
-          log(empresaId, `Número resolvido: ${chatId} -> ${resolvedChatId}`);
+        const numberId = await session.client.getNumberId(numericTarget);
+        if (numberId?._serialized) {
+          pushCandidate(numberId._serialized);
+          log(empresaId, `Número resolvido via getNumberId: ${numericTarget} -> ${numberId._serialized}`);
         }
       } catch (resolveErr) {
-        log(empresaId, `Não foi possível resolver número, usando original: ${resolveErr.message}`);
+        log(empresaId, `Não foi possível resolver via getNumberId: ${resolveErr.message}`);
       }
     }
 
-    let sentMsg;
-
-    // Se tem media_url, enviar como mídia
-    if (media_url && message_type !== 'text') {
+    if (rawTarget.endsWith('@lid')) {
       try {
-        const media = await MessageMedia.fromUrl(media_url, {
-          unsafeMime: true,
-          reqOptions: { timeout: 30000 },
-        });
-
-        if (media_mimetype) {
-          media.mimetype = media_mimetype;
+        const contact = await session.client.getContactById(rawTarget);
+        if (contact?.id?._serialized) {
+          pushCandidate(contact.id._serialized);
+          log(empresaId, `Contato LID resolvido: ${rawTarget} -> ${contact.id._serialized}`);
         }
-        if (filename) {
-          media.filename = filename;
-        }
-
-        sentMsg = await session.client.sendMessage(resolvedChatId, media, {
-          caption: message || '',
-          sendMediaAsDocument: message_type === 'document',
-        });
-      } catch (mediaErr) {
-        log(empresaId, `Erro ao enviar mídia, tentando como texto: ${mediaErr.message}`);
-        sentMsg = await session.client.sendMessage(resolvedChatId, `${message || ''}\n${media_url}`);
+      } catch (contactErr) {
+        log(empresaId, `Falha ao resolver contato LID: ${contactErr.message}`);
       }
-    } else {
-      sentMsg = await session.client.sendMessage(resolvedChatId, message || '');
     }
 
-    log(empresaId, `Mensagem enviada com sucesso para ${normalizedPhone}`);
+    return candidates.length ? candidates : [rawTarget];
+  };
+
+  try {
+    const candidateIds = await buildCandidateIds();
+    log(empresaId, `Tentando envio para IDs: ${candidateIds.join(', ')}`);
+
+    let sentMsg = null;
+    let sentTo = null;
+    let lastError = null;
+
+    for (const candidateId of candidateIds) {
+      try {
+        // Se tem media_url, enviar como mídia
+        if (media_url && message_type !== 'text') {
+          try {
+            const media = await MessageMedia.fromUrl(media_url, {
+              unsafeMime: true,
+              reqOptions: { timeout: 30000 },
+            });
+
+            if (media_mimetype) {
+              media.mimetype = media_mimetype;
+            }
+            if (filename) {
+              media.filename = filename;
+            }
+
+            sentMsg = await session.client.sendMessage(candidateId, media, {
+              caption: message || '',
+              sendMediaAsDocument: message_type === 'document',
+            });
+          } catch (mediaErr) {
+            log(empresaId, `Erro ao enviar mídia para ${candidateId}, tentando como texto: ${mediaErr.message}`);
+            sentMsg = await session.client.sendMessage(candidateId, `${message || ''}\n${media_url}`);
+          }
+        } else {
+          sentMsg = await session.client.sendMessage(candidateId, message || '');
+        }
+
+        sentTo = candidateId;
+        break;
+      } catch (sendErr) {
+        lastError = sendErr;
+        log(empresaId, `Falha ao enviar para ${candidateId}: ${sendErr.message}`);
+      }
+    }
+
+    if (!sentMsg) {
+      throw lastError || new Error('Falha ao enviar mensagem para todos os IDs candidatos');
+    }
+
+    log(empresaId, `Mensagem enviada com sucesso para ${sentTo || targetPhone}`);
 
     // Enviar status_update para o ERP se temos message_id
     if (message_id) {
