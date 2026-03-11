@@ -153,11 +153,43 @@ export default function EmailInboxPage() {
 
   const handleSelectEmail = async (email: EmailRow) => {
     setSelectedEmail(email);
+    setEmailBody(null);
+    setEmailAttachments([]);
+
     if (!email.is_read) {
       await supabase.from('emails').update({ is_read: true } as any).eq('id', email.id);
       setEmails(prev => prev.map(e => e.id === email.id ? { ...e, is_read: true } : e));
       fetchCounts();
     }
+
+    // If body is already available locally, use it
+    if (email.body_html || email.body_text) {
+      setEmailBody({ html: email.body_html, text: email.body_text });
+      // Fetch attachments from DB
+      const { data: atts } = await supabase
+        .from('email_attachments').select('*').eq('email_id', email.id);
+      setEmailAttachments((atts as EmailAttachment[]) || []);
+      return;
+    }
+
+    // Fetch body on-demand via IMAP
+    setLoadingBody(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-email-body', {
+        body: { email_id: email.id, user_id: userId },
+      });
+      if (error) throw error;
+      const bodyHtml = data?.body_html || '';
+      const bodyText = data?.body_text || '';
+      setEmailBody({ html: bodyHtml, text: bodyText });
+      setEmailAttachments(data?.attachments || []);
+      // Update local email cache
+      setEmails(prev => prev.map(e => e.id === email.id ? { ...e, body_html: bodyHtml, body_text: bodyText } : e));
+    } catch (err: any) {
+      console.error('Error fetching email body:', err);
+      setEmailBody({ html: '', text: '(Erro ao carregar conteúdo do email)' });
+    }
+    setLoadingBody(false);
   };
 
   const handleStar = async (email: EmailRow, e: React.MouseEvent) => {
