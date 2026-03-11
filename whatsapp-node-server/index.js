@@ -632,7 +632,8 @@ app.post('/send-message', async (req, res) => {
       timestamp: sentMsg?.timestamp || null,
     });
   } catch (err) {
-    log(empresaId, `ERRO ao enviar mensagem: ${err.message}`);
+    const errMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : JSON.stringify(err));
+    log(empresaId, `ERRO ao enviar mensagem: ${errMsg}`);
 
     // Enviar falha para o ERP
     if (message_id) {
@@ -642,7 +643,7 @@ app.post('/send-message', async (req, res) => {
       });
     }
 
-    res.status(500).json({ error: `Falha ao enviar: ${err.message}` });
+    res.status(500).json({ error: `Falha ao enviar: ${errMsg}` });
   }
 });
 
