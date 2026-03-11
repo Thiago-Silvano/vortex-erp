@@ -881,7 +881,7 @@ export default function NewSalePage() {
         const h = item.metadata.hotel;
         hotels.push({
           name: h.hotelName, description: h.description, checkIn: h.checkInDate,
-          checkOut: h.checkOutDate, nights: tripNights || 0, meal: h.mealPlan,
+          checkOut: h.checkOutDate, nights: tripNights || 0,
         });
       }
     }
