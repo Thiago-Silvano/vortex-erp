@@ -943,6 +943,7 @@ export default function NewSalePage() {
         isMain: p.is_main,
       })),
       flightLegs,
+      flightGroups,
       hotels,
       services: items.map((item, idx) => {
         const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
