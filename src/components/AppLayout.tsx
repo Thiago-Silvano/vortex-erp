@@ -333,6 +333,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        onClick={() => setShowPhotoModal(true)}
+                        variant="outline"
+                        className="h-10 rounded-[20px] gap-2 font-medium border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+                      >
+                        <Camera className="h-4 w-4" />
+                        Foto
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Capturar foto e vincular ao cliente</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
                         onClick={() => navigate('/whatsapp')}
                         variant="outline"
                         className="h-10 rounded-[20px] gap-2 font-medium border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10"
