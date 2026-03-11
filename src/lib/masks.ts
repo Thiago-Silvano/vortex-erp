@@ -35,3 +35,14 @@ export function validateEmail(value: string): boolean {
 export function unmask(value: string): string {
   return value.replace(/\D/g, '');
 }
+
+export function maskCurrency(value: string | number): string {
+  const num = typeof value === 'number' ? value : parseFloat(value.replace(/[^\d]/g, '')) / 100;
+  if (isNaN(num)) return 'R$ 0,00';
+  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+export function parseCurrency(value: string): number {
+  const digits = value.replace(/[^\d]/g, '');
+  return parseInt(digits || '0', 10) / 100;
+}
