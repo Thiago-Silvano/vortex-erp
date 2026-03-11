@@ -159,6 +159,7 @@ export default function NewSalePage() {
     setNotes(sale.notes || '');
     setPassengersCount(Number((sale as any).passengers_count) || 1);
     setTripNights(Number((sale as any).trip_nights) || 0);
+    if (Number((sale as any).trip_nights) > 0) setNightsManuallySet(true);
     setTripStartDate((sale as any).trip_start_date || '');
     setTripEndDate((sale as any).trip_end_date || '');
     setDestinationName((sale as any).destination_name || '');
