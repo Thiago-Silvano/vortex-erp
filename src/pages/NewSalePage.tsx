@@ -629,7 +629,10 @@ export default function NewSalePage() {
         await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
       }
       const saleId = await saveSaleCore(payload, userEmail);
-      if (saleId) toast.success('Rascunho salvo automaticamente.');
+      if (saleId) {
+        if (!editSaleId) setEditSaleId(saleId);
+        toast.success('Rascunho salvo automaticamente.');
+      }
     } catch { /* silent */ }
     finally { setSavingDraft(false); }
   };
