@@ -192,7 +192,7 @@ export default function ClientsPage() {
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>CPF *</Label>
+                  <Label>CPF</Label>
                   <Input
                     value={form.cpf}
                     onChange={e => setForm(p => ({ ...p, cpf: maskCpf(e.target.value) }))}
