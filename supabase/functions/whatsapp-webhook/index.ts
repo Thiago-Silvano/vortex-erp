@@ -43,6 +43,14 @@ async function addLog(supabase: any, empresaId: string | null, eventType: string
   }
 }
 
+function normalizeName(value: string | null | undefined): string {
+  return (value || '').trim().toLowerCase();
+}
+
+function isLikelyLidNumeric(value: string): boolean {
+  return /^\d{14,20}$/.test(value);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
