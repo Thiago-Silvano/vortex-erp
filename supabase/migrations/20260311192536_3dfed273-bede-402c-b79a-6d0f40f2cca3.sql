@@ -1,0 +1,1 @@
+ALTER TABLE public.user_permissions ADD COLUMN IF NOT EXISTS default_empresa_id uuid REFERENCES public.companies(id) DEFAULT NULL;
