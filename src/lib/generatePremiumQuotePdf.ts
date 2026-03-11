@@ -390,21 +390,21 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     y += 6;
   }
 
-  // ─── Section: Experiências e Serviços ────────────────────
-  if (data.services.length > 0) {
+  // ─── Section: Experiências e Serviços (hide when showIndividualValues is true) ────────────────────
+  if (data.services.length > 0 && data.showIndividualValues !== true) {
     y = checkPageBreak(doc, y, 30, m);
     y = drawSectionTitle(doc, 'Experiências e serviços', y, m, pw);
     y += 4;
 
     data.services.forEach((svc) => {
-      y = checkPageBreak(doc, y, 12, m);
+      y = checkPageBreak(doc, y, 16, m);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       setColor(doc, DEEP_BLUE);
       doc.text(s(`-  ${svc.name}`), m, y);
 
-      if (svc.value > 0 && data.showIndividualValues !== false) {
+      if (svc.value > 0) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         setColor(doc, TEXT_MAIN);
@@ -412,16 +412,14 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       }
       y += 5;
 
-      if (svc.description || svc.date || svc.quantity) {
+      if (svc.description) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         setColor(doc, TEXT_MUTED);
-        const meta: string[] = [];
-        if (svc.date) meta.push(formatDateBR(svc.date));
-        if (svc.quantity) meta.push(`${svc.quantity} pessoa(s)`);
-        if (svc.description) meta.push(svc.description);
-        doc.text(s(meta.join('  ·  ')), m + 5, y);
-        y += 4;
+        const descLines = doc.splitTextToSize(s(svc.description), cw - 10);
+        const maxLines = Math.min(descLines.length, 6);
+        doc.text(descLines.slice(0, maxLines), m + 5, y);
+        y += maxLines * 3.5 + 2;
       }
       y += 2;
     });
