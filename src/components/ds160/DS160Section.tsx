@@ -30,13 +30,14 @@ interface Props {
   isMaster?: boolean;
 }
 
-export default function DS160Section({ clientId, clientName, clientEmail }: Props) {
+export default function DS160Section({ clientId, clientName, clientEmail, isMaster }: Props) {
   const { activeCompany } = useCompany();
   const [forms, setForms] = useState<DS160Form[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [deleteFormId, setDeleteFormId] = useState<string | null>(null);
 
   const fetchForms = async () => {
     const { data } = await supabase
