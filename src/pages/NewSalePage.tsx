@@ -1600,17 +1600,17 @@ export default function NewSalePage() {
                           <div>
                             <Label className="text-xs text-muted-foreground">Valor/Parcela</Label>
                             <Input
-                              type="number"
-                              step="0.01"
-                              value={opt.installmentValue}
+                              value={opt.installmentValue ? `R$ ${opt.installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
                               onChange={e => {
-                                const val = parseFloat(e.target.value) || 0;
+                                const digits = e.target.value.replace(/[^\d]/g, '');
+                                const val = parseInt(digits || '0', 10) / 100;
                                 setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
                                   ...o,
                                   installmentValue: val,
                                   totalValue: val * o.installments,
                                 } : o));
                               }}
+                              placeholder="R$ 0,00"
                               className="h-8"
                             />
                           </div>
