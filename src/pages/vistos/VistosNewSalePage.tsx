@@ -46,6 +46,13 @@ export default function VistosNewSalePage() {
   const [saving, setSaving] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; }[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [quickClientOpen, setQuickClientOpen] = useState(false);
+
+  const refreshClients = () => {
+    if (!activeCompany?.id) return;
+    supabase.from('clients').select('id, full_name').eq('empresa_id', activeCompany.id).order('full_name')
+      .then(({ data }) => { if (data) setAllClients(data); });
+  };
 
   useEffect(() => {
     if (!activeCompany?.id) return;
