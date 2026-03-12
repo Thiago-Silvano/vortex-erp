@@ -203,8 +203,13 @@ export default function VistosNewSalePage() {
                         <CommandList>
                           <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
                           <CommandGroup>
-                            {allClients.map(c => (
-                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { setClientName(c.full_name); setClientPopoverOpen(false); }}>
+                          {allClients.map(c => (
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => {
+                                setClientName(c.full_name);
+                                setClientPhone(c.phone || '');
+                                setClientEmail(c.email || '');
+                                setClientPopoverOpen(false);
+                              }}>
                                 {c.full_name}
                               </CommandItem>
                             ))}
