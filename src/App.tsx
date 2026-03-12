@@ -124,8 +124,8 @@ const App = () => (
           <Route path="/email/settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
           {/* Public pages (no auth required) */}
           <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
-          <Route path="/ds160/:token" element={<DS160PublicPage />} />
           <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
+          <Route path="/ds160/:token" element={<DS160PublicPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
