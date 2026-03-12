@@ -104,6 +104,7 @@ export default function NewSalePage() {
   const [feeRate, setFeeRate] = useState(0);
   const [boletoInterestRate, setBoletoInterestRate] = useState(0);
   const [saleInterest, setSaleInterest] = useState(0);
+  const [operatorTaxes, setOperatorTaxes] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
