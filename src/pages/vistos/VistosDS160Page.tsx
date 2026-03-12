@@ -379,8 +379,8 @@ export default function VistosDS160Page() {
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => copyLink(group.token)}>
                           <Copy className="h-3 w-3" /> Copiar Link
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => resendLink(group)}>
-                          <RefreshCw className="h-3 w-3" /> Reenviar
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => resendCopyLink(group)}>
+                          <Copy className="h-3 w-3" /> Copiar Link
                         </Button>
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/group/${group.token}`, '_blank')}>
                           <ExternalLink className="h-3 w-3" /> Abrir
