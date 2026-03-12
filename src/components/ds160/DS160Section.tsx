@@ -82,22 +82,6 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     toast.success('Link copiado!');
   };
 
-  const resendLink = async (form: DS160Form) => {
-    if (!clientEmail) {
-      toast.error('Cliente não possui email cadastrado');
-      return;
-    }
-    try {
-      const formLink = `${baseUrl}/ds160/${form.token}`;
-      const { data: user } = await supabase.auth.getUser();
-      await supabase.functions.invoke('send-ds160-link', {
-        body: { to: clientEmail, clientName, formLink, user_id: user.user?.id, empresa_id: activeCompany?.id },
-      });
-      toast.success('Link reenviado!');
-    } catch {
-      toast.error('Erro ao reenviar email');
-    }
-  };
 
   const handleGeneratePdf = async (form: DS160Form) => {
     setGeneratingPdf(true);
