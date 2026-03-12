@@ -78,7 +78,7 @@ export default function VistosNewSalePage() {
   };
 
   const addApplicant = () => {
-    setApplicants([...applicants, { full_name: '', birth_date: '', phone: '', email: '', passport_number: '', is_main: false }]);
+    setApplicants([...applicants, { full_name: '', is_main: false }]);
     const prod = products.find(p => p.id === productId);
     if (prod) setTotalValue(prod.price * (applicants.length + 1));
   };
