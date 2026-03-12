@@ -25,7 +25,7 @@ serve(async (req) => {
     if (!caller) throw new Error("Não autorizado");
 
     // Check if caller has master role
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    
     const { data: permData } = await adminClient
       .from("user_permissions")
       .select("user_role")
