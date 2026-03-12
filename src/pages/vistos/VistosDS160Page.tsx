@@ -407,22 +407,15 @@ export default function VistosDS160Page() {
       <Dialog open={showSendModal} onOpenChange={setShowSendModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enviar DS-160 em Grupo</DialogTitle>
+            <DialogTitle>Gerar Link DS-160 em Grupo</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {selected.size} cliente(s) selecionado(s). Um único link será enviado para o email abaixo.
-              A pessoa que receber poderá preencher o DS-160 de cada aplicante individualmente.
+              {selected.size} cliente(s) selecionado(s). Um link será gerado e copiado para você enviar ao responsável pelo preenchimento.
             </p>
-            <div className="space-y-3">
-              <div>
-                <Label>Nome do responsável</Label>
-                <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder="Nome de quem vai preencher" />
-              </div>
-              <div>
-                <Label>Email para envio</Label>
-                <Input value={sendEmail} onChange={e => setSendEmail(e.target.value)} placeholder="email@exemplo.com" type="email" />
-              </div>
+            <div>
+              <Label>Nome do responsável</Label>
+              <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder="Nome de quem vai preencher" />
             </div>
             <div className="border rounded-lg p-3">
               <p className="text-xs font-medium text-muted-foreground mb-2">Aplicantes selecionados:</p>
