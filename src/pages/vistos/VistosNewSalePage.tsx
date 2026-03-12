@@ -54,6 +54,8 @@ export default function VistosNewSalePage() {
     if (!activeCompany?.id) return;
     supabase.from('visa_products').select('id, name, price').eq('empresa_id', activeCompany.id).order('name')
       .then(({ data }) => { if (data) setProducts(data as Product[]); });
+    supabase.from('clients').select('id, full_name').eq('empresa_id', activeCompany.id).order('full_name')
+      .then(({ data }) => { if (data) setAllClients(data); });
   }, [activeCompany?.id]);
 
   useEffect(() => {
