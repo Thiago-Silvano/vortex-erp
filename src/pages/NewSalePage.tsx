@@ -1482,7 +1482,7 @@ export default function NewSalePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
                   <Label>Juros na venda? (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={saleInterest || ''} onChange={e => setSaleInterest(parseFloat(e.target.value) || 0)} placeholder="0,00" />
+                  <Input value={saleInterest ? `R$ ${saleInterest.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setSaleInterest(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
                   <p className="text-xs text-muted-foreground mt-1">Valor somado internamente. Não aparece para o cliente.</p>
                 </div>
                 {saleInterest > 0 && (
