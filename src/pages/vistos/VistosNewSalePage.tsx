@@ -273,7 +273,7 @@ export default function VistosNewSalePage() {
                 <span className="text-sm font-semibold text-foreground whitespace-nowrap">
                   {app.is_main ? '⭐' : `${idx + 1}.`}
                 </span>
-                <div className="flex-1">
+                <div className="flex-1 flex gap-2">
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
@@ -297,6 +297,9 @@ export default function VistosNewSalePage() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  <Button type="button" size="icon" variant="outline" onClick={() => { setQuickClientForApplicant(idx); setQuickClientOpen(true); }} title="Cadastrar novo cliente">
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
                 <div className="flex items-center gap-1">
                   {!app.is_main && (
