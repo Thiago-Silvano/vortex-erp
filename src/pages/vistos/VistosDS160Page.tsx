@@ -119,9 +119,7 @@ export default function VistosDS160Page() {
       toast.error('Selecione pelo menos um cliente');
       return;
     }
-    // Pre-fill with first selected client's email
     const firstClient = clients.find(c => selected.has(c.id));
-    setSendEmail(firstClient?.email || '');
     setSendName(firstClient?.full_name || '');
     setShowSendModal(true);
   };
