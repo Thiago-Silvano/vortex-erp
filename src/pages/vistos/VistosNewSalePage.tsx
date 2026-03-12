@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Plus, Trash2, ChevronsUpDown } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import QuickClientModal from '@/components/QuickClientModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -43,6 +44,7 @@ export default function VistosNewSalePage() {
   const [applicants, setApplicants] = useState<Applicant[]>([
     { full_name: '', is_main: true },
   ]);
+  const [payerIsApplicant, setPayerIsApplicant] = useState(false);
   const [saving, setSaving] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; phone?: string; email?: string }[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
@@ -159,7 +161,7 @@ export default function VistosNewSalePage() {
 
     const { data: insertedApplicants } = await supabase.from('visa_applicants').insert(appPayloads).select('id, full_name');
 
-    // Create processes for each applicant
+    // Create processes: for applicants + optionally for the payer
     if (insertedApplicants) {
       const processPayloads = insertedApplicants.map(app => ({
         empresa_id: activeCompany?.id,
@@ -170,6 +172,36 @@ export default function VistosNewSalePage() {
         applicant_name: app.full_name,
         status: 'falta_passaporte' as const,
       }));
+
+      // If payer is also an applicant, add a process for the payer (using the first applicant as reference)
+      if (payerIsApplicant) {
+        // Check if payer name is already among applicants to avoid duplicate
+        const payerAlreadyListed = insertedApplicants.some(
+          app => app.full_name.trim().toLowerCase() === clientName.trim().toLowerCase()
+        );
+        if (!payerAlreadyListed) {
+          // Create a visa_applicant record for the payer
+          const { data: payerApplicant } = await supabase.from('visa_applicants').insert({
+            visa_sale_id: saleId,
+            full_name: clientName.trim(),
+            is_main: false,
+            sort_order: insertedApplicants.length,
+          }).select('id, full_name').single();
+
+          if (payerApplicant) {
+            processPayloads.push({
+              empresa_id: activeCompany?.id,
+              visa_sale_id: saleId,
+              applicant_id: payerApplicant.id,
+              product_id: productId,
+              client_name: clientName.trim(),
+              applicant_name: payerApplicant.full_name,
+              status: 'falta_passaporte' as const,
+            });
+          }
+        }
+      }
+
       await supabase.from('visa_processes').insert(processPayloads);
     }
 
@@ -260,7 +292,7 @@ export default function VistosNewSalePage() {
           </CardContent>
         </Card>
 
-        <Card>
+         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Aplicantes</CardTitle>
@@ -268,6 +300,10 @@ export default function VistosNewSalePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
+              <Checkbox id="payerIsApplicant" checked={payerIsApplicant} onCheckedChange={(v) => setPayerIsApplicant(v === true)} />
+              <Label htmlFor="payerIsApplicant" className="cursor-pointer text-sm">O pagante da venda é um aplicante?</Label>
+            </div>
             {applicants.map((app, idx) => (
               <div key={idx} className="flex items-center gap-3 border rounded-lg p-3">
                 <span className="text-sm font-semibold text-foreground whitespace-nowrap">
