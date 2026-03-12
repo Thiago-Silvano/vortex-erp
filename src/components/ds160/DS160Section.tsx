@@ -53,13 +53,8 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   const baseUrl = window.location.origin;
 
-  const sendLink = async () => {
-    if (!clientEmail) {
-      toast.error('Cliente não possui email cadastrado');
-      return;
-    }
+  const generateLink = async () => {
     setSending(true);
-    // Create a new form entry
     const { data: user } = await supabase.auth.getUser();
     const { data: newForm, error } = await supabase.from('ds160_forms').insert({
       client_id: clientId,
@@ -75,23 +70,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       return;
     }
 
-    // Send email via edge function
-    try {
-      const formLink = `${baseUrl}/ds160/${(newForm as any).token}`;
-      await supabase.functions.invoke('send-ds160-link', {
-        body: {
-          to: clientEmail,
-          clientName,
-          formLink,
-          user_id: user.user?.id,
-          empresa_id: activeCompany?.id,
-        },
-      });
-      toast.success('Link do DS-160 enviado por email!');
-    } catch {
-      toast.warning('Formulário criado mas houve erro ao enviar email. Use o botão copiar link.');
-    }
-
+    const formLink = `${baseUrl}/ds160/${(newForm as any).token}`;
+    navigator.clipboard.writeText(formLink);
+    toast.success('Link gerado e copiado para a área de transferência!');
     setSending(false);
     fetchForms();
   };
