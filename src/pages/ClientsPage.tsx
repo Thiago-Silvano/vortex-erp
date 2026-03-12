@@ -57,7 +57,8 @@ export default function ClientsPage() {
   const [form, setForm] = useState<Omit<Client, 'id'>>(emptyClient());
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [emailError, setEmailError] = useState('');
-
+  const [isDependent, setIsDependent] = useState(false);
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
