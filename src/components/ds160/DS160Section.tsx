@@ -147,9 +147,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           <FileText className="h-4 w-4" />
           Formulário DS-160
         </h3>
-        <Button size="sm" onClick={sendLink} disabled={sending} className="gap-1.5">
-          {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-          Enviar Link
+        <Button size="sm" onClick={generateLink} disabled={sending} className="gap-1.5">
+          {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />}
+          Gerar Link
         </Button>
       </div>
 
