@@ -20,10 +20,6 @@ interface Product { id: string; name: string; price: number; }
 interface Applicant {
   id?: string;
   full_name: string;
-  birth_date: string;
-  phone: string;
-  email: string;
-  passport_number: string;
   is_main: boolean;
 }
 
