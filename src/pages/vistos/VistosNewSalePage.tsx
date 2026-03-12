@@ -44,7 +44,7 @@ export default function VistosNewSalePage() {
   const [applicants, setApplicants] = useState<Applicant[]>([
     { full_name: '', is_main: true },
   ]);
-  const [saving, setSaving] = useState(false);
+  const [payerIsApplicant, setPayerIsApplicant] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; phone?: string; email?: string }[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
