@@ -235,6 +235,39 @@ export default function ClientsPage() {
                   <Label>Nome completo *</Label>
                   <Input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} />
                 </div>
+
+                {!editingId && (
+                  <div className="md:col-span-2 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="is-dependent"
+                        checked={isDependent}
+                        onCheckedChange={(checked) => {
+                          setIsDependent(!!checked);
+                          if (!checked) {
+                            setSelectedParentId(null);
+                          }
+                        }}
+                      />
+                      <Label htmlFor="is-dependent" className="cursor-pointer flex items-center gap-1.5">
+                        <Users className="h-4 w-4" />
+                        O novo cliente é dependente de outro cliente?
+                      </Label>
+                    </div>
+                    {isDependent && (
+                      <Select value={selectedParentId || ''} onValueChange={handleParentSelect}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o cliente titular..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.full_name}{c.cpf ? ` - ${c.cpf}` : ''}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                )}
               </div>
 
               <Card>
