@@ -56,6 +56,8 @@ import EmailTemplatesPage from "./pages/email/EmailTemplatesPage";
 import EmailSettingsPage from "./pages/email/EmailSettingsPage";
 import PropostaPublicPage from "./pages/PropostaPublicPage";
 import DS160PublicPage from "./pages/DS160PublicPage";
+import DS160GroupPublicPage from "./pages/DS160GroupPublicPage";
+import VistosDS160Page from "./pages/vistos/VistosDS160Page";
 
 const queryClient = new QueryClient();
 
