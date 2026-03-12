@@ -124,11 +124,7 @@ export default function VistosDS160Page() {
     setShowSendModal(true);
   };
 
-  const handleSendGroup = async () => {
-    if (!sendEmail) {
-      toast.error('Informe o email para envio');
-      return;
-    }
+  const handleGenerateGroup = async () => {
     setSending(true);
 
     const { data: user } = await supabase.auth.getUser();
@@ -141,7 +137,6 @@ export default function VistosDS160Page() {
         status: 'sent',
         sent_at: new Date().toISOString(),
         sent_by: user.user?.email || '',
-        sent_to_email: sendEmail,
         sent_to_name: sendName,
       } as any)
       .select()
@@ -171,22 +166,9 @@ export default function VistosDS160Page() {
       return;
     }
 
-    // Send email
-    try {
-      const formLink = `${baseUrl}/ds160/group/${(group as any).token}`;
-      await supabase.functions.invoke('send-ds160-link', {
-        body: {
-          to: sendEmail,
-          clientName: sendName,
-          formLink,
-          user_id: user.user?.id,
-          empresa_id: activeCompany?.id,
-        },
-      });
-      toast.success('Link do DS-160 em grupo enviado por email!');
-    } catch {
-      toast.warning('Grupo criado mas houve erro ao enviar email. Use o botão copiar link.');
-    }
+    const formLink = `${baseUrl}/ds160/group/${(group as any).token}`;
+    navigator.clipboard.writeText(formLink);
+    toast.success('Link gerado e copiado para a área de transferência!');
 
     setSending(false);
     setShowSendModal(false);
