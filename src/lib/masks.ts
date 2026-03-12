@@ -42,6 +42,12 @@ export function maskCurrency(value: string | number): string {
   return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+export function maskCurrencyInput(value: string | number): string {
+  const num = typeof value === 'number' ? value : parseFloat(value.replace(/[^\d]/g, '')) / 100;
+  if (isNaN(num) || num === 0) return '';
+  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
 export function parseCurrency(value: string): number {
   const digits = value.replace(/[^\d]/g, '');
   return parseInt(digits || '0', 10) / 100;
