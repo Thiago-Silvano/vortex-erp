@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 import { maskCpf, maskPhone, validateEmail } from '@/lib/masks';
 import CepLookup from '@/components/CepLookup';
+import { Users } from 'lucide-react';
 
 interface QuickClientModalProps {
   open: boolean;
@@ -29,17 +32,58 @@ export default function QuickClientModal({ open, onClose, onClientCreated, initi
   const [form, setForm] = useState(() => ({ ...emptyForm(), full_name: initialName || '' }));
   const [saving, setSaving] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [isDependent, setIsDependent] = useState(false);
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [existingClients, setExistingClients] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (open && isDependent && existingClients.length === 0) {
+      const fetchClients = async () => {
+        let query = supabase.from('clients').select('*').order('full_name');
+        if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+        const { data } = await query;
+        if (data) setExistingClients(data);
+      };
+      fetchClients();
+    }
+  }, [open, isDependent, activeCompany?.id]);
 
   const handleOpen = (isOpen: boolean) => {
     if (!isOpen) { onClose(); return; }
     setForm({ ...emptyForm(), full_name: initialName || '' });
     setEmailError('');
+    setIsDependent(false);
+    setSelectedParentId(null);
+    setExistingClients([]);
   };
 
   const handleEmailChange = (value: string) => {
     const lower = value.toLowerCase();
     setForm(p => ({ ...p, email: lower }));
     setEmailError(lower && !validateEmail(lower) ? 'Email inválido' : '');
+  };
+
+  const handleParentSelect = (parentId: string) => {
+    setSelectedParentId(parentId);
+    const parent = existingClients.find(c => c.id === parentId);
+    if (parent) {
+      setForm(prev => ({
+        ...prev,
+        passport_number: parent.passport_number || '',
+        passport_issue_date: parent.passport_issue_date || '',
+        passport_expiry_date: parent.passport_expiry_date || '',
+        email: parent.email || '',
+        phone: parent.phone || '',
+        cep: parent.cep || '',
+        address: parent.address || '',
+        address_number: parent.address_number || '',
+        complement: parent.complement || '',
+        neighborhood: parent.neighborhood || '',
+        city: parent.city || '',
+        state: parent.state || '',
+        country: parent.country || 'Brasil',
+      }));
+    }
   };
 
   const handleSave = async () => {
@@ -84,6 +128,34 @@ export default function QuickClientModal({ open, onClose, onClientCreated, initi
             <div className="md:col-span-2">
               <Label>Nome completo *</Label>
               <Input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} />
+            </div>
+            <div className="md:col-span-2 space-y-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="quick-is-dependent"
+                  checked={isDependent}
+                  onCheckedChange={(checked) => {
+                    setIsDependent(!!checked);
+                    if (!checked) setSelectedParentId(null);
+                  }}
+                />
+                <Label htmlFor="quick-is-dependent" className="cursor-pointer flex items-center gap-1.5">
+                  <Users className="h-4 w-4" />
+                  O novo cliente é dependente de outro cliente?
+                </Label>
+              </div>
+              {isDependent && (
+                <Select value={selectedParentId || ''} onValueChange={handleParentSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o cliente titular..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {existingClients.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.full_name}{c.cpf ? ` - ${c.cpf}` : ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
 
