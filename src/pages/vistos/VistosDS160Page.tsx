@@ -181,23 +181,10 @@ export default function VistosDS160Page() {
     toast.success('Link copiado!');
   };
 
-  const resendLink = async (group: GroupForm) => {
-    try {
-      const formLink = `${baseUrl}/ds160/group/${group.token}`;
-      const { data: user } = await supabase.auth.getUser();
-      await supabase.functions.invoke('send-ds160-link', {
-        body: {
-          to: group.sent_to_email,
-          clientName: group.sent_to_name,
-          formLink,
-          user_id: user.user?.id,
-          empresa_id: activeCompany?.id,
-        },
-      });
-      toast.success('Link reenviado!');
-    } catch {
-      toast.error('Erro ao reenviar email');
-    }
+  const resendCopyLink = (group: GroupForm) => {
+    const formLink = `${baseUrl}/ds160/group/${group.token}`;
+    navigator.clipboard.writeText(formLink);
+    toast.success('Link copiado!');
   };
 
   const handleDeleteGroup = async () => {
