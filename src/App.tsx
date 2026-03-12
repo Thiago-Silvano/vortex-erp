@@ -108,6 +108,7 @@ const App = () => (
           <Route path="/vistos/sales/new" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
           <Route path="/vistos/sales/edit" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
           <Route path="/vistos/production" element={<ProtectedRoute><VistosProductionPage /></ProtectedRoute>} />
+          <Route path="/vistos/ds160" element={<ProtectedRoute><VistosDS160Page /></ProtectedRoute>} />
           <Route path="/vistos/reports" element={<ProtectedRoute><VistosReportsPage /></ProtectedRoute>} />
 
           {/* WhatsApp routes */}
