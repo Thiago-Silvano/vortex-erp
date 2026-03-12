@@ -161,7 +161,7 @@ export default function VistosNewSalePage() {
 
     const { data: insertedApplicants } = await supabase.from('visa_applicants').insert(appPayloads).select('id, full_name');
 
-    // Create processes for each applicant
+    // Create processes: for applicants + optionally for the payer
     if (insertedApplicants) {
       const processPayloads = insertedApplicants.map(app => ({
         empresa_id: activeCompany?.id,
@@ -172,6 +172,36 @@ export default function VistosNewSalePage() {
         applicant_name: app.full_name,
         status: 'falta_passaporte' as const,
       }));
+
+      // If payer is also an applicant, add a process for the payer (using the first applicant as reference)
+      if (payerIsApplicant) {
+        // Check if payer name is already among applicants to avoid duplicate
+        const payerAlreadyListed = insertedApplicants.some(
+          app => app.full_name.trim().toLowerCase() === clientName.trim().toLowerCase()
+        );
+        if (!payerAlreadyListed) {
+          // Create a visa_applicant record for the payer
+          const { data: payerApplicant } = await supabase.from('visa_applicants').insert({
+            visa_sale_id: saleId,
+            full_name: clientName.trim(),
+            is_main: false,
+            sort_order: insertedApplicants.length,
+          }).select('id, full_name').single();
+
+          if (payerApplicant) {
+            processPayloads.push({
+              empresa_id: activeCompany?.id,
+              visa_sale_id: saleId,
+              applicant_id: payerApplicant.id,
+              product_id: productId,
+              client_name: clientName.trim(),
+              applicant_name: payerApplicant.full_name,
+              status: 'falta_passaporte' as const,
+            });
+          }
+        }
+      }
+
       await supabase.from('visa_processes').insert(processPayloads);
     }
 
