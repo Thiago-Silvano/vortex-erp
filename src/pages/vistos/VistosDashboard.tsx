@@ -42,7 +42,10 @@ export default function VistosDashboard() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserName(data.user.email?.split('@')[0] || 'Usuário');
+      if (data.user) {
+        const raw = data.user.email?.split('@')[0] || 'Usuário';
+        setUserName(raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase());
+      }
     });
   }, []);
 
