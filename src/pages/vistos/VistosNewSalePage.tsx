@@ -47,6 +47,8 @@ export default function VistosNewSalePage() {
     { full_name: '', birth_date: '', phone: '', email: '', passport_number: '', is_main: true },
   ]);
   const [saving, setSaving] = useState(false);
+  const [allClients, setAllClients] = useState<{ id: string; full_name: string; }[]>([]);
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (!activeCompany?.id) return;
