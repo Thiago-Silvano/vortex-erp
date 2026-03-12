@@ -73,6 +73,20 @@ export default function VistosProductionPage() {
   const [waSendName, setWaSendName] = useState('');
   const [waSendMessage, setWaSendMessage] = useState('');
 
+  // Add manual process
+  const [addOpen, setAddOpen] = useState(false);
+  const [addName, setAddName] = useState('');
+  const [addApplicant, setAddApplicant] = useState('');
+  const [addProduct, setAddProduct] = useState('');
+  const [products, setProducts] = useState<{id: string; name: string}[]>([]);
+
+  useEffect(() => {
+    if (!activeCompany?.id) return;
+    supabase.from('visa_products').select('id, name').eq('empresa_id', activeCompany.id).then(({ data }) => {
+      if (data) setProducts(data as any);
+    });
+  }, [activeCompany?.id]);
+
   const fetchProcesses = async () => {
     if (!activeCompany?.id) return;
     const { data } = await supabase
