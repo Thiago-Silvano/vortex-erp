@@ -265,7 +265,10 @@ export default function VistosProductionPage() {
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">Produção — Kanban</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">Produção — Kanban</h1>
+          <Button onClick={() => setAddOpen(true)}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>
+        </div>
 
         <div className="flex gap-3 overflow-x-auto pb-4">
           {groupedByStatus.map(col => (
