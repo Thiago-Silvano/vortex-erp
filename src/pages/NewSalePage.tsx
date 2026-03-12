@@ -1695,7 +1695,7 @@ export default function NewSalePage() {
               <div>
                 <p className="text-sm text-muted-foreground">Total da Venda</p>
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
-                {saleInterest > 0 && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)} + Juros: {fmt(saleInterest)})</p>}
+                {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
               </div>
               <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
