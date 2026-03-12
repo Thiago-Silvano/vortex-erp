@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Plus, Trash2, ChevronsUpDown } from 'lucide-react';
+import QuickClientModal from '@/components/QuickClientModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, validateEmail, maskCurrencyInput, parseCurrency } from '@/lib/masks';
@@ -45,6 +46,13 @@ export default function VistosNewSalePage() {
   const [saving, setSaving] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; }[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [quickClientOpen, setQuickClientOpen] = useState(false);
+
+  const refreshClients = () => {
+    if (!activeCompany?.id) return;
+    supabase.from('clients').select('id, full_name').eq('empresa_id', activeCompany.id).order('full_name')
+      .then(({ data }) => { if (data) setAllClients(data); });
+  };
 
   useEffect(() => {
     if (!activeCompany?.id) return;
@@ -180,29 +188,34 @@ export default function VistosNewSalePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Cliente *</Label>
-                <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" aria-expanded={clientPopoverOpen} className="w-full justify-between font-normal">
-                      {clientName || 'Selecione o cliente...'}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Buscar cliente..." />
-                      <CommandList>
-                        <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
-                        <CommandGroup>
-                          {allClients.map(c => (
-                            <CommandItem key={c.id} value={c.full_name} onSelect={() => { setClientName(c.full_name); setClientPopoverOpen(false); }}>
-                              {c.full_name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <div className="flex gap-2">
+                  <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={clientPopoverOpen} className="w-full justify-between font-normal">
+                        {clientName || 'Selecione o cliente...'}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar cliente..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                          <CommandGroup>
+                            {allClients.map(c => (
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { setClientName(c.full_name); setClientPopoverOpen(false); }}>
+                                {c.full_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div><Label>Telefone</Label><Input value={clientPhone} onChange={e => setClientPhone(maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
               <div>
@@ -301,6 +314,12 @@ export default function VistosNewSalePage() {
           <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar Venda'}</Button>
         </div>
       </div>
+      <QuickClientModal
+        open={quickClientOpen}
+        onClose={() => setQuickClientOpen(false)}
+        initialName={clientName}
+        onClientCreated={(client) => { setClientName(client.full_name); refreshClients(); }}
+      />
     </AppLayout>
   );
 }
