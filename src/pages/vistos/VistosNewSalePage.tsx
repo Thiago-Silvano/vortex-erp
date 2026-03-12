@@ -325,9 +325,19 @@ export default function VistosNewSalePage() {
       </div>
       <QuickClientModal
         open={quickClientOpen}
-        onClose={() => setQuickClientOpen(false)}
+        onClose={() => { setQuickClientOpen(false); setQuickClientForApplicant(null); }}
         initialName={clientName}
-        onClientCreated={(client) => { setClientName(client.full_name); refreshClients(); }}
+        onClientCreated={(client) => {
+          if (quickClientForApplicant !== null) {
+            updateApplicant(quickClientForApplicant, 'full_name', client.full_name);
+          } else {
+            setClientName(client.full_name);
+            setClientPhone(client.phone || '');
+            setClientEmail(client.email || '');
+          }
+          refreshClients();
+          setQuickClientForApplicant(null);
+        }}
       />
     </AppLayout>
   );
