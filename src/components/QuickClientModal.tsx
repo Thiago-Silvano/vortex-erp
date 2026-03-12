@@ -13,7 +13,7 @@ import CepLookup from '@/components/CepLookup';
 interface QuickClientModalProps {
   open: boolean;
   onClose: () => void;
-  onClientCreated: (client: { id: string; full_name: string }) => void;
+  onClientCreated: (client: { id: string; full_name: string; phone?: string; email?: string }) => void;
   initialName?: string;
 }
 
@@ -55,12 +55,12 @@ export default function QuickClientModal({ open, onClose, onClientCreated, initi
       empresa_id: activeCompany?.id,
     };
 
-    const { data, error } = await supabase.from('clients').insert(payload).select('id, full_name').single();
+    const { data, error } = await supabase.from('clients').insert(payload).select('id, full_name, phone, email').single();
     setSaving(false);
 
     if (error) { toast.error('Erro ao cadastrar cliente'); return; }
     toast.success('Cliente cadastrado!');
-    onClientCreated({ id: data.id, full_name: data.full_name });
+    onClientCreated({ id: data.id, full_name: data.full_name, phone: data.phone || '', email: data.email || '' });
     setForm(emptyForm());
     onClose();
   };

@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Send, Search, Loader2, Users, FileText, ExternalLink, Copy, RefreshCw, Trash2, Bell } from 'lucide-react';
+import { Search, Loader2, Users, FileText, ExternalLink, Copy, Link2, Trash2, Bell } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -119,18 +119,12 @@ export default function VistosDS160Page() {
       toast.error('Selecione pelo menos um cliente');
       return;
     }
-    // Pre-fill with first selected client's email
     const firstClient = clients.find(c => selected.has(c.id));
-    setSendEmail(firstClient?.email || '');
     setSendName(firstClient?.full_name || '');
     setShowSendModal(true);
   };
 
-  const handleSendGroup = async () => {
-    if (!sendEmail) {
-      toast.error('Informe o email para envio');
-      return;
-    }
+  const handleGenerateGroup = async () => {
     setSending(true);
 
     const { data: user } = await supabase.auth.getUser();
@@ -143,7 +137,6 @@ export default function VistosDS160Page() {
         status: 'sent',
         sent_at: new Date().toISOString(),
         sent_by: user.user?.email || '',
-        sent_to_email: sendEmail,
         sent_to_name: sendName,
       } as any)
       .select()
@@ -173,22 +166,9 @@ export default function VistosDS160Page() {
       return;
     }
 
-    // Send email
-    try {
-      const formLink = `${baseUrl}/ds160/group/${(group as any).token}`;
-      await supabase.functions.invoke('send-ds160-link', {
-        body: {
-          to: sendEmail,
-          clientName: sendName,
-          formLink,
-          user_id: user.user?.id,
-          empresa_id: activeCompany?.id,
-        },
-      });
-      toast.success('Link do DS-160 em grupo enviado por email!');
-    } catch {
-      toast.warning('Grupo criado mas houve erro ao enviar email. Use o botão copiar link.');
-    }
+    const formLink = `${baseUrl}/ds160/group/${(group as any).token}`;
+    navigator.clipboard.writeText(formLink);
+    toast.success('Link gerado e copiado para a área de transferência!');
 
     setSending(false);
     setShowSendModal(false);
@@ -201,23 +181,10 @@ export default function VistosDS160Page() {
     toast.success('Link copiado!');
   };
 
-  const resendLink = async (group: GroupForm) => {
-    try {
-      const formLink = `${baseUrl}/ds160/group/${group.token}`;
-      const { data: user } = await supabase.auth.getUser();
-      await supabase.functions.invoke('send-ds160-link', {
-        body: {
-          to: group.sent_to_email,
-          clientName: group.sent_to_name,
-          formLink,
-          user_id: user.user?.id,
-          empresa_id: activeCompany?.id,
-        },
-      });
-      toast.success('Link reenviado!');
-    } catch {
-      toast.error('Erro ao reenviar email');
-    }
+  const resendCopyLink = (group: GroupForm) => {
+    const formLink = `${baseUrl}/ds160/group/${group.token}`;
+    navigator.clipboard.writeText(formLink);
+    toast.success('Link copiado!');
   };
 
   const handleDeleteGroup = async () => {
@@ -273,7 +240,8 @@ export default function VistosDS160Page() {
                 Selecionar Clientes
               </CardTitle>
               <Button onClick={openSendModal} disabled={selected.size === 0} className="gap-1.5">
-                <Send className="h-4 w-4" />
+                <Link2 className="h-4 w-4" />
+                Gerar Link ({selected.size})
                 Enviar Link ({selected.size})
               </Button>
             </div>
@@ -366,7 +334,7 @@ export default function VistosDS160Page() {
                             {allSubmitted ? 'Todos preenchidos' : st.label}
                           </Badge>
                           <span className="text-xs text-muted-foreground ml-2">
-                            Para: {group.sent_to_name} ({group.sent_to_email})
+                            Responsável: {group.sent_to_name}
                           </span>
                         </div>
                         <span className="text-xs text-muted-foreground">
@@ -411,8 +379,8 @@ export default function VistosDS160Page() {
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => copyLink(group.token)}>
                           <Copy className="h-3 w-3" /> Copiar Link
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => resendLink(group)}>
-                          <RefreshCw className="h-3 w-3" /> Reenviar
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => resendCopyLink(group)}>
+                          <Copy className="h-3 w-3" /> Copiar Link
                         </Button>
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/group/${group.token}`, '_blank')}>
                           <ExternalLink className="h-3 w-3" /> Abrir
@@ -439,22 +407,15 @@ export default function VistosDS160Page() {
       <Dialog open={showSendModal} onOpenChange={setShowSendModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enviar DS-160 em Grupo</DialogTitle>
+            <DialogTitle>Gerar Link DS-160 em Grupo</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {selected.size} cliente(s) selecionado(s). Um único link será enviado para o email abaixo.
-              A pessoa que receber poderá preencher o DS-160 de cada aplicante individualmente.
+              {selected.size} cliente(s) selecionado(s). Um link será gerado e copiado para você enviar ao responsável pelo preenchimento.
             </p>
-            <div className="space-y-3">
-              <div>
-                <Label>Nome do responsável</Label>
-                <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder="Nome de quem vai preencher" />
-              </div>
-              <div>
-                <Label>Email para envio</Label>
-                <Input value={sendEmail} onChange={e => setSendEmail(e.target.value)} placeholder="email@exemplo.com" type="email" />
-              </div>
+            <div>
+              <Label>Nome do responsável</Label>
+              <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder="Nome de quem vai preencher" />
             </div>
             <div className="border rounded-lg p-3">
               <p className="text-xs font-medium text-muted-foreground mb-2">Aplicantes selecionados:</p>
@@ -467,9 +428,9 @@ export default function VistosDS160Page() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSendModal(false)}>Cancelar</Button>
-            <Button onClick={handleSendGroup} disabled={sending} className="gap-1.5">
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Enviar Link
+            <Button onClick={handleGenerateGroup} disabled={sending} className="gap-1.5">
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+              Gerar e Copiar Link
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -44,13 +44,14 @@ export default function VistosNewSalePage() {
     { full_name: '', is_main: true },
   ]);
   const [saving, setSaving] = useState(false);
-  const [allClients, setAllClients] = useState<{ id: string; full_name: string; }[]>([]);
+  const [allClients, setAllClients] = useState<{ id: string; full_name: string; phone?: string; email?: string }[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
+  const [quickClientForApplicant, setQuickClientForApplicant] = useState<number | null>(null);
 
   const refreshClients = () => {
     if (!activeCompany?.id) return;
-    supabase.from('clients').select('id, full_name').eq('empresa_id', activeCompany.id).order('full_name')
+    supabase.from('clients').select('id, full_name, phone, email').eq('empresa_id', activeCompany.id).order('full_name')
       .then(({ data }) => { if (data) setAllClients(data); });
   };
 
@@ -58,7 +59,7 @@ export default function VistosNewSalePage() {
     if (!activeCompany?.id) return;
     supabase.from('visa_products').select('id, name, price').eq('empresa_id', activeCompany.id).order('name')
       .then(({ data }) => { if (data) setProducts(data as Product[]); });
-    supabase.from('clients').select('id, full_name').eq('empresa_id', activeCompany.id).order('full_name')
+    supabase.from('clients').select('id, full_name, phone, email').eq('empresa_id', activeCompany.id).order('full_name')
       .then(({ data }) => { if (data) setAllClients(data); });
   }, [activeCompany?.id]);
 
@@ -202,8 +203,13 @@ export default function VistosNewSalePage() {
                         <CommandList>
                           <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
                           <CommandGroup>
-                            {allClients.map(c => (
-                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { setClientName(c.full_name); setClientPopoverOpen(false); }}>
+                          {allClients.map(c => (
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => {
+                                setClientName(c.full_name);
+                                setClientPhone(c.phone || '');
+                                setClientEmail(c.email || '');
+                                setClientPopoverOpen(false);
+                              }}>
                                 {c.full_name}
                               </CommandItem>
                             ))}
@@ -267,7 +273,7 @@ export default function VistosNewSalePage() {
                 <span className="text-sm font-semibold text-foreground whitespace-nowrap">
                   {app.is_main ? '⭐' : `${idx + 1}.`}
                 </span>
-                <div className="flex-1">
+                <div className="flex-1 flex gap-2">
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
@@ -291,6 +297,9 @@ export default function VistosNewSalePage() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  <Button type="button" size="icon" variant="outline" onClick={() => { setQuickClientForApplicant(idx); setQuickClientOpen(true); }} title="Cadastrar novo cliente">
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
                 <div className="flex items-center gap-1">
                   {!app.is_main && (
@@ -316,9 +325,19 @@ export default function VistosNewSalePage() {
       </div>
       <QuickClientModal
         open={quickClientOpen}
-        onClose={() => setQuickClientOpen(false)}
+        onClose={() => { setQuickClientOpen(false); setQuickClientForApplicant(null); }}
         initialName={clientName}
-        onClientCreated={(client) => { setClientName(client.full_name); refreshClients(); }}
+        onClientCreated={(client) => {
+          if (quickClientForApplicant !== null) {
+            updateApplicant(quickClientForApplicant, 'full_name', client.full_name);
+          } else {
+            setClientName(client.full_name);
+            setClientPhone(client.phone || '');
+            setClientEmail(client.email || '');
+          }
+          refreshClients();
+          setQuickClientForApplicant(null);
+        }}
       />
     </AppLayout>
   );
