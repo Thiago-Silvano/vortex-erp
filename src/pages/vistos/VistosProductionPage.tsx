@@ -373,7 +373,7 @@ export default function VistosProductionPage() {
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader><DialogTitle>Processo — {selectedProcess?.applicant_name}</DialogTitle></DialogHeader>
           {selectedProcess && (
-            <ScrollArea className="flex-1 pr-4 -mr-4">
+            <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">Cliente:</span> <span className="font-medium">{selectedProcess.client_name}</span></div>
                 <div><span className="text-muted-foreground">Produto:</span> <span className="font-medium">{selectedProcess.product_name}</span></div>
