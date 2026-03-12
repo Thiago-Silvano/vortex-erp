@@ -280,7 +280,7 @@ export default function SellersPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Salário mensal fixo (R$)</Label><Input type="number" value={form.monthly_salary} onChange={e => setField('monthly_salary', Number(e.target.value))} /></div>
+                <div><Label>Salário mensal fixo (R$)</Label><Input value={form.monthly_salary ? `R$ ${Number(form.monthly_salary).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setField('monthly_salary', parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" /></div>
                 <div className="md:col-span-3"><Label>Observações internas</Label><Textarea value={form.notes} onChange={e => setField('notes', e.target.value)} /></div>
               </CardContent>
             </Card>

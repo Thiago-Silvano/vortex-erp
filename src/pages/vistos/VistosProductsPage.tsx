@@ -135,7 +135,7 @@ export default function VistosProductsPage() {
               <div><Label>Nome</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Visto Americano" /></div>
               <div><Label>Descrição</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Preço (R$)</Label><Input type="number" value={price} onChange={e => setPrice(Number(e.target.value))} /></div>
+                <div><Label>Preço (R$)</Label><Input value={price ? `R$ ${price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setPrice(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" /></div>
                 <div><Label>Prazo Médio (dias)</Label><Input type="number" value={averageDays} onChange={e => setAverageDays(Number(e.target.value))} /></div>
               </div>
             </div>

@@ -9,10 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Plus, Trash2, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { maskPhone, validateEmail } from '@/lib/masks';
+import { maskPhone, validateEmail, maskCurrencyInput, parseCurrency } from '@/lib/masks';
 
 interface Product { id: string; name: string; price: number; }
 interface Applicant {
@@ -45,11 +47,15 @@ export default function VistosNewSalePage() {
     { full_name: '', birth_date: '', phone: '', email: '', passport_number: '', is_main: true },
   ]);
   const [saving, setSaving] = useState(false);
+  const [allClients, setAllClients] = useState<{ id: string; full_name: string; }[]>([]);
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (!activeCompany?.id) return;
     supabase.from('visa_products').select('id, name, price').eq('empresa_id', activeCompany.id).order('name')
       .then(({ data }) => { if (data) setProducts(data as Product[]); });
+    supabase.from('clients').select('id, full_name').eq('empresa_id', activeCompany.id).order('full_name')
+      .then(({ data }) => { if (data) setAllClients(data); });
   }, [activeCompany?.id]);
 
   useEffect(() => {
@@ -176,7 +182,32 @@ export default function VistosNewSalePage() {
           <CardHeader><CardTitle>Dados da Venda</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label>Cliente *</Label><Input value={clientName} onChange={e => setClientName(e.target.value)} /></div>
+              <div>
+                <Label>Cliente *</Label>
+                <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" aria-expanded={clientPopoverOpen} className="w-full justify-between font-normal">
+                      {clientName || 'Selecione o cliente...'}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar cliente..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                        <CommandGroup>
+                          {allClients.map(c => (
+                            <CommandItem key={c.id} value={c.full_name} onSelect={() => { setClientName(c.full_name); setClientPopoverOpen(false); }}>
+                              {c.full_name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <div><Label>Telefone</Label><Input value={clientPhone} onChange={e => setClientPhone(maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
               <div>
                 <Label>Email</Label>
@@ -193,7 +224,7 @@ export default function VistosNewSalePage() {
                 </Select>
               </div>
               <div><Label>Data da Venda</Label><Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} /></div>
-              <div><Label>Valor Total (R$)</Label><Input type="number" value={totalValue} onChange={e => setTotalValue(Number(e.target.value))} /></div>
+              <div><Label>Valor Total (R$)</Label><Input value={maskCurrencyInput(totalValue)} onChange={e => setTotalValue(parseCurrency(e.target.value))} placeholder="R$ 0,00" /></div>
               <div>
                 <Label>Forma de Pagamento</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>

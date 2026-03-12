@@ -325,7 +325,7 @@ export default function AccountsReceivablePage() {
                   <SelectContent>{costCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>Valor Total *</Label><Input type="number" step="0.01" value={manualAmount} onChange={e => setManualAmount(parseFloat(e.target.value) || 0)} /></div>
+              <div><Label>Valor Total *</Label><Input value={manualAmount ? `R$ ${manualAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setManualAmount(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" /></div>
               <div><Label>Data de Vencimento</Label><Input type="date" value={manualDueDate} onChange={e => setManualDueDate(e.target.value)} /></div>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -349,7 +349,7 @@ export default function AccountsReceivablePage() {
                           <TableRow key={i}>
                             <TableCell className="font-medium">{i + 1}ª</TableCell>
                             <TableCell><Input type="date" value={row.due_date} onChange={e => updateInstallmentRow(i, 'due_date', e.target.value)} className="w-40" /></TableCell>
-                            <TableCell><Input type="number" step="0.01" value={row.amount} onChange={e => updateInstallmentRow(i, 'amount', parseFloat(e.target.value) || 0)} className="w-32" /></TableCell>
+                            <TableCell><Input value={row.amount ? `R$ ${row.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); updateInstallmentRow(i, 'amount', parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" className="w-32" /></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
