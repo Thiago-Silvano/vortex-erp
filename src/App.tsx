@@ -125,6 +125,7 @@ const App = () => (
           {/* Public pages (no auth required) */}
           <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
+          <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
