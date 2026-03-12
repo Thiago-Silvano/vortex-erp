@@ -44,9 +44,10 @@ export default function VistosNewSalePage() {
     { full_name: '', is_main: true },
   ]);
   const [saving, setSaving] = useState(false);
-  const [allClients, setAllClients] = useState<{ id: string; full_name: string; }[]>([]);
+  const [allClients, setAllClients] = useState<{ id: string; full_name: string; phone?: string; email?: string }[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
+  const [quickClientForApplicant, setQuickClientForApplicant] = useState<number | null>(null);
 
   const refreshClients = () => {
     if (!activeCompany?.id) return;
