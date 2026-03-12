@@ -278,7 +278,7 @@ export default function AccountsPayablePage() {
                     <TableCell><Badge variant={statusVariant(r.status)}>{statusLabel[r.status] || r.status}</Badge></TableCell>
                     <TableCell>
                       {r.status === 'open' && (
-                        <Button size="icon" variant="ghost" onClick={() => openMark(r.id)} title="Marcar como pago">
+                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como pago">
                           <Check className="h-4 w-4 text-primary" />
                         </Button>
                       )}

@@ -277,7 +277,7 @@ export default function AccountsReceivablePage() {
                     <TableCell><Badge variant={statusVariant(r.status)}>{statusLabel[r.status] || r.status}</Badge></TableCell>
                     <TableCell>
                       {r.status === 'pending' && (
-                        <Button size="icon" variant="ghost" onClick={() => openMark(r.id)} title="Marcar como recebido">
+                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como recebido">
                           <Check className="h-4 w-4 text-primary" />
                         </Button>
                       )}

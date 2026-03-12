@@ -166,7 +166,7 @@ export default function ClientsPage() {
                     <TableCell>{c.phone}</TableCell>
                     <TableCell>{c.city}{c.state ? ` - ${c.state}` : ''}</TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(c)}><Pencil className="h-4 w-4" /></Button>
                         <Button size="icon" variant="ghost" onClick={() => setDeleteId(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>

@@ -181,7 +181,7 @@ export default function SuppliersPage() {
                     <TableCell>{s.phone}</TableCell>
                     <TableCell>{s.city}{s.state ? ` - ${s.state}` : ''}</TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(s)}><Pencil className="h-4 w-4" /></Button>
                         <Button size="icon" variant="ghost" onClick={() => setDeleteId(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
