@@ -423,9 +423,21 @@ export default function VistosProductionPage() {
               {selectedProcess.documents?.length > 0 && (
                 <div className="space-y-1 mb-2">
                   {selectedProcess.documents.map((doc: any, i: number) => (
-                    <a key={i} href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
-                      <FileText className="h-3.5 w-3.5" /> {doc.name}
-                    </a>
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <a href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-primary hover:underline flex-1 min-w-0">
+                        <FileText className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{doc.name}</span>
+                      </a>
+                      <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={async (e) => {
+                        e.stopPropagation();
+                        const updatedDocs = selectedProcess.documents.filter((_: any, idx: number) => idx !== i);
+                        await supabase.from('visa_processes').update({ documents: updatedDocs }).eq('id', selectedProcess.id);
+                        toast.success('Documento removido!');
+                        setDetailOpen(false);
+                        fetchProcesses();
+                      }}>
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
                   ))}
                   <Button
                     size="sm"
