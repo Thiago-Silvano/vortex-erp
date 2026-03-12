@@ -493,6 +493,7 @@ export default function VistosProductionPage() {
                 </Card>
               )}
             </div>
+            </ScrollArea>
           )}
           <DialogFooter>
             <DialogClose asChild><Button variant="outline">Fechar</Button></DialogClose>

@@ -178,7 +178,7 @@ export default function SalesPage() {
           {filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</p>
           ) : filtered.map(s => (
-            <Card key={s.id} className="p-4">
+             <Card key={s.id} className="p-4 cursor-pointer" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{s.client_name}</p>
