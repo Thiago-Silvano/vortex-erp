@@ -159,7 +159,7 @@ export default function ClientsPage() {
                 {filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum cliente encontrado</TableCell></TableRow>
                 ) : filtered.map(c => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(c)}>
                     <TableCell className="font-medium">{c.full_name}</TableCell>
                     <TableCell>{c.cpf}</TableCell>
                     <TableCell>{c.email}</TableCell>

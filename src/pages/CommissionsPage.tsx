@@ -181,7 +181,7 @@ export default function CommissionsPage() {
                 {commissions.length === 0 ? (
                   <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma comissão encontrada</TableCell></TableRow>
                 ) : commissions.map(c => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetailComm(c)}>
                     <TableCell>{c.sale_date ? format(new Date(c.sale_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell className="font-medium">{c.seller_name}</TableCell>
                     <TableCell>{c.client_name}</TableCell>

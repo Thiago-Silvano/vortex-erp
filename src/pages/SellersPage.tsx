@@ -182,7 +182,7 @@ export default function SellersPage() {
                 {filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum vendedor cadastrado</TableCell></TableRow>
                 ) : filtered.map(s => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(s)}>
                     <TableCell className="font-medium">{s.full_name}</TableCell>
                     <TableCell>{s.cpf}</TableCell>
                     <TableCell>{s.phone}</TableCell>

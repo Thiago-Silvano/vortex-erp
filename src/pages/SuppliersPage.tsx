@@ -174,7 +174,7 @@ export default function SuppliersPage() {
                 {filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum fornecedor encontrado</TableCell></TableRow>
                 ) : filtered.map(s => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(s)}>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell>{s.cnpj}</TableCell>
                     <TableCell>{s.email}</TableCell>

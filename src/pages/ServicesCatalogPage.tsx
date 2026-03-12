@@ -138,7 +138,7 @@ export default function ServicesCatalogPage() {
                 {items.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>
                 ) : items.map(s => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(s)}>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell>{s.category || '-'}</TableCell>
                     <TableCell>{getCostCenterName(s.cost_center_id)}</TableCell>
