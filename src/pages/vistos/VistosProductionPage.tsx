@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Upload, FileText, User, GripVertical, Send } from 'lucide-react';
+import { Upload, FileText, User, GripVertical, Send, Plus, Trash2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import NewWhatsAppConversationModal from '@/components/NewWhatsAppConversationModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -71,6 +72,20 @@ export default function VistosProductionPage() {
   const [waSendPhone, setWaSendPhone] = useState('');
   const [waSendName, setWaSendName] = useState('');
   const [waSendMessage, setWaSendMessage] = useState('');
+
+  // Add manual process
+  const [addOpen, setAddOpen] = useState(false);
+  const [addName, setAddName] = useState('');
+  const [addApplicant, setAddApplicant] = useState('');
+  const [addProduct, setAddProduct] = useState('');
+  const [products, setProducts] = useState<{id: string; name: string}[]>([]);
+
+  useEffect(() => {
+    if (!activeCompany?.id) return;
+    supabase.from('visa_products').select('id, name').eq('empresa_id', activeCompany.id).then(({ data }) => {
+      if (data) setProducts(data as any);
+    });
+  }, [activeCompany?.id]);
 
   const fetchProcesses = async () => {
     if (!activeCompany?.id) return;
@@ -250,7 +265,10 @@ export default function VistosProductionPage() {
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">Produção — Kanban</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">Produção — Kanban</h1>
+          <Button onClick={() => setAddOpen(true)}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>
+        </div>
 
         <div className="flex gap-3 overflow-x-auto pb-4">
           {groupedByStatus.map(col => (
@@ -292,9 +310,67 @@ export default function VistosProductionPage() {
         </div>
       </div>
 
+      {/* Add Manual Process Dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Adicionar Processo Manual</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div><Label>Nome do Cliente *</Label><Input value={addName} onChange={e => setAddName(e.target.value)} /></div>
+            <div><Label>Nome do Requerente *</Label><Input value={addApplicant} onChange={e => setAddApplicant(e.target.value)} /></div>
+            <div>
+              <Label>Produto</Label>
+              <Select value={addProduct} onValueChange={setAddProduct}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+            <Button onClick={async () => {
+              if (!addName.trim() || !addApplicant.trim()) { toast.error('Preencha nome do cliente e requerente.'); return; }
+              // Create a dummy visa_sale first, then process
+              const { data: sale } = await supabase.from('visa_sales').insert({
+                empresa_id: activeCompany?.id,
+                client_name: addName,
+                sale_date: new Date().toISOString().slice(0, 10),
+                total_value: 0,
+                payment_method: 'pix',
+                status: 'active',
+              } as any).select('id').single();
+              if (!sale) { toast.error('Erro ao criar registro.'); return; }
+              // Create applicant
+              const { data: applicant } = await supabase.from('visa_applicants').insert({
+                visa_sale_id: sale.id,
+                full_name: addApplicant,
+                is_main: true,
+                sort_order: 0,
+              }).select('id').single();
+              if (!applicant) { toast.error('Erro ao criar requerente.'); return; }
+              // Create process
+              await supabase.from('visa_processes').insert({
+                visa_sale_id: sale.id,
+                applicant_id: applicant.id,
+                applicant_name: addApplicant,
+                client_name: addName,
+                empresa_id: activeCompany?.id,
+                product_id: addProduct || null,
+                status: 'produzindo',
+              } as any);
+              toast.success('Processo criado!');
+              setAddOpen(false);
+              setAddName(''); setAddApplicant(''); setAddProduct('');
+              fetchProcesses();
+            }}>Criar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Process Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Processo — {selectedProcess?.applicant_name}</DialogTitle></DialogHeader>
           {selectedProcess && (
             <div className="space-y-4 py-2">
@@ -347,9 +423,21 @@ export default function VistosProductionPage() {
               {selectedProcess.documents?.length > 0 && (
                 <div className="space-y-1 mb-2">
                   {selectedProcess.documents.map((doc: any, i: number) => (
-                    <a key={i} href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline">
-                      <FileText className="h-3.5 w-3.5" /> {doc.name}
-                    </a>
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <a href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-primary hover:underline flex-1 min-w-0">
+                        <FileText className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{doc.name}</span>
+                      </a>
+                      <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={async (e) => {
+                        e.stopPropagation();
+                        const updatedDocs = selectedProcess.documents.filter((_: any, idx: number) => idx !== i);
+                        await supabase.from('visa_processes').update({ documents: updatedDocs }).eq('id', selectedProcess.id);
+                        toast.success('Documento removido!');
+                        setDetailOpen(false);
+                        fetchProcesses();
+                      }}>
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
                   ))}
                   <Button
                     size="sm"

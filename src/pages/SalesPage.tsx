@@ -148,8 +148,8 @@ export default function SalesPage() {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
-                ) : filtered.map(s => (
-                  <TableRow key={s.id}>
+                 ) : filtered.map(s => (
+                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
                     <TableCell>{s.sale_date ? format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell className="capitalize">{s.payment_method}</TableCell>
@@ -178,7 +178,7 @@ export default function SalesPage() {
           {filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</p>
           ) : filtered.map(s => (
-            <Card key={s.id} className="p-4">
+             <Card key={s.id} className="p-4 cursor-pointer" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{s.client_name}</p>
