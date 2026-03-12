@@ -334,7 +334,7 @@ export default function VistosDS160Page() {
                             {allSubmitted ? 'Todos preenchidos' : st.label}
                           </Badge>
                           <span className="text-xs text-muted-foreground ml-2">
-                            Para: {group.sent_to_name} ({group.sent_to_email})
+                            Responsável: {group.sent_to_name}
                           </span>
                         </div>
                         <span className="text-xs text-muted-foreground">
