@@ -310,12 +310,70 @@ export default function VistosProductionPage() {
         </div>
       </div>
 
+      {/* Add Manual Process Dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Adicionar Processo Manual</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div><Label>Nome do Cliente *</Label><Input value={addName} onChange={e => setAddName(e.target.value)} /></div>
+            <div><Label>Nome do Requerente *</Label><Input value={addApplicant} onChange={e => setAddApplicant(e.target.value)} /></div>
+            <div>
+              <Label>Produto</Label>
+              <Select value={addProduct} onValueChange={setAddProduct}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+            <Button onClick={async () => {
+              if (!addName.trim() || !addApplicant.trim()) { toast.error('Preencha nome do cliente e requerente.'); return; }
+              // Create a dummy visa_sale first, then process
+              const { data: sale } = await supabase.from('visa_sales').insert({
+                empresa_id: activeCompany?.id,
+                client_name: addName,
+                sale_date: new Date().toISOString().slice(0, 10),
+                total_value: 0,
+                payment_method: 'pix',
+                status: 'active',
+              } as any).select('id').single();
+              if (!sale) { toast.error('Erro ao criar registro.'); return; }
+              // Create applicant
+              const { data: applicant } = await supabase.from('visa_applicants').insert({
+                visa_sale_id: sale.id,
+                full_name: addApplicant,
+                is_main: true,
+                sort_order: 0,
+              }).select('id').single();
+              if (!applicant) { toast.error('Erro ao criar requerente.'); return; }
+              // Create process
+              await supabase.from('visa_processes').insert({
+                visa_sale_id: sale.id,
+                applicant_id: applicant.id,
+                applicant_name: addApplicant,
+                client_name: addName,
+                empresa_id: activeCompany?.id,
+                product_id: addProduct || null,
+                status: 'produzindo',
+              } as any);
+              toast.success('Processo criado!');
+              setAddOpen(false);
+              setAddName(''); setAddApplicant(''); setAddProduct('');
+              fetchProcesses();
+            }}>Criar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Process Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader><DialogTitle>Processo — {selectedProcess?.applicant_name}</DialogTitle></DialogHeader>
           {selectedProcess && (
-            <div className="space-y-4 py-2">
+            <ScrollArea className="flex-1 pr-4 -mr-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">Cliente:</span> <span className="font-medium">{selectedProcess.client_name}</span></div>
                 <div><span className="text-muted-foreground">Produto:</span> <span className="font-medium">{selectedProcess.product_name}</span></div>
