@@ -140,10 +140,10 @@ export default function VistosNewSalePage() {
     const appPayloads = applicants.map((a, i) => ({
       visa_sale_id: saleId,
       full_name: a.full_name.trim(),
-      birth_date: a.birth_date || null,
-      phone: a.phone,
-      email: a.email,
-      passport_number: a.passport_number,
+      birth_date: null,
+      phone: '',
+      email: '',
+      passport_number: '',
       is_main: a.is_main,
       sort_order: i,
     }));
