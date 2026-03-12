@@ -56,6 +56,8 @@ import EmailTemplatesPage from "./pages/email/EmailTemplatesPage";
 import EmailSettingsPage from "./pages/email/EmailSettingsPage";
 import PropostaPublicPage from "./pages/PropostaPublicPage";
 import DS160PublicPage from "./pages/DS160PublicPage";
+import DS160GroupPublicPage from "./pages/DS160GroupPublicPage";
+import VistosDS160Page from "./pages/vistos/VistosDS160Page";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +108,7 @@ const App = () => (
           <Route path="/vistos/sales/new" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
           <Route path="/vistos/sales/edit" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
           <Route path="/vistos/production" element={<ProtectedRoute><VistosProductionPage /></ProtectedRoute>} />
+          <Route path="/vistos/ds160" element={<ProtectedRoute><VistosDS160Page /></ProtectedRoute>} />
           <Route path="/vistos/reports" element={<ProtectedRoute><VistosReportsPage /></ProtectedRoute>} />
 
           {/* WhatsApp routes */}
@@ -121,6 +124,7 @@ const App = () => (
           <Route path="/email/settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
           {/* Public pages (no auth required) */}
           <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
+          <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
           
           <Route path="*" element={<NotFound />} />

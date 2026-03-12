@@ -115,6 +115,7 @@ function AppSidebar() {
     { title: 'Vendas', url: '/vistos/sales', icon: ShoppingCart, permKey: 'sales_view' },
     { title: 'Produtos', url: '/vistos/products', icon: Package },
     { title: 'Produção', url: '/vistos/production', icon: Cog },
+    { title: 'DS-160 Grupo', url: '/vistos/ds160', icon: FileEdit },
     { title: 'Calendário', url: '/calendar', icon: CalendarDays },
     { title: 'Relatórios', url: '/vistos/reports', icon: FileBarChart },
   ];
