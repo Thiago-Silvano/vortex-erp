@@ -104,6 +104,7 @@ export default function NewSalePage() {
   const [feeRate, setFeeRate] = useState(0);
   const [boletoInterestRate, setBoletoInterestRate] = useState(0);
   const [saleInterest, setSaleInterest] = useState(0);
+  const [operatorTaxes, setOperatorTaxes] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
@@ -156,6 +157,7 @@ export default function NewSalePage() {
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setCommissionRate(Number(sale.commission_rate) || 0);
     setSaleInterest(Number((sale as any).sale_interest) || 0);
+    setOperatorTaxes(Number((sale as any).operator_taxes) || 0);
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
     setPassengersCount(Number((sale as any).passengers_count) || 1);
@@ -275,7 +277,7 @@ export default function NewSalePage() {
   }, [cardPaymentType, installments, ecRates, linkRates, paymentMethod]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
-  const totalSaleWithInterest = totalSale + saleInterest;
+  const totalSaleWithInterest = totalSale + saleInterest + operatorTaxes;
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
   const grossProfit = totalSaleWithInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
@@ -531,6 +533,7 @@ export default function NewSalePage() {
         invoice_url: invoiceUrl || null,
         destination_image_url: destinationImageUrl || null,
         sale_interest: saleInterest,
+        operator_taxes: operatorTaxes,
         passengers_count: passengersCount,
         trip_nights: tripNights,
         trip_start_date: tripStartDate || null,
@@ -1438,6 +1441,22 @@ export default function NewSalePage() {
                 </div>
               ))}
             </div>
+            {/* Operator Taxes */}
+            <div className="border-t pt-4 px-4 pb-4 sm:px-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                  <Label>Taxas da Operadora (R$)</Label>
+                  <Input type="number" step="0.01" min="0" value={operatorTaxes || ''} onChange={e => setOperatorTaxes(parseFloat(e.target.value) || 0)} placeholder="0,00" />
+                  <p className="text-xs text-muted-foreground mt-1">Valor somado ao total da venda.</p>
+                </div>
+                {operatorTaxes > 0 && (
+                  <>
+                    <div><p className="text-sm text-muted-foreground">Total dos serviços</p><p className="text-sm font-medium">{fmt(totalSale)}</p></div>
+                    <div><p className="text-sm text-muted-foreground">Total + Taxas</p><p className="text-sm font-bold text-primary">{fmt(totalSale + operatorTaxes)}</p></div>
+                  </>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -1676,7 +1695,7 @@ export default function NewSalePage() {
               <div>
                 <p className="text-sm text-muted-foreground">Total da Venda</p>
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
-                {saleInterest > 0 && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)} + Juros: {fmt(saleInterest)})</p>}
+                {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
               </div>
               <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
