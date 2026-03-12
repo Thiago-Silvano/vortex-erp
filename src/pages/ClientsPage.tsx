@@ -127,7 +127,33 @@ export default function ClientsPage() {
     setEditingId(null);
     setForm(emptyClient());
     setEmailError('');
+    setIsDependent(false);
+    setSelectedParentId(null);
     setDialogOpen(true);
+  };
+
+  const handleParentSelect = (parentId: string) => {
+    setSelectedParentId(parentId);
+    const parent = clients.find(c => c.id === parentId);
+    if (parent) {
+      setForm(prev => ({
+        ...prev,
+        // Copy everything except CPF and birth_date
+        passport_number: parent.passport_number,
+        passport_issue_date: parent.passport_issue_date,
+        passport_expiry_date: parent.passport_expiry_date,
+        email: parent.email,
+        phone: parent.phone,
+        cep: parent.cep,
+        address: parent.address,
+        address_number: parent.address_number,
+        complement: parent.complement,
+        neighborhood: parent.neighborhood,
+        city: parent.city,
+        state: parent.state,
+        country: parent.country,
+      }));
+    }
   };
 
   return (
