@@ -194,9 +194,6 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
                   <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => copyLink(form.token)}>
                     <Copy className="h-3 w-3" />Copiar Link
                   </Button>
-                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => resendLink(form)}>
-                    <RefreshCw className="h-3 w-3" />Reenviar
-                  </Button>
                   <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/${form.token}`, '_blank')}>
                     <ExternalLink className="h-3 w-3" />Abrir
                   </Button>
