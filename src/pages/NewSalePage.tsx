@@ -277,7 +277,7 @@ export default function NewSalePage() {
   }, [cardPaymentType, installments, ecRates, linkRates, paymentMethod]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
-  const totalSaleWithInterest = totalSale + saleInterest;
+  const totalSaleWithInterest = totalSale + saleInterest + operatorTaxes;
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
   const grossProfit = totalSaleWithInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
