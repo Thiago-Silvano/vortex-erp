@@ -4,7 +4,7 @@ import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Send, Copy, ExternalLink, RefreshCw, FileText, Loader2, Bell, Trash2 } from 'lucide-react';
+import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -53,13 +53,8 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   const baseUrl = window.location.origin;
 
-  const sendLink = async () => {
-    if (!clientEmail) {
-      toast.error('Cliente não possui email cadastrado');
-      return;
-    }
+  const generateLink = async () => {
     setSending(true);
-    // Create a new form entry
     const { data: user } = await supabase.auth.getUser();
     const { data: newForm, error } = await supabase.from('ds160_forms').insert({
       client_id: clientId,
@@ -75,23 +70,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       return;
     }
 
-    // Send email via edge function
-    try {
-      const formLink = `${baseUrl}/ds160/${(newForm as any).token}`;
-      await supabase.functions.invoke('send-ds160-link', {
-        body: {
-          to: clientEmail,
-          clientName,
-          formLink,
-          user_id: user.user?.id,
-          empresa_id: activeCompany?.id,
-        },
-      });
-      toast.success('Link do DS-160 enviado por email!');
-    } catch {
-      toast.warning('Formulário criado mas houve erro ao enviar email. Use o botão copiar link.');
-    }
-
+    const formLink = `${baseUrl}/ds160/${(newForm as any).token}`;
+    navigator.clipboard.writeText(formLink);
+    toast.success('Link gerado e copiado para a área de transferência!');
     setSending(false);
     fetchForms();
   };
@@ -101,22 +82,6 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     toast.success('Link copiado!');
   };
 
-  const resendLink = async (form: DS160Form) => {
-    if (!clientEmail) {
-      toast.error('Cliente não possui email cadastrado');
-      return;
-    }
-    try {
-      const formLink = `${baseUrl}/ds160/${form.token}`;
-      const { data: user } = await supabase.auth.getUser();
-      await supabase.functions.invoke('send-ds160-link', {
-        body: { to: clientEmail, clientName, formLink, user_id: user.user?.id, empresa_id: activeCompany?.id },
-      });
-      toast.success('Link reenviado!');
-    } catch {
-      toast.error('Erro ao reenviar email');
-    }
-  };
 
   const handleGeneratePdf = async (form: DS160Form) => {
     setGeneratingPdf(true);
@@ -166,9 +131,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           <FileText className="h-4 w-4" />
           Formulário DS-160
         </h3>
-        <Button size="sm" onClick={sendLink} disabled={sending} className="gap-1.5">
-          {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-          Enviar Link
+        <Button size="sm" onClick={generateLink} disabled={sending} className="gap-1.5">
+          {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />}
+          Gerar Link
         </Button>
       </div>
 
@@ -212,9 +177,6 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => copyLink(form.token)}>
                     <Copy className="h-3 w-3" />Copiar Link
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => resendLink(form)}>
-                    <RefreshCw className="h-3 w-3" />Reenviar
                   </Button>
                   <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/${form.token}`, '_blank')}>
                     <ExternalLink className="h-3 w-3" />Abrir
