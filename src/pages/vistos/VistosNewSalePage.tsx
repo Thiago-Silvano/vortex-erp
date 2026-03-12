@@ -314,6 +314,12 @@ export default function VistosNewSalePage() {
           <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar Venda'}</Button>
         </div>
       </div>
+      <QuickClientModal
+        open={quickClientOpen}
+        onClose={() => setQuickClientOpen(false)}
+        initialName={clientName}
+        onClientCreated={(client) => { setClientName(client.full_name); refreshClients(); }}
+      />
     </AppLayout>
   );
 }
