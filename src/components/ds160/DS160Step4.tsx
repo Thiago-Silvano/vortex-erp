@@ -95,6 +95,16 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
           </div>
         </div>
       )}
+      <div>
+        <Label>Você já teve um visto americano negado?</Label>
+        <RadioGroup value={data.visto_negado || 'Não'} onValueChange={v => onChange('visto_negado', v)} className="flex gap-4 mt-1">
+          <div className="flex items-center gap-2"><RadioGroupItem value="Não" id="negado_nao" /><Label htmlFor="negado_nao">Não</Label></div>
+          <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="negado_sim" /><Label htmlFor="negado_sim">Sim</Label></div>
+        </RadioGroup>
+      </div>
+      {data.visto_negado === 'Sim' && (
+        <div><Label>Explique o motivo da negativa</Label><Textarea value={data.visto_negado_explicacao || ''} onChange={e => onChange('visto_negado_explicacao', e.target.value)} rows={3} placeholder="Descreva as circunstâncias da negativa..." /></div>
+      )}
     </div>
   );
 }

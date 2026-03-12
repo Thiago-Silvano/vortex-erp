@@ -13,7 +13,7 @@ export default function DS160Step7({ data, onChange }: DS160StepProps) {
         <Select value={data.status_profissional || ''} onValueChange={v => onChange('status_profissional', v)}>
           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
           <SelectContent>
-            {['Empregado Atualmente','Estudante','Autônomo','Desempregado','Aposentado','Outro'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            {['Empregado Atualmente','Estudante','Autônomo','Empresário','Desempregado','Aposentado','Outro'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
