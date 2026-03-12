@@ -240,7 +240,8 @@ export default function VistosDS160Page() {
                 Selecionar Clientes
               </CardTitle>
               <Button onClick={openSendModal} disabled={selected.size === 0} className="gap-1.5">
-                <Send className="h-4 w-4" />
+                <Link2 className="h-4 w-4" />
+                Gerar Link ({selected.size})
                 Enviar Link ({selected.size})
               </Button>
             </div>
