@@ -14,7 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Plus, Trash2, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { maskCurrencyInput, parseCurrency } from '@/lib/masks';
+import { maskPhone, validateEmail, maskCurrencyInput, parseCurrency } from '@/lib/masks';
 
 interface Product { id: string; name: string; price: number; }
 interface Applicant {
