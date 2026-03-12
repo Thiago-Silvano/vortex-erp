@@ -51,7 +51,7 @@ export default function VistosNewSalePage() {
 
   const refreshClients = () => {
     if (!activeCompany?.id) return;
-    supabase.from('clients').select('id, full_name').eq('empresa_id', activeCompany.id).order('full_name')
+    supabase.from('clients').select('id, full_name, phone, email').eq('empresa_id', activeCompany.id).order('full_name')
       .then(({ data }) => { if (data) setAllClients(data); });
   };
 
