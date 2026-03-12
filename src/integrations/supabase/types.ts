@@ -1387,6 +1387,7 @@ export type Database = {
           invoice_url: string | null
           net_profit: number | null
           notes: string | null
+          operator_taxes: number | null
           passengers_count: number | null
           payment_method: string | null
           proposal_payment_options: Json | null
@@ -1424,6 +1425,7 @@ export type Database = {
           invoice_url?: string | null
           net_profit?: number | null
           notes?: string | null
+          operator_taxes?: number | null
           passengers_count?: number | null
           payment_method?: string | null
           proposal_payment_options?: Json | null
@@ -1461,6 +1463,7 @@ export type Database = {
           invoice_url?: string | null
           net_profit?: number | null
           notes?: string | null
+          operator_taxes?: number | null
           passengers_count?: number | null
           payment_method?: string | null
           proposal_payment_options?: Json | null
