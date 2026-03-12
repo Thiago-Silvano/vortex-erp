@@ -20,6 +20,7 @@ export default function DS160Step7({ data, onChange }: DS160StepProps) {
       <div><Label>Nome da Empresa / Instituição de Ensino Atual</Label><Input value={data.empresa_atual || ''} onChange={e => onChange('empresa_atual', e.target.value)} /></div>
       <div><Label>Cargo / Função / Curso</Label><Input value={data.cargo_atual || ''} onChange={e => onChange('cargo_atual', e.target.value)} /></div>
       <div><Label>Renda Mensal Estimada (BRL)</Label><Input value={data.renda_mensal || ''} onChange={e => onChange('renda_mensal', e.target.value)} /></div>
+      <div><Label>CEP</Label><Input value={data.empresa_cep || ''} onChange={e => onChange('empresa_cep', e.target.value)} placeholder="00000-000" maxLength={9} /></div>
       <div><Label>Endereço Completo</Label><Input value={data.empresa_endereco || ''} onChange={e => onChange('empresa_endereco', e.target.value)} /></div>
       <div><Label>Data de Início</Label><Input type="date" value={data.empresa_data_inicio || ''} onChange={e => onChange('empresa_data_inicio', e.target.value)} /></div>
       <div><Label>Idiomas que fala fluentemente</Label><Input value={data.idiomas || ''} onChange={e => onChange('idiomas', e.target.value)} /></div>
