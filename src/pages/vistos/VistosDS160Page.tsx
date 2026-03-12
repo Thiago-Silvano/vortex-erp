@@ -435,9 +435,9 @@ export default function VistosDS160Page() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSendModal(false)}>Cancelar</Button>
-            <Button onClick={handleSendGroup} disabled={sending} className="gap-1.5">
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Enviar Link
+            <Button onClick={handleGenerateGroup} disabled={sending} className="gap-1.5">
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+              Gerar e Copiar Link
             </Button>
           </DialogFooter>
         </DialogContent>
