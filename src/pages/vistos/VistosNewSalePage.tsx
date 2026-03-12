@@ -40,7 +40,7 @@ export default function VistosNewSalePage() {
   const [notes, setNotes] = useState('');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [applicants, setApplicants] = useState<Applicant[]>([
-    { full_name: '', birth_date: '', phone: '', email: '', passport_number: '', is_main: true },
+    { full_name: '', is_main: true },
   ]);
   const [saving, setSaving] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; }[]>([]);
