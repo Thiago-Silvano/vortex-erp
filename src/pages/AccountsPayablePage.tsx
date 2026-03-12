@@ -347,7 +347,7 @@ export default function AccountsPayablePage() {
                           <TableRow key={i}>
                             <TableCell className="font-medium">{i + 1}ª</TableCell>
                             <TableCell><Input type="date" value={row.due_date} onChange={e => updateInstallmentRow(i, 'due_date', e.target.value)} className="w-40" /></TableCell>
-                            <TableCell><Input type="number" step="0.01" value={row.amount} onChange={e => updateInstallmentRow(i, 'amount', parseFloat(e.target.value) || 0)} className="w-32" /></TableCell>
+                            <TableCell><Input value={row.amount ? `R$ ${row.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); updateInstallmentRow(i, 'amount', parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" className="w-32" /></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

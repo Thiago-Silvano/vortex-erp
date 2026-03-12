@@ -224,7 +224,7 @@ export default function VistosNewSalePage() {
                 </Select>
               </div>
               <div><Label>Data da Venda</Label><Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} /></div>
-              <div><Label>Valor Total (R$)</Label><Input type="number" value={totalValue} onChange={e => setTotalValue(Number(e.target.value))} /></div>
+              <div><Label>Valor Total (R$)</Label><Input value={maskCurrencyInput(totalValue)} onChange={e => setTotalValue(parseCurrency(e.target.value))} placeholder="R$ 0,00" /></div>
               <div>
                 <Label>Forma de Pagamento</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
