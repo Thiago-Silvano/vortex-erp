@@ -1446,7 +1446,7 @@ export default function NewSalePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
                   <Label>Taxas da Operadora (R$)</Label>
-                  <Input type="number" step="0.01" min="0" value={operatorTaxes || ''} onChange={e => setOperatorTaxes(parseFloat(e.target.value) || 0)} placeholder="0,00" />
+                  <Input value={operatorTaxes ? `R$ ${operatorTaxes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setOperatorTaxes(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
                   <p className="text-xs text-muted-foreground mt-1">Valor somado ao total da venda.</p>
                 </div>
                 {operatorTaxes > 0 && (
