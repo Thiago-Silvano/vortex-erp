@@ -13,7 +13,7 @@ import CepLookup from '@/components/CepLookup';
 interface QuickClientModalProps {
   open: boolean;
   onClose: () => void;
-  onClientCreated: (client: { id: string; full_name: string }) => void;
+  onClientCreated: (client: { id: string; full_name: string; phone?: string; email?: string }) => void;
   initialName?: string;
 }
 
