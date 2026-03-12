@@ -462,6 +462,7 @@ export type Database = {
           empresa_id: string | null
           expires_at: string | null
           form_data: Json
+          group_id: string | null
           id: string
           ip_address: string | null
           last_saved_at: string | null
@@ -480,6 +481,7 @@ export type Database = {
           empresa_id?: string | null
           expires_at?: string | null
           form_data?: Json
+          group_id?: string | null
           id?: string
           ip_address?: string | null
           last_saved_at?: string | null
@@ -498,6 +500,7 @@ export type Database = {
           empresa_id?: string | null
           expires_at?: string | null
           form_data?: Json
+          group_id?: string | null
           id?: string
           ip_address?: string | null
           last_saved_at?: string | null
@@ -519,6 +522,60 @@ export type Database = {
           },
           {
             foreignKeyName: "ds160_forms_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ds160_forms_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "ds160_group_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ds160_group_forms: {
+        Row: {
+          created_at: string
+          empresa_id: string | null
+          id: string
+          sent_at: string | null
+          sent_by: string | null
+          sent_to_email: string | null
+          sent_to_name: string | null
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_to_email?: string | null
+          sent_to_name?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_to_email?: string | null
+          sent_to_name?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds160_group_forms_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
