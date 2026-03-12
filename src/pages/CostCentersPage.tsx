@@ -102,13 +102,13 @@ export default function CostCentersPage() {
                 {items.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum centro de custo cadastrado</TableCell></TableRow>
                 ) : items.map(c => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(c)}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.description || '-'}</TableCell>
                     <TableCell><Badge variant={c.status === 'active' ? 'default' : 'secondary'}>{c.status === 'active' ? 'Ativo' : 'Inativo'}</Badge></TableCell>
                     <TableCell>{format(new Date(c.created_at), 'dd/MM/yyyy')}</TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(c)}><Pencil className="h-4 w-4" /></Button>
                         <Button size="icon" variant="ghost" onClick={() => setDeleteId(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>

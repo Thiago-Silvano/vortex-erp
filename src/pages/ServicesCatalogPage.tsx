@@ -138,13 +138,13 @@ export default function ServicesCatalogPage() {
                 {items.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>
                 ) : items.map(s => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(s)}>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell>{s.category || '-'}</TableCell>
                     <TableCell>{getCostCenterName(s.cost_center_id)}</TableCell>
                     <TableCell><Badge variant={s.status === 'active' ? 'default' : 'secondary'}>{s.status === 'active' ? 'Ativo' : 'Inativo'}</Badge></TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(s)}><Pencil className="h-4 w-4" /></Button>
                         <Button size="icon" variant="ghost" onClick={() => setDeleteId(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>

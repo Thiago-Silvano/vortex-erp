@@ -268,7 +268,7 @@ export default function AccountsReceivablePage() {
                 {filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
-                  <TableRow key={r.id}>
+                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => r.status === 'pending' && openMark(r.id)}>
                     <TableCell className="font-medium">{r.client_name || '-'}</TableCell>
                     <TableCell>{r.description || (r.origin_type === 'sale' ? 'Venda' : '-')}</TableCell>
                     <TableCell>{r.installment_number}ª</TableCell>
@@ -277,7 +277,7 @@ export default function AccountsReceivablePage() {
                     <TableCell><Badge variant={statusVariant(r.status)}>{statusLabel[r.status] || r.status}</Badge></TableCell>
                     <TableCell>
                       {r.status === 'pending' && (
-                        <Button size="icon" variant="ghost" onClick={() => openMark(r.id)} title="Marcar como recebido">
+                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como recebido">
                           <Check className="h-4 w-4 text-primary" />
                         </Button>
                       )}

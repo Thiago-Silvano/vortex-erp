@@ -181,7 +181,7 @@ export default function CommissionsPage() {
                 {commissions.length === 0 ? (
                   <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma comissão encontrada</TableCell></TableRow>
                 ) : commissions.map(c => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetailComm(c)}>
                     <TableCell>{c.sale_date ? format(new Date(c.sale_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell className="font-medium">{c.seller_name}</TableCell>
                     <TableCell>{c.client_name}</TableCell>
@@ -191,7 +191,7 @@ export default function CommissionsPage() {
                     <TableCell className="font-bold">{fmt(c.commission_value)}</TableCell>
                     <TableCell><Badge variant={statusVariant(c.status) as any}>{statusLabels[c.status] || c.status}</Badge></TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" onClick={() => setDetailComm(c)}><FileText className="h-4 w-4" /></Button>
                         {c.status === 'pending' && <Button variant="ghost" size="sm" onClick={() => updateStatus(c.id, 'approved')} title="Aprovar"><CheckCircle className="h-4 w-4 text-blue-500" /></Button>}
                         {c.status === 'approved' && <Button variant="ghost" size="sm" onClick={() => updateStatus(c.id, 'paid')} title="Marcar como paga"><DollarSign className="h-4 w-4 text-green-500" /></Button>}

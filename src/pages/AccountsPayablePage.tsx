@@ -269,7 +269,7 @@ export default function AccountsPayablePage() {
                 {filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
-                  <TableRow key={r.id}>
+                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => r.status === 'open' && openMark(r.id)}>
                     <TableCell className="font-medium">{supplierName(r.supplier_id)}</TableCell>
                     <TableCell>{r.description || '-'}</TableCell>
                     <TableCell>{r.installment_number}/{r.total_installments}</TableCell>
@@ -278,7 +278,7 @@ export default function AccountsPayablePage() {
                     <TableCell><Badge variant={statusVariant(r.status)}>{statusLabel[r.status] || r.status}</Badge></TableCell>
                     <TableCell>
                       {r.status === 'open' && (
-                        <Button size="icon" variant="ghost" onClick={() => openMark(r.id)} title="Marcar como pago">
+                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como pago">
                           <Check className="h-4 w-4 text-primary" />
                         </Button>
                       )}
