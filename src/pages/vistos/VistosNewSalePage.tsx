@@ -250,34 +250,46 @@ export default function VistosNewSalePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {applicants.map((app, idx) => (
-              <div key={idx} className="border rounded-lg p-4 space-y-3 relative">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-foreground">
-                    {app.is_main ? '⭐ Aplicante Principal' : `Aplicante ${idx + 1}`}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {!app.is_main && (
-                      <Button variant="ghost" size="sm" onClick={() => updateApplicant(idx, 'is_main', true)}>
-                        Tornar principal
+              <div key={idx} className="flex items-center gap-3 border rounded-lg p-3">
+                <span className="text-sm font-semibold text-foreground whitespace-nowrap">
+                  {app.is_main ? '⭐' : `${idx + 1}.`}
+                </span>
+                <div className="flex-1">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                        {app.full_name || 'Selecione o aplicante...'}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
-                    )}
-                    {applicants.length > 1 && (
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeApplicant(idx)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar cliente..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                          <CommandGroup>
+                            {allClients.map(c => (
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => updateApplicant(idx, 'full_name', c.full_name)}>
+                                {c.full_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div><Label>Nome Completo *</Label><Input value={app.full_name} onChange={e => updateApplicant(idx, 'full_name', e.target.value)} /></div>
-                  <div><Label>Data de Nascimento</Label><Input type="date" value={app.birth_date} onChange={e => updateApplicant(idx, 'birth_date', e.target.value)} /></div>
-                  <div><Label>Telefone</Label><Input value={app.phone} onChange={e => updateApplicant(idx, 'phone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
-                  <div>
-                    <Label>Email</Label>
-                    <Input value={app.email} onChange={e => updateApplicant(idx, 'email', e.target.value.toLowerCase())} placeholder="exemplo@email.com" />
-                    {app.email && !validateEmail(app.email) && <p className="text-xs text-destructive mt-1">Email inválido</p>}
-                  </div>
-                  <div><Label>Nº Passaporte (opcional)</Label><Input value={app.passport_number} onChange={e => updateApplicant(idx, 'passport_number', e.target.value)} /></div>
+                <div className="flex items-center gap-1">
+                  {!app.is_main && (
+                    <Button variant="ghost" size="sm" onClick={() => updateApplicant(idx, 'is_main', true)}>
+                      Tornar principal
+                    </Button>
+                  )}
+                  {applicants.length > 1 && (
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeApplicant(idx)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
