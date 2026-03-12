@@ -22,8 +22,18 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: { user: caller } } = await callerClient.auth.getUser();
-    if (!caller || caller.email !== "thiago@vortexviagens.com.br") {
-      throw new Error("Apenas o administrador pode gerenciar usuários");
+    if (!caller) throw new Error("Não autorizado");
+
+    // Check if caller has master role
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: permData } = await adminClient
+      .from("user_permissions")
+      .select("user_role")
+      .eq("user_id", caller.id)
+      .single();
+
+    if (!permData || permData.user_role !== "master") {
+      throw new Error("Apenas usuários Master podem gerenciar usuários");
     }
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
