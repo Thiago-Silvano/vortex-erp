@@ -11,7 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Pencil, Trash2, MessageCircle } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, MessageCircle, Users } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
@@ -55,7 +57,8 @@ export default function ClientsPage() {
   const [form, setForm] = useState<Omit<Client, 'id'>>(emptyClient());
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [emailError, setEmailError] = useState('');
-
+  const [isDependent, setIsDependent] = useState(false);
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
@@ -124,7 +127,33 @@ export default function ClientsPage() {
     setEditingId(null);
     setForm(emptyClient());
     setEmailError('');
+    setIsDependent(false);
+    setSelectedParentId(null);
     setDialogOpen(true);
+  };
+
+  const handleParentSelect = (parentId: string) => {
+    setSelectedParentId(parentId);
+    const parent = clients.find(c => c.id === parentId);
+    if (parent) {
+      setForm(prev => ({
+        ...prev,
+        // Copy everything except CPF and birth_date
+        passport_number: parent.passport_number,
+        passport_issue_date: parent.passport_issue_date,
+        passport_expiry_date: parent.passport_expiry_date,
+        email: parent.email,
+        phone: parent.phone,
+        cep: parent.cep,
+        address: parent.address,
+        address_number: parent.address_number,
+        complement: parent.complement,
+        neighborhood: parent.neighborhood,
+        city: parent.city,
+        state: parent.state,
+        country: parent.country,
+      }));
+    }
   };
 
   return (
@@ -206,6 +235,39 @@ export default function ClientsPage() {
                   <Label>Nome completo *</Label>
                   <Input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} />
                 </div>
+
+                {!editingId && (
+                  <div className="md:col-span-2 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="is-dependent"
+                        checked={isDependent}
+                        onCheckedChange={(checked) => {
+                          setIsDependent(!!checked);
+                          if (!checked) {
+                            setSelectedParentId(null);
+                          }
+                        }}
+                      />
+                      <Label htmlFor="is-dependent" className="cursor-pointer flex items-center gap-1.5">
+                        <Users className="h-4 w-4" />
+                        O novo cliente é dependente de outro cliente?
+                      </Label>
+                    </div>
+                    {isDependent && (
+                      <Select value={selectedParentId || ''} onValueChange={handleParentSelect}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o cliente titular..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.full_name}{c.cpf ? ` - ${c.cpf}` : ''}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                )}
               </div>
 
               <Card>
