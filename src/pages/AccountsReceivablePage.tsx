@@ -294,7 +294,7 @@ export default function AccountsReceivablePage() {
                     <TableCell>{r.installment_number}ª</TableCell>
                     <TableCell>{fmt(r.amount)}</TableCell>
                     <TableCell>{r.due_date ? format(new Date(r.due_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
-                    <TableCell><Badge variant={statusVariant(r.status)}>{statusLabel[r.status] || r.status}</Badge></TableCell>
+                    <TableCell><Badge className={statusClasses(r.status)}>{statusLabel[r.status] || r.status}</Badge></TableCell>
                     <TableCell>
                       {r.status === 'pending' && (
                         <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como recebido">
