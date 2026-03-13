@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -31,6 +31,22 @@ export default function VistosSalesPage() {
   const [filter, setFilter] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<VisaSale | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [sortKey, setSortKey] = useState<'client_name' | 'product_name' | 'sale_date' | 'total_value' | 'payment_method'>('sale_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'sale_date' || key === 'total_value' ? 'desc' : 'asc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: typeof sortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
 
   const fetchSales = async () => {
     if (!activeCompany?.id) return;
@@ -50,10 +66,20 @@ export default function VistosSalesPage() {
 
   useEffect(() => { fetchSales(); }, [activeCompany?.id]);
 
-  const filtered = sales.filter(s =>
-    s.client_name.toLowerCase().includes(filter.toLowerCase()) ||
-    (s.product_name || '').toLowerCase().includes(filter.toLowerCase())
-  );
+  const filtered = sales
+    .filter(s =>
+      s.client_name.toLowerCase().includes(filter.toLowerCase()) ||
+      (s.product_name || '').toLowerCase().includes(filter.toLowerCase())
+    )
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'client_name') cmp = a.client_name.localeCompare(b.client_name);
+      else if (sortKey === 'product_name') cmp = (a.product_name || '').localeCompare(b.product_name || '');
+      else if (sortKey === 'sale_date') cmp = a.sale_date.localeCompare(b.sale_date);
+      else if (sortKey === 'total_value') cmp = (a.total_value || 0) - (b.total_value || 0);
+      else if (sortKey === 'payment_method') cmp = (a.payment_method || '').localeCompare(b.payment_method || '');
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
 
   const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto', cartao_credito: 'Cartão Crédito', cartao_debito: 'Cartão Débito', transferencia: 'Transferência' };
 
@@ -103,11 +129,21 @@ export default function VistosSalesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead>Pagamento</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('client_name')}>
+                    <span className="inline-flex items-center">Cliente <SortIcon col="client_name" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('product_name')}>
+                    <span className="inline-flex items-center">Produto <SortIcon col="product_name" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_date')}>
+                    <span className="inline-flex items-center">Data <SortIcon col="sale_date" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none text-right" onClick={() => toggleSort('total_value')}>
+                    <span className="inline-flex items-center justify-end w-full">Valor <SortIcon col="total_value" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('payment_method')}>
+                    <span className="inline-flex items-center">Pagamento <SortIcon col="payment_method" /></span>
+                  </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
