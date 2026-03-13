@@ -28,6 +28,10 @@ export default function Settings() {
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [testingGoogle, setTestingGoogle] = useState(false);
   const [googleStatus, setGoogleStatus] = useState<'idle' | 'connected' | 'error'>('idle');
+  const [unsplashKey, setUnsplashKey] = useState('');
+  const [pexelsKey, setPexelsKey] = useState('');
+  const [testingStock, setTestingStock] = useState(false);
+  const [stockStatus, setStockStatus] = useState<{ unsplash?: boolean; pexels?: boolean } | null>(null);
 
   const defaultEcRates: CardRate[] = [
     { installments: 0, rate: 1.39, label: 'Débito' },
