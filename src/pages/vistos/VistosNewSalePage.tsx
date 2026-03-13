@@ -114,12 +114,15 @@ export default function VistosNewSalePage() {
     // Load payments
     const { data: paymentData } = await (supabase.from('visa_sale_payments' as any) as any).select('*').eq('visa_sale_id', id).order('created_at');
     if (paymentData && paymentData.length > 0) {
+      // Group by payment_type to reconstruct installments
       setPayments(paymentData.map((p: any) => ({
         id: p.id,
         payment_type: p.payment_type,
         value: Number(p.value),
         payment_date: p.payment_date || '',
         is_received: p.is_received || false,
+        num_installments: 1,
+        installments: [],
       })));
     }
   };
