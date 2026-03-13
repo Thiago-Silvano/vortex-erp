@@ -19,38 +19,47 @@ export function resetServerUrl() {
   _serverUrl = '';
 }
 
+async function proxyRequest(serverUrl: string, endpoint: string, method = 'GET', payload?: any) {
+  const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
+    body: { server_url: serverUrl, endpoint, method, payload },
+  });
+  if (error) throw new Error(error.message || 'Erro ao comunicar com servidor WhatsApp');
+  return data;
+}
+
 export async function fetchChats(serverUrl: string) {
-  const res = await fetch(`${serverUrl}/chats`);
-  if (!res.ok) throw new Error('Falha ao carregar conversas');
-  return res.json();
+  return proxyRequest(serverUrl, '/chats');
 }
 
 export async function fetchMessages(serverUrl: string, number: string) {
-  const res = await fetch(`${serverUrl}/messages/${encodeURIComponent(number)}`);
-  if (!res.ok) throw new Error('Falha ao carregar mensagens');
-  return res.json();
+  return proxyRequest(serverUrl, `/messages/${encodeURIComponent(number)}`);
 }
 
 export async function sendMessage(serverUrl: string, number: string, message: string) {
-  const res = await fetch(`${serverUrl}/send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ number, message }),
-  });
-  if (!res.ok) throw new Error('Falha ao enviar mensagem');
-  return res.json();
+  return proxyRequest(serverUrl, '/send', 'POST', { number, message });
 }
 
 export async function sendMedia(serverUrl: string, number: string, file: File, caption?: string) {
-  const formData = new FormData();
-  formData.append('number', number);
-  formData.append('file', file);
-  if (caption) formData.append('caption', caption);
-  
-  const res = await fetch(`${serverUrl}/send-media`, {
-    method: 'POST',
-    body: formData,
+  // Media needs special handling - convert to base64 and send through proxy
+  const base64 = await fileToBase64(file);
+  return proxyRequest(serverUrl, '/send-media', 'POST', {
+    number,
+    file_base64: base64,
+    file_name: file.name,
+    mime_type: file.type,
+    caption,
   });
-  if (!res.ok) throw new Error('Falha ao enviar mídia');
-  return res.json();
+}
+
+export async function checkStatus(serverUrl: string) {
+  return proxyRequest(serverUrl, '/status');
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
