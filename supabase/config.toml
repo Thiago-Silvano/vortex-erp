@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.fetch-emails]
 verify_jwt = false
+
+[functions.search-destination-images]
+verify_jwt = false
