@@ -14,7 +14,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
 import PdfImportModal from '@/components/PdfImportModal';
@@ -133,6 +134,9 @@ export default function NewSalePage() {
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
   const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
   const [uploadingDestImage, setUploadingDestImage] = useState(false);
+  const [aiImageSearch, setAiImageSearch] = useState(false);
+  const [aiImages, setAiImages] = useState<string[]>([]);
+  const [aiImageDialog, setAiImageDialog] = useState(false);
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [supplierPayments, setSupplierPayments] = useState<SupplierPaymentControl[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -531,6 +535,53 @@ export default function NewSalePage() {
     setUploadingDestImage(false);
     toast.success('Imagem do destino enviada!');
     e.target.value = '';
+  };
+
+  const handleAiImageSearch = async () => {
+    if (!destinationName.trim()) {
+      toast.error('Preencha o nome do destino primeiro');
+      return;
+    }
+    setAiImageSearch(true);
+    setAiImages([]);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-destination-images', {
+        body: { destination: destinationName.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        setAiImageSearch(false);
+        return;
+      }
+      if (data?.images?.length > 0) {
+        setAiImages(data.images);
+        setAiImageDialog(true);
+      } else {
+        toast.error('Nenhuma imagem encontrada');
+      }
+    } catch (err: any) {
+      console.error('AI image search error:', err);
+      toast.error('Erro ao buscar imagens com I.A.');
+    }
+    setAiImageSearch(false);
+  };
+
+  const handleSelectAiImage = async (base64Url: string) => {
+    try {
+      const res = await fetch(base64Url);
+      const blob = await res.blob();
+      const fileName = `destinations/${crypto.randomUUID()}.png`;
+      const { error } = await supabase.storage.from('quote-images').upload(fileName, blob, { contentType: 'image/png' });
+      if (error) { toast.error('Erro ao salvar imagem'); return; }
+      const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+      setDestinationImageUrl(data.publicUrl);
+      setAiImageDialog(false);
+      setAiImages([]);
+      toast.success('Imagem selecionada!');
+    } catch {
+      toast.error('Erro ao processar imagem');
+    }
   };
 
   const handleItemImageUpload = async (itemIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1301,7 +1352,7 @@ export default function NewSalePage() {
             </div>
             <div className="col-span-full mt-2">
               <Label>Imagem do Destino (para proposta)</Label>
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
                 {destinationImageUrl ? (
                   <div className="relative">
                     <img src={destinationImageUrl} alt="Destino" className="h-20 w-32 object-cover rounded border" />
@@ -1321,8 +1372,42 @@ export default function NewSalePage() {
                     <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
                   </label>
                 )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAiImageSearch}
+                  disabled={aiImageSearch || !destinationName.trim()}
+                  className="gap-2"
+                >
+                  {aiImageSearch ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Buscar com I.A.
+                </Button>
               </div>
             </div>
+
+            {/* AI Image Selection Dialog */}
+            <Dialog open={aiImageDialog} onOpenChange={setAiImageDialog}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Escolha uma imagem de {destinationName}</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {aiImages.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors"
+                      onClick={() => handleSelectAiImage(img)}
+                    >
+                      <img src={img} alt={`${destinationName} ${idx + 1}`} className="w-full h-36 object-cover" />
+                      <div className="p-2 text-center">
+                        <Button size="sm" variant="ghost" className="w-full text-xs">Selecionar</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 
