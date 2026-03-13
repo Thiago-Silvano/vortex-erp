@@ -411,12 +411,12 @@ export default function WhatsAppInboxPage() {
 
       if (contact) {
         await (supabase.from('whatsapp_conversations')
-          .update({ contact_id: contact.id, client_name: clientForm.full_name })
+          .update({ contact_id: contact.id, contact_name: clientForm.full_name })
           .eq('id', activeConv.id) as any);
 
-        setActiveConv(prev => prev ? { ...prev, client_name: clientForm.full_name, contact_id: contact.id } : null);
+        setActiveConv(prev => prev ? { ...prev, contact_name: clientForm.full_name, contact_id: contact.id } : null);
         setConversations(prev => prev.map(c =>
-          c.id === activeConv.id ? { ...c, client_name: clientForm.full_name, contact_id: contact.id } : c
+          c.id === activeConv.id ? { ...c, contact_name: clientForm.full_name, contact_id: contact.id } : c
         ));
       }
     }
