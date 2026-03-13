@@ -26,9 +26,11 @@ interface VisaSale {
 
 export default function VistosSalesPage() {
   const navigate = useNavigate();
-  const { activeCompany } = useCompany();
+  const { activeCompany, isMaster } = useCompany();
   const [sales, setSales] = useState<VisaSale[]>([]);
   const [filter, setFilter] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<VisaSale | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchSales = async () => {
     if (!activeCompany?.id) return;
