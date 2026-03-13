@@ -515,7 +515,7 @@ export default function VistosNewSalePage() {
                     </Button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                   <div>
                     <Label className="text-xs">Tipo</Label>
                     <Select value={payment.payment_type} onValueChange={v => updatePayment(idx, 'payment_type', v)}>
@@ -529,17 +529,51 @@ export default function VistosNewSalePage() {
                     <Label className="text-xs">Valor (R$)</Label>
                     <Input className="h-9" value={maskCurrencyInput(payment.value)} onChange={e => updatePayment(idx, 'value', parseCurrency(e.target.value))} />
                   </div>
-                  <div>
-                    <Label className="text-xs">Data de Pagamento</Label>
-                    <Input className="h-9" type="date" value={payment.payment_date} onChange={e => updatePayment(idx, 'payment_date', e.target.value)} />
-                  </div>
-                  <div className="flex items-end pb-1">
-                    <div className="flex items-center gap-2">
-                      <Checkbox id={`received-${idx}`} checked={payment.is_received} onCheckedChange={v => updatePayment(idx, 'is_received', v === true)} />
-                      <Label htmlFor={`received-${idx}`} className="text-sm cursor-pointer">Recebido</Label>
+                  {isInstallmentType(payment.payment_type) && (
+                    <div>
+                      <Label className="text-xs">Parcelas</Label>
+                      <Input className="h-9" type="number" min={1} max={24} value={payment.num_installments} onChange={e => updatePayment(idx, 'num_installments', parseInt(e.target.value) || 1)} />
                     </div>
-                  </div>
+                  )}
+                  {/* Show date & received only when NOT using installments */}
+                  {(payment.num_installments <= 1 || !isInstallmentType(payment.payment_type)) && (
+                    <>
+                      <div>
+                        <Label className="text-xs">Data de Pagamento</Label>
+                        <Input className="h-9" type="date" value={payment.payment_date} onChange={e => updatePayment(idx, 'payment_date', e.target.value)} />
+                      </div>
+                      <div className="flex items-end pb-1">
+                        <div className="flex items-center gap-2">
+                          <Checkbox id={`received-${idx}`} checked={payment.is_received} onCheckedChange={v => updatePayment(idx, 'is_received', v === true)} />
+                          <Label htmlFor={`received-${idx}`} className="text-sm cursor-pointer">Recebido</Label>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
+                {/* Installment rows */}
+                {payment.installments.length > 1 && (
+                  <div className="mt-3 space-y-2 pl-4 border-l-2 border-primary/20">
+                    <span className="text-xs font-medium text-muted-foreground">Parcelas individuais:</span>
+                    {payment.installments.map((inst, iIdx) => (
+                      <div key={iIdx} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+                        <span className="text-xs font-semibold text-foreground self-center">Parcela {iIdx + 1}/{payment.installments.length}</span>
+                        <div>
+                          <Label className="text-xs">Valor (R$)</Label>
+                          <Input className="h-8 text-sm" value={maskCurrencyInput(inst.value)} onChange={e => updateInstallment(idx, iIdx, 'value', parseCurrency(e.target.value))} />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Data</Label>
+                          <Input className="h-8 text-sm" type="date" value={inst.payment_date} onChange={e => updateInstallment(idx, iIdx, 'payment_date', e.target.value)} />
+                        </div>
+                        <div className="flex items-center gap-2 pb-1">
+                          <Checkbox id={`inst-received-${idx}-${iIdx}`} checked={inst.is_received} onCheckedChange={v => updateInstallment(idx, iIdx, 'is_received', v === true)} />
+                          <Label htmlFor={`inst-received-${idx}-${iIdx}`} className="text-xs cursor-pointer">Recebido</Label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             {totalValue > 0 && (
