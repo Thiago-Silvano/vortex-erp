@@ -142,6 +142,7 @@ export default function SalesPage() {
                   <TableHead>Pagamento</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Lucro Líq.</TableHead>
+                  <TableHead>Status Venda</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
