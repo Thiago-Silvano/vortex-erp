@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Wifi, WifiOff, Save } from 'lucide-react';
+import { Settings, Wifi, WifiOff, Save, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { resetServerUrl, checkStatus } from '@/lib/whatsappApi';
 
@@ -23,6 +23,8 @@ export default function WhatsAppSettingsPage() {
     session_name: '',
     auto_reply_enabled: false,
     auto_reply_message: '',
+    connected_phone: '',
+    connected_name: '',
   });
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -33,7 +35,7 @@ export default function WhatsAppSettingsPage() {
 
   const loadSettings = async () => {
     const { data } = await (supabase.from('whatsapp_settings').select('*').eq('empresa_id', empresaId).maybeSingle() as any);
-    if (data) setSettings(data);
+    if (data) setSettings(prev => ({ ...prev, ...data }));
   };
 
   const handleSave = async () => {
@@ -70,16 +72,41 @@ export default function WhatsAppSettingsPage() {
     setChecking(true);
     try {
       const data = await checkStatus(settings.server_url);
+      console.log('WhatsApp status response:', JSON.stringify(data));
+
       const statusValue = String(data?.status ?? data?.state ?? '').toLowerCase();
       const connected = Boolean(data?.connected ?? data?.is_connected ?? data?.isConnected ?? data?.authenticated) || ['connected', 'open', 'ready'].includes(statusValue);
-      await (supabase.from('whatsapp_settings').update({ is_connected: connected }).eq('id', settings.id) as any);
-      setSettings(prev => ({ ...prev, is_connected: connected }));
+
+      // Extract phone number from response - try multiple fields
+      const phone = data?.phone || data?.wid?.user || data?.me?.user || data?.number || data?.pushname || '';
+      const name = data?.pushname || data?.name || data?.displayName || '';
+
+      const updatePayload: any = {
+        is_connected: connected,
+        connected_phone: phone ? String(phone) : settings.connected_phone,
+        connected_name: name ? String(name) : settings.connected_name,
+      };
+
+      await (supabase.from('whatsapp_settings').update(updatePayload).eq('id', settings.id) as any);
+      setSettings(prev => ({ ...prev, is_connected: connected, connected_phone: updatePayload.connected_phone, connected_name: updatePayload.connected_name }));
       toast.success(connected ? 'WhatsApp conectado!' : 'WhatsApp desconectado');
     } catch {
       toast.error('Não foi possível conectar ao servidor. Verifique se a URL está correta e o servidor está rodando.');
       setSettings(prev => ({ ...prev, is_connected: false }));
     }
     setChecking(false);
+  };
+
+  const formatPhone = (phone: string) => {
+    if (!phone) return '';
+    const clean = phone.replace(/\D/g, '');
+    if (clean.length === 13) {
+      return `+${clean.slice(0, 2)} (${clean.slice(2, 4)}) ${clean.slice(4, 9)}-${clean.slice(9)}`;
+    }
+    if (clean.length === 12) {
+      return `+${clean.slice(0, 2)} (${clean.slice(2, 4)}) ${clean.slice(4, 8)}-${clean.slice(8)}`;
+    }
+    return phone;
   };
 
   return (
@@ -101,7 +128,7 @@ export default function WhatsAppSettingsPage() {
               <Label>Nome da Sessão</Label>
               <Input value={settings.session_name} onChange={e => setSettings(p => ({ ...p, session_name: e.target.value }))} placeholder="vortex-viagens" />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="text-sm">Status:</span>
               {settings.is_connected ? (
                 <Badge className="bg-green-500/10 text-green-600 gap-1"><Wifi className="h-3 w-3" /> Conectado</Badge>
@@ -112,6 +139,20 @@ export default function WhatsAppSettingsPage() {
                 {checking ? 'Verificando...' : 'Verificar Conexão'}
               </Button>
             </div>
+
+            {/* Connected phone info */}
+            {settings.is_connected && (settings.connected_phone || settings.connected_name) && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                <Smartphone className="h-5 w-5 text-green-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-green-700">
+                    {settings.connected_name && <span>{settings.connected_name} — </span>}
+                    {formatPhone(settings.connected_phone) || 'Número não identificado'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Número autenticado no WhatsApp</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
