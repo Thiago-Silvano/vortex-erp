@@ -330,19 +330,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </TooltipTrigger>
                     <TooltipContent>Capturar foto e vincular ao cliente</TooltipContent>
                   </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={handleOpenWhatsApp}
-                        variant="outline"
-                        className="h-10 rounded-[20px] gap-2 font-medium border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        WhatsApp
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Abrir WhatsApp Web — {activeCompany?.name || 'Empresa'}</TooltipContent>
-                  </Tooltip>
                 </TooltipProvider>
               </div>
             )}
