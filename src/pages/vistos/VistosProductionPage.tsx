@@ -67,11 +67,7 @@ export default function VistosProductionPage() {
   const [duties, setDuties] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // WhatsApp send documents
-  const [waSendOpen, setWaSendOpen] = useState(false);
-  const [waSendPhone, setWaSendPhone] = useState('');
-  const [waSendName, setWaSendName] = useState('');
-  const [waSendMessage, setWaSendMessage] = useState('');
+  // WhatsApp - removed old modal state
 
   // Add manual process
   const [addOpen, setAddOpen] = useState(false);
