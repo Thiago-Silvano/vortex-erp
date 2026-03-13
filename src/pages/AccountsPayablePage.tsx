@@ -320,7 +320,7 @@ export default function AccountsPayablePage() {
                 {filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
-                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => r.status === 'open' && openMark(r.id)}>
+                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(r)}>
                     <TableCell className="font-medium">{supplierName(r.supplier_id)}</TableCell>
                     <TableCell>{r.description || '-'}</TableCell>
                     <TableCell>{r.installment_number}/{r.total_installments}</TableCell>
@@ -328,11 +328,16 @@ export default function AccountsPayablePage() {
                     <TableCell>{r.due_date ? format(new Date(r.due_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell><Badge className={statusClasses(r.status)}>{statusLabel[r.status] || r.status}</Badge></TableCell>
                     <TableCell>
-                      {r.status === 'open' && (
-                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como pago">
-                          <Check className="h-4 w-4 text-primary" />
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openEdit(r); }} title="Editar">
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                      )}
+                        {r.status === 'open' && (
+                          <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como pago">
+                            <Check className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

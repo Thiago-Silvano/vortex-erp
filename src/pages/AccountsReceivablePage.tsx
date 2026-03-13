@@ -320,7 +320,7 @@ export default function AccountsReceivablePage() {
                 {filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
-                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => r.status === 'pending' && openMark(r.id)}>
+                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(r)}>
                     <TableCell className="font-medium">{r.client_name || '-'}</TableCell>
                     <TableCell>{r.description || (r.origin_type === 'sale' ? 'Venda' : '-')}</TableCell>
                     <TableCell>{r.installment_number}ª</TableCell>
@@ -328,11 +328,16 @@ export default function AccountsReceivablePage() {
                     <TableCell>{r.due_date ? format(new Date(r.due_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell><Badge className={statusClasses(r.status)}>{statusLabel[r.status] || r.status}</Badge></TableCell>
                     <TableCell>
-                      {r.status === 'pending' && (
-                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como recebido">
-                          <Check className="h-4 w-4 text-primary" />
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openEdit(r); }} title="Editar">
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                      )}
+                        {r.status === 'pending' && (
+                          <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como recebido">
+                            <Check className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
