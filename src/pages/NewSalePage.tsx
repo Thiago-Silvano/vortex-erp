@@ -344,7 +344,84 @@ export default function NewSalePage() {
     setReceivables(recs);
   }, [installments, paymentMethod, totalSaleWithInterest, boletoInterestRate, saleDate]);
 
-  const updateItem = (idx: number, field: keyof SaleItem, value: any) => {
+  // Sync supplier payments when suppliers or totalCost change
+  useEffect(() => {
+    setSupplierPayments(prev => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const costPerSupplier = selectedSupplierIds.length > 0 ? totalCost / selectedSupplierIds.length : 0;
+      return selectedSupplierIds.map(sid => {
+        const existing = prev.find(sp => sp.supplier_id === sid);
+        if (existing) {
+          // Update amount but keep payment config
+          const newAmount = costPerSupplier;
+          const updatedDates = existing.payment_method === 'credito'
+            ? existing.installment_dates.map(d => ({ ...d, amount: newAmount / (existing.installments || 1) }))
+            : existing.installment_dates;
+          return { ...existing, amount: newAmount, installment_dates: updatedDates };
+        }
+        return {
+          supplier_id: sid,
+          payment_method: 'pix' as const,
+          payment_date: today,
+          installments: 1,
+          installment_dates: [{ date: today, amount: costPerSupplier }],
+          amount: costPerSupplier,
+        };
+      });
+    });
+  }, [selectedSupplierIds, totalCost]);
+
+  const updateSupplierPayment = (sid: string, field: string, value: any) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    setSupplierPayments(prev => prev.map(sp => {
+      if (sp.supplier_id !== sid) return sp;
+      const updated = { ...sp, [field]: value };
+      if (field === 'payment_method') {
+        if (value === 'pix') {
+          updated.payment_date = today;
+          updated.installments = 1;
+          updated.installment_dates = [{ date: today, amount: sp.amount }];
+        } else if (value === 'faturado') {
+          updated.payment_date = today;
+          updated.installments = 1;
+          updated.installment_dates = [{ date: today, amount: sp.amount }];
+        } else if (value === 'credito') {
+          updated.installments = 3;
+          const dates = [];
+          const base = new Date();
+          for (let i = 1; i <= 3; i++) {
+            const d = new Date(base);
+            d.setMonth(d.getMonth() + i);
+            dates.push({ date: d.toISOString().split('T')[0], amount: sp.amount / 3 });
+          }
+          updated.installment_dates = dates;
+        }
+      }
+      if (field === 'installments' && sp.payment_method === 'credito') {
+        const inst = value as number;
+        const dates = [];
+        const base = new Date();
+        for (let i = 1; i <= inst; i++) {
+          const d = new Date(base);
+          d.setMonth(d.getMonth() + i);
+          dates.push({ date: d.toISOString().split('T')[0], amount: sp.amount / inst });
+        }
+        updated.installment_dates = dates;
+      }
+      return updated;
+    }));
+  };
+
+  const updateSupplierInstallmentDate = (sid: string, idx: number, newDate: string) => {
+    setSupplierPayments(prev => prev.map(sp => {
+      if (sp.supplier_id !== sid) return sp;
+      const dates = [...sp.installment_dates];
+      dates[idx] = { ...dates[idx], date: newDate };
+      return { ...sp, installment_dates: dates };
+    }));
+  };
+
+
     setItems(prev => prev.map((item, i) => {
       if (i !== idx) return item;
       const updated = { ...item, [field]: value };
