@@ -262,6 +262,14 @@ export default function NewSalePage() {
     })();
     if (activeCompany) {
       (supabase.from('sellers') as any).select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
+      // Load stock image API keys
+      supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1).single().then(({ data }) => {
+        if (data) {
+          const d = data as any;
+          if (d.unsplash_api_key) { setUnsplashApiKey(d.unsplash_api_key); setHasStockKeys(true); }
+          if (d.pexels_api_key) { setPexelsApiKey(d.pexels_api_key); setHasStockKeys(true); }
+        }
+      });
     }
   }, [activeCompany]);
 
