@@ -139,8 +139,17 @@ export default function AccountsPayablePage() {
       if (filterSupplier !== 'all' && r.supplier_id !== filterSupplier) return false;
       if (filterCostCenter !== 'all' && r.cost_center_id !== filterCostCenter) return false;
       return true;
+    }).sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'supplier') cmp = (supplierName(a.supplier_id)).localeCompare(supplierName(b.supplier_id));
+      else if (sortKey === 'description') cmp = (a.description || '').localeCompare(b.description || '');
+      else if (sortKey === 'installment_number') cmp = a.installment_number - b.installment_number;
+      else if (sortKey === 'amount') cmp = a.amount - b.amount;
+      else if (sortKey === 'due_date') cmp = (a.due_date || '').localeCompare(b.due_date || '');
+      else if (sortKey === 'status') cmp = a.status.localeCompare(b.status);
+      return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [periodItems, filterStatus, filterSupplier, filterCostCenter]);
+  }, [periodItems, filterStatus, filterSupplier, filterCostCenter, sortKey, sortDir, suppliers]);
 
   const statusLabel: Record<string, string> = { open: 'Em aberto', paid: 'Pago', overdue: 'Atrasado' };
   const statusVariant = (s: string) => s === 'paid' ? 'default' as const : s === 'overdue' ? 'destructive' as const : 'secondary' as const;

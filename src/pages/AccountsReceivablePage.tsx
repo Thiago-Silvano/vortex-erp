@@ -142,8 +142,17 @@ export default function AccountsReceivablePage() {
       if (filterClient && !r.client_name?.toLowerCase().includes(filterClient.toLowerCase())) return false;
       if (filterCostCenter !== 'all' && r.cost_center_id !== filterCostCenter) return false;
       return true;
+    }).sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'client_name') cmp = (a.client_name || '').localeCompare(b.client_name || '');
+      else if (sortKey === 'description') cmp = (a.description || '').localeCompare(b.description || '');
+      else if (sortKey === 'installment_number') cmp = a.installment_number - b.installment_number;
+      else if (sortKey === 'amount') cmp = a.amount - b.amount;
+      else if (sortKey === 'due_date') cmp = (a.due_date || '').localeCompare(b.due_date || '');
+      else if (sortKey === 'status') cmp = a.status.localeCompare(b.status);
+      return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [periodItems, filterStatus, filterClient, filterCostCenter]);
+  }, [periodItems, filterStatus, filterClient, filterCostCenter, sortKey, sortDir]);
 
   const statusLabel: Record<string, string> = { pending: 'Em aberto', received: 'Recebido', overdue: 'Atrasado' };
   const statusVariant = (s: string) => s === 'received' ? 'default' as const : s === 'overdue' ? 'destructive' as const : 'secondary' as const;
