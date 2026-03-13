@@ -118,6 +118,8 @@ export default function WhatsAppInboxPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const normalizePhone = (phone: string) => phone?.replace(/\D/g, '') || '';
+
   const loadConversations = async () => {
     try {
       const url = await getServerUrl(empresaId);
@@ -138,30 +140,36 @@ export default function WhatsAppInboxPage() {
       try {
         const chats = await fetchChats(url);
         if (Array.isArray(chats)) {
-          for (const chat of chats) {
-            const phone = chat.id?.user || chat.number || '';
-            const name = chat.name || chat.pushname || phone;
-            const existing = dbConvs?.find((c: any) => c.phone === phone);
+          const dbPhones = new Set((dbConvs || []).map((c: any) => normalizePhone(c.phone)));
+          const newChats = chats.filter((chat: any) => {
+            const phone = normalizePhone(chat.id?.user || chat.number || '');
+            return phone.length >= 8 && !dbPhones.has(phone);
+          });
 
-            if (!existing) {
-              await (supabase.from('whatsapp_conversations').insert({
-                empresa_id: empresaId,
-                phone,
-                contact_name: name,
-                last_message: chat.lastMessage?.body || '',
-                last_message_at: chat.lastMessage?.timestamp ? new Date(chat.lastMessage.timestamp * 1000).toISOString() : new Date().toISOString(),
-                unread_count: chat.unreadCount || 0,
+          if (newChats.length > 0 && newChats.length < 200) {
+            for (const chat of newChats) {
+              const phone = normalizePhone(chat.id?.user || chat.number || '');
+              const name = chat.name || chat.pushname || phone;
+              // Use the DB function which handles dedup
+              await (supabase.rpc('find_or_create_conversation', {
+                p_empresa_id: empresaId,
+                p_phone: phone,
+                p_client_name: name,
+                p_last_message: chat.lastMessage?.body || '',
+                p_last_message_at: chat.lastMessage?.timestamp
+                  ? new Date(chat.lastMessage.timestamp * 1000).toISOString()
+                  : new Date().toISOString(),
               }) as any);
             }
-          }
 
-          // Reload
-          const { data: updated } = await (supabase
-            .from('whatsapp_conversations')
-            .select('*')
-            .eq('empresa_id', empresaId)
-            .order('last_message_at', { ascending: false }) as any);
-          if (updated) setConversations(updated);
+            // Reload
+            const { data: updated } = await (supabase
+              .from('whatsapp_conversations')
+              .select('*')
+              .eq('empresa_id', empresaId)
+              .order('last_message_at', { ascending: false }) as any);
+            if (updated) setConversations(updated);
+          }
         }
       } catch {
         // Server might be offline, use DB data
