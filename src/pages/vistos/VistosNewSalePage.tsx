@@ -334,7 +334,7 @@ export default function VistosNewSalePage() {
         p.installments.forEach((inst, i) => {
           recIdx++;
           receivablePayloads.push({
-            sale_id: saleId,
+            visa_sale_id: saleId,
             installment_number: recIdx,
             due_date: inst.payment_date || null,
             amount: inst.value,
@@ -350,7 +350,7 @@ export default function VistosNewSalePage() {
       } else {
         recIdx++;
         receivablePayloads.push({
-          sale_id: saleId,
+          visa_sale_id: saleId,
           installment_number: recIdx,
           due_date: p.payment_date || null,
           amount: p.value,
