@@ -785,7 +785,42 @@ export default function NewSalePage() {
       } as any)));
     }
 
-    if (totalCost > 0 && selectedSupplierIds.length > 0) {
+    // Generate accounts_payable from supplier payment controls
+    if (supplierPayments.length > 0) {
+      const payables: any[] = [];
+      for (const sp of supplierPayments) {
+        if (sp.amount <= 0) continue;
+        if (sp.payment_method === 'pix') {
+          payables.push({
+            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+            due_date: sp.payment_date, description: `Venda - ${clientName} (Pix)`,
+            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+            installment_number: 1, total_installments: 1,
+          });
+        } else if (sp.payment_method === 'faturado') {
+          payables.push({
+            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+            due_date: sp.installment_dates[0]?.date || sp.payment_date,
+            description: `Venda - ${clientName} (Faturado)`,
+            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+            installment_number: 1, total_installments: 1,
+          });
+        } else if (sp.payment_method === 'credito') {
+          sp.installment_dates.forEach((inst, idx) => {
+            payables.push({
+              sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
+              due_date: inst.date, description: `Venda - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
+              status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+              installment_number: idx + 1, total_installments: sp.installments,
+            });
+          });
+        }
+      }
+      if (payables.length > 0) {
+        await supabase.from('accounts_payable').insert(payables);
+      }
+    } else if (totalCost > 0 && selectedSupplierIds.length > 0) {
+      // Fallback: split equally
       const costPerSupplier = totalCost / selectedSupplierIds.length;
       await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
         sale_id: saleId, supplier_id: sid, amount: costPerSupplier,
