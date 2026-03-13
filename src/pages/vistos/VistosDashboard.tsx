@@ -86,6 +86,7 @@ export default function VistosDashboard() {
       }
     }
     const totalRevenue = sales?.reduce((s, v) => s + Number(v.total_value || 0), 0) || 0;
+    const totalCardFees = sales?.reduce((s, v) => s + Number((v as any).card_fee_value || 0), 0) || 0;
     // If no items found (legacy), put all in services
     if (totalServices === 0 && totalFees === 0 && totalRevenue > 0) {
       totalServices = totalRevenue;
