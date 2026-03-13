@@ -64,6 +64,38 @@ export default function AccountsReceivablePage() {
   const [markPaymentMethod, setMarkPaymentMethod] = useState('');
   const [markNotes, setMarkNotes] = useState('');
 
+  const [editDialog, setEditDialog] = useState(false);
+  const [editItem, setEditItem] = useState<Receivable | null>(null);
+  const [editClientName, setEditClientName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editAmount, setEditAmount] = useState(0);
+  const [editDueDate, setEditDueDate] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+
+  const openEdit = (item: Receivable) => {
+    setEditItem(item);
+    setEditClientName(item.client_name || '');
+    setEditDescription(item.description || '');
+    setEditAmount(item.amount || 0);
+    setEditDueDate(item.due_date || '');
+    setEditNotes(item.notes || '');
+    setEditDialog(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editItem) return;
+    await supabase.from('receivables').update({
+      client_name: editClientName,
+      description: editDescription,
+      amount: editAmount,
+      due_date: editDueDate || null,
+      notes: editNotes,
+    } as any).eq('id', editItem.id);
+    toast.success('Registro atualizado!');
+    setEditDialog(false);
+    fetch_();
+  };
+
   const [manualDialog, setManualDialog] = useState(false);
   const [manualClientId, setManualClientId] = useState('');
   const [manualDescription, setManualDescription] = useState('');

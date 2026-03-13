@@ -64,6 +64,35 @@ export default function AccountsPayablePage() {
   const [markPaymentMethod, setMarkPaymentMethod] = useState('pix');
   const [markNotes, setMarkNotes] = useState('');
 
+  const [editDialog, setEditDialog] = useState(false);
+  const [editItem, setEditItem] = useState<Payable | null>(null);
+  const [editDescription, setEditDescription] = useState('');
+  const [editAmount, setEditAmount] = useState(0);
+  const [editDueDate, setEditDueDate] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+
+  const openEdit = (item: Payable) => {
+    setEditItem(item);
+    setEditDescription(item.description || '');
+    setEditAmount(item.amount || 0);
+    setEditDueDate(item.due_date || '');
+    setEditNotes(item.notes || '');
+    setEditDialog(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editItem) return;
+    await supabase.from('accounts_payable').update({
+      description: editDescription,
+      amount: editAmount,
+      due_date: editDueDate || null,
+      notes: editNotes,
+    }).eq('id', editItem.id);
+    toast.success('Registro atualizado!');
+    setEditDialog(false);
+    fetch_();
+  };
+
   const [manualDialog, setManualDialog] = useState(false);
   const [manualSupplierId, setManualSupplierId] = useState('');
   const [manualDescription, setManualDescription] = useState('');
