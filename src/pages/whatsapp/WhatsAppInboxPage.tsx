@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Search, Send, Paperclip, Image, FileText, Mic, UserPlus, Phone, Mail, X } from 'lucide-react';
+import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -19,11 +19,13 @@ import { Label } from '@/components/ui/label';
 interface Conversation {
   id: string;
   phone: string;
-  contact_name: string;
+  client_name: string;
+  contact_name?: string;
   last_message: string;
   last_message_at: string;
   unread_count: number;
   contact_id: string | null;
+  whatsapp_id?: string;
 }
 
 interface Message {
@@ -47,13 +49,14 @@ export default function WhatsAppInboxPage() {
   const [loading, setLoading] = useState(false);
   const [serverUrl, setServerUrl] = useState('');
   const [showCreateClient, setShowCreateClient] = useState(false);
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const [newMsgForm, setNewMsgForm] = useState({ phone: '', name: '', message: '' });
   const [clientForm, setClientForm] = useState({ full_name: '', phone: '', email: '' });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load server URL and conversations
   useEffect(() => {
     if (!empresaId) return;
     loadConversations();
@@ -70,12 +73,14 @@ export default function WhatsAppInboxPage() {
       const content = data.body || data.message || '';
       if (!phone || phone.length < 8) return;
 
-      // Find or create conversation via DB function
+      const whatsappId = data.from || '';
+
       const { data: convId } = await (supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
         p_phone: phone,
         p_client_name: data.name || data.pushname || phone,
         p_last_message: content,
+        p_whatsapp_id: whatsappId || null,
       }) as any);
 
       if (convId) {
@@ -87,7 +92,7 @@ export default function WhatsAppInboxPage() {
           message_type: 'text',
         }) as any);
 
-        if (activeConv?.phone && normalizePhone(activeConv.phone) === phone) {
+        if (activeConv?.id === convId || (activeConv?.phone && normalizePhone(activeConv.phone) === phone)) {
           setMessages(prev => [...prev, {
             id: crypto.randomUUID(),
             sender: 'them',
@@ -98,7 +103,6 @@ export default function WhatsAppInboxPage() {
           }]);
         }
 
-        // Reload conversations to get updated state
         const { data: updated } = await (supabase
           .from('whatsapp_conversations')
           .select('*')
@@ -111,9 +115,8 @@ export default function WhatsAppInboxPage() {
     });
 
     return () => { socket.disconnect(); };
-  }, [serverUrl, conversations, activeConv, empresaId]);
+  }, [serverUrl, activeConv, empresaId]);
 
-  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -125,7 +128,6 @@ export default function WhatsAppInboxPage() {
       const url = await getServerUrl(empresaId);
       setServerUrl(url);
 
-      // Load from DB first
       const { data: dbConvs } = await (supabase
         .from('whatsapp_conversations')
         .select('*')
@@ -136,33 +138,39 @@ export default function WhatsAppInboxPage() {
         setConversations(dbConvs);
       }
 
-      // Sync from WhatsApp server
+      // Sync from server
       try {
         const chats = await fetchChats(url);
         if (Array.isArray(chats)) {
           const dbPhones = new Set((dbConvs || []).map((c: any) => normalizePhone(c.phone)));
+          const dbWaIds = new Set((dbConvs || []).map((c: any) => c.whatsapp_id).filter(Boolean));
+
           const newChats = chats.filter((chat: any) => {
-            const phone = normalizePhone(chat.id?.user || chat.number || '');
-            return phone.length >= 8 && !dbPhones.has(phone);
+            const chatId = chat.id || '';
+            const phone = normalizePhone(chat.numero || chat.id?.user || '');
+            // Skip groups
+            if (typeof chatId === 'string' && (chatId.includes('@g.us'))) return false;
+            return phone.length >= 8 && !dbPhones.has(phone) && !dbWaIds.has(chatId);
           });
 
           if (newChats.length > 0 && newChats.length < 200) {
             for (const chat of newChats) {
-              const phone = normalizePhone(chat.id?.user || chat.number || '');
-              const name = chat.name || chat.pushname || phone;
-              // Use the DB function which handles dedup
+              const phone = normalizePhone(chat.numero || chat.id?.user || '');
+              const name = chat.nome || chat.name || chat.pushname || phone;
+              const whatsappId = typeof chat.id === 'string' ? chat.id : (chat.id?.user ? `${chat.id.user}@c.us` : null);
+
               await (supabase.rpc('find_or_create_conversation', {
                 p_empresa_id: empresaId,
                 p_phone: phone,
                 p_client_name: name,
-                p_last_message: chat.lastMessage?.body || '',
-                p_last_message_at: chat.lastMessage?.timestamp
-                  ? new Date(chat.lastMessage.timestamp * 1000).toISOString()
+                p_last_message: '',
+                p_last_message_at: chat.timestamp
+                  ? new Date(chat.timestamp * 1000).toISOString()
                   : new Date().toISOString(),
+                p_whatsapp_id: whatsappId,
               }) as any);
             }
 
-            // Reload
             const { data: updated } = await (supabase
               .from('whatsapp_conversations')
               .select('*')
@@ -172,7 +180,7 @@ export default function WhatsAppInboxPage() {
           }
         }
       } catch {
-        // Server might be offline, use DB data
+        // Server offline, use DB data
       }
     } catch (err) {
       console.error('Error loading conversations:', err);
@@ -183,11 +191,9 @@ export default function WhatsAppInboxPage() {
     setActiveConv(conv);
     setLoading(true);
 
-    // Mark as read
     await (supabase.from('whatsapp_conversations').update({ unread_count: 0 }).eq('id', conv.id) as any);
     setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c));
 
-    // Load messages from DB
     const { data: dbMsgs } = await (supabase
       .from('whatsapp_messages')
       .select('*')
@@ -197,10 +203,11 @@ export default function WhatsAppInboxPage() {
     if (dbMsgs?.length) {
       setMessages(dbMsgs);
     } else {
-      // Fetch from server
+      // Fetch from server using whatsapp_id or phone
       try {
-        if (!conv.phone) throw new Error('No phone');
-        const serverMsgs = await fetchMessages(serverUrl, conv.phone);
+        const queryId = conv.whatsapp_id || conv.phone;
+        if (!queryId) throw new Error('No phone');
+        const serverMsgs = await fetchMessages(serverUrl, queryId);
         if (Array.isArray(serverMsgs)) {
           const mapped = serverMsgs.map((m: any) => ({
             id: m.id || crypto.randomUUID(),
@@ -212,16 +219,17 @@ export default function WhatsAppInboxPage() {
           }));
           setMessages(mapped);
 
-          // Save to DB
-          for (const msg of mapped) {
-            await (supabase.from('whatsapp_messages').insert({
-              conversation_id: conv.id,
-              empresa_id: empresaId,
-              sender: msg.sender,
-              content: msg.content,
-              message_type: msg.message_type,
-              media_url: msg.media_url,
-            }) as any);
+          // Save to DB in batch (don't await each one)
+          const inserts = mapped.map((msg: any) => ({
+            conversation_id: conv.id,
+            empresa_id: empresaId,
+            sender: msg.sender,
+            content: msg.content,
+            message_type: msg.message_type,
+            media_url: msg.media_url,
+          }));
+          if (inserts.length > 0) {
+            await (supabase.from('whatsapp_messages').insert(inserts) as any);
           }
         }
       } catch {
@@ -237,7 +245,6 @@ export default function WhatsAppInboxPage() {
     const text = msgText.trim();
     setMsgText('');
 
-    // Optimistic update
     const newMsg: Message = {
       id: crypto.randomUUID(),
       sender: 'me',
@@ -249,7 +256,9 @@ export default function WhatsAppInboxPage() {
     setMessages(prev => [...prev, newMsg]);
 
     try {
-      await sendMessage(serverUrl, activeConv.phone, text);
+      // Use whatsapp_id if available, otherwise phone
+      const targetId = activeConv.whatsapp_id || activeConv.phone;
+      await sendMessage(serverUrl, targetId, text);
 
       await (supabase.from('whatsapp_messages').insert({
         conversation_id: activeConv.id,
@@ -267,8 +276,64 @@ export default function WhatsAppInboxPage() {
       setConversations(prev => prev.map(c =>
         c.id === activeConv.id ? { ...c, last_message: text, last_message_at: new Date().toISOString() } : c
       ));
-    } catch {
-      toast.error('Erro ao enviar mensagem');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error('Erro ao enviar mensagem. Verifique a conexão com o servidor.');
+    }
+  };
+
+  const handleNewMessage = async () => {
+    if (!newMsgForm.phone.trim() || !newMsgForm.message.trim()) {
+      toast.error('Telefone e mensagem são obrigatórios');
+      return;
+    }
+
+    const phone = normalizePhone(newMsgForm.phone);
+    if (phone.length < 8) {
+      toast.error('Número de telefone inválido');
+      return;
+    }
+
+    try {
+      // Send via server
+      await sendMessage(serverUrl, phone, newMsgForm.message);
+
+      // Create/find conversation
+      const { data: convId } = await (supabase.rpc('find_or_create_conversation', {
+        p_empresa_id: empresaId,
+        p_phone: phone,
+        p_client_name: newMsgForm.name || phone,
+        p_last_message: newMsgForm.message,
+      }) as any);
+
+      if (convId) {
+        await (supabase.from('whatsapp_messages').insert({
+          conversation_id: convId,
+          empresa_id: empresaId,
+          sender: 'me',
+          content: newMsgForm.message,
+          message_type: 'text',
+        }) as any);
+      }
+
+      toast.success('Mensagem enviada!');
+      setShowNewMessage(false);
+      setNewMsgForm({ phone: '', name: '', message: '' });
+
+      // Reload conversations and open the new one
+      const { data: updated } = await (supabase
+        .from('whatsapp_conversations')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .order('last_message_at', { ascending: false }) as any);
+      if (updated) {
+        setConversations(updated);
+        const newConv = updated.find((c: any) => normalizePhone(c.phone) === phone);
+        if (newConv) openConversation(newConv);
+      }
+    } catch (err) {
+      console.error('Error sending new message:', err);
+      toast.error('Erro ao enviar mensagem. Verifique a conexão com o servidor.');
     }
   };
 
@@ -290,7 +355,6 @@ export default function WhatsAppInboxPage() {
       return;
     }
 
-    // Create whatsapp contact linked to client
     await (supabase.from('whatsapp_contacts').insert({
       empresa_id: empresaId,
       client_id: data.id,
@@ -299,7 +363,6 @@ export default function WhatsAppInboxPage() {
       email: clientForm.email,
     }) as any);
 
-    // Link conversation to contact
     if (activeConv) {
       const { data: contact } = await (supabase.from('whatsapp_contacts')
         .select('id')
@@ -309,12 +372,12 @@ export default function WhatsAppInboxPage() {
 
       if (contact) {
         await (supabase.from('whatsapp_conversations')
-          .update({ contact_id: contact.id, contact_name: clientForm.full_name })
+          .update({ contact_id: contact.id, client_name: clientForm.full_name })
           .eq('id', activeConv.id) as any);
 
-        setActiveConv(prev => prev ? { ...prev, contact_name: clientForm.full_name, contact_id: contact.id } : null);
+        setActiveConv(prev => prev ? { ...prev, client_name: clientForm.full_name, contact_id: contact.id } : null);
         setConversations(prev => prev.map(c =>
-          c.id === activeConv.id ? { ...c, contact_name: clientForm.full_name, contact_id: contact.id } : c
+          c.id === activeConv.id ? { ...c, client_name: clientForm.full_name, contact_id: contact.id } : c
         ));
       }
     }
@@ -323,9 +386,14 @@ export default function WhatsAppInboxPage() {
     setShowCreateClient(false);
   };
 
-  const filteredConvs = conversations.filter(c =>
-    !search || c.contact_name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search)
-  );
+  const getDisplayName = (conv: Conversation) => conv.client_name || conv.contact_name || conv.phone;
+
+  const filteredConvs = conversations.filter(c => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    const name = getDisplayName(c).toLowerCase();
+    return name.includes(s) || c.phone?.includes(search);
+  });
 
   const formatTime = (dateStr: string) => {
     if (!dateStr) return '';
@@ -342,45 +410,59 @@ export default function WhatsAppInboxPage() {
       <div className="flex h-[calc(100vh-3.5rem)] bg-background">
         {/* Column 1: Conversations */}
         <div className="w-[340px] border-r flex flex-col bg-card shrink-0">
-          <div className="p-3 border-b">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar conversa..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9"
-              />
+          <div className="p-3 border-b space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar conversa..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+              <Button
+                size="icon"
+                variant="outline"
+                className="shrink-0 h-9 w-9"
+                title="Nova mensagem"
+                onClick={() => setShowNewMessage(true)}
+              >
+                <MessageSquarePlus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           <ScrollArea className="flex-1">
-            {filteredConvs.map((conv) => (
-              <div
-                key={conv.id}
-                onClick={() => openConversation(conv)}
-                className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/30 ${activeConv?.id === conv.id ? 'bg-muted' : ''}`}
-              >
-                <Avatar className="h-11 w-11 shrink-0">
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                    {conv.contact_name.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm truncate">{conv.contact_name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">{formatTime(conv.last_message_at)}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <p className="text-xs text-muted-foreground truncate pr-2">{conv.last_message || 'Sem mensagens'}</p>
-                    {conv.unread_count > 0 && (
-                      <Badge className="h-5 min-w-5 flex items-center justify-center rounded-full text-[10px] bg-primary text-primary-foreground shrink-0">
-                        {conv.unread_count}
-                      </Badge>
-                    )}
+            {filteredConvs.map((conv) => {
+              const displayName = getDisplayName(conv);
+              return (
+                <div
+                  key={conv.id}
+                  onClick={() => openConversation(conv)}
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/30 ${activeConv?.id === conv.id ? 'bg-muted' : ''}`}
+                >
+                  <Avatar className="h-11 w-11 shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                      {displayName.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm truncate">{displayName}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">{formatTime(conv.last_message_at)}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <p className="text-xs text-muted-foreground truncate pr-2">{conv.last_message || 'Sem mensagens'}</p>
+                      {conv.unread_count > 0 && (
+                        <Badge className="h-5 min-w-5 flex items-center justify-center rounded-full text-[10px] bg-primary text-primary-foreground shrink-0">
+                          {conv.unread_count}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {filteredConvs.length === 0 && (
               <div className="p-8 text-center text-muted-foreground text-sm">
                 Nenhuma conversa encontrada
@@ -393,20 +475,18 @@ export default function WhatsAppInboxPage() {
         <div className="flex-1 flex flex-col min-w-0">
           {activeConv ? (
             <>
-              {/* Chat header */}
               <div className="h-14 flex items-center gap-3 px-4 border-b bg-card shrink-0">
                 <Avatar className="h-9 w-9">
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                    {activeConv.contact_name.slice(0, 2).toUpperCase()}
+                    {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{activeConv.contact_name}</p>
+                  <p className="font-medium text-sm">{getDisplayName(activeConv)}</p>
                   <p className="text-xs text-muted-foreground">{activeConv.phone}</p>
                 </div>
               </div>
 
-              {/* Messages */}
               <ScrollArea className="flex-1 p-4">
                 <div className="max-w-3xl mx-auto space-y-2">
                   {loading && <p className="text-center text-muted-foreground text-sm py-8">Carregando...</p>}
@@ -439,7 +519,6 @@ export default function WhatsAppInboxPage() {
                 </div>
               </ScrollArea>
 
-              {/* Send bar */}
               <div className="p-3 border-t bg-card flex items-center gap-2 shrink-0">
                 <Button variant="ghost" size="icon" className="shrink-0" onClick={() => fileInputRef.current?.click()}>
                   <Paperclip className="h-5 w-5 text-muted-foreground" />
@@ -464,7 +543,11 @@ export default function WhatsAppInboxPage() {
                   <Send className="h-7 w-7" />
                 </div>
                 <p className="text-lg font-medium">WhatsApp Inbox</p>
-                <p className="text-sm mt-1">Selecione uma conversa para começar</p>
+                <p className="text-sm mt-1">Selecione uma conversa ou inicie uma nova</p>
+                <Button className="mt-4 gap-2" onClick={() => setShowNewMessage(true)}>
+                  <MessageSquarePlus className="h-4 w-4" />
+                  Nova Mensagem
+                </Button>
               </div>
             </div>
           )}
@@ -479,10 +562,10 @@ export default function WhatsAppInboxPage() {
             <div className="p-4 flex flex-col items-center">
               <Avatar className="h-20 w-20 mb-3">
                 <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
-                  {activeConv.contact_name.slice(0, 2).toUpperCase()}
+                  {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <p className="font-semibold text-base">{activeConv.contact_name}</p>
+              <p className="font-semibold text-base">{getDisplayName(activeConv)}</p>
 
               <div className="w-full mt-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm">
@@ -497,7 +580,7 @@ export default function WhatsAppInboxPage() {
                   className="w-full mt-6 gap-2"
                   onClick={() => {
                     setClientForm({
-                      full_name: activeConv.contact_name,
+                      full_name: getDisplayName(activeConv),
                       phone: activeConv.phone,
                       email: '',
                     });
@@ -517,6 +600,50 @@ export default function WhatsAppInboxPage() {
           </div>
         )}
       </div>
+
+      {/* New Message Dialog */}
+      <Dialog open={showNewMessage} onOpenChange={setShowNewMessage}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquarePlus className="h-5 w-5" />
+              Nova Mensagem
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Telefone (com DDD e código do país)</Label>
+              <Input
+                value={newMsgForm.phone}
+                onChange={(e) => setNewMsgForm(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="5548991234567"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Ex: 5548991234567 (55 = Brasil, 48 = DDD)</p>
+            </div>
+            <div>
+              <Label>Nome do contato (opcional)</Label>
+              <Input
+                value={newMsgForm.name}
+                onChange={(e) => setNewMsgForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="João Silva"
+              />
+            </div>
+            <div>
+              <Label>Mensagem</Label>
+              <Input
+                value={newMsgForm.message}
+                onChange={(e) => setNewMsgForm(prev => ({ ...prev, message: e.target.value }))}
+                placeholder="Olá! Tudo bem?"
+                onKeyDown={(e) => e.key === 'Enter' && handleNewMessage()}
+              />
+            </div>
+            <Button onClick={handleNewMessage} className="w-full gap-2">
+              <Send className="h-4 w-4" />
+              Enviar Mensagem
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Client Dialog */}
       <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>

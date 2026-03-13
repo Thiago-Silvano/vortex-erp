@@ -2704,6 +2704,8 @@ export type Database = {
         Row: {
           auto_reply_enabled: boolean | null
           auto_reply_message: string | null
+          connected_name: string | null
+          connected_phone: string | null
           created_at: string
           empresa_id: string | null
           id: string
@@ -2716,6 +2718,8 @@ export type Database = {
         Insert: {
           auto_reply_enabled?: boolean | null
           auto_reply_message?: string | null
+          connected_name?: string | null
+          connected_phone?: string | null
           created_at?: string
           empresa_id?: string | null
           id?: string
@@ -2728,6 +2732,8 @@ export type Database = {
         Update: {
           auto_reply_enabled?: boolean | null
           auto_reply_message?: string | null
+          connected_name?: string | null
+          connected_phone?: string | null
           created_at?: string
           empresa_id?: string | null
           id?: string
