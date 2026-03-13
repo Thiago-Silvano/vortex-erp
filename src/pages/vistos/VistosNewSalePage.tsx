@@ -120,6 +120,7 @@ export default function VistosNewSalePage() {
     setClientEmail(sale.client_email || '');
     setNotes(sale.notes || '');
     setSaleDate(sale.sale_date);
+    setCardFeeValue(Number(sale.card_fee_value) || 0);
 
     // Load sale items
     const { data: items } = await (supabase.from('visa_sale_items' as any) as any).select('*').eq('visa_sale_id', id).order('sort_order');
