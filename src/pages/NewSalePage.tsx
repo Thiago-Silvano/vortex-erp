@@ -537,6 +537,53 @@ export default function NewSalePage() {
     e.target.value = '';
   };
 
+  const handleAiImageSearch = async () => {
+    if (!destinationName.trim()) {
+      toast.error('Preencha o nome do destino primeiro');
+      return;
+    }
+    setAiImageSearch(true);
+    setAiImages([]);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-destination-images', {
+        body: { destination: destinationName.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        setAiImageSearch(false);
+        return;
+      }
+      if (data?.images?.length > 0) {
+        setAiImages(data.images);
+        setAiImageDialog(true);
+      } else {
+        toast.error('Nenhuma imagem encontrada');
+      }
+    } catch (err: any) {
+      console.error('AI image search error:', err);
+      toast.error('Erro ao buscar imagens com I.A.');
+    }
+    setAiImageSearch(false);
+  };
+
+  const handleSelectAiImage = async (base64Url: string) => {
+    try {
+      const res = await fetch(base64Url);
+      const blob = await res.blob();
+      const fileName = `destinations/${crypto.randomUUID()}.png`;
+      const { error } = await supabase.storage.from('quote-images').upload(fileName, blob, { contentType: 'image/png' });
+      if (error) { toast.error('Erro ao salvar imagem'); return; }
+      const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+      setDestinationImageUrl(data.publicUrl);
+      setAiImageDialog(false);
+      setAiImages([]);
+      toast.success('Imagem selecionada!');
+    } catch {
+      toast.error('Erro ao processar imagem');
+    }
+  };
+
   const handleItemImageUpload = async (itemIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
