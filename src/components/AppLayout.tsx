@@ -349,14 +349,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           >
             <Camera className="h-6 w-6" />
           </button>
-          <button
-            onClick={handleOpenWhatsApp}
-            className="h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
-            style={{ backgroundColor: '#25D366' }}
-            title={`Abrir WhatsApp Web — ${activeCompany?.name || ''}`}
-          >
-            <MessageSquare className="h-6 w-6" />
-          </button>
         </div>
       )}
 
