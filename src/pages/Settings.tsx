@@ -121,6 +121,27 @@ export default function Settings() {
     }
   };
 
+  const testStockConnection = async () => {
+    if (!unsplashKey.trim() && !pexelsKey.trim()) { toast.error('Insira pelo menos uma API Key'); return; }
+    setTestingStock(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-stock-images', {
+        body: { action: 'test', unsplashKey: unsplashKey.trim() || undefined, pexelsKey: pexelsKey.trim() || undefined },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        setStockStatus(data.results);
+        const connected = [data.results.unsplash && 'Unsplash', data.results.pexels && 'Pexels'].filter(Boolean);
+        if (connected.length > 0) toast.success(`Conectado: ${connected.join(', ')}`);
+        else toast.error('Nenhuma API conectada');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao testar');
+    } finally {
+      setTestingStock(false);
+    }
+  };
+
   const handleSave = async () => {
     saveAgencySettings(settings);
 
