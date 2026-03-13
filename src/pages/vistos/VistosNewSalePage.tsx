@@ -25,12 +25,20 @@ interface Applicant {
   is_main: boolean;
 }
 
+interface PaymentInstallment {
+  value: number;
+  payment_date: string;
+  is_received: boolean;
+}
+
 interface PaymentEntry {
   id?: string;
   payment_type: string;
   value: number;
   payment_date: string;
   is_received: boolean;
+  num_installments: number;
+  installments: PaymentInstallment[];
 }
 
 const PAYMENT_TYPES = [
@@ -66,10 +74,12 @@ export default function VistosNewSalePage() {
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [quickClientForApplicant, setQuickClientForApplicant] = useState<number | null>(null);
 
+  const makeDefaultPayment = (): PaymentEntry => ({
+    payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false, num_installments: 1, installments: [],
+  });
+
   // Multi-payment
-  const [payments, setPayments] = useState<PaymentEntry[]>([
-    { payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false },
-  ]);
+  const [payments, setPayments] = useState<PaymentEntry[]>([makeDefaultPayment()]);
 
   const refreshClients = () => {
     if (!activeCompany?.id) return;
@@ -104,12 +114,15 @@ export default function VistosNewSalePage() {
     // Load payments
     const { data: paymentData } = await (supabase.from('visa_sale_payments' as any) as any).select('*').eq('visa_sale_id', id).order('created_at');
     if (paymentData && paymentData.length > 0) {
+      // Group by payment_type to reconstruct installments
       setPayments(paymentData.map((p: any) => ({
         id: p.id,
         payment_type: p.payment_type,
         value: Number(p.value),
         payment_date: p.payment_date || '',
         is_received: p.is_received || false,
+        num_installments: 1,
+        installments: [],
       })));
     }
   };
@@ -137,9 +150,7 @@ export default function VistosNewSalePage() {
   };
 
   const addPayment = () => {
-    const newPayments = [...payments, { payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false }];
-    setPayments(newPayments);
-    // Auto-distribute
+    const newPayments: PaymentEntry[] = [...payments, makeDefaultPayment()];
     const perPayment = Math.round((totalValue / newPayments.length) * 100) / 100;
     const remainder = Math.round((totalValue - perPayment * newPayments.length) * 100) / 100;
     setPayments(newPayments.map((p, i) => ({
@@ -160,8 +171,59 @@ export default function VistosNewSalePage() {
     })));
   };
 
+  const isInstallmentType = (type: string) => type === 'cartao_credito' || type === 'boleto';
+
   const updatePayment = (idx: number, field: keyof PaymentEntry, value: any) => {
-    setPayments(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
+    setPayments(prev => prev.map((p, i) => {
+      if (i !== idx) return p;
+      const updated = { ...p, [field]: value };
+      // When changing type to installment-compatible and num > 1, generate installments
+      if (field === 'payment_type') {
+        if (!isInstallmentType(value as string)) {
+          updated.num_installments = 1;
+          updated.installments = [];
+        } else if (updated.num_installments > 1) {
+          updated.installments = generateInstallments(updated.value, updated.num_installments, updated.payment_date);
+        }
+      }
+      if (field === 'num_installments') {
+        const num = Math.max(1, Number(value) || 1);
+        updated.num_installments = num;
+        if (num > 1 && isInstallmentType(updated.payment_type)) {
+          updated.installments = generateInstallments(updated.value, num, updated.payment_date);
+        } else {
+          updated.installments = [];
+        }
+      }
+      if (field === 'value' && updated.num_installments > 1 && isInstallmentType(updated.payment_type)) {
+        updated.installments = generateInstallments(value as number, updated.num_installments, updated.payment_date);
+      }
+      return updated;
+    }));
+  };
+
+  const generateInstallments = (total: number, count: number, startDate: string): PaymentInstallment[] => {
+    const perInst = Math.round((total / count) * 100) / 100;
+    const remainder = Math.round((total - perInst * count) * 100) / 100;
+    const base = startDate ? new Date(startDate + 'T12:00:00') : new Date();
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date(base);
+      d.setMonth(d.getMonth() + i);
+      return {
+        value: i === 0 ? perInst + remainder : perInst,
+        payment_date: format(d, 'yyyy-MM-dd'),
+        is_received: false,
+      };
+    });
+  };
+
+  const updateInstallment = (payIdx: number, instIdx: number, field: keyof PaymentInstallment, value: any) => {
+    setPayments(prev => prev.map((p, i) => {
+      if (i !== payIdx) return p;
+      const insts = [...p.installments];
+      insts[instIdx] = { ...insts[instIdx], [field]: value };
+      return { ...p, installments: insts };
+    }));
   };
 
   const addApplicant = () => {
@@ -238,33 +300,69 @@ export default function VistosNewSalePage() {
       saleId = newSale.id;
     }
 
-    // Insert payments
-    await (supabase.from('visa_sale_payments' as any) as any).insert(
-      payments.map(p => ({
-        visa_sale_id: saleId,
-        payment_type: p.payment_type,
-        value: p.value,
-        payment_date: p.payment_date || null,
-        is_received: p.is_received,
-      }))
-    );
+    // Insert payments (flatten installments into individual rows)
+    const paymentRows: any[] = [];
+    payments.forEach(p => {
+      if (p.installments.length > 1) {
+        p.installments.forEach(inst => {
+          paymentRows.push({
+            visa_sale_id: saleId,
+            payment_type: p.payment_type,
+            value: inst.value,
+            payment_date: inst.payment_date || null,
+            is_received: inst.is_received,
+          });
+        });
+      } else {
+        paymentRows.push({
+          visa_sale_id: saleId,
+          payment_type: p.payment_type,
+          value: p.value,
+          payment_date: p.payment_date || null,
+          is_received: p.is_received,
+        });
+      }
+    });
+    await (supabase.from('visa_sale_payments' as any) as any).insert(paymentRows);
 
-    // Generate receivables based on payments
-    const receivablePayloads = payments.map((p, idx) => {
+    // Generate receivables — one per installment
+    const receivablePayloads: any[] = [];
+    let recIdx = 0;
+    payments.forEach(p => {
       const typeLabel = PAYMENT_TYPES.find(t => t.value === p.payment_type)?.label || p.payment_type;
-      return {
-        sale_id: saleId,
-        installment_number: idx + 1,
-        due_date: p.payment_date || null,
-        amount: p.value,
-        client_name: clientName.trim(),
-        description: `Visto - ${clientName.trim()} (${typeLabel})`,
-        status: p.is_received ? 'paid' : 'pending',
-        payment_date: p.is_received ? p.payment_date || null : null,
-        payment_method: p.payment_type,
-        origin_type: 'visa_sale',
-        empresa_id: activeCompany?.id || null,
-      };
+      if (p.installments.length > 1) {
+        p.installments.forEach((inst, i) => {
+          recIdx++;
+          receivablePayloads.push({
+            sale_id: saleId,
+            installment_number: recIdx,
+            due_date: inst.payment_date || null,
+            amount: inst.value,
+            client_name: clientName.trim(),
+            description: `Visto - ${clientName.trim()} (${typeLabel} ${i + 1}/${p.installments.length})`,
+            status: inst.is_received ? 'paid' : 'pending',
+            payment_date: inst.is_received ? inst.payment_date || null : null,
+            payment_method: p.payment_type,
+            origin_type: 'visa_sale',
+            empresa_id: activeCompany?.id || null,
+          });
+        });
+      } else {
+        recIdx++;
+        receivablePayloads.push({
+          sale_id: saleId,
+          installment_number: recIdx,
+          due_date: p.payment_date || null,
+          amount: p.value,
+          client_name: clientName.trim(),
+          description: `Visto - ${clientName.trim()} (${typeLabel})`,
+          status: p.is_received ? 'paid' : 'pending',
+          payment_date: p.is_received ? p.payment_date || null : null,
+          payment_method: p.payment_type,
+          origin_type: 'visa_sale',
+          empresa_id: activeCompany?.id || null,
+        });
+      }
     });
     if (receivablePayloads.length > 0) {
       await supabase.from('receivables').insert(receivablePayloads as any);
@@ -417,7 +515,7 @@ export default function VistosNewSalePage() {
                     </Button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                   <div>
                     <Label className="text-xs">Tipo</Label>
                     <Select value={payment.payment_type} onValueChange={v => updatePayment(idx, 'payment_type', v)}>
@@ -431,17 +529,51 @@ export default function VistosNewSalePage() {
                     <Label className="text-xs">Valor (R$)</Label>
                     <Input className="h-9" value={maskCurrencyInput(payment.value)} onChange={e => updatePayment(idx, 'value', parseCurrency(e.target.value))} />
                   </div>
-                  <div>
-                    <Label className="text-xs">Data de Pagamento</Label>
-                    <Input className="h-9" type="date" value={payment.payment_date} onChange={e => updatePayment(idx, 'payment_date', e.target.value)} />
-                  </div>
-                  <div className="flex items-end pb-1">
-                    <div className="flex items-center gap-2">
-                      <Checkbox id={`received-${idx}`} checked={payment.is_received} onCheckedChange={v => updatePayment(idx, 'is_received', v === true)} />
-                      <Label htmlFor={`received-${idx}`} className="text-sm cursor-pointer">Recebido</Label>
+                  {isInstallmentType(payment.payment_type) && (
+                    <div>
+                      <Label className="text-xs">Parcelas</Label>
+                      <Input className="h-9" type="number" min={1} max={24} value={payment.num_installments} onChange={e => updatePayment(idx, 'num_installments', parseInt(e.target.value) || 1)} />
                     </div>
-                  </div>
+                  )}
+                  {/* Show date & received only when NOT using installments */}
+                  {(payment.num_installments <= 1 || !isInstallmentType(payment.payment_type)) && (
+                    <>
+                      <div>
+                        <Label className="text-xs">Data de Pagamento</Label>
+                        <Input className="h-9" type="date" value={payment.payment_date} onChange={e => updatePayment(idx, 'payment_date', e.target.value)} />
+                      </div>
+                      <div className="flex items-end pb-1">
+                        <div className="flex items-center gap-2">
+                          <Checkbox id={`received-${idx}`} checked={payment.is_received} onCheckedChange={v => updatePayment(idx, 'is_received', v === true)} />
+                          <Label htmlFor={`received-${idx}`} className="text-sm cursor-pointer">Recebido</Label>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
+                {/* Installment rows */}
+                {payment.installments.length > 1 && (
+                  <div className="mt-3 space-y-2 pl-4 border-l-2 border-primary/20">
+                    <span className="text-xs font-medium text-muted-foreground">Parcelas individuais:</span>
+                    {payment.installments.map((inst, iIdx) => (
+                      <div key={iIdx} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+                        <span className="text-xs font-semibold text-foreground self-center">Parcela {iIdx + 1}/{payment.installments.length}</span>
+                        <div>
+                          <Label className="text-xs">Valor (R$)</Label>
+                          <Input className="h-8 text-sm" value={maskCurrencyInput(inst.value)} onChange={e => updateInstallment(idx, iIdx, 'value', parseCurrency(e.target.value))} />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Data</Label>
+                          <Input className="h-8 text-sm" type="date" value={inst.payment_date} onChange={e => updateInstallment(idx, iIdx, 'payment_date', e.target.value)} />
+                        </div>
+                        <div className="flex items-center gap-2 pb-1">
+                          <Checkbox id={`inst-received-${idx}-${iIdx}`} checked={inst.is_received} onCheckedChange={v => updateInstallment(idx, iIdx, 'is_received', v === true)} />
+                          <Label htmlFor={`inst-received-${idx}-${iIdx}`} className="text-xs cursor-pointer">Recebido</Label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             {totalValue > 0 && (
