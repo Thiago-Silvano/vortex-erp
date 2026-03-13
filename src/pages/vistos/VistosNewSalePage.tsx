@@ -722,10 +722,28 @@ export default function VistosNewSalePage() {
                 )}
               </div>
             ))}
+            {/* Taxa da Máquina */}
+            <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+              <Label className="text-sm font-semibold">Taxa da Máquina (R$)</Label>
+              <Input
+                className="h-9 max-w-xs"
+                value={maskCurrencyInput(cardFeeValue)}
+                onChange={e => setCardFeeValue(parseCurrency(e.target.value))}
+                placeholder="0,00"
+              />
+              <p className="text-xs text-muted-foreground">Valor cobrado pela maquininha de cartão. Será deduzido do lucro da venda.</p>
+            </div>
+
             {totalValue > 0 && (
               <div className={`text-sm p-2 rounded ${Math.abs(paymentsDiff) > 0.01 ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
                 Total dos pagamentos: <strong>{fmt(paymentsTotal)}</strong> / Total da venda: <strong>{fmt(totalValue)}</strong>
                 {Math.abs(paymentsDiff) > 0.01 && <span className="ml-2">(Diferença: {fmt(paymentsDiff)})</span>}
+              </div>
+            )}
+
+            {cardFeeValue > 0 && (
+              <div className="text-sm p-2 rounded bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                Lucro estimado: <strong>{fmt(totalServices - cardFeeValue)}</strong> (Serviços {fmt(totalServices)} − Taxa máquina {fmt(cardFeeValue)})
               </div>
             )}
           </CardContent>
