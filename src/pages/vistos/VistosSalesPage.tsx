@@ -66,10 +66,20 @@ export default function VistosSalesPage() {
 
   useEffect(() => { fetchSales(); }, [activeCompany?.id]);
 
-  const filtered = sales.filter(s =>
-    s.client_name.toLowerCase().includes(filter.toLowerCase()) ||
-    (s.product_name || '').toLowerCase().includes(filter.toLowerCase())
-  );
+  const filtered = sales
+    .filter(s =>
+      s.client_name.toLowerCase().includes(filter.toLowerCase()) ||
+      (s.product_name || '').toLowerCase().includes(filter.toLowerCase())
+    )
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'client_name') cmp = a.client_name.localeCompare(b.client_name);
+      else if (sortKey === 'product_name') cmp = (a.product_name || '').localeCompare(b.product_name || '');
+      else if (sortKey === 'sale_date') cmp = a.sale_date.localeCompare(b.sale_date);
+      else if (sortKey === 'total_value') cmp = (a.total_value || 0) - (b.total_value || 0);
+      else if (sortKey === 'payment_method') cmp = (a.payment_method || '').localeCompare(b.payment_method || '');
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
 
   const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto', cartao_credito: 'Cartão Crédito', cartao_debito: 'Cartão Débito', transferencia: 'Transferência' };
 
