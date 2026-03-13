@@ -149,11 +149,15 @@ export default function VistosDashboard() {
   const approvalRate = total > 0 ? Math.round((stats.approved / total) * 100) : 0;
   const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+  const profit = stats.revenueServices - stats.cardFees;
+
   const statCards = [
     { label: 'Vendas do Mês', value: stats.salesThisMonth.toString(), icon: ShoppingCart, color: 'bg-primary text-primary-foreground' },
     { label: 'Faturamento Total', value: fmt(stats.revenueTotal), icon: DollarSign, color: 'bg-yellow-500 text-white' },
     { label: 'Serviços', value: fmt(stats.revenueServices), icon: DollarSign, color: 'bg-emerald-600 text-white' },
     { label: 'Taxas Fornecedor', value: fmt(stats.revenueFees), icon: Receipt, color: 'bg-amber-500 text-white' },
+    { label: 'Taxa Máquina', value: fmt(stats.cardFees), icon: CreditCard, color: 'bg-red-500 text-white' },
+    { label: 'Lucro (Serv. - Máq.)', value: fmt(profit), icon: TrendingUp, color: 'bg-teal-600 text-white' },
     { label: 'Em Produção', value: stats.inProduction.toString(), icon: Cog, color: 'bg-blue-600 text-white' },
     { label: 'Agendadas', value: stats.scheduled.toString(), icon: CalendarDays, color: 'bg-violet-600 text-white' },
     { label: 'Aprovados', value: stats.approved.toString(), icon: CheckCircle, color: 'bg-emerald-600 text-white' },
