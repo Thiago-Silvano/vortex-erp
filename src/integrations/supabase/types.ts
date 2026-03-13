@@ -2351,6 +2351,7 @@ export type Database = {
           description: string | null
           empresa_id: string | null
           id: string
+          is_supplier_fee: boolean
           name: string
           price: number
           status: string
@@ -2362,6 +2363,7 @@ export type Database = {
           description?: string | null
           empresa_id?: string | null
           id?: string
+          is_supplier_fee?: boolean
           name?: string
           price?: number
           status?: string
@@ -2373,6 +2375,7 @@ export type Database = {
           description?: string | null
           empresa_id?: string | null
           id?: string
+          is_supplier_fee?: boolean
           name?: string
           price?: number
           status?: string
@@ -2384,6 +2387,60 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visa_sale_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_supplier_fee: boolean
+          product_id: string | null
+          product_name: string
+          quantity: number
+          sort_order: number
+          total_value: number
+          unit_price: number
+          visa_sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_supplier_fee?: boolean
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          sort_order?: number
+          total_value?: number
+          unit_price?: number
+          visa_sale_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_supplier_fee?: boolean
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          sort_order?: number
+          total_value?: number
+          unit_price?: number
+          visa_sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visa_sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "visa_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visa_sale_items_visa_sale_id_fkey"
+            columns: ["visa_sale_id"]
+            isOneToOne: false
+            referencedRelation: "visa_sales"
             referencedColumns: ["id"]
           },
         ]
