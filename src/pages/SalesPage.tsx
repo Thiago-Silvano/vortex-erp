@@ -31,6 +31,7 @@ interface SaleRow {
   status: string;
   payment_method: string;
   created_at: string;
+  sale_workflow_status: string;
 }
 
 export default function SalesPage() {

@@ -149,6 +149,7 @@ export default function NewSalePage() {
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
   const [showIndividualValues, setShowIndividualValues] = useState(true);
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
+  const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
 
   useEffect(() => {
     if (initialEditSaleId) loadSale(initialEditSaleId);
