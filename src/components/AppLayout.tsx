@@ -229,19 +229,12 @@ function AppSidebar() {
   );
 }
 
-function getOpener() {
-  try {
-    return window.top || window;
-  } catch {
-    return window;
-  }
-}
+const _whatsappWindows: Record<string, Window | null> = {};
 
 function openWhatsAppPopup(companyName: string, companySlug: string) {
   const windowName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
-  const opener = getOpener();
 
-  const existing = (opener as any).__whatsappWindows?.[windowName];
+  const existing = _whatsappWindows[windowName];
   if (existing && !existing.closed) {
     try { existing.focus(); } catch { /* cross-origin */ }
     return;
@@ -253,23 +246,14 @@ function openWhatsAppPopup(companyName: string, companySlug: string) {
   const top = Math.round((screen.height - height) / 2);
   const features = `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,scrollbars=yes,resizable=yes`;
 
-  let popup: Window | null = null;
-  try {
-    popup = opener.open('https://web.whatsapp.com', windowName, features);
-  } catch {
-    popup = window.open('https://web.whatsapp.com', windowName, features);
-  }
+  const popup = window.open('https://web.whatsapp.com', windowName, features);
 
   if (!popup) {
-    // Fallback: open in new tab if popup blocked
     window.open('https://web.whatsapp.com', '_blank', 'noopener,noreferrer');
     return;
   }
 
-  if (!(opener as any).__whatsappWindows) {
-    (opener as any).__whatsappWindows = {};
-  }
-  (opener as any).__whatsappWindows[windowName] = popup;
+  _whatsappWindows[windowName] = popup;
 }
 
 export function openWhatsAppChat(phone: string, companySlug: string) {
@@ -277,9 +261,8 @@ export function openWhatsAppChat(phone: string, companySlug: string) {
   const fullPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
   const windowName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
   const url = `https://web.whatsapp.com/send?phone=${fullPhone}`;
-  const opener = getOpener();
 
-  const existing = (opener as any).__whatsappWindows?.[windowName];
+  const existing = _whatsappWindows[windowName];
   if (existing && !existing.closed) {
     try {
       existing.location.href = url;
