@@ -229,40 +229,8 @@ function AppSidebar() {
   );
 }
 
-const _whatsappWindows: Record<string, Window | null> = {};
 
-function openWhatsAppPopup(companyName: string, companySlug: string) {
-  const windowName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
 
-  const existing = _whatsappWindows[windowName];
-  if (existing && !existing.closed) {
-    try { existing.focus(); return; } catch { /* cross-origin, reopen */ }
-  }
-
-  // Use a link click to bypass iframe/popup blockers
-  const a = document.createElement('a');
-  a.href = 'https://web.whatsapp.com';
-  a.target = windowName;
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-export function openWhatsAppChat(phone: string, companySlug: string) {
-  const cleanPhone = phone.replace(/\D/g, '');
-  const fullPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-  const windowName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
-  const url = `https://web.whatsapp.com/send?phone=${fullPhone}`;
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = windowName;
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
