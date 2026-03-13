@@ -200,9 +200,15 @@ export default function SalesPage() {
                   <p className="font-semibold truncate">{s.client_name}</p>
                   <p className="text-xs text-muted-foreground">{s.sale_date ? format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'} · <span className="capitalize">{s.payment_method}</span></p>
                 </div>
-                <Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'} className="shrink-0 ml-2">
-                  {s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}
-                </Badge>
+                <div className="flex gap-1 shrink-0 ml-2">
+                  {(() => {
+                    const ws = workflowStatusMap[s.sale_workflow_status || 'em_aberto'] || workflowStatusMap.em_aberto;
+                    return <Badge className={`${ws.color} border text-xs`} variant="outline">{ws.label}</Badge>;
+                  })()}
+                  <Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'} className="text-xs">
+                    {s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}
+                  </Badge>
+                </div>
               </div>
               <div className="flex items-center justify-between mt-2">
                 <div className="flex gap-4 text-sm">
