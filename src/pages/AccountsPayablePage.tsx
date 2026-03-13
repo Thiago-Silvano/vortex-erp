@@ -166,7 +166,7 @@ export default function AccountsPayablePage() {
   };
 
   const handleMark = async () => {
-    await supabase.from('accounts_payable').update({ status: 'paid', payment_date: markPaymentDate || null, notes: markNotes }).eq('id', markId);
+    await supabase.from('accounts_payable').update({ status: 'paid', payment_date: markPaymentDate || null, notes: markPaymentMethod ? `${markPaymentMethod}${markNotes ? ' - ' + markNotes : ''}` : markNotes }).eq('id', markId);
     toast.success('Marcado como pago!');
     setMarkDialog(false);
     fetch_();
