@@ -160,6 +160,7 @@ export default function AccountsPayablePage() {
   const openMark = (id: string) => {
     setMarkId(id);
     setMarkPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+    setMarkPaymentMethod('pix');
     setMarkNotes('');
     setMarkDialog(true);
   };
