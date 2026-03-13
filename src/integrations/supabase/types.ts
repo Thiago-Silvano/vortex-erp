@@ -1076,8 +1076,9 @@ export type Database = {
           origin_type: string | null
           payment_date: string | null
           payment_method: string | null
-          sale_id: string
+          sale_id: string | null
           status: string | null
+          visa_sale_id: string | null
         }
         Insert: {
           amount?: number | null
@@ -1093,8 +1094,9 @@ export type Database = {
           origin_type?: string | null
           payment_date?: string | null
           payment_method?: string | null
-          sale_id: string
+          sale_id?: string | null
           status?: string | null
+          visa_sale_id?: string | null
         }
         Update: {
           amount?: number | null
@@ -1110,8 +1112,9 @@ export type Database = {
           origin_type?: string | null
           payment_date?: string | null
           payment_method?: string | null
-          sale_id?: string
+          sale_id?: string | null
           status?: string | null
+          visa_sale_id?: string | null
         }
         Relationships: [
           {
@@ -1133,6 +1136,13 @@ export type Database = {
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivables_visa_sale_id_fkey"
+            columns: ["visa_sale_id"]
+            isOneToOne: false
+            referencedRelation: "visa_sales"
             referencedColumns: ["id"]
           },
         ]
