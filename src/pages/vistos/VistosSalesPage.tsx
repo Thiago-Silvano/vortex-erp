@@ -67,8 +67,8 @@ export default function VistosSalesPage() {
       await supabase.from('visa_applicants').delete().eq('visa_sale_id', deleteTarget.id);
       // Delete related payments
       await supabase.from('visa_sale_payments').delete().eq('visa_sale_id', deleteTarget.id);
-      // Delete related production
-      await supabase.from('visa_production').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete related processes
+      await supabase.from('visa_processes').delete().eq('visa_sale_id', deleteTarget.id);
       // Delete related commissions
       await supabase.from('seller_commissions').delete().eq('visa_sale_id', deleteTarget.id);
       // Delete the sale
