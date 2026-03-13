@@ -25,12 +25,20 @@ interface Applicant {
   is_main: boolean;
 }
 
+interface PaymentInstallment {
+  value: number;
+  payment_date: string;
+  is_received: boolean;
+}
+
 interface PaymentEntry {
   id?: string;
   payment_type: string;
   value: number;
   payment_date: string;
   is_received: boolean;
+  num_installments: number;
+  installments: PaymentInstallment[];
 }
 
 const PAYMENT_TYPES = [
