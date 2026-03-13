@@ -232,12 +232,19 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           checkOutTime: h.check_out_time || prev.checkOutTime,
           category: h.category || prev.category,
           highlights: h.highlights || prev.highlights,
+          tripadvisorRating: h.tripadvisor_rating || prev.tripadvisorRating,
+          tripadvisorReviewsCount: h.tripadvisor_reviews_count || prev.tripadvisorReviewsCount,
+          tripadvisorRanking: h.tripadvisor_ranking || prev.tripadvisorRanking,
+          tripadvisorBadges: h.tripadvisor_badges || prev.tripadvisorBadges,
+          tripadvisorTopReviews: h.tripadvisor_top_reviews || prev.tripadvisorTopReviews,
+          tripadvisorRatingBreakdown: h.tripadvisor_rating_breakdown || prev.tripadvisorRatingBreakdown,
+          tripadvisorPopularMentions: h.tripadvisor_popular_mentions || prev.tripadvisorPopularMentions,
         }));
         if (data.images && data.images.length > 0) {
           setHotelImages(data.images);
           setSelectedImageIndices(new Set(data.images.map((_: string, i: number) => i)));
         }
-        toast.success(`Informações do hotel encontradas!`);
+        toast.success(`Informações do hotel e TripAdvisor encontradas!`);
       } else {
         toast.error('Não foi possível encontrar informações do hotel');
       }
