@@ -93,7 +93,7 @@ export default function WhatsAppInboxPage() {
         return;
       }
 
-      const whatsappId = data.from || '';
+      const whatsappId = extractWhatsappId(data);
 
       const { data: convId, error: rpcError } = await (supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
