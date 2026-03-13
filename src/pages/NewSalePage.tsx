@@ -1415,6 +1415,19 @@ export default function NewSalePage() {
                     <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
                   </label>
                 )}
+                {hasStockKeys && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStockImageSearchOpen(true)}
+                    disabled={!destinationName.trim()}
+                    className="gap-2"
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                    Buscar Imagens
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
