@@ -664,7 +664,32 @@ export default function NewSalePage() {
     const saleId = await saveSaleCore(payload, userEmail);
     if (!saleId) return;
 
-    if (receivables.length > 0) {
+    // Generate receivables from enabled proposal payment options if any, else from legacy receivables
+    const enabledOptions = proposalPaymentOptions.filter(o => o.enabled);
+    if (enabledOptions.length > 0) {
+      let installmentCounter = 1;
+      const allReceivables: any[] = [];
+      const baseDate = new Date(saleDate || new Date());
+      for (const opt of enabledOptions) {
+        for (let i = 1; i <= opt.installments; i++) {
+          const dueDate = new Date(baseDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+          allReceivables.push({
+            sale_id: saleId, installment_number: installmentCounter++,
+            due_date: dueDate.toISOString().split('T')[0],
+            amount: opt.installmentValue,
+            client_name: clientName,
+            description: `Venda - ${clientName} (${opt.label})`,
+            status: 'pending', origin_type: 'sale',
+            payment_method: opt.method,
+            empresa_id: activeCompany?.id || null,
+          });
+        }
+      }
+      if (allReceivables.length > 0) {
+        await supabase.from('receivables').insert(allReceivables);
+      }
+    } else if (receivables.length > 0) {
       await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
