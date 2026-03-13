@@ -348,12 +348,10 @@ export default function ClientsPage() {
                         toast.error('Cadastre um telefone para o cliente antes de chamar no WhatsApp');
                         return;
                       }
-                      const cleanPhone = form.phone.replace(/\D/g, '');
-                      setDialogOpen(false);
-                      navigate('/whatsapp', { state: { openPhone: cleanPhone, openName: form.full_name } });
+                      openWhatsAppChat(form.phone, activeCompany?.slug || '');
                     }}
                   >
-                    <MessageCircle className="h-4 w-4" />Chamar no WhatsApp
+                    <MessageCircle className="h-4 w-4" />Conversar no WhatsApp
                   </Button>
                 )}
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>

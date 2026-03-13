@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import React from 'react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -12,7 +12,7 @@ import {
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
   Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
-  MessageSquare, CheckCircle, Zap, MessageCircle, Mail, Send, FileEdit, Archive,
+  MessageSquare, Mail, FileEdit,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
-import NewWhatsAppConversationModal from '@/components/NewWhatsAppConversationModal';
 import PhotoCaptureModal from '@/components/PhotoCaptureModal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Camera } from 'lucide-react';
@@ -78,7 +77,6 @@ function AppSidebar() {
     { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
     { title: 'Clientes', url: '/clients', icon: UserRound, permKey: 'clients_view' },
     { title: 'Fornecedores', url: '/suppliers', icon: Building2, permKey: 'suppliers_view' },
-    
     { title: 'Vendas', url: '/sales', icon: ShoppingCart, permKey: 'sales_view' },
     { title: 'Vendedores', url: '/sellers', icon: UserCheck, permKey: 'sellers_view' },
     { title: 'Serviços', url: '/services', icon: ClipboardList, permKey: 'services_view' },
@@ -131,14 +129,6 @@ function AppSidebar() {
   const financialItems = isVistos ? vistosFinancial : viagensFinancial;
   const reportItems = isVistos ? [] : viagensReports;
 
-  const whatsappItems: MenuItem[] = [
-    { title: 'WhatsApp', url: '/whatsapp', icon: MessageSquare, permKey: 'whatsapp_view' },
-    { title: 'Finalizadas', url: '/whatsapp/finished', icon: CheckCircle, permKey: 'whatsapp_view' },
-    { title: 'Automações', url: '/whatsapp/automations', icon: Zap, permKey: 'whatsapp_view' },
-    { title: 'Msg. Rápidas', url: '/whatsapp/quick-replies', icon: MessageCircle, permKey: 'whatsapp_view' },
-    { title: 'Configurações', url: '/whatsapp/settings', icon: Cog, permKey: 'whatsapp_view' },
-  ];
-
   const emailItems: MenuItem[] = [
     { title: 'Inbox', url: '/email', icon: Mail },
     { title: 'Templates', url: '/email/templates', icon: FileText },
@@ -152,12 +142,10 @@ function AppSidebar() {
 
   const isFinancialActive = location.pathname.startsWith('/financial');
   const isReportsActive = location.pathname.startsWith('/reports');
-  const isWhatsAppActive = location.pathname.startsWith('/whatsapp');
   const isEmailActive = location.pathname.startsWith('/email');
 
   const filteredFinancial = filterItems(financialItems);
   const filteredReports = filterItems(reportItems);
-  const filteredWhatsApp = filterItems(whatsappItems);
   const filteredEmail = filterItems(emailItems);
 
   const renderMenuItems = (items: MenuItem[]) => (
@@ -216,7 +204,6 @@ function AppSidebar() {
           <SidebarGroupContent>{renderMenuItems(filterItems(mainItems))}</SidebarGroupContent>
         </SidebarGroup>
 
-        {renderCollapsibleGroup('Conversas', MessageSquare, filteredWhatsApp, isWhatsAppActive)}
         {renderCollapsibleGroup('Email', Mail, filteredEmail, isEmailActive)}
         {renderCollapsibleGroup('Financeiro', DollarSign, filteredFinancial, isFinancialActive)}
         {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
@@ -242,6 +229,64 @@ function AppSidebar() {
   );
 }
 
+function openWhatsAppPopup(companyName: string, companySlug: string) {
+  const sessionName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
+  const windowName = sessionName;
+
+  // Check if window already exists and is open
+  const existing = (window as any).__whatsappWindows?.[windowName];
+  if (existing && !existing.closed) {
+    existing.focus();
+    return;
+  }
+
+  const width = 1200;
+  const height = 800;
+  const left = Math.round((screen.width - width) / 2);
+  const top = Math.round((screen.height - height) / 2);
+
+  const popup = window.open(
+    'https://web.whatsapp.com',
+    windowName,
+    `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,scrollbars=yes,resizable=yes`
+  );
+
+  if (!(window as any).__whatsappWindows) {
+    (window as any).__whatsappWindows = {};
+  }
+  (window as any).__whatsappWindows[windowName] = popup;
+}
+
+export function openWhatsAppChat(phone: string, companySlug: string) {
+  const cleanPhone = phone.replace(/\D/g, '');
+  const fullPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+  const sessionName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
+  const windowName = sessionName;
+
+  const existing = (window as any).__whatsappWindows?.[windowName];
+  if (existing && !existing.closed) {
+    existing.location.href = `https://web.whatsapp.com/send?phone=${fullPhone}`;
+    existing.focus();
+    return;
+  }
+
+  const width = 1200;
+  const height = 800;
+  const left = Math.round((screen.width - width) / 2);
+  const top = Math.round((screen.height - height) / 2);
+
+  const popup = window.open(
+    `https://web.whatsapp.com/send?phone=${fullPhone}`,
+    windowName,
+    `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,scrollbars=yes,resizable=yes`
+  );
+
+  if (!(window as any).__whatsappWindows) {
+    (window as any).__whatsappWindows = {};
+  }
+  (window as any).__whatsappWindows[windowName] = popup;
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
   const navigate = useNavigate();
@@ -251,7 +296,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const [pendingCompany, setPendingCompany] = useState<typeof activeCompany>(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showNewWAModal, setShowNewWAModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const handleCompanyChange = (val: string) => {
@@ -278,8 +322,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setPendingCompany(null);
   };
 
-  const handleWAConversationCreated = (convId: string) => {
-    navigate('/whatsapp', { state: { openConversationId: convId } });
+  const handleOpenWhatsApp = () => {
+    if (!activeCompany) return;
+    openWhatsAppPopup(activeCompany.name, activeCompany.slug);
   };
 
   return (
@@ -314,7 +359,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </span>
             )}
 
-            {/* Communication channel buttons - desktop */}
+            {/* Header shortcut buttons - desktop */}
             {!isMobile && (
               <div className="ml-auto flex items-center gap-2">
                 <TooltipProvider>
@@ -347,7 +392,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        onClick={() => navigate('/whatsapp')}
+                        onClick={handleOpenWhatsApp}
                         variant="outline"
                         className="h-10 rounded-[20px] gap-2 font-medium border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10"
                       >
@@ -355,22 +400,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         WhatsApp
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Abrir módulo WhatsApp</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => setShowNewWAModal(true)}
-                        className="h-10 rounded-[20px] gap-2 text-white font-medium"
-                        style={{ backgroundColor: '#25D366' }}
-                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1ebe5d')}
-                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#25D366')}
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        Nova Conversa
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Iniciar nova conversa no WhatsApp</TooltipContent>
+                    <TooltipContent>Abrir WhatsApp Web — {activeCompany?.name || 'Empresa'}</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
@@ -392,21 +422,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Camera className="h-6 w-6" />
           </button>
           <button
-            onClick={() => setShowNewWAModal(true)}
+            onClick={handleOpenWhatsApp}
             className="h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
             style={{ backgroundColor: '#25D366' }}
-            title="Iniciar nova conversa no WhatsApp"
+            title={`Abrir WhatsApp Web — ${activeCompany?.name || ''}`}
           >
             <MessageSquare className="h-6 w-6" />
           </button>
         </div>
       )}
-
-      <NewWhatsAppConversationModal
-        open={showNewWAModal}
-        onOpenChange={setShowNewWAModal}
-        onConversationCreated={handleWAConversationCreated}
-      />
 
       <PhotoCaptureModal
         open={showPhotoModal}

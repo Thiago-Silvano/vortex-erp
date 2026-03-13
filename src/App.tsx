@@ -105,12 +105,6 @@ const App = () => (
           <Route path="/vistos/ds160" element={<ProtectedRoute><VistosDS160Page /></ProtectedRoute>} />
           <Route path="/vistos/reports" element={<ProtectedRoute><VistosReportsPage /></ProtectedRoute>} />
 
-          {/* WhatsApp routes */}
-          <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppPage /></ProtectedRoute>} />
-          <Route path="/whatsapp/finished" element={<ProtectedRoute><WhatsAppFinishedPage /></ProtectedRoute>} />
-          <Route path="/whatsapp/quick-replies" element={<ProtectedRoute><WhatsAppQuickRepliesPage /></ProtectedRoute>} />
-          <Route path="/whatsapp/automations" element={<ProtectedRoute><WhatsAppAutomationsPage /></ProtectedRoute>} />
-          <Route path="/whatsapp/settings" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
 
           {/* Email routes */}
           <Route path="/email" element={<ProtectedRoute><EmailInboxPage /></ProtectedRoute>} />
