@@ -850,82 +850,9 @@ export default function NewSalePage() {
     const saleId = await saveSaleCore(payload, userEmail);
     if (!saleId) return;
 
-    // Generate receivables from enabled proposal payment options if any, else from legacy receivables
-    const enabledOptions = proposalPaymentOptions.filter(o => o.enabled);
-    if (enabledOptions.length > 0) {
-      let installmentCounter = 1;
-      const allReceivables: any[] = [];
-      const baseDate = new Date(saleDate || new Date());
-      for (const opt of enabledOptions) {
-        for (let i = 1; i <= opt.installments; i++) {
-          const dueDate = new Date(baseDate);
-          dueDate.setMonth(dueDate.getMonth() + i);
-          allReceivables.push({
-            sale_id: saleId, installment_number: installmentCounter++,
-            due_date: dueDate.toISOString().split('T')[0],
-            amount: opt.installmentValue,
-            client_name: clientName,
-            description: `Venda - ${clientName} (${opt.label})`,
-            status: 'pending', origin_type: 'sale',
-            payment_method: opt.method,
-            empresa_id: activeCompany?.id || null,
-          });
-        }
-      }
-      if (allReceivables.length > 0) {
-        await supabase.from('receivables').insert(allReceivables);
-      }
-    } else if (receivables.length > 0) {
-      await supabase.from('receivables').insert(receivables.map(r => ({
-        sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
-        client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
-        empresa_id: activeCompany?.id || null,
-      } as any)));
-    }
-
-    // Generate accounts_payable from supplier payment controls
-    if (supplierPayments.length > 0) {
-      const payables: any[] = [];
-      for (const sp of supplierPayments) {
-        if (sp.amount <= 0) continue;
-        if (sp.payment_method === 'pix') {
-          payables.push({
-            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
-            due_date: sp.payment_date, description: `Venda - ${clientName} (Pix)`,
-            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1,
-          });
-        } else if (sp.payment_method === 'faturado') {
-          payables.push({
-            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
-            due_date: sp.installment_dates[0]?.date || sp.payment_date,
-            description: `Venda - ${clientName} (Faturado)`,
-            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1,
-          });
-        } else if (sp.payment_method === 'credito') {
-          sp.installment_dates.forEach((inst, idx) => {
-            payables.push({
-              sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
-              due_date: inst.date, description: `Venda - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
-              status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-              installment_number: idx + 1, total_installments: sp.installments,
-            });
-          });
-        }
-      }
-      if (payables.length > 0) {
-        await supabase.from('accounts_payable').insert(payables);
-      }
-    } else if (totalCost > 0 && selectedSupplierIds.length > 0) {
-      // Fallback: split equally
-      const costPerSupplier = totalCost / selectedSupplierIds.length;
-      await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
-        sale_id: saleId, supplier_id: sid, amount: costPerSupplier,
-        due_date: saleDate, description: `Venda - ${clientName}`, status: 'open', origin_type: 'sale',
-        empresa_id: activeCompany?.id || null,
-      })));
-    }
+    // Generate receivables and payables using shared functions
+    await generateReceivablesForSale(saleId);
+    await generatePayablesForSale(saleId);
 
     if (quoteId) {
       await supabase.from('quotes').update({ status: 'concluido' }).eq('id', quoteId);
