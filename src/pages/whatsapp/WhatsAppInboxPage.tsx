@@ -200,21 +200,20 @@ export default function WhatsAppInboxPage() {
         const chats = await fetchChats(url);
         if (Array.isArray(chats)) {
           const dbPhones = new Set((dbConvs || []).map((c: any) => normalizePhone(c.phone)));
-          const dbWaIds = new Set((dbConvs || []).map((c: any) => c.whatsapp_id).filter(Boolean));
 
           const newChats = chats.filter((chat: any) => {
-            const chatId = chat.id || '';
-            const phone = normalizePhone(chat.numero || chat.id?.user || '');
+            const chatId = extractWhatsappId(chat) || '';
+            const phone = extractIncomingPhone(chat);
             // Skip groups
-            if (typeof chatId === 'string' && (chatId.includes('@g.us'))) return false;
-            return phone.length >= 8 && !dbPhones.has(phone) && !dbWaIds.has(chatId);
+            if (typeof chatId === 'string' && chatId.includes('@g.us')) return false;
+            return phone.length >= 8 && !dbPhones.has(normalizePhone(phone));
           });
 
           if (newChats.length > 0 && newChats.length < 200) {
             for (const chat of newChats) {
-              const phone = normalizePhone(chat.numero || chat.id?.user || '');
+              const phone = extractIncomingPhone(chat);
               const name = chat.nome || chat.name || chat.pushname || phone;
-              const whatsappId = typeof chat.id === 'string' ? chat.id : (chat.id?.user ? `${chat.id.user}@c.us` : null);
+              const whatsappId = extractWhatsappId(chat);
 
               await (supabase.rpc('find_or_create_conversation', {
                 p_empresa_id: empresaId,
