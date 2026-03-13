@@ -74,10 +74,12 @@ export default function VistosNewSalePage() {
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [quickClientForApplicant, setQuickClientForApplicant] = useState<number | null>(null);
 
+  const makeDefaultPayment = (): PaymentEntry => ({
+    payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false, num_installments: 1, installments: [],
+  });
+
   // Multi-payment
-  const [payments, setPayments] = useState<PaymentEntry[]>([
-    { payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false },
-  ]);
+  const [payments, setPayments] = useState<PaymentEntry[]>([makeDefaultPayment()]);
 
   const refreshClients = () => {
     if (!activeCompany?.id) return;
