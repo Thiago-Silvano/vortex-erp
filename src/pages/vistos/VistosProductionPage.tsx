@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, User, GripVertical, Send, Plus, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import NewWhatsAppConversationModal from '@/components/NewWhatsAppConversationModal';
+import { openWhatsAppChat } from '@/components/AppLayout';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -67,11 +67,7 @@ export default function VistosProductionPage() {
   const [duties, setDuties] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // WhatsApp send documents
-  const [waSendOpen, setWaSendOpen] = useState(false);
-  const [waSendPhone, setWaSendPhone] = useState('');
-  const [waSendName, setWaSendName] = useState('');
-  const [waSendMessage, setWaSendMessage] = useState('');
+  // WhatsApp - removed old modal state
 
   // Add manual process
   const [addOpen, setAddOpen] = useState(false);
@@ -458,14 +454,8 @@ export default function VistosProductionPage() {
                       }
 
                       const cleanPhone = client.phone.replace(/\D/g, '');
-                      const docsList = selectedProcess.documents.map((d: any) => d.url).join('\n');
-                      const message = `Olá ${selectedProcess.applicant_name}, segue os documentos do seu processo de visto:\n\n${selectedProcess.documents.map((d: any) => `📄 ${d.name}: ${d.url}`).join('\n')}`;
-                      
-                      setWaSendPhone(cleanPhone);
-                      setWaSendName(client.full_name);
-                      setWaSendMessage(message);
+                      openWhatsAppChat(cleanPhone, activeCompany?.slug || '');
                       setDetailOpen(false);
-                      setWaSendOpen(true);
                     }}
                   >
                     <Send className="h-3.5 w-3.5" />Enviar Documentos via WhatsApp
@@ -526,13 +516,6 @@ export default function VistosProductionPage() {
         </DialogContent>
       </Dialog>
 
-      <NewWhatsAppConversationModal
-        open={waSendOpen}
-        onOpenChange={setWaSendOpen}
-        onConversationCreated={() => setWaSendOpen(false)}
-        initialPhone={waSendPhone}
-        initialName={waSendName}
-      />
     </AppLayout>
   );
 }
