@@ -138,6 +138,10 @@ export default function NewSalePage() {
   const [aiImageSearch, setAiImageSearch] = useState(false);
   const [aiImages, setAiImages] = useState<string[]>([]);
   const [aiImageDialog, setAiImageDialog] = useState(false);
+  const [stockImageSearchOpen, setStockImageSearchOpen] = useState(false);
+  const [unsplashApiKey, setUnsplashApiKey] = useState('');
+  const [pexelsApiKey, setPexelsApiKey] = useState('');
+  const [hasStockKeys, setHasStockKeys] = useState(false);
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [supplierPayments, setSupplierPayments] = useState<SupplierPaymentControl[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
