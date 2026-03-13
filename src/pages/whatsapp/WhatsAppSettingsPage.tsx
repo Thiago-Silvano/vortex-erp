@@ -59,15 +59,24 @@ export default function WhatsAppSettingsPage() {
   };
 
   const checkConnection = async () => {
+    if (!settings.server_url || settings.server_url.includes('localhost')) {
+      toast.error('Configure uma URL de servidor válida (não pode ser localhost)');
+      return;
+    }
+    if (!settings.id) {
+      toast.error('Salve as configurações antes de verificar a conexão');
+      return;
+    }
     setChecking(true);
     try {
       const data = await checkStatus(settings.server_url);
       const statusValue = String(data?.status ?? data?.state ?? '').toLowerCase();
       const connected = Boolean(data?.connected ?? data?.is_connected ?? data?.isConnected ?? data?.authenticated) || ['connected', 'open', 'ready'].includes(statusValue);
       await (supabase.from('whatsapp_settings').update({ is_connected: connected }).eq('id', settings.id) as any);
+      setSettings(prev => ({ ...prev, is_connected: connected }));
       toast.success(connected ? 'WhatsApp conectado!' : 'WhatsApp desconectado');
     } catch {
-      toast.error('Não foi possível conectar ao servidor');
+      toast.error('Não foi possível conectar ao servidor. Verifique se a URL está correta e o servidor está rodando.');
       setSettings(prev => ({ ...prev, is_connected: false }));
     }
     setChecking(false);
