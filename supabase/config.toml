@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.search-destination-images]
 verify_jwt = false
+
+[functions.google-places]
+verify_jwt = false
