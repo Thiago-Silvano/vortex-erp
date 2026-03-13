@@ -295,10 +295,7 @@ export default function WhatsAppInboxPage() {
     }
 
     try {
-      // Send via server
-      await sendMessage(serverUrl, phone, newMsgForm.message);
-
-      // Create/find conversation
+      // 1. Create/find conversation FIRST so it always exists
       const { data: convId } = await (supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
         p_phone: phone,
@@ -316,11 +313,10 @@ export default function WhatsAppInboxPage() {
         }) as any);
       }
 
-      toast.success('Mensagem enviada!');
+      // 2. Reload conversations and open immediately
       setShowNewMessage(false);
       setNewMsgForm({ phone: '', name: '', message: '' });
 
-      // Reload conversations and open the new one
       const { data: updated } = await (supabase
         .from('whatsapp_conversations')
         .select('*')
@@ -331,9 +327,18 @@ export default function WhatsAppInboxPage() {
         const newConv = updated.find((c: any) => normalizePhone(c.phone) === phone);
         if (newConv) openConversation(newConv);
       }
+
+      // 3. Send via server (non-blocking — conversation already exists)
+      try {
+        await sendMessage(serverUrl, phone, newMsgForm.message);
+        toast.success('Mensagem enviada!');
+      } catch (sendErr) {
+        console.error('Error sending via server:', sendErr);
+        toast.warning('Conversa criada, mas houve erro ao enviar pelo servidor. Tente reenviar.');
+      }
     } catch (err) {
-      console.error('Error sending new message:', err);
-      toast.error('Erro ao enviar mensagem. Verifique a conexão com o servidor.');
+      console.error('Error creating conversation:', err);
+      toast.error('Erro ao criar conversa.');
     }
   };
 
