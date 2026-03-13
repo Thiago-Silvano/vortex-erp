@@ -78,6 +78,7 @@ export default function VistosNewSalePage() {
     { full_name: '', is_main: true },
   ]);
   const [payerIsApplicant, setPayerIsApplicant] = useState(true);
+  const [cardFeeValue, setCardFeeValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; phone?: string; email?: string }[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
@@ -119,6 +120,7 @@ export default function VistosNewSalePage() {
     setClientEmail(sale.client_email || '');
     setNotes(sale.notes || '');
     setSaleDate(sale.sale_date);
+    setCardFeeValue(Number(sale.card_fee_value) || 0);
 
     // Load sale items
     const { data: items } = await (supabase.from('visa_sale_items' as any) as any).select('*').eq('visa_sale_id', id).order('sort_order');
@@ -332,6 +334,7 @@ export default function VistosNewSalePage() {
       client_email: clientEmail,
       product_id: mainItem?.product_id || null,
       total_value: totalValue,
+      card_fee_value: cardFeeValue,
       payment_method: payments[0]?.payment_type || 'pix',
       installments: payments.length,
       notes,
@@ -719,10 +722,28 @@ export default function VistosNewSalePage() {
                 )}
               </div>
             ))}
+            {/* Taxa da Máquina */}
+            <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+              <Label className="text-sm font-semibold">Taxa da Máquina (R$)</Label>
+              <Input
+                className="h-9 max-w-xs"
+                value={maskCurrencyInput(cardFeeValue)}
+                onChange={e => setCardFeeValue(parseCurrency(e.target.value))}
+                placeholder="0,00"
+              />
+              <p className="text-xs text-muted-foreground">Valor cobrado pela maquininha de cartão. Será deduzido do lucro da venda.</p>
+            </div>
+
             {totalValue > 0 && (
               <div className={`text-sm p-2 rounded ${Math.abs(paymentsDiff) > 0.01 ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
                 Total dos pagamentos: <strong>{fmt(paymentsTotal)}</strong> / Total da venda: <strong>{fmt(totalValue)}</strong>
                 {Math.abs(paymentsDiff) > 0.01 && <span className="ml-2">(Diferença: {fmt(paymentsDiff)})</span>}
+              </div>
+            )}
+
+            {cardFeeValue > 0 && (
+              <div className="text-sm p-2 rounded bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                Lucro estimado: <strong>{fmt(totalServices - cardFeeValue)}</strong> (Serviços {fmt(totalServices)} − Taxa máquina {fmt(cardFeeValue)})
               </div>
             )}
           </CardContent>

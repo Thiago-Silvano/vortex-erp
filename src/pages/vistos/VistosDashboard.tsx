@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingCart, Cog, CalendarDays, CheckCircle, XCircle, DollarSign, Receipt } from 'lucide-react';
+import { ShoppingCart, Cog, CalendarDays, CheckCircle, XCircle, DollarSign, Receipt, CreditCard, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface Stats {
@@ -15,6 +15,7 @@ interface Stats {
   revenueTotal: number;
   revenueServices: number;
   revenueFees: number;
+  cardFees: number;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -37,7 +38,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function VistosDashboard() {
   const { activeCompany } = useCompany();
-  const [stats, setStats] = useState<Stats>({ salesThisMonth: 0, inProduction: 0, scheduled: 0, approved: 0, denied: 0, revenueTotal: 0, revenueServices: 0, revenueFees: 0 });
+  const [stats, setStats] = useState<Stats>({ salesThisMonth: 0, inProduction: 0, scheduled: 0, approved: 0, denied: 0, revenueTotal: 0, revenueServices: 0, revenueFees: 0, cardFees: 0 });
   const [statusChart, setStatusChart] = useState<{ name: string; value: number; color: string }[]>([]);
   const [productChart, setProductChart] = useState<{ name: string; vendas: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +66,7 @@ export default function VistosDashboard() {
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const { data: sales } = await supabase
       .from('visa_sales')
-      .select('id, product_id, total_value')
+      .select('id, product_id, total_value, card_fee_value')
       .eq('empresa_id', empresaId)
       .gte('sale_date', monthStart);
 
@@ -85,6 +86,7 @@ export default function VistosDashboard() {
       }
     }
     const totalRevenue = sales?.reduce((s, v) => s + Number(v.total_value || 0), 0) || 0;
+    const totalCardFees = sales?.reduce((s, v) => s + Number((v as any).card_fee_value || 0), 0) || 0;
     // If no items found (legacy), put all in services
     if (totalServices === 0 && totalFees === 0 && totalRevenue > 0) {
       totalServices = totalRevenue;
@@ -122,6 +124,7 @@ export default function VistosDashboard() {
       revenueTotal: totalRevenue,
       revenueServices: totalServices,
       revenueFees: totalFees,
+      cardFees: totalCardFees,
     });
 
     setStatusChart(
@@ -146,11 +149,15 @@ export default function VistosDashboard() {
   const approvalRate = total > 0 ? Math.round((stats.approved / total) * 100) : 0;
   const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+  const profit = stats.revenueServices - stats.cardFees;
+
   const statCards = [
     { label: 'Vendas do Mês', value: stats.salesThisMonth.toString(), icon: ShoppingCart, color: 'bg-primary text-primary-foreground' },
     { label: 'Faturamento Total', value: fmt(stats.revenueTotal), icon: DollarSign, color: 'bg-yellow-500 text-white' },
     { label: 'Serviços', value: fmt(stats.revenueServices), icon: DollarSign, color: 'bg-emerald-600 text-white' },
     { label: 'Taxas Fornecedor', value: fmt(stats.revenueFees), icon: Receipt, color: 'bg-amber-500 text-white' },
+    { label: 'Taxa Máquina', value: fmt(stats.cardFees), icon: CreditCard, color: 'bg-red-500 text-white' },
+    { label: 'Lucro (Serv. - Máq.)', value: fmt(profit), icon: TrendingUp, color: 'bg-teal-600 text-white' },
     { label: 'Em Produção', value: stats.inProduction.toString(), icon: Cog, color: 'bg-blue-600 text-white' },
     { label: 'Agendadas', value: stats.scheduled.toString(), icon: CalendarDays, color: 'bg-violet-600 text-white' },
     { label: 'Aprovados', value: stats.approved.toString(), icon: CheckCircle, color: 'bg-emerald-600 text-white' },
@@ -173,7 +180,7 @@ export default function VistosDashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {statCards.map(c => (
                 <Card key={c.label} className={`${c.color} border-0 shadow-md`}>
                   <CardContent className="p-5">

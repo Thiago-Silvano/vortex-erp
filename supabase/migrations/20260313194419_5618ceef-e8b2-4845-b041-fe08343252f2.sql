@@ -1,0 +1,1 @@
+ALTER TABLE public.visa_sales ADD COLUMN IF NOT EXISTS card_fee_value numeric NOT NULL DEFAULT 0;
