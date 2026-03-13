@@ -171,8 +171,59 @@ export default function VistosNewSalePage() {
     })));
   };
 
+  const isInstallmentType = (type: string) => type === 'cartao_credito' || type === 'boleto';
+
   const updatePayment = (idx: number, field: keyof PaymentEntry, value: any) => {
-    setPayments(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
+    setPayments(prev => prev.map((p, i) => {
+      if (i !== idx) return p;
+      const updated = { ...p, [field]: value };
+      // When changing type to installment-compatible and num > 1, generate installments
+      if (field === 'payment_type') {
+        if (!isInstallmentType(value as string)) {
+          updated.num_installments = 1;
+          updated.installments = [];
+        } else if (updated.num_installments > 1) {
+          updated.installments = generateInstallments(updated.value, updated.num_installments, updated.payment_date);
+        }
+      }
+      if (field === 'num_installments') {
+        const num = Math.max(1, Number(value) || 1);
+        updated.num_installments = num;
+        if (num > 1 && isInstallmentType(updated.payment_type)) {
+          updated.installments = generateInstallments(updated.value, num, updated.payment_date);
+        } else {
+          updated.installments = [];
+        }
+      }
+      if (field === 'value' && updated.num_installments > 1 && isInstallmentType(updated.payment_type)) {
+        updated.installments = generateInstallments(value as number, updated.num_installments, updated.payment_date);
+      }
+      return updated;
+    }));
+  };
+
+  const generateInstallments = (total: number, count: number, startDate: string): PaymentInstallment[] => {
+    const perInst = Math.round((total / count) * 100) / 100;
+    const remainder = Math.round((total - perInst * count) * 100) / 100;
+    const base = startDate ? new Date(startDate + 'T12:00:00') : new Date();
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date(base);
+      d.setMonth(d.getMonth() + i);
+      return {
+        value: i === 0 ? perInst + remainder : perInst,
+        payment_date: format(d, 'yyyy-MM-dd'),
+        is_received: false,
+      };
+    });
+  };
+
+  const updateInstallment = (payIdx: number, instIdx: number, field: keyof PaymentInstallment, value: any) => {
+    setPayments(prev => prev.map((p, i) => {
+      if (i !== payIdx) return p;
+      const insts = [...p.installments];
+      insts[instIdx] = { ...insts[instIdx], [field]: value };
+      return { ...p, installments: insts };
+    }));
   };
 
   const addApplicant = () => {
