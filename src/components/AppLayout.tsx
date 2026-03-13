@@ -267,10 +267,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setPendingCompany(null);
   };
 
-  const handleOpenWhatsApp = () => {
-    if (!activeCompany) return;
-    openWhatsAppPopup(activeCompany.name, activeCompany.slug);
-  };
 
   return (
     <SidebarProvider>
