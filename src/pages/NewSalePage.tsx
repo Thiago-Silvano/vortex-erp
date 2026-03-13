@@ -839,9 +839,23 @@ export default function NewSalePage() {
     finally { setSavingDraft(false); }
   };
 
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
+
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
+    // If editing an active sale, ask for confirmation first
+    if (saleStatus === 'active' && !showEditConfirm) {
+      setShowEditConfirm(true);
+      return;
+    }
+    setShowEditConfirm(false);
+    await doSave();
+  };
+
+  const doSave = async () => {
     const { payload, userEmail } = await buildSalePayload('active');
+    // Auto-set workflow status to "emitido" when generating a sale
+    payload.sale_workflow_status = 'emitido';
 
     if (editSaleId) {
       await supabase.from('receivables').delete().eq('sale_id', editSaleId);
