@@ -300,33 +300,69 @@ export default function VistosNewSalePage() {
       saleId = newSale.id;
     }
 
-    // Insert payments
-    await (supabase.from('visa_sale_payments' as any) as any).insert(
-      payments.map(p => ({
-        visa_sale_id: saleId,
-        payment_type: p.payment_type,
-        value: p.value,
-        payment_date: p.payment_date || null,
-        is_received: p.is_received,
-      }))
-    );
+    // Insert payments (flatten installments into individual rows)
+    const paymentRows: any[] = [];
+    payments.forEach(p => {
+      if (p.installments.length > 1) {
+        p.installments.forEach(inst => {
+          paymentRows.push({
+            visa_sale_id: saleId,
+            payment_type: p.payment_type,
+            value: inst.value,
+            payment_date: inst.payment_date || null,
+            is_received: inst.is_received,
+          });
+        });
+      } else {
+        paymentRows.push({
+          visa_sale_id: saleId,
+          payment_type: p.payment_type,
+          value: p.value,
+          payment_date: p.payment_date || null,
+          is_received: p.is_received,
+        });
+      }
+    });
+    await (supabase.from('visa_sale_payments' as any) as any).insert(paymentRows);
 
-    // Generate receivables based on payments
-    const receivablePayloads = payments.map((p, idx) => {
+    // Generate receivables — one per installment
+    const receivablePayloads: any[] = [];
+    let recIdx = 0;
+    payments.forEach(p => {
       const typeLabel = PAYMENT_TYPES.find(t => t.value === p.payment_type)?.label || p.payment_type;
-      return {
-        sale_id: saleId,
-        installment_number: idx + 1,
-        due_date: p.payment_date || null,
-        amount: p.value,
-        client_name: clientName.trim(),
-        description: `Visto - ${clientName.trim()} (${typeLabel})`,
-        status: p.is_received ? 'paid' : 'pending',
-        payment_date: p.is_received ? p.payment_date || null : null,
-        payment_method: p.payment_type,
-        origin_type: 'visa_sale',
-        empresa_id: activeCompany?.id || null,
-      };
+      if (p.installments.length > 1) {
+        p.installments.forEach((inst, i) => {
+          recIdx++;
+          receivablePayloads.push({
+            sale_id: saleId,
+            installment_number: recIdx,
+            due_date: inst.payment_date || null,
+            amount: inst.value,
+            client_name: clientName.trim(),
+            description: `Visto - ${clientName.trim()} (${typeLabel} ${i + 1}/${p.installments.length})`,
+            status: inst.is_received ? 'paid' : 'pending',
+            payment_date: inst.is_received ? inst.payment_date || null : null,
+            payment_method: p.payment_type,
+            origin_type: 'visa_sale',
+            empresa_id: activeCompany?.id || null,
+          });
+        });
+      } else {
+        recIdx++;
+        receivablePayloads.push({
+          sale_id: saleId,
+          installment_number: recIdx,
+          due_date: p.payment_date || null,
+          amount: p.value,
+          client_name: clientName.trim(),
+          description: `Visto - ${clientName.trim()} (${typeLabel})`,
+          status: p.is_received ? 'paid' : 'pending',
+          payment_date: p.is_received ? p.payment_date || null : null,
+          payment_method: p.payment_type,
+          origin_type: 'visa_sale',
+          empresa_id: activeCompany?.id || null,
+        });
+      }
     });
     if (receivablePayloads.length > 0) {
       await supabase.from('receivables').insert(receivablePayloads as any);
