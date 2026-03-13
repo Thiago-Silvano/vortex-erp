@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const prompt = `You are a travel industry expert. Search for the hotel "${hotelName}"${location ? ` in ${location}` : ''} and return detailed information.
+    const prompt = `You are a travel industry expert with deep knowledge of TripAdvisor data. Search for the hotel "${hotelName}"${location ? ` in ${location}` : ''} and return detailed information including TripAdvisor-specific data.
 
 Return a JSON object with EXACTLY this structure (use null for unknown fields):
 {
@@ -32,15 +32,32 @@ Return a JSON object with EXACTLY this structure (use null for unknown fields):
   "address": "Full address",
   "city": "City name",
   "country": "Country",
-  "description": "A compelling 2-3 sentence description of the hotel highlighting its best features",
+  "description": "A compelling 2-3 sentence description of the hotel highlighting its best features, in Portuguese (Brazil)",
   "amenities": ["Pool", "Spa", "Restaurant", "Gym", "WiFi", "Room Service"],
   "check_in_time": "15:00",
   "check_out_time": "11:00",
   "category": "Resort/Hotel/Boutique/Pousada",
-  "highlights": ["Beachfront", "All-Inclusive", "Adults Only"]
+  "highlights": ["Beachfront", "All-Inclusive", "Adults Only"],
+  "tripadvisor_rating": 4.5,
+  "tripadvisor_reviews_count": 3200,
+  "tripadvisor_ranking": "Nº 3 de 45 hotéis em Cancún",
+  "tripadvisor_badges": ["Travellers Choice 2024", "Certificado de Excelência"],
+  "tripadvisor_top_reviews": [
+    "Hotel incrível com vista maravilhosa para o mar",
+    "Serviço impecável, staff muito atencioso",
+    "Café da manhã espetacular com opções variadas"
+  ],
+  "tripadvisor_rating_breakdown": {
+    "location": 4.8,
+    "cleanliness": 4.6,
+    "service": 4.7,
+    "value": 4.3,
+    "rooms": 4.5
+  },
+  "tripadvisor_popular_mentions": ["piscina", "vista para o mar", "café da manhã", "staff"]
 }
 
-Be accurate and factual. If you're unsure about specific details, use reasonable defaults for a hotel of that category. Always provide the description in Portuguese (Brazil).`;
+Be accurate and factual based on your knowledge of this hotel's TripAdvisor presence. Provide reviews and mentions in Portuguese (Brazil). If unsure about specific TripAdvisor data, provide reasonable estimates based on the hotel's category and reputation.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -51,14 +68,14 @@ Be accurate and factual. If you're unsure about specific details, use reasonable
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: 'You are a hotel information database. Return ONLY valid JSON, no markdown, no explanation.' },
+          { role: 'system', content: 'You are a hotel information database with TripAdvisor data. Return ONLY valid JSON, no markdown, no explanation.' },
           { role: 'user', content: prompt },
         ],
         tools: [{
           type: 'function',
           function: {
             name: 'return_hotel_info',
-            description: 'Return structured hotel information',
+            description: 'Return structured hotel information with TripAdvisor data',
             parameters: {
               type: 'object',
               properties: {
@@ -73,6 +90,22 @@ Be accurate and factual. If you're unsure about specific details, use reasonable
                 check_out_time: { type: 'string' },
                 category: { type: 'string' },
                 highlights: { type: 'array', items: { type: 'string' } },
+                tripadvisor_rating: { type: 'number' },
+                tripadvisor_reviews_count: { type: 'number' },
+                tripadvisor_ranking: { type: 'string' },
+                tripadvisor_badges: { type: 'array', items: { type: 'string' } },
+                tripadvisor_top_reviews: { type: 'array', items: { type: 'string' } },
+                tripadvisor_rating_breakdown: {
+                  type: 'object',
+                  properties: {
+                    location: { type: 'number' },
+                    cleanliness: { type: 'number' },
+                    service: { type: 'number' },
+                    value: { type: 'number' },
+                    rooms: { type: 'number' },
+                  },
+                },
+                tripadvisor_popular_mentions: { type: 'array', items: { type: 'string' } },
               },
               required: ['name', 'description'],
               additionalProperties: false,
@@ -134,7 +167,6 @@ Be accurate and factual. If you're unsure about specific details, use reasonable
       `A gorgeous bar or entertainment area at ${hotelName}, cocktail bar, ambient lighting, luxury nightlife, professional photography, 16:9`,
     ];
 
-    // Generate images in 2 batches
     for (let batch = 0; batch < 2; batch++) {
       const batchPrompts = imagePrompts.slice(batch * 5, (batch + 1) * 5);
       const batchResults = await Promise.allSettled(
