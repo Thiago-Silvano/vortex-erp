@@ -2018,11 +2018,31 @@ export default function NewSalePage() {
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
-            {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Rascunho'}
+          {saleStatus !== 'active' && (
+            <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
+              {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Rascunho'}
+            </Button>
+          )}
+          <Button onClick={handleSave} className="w-full sm:w-auto">
+            {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Gerar Venda' : 'Converter em Venda'}
           </Button>
-          <Button onClick={handleSave} className="w-full sm:w-auto">{editSaleId ? 'Gerar Venda' : 'Converter em Venda'}</Button>
         </div>
+
+        {/* Edit Confirmation Dialog */}
+        <AlertDialog open={showEditConfirm} onOpenChange={setShowEditConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Editar Venda</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja alterar os dados desta venda? Os lançamentos financeiros (contas a receber, contas a pagar e comissões) serão regenerados.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={doSave}>Confirmar Edição</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <PdfImportModal
           open={pdfImportOpen}
