@@ -435,6 +435,23 @@ export default function AccountsPayablePage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Edit dialog */}
+        <Dialog open={editDialog} onOpenChange={setEditDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Editar Conta a Pagar</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div><Label>Descrição</Label><Input value={editDescription} onChange={e => setEditDescription(e.target.value)} /></div>
+              <div><Label>Valor</Label><Input type="number" step="0.01" value={editAmount} onChange={e => setEditAmount(Number(e.target.value))} /></div>
+              <div><Label>Vencimento</Label><Input type="date" value={editDueDate} onChange={e => setEditDueDate(e.target.value)} /></div>
+              <div><Label>Observação</Label><Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} /></div>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setEditDialog(false)}>Cancelar</Button>
+                <Button onClick={handleEditSave}>Salvar</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
