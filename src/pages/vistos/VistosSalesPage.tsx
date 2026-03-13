@@ -57,6 +57,33 @@ export default function VistosSalesPage() {
 
   const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto', cartao_credito: 'Cartão Crédito', cartao_debito: 'Cartão Débito', transferencia: 'Transferência' };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      // Delete related receivables
+      await supabase.from('receivables').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete related applicants
+      await supabase.from('visa_applicants').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete related payments
+      await supabase.from('visa_sale_payments').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete related production
+      await supabase.from('visa_production').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete related commissions
+      await supabase.from('seller_commissions').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete the sale
+      const { error } = await supabase.from('visa_sales').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      toast.success('Venda excluída com sucesso');
+      setSales(prev => prev.filter(s => s.id !== deleteTarget.id));
+    } catch (err: any) {
+      toast.error('Erro ao excluir: ' + err.message);
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
