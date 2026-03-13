@@ -229,14 +229,21 @@ function AppSidebar() {
   );
 }
 
-function openWhatsAppPopup(companyName: string, companySlug: string) {
-  const sessionName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
-  const windowName = sessionName;
+function getOpener() {
+  try {
+    return window.top || window;
+  } catch {
+    return window;
+  }
+}
 
-  // Check if window already exists and is open
-  const existing = (window as any).__whatsappWindows?.[windowName];
+function openWhatsAppPopup(companyName: string, companySlug: string) {
+  const windowName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
+  const opener = getOpener();
+
+  const existing = (opener as any).__whatsappWindows?.[windowName];
   if (existing && !existing.closed) {
-    existing.focus();
+    try { existing.focus(); } catch { /* cross-origin */ }
     return;
   }
 
@@ -244,17 +251,25 @@ function openWhatsAppPopup(companyName: string, companySlug: string) {
   const height = 800;
   const left = Math.round((screen.width - width) / 2);
   const top = Math.round((screen.height - height) / 2);
+  const features = `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,scrollbars=yes,resizable=yes`;
 
-  const popup = window.open(
-    'https://web.whatsapp.com',
-    windowName,
-    `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,scrollbars=yes,resizable=yes`
-  );
-
-  if (!(window as any).__whatsappWindows) {
-    (window as any).__whatsappWindows = {};
+  let popup: Window | null = null;
+  try {
+    popup = opener.open('https://web.whatsapp.com', windowName, features);
+  } catch {
+    popup = window.open('https://web.whatsapp.com', windowName, features);
   }
-  (window as any).__whatsappWindows[windowName] = popup;
+
+  if (!popup) {
+    // Fallback: open in new tab if popup blocked
+    window.open('https://web.whatsapp.com', '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  if (!(opener as any).__whatsappWindows) {
+    (opener as any).__whatsappWindows = {};
+  }
+  (opener as any).__whatsappWindows[windowName] = popup;
 }
 
 export function openWhatsAppChat(phone: string, companySlug: string) {
