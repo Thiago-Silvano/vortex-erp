@@ -65,23 +65,46 @@ export default function WhatsAppInboxPage() {
   // Socket.IO connection
   useEffect(() => {
     if (!serverUrl) return;
+    console.log('[WhatsApp Socket] Connecting to:', serverUrl);
     const socket = io(serverUrl, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
+    socket.on('connect', () => {
+      console.log('[WhatsApp Socket] Connected! ID:', socket.id);
+    });
+
+    socket.on('connect_error', (err: any) => {
+      console.error('[WhatsApp Socket] Connection error:', err?.message || err);
+    });
+
+    socket.on('disconnect', (reason: string) => {
+      console.log('[WhatsApp Socket] Disconnected:', reason);
+    });
+
+    socket.onAny((eventName: string, ...args: any[]) => {
+      console.log('[WhatsApp Socket] Event received:', eventName, args);
+    });
+
     socket.on('nova_mensagem', async (data: any) => {
+      console.log('[WhatsApp Socket] nova_mensagem data:', JSON.stringify(data));
       const phone = normalizePhone(data.from || data.number || '');
       const content = data.body || data.message || '';
-      if (!phone || phone.length < 8) return;
+      if (!phone || phone.length < 8) {
+        console.warn('[WhatsApp Socket] Ignoring message - invalid phone:', phone);
+        return;
+      }
 
       const whatsappId = data.from || '';
 
-      const { data: convId } = await (supabase.rpc('find_or_create_conversation', {
+      const { data: convId, error: rpcError } = await (supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
         p_phone: phone,
         p_client_name: data.name || data.pushname || phone,
         p_last_message: content,
         p_whatsapp_id: whatsappId || null,
       }) as any);
+
+      console.log('[WhatsApp Socket] find_or_create result:', convId, 'error:', rpcError);
 
       if (convId) {
         await (supabase.from('whatsapp_messages').insert({
@@ -294,26 +317,31 @@ export default function WhatsAppInboxPage() {
       return;
     }
 
+    const messageText = newMsgForm.message.trim();
+    const contactName = newMsgForm.name || phone;
+
     try {
       // 1. Create/find conversation FIRST so it always exists
-      const { data: convId } = await (supabase.rpc('find_or_create_conversation', {
+      const { data: convId, error: rpcError } = await (supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
         p_phone: phone,
-        p_client_name: newMsgForm.name || phone,
-        p_last_message: newMsgForm.message,
+        p_client_name: contactName,
+        p_last_message: messageText,
       }) as any);
+
+      console.log('[NewMessage] find_or_create result:', convId, 'error:', rpcError);
 
       if (convId) {
         await (supabase.from('whatsapp_messages').insert({
           conversation_id: convId,
           empresa_id: empresaId,
           sender: 'me',
-          content: newMsgForm.message,
+          content: messageText,
           message_type: 'text',
         }) as any);
       }
 
-      // 2. Reload conversations and open immediately
+      // 2. Close modal and reload conversations
       setShowNewMessage(false);
       setNewMsgForm({ phone: '', name: '', message: '' });
 
@@ -328,9 +356,9 @@ export default function WhatsAppInboxPage() {
         if (newConv) openConversation(newConv);
       }
 
-      // 3. Send via server (non-blocking — conversation already exists)
+      // 3. Send via server using captured text
       try {
-        await sendMessage(serverUrl, phone, newMsgForm.message);
+        await sendMessage(serverUrl, phone, messageText);
         toast.success('Mensagem enviada!');
       } catch (sendErr) {
         console.error('Error sending via server:', sendErr);
