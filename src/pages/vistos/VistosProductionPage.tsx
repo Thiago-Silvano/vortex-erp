@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, User, GripVertical, Send, Plus, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { openWhatsAppChat } from '@/components/AppLayout';
+
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
