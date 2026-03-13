@@ -25,6 +25,23 @@ interface Applicant {
   is_main: boolean;
 }
 
+interface PaymentEntry {
+  id?: string;
+  payment_type: string;
+  value: number;
+  payment_date: string;
+  is_received: boolean;
+}
+
+const PAYMENT_TYPES = [
+  { value: 'pix', label: 'Pix' },
+  { value: 'cartao_credito', label: 'Cartão de Crédito' },
+  { value: 'cartao_debito', label: 'Cartão de Débito' },
+  { value: 'boleto', label: 'Boleto' },
+  { value: 'dinheiro', label: 'Dinheiro' },
+  { value: 'transferencia', label: 'Transferência' },
+];
+
 export default function VistosNewSalePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,8 +54,6 @@ export default function VistosNewSalePage() {
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [totalValue, setTotalValue] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState('pix');
-  const [installments, setInstallments] = useState(1);
   const [notes, setNotes] = useState('');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [applicants, setApplicants] = useState<Applicant[]>([
@@ -50,6 +65,11 @@ export default function VistosNewSalePage() {
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [quickClientForApplicant, setQuickClientForApplicant] = useState<number | null>(null);
+
+  // Multi-payment
+  const [payments, setPayments] = useState<PaymentEntry[]>([
+    { payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false },
+  ]);
 
   const refreshClients = () => {
     if (!activeCompany?.id) return;
@@ -74,24 +94,84 @@ export default function VistosNewSalePage() {
     if (!sale) return;
     setClientName(sale.client_name); setClientPhone(sale.client_phone || '');
     setClientEmail(sale.client_email || ''); setProductId(sale.product_id || '');
-    setTotalValue(sale.total_value || 0); setPaymentMethod(sale.payment_method || 'pix');
-    setInstallments(sale.installments || 1); setNotes(sale.notes || '');
+    setTotalValue(sale.total_value || 0);
+    setNotes(sale.notes || '');
     setSaleDate(sale.sale_date);
 
     const { data: apps } = await supabase.from('visa_applicants').select('*').eq('visa_sale_id', id).order('sort_order');
     if (apps && apps.length > 0) setApplicants(apps as Applicant[]);
+
+    // Load payments
+    const { data: paymentData } = await (supabase.from('visa_sale_payments' as any) as any).select('*').eq('visa_sale_id', id).order('created_at');
+    if (paymentData && paymentData.length > 0) {
+      setPayments(paymentData.map((p: any) => ({
+        id: p.id,
+        payment_type: p.payment_type,
+        value: Number(p.value),
+        payment_date: p.payment_date || '',
+        is_received: p.is_received || false,
+      })));
+    }
   };
 
   const handleProductChange = (id: string) => {
     setProductId(id);
     const prod = products.find(p => p.id === id);
-    if (prod) setTotalValue(prod.price * applicants.length);
+    if (prod) {
+      const newTotal = prod.price * applicants.length;
+      setTotalValue(newTotal);
+      autoDistributePayments(newTotal);
+    }
+  };
+
+  const autoDistributePayments = (total: number) => {
+    setPayments(prev => {
+      if (prev.length === 0) return prev;
+      const perPayment = Math.round((total / prev.length) * 100) / 100;
+      const remainder = Math.round((total - perPayment * prev.length) * 100) / 100;
+      return prev.map((p, i) => ({
+        ...p,
+        value: i === 0 ? perPayment + remainder : perPayment,
+      }));
+    });
+  };
+
+  const addPayment = () => {
+    const newPayments = [...payments, { payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false }];
+    setPayments(newPayments);
+    // Auto-distribute
+    const perPayment = Math.round((totalValue / newPayments.length) * 100) / 100;
+    const remainder = Math.round((totalValue - perPayment * newPayments.length) * 100) / 100;
+    setPayments(newPayments.map((p, i) => ({
+      ...p,
+      value: i === 0 ? perPayment + remainder : perPayment,
+    })));
+  };
+
+  const removePayment = (idx: number) => {
+    if (payments.length <= 1) return;
+    const updated = payments.filter((_, i) => i !== idx);
+    // Re-distribute
+    const perPayment = Math.round((totalValue / updated.length) * 100) / 100;
+    const remainder = Math.round((totalValue - perPayment * updated.length) * 100) / 100;
+    setPayments(updated.map((p, i) => ({
+      ...p,
+      value: i === 0 ? perPayment + remainder : perPayment,
+    })));
+  };
+
+  const updatePayment = (idx: number, field: keyof PaymentEntry, value: any) => {
+    setPayments(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
   };
 
   const addApplicant = () => {
     setApplicants([...applicants, { full_name: '', is_main: false }]);
     const prod = products.find(p => p.id === productId);
-    if (prod) setTotalValue(prod.price * (applicants.length + 1));
+    if (prod) {
+      const newTotal = prod.price * (applicants.length + 1);
+      setTotalValue(newTotal);
+      autoDistributePayments(newTotal);
+    }
   };
 
   const removeApplicant = (idx: number) => {
@@ -100,7 +180,11 @@ export default function VistosNewSalePage() {
     if (!updated.some(a => a.is_main)) updated[0].is_main = true;
     setApplicants(updated);
     const prod = products.find(p => p.id === productId);
-    if (prod) setTotalValue(prod.price * updated.length);
+    if (prod) {
+      const newTotal = prod.price * updated.length;
+      setTotalValue(newTotal);
+      autoDistributePayments(newTotal);
+    }
   };
 
   const updateApplicant = (idx: number, field: keyof Applicant, value: any) => {
@@ -112,14 +196,19 @@ export default function VistosNewSalePage() {
     setApplicants(updated);
   };
 
+  const paymentsTotal = payments.reduce((s, p) => s + p.value, 0);
+  const paymentsDiff = Math.round((totalValue - paymentsTotal) * 100) / 100;
+
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Informe o nome do cliente.'); return; }
     if (!productId) { toast.error('Selecione um produto.'); return; }
     if (applicants.some(a => !a.full_name.trim())) { toast.error('Preencha o nome de todos os aplicantes.'); return; }
+    if (Math.abs(paymentsDiff) > 0.01) { toast.error('A soma dos pagamentos deve ser igual ao valor total.'); return; }
 
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Use first payment method for legacy field
     const salePayload = {
       empresa_id: activeCompany?.id,
       client_name: clientName.trim(),
@@ -127,8 +216,8 @@ export default function VistosNewSalePage() {
       client_email: clientEmail,
       product_id: productId,
       total_value: totalValue,
-      payment_method: paymentMethod,
-      installments,
+      payment_method: payments[0]?.payment_type || 'pix',
+      installments: payments.length,
       notes,
       sale_date: saleDate,
       created_by: user?.email || '',
@@ -138,13 +227,47 @@ export default function VistosNewSalePage() {
 
     if (editSaleId) {
       await supabase.from('visa_sales').update(salePayload).eq('id', editSaleId);
-      // Remove old applicants & processes
       await supabase.from('visa_processes').delete().eq('visa_sale_id', editSaleId);
       await supabase.from('visa_applicants').delete().eq('visa_sale_id', editSaleId);
+      await (supabase.from('visa_sale_payments' as any) as any).delete().eq('visa_sale_id', editSaleId);
+      // Delete old receivables linked to this visa sale
+      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
     } else {
       const { data: newSale, error } = await supabase.from('visa_sales').insert(salePayload).select('id').single();
       if (error || !newSale) { toast.error('Erro ao salvar venda.'); setSaving(false); return; }
       saleId = newSale.id;
+    }
+
+    // Insert payments
+    await (supabase.from('visa_sale_payments' as any) as any).insert(
+      payments.map(p => ({
+        visa_sale_id: saleId,
+        payment_type: p.payment_type,
+        value: p.value,
+        payment_date: p.payment_date || null,
+        is_received: p.is_received,
+      }))
+    );
+
+    // Generate receivables based on payments
+    const receivablePayloads = payments.map((p, idx) => {
+      const typeLabel = PAYMENT_TYPES.find(t => t.value === p.payment_type)?.label || p.payment_type;
+      return {
+        sale_id: saleId,
+        installment_number: idx + 1,
+        due_date: p.payment_date || null,
+        amount: p.value,
+        client_name: clientName.trim(),
+        description: `Visto - ${clientName.trim()} (${typeLabel})`,
+        status: p.is_received ? 'paid' : 'pending',
+        payment_date: p.is_received ? p.payment_date || null : null,
+        payment_method: p.payment_type,
+        origin_type: 'visa_sale',
+        empresa_id: activeCompany?.id || null,
+      };
+    });
+    if (receivablePayloads.length > 0) {
+      await supabase.from('receivables').insert(receivablePayloads as any);
     }
 
     // Insert applicants
@@ -161,7 +284,6 @@ export default function VistosNewSalePage() {
 
     const { data: insertedApplicants } = await supabase.from('visa_applicants').insert(appPayloads).select('id, full_name');
 
-    // Create processes: for applicants + optionally for the payer
     if (insertedApplicants) {
       const processPayloads = insertedApplicants.map(app => ({
         empresa_id: activeCompany?.id,
@@ -173,14 +295,11 @@ export default function VistosNewSalePage() {
         status: 'falta_passaporte' as const,
       }));
 
-      // If payer is also an applicant, add a process for the payer (using the first applicant as reference)
       if (payerIsApplicant) {
-        // Check if payer name is already among applicants to avoid duplicate
         const payerAlreadyListed = insertedApplicants.some(
           app => app.full_name.trim().toLowerCase() === clientName.trim().toLowerCase()
         );
         if (!payerAlreadyListed) {
-          // Create a visa_applicant record for the payer
           const { data: payerApplicant } = await supabase.from('visa_applicants').insert({
             visa_sale_id: saleId,
             full_name: clientName.trim(),
@@ -209,6 +328,8 @@ export default function VistosNewSalePage() {
     setSaving(false);
     navigate('/vistos/sales');
   };
+
+  const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
   return (
     <AppLayout>
@@ -271,24 +392,64 @@ export default function VistosNewSalePage() {
                 </Select>
               </div>
               <div><Label>Data da Venda</Label><Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} /></div>
-              <div><Label>Valor Total (R$)</Label><Input value={maskCurrencyInput(totalValue)} onChange={e => setTotalValue(parseCurrency(e.target.value))} placeholder="R$ 0,00" /></div>
-              <div>
-                <Label>Forma de Pagamento</Label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pix">Pix</SelectItem>
-                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                    <SelectItem value="cartao">Cartão</SelectItem>
-                    <SelectItem value="boleto">Boleto</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {paymentMethod === 'cartao' && (
-                <div><Label>Parcelas</Label><Input type="number" min={1} max={12} value={installments} onChange={e => setInstallments(Number(e.target.value))} /></div>
-              )}
+              <div><Label>Valor Total (R$)</Label><Input value={maskCurrencyInput(totalValue)} onChange={e => { const v = parseCurrency(e.target.value); setTotalValue(v); autoDistributePayments(v); }} placeholder="R$ 0,00" /></div>
             </div>
             <div><Label>Observações</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} /></div>
+          </CardContent>
+        </Card>
+
+        {/* Multi-Payment */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Pagamentos</CardTitle>
+              <Button variant="outline" size="sm" onClick={addPayment}><Plus className="h-4 w-4 mr-1" /> Adicionar Pagamento</Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {payments.map((payment, idx) => (
+              <div key={idx} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground">Pagamento {idx + 1}</span>
+                  {payments.length > 1 && (
+                    <Button variant="ghost" size="icon" className="text-destructive h-7 w-7" onClick={() => removePayment(idx)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div>
+                    <Label className="text-xs">Tipo</Label>
+                    <Select value={payment.payment_type} onValueChange={v => updatePayment(idx, 'payment_type', v)}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {PAYMENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Valor (R$)</Label>
+                    <Input className="h-9" value={maskCurrencyInput(payment.value)} onChange={e => updatePayment(idx, 'value', parseCurrency(e.target.value))} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Data de Pagamento</Label>
+                    <Input className="h-9" type="date" value={payment.payment_date} onChange={e => updatePayment(idx, 'payment_date', e.target.value)} />
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <div className="flex items-center gap-2">
+                      <Checkbox id={`received-${idx}`} checked={payment.is_received} onCheckedChange={v => updatePayment(idx, 'is_received', v === true)} />
+                      <Label htmlFor={`received-${idx}`} className="text-sm cursor-pointer">Recebido</Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {totalValue > 0 && (
+              <div className={`text-sm p-2 rounded ${Math.abs(paymentsDiff) > 0.01 ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
+                Total dos pagamentos: <strong>{fmt(paymentsTotal)}</strong> / Total da venda: <strong>{fmt(totalValue)}</strong>
+                {Math.abs(paymentsDiff) > 0.01 && <span className="ml-2">(Diferença: {fmt(paymentsDiff)})</span>}
+              </div>
+            )}
           </CardContent>
         </Card>
 

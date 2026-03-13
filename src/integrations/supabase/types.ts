@@ -2251,6 +2251,44 @@ export type Database = {
           },
         ]
       }
+      visa_sale_payments: {
+        Row: {
+          created_at: string
+          id: string
+          is_received: boolean
+          payment_date: string | null
+          payment_type: string
+          value: number
+          visa_sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_received?: boolean
+          payment_date?: string | null
+          payment_type?: string
+          value?: number
+          visa_sale_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_received?: boolean
+          payment_date?: string | null
+          payment_type?: string
+          value?: number
+          visa_sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visa_sale_payments_visa_sale_id_fkey"
+            columns: ["visa_sale_id"]
+            isOneToOne: false
+            referencedRelation: "visa_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visa_sales: {
         Row: {
           client_email: string | null
