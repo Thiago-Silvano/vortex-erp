@@ -165,12 +165,18 @@ export default function SalesPage() {
                     <TableCell className="capitalize">{s.payment_method}</TableCell>
                     <TableCell>{fmt(Number(s.total_sale))}</TableCell>
                     <TableCell>{fmt(Number(s.net_profit))}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const ws = workflowStatusMap[s.sale_workflow_status || 'em_aberto'] || workflowStatusMap.em_aberto;
+                        return <Badge className={`${ws.color} border`} variant="outline">{ws.label}</Badge>;
+                      })()}
+                    </TableCell>
                     <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
                         {canDelete(s) && (
-                          <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(s)}>
+                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         )}
