@@ -51,7 +51,7 @@ export default function VistosSalesPage() {
     (s.product_name || '').toLowerCase().includes(filter.toLowerCase())
   );
 
-  const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto' };
+  const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto', cartao_credito: 'Cartão Crédito', cartao_debito: 'Cartão Débito', transferencia: 'Transferência' };
 
   return (
     <AppLayout>
