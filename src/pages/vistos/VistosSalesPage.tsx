@@ -129,11 +129,21 @@ export default function VistosSalesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead>Pagamento</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('client_name')}>
+                    <span className="inline-flex items-center">Cliente <SortIcon col="client_name" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('product_name')}>
+                    <span className="inline-flex items-center">Produto <SortIcon col="product_name" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_date')}>
+                    <span className="inline-flex items-center">Data <SortIcon col="sale_date" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none text-right" onClick={() => toggleSort('total_value')}>
+                    <span className="inline-flex items-center justify-end w-full">Valor <SortIcon col="total_value" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('payment_method')}>
+                    <span className="inline-flex items-center">Pagamento <SortIcon col="payment_method" /></span>
+                  </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
