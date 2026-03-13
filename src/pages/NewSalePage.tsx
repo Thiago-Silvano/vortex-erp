@@ -1522,7 +1522,10 @@ export default function NewSalePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Serviços da Venda</CardTitle>
-            <Button size="sm" variant="outline" onClick={() => setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {} }])}>
+            <Button size="sm" variant="outline" onClick={() => {
+              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {} }]);
+              setTimeout(() => setEditingItemIdx(items.length), 50);
+            }}>
               <Plus className="h-4 w-4 mr-1" />Adicionar
             </Button>
           </CardHeader>
@@ -2160,6 +2163,12 @@ export default function NewSalePage() {
               });
               // Auto-save draft after service detail save
               setTimeout(() => handleSilentSaveDraft(), 300);
+            }}
+            onHotelImagesFound={(images) => {
+              setItemImages(prev => ({
+                ...prev,
+                [editingItemIdx]: [...(prev[editingItemIdx] || []), ...images],
+              }));
             }}
           />
         )}

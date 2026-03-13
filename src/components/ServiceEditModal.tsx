@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -41,6 +41,7 @@ interface HotelInfo {
   checkOutDate: string;
   category: string;
   highlights: string[];
+  images?: string[];
 }
 
 export interface ServiceMetadata {
@@ -75,6 +76,7 @@ interface Props {
   description: string;
   metadata: ServiceMetadata;
   onSave: (description: string, metadata: ServiceMetadata) => void;
+  onHotelImagesFound?: (images: string[]) => void;
 }
 
 const emptyLeg = (): FlightLeg => ({
@@ -85,10 +87,10 @@ const emptyLeg = (): FlightLeg => ({
 const emptyHotel = (): HotelInfo => ({
   hotelName: '', stars: 0, address: '', city: '', country: '', description: '',
   amenities: [], checkInTime: '15:00', checkOutTime: '11:00',
-  checkInDate: '', checkOutDate: '', category: '', highlights: [],
+  checkInDate: '', checkOutDate: '', category: '', highlights: [], images: [],
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, onSave }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, onSave, onHotelImagesFound }: Props) {
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
   const [detailedDesc, setDetailedDesc] = useState(metadata.detailedDescription || '');
@@ -96,6 +98,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [baggage, setBaggage] = useState<BaggageInfo>(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
   const [hotel, setHotel] = useState<HotelInfo>(metadata.hotel || emptyHotel());
   const [searchingHotel, setSearchingHotel] = useState(false);
+  const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
+  const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (open) {
@@ -105,6 +109,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setFlightLegs(metadata.flightLegs || []);
       setBaggage(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
       setHotel(metadata.hotel || emptyHotel());
+      setHotelImages(metadata.hotel?.images || []);
+      setSelectedImageIndices(new Set());
     }
   }, [open]);
 
@@ -114,9 +120,20 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   };
   const removeLeg = (idx: number) => setFlightLegs(prev => prev.filter((_, i) => i !== idx));
 
+  const toggleImageSelection = (idx: number) => {
+    setSelectedImageIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
   const handleSearchHotel = async () => {
     if (!hotel.hotelName.trim()) { toast.error('Digite o nome do hotel'); return; }
     setSearchingHotel(true);
+    setHotelImages([]);
+    setSelectedImageIndices(new Set());
     try {
       const { data, error } = await supabase.functions.invoke('search-hotel-ai', {
         body: { hotelName: hotel.hotelName, location: hotel.city || hotel.country || '' },
@@ -138,7 +155,12 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           category: h.category || prev.category,
           highlights: h.highlights || prev.highlights,
         }));
-        toast.success('Informações do hotel encontradas!');
+        if (data.images && data.images.length > 0) {
+          setHotelImages(data.images);
+          // Auto-select all images
+          setSelectedImageIndices(new Set(data.images.map((_: string, i: number) => i)));
+        }
+        toast.success(`Informações do hotel encontradas! ${data.images?.length || 0} imagens geradas.`);
       } else {
         toast.error('Não foi possível encontrar informações do hotel');
       }
@@ -150,6 +172,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   };
 
   const handleSave = () => {
+    const selectedImages = hotelImages.filter((_, i) => selectedImageIndices.has(i));
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
     if (type === 'aereo') {
       meta.flightLegs = flightLegs;
@@ -160,9 +183,12 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       meta.totalTravelDurationReturn = calcTotalTravelDuration(returnL);
     }
     if (type === 'hotel') {
-      meta.hotel = hotel;
+      meta.hotel = { ...hotel, images: selectedImages };
     }
     onSave(desc, meta);
+    if (type === 'hotel' && selectedImages.length > 0 && onHotelImagesFound) {
+      onHotelImagesFound(selectedImages);
+    }
     onClose();
   };
 
@@ -272,9 +298,16 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 </div>
                 <Button variant="outline" className="mt-6" onClick={handleSearchHotel} disabled={searchingHotel}>
                   {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
-                  Buscar
+                  {searchingHotel ? 'Buscando...' : 'Buscar'}
                 </Button>
               </div>
+
+              {searchingHotel && (
+                <div className="p-4 bg-muted/50 rounded-lg text-center text-sm text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
+                  Buscando informações e gerando imagens do hotel...
+                </div>
+              )}
 
               {hotel.description && (
                 <div className="p-3 bg-muted/50 rounded-lg text-sm">
@@ -287,6 +320,41 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Hotel Images Gallery */}
+              {hotelImages.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold">Imagens do Hotel ({selectedImageIndices.size} selecionadas)</Label>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => setSelectedImageIndices(new Set(hotelImages.map((_, i) => i)))}>
+                        Selecionar todas
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setSelectedImageIndices(new Set())}>
+                        Limpar
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    {hotelImages.map((img, idx) => (
+                      <div
+                        key={idx}
+                        className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                          selectedImageIndices.has(idx) ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-muted-foreground/30'
+                        }`}
+                        onClick={() => toggleImageSelection(idx)}
+                      >
+                        <img src={img} alt={`Hotel ${idx + 1}`} className="w-full h-24 object-cover" />
+                        {selectedImageIndices.has(idx) && (
+                          <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center">
+                            <Check className="h-3 w-3" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
