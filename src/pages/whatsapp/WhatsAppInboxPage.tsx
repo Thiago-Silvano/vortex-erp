@@ -66,27 +66,28 @@ export default function WhatsAppInboxPage() {
     socketRef.current = socket;
 
     socket.on('nova_mensagem', async (data: any) => {
-      const phone = data.from || data.number || '';
+      const phone = normalizePhone(data.from || data.number || '');
       const content = data.body || data.message || '';
+      if (!phone || phone.length < 8) return;
 
-      // Save to DB
-      const conv = conversations.find(c => c.phone === phone);
-      if (conv) {
+      // Find or create conversation via DB function
+      const { data: convId } = await (supabase.rpc('find_or_create_conversation', {
+        p_empresa_id: empresaId,
+        p_phone: phone,
+        p_client_name: data.name || data.pushname || phone,
+        p_last_message: content,
+      }) as any);
+
+      if (convId) {
         await (supabase.from('whatsapp_messages').insert({
-          conversation_id: conv.id,
+          conversation_id: convId,
           empresa_id: empresaId,
           sender: 'them',
           content,
           message_type: 'text',
         }) as any);
 
-        await (supabase.from('whatsapp_conversations').update({
-          last_message: content,
-          last_message_at: new Date().toISOString(),
-          unread_count: (conv.unread_count || 0) + 1,
-        }).eq('id', conv.id) as any);
-
-        if (activeConv?.id === conv.id) {
+        if (activeConv?.phone && normalizePhone(activeConv.phone) === phone) {
           setMessages(prev => [...prev, {
             id: crypto.randomUUID(),
             sender: 'them',
@@ -97,14 +98,13 @@ export default function WhatsAppInboxPage() {
           }]);
         }
 
-        setConversations(prev => prev.map(c =>
-          c.id === conv.id
-            ? { ...c, last_message: content, last_message_at: new Date().toISOString(), unread_count: c.id === activeConv?.id ? 0 : c.unread_count + 1 }
-            : c
-        ));
-      } else {
-        // New conversation
-        loadConversations();
+        // Reload conversations to get updated state
+        const { data: updated } = await (supabase
+          .from('whatsapp_conversations')
+          .select('*')
+          .eq('empresa_id', empresaId)
+          .order('last_message_at', { ascending: false }) as any);
+        if (updated) setConversations(updated);
       }
 
       toast.info(`Nova mensagem de ${data.name || phone}`);
