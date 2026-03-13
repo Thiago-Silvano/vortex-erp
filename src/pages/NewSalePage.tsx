@@ -1275,6 +1275,7 @@ export default function NewSalePage() {
                     <SelectItem value="perdido">Perdido</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
               <div>
                 <Label>Data da Venda</Label>
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
