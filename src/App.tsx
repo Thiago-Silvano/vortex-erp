@@ -53,6 +53,13 @@ import DS160PublicPage from "./pages/DS160PublicPage";
 import DS160GroupPublicPage from "./pages/DS160GroupPublicPage";
 import VistosDS160Page from "./pages/vistos/VistosDS160Page";
 
+// WhatsApp pages
+import WhatsAppInboxPage from "./pages/whatsapp/WhatsAppInboxPage";
+import WhatsAppContactsPage from "./pages/whatsapp/WhatsAppContactsPage";
+import WhatsAppLabelsPage from "./pages/whatsapp/WhatsAppLabelsPage";
+import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage";
+import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -110,6 +117,13 @@ const App = () => (
           <Route path="/email" element={<ProtectedRoute><EmailInboxPage /></ProtectedRoute>} />
           <Route path="/email/templates" element={<ProtectedRoute><EmailTemplatesPage /></ProtectedRoute>} />
           <Route path="/email/settings" element={<ProtectedRoute><EmailSettingsPage /></ProtectedRoute>} />
+
+          {/* WhatsApp routes */}
+          <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppInboxPage /></ProtectedRoute>} />
+          <Route path="/whatsapp/contacts" element={<ProtectedRoute><WhatsAppContactsPage /></ProtectedRoute>} />
+          <Route path="/whatsapp/labels" element={<ProtectedRoute><WhatsAppLabelsPage /></ProtectedRoute>} />
+          <Route path="/whatsapp/quick-replies" element={<ProtectedRoute><WhatsAppQuickRepliesPage /></ProtectedRoute>} />
+          <Route path="/whatsapp/settings" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
           {/* Public pages (no auth required) */}
           <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
           <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
