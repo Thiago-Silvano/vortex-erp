@@ -62,8 +62,8 @@ export default function WhatsAppSettingsPage() {
     setChecking(true);
     try {
       const data = await checkStatus(settings.server_url);
-      const connected = data.connected || data.status === 'connected';
-      setSettings(prev => ({ ...prev, is_connected: connected }));
+      const statusValue = String(data?.status ?? data?.state ?? '').toLowerCase();
+      const connected = Boolean(data?.connected ?? data?.is_connected ?? data?.isConnected ?? data?.authenticated) || ['connected', 'open', 'ready'].includes(statusValue);
       await (supabase.from('whatsapp_settings').update({ is_connected: connected }).eq('id', settings.id) as any);
       toast.success(connected ? 'WhatsApp conectado!' : 'WhatsApp desconectado');
     } catch {
