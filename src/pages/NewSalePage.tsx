@@ -149,6 +149,7 @@ export default function NewSalePage() {
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
   const [showIndividualValues, setShowIndividualValues] = useState(true);
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
+  const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
 
   useEffect(() => {
     if (initialEditSaleId) loadSale(initialEditSaleId);
@@ -158,6 +159,7 @@ export default function NewSalePage() {
     const { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
     if (!sale) return;
     setSaleStatus(sale.status === 'active' ? 'active' : 'draft');
+    setSaleWorkflowStatus((sale as any).sale_workflow_status || 'em_aberto');
     setQuoteId(sale.quote_id || '');
     setClientName(sale.client_name);
     setSaleDate(sale.sale_date);
@@ -627,6 +629,7 @@ export default function NewSalePage() {
         trip_start_date: tripStartDate || null,
         trip_end_date: tripEndDate || null,
         destination_name: destinationName || '',
+        sale_workflow_status: saleWorkflowStatus,
       } as any,
       userEmail,
     };
@@ -1259,6 +1262,19 @@ export default function NewSalePage() {
               <div>
                 <Label>Nº Passageiros</Label>
                 <Input type="number" min="1" value={passengersCount} onChange={e => setPassengersCount(parseInt(e.target.value) || 1)} />
+              </div>
+              <div>
+                <Label>Status da Venda</Label>
+                <Select value={saleWorkflowStatus} onValueChange={setSaleWorkflowStatus}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="em_aberto">Em aberto</SelectItem>
+                    <SelectItem value="contatando">Contatando</SelectItem>
+                    <SelectItem value="reservado">Reservado</SelectItem>
+                    <SelectItem value="emitido">Emitido</SelectItem>
+                    <SelectItem value="perdido">Perdido</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Data da Venda</Label>

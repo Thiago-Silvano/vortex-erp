@@ -31,6 +31,7 @@ interface SaleRow {
   status: string;
   payment_method: string;
   created_at: string;
+  sale_workflow_status: string;
 }
 
 export default function SalesPage() {
@@ -118,6 +119,14 @@ export default function SalesPage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  const workflowStatusMap: Record<string, { label: string; color: string }> = {
+    em_aberto: { label: 'Em aberto', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+    contatando: { label: 'Contatando', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+    reservado: { label: 'Reservado', color: 'bg-purple-100 text-purple-800 border-purple-300' },
+    emitido: { label: 'Emitido', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+    perdido: { label: 'Perdido', color: 'bg-red-100 text-red-800 border-red-300' },
+  };
+
   return (
     <AppLayout>
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -141,13 +150,14 @@ export default function SalesPage() {
                   <TableHead>Pagamento</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Lucro Líq.</TableHead>
+                  <TableHead>Status Venda</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
@@ -155,12 +165,18 @@ export default function SalesPage() {
                     <TableCell className="capitalize">{s.payment_method}</TableCell>
                     <TableCell>{fmt(Number(s.total_sale))}</TableCell>
                     <TableCell>{fmt(Number(s.net_profit))}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const ws = workflowStatusMap[s.sale_workflow_status || 'em_aberto'] || workflowStatusMap.em_aberto;
+                        return <Badge className={`${ws.color} border`} variant="outline">{ws.label}</Badge>;
+                      })()}
+                    </TableCell>
                     <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
                         {canDelete(s) && (
-                          <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(s)}>
+                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         )}
@@ -184,9 +200,15 @@ export default function SalesPage() {
                   <p className="font-semibold truncate">{s.client_name}</p>
                   <p className="text-xs text-muted-foreground">{s.sale_date ? format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'} · <span className="capitalize">{s.payment_method}</span></p>
                 </div>
-                <Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'} className="shrink-0 ml-2">
-                  {s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}
-                </Badge>
+                <div className="flex gap-1 shrink-0 ml-2">
+                  {(() => {
+                    const ws = workflowStatusMap[s.sale_workflow_status || 'em_aberto'] || workflowStatusMap.em_aberto;
+                    return <Badge className={`${ws.color} border text-xs`} variant="outline">{ws.label}</Badge>;
+                  })()}
+                  <Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'} className="text-xs">
+                    {s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}
+                  </Badge>
+                </div>
               </div>
               <div className="flex items-center justify-between mt-2">
                 <div className="flex gap-4 text-sm">

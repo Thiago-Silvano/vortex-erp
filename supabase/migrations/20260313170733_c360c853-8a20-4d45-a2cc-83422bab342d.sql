@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN IF NOT EXISTS sale_workflow_status text NOT NULL DEFAULT 'em_aberto';
