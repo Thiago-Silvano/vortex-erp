@@ -21,6 +21,7 @@ import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQu
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
+import ImageSearchModal, { StockImage } from '@/components/ImageSearchModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, maskCpf, maskEmail, maskCurrency, parseCurrency } from '@/lib/masks';
@@ -137,6 +138,10 @@ export default function NewSalePage() {
   const [aiImageSearch, setAiImageSearch] = useState(false);
   const [aiImages, setAiImages] = useState<string[]>([]);
   const [aiImageDialog, setAiImageDialog] = useState(false);
+  const [stockImageSearchOpen, setStockImageSearchOpen] = useState(false);
+  const [unsplashApiKey, setUnsplashApiKey] = useState('');
+  const [pexelsApiKey, setPexelsApiKey] = useState('');
+  const [hasStockKeys, setHasStockKeys] = useState(false);
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [supplierPayments, setSupplierPayments] = useState<SupplierPaymentControl[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -257,6 +262,14 @@ export default function NewSalePage() {
     })();
     if (activeCompany) {
       (supabase.from('sellers') as any).select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
+      // Load stock image API keys
+      supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1).single().then(({ data }) => {
+        if (data) {
+          const d = data as any;
+          if (d.unsplash_api_key) { setUnsplashApiKey(d.unsplash_api_key); setHasStockKeys(true); }
+          if (d.pexels_api_key) { setPexelsApiKey(d.pexels_api_key); setHasStockKeys(true); }
+        }
+      });
     }
   }, [activeCompany]);
 
@@ -579,6 +592,36 @@ export default function NewSalePage() {
       setAiImageDialog(false);
       setAiImages([]);
       toast.success('Imagem selecionada!');
+    } catch {
+      toast.error('Erro ao processar imagem');
+    }
+  };
+
+  const handleStockImageSelect = async (img: StockImage) => {
+    try {
+      const res = await fetch(img.url_full);
+      const blob = await res.blob();
+      const ext = img.url_full.includes('.png') ? 'png' : 'jpg';
+      const fileName = `destinations/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('quote-images').upload(fileName, blob, { contentType: `image/${ext === 'png' ? 'png' : 'jpeg'}` });
+      if (error) { toast.error('Erro ao salvar imagem'); return; }
+      const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+      setDestinationImageUrl(data.publicUrl);
+      setStockImageSearchOpen(false);
+
+      // Save to destination_images cache
+      await supabase.from('destination_images' as any).insert({
+        titulo: img.description,
+        autor: img.photographer,
+        fonte: img.source,
+        url_original: img.url_full,
+        url_local: data.publicUrl,
+        largura: img.width,
+        altura: img.height,
+        empresa_id: activeCompany?.id || null,
+      } as any);
+
+      toast.success(`Imagem de ${img.photographer} (${img.source}) selecionada!`);
     } catch {
       toast.error('Erro ao processar imagem');
     }
@@ -1372,6 +1415,19 @@ export default function NewSalePage() {
                     <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
                   </label>
                 )}
+                {hasStockKeys && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStockImageSearchOpen(true)}
+                    disabled={!destinationName.trim()}
+                    className="gap-2"
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                    Buscar Imagens
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
@@ -1408,6 +1464,16 @@ export default function NewSalePage() {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* Stock Image Search Modal */}
+            <ImageSearchModal
+              open={stockImageSearchOpen}
+              onClose={() => setStockImageSearchOpen(false)}
+              onSelect={handleStockImageSelect}
+              initialQuery={destinationName}
+              unsplashKey={unsplashApiKey}
+              pexelsKey={pexelsApiKey}
+            />
           </CardContent>
         </Card>
 

@@ -110,6 +110,8 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          pexels_api_key: string | null
+          unsplash_api_key: string | null
           updated_at: string
           website: string | null
           whatsapp: string | null
@@ -126,6 +128,8 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          pexels_api_key?: string | null
+          unsplash_api_key?: string | null
           updated_at?: string
           website?: string | null
           whatsapp?: string | null
@@ -142,6 +146,8 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          pexels_api_key?: string | null
+          unsplash_api_key?: string | null
           updated_at?: string
           website?: string | null
           whatsapp?: string | null
@@ -450,6 +456,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "cost_centers_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      destination_images: {
+        Row: {
+          altura: number | null
+          autor: string | null
+          created_at: string | null
+          data_importacao: string | null
+          empresa_id: string | null
+          fonte: string | null
+          id: string
+          largura: number | null
+          titulo: string
+          url_local: string
+          url_original: string | null
+        }
+        Insert: {
+          altura?: number | null
+          autor?: string | null
+          created_at?: string | null
+          data_importacao?: string | null
+          empresa_id?: string | null
+          fonte?: string | null
+          id?: string
+          largura?: number | null
+          titulo?: string
+          url_local?: string
+          url_original?: string | null
+        }
+        Update: {
+          altura?: number | null
+          autor?: string | null
+          created_at?: string | null
+          data_importacao?: string | null
+          empresa_id?: string | null
+          fonte?: string | null
+          id?: string
+          largura?: number | null
+          titulo?: string
+          url_local?: string
+          url_original?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "destination_images_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
