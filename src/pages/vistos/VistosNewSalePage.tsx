@@ -208,7 +208,7 @@ export default function VistosNewSalePage() {
     const base = startDate ? new Date(startDate + 'T12:00:00') : new Date();
     return Array.from({ length: count }, (_, i) => {
       const d = new Date(base);
-      d.setMonth(d.getMonth() + i);
+      d.setDate(d.getDate() + 30 * (i + 1));
       return {
         value: i === 0 ? perInst + remainder : perInst,
         payment_date: format(d, 'yyyy-MM-dd'),
