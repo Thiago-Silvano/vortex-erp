@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingCart, Cog, CalendarDays, CheckCircle, XCircle } from 'lucide-react';
+import { ShoppingCart, Cog, CalendarDays, CheckCircle, XCircle, DollarSign, Receipt } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface Stats {
@@ -12,6 +12,9 @@ interface Stats {
   scheduled: number;
   approved: number;
   denied: number;
+  revenueTotal: number;
+  revenueServices: number;
+  revenueFees: number;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -34,7 +37,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function VistosDashboard() {
   const { activeCompany } = useCompany();
-  const [stats, setStats] = useState<Stats>({ salesThisMonth: 0, inProduction: 0, scheduled: 0, approved: 0, denied: 0 });
+  const [stats, setStats] = useState<Stats>({ salesThisMonth: 0, inProduction: 0, scheduled: 0, approved: 0, denied: 0, revenueTotal: 0, revenueServices: 0, revenueFees: 0 });
   const [statusChart, setStatusChart] = useState<{ name: string; value: number; color: string }[]>([]);
   const [productChart, setProductChart] = useState<{ name: string; vendas: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,22 +61,40 @@ export default function VistosDashboard() {
     setLoading(true);
     const empresaId = activeCompany?.id;
 
-    // Sales this month
     const now = new Date();
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const { data: sales } = await supabase
       .from('visa_sales')
-      .select('id, product_id')
+      .select('id, product_id, total_value')
       .eq('empresa_id', empresaId)
       .gte('sale_date', monthStart);
 
-    // Processes
+    // Fetch sale items for revenue breakdown
+    const saleIds = sales?.map(s => s.id) || [];
+    let totalServices = 0;
+    let totalFees = 0;
+    if (saleIds.length > 0) {
+      const { data: items } = await (supabase.from('visa_sale_items' as any) as any)
+        .select('total_value, is_supplier_fee')
+        .in('visa_sale_id', saleIds);
+      if (items) {
+        items.forEach((item: any) => {
+          if (item.is_supplier_fee) totalFees += Number(item.total_value) || 0;
+          else totalServices += Number(item.total_value) || 0;
+        });
+      }
+    }
+    const totalRevenue = sales?.reduce((s, v) => s + Number(v.total_value || 0), 0) || 0;
+    // If no items found (legacy), put all in services
+    if (totalServices === 0 && totalFees === 0 && totalRevenue > 0) {
+      totalServices = totalRevenue;
+    }
+
     const { data: processes } = await supabase
       .from('visa_processes')
       .select('status, product_id')
       .eq('empresa_id', empresaId);
 
-    // Products for names
     const { data: products } = await supabase
       .from('visa_products')
       .select('id, name')
@@ -98,6 +119,9 @@ export default function VistosDashboard() {
       scheduled: sched,
       approved: appr,
       denied: den,
+      revenueTotal: totalRevenue,
+      revenueServices: totalServices,
+      revenueFees: totalFees,
     });
 
     setStatusChart(
@@ -108,7 +132,6 @@ export default function VistosDashboard() {
       }))
     );
 
-    // Sales by product
     const prodSales: Record<string, number> = {};
     sales?.forEach(s => {
       const name = productMap[s.product_id] || 'Outro';
@@ -121,13 +144,17 @@ export default function VistosDashboard() {
 
   const total = stats.approved + stats.denied;
   const approvalRate = total > 0 ? Math.round((stats.approved / total) * 100) : 0;
+  const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
   const statCards = [
-    { label: 'Vendas do Mês', value: stats.salesThisMonth, icon: ShoppingCart, color: 'bg-primary text-primary-foreground' },
-    { label: 'Em Produção', value: stats.inProduction, icon: Cog, color: 'bg-blue-600 text-white' },
-    { label: 'Agendadas', value: stats.scheduled, icon: CalendarDays, color: 'bg-violet-600 text-white' },
-    { label: 'Aprovados', value: stats.approved, icon: CheckCircle, color: 'bg-emerald-600 text-white' },
-    { label: 'Negados', value: stats.denied, icon: XCircle, color: 'bg-destructive text-destructive-foreground' },
+    { label: 'Vendas do Mês', value: stats.salesThisMonth.toString(), icon: ShoppingCart, color: 'bg-primary text-primary-foreground' },
+    { label: 'Faturamento Total', value: fmt(stats.revenueTotal), icon: DollarSign, color: 'bg-yellow-500 text-white' },
+    { label: 'Serviços', value: fmt(stats.revenueServices), icon: DollarSign, color: 'bg-emerald-600 text-white' },
+    { label: 'Taxas Fornecedor', value: fmt(stats.revenueFees), icon: Receipt, color: 'bg-amber-500 text-white' },
+    { label: 'Em Produção', value: stats.inProduction.toString(), icon: Cog, color: 'bg-blue-600 text-white' },
+    { label: 'Agendadas', value: stats.scheduled.toString(), icon: CalendarDays, color: 'bg-violet-600 text-white' },
+    { label: 'Aprovados', value: stats.approved.toString(), icon: CheckCircle, color: 'bg-emerald-600 text-white' },
+    { label: 'Negados', value: stats.denied.toString(), icon: XCircle, color: 'bg-destructive text-destructive-foreground' },
   ];
 
   return (
@@ -141,18 +168,18 @@ export default function VistosDashboard() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {[1,2,3,4,5].map(i => <Card key={i} className="animate-pulse"><CardContent className="p-6 h-28" /></Card>)}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+            {[1,2,3,4,5,6,7,8].map(i => <Card key={i} className="animate-pulse"><CardContent className="p-6 h-28" /></Card>)}
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
               {statCards.map(c => (
                 <Card key={c.label} className={`${c.color} border-0 shadow-md`}>
                   <CardContent className="p-5">
-                    <c.icon className="h-7 w-7 opacity-80 mb-2" />
-                    <p className="text-2xl font-bold">{c.value}</p>
-                    <p className="text-sm opacity-80">{c.label}</p>
+                    <c.icon className="h-6 w-6 opacity-80 mb-2" />
+                    <p className="text-xl font-bold leading-tight">{c.value}</p>
+                    <p className="text-xs opacity-80 mt-1">{c.label}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -187,7 +214,7 @@ export default function VistosDashboard() {
               {productChart.length > 0 && (
                 <Card>
                   <CardContent className="p-5">
-                    <h3 className="font-semibold mb-4 text-foreground">Vendas por Produto</h3>
+                    <h3 className="font-semibold mb-4 text-foreground">Vendas por Serviço</h3>
                     <ResponsiveContainer width="100%" height={250}>
                       <BarChart data={productChart}>
                         <CartesianGrid strokeDasharray="3 3" />

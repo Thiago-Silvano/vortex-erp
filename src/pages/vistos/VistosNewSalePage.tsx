@@ -13,12 +13,23 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Plus, Trash2, ChevronsUpDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import QuickClientModal from '@/components/QuickClientModal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, validateEmail, maskCurrencyInput, parseCurrency } from '@/lib/masks';
 
-interface Product { id: string; name: string; price: number; }
+interface Product { id: string; name: string; price: number; is_supplier_fee: boolean; }
+
+interface SaleItem {
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total_value: number;
+  is_supplier_fee: boolean;
+}
+
 interface Applicant {
   id?: string;
   full_name: string;
@@ -57,11 +68,10 @@ export default function VistosNewSalePage() {
   const editSaleId = (location.state as any)?.editSaleId;
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [productId, setProductId] = useState('');
+  const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
-  const [totalValue, setTotalValue] = useState(0);
   const [notes, setNotes] = useState('');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [applicants, setApplicants] = useState<Applicant[]>([
@@ -78,8 +88,11 @@ export default function VistosNewSalePage() {
     payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false, num_installments: 1, installments: [],
   });
 
-  // Multi-payment
   const [payments, setPayments] = useState<PaymentEntry[]>([makeDefaultPayment()]);
+
+  const totalValue = saleItems.reduce((s, item) => s + item.total_value, 0);
+  const totalServices = saleItems.filter(i => !i.is_supplier_fee).reduce((s, i) => s + i.total_value, 0);
+  const totalFees = saleItems.filter(i => i.is_supplier_fee).reduce((s, i) => s + i.total_value, 0);
 
   const refreshClients = () => {
     if (!activeCompany?.id) return;
@@ -89,7 +102,7 @@ export default function VistosNewSalePage() {
 
   useEffect(() => {
     if (!activeCompany?.id) return;
-    supabase.from('visa_products').select('id, name, price').eq('empresa_id', activeCompany.id).order('name')
+    supabase.from('visa_products').select('id, name, price, is_supplier_fee').eq('empresa_id', activeCompany.id).order('name')
       .then(({ data }) => { if (data) setProducts(data as Product[]); });
     supabase.from('clients').select('id, full_name, phone, email').eq('empresa_id', activeCompany.id).order('full_name')
       .then(({ data }) => { if (data) setAllClients(data); });
@@ -103,18 +116,41 @@ export default function VistosNewSalePage() {
     const { data: sale } = await supabase.from('visa_sales').select('*').eq('id', id).single();
     if (!sale) return;
     setClientName(sale.client_name); setClientPhone(sale.client_phone || '');
-    setClientEmail(sale.client_email || ''); setProductId(sale.product_id || '');
-    setTotalValue(sale.total_value || 0);
+    setClientEmail(sale.client_email || '');
     setNotes(sale.notes || '');
     setSaleDate(sale.sale_date);
+
+    // Load sale items
+    const { data: items } = await (supabase.from('visa_sale_items' as any) as any).select('*').eq('visa_sale_id', id).order('sort_order');
+    if (items && items.length > 0) {
+      setSaleItems(items.map((item: any) => ({
+        product_id: item.product_id || '',
+        product_name: item.product_name || '',
+        quantity: item.quantity || 1,
+        unit_price: Number(item.unit_price) || 0,
+        total_value: Number(item.total_value) || 0,
+        is_supplier_fee: item.is_supplier_fee || false,
+      })));
+    } else if (sale.product_id) {
+      // Legacy: single product_id on sale
+      const prod = products.find(p => p.id === sale.product_id);
+      if (prod) {
+        setSaleItems([{
+          product_id: prod.id,
+          product_name: prod.name,
+          quantity: 1,
+          unit_price: Number(sale.total_value) || prod.price,
+          total_value: Number(sale.total_value) || prod.price,
+          is_supplier_fee: prod.is_supplier_fee,
+        }]);
+      }
+    }
 
     const { data: apps } = await supabase.from('visa_applicants').select('*').eq('visa_sale_id', id).order('sort_order');
     if (apps && apps.length > 0) setApplicants(apps as Applicant[]);
 
-    // Load payments
-    const { data: paymentData } = await (supabase.from('visa_sale_payments' as any) as any).select('*').eq('visa_sale_id', id).order('created_at');
+    const { data: paymentData } = await supabase.from('visa_sale_payments').select('*').eq('visa_sale_id', id).order('created_at');
     if (paymentData && paymentData.length > 0) {
-      // Group by payment_type to reconstruct installments
       setPayments(paymentData.map((p: any) => ({
         id: p.id,
         payment_type: p.payment_type,
@@ -127,15 +163,44 @@ export default function VistosNewSalePage() {
     }
   };
 
-  const handleProductChange = (id: string) => {
-    setProductId(id);
-    const prod = products.find(p => p.id === id);
-    if (prod) {
-      const newTotal = prod.price * applicants.length;
-      setTotalValue(newTotal);
-      autoDistributePayments(newTotal);
-    }
+  // --- Sale Items management ---
+  const addSaleItem = () => {
+    setSaleItems(prev => [...prev, { product_id: '', product_name: '', quantity: 1, unit_price: 0, total_value: 0, is_supplier_fee: false }]);
   };
+
+  const updateSaleItem = (idx: number, field: keyof SaleItem, value: any) => {
+    setSaleItems(prev => prev.map((item, i) => {
+      if (i !== idx) return item;
+      const updated = { ...item, [field]: value };
+      if (field === 'product_id') {
+        const prod = products.find(p => p.id === value);
+        if (prod) {
+          updated.product_name = prod.name;
+          updated.unit_price = prod.price;
+          updated.is_supplier_fee = prod.is_supplier_fee;
+          updated.total_value = prod.price * updated.quantity;
+        }
+      }
+      if (field === 'quantity') {
+        updated.total_value = updated.unit_price * (Number(value) || 1);
+      }
+      if (field === 'unit_price') {
+        updated.total_value = (Number(value) || 0) * updated.quantity;
+      }
+      return updated;
+    }));
+  };
+
+  const removeSaleItem = (idx: number) => {
+    setSaleItems(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // --- Auto distribute payments when total changes ---
+  useEffect(() => {
+    if (totalValue > 0 && payments.length > 0) {
+      autoDistributePayments(totalValue);
+    }
+  }, [totalValue]);
 
   const autoDistributePayments = (total: number) => {
     setPayments(prev => {
@@ -162,7 +227,6 @@ export default function VistosNewSalePage() {
   const removePayment = (idx: number) => {
     if (payments.length <= 1) return;
     const updated = payments.filter((_, i) => i !== idx);
-    // Re-distribute
     const perPayment = Math.round((totalValue / updated.length) * 100) / 100;
     const remainder = Math.round((totalValue - perPayment * updated.length) * 100) / 100;
     setPayments(updated.map((p, i) => ({
@@ -177,7 +241,6 @@ export default function VistosNewSalePage() {
     setPayments(prev => prev.map((p, i) => {
       if (i !== idx) return p;
       const updated = { ...p, [field]: value };
-      // When changing type to installment-compatible and num > 1, generate installments
       if (field === 'payment_type') {
         if (!isInstallmentType(value as string)) {
           updated.num_installments = 1;
@@ -228,12 +291,6 @@ export default function VistosNewSalePage() {
 
   const addApplicant = () => {
     setApplicants([...applicants, { full_name: '', is_main: false }]);
-    const prod = products.find(p => p.id === productId);
-    if (prod) {
-      const newTotal = prod.price * (applicants.length + 1);
-      setTotalValue(newTotal);
-      autoDistributePayments(newTotal);
-    }
   };
 
   const removeApplicant = (idx: number) => {
@@ -241,12 +298,6 @@ export default function VistosNewSalePage() {
     const updated = applicants.filter((_, i) => i !== idx);
     if (!updated.some(a => a.is_main)) updated[0].is_main = true;
     setApplicants(updated);
-    const prod = products.find(p => p.id === productId);
-    if (prod) {
-      const newTotal = prod.price * updated.length;
-      setTotalValue(newTotal);
-      autoDistributePayments(newTotal);
-    }
   };
 
   const updateApplicant = (idx: number, field: keyof Applicant, value: any) => {
@@ -263,20 +314,23 @@ export default function VistosNewSalePage() {
 
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Informe o nome do cliente.'); return; }
-    if (!productId) { toast.error('Selecione um produto.'); return; }
+    if (saleItems.length === 0) { toast.error('Adicione pelo menos um serviço.'); return; }
+    if (saleItems.some(item => !item.product_id)) { toast.error('Selecione o serviço em todos os itens.'); return; }
     if (applicants.some(a => !a.full_name.trim())) { toast.error('Preencha o nome de todos os aplicantes.'); return; }
     if (Math.abs(paymentsDiff) > 0.01) { toast.error('A soma dos pagamentos deve ser igual ao valor total.'); return; }
 
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Use first payment method for legacy field
+    // Use first non-fee product for legacy product_id
+    const mainItem = saleItems.find(i => !i.is_supplier_fee) || saleItems[0];
+
     const salePayload = {
       empresa_id: activeCompany?.id,
       client_name: clientName.trim(),
       client_phone: clientPhone,
       client_email: clientEmail,
-      product_id: productId,
+      product_id: mainItem?.product_id || null,
       total_value: totalValue,
       payment_method: payments[0]?.payment_type || 'pix',
       installments: payments.length,
@@ -291,8 +345,8 @@ export default function VistosNewSalePage() {
       await supabase.from('visa_sales').update(salePayload).eq('id', editSaleId);
       await supabase.from('visa_processes').delete().eq('visa_sale_id', editSaleId);
       await supabase.from('visa_applicants').delete().eq('visa_sale_id', editSaleId);
-      await (supabase.from('visa_sale_payments' as any) as any).delete().eq('visa_sale_id', editSaleId);
-      // Delete old receivables linked to this visa sale
+      await supabase.from('visa_sale_payments').delete().eq('visa_sale_id', editSaleId);
+      await (supabase.from('visa_sale_items' as any) as any).delete().eq('visa_sale_id', editSaleId);
       await supabase.from('receivables').delete().eq('visa_sale_id', editSaleId);
     } else {
       const { data: newSale, error } = await supabase.from('visa_sales').insert(salePayload).select('id').single();
@@ -300,7 +354,20 @@ export default function VistosNewSalePage() {
       saleId = newSale.id;
     }
 
-    // Insert payments (flatten installments into individual rows)
+    // Insert sale items
+    const itemPayloads = saleItems.map((item, i) => ({
+      visa_sale_id: saleId,
+      product_id: item.product_id,
+      product_name: item.product_name,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      total_value: item.total_value,
+      is_supplier_fee: item.is_supplier_fee,
+      sort_order: i,
+    }));
+    await (supabase.from('visa_sale_items' as any) as any).insert(itemPayloads);
+
+    // Insert payments
     const paymentRows: any[] = [];
     payments.forEach(p => {
       if (p.installments.length > 1) {
@@ -323,9 +390,9 @@ export default function VistosNewSalePage() {
         });
       }
     });
-    await (supabase.from('visa_sale_payments' as any) as any).insert(paymentRows);
+    await supabase.from('visa_sale_payments').insert(paymentRows);
 
-    // Generate receivables — one per installment
+    // Generate receivables
     const receivablePayloads: any[] = [];
     let recIdx = 0;
     payments.forEach(p => {
@@ -383,15 +450,23 @@ export default function VistosNewSalePage() {
     const { data: insertedApplicants } = await supabase.from('visa_applicants').insert(appPayloads).select('id, full_name');
 
     if (insertedApplicants) {
-      const processPayloads = insertedApplicants.map(app => ({
-        empresa_id: activeCompany?.id,
-        visa_sale_id: saleId,
-        applicant_id: app.id,
-        product_id: productId,
-        client_name: clientName.trim(),
-        applicant_name: app.full_name,
-        status: 'falta_passaporte' as const,
-      }));
+      // Create processes only for non-fee products
+      const serviceProducts = saleItems.filter(item => !item.is_supplier_fee && item.product_id);
+      const processPayloads: any[] = [];
+
+      insertedApplicants.forEach(app => {
+        serviceProducts.forEach(item => {
+          processPayloads.push({
+            empresa_id: activeCompany?.id,
+            visa_sale_id: saleId,
+            applicant_id: app.id,
+            product_id: item.product_id,
+            client_name: clientName.trim(),
+            applicant_name: app.full_name,
+            status: 'falta_passaporte',
+          });
+        });
+      });
 
       if (payerIsApplicant) {
         const payerAlreadyListed = insertedApplicants.some(
@@ -406,20 +481,24 @@ export default function VistosNewSalePage() {
           }).select('id, full_name').single();
 
           if (payerApplicant) {
-            processPayloads.push({
-              empresa_id: activeCompany?.id,
-              visa_sale_id: saleId,
-              applicant_id: payerApplicant.id,
-              product_id: productId,
-              client_name: clientName.trim(),
-              applicant_name: payerApplicant.full_name,
-              status: 'falta_passaporte' as const,
+            serviceProducts.forEach(item => {
+              processPayloads.push({
+                empresa_id: activeCompany?.id,
+                visa_sale_id: saleId,
+                applicant_id: payerApplicant.id,
+                product_id: item.product_id,
+                client_name: clientName.trim(),
+                applicant_name: payerApplicant.full_name,
+                status: 'falta_passaporte',
+              });
             });
           }
         }
       }
 
-      await supabase.from('visa_processes').insert(processPayloads);
+      if (processPayloads.length > 0) {
+        await supabase.from('visa_processes').insert(processPayloads);
+      }
     }
 
     toast.success(editSaleId ? 'Venda atualizada!' : 'Venda criada! Processos gerados.');
@@ -480,19 +559,85 @@ export default function VistosNewSalePage() {
                 <Input value={clientEmail} onChange={e => setClientEmail(e.target.value.toLowerCase())} placeholder="exemplo@email.com" />
                 {clientEmail && !validateEmail(clientEmail) && <p className="text-xs text-destructive mt-1">Email inválido</p>}
               </div>
-              <div>
-                <Label>Produto *</Label>
-                <Select value={productId} onValueChange={handleProductChange}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name} — R$ {p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
               <div><Label>Data da Venda</Label><Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} /></div>
-              <div><Label>Valor Total (R$)</Label><Input value={maskCurrencyInput(totalValue)} onChange={e => { const v = parseCurrency(e.target.value); setTotalValue(v); autoDistributePayments(v); }} placeholder="R$ 0,00" /></div>
             </div>
             <div><Label>Observações</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} /></div>
+          </CardContent>
+        </Card>
+
+        {/* Serviços da Venda */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Serviços da Venda</CardTitle>
+              <Button variant="outline" size="sm" onClick={addSaleItem}><Plus className="h-4 w-4 mr-1" /> Adicionar Serviço</Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {saleItems.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum serviço adicionado. Clique em "Adicionar Serviço" para começar.</p>
+            )}
+            {saleItems.map((item, idx) => (
+              <div key={idx} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">Serviço {idx + 1}</span>
+                    {item.is_supplier_fee && (
+                      <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 text-xs">Taxa</Badge>
+                    )}
+                  </div>
+                  <Button variant="ghost" size="icon" className="text-destructive h-7 w-7" onClick={() => removeSaleItem(idx)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div className="md:col-span-2">
+                    <Label className="text-xs">Serviço *</Label>
+                    <Select value={item.product_id} onValueChange={v => updateSaleItem(idx, 'product_id', v)}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="Selecione o serviço" /></SelectTrigger>
+                      <SelectContent>
+                        {products.map(p => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name} — R$ {p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {p.is_supplier_fee ? ' (Taxa)' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Qtd</Label>
+                    <Input className="h-9" type="number" min={1} value={item.quantity} onChange={e => updateSaleItem(idx, 'quantity', parseInt(e.target.value) || 1)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Valor Unit. (R$)</Label>
+                    <Input className="h-9" value={maskCurrencyInput(item.unit_price)} onChange={e => updateSaleItem(idx, 'unit_price', parseCurrency(e.target.value))} />
+                  </div>
+                </div>
+                <div className="text-sm text-right text-muted-foreground">
+                  Subtotal: <strong className="text-foreground">{fmt(item.total_value)}</strong>
+                </div>
+              </div>
+            ))}
+
+            {saleItems.length > 0 && (
+              <div className="border-t pt-3 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Serviços:</span>
+                  <span className="font-medium">{fmt(totalServices)}</span>
+                </div>
+                {totalFees > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Taxas de fornecedor:</span>
+                    <span className="font-medium text-amber-600">{fmt(totalFees)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base font-bold pt-1 border-t">
+                  <span>Total da Venda:</span>
+                  <span>{fmt(totalValue)}</span>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -535,7 +680,6 @@ export default function VistosNewSalePage() {
                       <Input className="h-9" type="number" min={1} max={24} value={payment.num_installments} onChange={e => updatePayment(idx, 'num_installments', parseInt(e.target.value) || 1)} />
                     </div>
                   )}
-                  {/* Show date & received only when NOT using installments */}
                   {(payment.num_installments <= 1 || !isInstallmentType(payment.payment_type)) && (
                     <>
                       <div>
@@ -551,7 +695,6 @@ export default function VistosNewSalePage() {
                     </>
                   )}
                 </div>
-                {/* Installment rows */}
                 {payment.installments.length > 1 && (
                   <div className="mt-3 space-y-2 pl-4 border-l-2 border-primary/20">
                     <span className="text-xs font-medium text-muted-foreground">Parcelas individuais:</span>

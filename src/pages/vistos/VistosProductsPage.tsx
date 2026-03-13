@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Product {
   id: string;
@@ -20,6 +21,7 @@ interface Product {
   price: number;
   average_days: number;
   status: string;
+  is_supplier_fee: boolean;
 }
 
 export default function VistosProductsPage() {
@@ -31,6 +33,7 @@ export default function VistosProductsPage() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(0);
   const [averageDays, setAverageDays] = useState(30);
+  const [isSupplierFee, setIsSupplierFee] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const fetchProducts = async () => {
@@ -47,33 +50,34 @@ export default function VistosProductsPage() {
 
   const openNew = () => {
     setEditing(null);
-    setName(''); setDescription(''); setPrice(0); setAverageDays(30);
+    setName(''); setDescription(''); setPrice(0); setAverageDays(30); setIsSupplierFee(false);
     setDialogOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setName(p.name); setDescription(p.description); setPrice(p.price); setAverageDays(p.average_days);
+    setName(p.name); setDescription(p.description); setPrice(p.price); setAverageDays(p.average_days); setIsSupplierFee(p.is_supplier_fee);
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (!name.trim()) { toast.error('Informe o nome do produto.'); return; }
+    if (!name.trim()) { toast.error('Informe o nome do serviço.'); return; }
     setLoading(true);
     const payload = {
       name: name.trim(),
       description: description.trim(),
       price,
       average_days: averageDays,
+      is_supplier_fee: isSupplierFee,
       empresa_id: activeCompany?.id,
     };
 
     if (editing) {
       await supabase.from('visa_products').update(payload).eq('id', editing.id);
-      toast.success('Produto atualizado!');
+      toast.success('Serviço atualizado!');
     } else {
       await supabase.from('visa_products').insert(payload);
-      toast.success('Produto criado!');
+      toast.success('Serviço criado!');
     }
     setLoading(false);
     setDialogOpen(false);
@@ -82,7 +86,7 @@ export default function VistosProductsPage() {
 
   const handleDelete = async (id: string) => {
     await supabase.from('visa_products').delete().eq('id', id);
-    toast.success('Produto removido.');
+    toast.success('Serviço removido.');
     fetchProducts();
   };
 
@@ -90,8 +94,8 @@ export default function VistosProductsPage() {
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Produtos</h1>
-          <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Novo Produto</Button>
+          <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
+          <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Novo Serviço</Button>
         </div>
 
         <Card>
@@ -100,6 +104,7 @@ export default function VistosProductsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead className="text-right">Preço</TableHead>
                   <TableHead className="text-right">Prazo (dias)</TableHead>
@@ -108,11 +113,18 @@ export default function VistosProductsPage() {
               </TableHeader>
               <TableBody>
                 {products.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum produto cadastrado</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum serviço cadastrado</TableCell></TableRow>
                 ) : products.map(p => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-[300px] truncate">{p.description}</TableCell>
+                    <TableCell>
+                      {p.is_supplier_fee ? (
+                        <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">Taxa</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5">Serviço</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground max-w-[250px] truncate">{p.description}</TableCell>
                     <TableCell className="text-right">R$ {p.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell className="text-right">{p.average_days}</TableCell>
                     <TableCell className="text-right">
@@ -130,13 +142,20 @@ export default function VistosProductsPage() {
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>
-            <DialogHeader><DialogTitle>{editing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? 'Editar Serviço' : 'Novo Serviço'}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-2">
               <div><Label>Nome</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Visto Americano" /></div>
               <div><Label>Descrição</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Preço (R$)</Label><Input value={price ? `R$ ${price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setPrice(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" /></div>
                 <div><Label>Prazo Médio (dias)</Label><Input type="number" value={averageDays} onChange={e => setAverageDays(Number(e.target.value))} /></div>
+              </div>
+              <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
+                <Checkbox id="is_supplier_fee" checked={isSupplierFee} onCheckedChange={(v) => setIsSupplierFee(v === true)} />
+                <div>
+                  <Label htmlFor="is_supplier_fee" className="cursor-pointer text-sm font-medium">Taxa de fornecedor</Label>
+                  <p className="text-xs text-muted-foreground">Marque se este serviço é uma taxa repassada ao fornecedor (ex: taxa consular, CASV). Será separado nos relatórios financeiros.</p>
+                </div>
               </div>
             </div>
             <DialogFooter>
