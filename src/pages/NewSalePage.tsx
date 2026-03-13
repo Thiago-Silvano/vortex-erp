@@ -279,7 +279,7 @@ export default function NewSalePage() {
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
   const totalSaleWithInterest = totalSale + saleInterest + operatorTaxes;
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
-  const grossProfit = totalSaleWithInterest - totalCost;
+  const grossProfit = totalSale + saleInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
   const cardFeeValue = paymentMethod === 'credito' ? totalSaleWithInterest * (feeRate / 100) : 0;
   const netProfit = grossProfit - commissionValue - cardFeeValue;
