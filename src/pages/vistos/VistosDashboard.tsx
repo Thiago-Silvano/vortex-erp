@@ -66,7 +66,7 @@ export default function VistosDashboard() {
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const { data: sales } = await supabase
       .from('visa_sales')
-      .select('id, product_id, total_value')
+      .select('id, product_id, total_value, card_fee_value')
       .eq('empresa_id', empresaId)
       .gte('sale_date', monthStart);
 
