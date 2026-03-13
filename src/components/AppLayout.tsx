@@ -12,7 +12,7 @@ import {
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
   Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
-  MessageSquare, Mail, FileEdit,
+  Mail, FileEdit,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -229,40 +229,8 @@ function AppSidebar() {
   );
 }
 
-const _whatsappWindows: Record<string, Window | null> = {};
 
-function openWhatsAppPopup(companyName: string, companySlug: string) {
-  const windowName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
 
-  const existing = _whatsappWindows[windowName];
-  if (existing && !existing.closed) {
-    try { existing.focus(); return; } catch { /* cross-origin, reopen */ }
-  }
-
-  // Use a link click to bypass iframe/popup blockers
-  const a = document.createElement('a');
-  a.href = 'https://web.whatsapp.com';
-  a.target = windowName;
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-export function openWhatsAppChat(phone: string, companySlug: string) {
-  const cleanPhone = phone.replace(/\D/g, '');
-  const fullPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-  const windowName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
-  const url = `https://web.whatsapp.com/send?phone=${fullPhone}`;
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = windowName;
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
@@ -299,10 +267,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setPendingCompany(null);
   };
 
-  const handleOpenWhatsApp = () => {
-    if (!activeCompany) return;
-    openWhatsAppPopup(activeCompany.name, activeCompany.slug);
-  };
 
   return (
     <SidebarProvider>
@@ -366,19 +330,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </TooltipTrigger>
                     <TooltipContent>Capturar foto e vincular ao cliente</TooltipContent>
                   </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={handleOpenWhatsApp}
-                        variant="outline"
-                        className="h-10 rounded-[20px] gap-2 font-medium border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        WhatsApp
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Abrir WhatsApp Web — {activeCompany?.name || 'Empresa'}</TooltipContent>
-                  </Tooltip>
                 </TooltipProvider>
               </div>
             )}
@@ -397,14 +348,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             title="Capturar foto"
           >
             <Camera className="h-6 w-6" />
-          </button>
-          <button
-            onClick={handleOpenWhatsApp}
-            className="h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
-            style={{ backgroundColor: '#25D366' }}
-            title={`Abrir WhatsApp Web — ${activeCompany?.name || ''}`}
-          >
-            <MessageSquare className="h-6 w-6" />
           </button>
         </div>
       )}

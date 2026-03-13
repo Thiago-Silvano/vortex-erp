@@ -11,8 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Pencil, Trash2, MessageCircle, Users } from 'lucide-react';
-import { openWhatsAppChat } from '@/components/AppLayout';
+import { Plus, Search, Pencil, Trash2, Users } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -339,21 +338,6 @@ export default function ClientsPage() {
               </Card>
 
               <div className="flex justify-end gap-3">
-                {editingId && (
-                  <Button
-                    variant="outline"
-                    className="gap-1.5 text-emerald-600 border-emerald-300 hover:bg-emerald-50"
-                    onClick={() => {
-                      if (!form.phone?.trim()) {
-                        toast.error('Cadastre um telefone para o cliente antes de chamar no WhatsApp');
-                        return;
-                      }
-                      openWhatsAppChat(form.phone, activeCompany?.slug || '');
-                    }}
-                  >
-                    <MessageCircle className="h-4 w-4" />Conversar no WhatsApp
-                  </Button>
-                )}
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                 <Button onClick={handleSave}>{editingId ? 'Atualizar' : 'Cadastrar'}</Button>
               </div>
