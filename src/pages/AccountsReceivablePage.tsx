@@ -46,6 +46,17 @@ export default function AccountsReceivablePage() {
   const [filterClient, setFilterClient] = useState('');
   const [filterCostCenter, setFilterCostCenter] = useState('all');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
+  const [sortKey, setSortKey] = useState<'client_name' | 'description' | 'installment_number' | 'amount' | 'due_date' | 'status'>('due_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir(key === 'amount' ? 'desc' : 'asc'); }
+  };
+  const SortIcon = ({ col }: { col: typeof sortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
 
   const [markDialog, setMarkDialog] = useState(false);
   const [markId, setMarkId] = useState('');
