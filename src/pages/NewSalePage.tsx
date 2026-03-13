@@ -705,41 +705,16 @@ export default function NewSalePage() {
   };
 
   const generateReceivablesForSale = async (saleId: string) => {
-    const enabledOptions = proposalPaymentOptions.filter(o => o.enabled);
-    if (enabledOptions.length > 0) {
-      let installmentCounter = 1;
-      const allReceivables: any[] = [];
-      const baseDate = new Date(saleDate || new Date());
-      for (const opt of enabledOptions) {
-        for (let i = 1; i <= opt.installments; i++) {
-          const dueDate = new Date(baseDate);
-          dueDate.setMonth(dueDate.getMonth() + i);
-          allReceivables.push({
-            sale_id: saleId, installment_number: installmentCounter++,
-            due_date: dueDate.toISOString().split('T')[0],
-            amount: opt.installmentValue,
-            client_name: clientName,
-            description: `Venda - ${clientName} (${opt.label})`,
-            status: 'pending', origin_type: 'sale',
-            payment_method: opt.method,
-            empresa_id: activeCompany?.id || null,
-          });
-        }
-      }
-      if (allReceivables.length > 0) {
-        const { error } = await supabase.from('receivables').insert(allReceivables);
-        if (error) console.error('Erro ao gerar recebíveis:', error);
-      }
-    } else if (receivables.length > 0) {
+    if (receivables.length > 0) {
+      const enabledOptions = proposalPaymentOptions.filter(o => o.enabled);
       const { error } = await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
-        payment_method: paymentMethod || 'pix',
+        payment_method: enabledOptions.length > 0 ? (enabledOptions[0]?.method || paymentMethod || 'pix') : (paymentMethod || 'pix'),
         empresa_id: activeCompany?.id || null,
       } as any)));
       if (error) console.error('Erro ao gerar recebíveis:', error);
     } else if (totalSaleWithInterest > 0) {
-      // Fallback: single receivable with total amount
       const { error } = await supabase.from('receivables').insert({
         sale_id: saleId, installment_number: 1, due_date: saleDate || null, amount: totalSaleWithInterest,
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
