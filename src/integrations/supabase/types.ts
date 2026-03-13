@@ -2485,6 +2485,7 @@ export type Database = {
       }
       visa_sales: {
         Row: {
+          card_fee_value: number
           client_email: string | null
           client_name: string
           client_phone: string | null
@@ -2502,6 +2503,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          card_fee_value?: number
           client_email?: string | null
           client_name?: string
           client_phone?: string | null
@@ -2519,6 +2521,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          card_fee_value?: number
           client_email?: string | null
           client_name?: string
           client_phone?: string | null
