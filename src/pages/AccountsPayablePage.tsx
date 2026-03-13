@@ -61,6 +61,7 @@ export default function AccountsPayablePage() {
   const [markDialog, setMarkDialog] = useState(false);
   const [markId, setMarkId] = useState('');
   const [markPaymentDate, setMarkPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [markPaymentMethod, setMarkPaymentMethod] = useState('pix');
   const [markNotes, setMarkNotes] = useState('');
 
   const [manualDialog, setManualDialog] = useState(false);
