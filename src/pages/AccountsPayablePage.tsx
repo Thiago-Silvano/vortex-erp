@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle } from 'lucide-react';
+import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
@@ -46,6 +46,17 @@ export default function AccountsPayablePage() {
   const [filterSupplier, setFilterSupplier] = useState('all');
   const [filterCostCenter, setFilterCostCenter] = useState('all');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
+  const [sortKey, setSortKey] = useState<'supplier' | 'description' | 'installment_number' | 'amount' | 'due_date' | 'status'>('due_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir(key === 'amount' ? 'desc' : 'asc'); }
+  };
+  const SortIcon = ({ col }: { col: typeof sortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
 
   const [markDialog, setMarkDialog] = useState(false);
   const [markId, setMarkId] = useState('');
@@ -128,8 +139,17 @@ export default function AccountsPayablePage() {
       if (filterSupplier !== 'all' && r.supplier_id !== filterSupplier) return false;
       if (filterCostCenter !== 'all' && r.cost_center_id !== filterCostCenter) return false;
       return true;
+    }).sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'supplier') cmp = (supplierName(a.supplier_id)).localeCompare(supplierName(b.supplier_id));
+      else if (sortKey === 'description') cmp = (a.description || '').localeCompare(b.description || '');
+      else if (sortKey === 'installment_number') cmp = a.installment_number - b.installment_number;
+      else if (sortKey === 'amount') cmp = a.amount - b.amount;
+      else if (sortKey === 'due_date') cmp = (a.due_date || '').localeCompare(b.due_date || '');
+      else if (sortKey === 'status') cmp = a.status.localeCompare(b.status);
+      return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [periodItems, filterStatus, filterSupplier, filterCostCenter]);
+  }, [periodItems, filterStatus, filterSupplier, filterCostCenter, sortKey, sortDir, suppliers]);
 
   const statusLabel: Record<string, string> = { open: 'Em aberto', paid: 'Pago', overdue: 'Atrasado' };
   const statusVariant = (s: string) => s === 'paid' ? 'default' as const : s === 'overdue' ? 'destructive' as const : 'secondary' as const;
@@ -256,12 +276,12 @@ export default function AccountsPayablePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Parcela</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('supplier')}><span className="inline-flex items-center">Fornecedor <SortIcon col="supplier" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('description')}><span className="inline-flex items-center">Descrição <SortIcon col="description" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('installment_number')}><span className="inline-flex items-center">Parcela <SortIcon col="installment_number" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('amount')}><span className="inline-flex items-center">Valor <SortIcon col="amount" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('due_date')}><span className="inline-flex items-center">Vencimento <SortIcon col="due_date" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('status')}><span className="inline-flex items-center">Status <SortIcon col="status" /></span></TableHead>
                   <TableHead className="w-16">Ação</TableHead>
                 </TableRow>
               </TableHeader>
