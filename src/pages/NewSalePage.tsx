@@ -159,6 +159,7 @@ export default function NewSalePage() {
     const { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
     if (!sale) return;
     setSaleStatus(sale.status === 'active' ? 'active' : 'draft');
+    setSaleWorkflowStatus((sale as any).sale_workflow_status || 'em_aberto');
     setQuoteId(sale.quote_id || '');
     setClientName(sale.client_name);
     setSaleDate(sale.sale_date);
