@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
@@ -704,41 +705,16 @@ export default function NewSalePage() {
   };
 
   const generateReceivablesForSale = async (saleId: string) => {
-    const enabledOptions = proposalPaymentOptions.filter(o => o.enabled);
-    if (enabledOptions.length > 0) {
-      let installmentCounter = 1;
-      const allReceivables: any[] = [];
-      const baseDate = new Date(saleDate || new Date());
-      for (const opt of enabledOptions) {
-        for (let i = 1; i <= opt.installments; i++) {
-          const dueDate = new Date(baseDate);
-          dueDate.setMonth(dueDate.getMonth() + i);
-          allReceivables.push({
-            sale_id: saleId, installment_number: installmentCounter++,
-            due_date: dueDate.toISOString().split('T')[0],
-            amount: opt.installmentValue,
-            client_name: clientName,
-            description: `Venda - ${clientName} (${opt.label})`,
-            status: 'pending', origin_type: 'sale',
-            payment_method: opt.method,
-            empresa_id: activeCompany?.id || null,
-          });
-        }
-      }
-      if (allReceivables.length > 0) {
-        const { error } = await supabase.from('receivables').insert(allReceivables);
-        if (error) console.error('Erro ao gerar recebíveis:', error);
-      }
-    } else if (receivables.length > 0) {
+    if (receivables.length > 0) {
+      const enabledOptions = proposalPaymentOptions.filter(o => o.enabled);
       const { error } = await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
-        payment_method: paymentMethod || 'pix',
+        payment_method: enabledOptions.length > 0 ? (enabledOptions[0]?.method || paymentMethod || 'pix') : (paymentMethod || 'pix'),
         empresa_id: activeCompany?.id || null,
       } as any)));
       if (error) console.error('Erro ao gerar recebíveis:', error);
     } else if (totalSaleWithInterest > 0) {
-      // Fallback: single receivable with total amount
       const { error } = await supabase.from('receivables').insert({
         sale_id: saleId, installment_number: 1, due_date: saleDate || null, amount: totalSaleWithInterest,
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
@@ -839,9 +815,23 @@ export default function NewSalePage() {
     finally { setSavingDraft(false); }
   };
 
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
+
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
+    // If editing an active sale, ask for confirmation first
+    if (saleStatus === 'active' && !showEditConfirm) {
+      setShowEditConfirm(true);
+      return;
+    }
+    setShowEditConfirm(false);
+    await doSave();
+  };
+
+  const doSave = async () => {
     const { payload, userEmail } = await buildSalePayload('active');
+    // Auto-set workflow status to "emitido" when generating a sale
+    payload.sale_workflow_status = 'emitido';
 
     if (editSaleId) {
       await supabase.from('receivables').delete().eq('sale_id', editSaleId);
@@ -2004,11 +1994,31 @@ export default function NewSalePage() {
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
-            {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Rascunho'}
+          {saleStatus !== 'active' && (
+            <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
+              {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Rascunho'}
+            </Button>
+          )}
+          <Button onClick={handleSave} className="w-full sm:w-auto">
+            {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Gerar Venda' : 'Converter em Venda'}
           </Button>
-          <Button onClick={handleSave} className="w-full sm:w-auto">{editSaleId ? 'Gerar Venda' : 'Converter em Venda'}</Button>
         </div>
+
+        {/* Edit Confirmation Dialog */}
+        <AlertDialog open={showEditConfirm} onOpenChange={setShowEditConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Editar Venda</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja alterar os dados desta venda? Os lançamentos financeiros (contas a receber, contas a pagar e comissões) serão regenerados.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={doSave}>Confirmar Edição</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <PdfImportModal
           open={pdfImportOpen}
