@@ -76,9 +76,12 @@ export default function Settings() {
     let query = supabase.from('agency_settings').select('*');
     if (activeCompany) query = query.eq('empresa_id', activeCompany.id);
     const { data } = await query.limit(1).single();
-    if (data && (data as any).google_maps_api_key) {
-      setGoogleApiKey((data as any).google_maps_api_key);
-      setGoogleStatus('connected');
+    if (data) {
+      const d = data as any;
+      if (d.google_maps_api_key) { setGoogleApiKey(d.google_maps_api_key); setGoogleStatus('connected'); }
+      if (d.unsplash_api_key) setUnsplashKey(d.unsplash_api_key);
+      if (d.pexels_api_key) setPexelsKey(d.pexels_api_key);
+      if (d.unsplash_api_key || d.pexels_api_key) setStockStatus({ unsplash: !!d.unsplash_api_key, pexels: !!d.pexels_api_key });
     }
   };
 
