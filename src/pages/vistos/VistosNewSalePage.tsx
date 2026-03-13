@@ -78,6 +78,7 @@ export default function VistosNewSalePage() {
     { full_name: '', is_main: true },
   ]);
   const [payerIsApplicant, setPayerIsApplicant] = useState(true);
+  const [cardFeeValue, setCardFeeValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; phone?: string; email?: string }[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
