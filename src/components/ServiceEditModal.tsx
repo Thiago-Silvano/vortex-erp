@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import HotelSearchAutocomplete, { HotelDetails } from '@/components/HotelSearchAutocomplete';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface FlightLeg {
   origin: string;
@@ -42,6 +44,18 @@ interface HotelInfo {
   category: string;
   highlights: string[];
   images?: string[];
+  placeId?: string;
+  phone?: string;
+  website?: string;
+  rating?: number;
+  reviewsTotal?: number;
+  roomType?: string;
+  roomCount?: number;
+  guestCount?: number;
+  nightsCount?: number;
+  pricePerNight?: number;
+  totalPrice?: number;
+  observations?: string;
 }
 
 export interface ServiceMetadata {
@@ -88,9 +102,12 @@ const emptyHotel = (): HotelInfo => ({
   hotelName: '', stars: 0, address: '', city: '', country: '', description: '',
   amenities: [], checkInTime: '15:00', checkOutTime: '11:00',
   checkInDate: '', checkOutDate: '', category: '', highlights: [], images: [],
+  phone: '', website: '', rating: 0, reviewsTotal: 0,
+  roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
 });
 
 export default function ServiceEditModal({ open, onClose, description, metadata, onSave, onHotelImagesFound }: Props) {
+  const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
   const [detailedDesc, setDetailedDesc] = useState(metadata.detailedDescription || '');
@@ -100,6 +117,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [searchingHotel, setSearchingHotel] = useState(false);
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
   const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(new Set());
+  const [googleApiKey, setGoogleApiKey] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -111,8 +129,32 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setHotel(metadata.hotel || emptyHotel());
       setHotelImages(metadata.hotel?.images || []);
       setSelectedImageIndices(new Set());
+      loadGoogleApiKey();
     }
   }, [open]);
+
+  // Calculate nights when dates change
+  useEffect(() => {
+    if (hotel.checkInDate && hotel.checkOutDate) {
+      const cin = new Date(hotel.checkInDate);
+      const cout = new Date(hotel.checkOutDate);
+      const diff = Math.max(0, Math.round((cout.getTime() - cin.getTime()) / (1000 * 60 * 60 * 24)));
+      setHotel(prev => ({
+        ...prev,
+        nightsCount: diff,
+        totalPrice: diff * (prev.pricePerNight || 0),
+      }));
+    }
+  }, [hotel.checkInDate, hotel.checkOutDate]);
+
+  const loadGoogleApiKey = async () => {
+    let query = supabase.from('agency_settings').select('*');
+    if (activeCompany) query = query.eq('empresa_id', activeCompany.id);
+    const { data } = await query.limit(1).single();
+    if (data && (data as any).google_maps_api_key) {
+      setGoogleApiKey((data as any).google_maps_api_key);
+    }
+  };
 
   const addFlightLeg = () => setFlightLegs(prev => [...prev, emptyLeg()]);
   const updateLeg = (idx: number, field: keyof FlightLeg, value: string) => {
@@ -129,7 +171,30 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     });
   };
 
-  const handleSearchHotel = async () => {
+  const handleGoogleHotelSelect = (details: HotelDetails) => {
+    setHotel(prev => ({
+      ...prev,
+      hotelName: details.name,
+      address: details.address,
+      city: details.city,
+      country: details.country,
+      phone: details.phone,
+      website: details.website,
+      rating: details.rating,
+      reviewsTotal: details.reviews_total,
+      placeId: details.place_id,
+      stars: Math.round(details.rating),
+    }));
+    setDesc(details.name);
+    if (details.photos && details.photos.length > 0) {
+      setHotelImages(details.photos);
+      setSelectedImageIndices(new Set(details.photos.map((_, i) => i)));
+    }
+    toast.success(`Hotel "${details.name}" selecionado com ${details.photos?.length || 0} fotos!`);
+  };
+
+  // Fallback AI search
+  const handleSearchHotelAI = async () => {
     if (!hotel.hotelName.trim()) { toast.error('Digite o nome do hotel'); return; }
     setSearchingHotel(true);
     setHotelImages([]);
@@ -157,10 +222,9 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
         }));
         if (data.images && data.images.length > 0) {
           setHotelImages(data.images);
-          // Auto-select all images
           setSelectedImageIndices(new Set(data.images.map((_: string, i: number) => i)));
         }
-        toast.success(`Informações do hotel encontradas! ${data.images?.length || 0} imagens geradas.`);
+        toast.success(`Informações do hotel encontradas!`);
       } else {
         toast.error('Não foi possível encontrar informações do hotel');
       }
@@ -291,35 +355,66 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           {/* ── HOTEL ── */}
           {type === 'hotel' && (
             <div className="space-y-4 border-t pt-4">
+              {/* Google Places Search */}
+              {googleApiKey ? (
+                <HotelSearchAutocomplete
+                  apiKey={googleApiKey}
+                  onSelect={handleGoogleHotelSelect}
+                  placeholder="Buscar hotel no Google Maps..."
+                />
+              ) : (
+                <div className="p-3 bg-muted/50 rounded-md text-sm text-muted-foreground">
+                  Configure sua Google Maps API Key em <strong>Configurações → Integrações</strong> para buscar hotéis automaticamente.
+                </div>
+              )}
+
+              {/* Hotel name + AI fallback search */}
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <Label>Nome do Hotel</Label>
                   <Input value={hotel.hotelName} onChange={e => setHotel(p => ({ ...p, hotelName: e.target.value }))} placeholder="Ex: Grand Hyatt Rio de Janeiro" />
                 </div>
-                <Button variant="outline" className="mt-6" onClick={handleSearchHotel} disabled={searchingHotel}>
-                  {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
-                  {searchingHotel ? 'Buscando...' : 'Buscar'}
-                </Button>
+                {!googleApiKey && (
+                  <Button variant="outline" className="mt-6" onClick={handleSearchHotelAI} disabled={searchingHotel}>
+                    {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
+                    {searchingHotel ? 'Buscando...' : 'Buscar IA'}
+                  </Button>
+                )}
               </div>
 
               {searchingHotel && (
                 <div className="p-4 bg-muted/50 rounded-lg text-center text-sm text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-                  Buscando informações e gerando imagens do hotel...
+                  Buscando informações do hotel...
                 </div>
               )}
 
-              {hotel.description && (
-                <div className="p-3 bg-muted/50 rounded-lg text-sm">
-                  <p className="font-medium mb-1">{hotel.hotelName} {hotel.stars > 0 && `${'⭐'.repeat(hotel.stars)}`}</p>
-                  <p className="text-muted-foreground">{hotel.description}</p>
+              {/* Hotel Info Card */}
+              {hotel.hotelName && (hotel.rating || hotel.description || hotel.address) && (
+                <div className="p-4 bg-muted/30 rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-foreground">{hotel.hotelName}</h4>
+                    {(hotel.rating || 0) > 0 && (
+                      <span className="flex items-center gap-1 text-sm">
+                        <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                        <span className="font-medium">{hotel.rating}</span>
+                        {(hotel.reviewsTotal || 0) > 0 && (
+                          <span className="text-muted-foreground text-xs">({hotel.reviewsTotal?.toLocaleString('pt-BR')} avaliações)</span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  {hotel.address && <p className="text-sm text-muted-foreground">{hotel.address}</p>}
+                  {hotel.description && <p className="text-sm">{hotel.description}</p>}
                   {hotel.amenities.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-wrap gap-1">
                       {hotel.amenities.map((a, i) => (
                         <span key={i} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">{a}</span>
                       ))}
                     </div>
                   )}
+                  {hotel.phone && <p className="text-xs text-muted-foreground">📞 {hotel.phone}</p>}
+                  {hotel.website && <p className="text-xs text-muted-foreground">🌐 {hotel.website}</p>}
                 </div>
               )}
 
@@ -327,7 +422,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               {hotelImages.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-semibold">Imagens do Hotel ({selectedImageIndices.size} selecionadas)</Label>
+                    <Label className="text-sm font-semibold">Fotos do Hotel ({selectedImageIndices.size} selecionadas)</Label>
                     <div className="flex gap-2">
                       <Button size="sm" variant="ghost" onClick={() => setSelectedImageIndices(new Set(hotelImages.map((_, i) => i)))}>
                         Selecionar todas
@@ -341,12 +436,12 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     {hotelImages.map((img, idx) => (
                       <div
                         key={idx}
-                        className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                        className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all aspect-video ${
                           selectedImageIndices.has(idx) ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-muted-foreground/30'
                         }`}
                         onClick={() => toggleImageSelection(idx)}
                       >
-                        <img src={img} alt={`Hotel ${idx + 1}`} className="w-full h-24 object-cover" />
+                        <img src={img} alt={`Hotel ${idx + 1}`} className="w-full h-full object-cover" />
                         {selectedImageIndices.has(idx) && (
                           <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center">
                             <Check className="h-3 w-3" />
@@ -358,18 +453,39 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 </div>
               )}
 
+              {/* Reservation Details */}
+              <div className="border-t pt-4">
+                <h3 className="font-semibold text-sm mb-3">Dados da Reserva</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div><Label className="text-xs">Check-in</Label><Input type="date" value={hotel.checkInDate} onChange={e => setHotel(p => ({ ...p, checkInDate: e.target.value }))} /></div>
+                  <div><Label className="text-xs">Check-out</Label><Input type="date" value={hotel.checkOutDate} onChange={e => setHotel(p => ({ ...p, checkOutDate: e.target.value }))} /></div>
+                  <div><Label className="text-xs">Noites</Label><Input type="number" min="0" value={hotel.nightsCount || 0} readOnly className="bg-muted" /></div>
+                  <div><Label className="text-xs">Hora Check-in</Label><Input type="time" value={hotel.checkInTime} onChange={e => setHotel(p => ({ ...p, checkInTime: e.target.value }))} /></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div><Label className="text-xs">Tipo de Quarto</Label><Input value={hotel.roomType || ''} onChange={e => setHotel(p => ({ ...p, roomType: e.target.value }))} placeholder="Deluxe Suite" /></div>
+                <div><Label className="text-xs">Qtd. Quartos</Label><Input type="number" min="1" value={hotel.roomCount || 1} onChange={e => setHotel(p => ({ ...p, roomCount: parseInt(e.target.value) || 1 }))} /></div>
+                <div><Label className="text-xs">Qtd. Hóspedes</Label><Input type="number" min="1" value={hotel.guestCount || 2} onChange={e => setHotel(p => ({ ...p, guestCount: parseInt(e.target.value) || 1 }))} /></div>
+                <div><Label className="text-xs">Valor/Noite (R$)</Label><Input type="number" min="0" step="0.01" value={hotel.pricePerNight || 0} onChange={e => {
+                  const ppn = parseFloat(e.target.value) || 0;
+                  setHotel(p => ({ ...p, pricePerNight: ppn, totalPrice: ppn * (p.nightsCount || 0) }));
+                }} /></div>
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div><Label className="text-xs">Estrelas</Label><Input type="number" min="0" max="5" value={hotel.stars} onChange={e => setHotel(p => ({ ...p, stars: parseInt(e.target.value) || 0 }))} /></div>
                 <div><Label className="text-xs">Categoria</Label><Input value={hotel.category} onChange={e => setHotel(p => ({ ...p, category: e.target.value }))} placeholder="Resort, Boutique..." /></div>
-                <div><Label className="text-xs">Check-in</Label><Input type="date" value={hotel.checkInDate} onChange={e => setHotel(p => ({ ...p, checkInDate: e.target.value }))} /></div>
-                <div><Label className="text-xs">Check-out</Label><Input type="date" value={hotel.checkOutDate} onChange={e => setHotel(p => ({ ...p, checkOutDate: e.target.value }))} /></div>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div><Label className="text-xs">Endereço</Label><Input value={hotel.address} onChange={e => setHotel(p => ({ ...p, address: e.target.value }))} /></div>
                 <div><Label className="text-xs">Cidade</Label><Input value={hotel.city} onChange={e => setHotel(p => ({ ...p, city: e.target.value }))} /></div>
                 <div><Label className="text-xs">País</Label><Input value={hotel.country} onChange={e => setHotel(p => ({ ...p, country: e.target.value }))} /></div>
-                <div><Label className="text-xs">Hora Check-in</Label><Input type="time" value={hotel.checkInTime} onChange={e => setHotel(p => ({ ...p, checkInTime: e.target.value }))} /></div>
               </div>
+
+              <div>
+                <Label className="text-xs">Endereço</Label>
+                <Input value={hotel.address} onChange={e => setHotel(p => ({ ...p, address: e.target.value }))} />
+              </div>
+
               <div>
                 <Label className="text-xs">Descrição do Hotel</Label>
                 <Textarea value={hotel.description} onChange={e => setHotel(p => ({ ...p, description: e.target.value }))} rows={3} placeholder="Descrição do hotel para a proposta..." />
@@ -377,6 +493,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               <div>
                 <Label className="text-xs">Comodidades (separadas por vírgula)</Label>
                 <Input value={hotel.amenities.join(', ')} onChange={e => setHotel(p => ({ ...p, amenities: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} placeholder="Piscina, Spa, WiFi, Restaurante..." />
+              </div>
+              <div>
+                <Label className="text-xs">Observações</Label>
+                <Textarea value={hotel.observations || ''} onChange={e => setHotel(p => ({ ...p, observations: e.target.value }))} rows={2} placeholder="Observações sobre a hospedagem..." />
               </div>
             </div>
           )}
