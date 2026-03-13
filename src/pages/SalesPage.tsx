@@ -119,6 +119,14 @@ export default function SalesPage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  const workflowStatusMap: Record<string, { label: string; color: string }> = {
+    em_aberto: { label: 'Em aberto', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+    contatando: { label: 'Contatando', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+    reservado: { label: 'Reservado', color: 'bg-purple-100 text-purple-800 border-purple-300' },
+    emitido: { label: 'Emitido', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+    perdido: { label: 'Perdido', color: 'bg-red-100 text-red-800 border-red-300' },
+  };
+
   return (
     <AppLayout>
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
