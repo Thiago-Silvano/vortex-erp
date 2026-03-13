@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, isSameDay } from 'date-fns';
@@ -63,6 +63,38 @@ export default function AccountsReceivablePage() {
   const [markPaymentDate, setMarkPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [markPaymentMethod, setMarkPaymentMethod] = useState('');
   const [markNotes, setMarkNotes] = useState('');
+
+  const [editDialog, setEditDialog] = useState(false);
+  const [editItem, setEditItem] = useState<Receivable | null>(null);
+  const [editClientName, setEditClientName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editAmount, setEditAmount] = useState(0);
+  const [editDueDate, setEditDueDate] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+
+  const openEdit = (item: Receivable) => {
+    setEditItem(item);
+    setEditClientName(item.client_name || '');
+    setEditDescription(item.description || '');
+    setEditAmount(item.amount || 0);
+    setEditDueDate(item.due_date || '');
+    setEditNotes(item.notes || '');
+    setEditDialog(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editItem) return;
+    await supabase.from('receivables').update({
+      client_name: editClientName,
+      description: editDescription,
+      amount: editAmount,
+      due_date: editDueDate || null,
+      notes: editNotes,
+    } as any).eq('id', editItem.id);
+    toast.success('Registro atualizado!');
+    setEditDialog(false);
+    fetch_();
+  };
 
   const [manualDialog, setManualDialog] = useState(false);
   const [manualClientId, setManualClientId] = useState('');
@@ -288,7 +320,7 @@ export default function AccountsReceivablePage() {
                 {filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
-                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => r.status === 'pending' && openMark(r.id)}>
+                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(r)}>
                     <TableCell className="font-medium">{r.client_name || '-'}</TableCell>
                     <TableCell>{r.description || (r.origin_type === 'sale' ? 'Venda' : '-')}</TableCell>
                     <TableCell>{r.installment_number}ª</TableCell>
@@ -296,11 +328,16 @@ export default function AccountsReceivablePage() {
                     <TableCell>{r.due_date ? format(new Date(r.due_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell><Badge className={statusClasses(r.status)}>{statusLabel[r.status] || r.status}</Badge></TableCell>
                     <TableCell>
-                      {r.status === 'pending' && (
-                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como recebido">
-                          <Check className="h-4 w-4 text-primary" />
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openEdit(r); }} title="Editar">
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                      )}
+                        {r.status === 'pending' && (
+                          <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como recebido">
+                            <Check className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -395,6 +432,24 @@ export default function AccountsReceivablePage() {
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setManualDialog(false)}>Cancelar</Button>
                 <Button onClick={handleManualSave}>Salvar</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit dialog */}
+        <Dialog open={editDialog} onOpenChange={setEditDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Editar Recebível</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div><Label>Cliente</Label><Input value={editClientName} onChange={e => setEditClientName(e.target.value)} /></div>
+              <div><Label>Descrição</Label><Input value={editDescription} onChange={e => setEditDescription(e.target.value)} /></div>
+              <div><Label>Valor</Label><Input type="number" step="0.01" value={editAmount} onChange={e => setEditAmount(Number(e.target.value))} /></div>
+              <div><Label>Vencimento</Label><Input type="date" value={editDueDate} onChange={e => setEditDueDate(e.target.value)} /></div>
+              <div><Label>Observação</Label><Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} /></div>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setEditDialog(false)}>Cancelar</Button>
+                <Button onClick={handleEditSave}>Salvar</Button>
               </div>
             </div>
           </DialogContent>
