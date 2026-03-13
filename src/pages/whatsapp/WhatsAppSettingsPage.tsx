@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Settings, Wifi, WifiOff, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { resetServerUrl } from '@/lib/whatsappApi';
+import { resetServerUrl, checkStatus } from '@/lib/whatsappApi';
 
 export default function WhatsAppSettingsPage() {
   const { activeCompany } = useCompany();
@@ -61,16 +61,11 @@ export default function WhatsAppSettingsPage() {
   const checkConnection = async () => {
     setChecking(true);
     try {
-      const res = await fetch(`${settings.server_url}/status`);
-      if (res.ok) {
-        const data = await res.json();
-        const connected = data.connected || data.status === 'connected';
-        setSettings(prev => ({ ...prev, is_connected: connected }));
-        await (supabase.from('whatsapp_settings').update({ is_connected: connected }).eq('id', settings.id) as any);
-        toast.success(connected ? 'WhatsApp conectado!' : 'WhatsApp desconectado');
-      } else {
-        toast.error('Servidor não respondeu');
-      }
+      const data = await checkStatus(settings.server_url);
+      const connected = data.connected || data.status === 'connected';
+      setSettings(prev => ({ ...prev, is_connected: connected }));
+      await (supabase.from('whatsapp_settings').update({ is_connected: connected }).eq('id', settings.id) as any);
+      toast.success(connected ? 'WhatsApp conectado!' : 'WhatsApp desconectado');
     } catch {
       toast.error('Não foi possível conectar ao servidor');
       setSettings(prev => ({ ...prev, is_connected: false }));
