@@ -454,14 +454,8 @@ export default function VistosProductionPage() {
                       }
 
                       const cleanPhone = client.phone.replace(/\D/g, '');
-                      const docsList = selectedProcess.documents.map((d: any) => d.url).join('\n');
-                      const message = `Olá ${selectedProcess.applicant_name}, segue os documentos do seu processo de visto:\n\n${selectedProcess.documents.map((d: any) => `📄 ${d.name}: ${d.url}`).join('\n')}`;
-                      
-                      setWaSendPhone(cleanPhone);
-                      setWaSendName(client.full_name);
-                      setWaSendMessage(message);
+                      openWhatsAppChat(cleanPhone, activeCompany?.slug || '');
                       setDetailOpen(false);
-                      setWaSendOpen(true);
                     }}
                   >
                     <Send className="h-3.5 w-3.5" />Enviar Documentos via WhatsApp
