@@ -275,12 +275,12 @@ export default function AccountsReceivablePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Parcela</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('client_name')}><span className="inline-flex items-center">Cliente <SortIcon col="client_name" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('description')}><span className="inline-flex items-center">Descrição <SortIcon col="description" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('installment_number')}><span className="inline-flex items-center">Parcela <SortIcon col="installment_number" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('amount')}><span className="inline-flex items-center">Valor <SortIcon col="amount" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('due_date')}><span className="inline-flex items-center">Vencimento <SortIcon col="due_date" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('status')}><span className="inline-flex items-center">Status <SortIcon col="status" /></span></TableHead>
                   <TableHead className="w-16">Ação</TableHead>
                 </TableRow>
               </TableHeader>
