@@ -150,9 +150,7 @@ export default function VistosNewSalePage() {
   };
 
   const addPayment = () => {
-    const newPayments = [...payments, { payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false }];
-    setPayments(newPayments);
-    // Auto-distribute
+    const newPayments: PaymentEntry[] = [...payments, makeDefaultPayment()];
     const perPayment = Math.round((totalValue / newPayments.length) * 100) / 100;
     const remainder = Math.round((totalValue - perPayment * newPayments.length) * 100) / 100;
     setPayments(newPayments.map((p, i) => ({
