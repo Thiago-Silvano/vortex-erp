@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Search, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 interface VisaSale {
@@ -22,6 +21,7 @@ interface VisaSale {
   payment_method: string;
   status: string;
   product_name?: string;
+  services_summary?: string;
 }
 
 export default function VistosSalesPage() {
@@ -57,9 +57,25 @@ export default function VistosSalesPage() {
       .order('sale_date', { ascending: false });
 
     if (data) {
+      // Fetch sale items for summaries
+      const saleIds = data.map((s: any) => s.id);
+      let itemsMap: Record<string, string[]> = {};
+      if (saleIds.length > 0) {
+        const { data: items } = await (supabase.from('visa_sale_items' as any) as any)
+          .select('visa_sale_id, product_name')
+          .in('visa_sale_id', saleIds);
+        if (items) {
+          items.forEach((item: any) => {
+            if (!itemsMap[item.visa_sale_id]) itemsMap[item.visa_sale_id] = [];
+            itemsMap[item.visa_sale_id].push(item.product_name);
+          });
+        }
+      }
+
       setSales(data.map((s: any) => ({
         ...s,
         product_name: s.visa_products?.name || '',
+        services_summary: itemsMap[s.id]?.join(', ') || s.visa_products?.name || '',
       })));
     }
   };
@@ -69,12 +85,12 @@ export default function VistosSalesPage() {
   const filtered = sales
     .filter(s =>
       s.client_name.toLowerCase().includes(filter.toLowerCase()) ||
-      (s.product_name || '').toLowerCase().includes(filter.toLowerCase())
+      (s.services_summary || '').toLowerCase().includes(filter.toLowerCase())
     )
     .sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'client_name') cmp = a.client_name.localeCompare(b.client_name);
-      else if (sortKey === 'product_name') cmp = (a.product_name || '').localeCompare(b.product_name || '');
+      else if (sortKey === 'product_name') cmp = (a.services_summary || '').localeCompare(b.services_summary || '');
       else if (sortKey === 'sale_date') cmp = a.sale_date.localeCompare(b.sale_date);
       else if (sortKey === 'total_value') cmp = (a.total_value || 0) - (b.total_value || 0);
       else if (sortKey === 'payment_method') cmp = (a.payment_method || '').localeCompare(b.payment_method || '');
@@ -87,17 +103,12 @@ export default function VistosSalesPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      // Delete related receivables
       await supabase.from('receivables').delete().eq('visa_sale_id', deleteTarget.id);
-      // Delete related applicants
       await supabase.from('visa_applicants').delete().eq('visa_sale_id', deleteTarget.id);
-      // Delete related payments
       await supabase.from('visa_sale_payments').delete().eq('visa_sale_id', deleteTarget.id);
-      // Delete related processes
+      await (supabase.from('visa_sale_items' as any) as any).delete().eq('visa_sale_id', deleteTarget.id);
       await supabase.from('visa_processes').delete().eq('visa_sale_id', deleteTarget.id);
-      // Delete related commissions
       await supabase.from('seller_commissions').delete().eq('visa_sale_id', deleteTarget.id);
-      // Delete the sale
       const { error } = await supabase.from('visa_sales').delete().eq('id', deleteTarget.id);
       if (error) throw error;
       toast.success('Venda excluída com sucesso');
@@ -133,7 +144,7 @@ export default function VistosSalesPage() {
                     <span className="inline-flex items-center">Cliente <SortIcon col="client_name" /></span>
                   </TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('product_name')}>
-                    <span className="inline-flex items-center">Produto <SortIcon col="product_name" /></span>
+                    <span className="inline-flex items-center">Serviços <SortIcon col="product_name" /></span>
                   </TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_date')}>
                     <span className="inline-flex items-center">Data <SortIcon col="sale_date" /></span>
@@ -154,7 +165,7 @@ export default function VistosSalesPage() {
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/vistos/sales/edit', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
-                    <TableCell>{s.product_name}</TableCell>
+                    <TableCell className="max-w-[200px] truncate text-muted-foreground">{s.services_summary}</TableCell>
                     <TableCell>{format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy')}</TableCell>
                     <TableCell className="text-right">R$ {(s.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>{paymentLabels[s.payment_method] || s.payment_method}</TableCell>

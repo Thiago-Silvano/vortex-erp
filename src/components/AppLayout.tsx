@@ -111,7 +111,7 @@ function AppSidebar() {
     { title: 'Clientes', url: '/clients', icon: UserRound, permKey: 'clients_view' },
     { title: 'Fornecedores', url: '/suppliers', icon: Building2, permKey: 'suppliers_view' },
     { title: 'Vendas', url: '/vistos/sales', icon: ShoppingCart, permKey: 'sales_view' },
-    { title: 'Produtos', url: '/vistos/products', icon: Package },
+    { title: 'Serviços', url: '/vistos/products', icon: Package },
     { title: 'Produção', url: '/vistos/production', icon: Cog },
     { title: 'DS-160 Grupo', url: '/vistos/ds160', icon: FileEdit },
     { title: 'Calendário', url: '/calendar', icon: CalendarDays },
