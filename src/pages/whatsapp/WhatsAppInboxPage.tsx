@@ -86,7 +86,7 @@ export default function WhatsAppInboxPage() {
 
     socket.on('nova_mensagem', async (data: any) => {
       console.log('[WhatsApp Socket] nova_mensagem data:', JSON.stringify(data));
-      const phone = normalizePhone(data.from || data.number || '');
+      const phone = extractIncomingPhone(data);
       const content = data.body || data.message || '';
       if (!phone || phone.length < 8) {
         console.warn('[WhatsApp Socket] Ignoring message - invalid phone:', phone);
