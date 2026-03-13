@@ -61,6 +61,7 @@ export default function AccountsPayablePage() {
   const [markDialog, setMarkDialog] = useState(false);
   const [markId, setMarkId] = useState('');
   const [markPaymentDate, setMarkPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [markPaymentMethod, setMarkPaymentMethod] = useState('pix');
   const [markNotes, setMarkNotes] = useState('');
 
   const [manualDialog, setManualDialog] = useState(false);
@@ -159,12 +160,13 @@ export default function AccountsPayablePage() {
   const openMark = (id: string) => {
     setMarkId(id);
     setMarkPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+    setMarkPaymentMethod('pix');
     setMarkNotes('');
     setMarkDialog(true);
   };
 
   const handleMark = async () => {
-    await supabase.from('accounts_payable').update({ status: 'paid', payment_date: markPaymentDate || null, notes: markNotes }).eq('id', markId);
+    await supabase.from('accounts_payable').update({ status: 'paid', payment_date: markPaymentDate || null, notes: markPaymentMethod ? `${markPaymentMethod}${markNotes ? ' - ' + markNotes : ''}` : markNotes }).eq('id', markId);
     toast.success('Marcado como pago!');
     setMarkDialog(false);
     fetch_();
@@ -315,6 +317,23 @@ export default function AccountsPayablePage() {
             <DialogHeader><DialogTitle>Marcar como Pago</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div><Label>Data do Pagamento</Label><Input type="date" value={markPaymentDate} onChange={e => setMarkPaymentDate(e.target.value)} /></div>
+              <div>
+                <Label>Forma de Pagamento</Label>
+                <Select value={markPaymentMethod} onValueChange={setMarkPaymentMethod}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="transferencia">Transferência Bancária</SelectItem>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="credito">Cartão de Crédito</SelectItem>
+                    <SelectItem value="debito">Cartão de Débito</SelectItem>
+                    <SelectItem value="boleto">Boleto</SelectItem>
+                    <SelectItem value="cheque">Cheque</SelectItem>
+                    <SelectItem value="faturado">Faturado</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div><Label>Observação</Label><Textarea value={markNotes} onChange={e => setMarkNotes(e.target.value)} /></div>
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setMarkDialog(false)}>Cancelar</Button>
