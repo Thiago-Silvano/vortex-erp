@@ -236,24 +236,17 @@ function openWhatsAppPopup(companyName: string, companySlug: string) {
 
   const existing = _whatsappWindows[windowName];
   if (existing && !existing.closed) {
-    try { existing.focus(); } catch { /* cross-origin */ }
-    return;
+    try { existing.focus(); return; } catch { /* cross-origin, reopen */ }
   }
 
-  const width = 1200;
-  const height = 800;
-  const left = Math.round((screen.width - width) / 2);
-  const top = Math.round((screen.height - height) / 2);
-  const features = `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,scrollbars=yes,resizable=yes`;
-
-  const popup = window.open('https://web.whatsapp.com', windowName, features);
-
-  if (!popup) {
-    window.open('https://web.whatsapp.com', '_blank', 'noopener,noreferrer');
-    return;
-  }
-
-  _whatsappWindows[windowName] = popup;
+  // Use a link click to bypass iframe/popup blockers
+  const a = document.createElement('a');
+  a.href = 'https://web.whatsapp.com';
+  a.target = windowName;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 export function openWhatsAppChat(phone: string, companySlug: string) {
