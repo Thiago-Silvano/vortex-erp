@@ -19,8 +19,7 @@ import { Label } from '@/components/ui/label';
 interface Conversation {
   id: string;
   phone: string;
-  client_name: string;
-  contact_name?: string;
+  contact_name: string;
   last_message: string;
   last_message_at: string;
   unread_count: number;
