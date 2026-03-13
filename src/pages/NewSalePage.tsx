@@ -1352,7 +1352,7 @@ export default function NewSalePage() {
             </div>
             <div className="col-span-full mt-2">
               <Label>Imagem do Destino (para proposta)</Label>
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
                 {destinationImageUrl ? (
                   <div className="relative">
                     <img src={destinationImageUrl} alt="Destino" className="h-20 w-32 object-cover rounded border" />
@@ -1372,8 +1372,42 @@ export default function NewSalePage() {
                     <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
                   </label>
                 )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAiImageSearch}
+                  disabled={aiImageSearch || !destinationName.trim()}
+                  className="gap-2"
+                >
+                  {aiImageSearch ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Buscar com I.A.
+                </Button>
               </div>
             </div>
+
+            {/* AI Image Selection Dialog */}
+            <Dialog open={aiImageDialog} onOpenChange={setAiImageDialog}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Escolha uma imagem de {destinationName}</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {aiImages.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors"
+                      onClick={() => handleSelectAiImage(img)}
+                    >
+                      <img src={img} alt={`${destinationName} ${idx + 1}`} className="w-full h-36 object-cover" />
+                      <div className="p-2 text-center">
+                        <Button size="sm" variant="ghost" className="w-full text-xs">Selecionar</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 
