@@ -629,6 +629,7 @@ export default function NewSalePage() {
         trip_start_date: tripStartDate || null,
         trip_end_date: tripEndDate || null,
         destination_name: destinationName || '',
+        sale_workflow_status: saleWorkflowStatus,
       } as any,
       userEmail,
     };
