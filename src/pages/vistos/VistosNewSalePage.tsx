@@ -293,7 +293,7 @@ export default function VistosNewSalePage() {
       await supabase.from('visa_applicants').delete().eq('visa_sale_id', editSaleId);
       await (supabase.from('visa_sale_payments' as any) as any).delete().eq('visa_sale_id', editSaleId);
       // Delete old receivables linked to this visa sale
-      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+      await supabase.from('receivables').delete().eq('visa_sale_id', editSaleId);
     } else {
       const { data: newSale, error } = await supabase.from('visa_sales').insert(salePayload).select('id').single();
       if (error || !newSale) { toast.error('Erro ao salvar venda.'); setSaving(false); return; }
