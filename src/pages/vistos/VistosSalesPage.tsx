@@ -8,9 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Pencil } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface VisaSale {
   id: string;
@@ -24,9 +26,11 @@ interface VisaSale {
 
 export default function VistosSalesPage() {
   const navigate = useNavigate();
-  const { activeCompany } = useCompany();
+  const { activeCompany, isMaster } = useCompany();
   const [sales, setSales] = useState<VisaSale[]>([]);
   const [filter, setFilter] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<VisaSale | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchSales = async () => {
     if (!activeCompany?.id) return;
@@ -52,6 +56,33 @@ export default function VistosSalesPage() {
   );
 
   const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto', cartao_credito: 'Cartão Crédito', cartao_debito: 'Cartão Débito', transferencia: 'Transferência' };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      // Delete related receivables
+      await supabase.from('receivables').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete related applicants
+      await supabase.from('visa_applicants').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete related payments
+      await supabase.from('visa_sale_payments').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete related processes
+      await supabase.from('visa_processes').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete related commissions
+      await supabase.from('seller_commissions').delete().eq('visa_sale_id', deleteTarget.id);
+      // Delete the sale
+      const { error } = await supabase.from('visa_sales').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      toast.success('Venda excluída com sucesso');
+      setSales(prev => prev.filter(s => s.id !== deleteTarget.id));
+    } catch (err: any) {
+      toast.error('Erro ao excluir: ' + err.message);
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   return (
     <AppLayout>
@@ -97,9 +128,16 @@ export default function VistosSalesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => navigate('/vistos/sales/edit', { state: { editSaleId: s.id } })}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate('/vistos/sales/edit', { state: { editSaleId: s.id } }); }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {isMaster && (
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -107,6 +145,23 @@ export default function VistosSalesPage() {
             </Table>
           </CardContent>
         </Card>
+
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir venda</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir a venda de <strong>{deleteTarget?.client_name}</strong>? Todas as parcelas no contas a receber serão excluídas. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {deleting ? 'Excluindo...' : 'Excluir'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
