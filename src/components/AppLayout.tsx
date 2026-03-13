@@ -255,31 +255,13 @@ export function openWhatsAppChat(phone: string, companySlug: string) {
   const windowName = companySlug === 'vortex-vistos' ? 'whatsapp_vortex_vistos' : 'whatsapp_vortex_viagens';
   const url = `https://web.whatsapp.com/send?phone=${fullPhone}`;
 
-  const existing = _whatsappWindows[windowName];
-  if (existing && !existing.closed) {
-    try {
-      existing.location.href = url;
-      existing.focus();
-    } catch {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-    return;
-  }
-
-  const width = 1200;
-  const height = 800;
-  const left = Math.round((screen.width - width) / 2);
-  const top = Math.round((screen.height - height) / 2);
-  const features = `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,scrollbars=yes,resizable=yes`;
-
-  const popup = window.open(url, windowName, features);
-
-  if (!popup) {
-    window.open(url, '_blank', 'noopener,noreferrer');
-    return;
-  }
-
-  _whatsappWindows[windowName] = popup;
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = windowName;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
