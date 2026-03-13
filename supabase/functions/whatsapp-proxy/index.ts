@@ -74,26 +74,35 @@ Deno.serve(async (req) => {
 
     let { response, parsed, responseText } = await executeProxyCall(payload);
 
-    // Some WhatsApp server implementations throw "No LID for user" when @c.us is sent.
-    // Retry once using only digits to improve compatibility.
+    // Some WhatsApp server implementations throw "No LID for user" with certain id formats.
+    // Retry with alternative number formats for compatibility.
     const originalNumber = (payload as { number?: unknown } | null)?.number;
     const shouldRetryNoLid =
       response.status >= 400 &&
       typeof originalNumber === "string" &&
-      originalNumber.includes("@") &&
       responseText.toLowerCase().includes("no lid for user");
 
     if (shouldRetryNoLid) {
-      const fallbackNumber = originalNumber.replace(/@.*/, "").replace(/\D/g, "");
-      if (fallbackNumber.length >= 8) {
+      const digits = originalNumber.replace(/@.*/, "").replace(/\D/g, "");
+      const candidates = [digits];
+
+      if (!digits.startsWith("55") && (digits.length === 10 || digits.length === 11)) {
+        candidates.push(`55${digits}`);
+      }
+
+      for (const candidate of candidates) {
+        if (!candidate || candidate.length < 8) continue;
+
         const retryPayload = {
           ...(typeof payload === "object" && payload !== null ? payload as Record<string, unknown> : {}),
-          number: fallbackNumber,
+          number: candidate,
         };
 
         const retryResult = await executeProxyCall(retryPayload);
         response = retryResult.response;
         parsed = retryResult.parsed;
+
+        if (response.status < 400) break;
       }
     }
 

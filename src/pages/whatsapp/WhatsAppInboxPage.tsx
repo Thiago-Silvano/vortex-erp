@@ -425,7 +425,7 @@ export default function WhatsAppInboxPage() {
     setShowCreateClient(false);
   };
 
-  const getDisplayName = (conv: Conversation) => conv.client_name || conv.contact_name || conv.phone;
+  const getDisplayName = (conv: Conversation) => conv.contact_name || conv.phone;
 
   const filteredConvs = conversations.filter(c => {
     if (!search) return true;
