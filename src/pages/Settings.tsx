@@ -295,6 +295,60 @@ export default function Settings() {
           </CardContent>
         </Card>
 
+        {/* Stock Images Integration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Image className="h-5 w-5" />
+              Integrações — Banco de Imagens
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Unsplash API Key</Label>
+              <p className="text-xs text-muted-foreground mb-1">
+                Obtenha em{' '}
+                <a href="https://unsplash.com/developers" target="_blank" rel="noopener noreferrer" className="text-primary underline">unsplash.com/developers</a>
+              </p>
+              <Input
+                type="password"
+                value={unsplashKey}
+                onChange={e => { setUnsplashKey(e.target.value); setStockStatus(null); }}
+                placeholder="Access Key..."
+              />
+              {stockStatus?.unsplash === true && (
+                <p className="flex items-center gap-1 mt-1 text-xs text-green-600"><CheckCircle className="h-3 w-3" />Unsplash conectado</p>
+              )}
+              {stockStatus?.unsplash === false && (
+                <p className="flex items-center gap-1 mt-1 text-xs text-destructive"><XCircle className="h-3 w-3" />Unsplash falhou</p>
+              )}
+            </div>
+            <div>
+              <Label>Pexels API Key</Label>
+              <p className="text-xs text-muted-foreground mb-1">
+                Obtenha em{' '}
+                <a href="https://www.pexels.com/api/" target="_blank" rel="noopener noreferrer" className="text-primary underline">pexels.com/api</a>
+              </p>
+              <Input
+                type="password"
+                value={pexelsKey}
+                onChange={e => { setPexelsKey(e.target.value); setStockStatus(null); }}
+                placeholder="API Key..."
+              />
+              {stockStatus?.pexels === true && (
+                <p className="flex items-center gap-1 mt-1 text-xs text-green-600"><CheckCircle className="h-3 w-3" />Pexels conectado</p>
+              )}
+              {stockStatus?.pexels === false && (
+                <p className="flex items-center gap-1 mt-1 text-xs text-destructive"><XCircle className="h-3 w-3" />Pexels falhou</p>
+              )}
+            </div>
+            <Button variant="outline" onClick={testStockConnection} disabled={testingStock}>
+              {testingStock ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Testar conexão
+            </Button>
+          </CardContent>
+        </Card>
+
         <h2 className="text-xl font-semibold text-foreground pt-4">Taxas de Pagamento - Cartão</h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
