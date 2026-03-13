@@ -61,6 +61,15 @@ interface Receivable { installment_number: number; due_date: string; amount: num
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
 
+interface SupplierPaymentControl {
+  supplier_id: string;
+  payment_method: 'pix' | 'faturado' | 'credito';
+  payment_date: string;
+  installments: number;
+  installment_dates: { date: string; amount: number }[];
+  amount: number;
+}
+
 interface ProposalPaymentOption {
   method: string;
   label: string;
@@ -124,6 +133,7 @@ export default function NewSalePage() {
   const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
   const [uploadingDestImage, setUploadingDestImage] = useState(false);
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
+  const [supplierPayments, setSupplierPayments] = useState<SupplierPaymentControl[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
@@ -333,6 +343,84 @@ export default function NewSalePage() {
     }
     setReceivables(recs);
   }, [installments, paymentMethod, totalSaleWithInterest, boletoInterestRate, saleDate]);
+
+  // Sync supplier payments when suppliers or totalCost change
+  useEffect(() => {
+    setSupplierPayments(prev => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const costPerSupplier = selectedSupplierIds.length > 0 ? totalCost / selectedSupplierIds.length : 0;
+      return selectedSupplierIds.map(sid => {
+        const existing = prev.find(sp => sp.supplier_id === sid);
+        if (existing) {
+          // Update amount but keep payment config
+          const newAmount = costPerSupplier;
+          const updatedDates = existing.payment_method === 'credito'
+            ? existing.installment_dates.map(d => ({ ...d, amount: newAmount / (existing.installments || 1) }))
+            : existing.installment_dates;
+          return { ...existing, amount: newAmount, installment_dates: updatedDates };
+        }
+        return {
+          supplier_id: sid,
+          payment_method: 'pix' as const,
+          payment_date: today,
+          installments: 1,
+          installment_dates: [{ date: today, amount: costPerSupplier }],
+          amount: costPerSupplier,
+        };
+      });
+    });
+  }, [selectedSupplierIds, totalCost]);
+
+  const updateSupplierPayment = (sid: string, field: string, value: any) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    setSupplierPayments(prev => prev.map(sp => {
+      if (sp.supplier_id !== sid) return sp;
+      const updated = { ...sp, [field]: value };
+      if (field === 'payment_method') {
+        if (value === 'pix') {
+          updated.payment_date = today;
+          updated.installments = 1;
+          updated.installment_dates = [{ date: today, amount: sp.amount }];
+        } else if (value === 'faturado') {
+          updated.payment_date = today;
+          updated.installments = 1;
+          updated.installment_dates = [{ date: today, amount: sp.amount }];
+        } else if (value === 'credito') {
+          updated.installments = 3;
+          const dates = [];
+          const base = new Date();
+          for (let i = 1; i <= 3; i++) {
+            const d = new Date(base);
+            d.setMonth(d.getMonth() + i);
+            dates.push({ date: d.toISOString().split('T')[0], amount: sp.amount / 3 });
+          }
+          updated.installment_dates = dates;
+        }
+      }
+      if (field === 'installments' && sp.payment_method === 'credito') {
+        const inst = value as number;
+        const dates = [];
+        const base = new Date();
+        for (let i = 1; i <= inst; i++) {
+          const d = new Date(base);
+          d.setMonth(d.getMonth() + i);
+          dates.push({ date: d.toISOString().split('T')[0], amount: sp.amount / inst });
+        }
+        updated.installment_dates = dates;
+      }
+      return updated;
+    }));
+  };
+
+  const updateSupplierInstallmentDate = (sid: string, idx: number, newDate: string) => {
+    setSupplierPayments(prev => prev.map(sp => {
+      if (sp.supplier_id !== sid) return sp;
+      const dates = [...sp.installment_dates];
+      dates[idx] = { ...dates[idx], date: newDate };
+      return { ...sp, installment_dates: dates };
+    }));
+  };
+
 
   const updateItem = (idx: number, field: keyof SaleItem, value: any) => {
     setItems(prev => prev.map((item, i) => {
@@ -697,7 +785,42 @@ export default function NewSalePage() {
       } as any)));
     }
 
-    if (totalCost > 0 && selectedSupplierIds.length > 0) {
+    // Generate accounts_payable from supplier payment controls
+    if (supplierPayments.length > 0) {
+      const payables: any[] = [];
+      for (const sp of supplierPayments) {
+        if (sp.amount <= 0) continue;
+        if (sp.payment_method === 'pix') {
+          payables.push({
+            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+            due_date: sp.payment_date, description: `Venda - ${clientName} (Pix)`,
+            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+            installment_number: 1, total_installments: 1,
+          });
+        } else if (sp.payment_method === 'faturado') {
+          payables.push({
+            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+            due_date: sp.installment_dates[0]?.date || sp.payment_date,
+            description: `Venda - ${clientName} (Faturado)`,
+            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+            installment_number: 1, total_installments: 1,
+          });
+        } else if (sp.payment_method === 'credito') {
+          sp.installment_dates.forEach((inst, idx) => {
+            payables.push({
+              sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
+              due_date: inst.date, description: `Venda - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
+              status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+              installment_number: idx + 1, total_installments: sp.installments,
+            });
+          });
+        }
+      }
+      if (payables.length > 0) {
+        await supabase.from('accounts_payable').insert(payables);
+      }
+    } else if (totalCost > 0 && selectedSupplierIds.length > 0) {
+      // Fallback: split equally
       const costPerSupplier = totalCost / selectedSupplierIds.length;
       await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
         sale_id: saleId, supplier_id: sid, amount: costPerSupplier,
@@ -1467,11 +1590,11 @@ export default function NewSalePage() {
               ))}
             </div>
             {/* Operator Taxes */}
-            <div className="border-t pt-4 px-4 pb-4 sm:px-0">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="border-t pt-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end px-4 sm:px-6 pb-4">
                 <div>
                   <Label>Taxas da Operadora (R$)</Label>
-                  <Input value={operatorTaxes ? `R$ ${operatorTaxes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setOperatorTaxes(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
+                  <Input value={operatorTaxes ? `R$ ${operatorTaxes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setOperatorTaxes(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" className="mt-1" />
                   <p className="text-xs text-muted-foreground mt-1">Valor somado ao total da venda.</p>
                 </div>
                 {operatorTaxes > 0 && (
@@ -1686,6 +1809,95 @@ export default function NewSalePage() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Controle de Pagamentos ao Fornecedor */}
+        {selectedSupplierIds.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="text-base">💰 Controle de Pagamentos ao Fornecedor</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {supplierPayments.map(sp => {
+                const sup = allSuppliers.find(s => s.id === sp.supplier_id);
+                return (
+                  <div key={sp.supplier_id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-sm">{sup?.name || 'Fornecedor'}</p>
+                      <p className="text-sm text-muted-foreground">Valor: <span className="font-semibold text-foreground">{fmt(sp.amount)}</span></p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-xs">Forma de Pagamento</Label>
+                        <Select value={sp.payment_method} onValueChange={v => updateSupplierPayment(sp.supplier_id, 'payment_method', v)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pix">Pix</SelectItem>
+                            <SelectItem value="faturado">Faturado</SelectItem>
+                            <SelectItem value="credito">Cartão de Crédito</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {sp.payment_method === 'pix' && (
+                        <div>
+                          <Label className="text-xs">Data do Pagamento</Label>
+                          <Input type="date" value={sp.payment_date} disabled className="bg-muted" />
+                          <p className="text-xs text-muted-foreground mt-1">Data de hoje (automático)</p>
+                        </div>
+                      )}
+
+                      {sp.payment_method === 'faturado' && (
+                        <div>
+                          <Label className="text-xs">Data de Vencimento</Label>
+                          <Input
+                            type="date"
+                            value={sp.installment_dates[0]?.date || sp.payment_date}
+                            onChange={e => {
+                              updateSupplierPayment(sp.supplier_id, 'payment_date', e.target.value);
+                              setSupplierPayments(prev => prev.map(s =>
+                                s.supplier_id === sp.supplier_id
+                                  ? { ...s, installment_dates: [{ date: e.target.value, amount: s.amount }] }
+                                  : s
+                              ));
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {sp.payment_method === 'credito' && (
+                        <div>
+                          <Label className="text-xs">Nº de Parcelas</Label>
+                          <Select value={String(sp.installments)} onValueChange={v => updateSupplierPayment(sp.supplier_id, 'installments', parseInt(v))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{Array.from({ length: 12 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+
+                    {sp.payment_method === 'credito' && sp.installment_dates.length > 0 && (
+                      <div className="border-t pt-3">
+                        <Label className="text-xs text-muted-foreground mb-2 block">Parcelas</Label>
+                        <div className="space-y-2">
+                          {sp.installment_dates.map((inst, idx) => (
+                            <div key={idx} className="grid grid-cols-3 gap-2 items-center">
+                              <p className="text-sm font-medium">{idx + 1}ª parcela</p>
+                              <Input
+                                type="date"
+                                value={inst.date}
+                                onChange={e => updateSupplierInstallmentDate(sp.supplier_id, idx, e.target.value)}
+                                className="h-8 text-sm"
+                              />
+                              <p className="text-sm text-right">{fmt(inst.amount)}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Invoice Upload */}
         <Card>
