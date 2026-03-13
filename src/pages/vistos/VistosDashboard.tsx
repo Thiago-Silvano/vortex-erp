@@ -124,6 +124,7 @@ export default function VistosDashboard() {
       revenueTotal: totalRevenue,
       revenueServices: totalServices,
       revenueFees: totalFees,
+      cardFees: totalCardFees,
     });
 
     setStatusChart(
