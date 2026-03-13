@@ -886,6 +886,71 @@ export type Database = {
           },
         ]
       }
+      hotels_cache: {
+        Row: {
+          cidade: string | null
+          created_at: string | null
+          data_atualizacao: string | null
+          empresa_id: string | null
+          endereco: string | null
+          fotos: Json | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          nome: string
+          pais: string | null
+          place_id: string
+          rating: number | null
+          reviews_total: number | null
+          telefone: string | null
+          website: string | null
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string | null
+          data_atualizacao?: string | null
+          empresa_id?: string | null
+          endereco?: string | null
+          fotos?: Json | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome?: string
+          pais?: string | null
+          place_id: string
+          rating?: number | null
+          reviews_total?: number | null
+          telefone?: string | null
+          website?: string | null
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string | null
+          data_atualizacao?: string | null
+          empresa_id?: string | null
+          endereco?: string | null
+          fotos?: Json | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome?: string
+          pais?: string | null
+          place_id?: string
+          rating?: number | null
+          reviews_total?: number | null
+          telefone?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotels_cache_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_audit_log: {
         Row: {
           action: string
