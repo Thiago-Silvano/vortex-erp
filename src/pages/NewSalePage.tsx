@@ -597,6 +597,36 @@ export default function NewSalePage() {
     }
   };
 
+  const handleStockImageSelect = async (img: StockImage) => {
+    try {
+      const res = await fetch(img.url_full);
+      const blob = await res.blob();
+      const ext = img.url_full.includes('.png') ? 'png' : 'jpg';
+      const fileName = `destinations/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('quote-images').upload(fileName, blob, { contentType: `image/${ext === 'png' ? 'png' : 'jpeg'}` });
+      if (error) { toast.error('Erro ao salvar imagem'); return; }
+      const { data } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+      setDestinationImageUrl(data.publicUrl);
+      setStockImageSearchOpen(false);
+
+      // Save to destination_images cache
+      await supabase.from('destination_images' as any).insert({
+        titulo: img.description,
+        autor: img.photographer,
+        fonte: img.source,
+        url_original: img.url_full,
+        url_local: data.publicUrl,
+        largura: img.width,
+        altura: img.height,
+        empresa_id: activeCompany?.id || null,
+      } as any);
+
+      toast.success(`Imagem de ${img.photographer} (${img.source}) selecionada!`);
+    } catch {
+      toast.error('Erro ao processar imagem');
+    }
+  };
+
   const handleItemImageUpload = async (itemIdx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
