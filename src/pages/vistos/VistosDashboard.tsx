@@ -38,7 +38,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function VistosDashboard() {
   const { activeCompany } = useCompany();
-  const [stats, setStats] = useState<Stats>({ salesThisMonth: 0, inProduction: 0, scheduled: 0, approved: 0, denied: 0, revenueTotal: 0, revenueServices: 0, revenueFees: 0 });
+  const [stats, setStats] = useState<Stats>({ salesThisMonth: 0, inProduction: 0, scheduled: 0, approved: 0, denied: 0, revenueTotal: 0, revenueServices: 0, revenueFees: 0, cardFees: 0 });
   const [statusChart, setStatusChart] = useState<{ name: string; value: number; color: string }[]>([]);
   const [productChart, setProductChart] = useState<{ name: string; vendas: number }[]>([]);
   const [loading, setLoading] = useState(true);
