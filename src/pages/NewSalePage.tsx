@@ -2164,6 +2164,12 @@ export default function NewSalePage() {
               // Auto-save draft after service detail save
               setTimeout(() => handleSilentSaveDraft(), 300);
             }}
+            onHotelImagesFound={(images) => {
+              setItemImages(prev => ({
+                ...prev,
+                [editingItemIdx]: [...(prev[editingItemIdx] || []), ...images],
+              }));
+            }}
           />
         )}
       </div>
