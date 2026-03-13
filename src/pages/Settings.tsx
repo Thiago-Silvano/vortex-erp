@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Save, X } from 'lucide-react';
+import { Save, X, CheckCircle, XCircle, Loader2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CardRate {
@@ -25,6 +25,9 @@ export default function Settings() {
   const [settings, setSettings] = useState<AgencySettings>(getAgencySettings());
   const [ecRates, setEcRates] = useState<CardRate[]>([]);
   const [linkRates, setLinkRates] = useState<CardRate[]>([]);
+  const [googleApiKey, setGoogleApiKey] = useState('');
+  const [testingGoogle, setTestingGoogle] = useState(false);
+  const [googleStatus, setGoogleStatus] = useState<'idle' | 'connected' | 'error'>('idle');
 
   const defaultEcRates: CardRate[] = [
     { installments: 0, rate: 1.39, label: 'Débito' },
@@ -47,6 +50,7 @@ export default function Settings() {
 
   useEffect(() => {
     loadRates();
+    loadGoogleApiKey();
   }, [activeCompany]);
 
   const loadRates = async () => {
@@ -64,6 +68,16 @@ export default function Settings() {
     }
   };
 
+  const loadGoogleApiKey = async () => {
+    let query = supabase.from('agency_settings').select('*');
+    if (activeCompany) query = query.eq('empresa_id', activeCompany.id);
+    const { data } = await query.limit(1).single();
+    if (data && (data as any).google_maps_api_key) {
+      setGoogleApiKey((data as any).google_maps_api_key);
+      setGoogleStatus('connected');
+    }
+  };
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -77,15 +91,52 @@ export default function Settings() {
     setter(prev => prev.map(r => r.installments === installments ? { ...r, rate } : r));
   };
 
+  const testGoogleConnection = async () => {
+    if (!googleApiKey.trim()) { toast.error('Insira a API Key primeiro'); return; }
+    setTestingGoogle(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-places', {
+        body: { action: 'test', apiKey: googleApiKey },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        setGoogleStatus('connected');
+        toast.success('Conectado com Google Maps!');
+      } else {
+        setGoogleStatus('error');
+        toast.error(`Erro: ${data?.error || 'API Key inválida'}`);
+      }
+    } catch (e: any) {
+      setGoogleStatus('error');
+      toast.error(e.message || 'Erro ao testar conexão');
+    } finally {
+      setTestingGoogle(false);
+    }
+  };
+
   const handleSave = async () => {
     saveAgencySettings(settings);
+
+    // Save Google Maps API Key to agency_settings
+    const empresaId = activeCompany?.id || null;
+    let query = supabase.from('agency_settings').select('id');
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { data: existing } = await query.limit(1).single();
+
+    if (existing) {
+      await supabase.from('agency_settings')
+        .update({ google_maps_api_key: googleApiKey } as any)
+        .eq('id', existing.id);
+    } else if (empresaId) {
+      await supabase.from('agency_settings')
+        .insert({ empresa_id: empresaId, google_maps_api_key: googleApiKey, name: settings.name } as any);
+    }
 
     // Delete existing rates for this company and insert new ones
     let deleteQuery = supabase.from('card_rates').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     if (activeCompany) deleteQuery = deleteQuery.eq('empresa_id', activeCompany.id) as any;
     await deleteQuery as any;
     
-    const empresaId = activeCompany?.id || null;
     const allRates = [
       ...ecRates.map(r => ({ payment_type: 'ec', installments: r.installments, rate: r.rate, empresa_id: empresaId })),
       ...linkRates.map(r => ({ payment_type: 'link', installments: r.installments, rate: r.rate, empresa_id: empresaId })),
@@ -165,6 +216,53 @@ export default function Settings() {
             <div>
               <Label>Website</Label>
               <Input value={settings.website} onChange={e => setSettings(p => ({ ...p, website: e.target.value }))} placeholder="www.suaagencia.com.br" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Google Maps Integration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Integrações — Google Maps
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Google Maps API Key</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Necessária para buscar hotéis automaticamente. Obtenha em{' '}
+                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                  Google Cloud Console
+                </a>
+                . Ative as APIs: Places API, Maps JavaScript API.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="password"
+                  value={googleApiKey}
+                  onChange={e => { setGoogleApiKey(e.target.value); setGoogleStatus('idle'); }}
+                  placeholder="AIzaSy..."
+                  className="flex-1"
+                />
+                <Button variant="outline" onClick={testGoogleConnection} disabled={testingGoogle}>
+                  {testingGoogle ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                  Testar conexão
+                </Button>
+              </div>
+              {googleStatus === 'connected' && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  Conectado com Google Maps
+                </div>
+              )}
+              {googleStatus === 'error' && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-destructive">
+                  <XCircle className="h-4 w-4" />
+                  Falha na conexão — verifique a API Key
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
