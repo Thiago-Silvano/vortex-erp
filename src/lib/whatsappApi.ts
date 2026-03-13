@@ -32,18 +32,22 @@ export async function fetchChats(serverUrl: string) {
 }
 
 export async function fetchMessages(serverUrl: string, number: string) {
-  return proxyRequest(serverUrl, `/messages/${encodeURIComponent(number)}`);
+  // Ensure we use the whatsapp ID format with @c.us suffix
+  const chatId = formatChatId(number);
+  return proxyRequest(serverUrl, `/messages/${encodeURIComponent(chatId)}`);
 }
 
 export async function sendMessage(serverUrl: string, number: string, message: string) {
-  return proxyRequest(serverUrl, '/send', 'POST', { number, message });
+  // Server expects phone number, try with @c.us format too
+  const chatId = formatChatId(number);
+  return proxyRequest(serverUrl, '/send', 'POST', { number: chatId, message });
 }
 
 export async function sendMedia(serverUrl: string, number: string, file: File, caption?: string) {
-  // Media needs special handling - convert to base64 and send through proxy
   const base64 = await fileToBase64(file);
+  const chatId = formatChatId(number);
   return proxyRequest(serverUrl, '/send-media', 'POST', {
-    number,
+    number: chatId,
     file_base64: base64,
     file_name: file.name,
     mime_type: file.type,
@@ -53,6 +57,18 @@ export async function sendMedia(serverUrl: string, number: string, file: File, c
 
 export async function checkStatus(serverUrl: string) {
   return proxyRequest(serverUrl, '/status');
+}
+
+/**
+ * Format a phone number into WhatsApp chat ID format.
+ * If already has @c.us or @g.us suffix, return as-is.
+ * Otherwise, strip non-digits and append @c.us.
+ */
+function formatChatId(phone: string): string {
+  if (!phone) return '';
+  if (phone.includes('@')) return phone;
+  const clean = phone.replace(/\D/g, '');
+  return `${clean}@c.us`;
 }
 
 function fileToBase64(file: File): Promise<string> {
