@@ -56,6 +56,19 @@ interface HotelInfo {
   pricePerNight?: number;
   totalPrice?: number;
   observations?: string;
+  tripadvisorRating?: number;
+  tripadvisorReviewsCount?: number;
+  tripadvisorRanking?: string;
+  tripadvisorBadges?: string[];
+  tripadvisorTopReviews?: string[];
+  tripadvisorRatingBreakdown?: {
+    location: number;
+    cleanliness: number;
+    service: number;
+    value: number;
+    rooms: number;
+  };
+  tripadvisorPopularMentions?: string[];
 }
 
 export interface ServiceMetadata {
@@ -219,12 +232,19 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           checkOutTime: h.check_out_time || prev.checkOutTime,
           category: h.category || prev.category,
           highlights: h.highlights || prev.highlights,
+          tripadvisorRating: h.tripadvisor_rating || prev.tripadvisorRating,
+          tripadvisorReviewsCount: h.tripadvisor_reviews_count || prev.tripadvisorReviewsCount,
+          tripadvisorRanking: h.tripadvisor_ranking || prev.tripadvisorRanking,
+          tripadvisorBadges: h.tripadvisor_badges || prev.tripadvisorBadges,
+          tripadvisorTopReviews: h.tripadvisor_top_reviews || prev.tripadvisorTopReviews,
+          tripadvisorRatingBreakdown: h.tripadvisor_rating_breakdown || prev.tripadvisorRatingBreakdown,
+          tripadvisorPopularMentions: h.tripadvisor_popular_mentions || prev.tripadvisorPopularMentions,
         }));
         if (data.images && data.images.length > 0) {
           setHotelImages(data.images);
           setSelectedImageIndices(new Set(data.images.map((_: string, i: number) => i)));
         }
-        toast.success(`Informações do hotel encontradas!`);
+        toast.success(`Informações do hotel e TripAdvisor encontradas!`);
       } else {
         toast.error('Não foi possível encontrar informações do hotel');
       }
@@ -368,30 +388,28 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 </div>
               )}
 
-              {/* Hotel name + AI fallback search */}
+              {/* Hotel name + AI search */}
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <Label>Nome do Hotel</Label>
                   <Input value={hotel.hotelName} onChange={e => setHotel(p => ({ ...p, hotelName: e.target.value }))} placeholder="Ex: Grand Hyatt Rio de Janeiro" />
                 </div>
-                {!googleApiKey && (
-                  <Button variant="outline" className="mt-6" onClick={handleSearchHotelAI} disabled={searchingHotel}>
-                    {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
-                    {searchingHotel ? 'Buscando...' : 'Buscar IA'}
-                  </Button>
-                )}
+                <Button variant="outline" className="mt-6" onClick={handleSearchHotelAI} disabled={searchingHotel}>
+                  {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
+                  {searchingHotel ? 'Buscando...' : 'Buscar'}
+                </Button>
               </div>
 
               {searchingHotel && (
                 <div className="p-4 bg-muted/50 rounded-lg text-center text-sm text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-                  Buscando informações do hotel...
+                  Buscando informações do hotel e TripAdvisor...
                 </div>
               )}
 
               {/* Hotel Info Card */}
-              {hotel.hotelName && (hotel.rating || hotel.description || hotel.address) && (
-                <div className="p-4 bg-muted/30 rounded-lg space-y-2">
+              {hotel.hotelName && (hotel.rating || hotel.description || hotel.address || hotel.tripadvisorRating) && (
+                <div className="p-4 bg-muted/30 rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold text-foreground">{hotel.hotelName}</h4>
                     {(hotel.rating || 0) > 0 && (
@@ -415,6 +433,70 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   )}
                   {hotel.phone && <p className="text-xs text-muted-foreground">📞 {hotel.phone}</p>}
                   {hotel.website && <p className="text-xs text-muted-foreground">🌐 {hotel.website}</p>}
+
+                  {/* TripAdvisor Section */}
+                  {(hotel.tripadvisorRating || hotel.tripadvisorRanking) && (
+                    <div className="border-t pt-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-foreground">🦉 TripAdvisor</span>
+                        {hotel.tripadvisorRating && (
+                          <span className="flex items-center gap-1 text-sm">
+                            <span className="font-bold text-emerald-600">{hotel.tripadvisorRating}</span>
+                            <span className="text-muted-foreground text-xs">/5</span>
+                            {hotel.tripadvisorReviewsCount && (
+                              <span className="text-muted-foreground text-xs">({hotel.tripadvisorReviewsCount.toLocaleString('pt-BR')} avaliações)</span>
+                            )}
+                          </span>
+                        )}
+                      </div>
+
+                      {hotel.tripadvisorRanking && (
+                        <p className="text-xs text-muted-foreground">🏆 {hotel.tripadvisorRanking}</p>
+                      )}
+
+                      {hotel.tripadvisorBadges && hotel.tripadvisorBadges.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {hotel.tripadvisorBadges.map((b, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-emerald-500/10 text-emerald-700 text-xs rounded-full font-medium">🏅 {b}</span>
+                          ))}
+                        </div>
+                      )}
+
+                      {hotel.tripadvisorRatingBreakdown && (
+                        <div className="grid grid-cols-5 gap-2 text-xs">
+                          {[
+                            { label: 'Localização', value: hotel.tripadvisorRatingBreakdown.location },
+                            { label: 'Limpeza', value: hotel.tripadvisorRatingBreakdown.cleanliness },
+                            { label: 'Serviço', value: hotel.tripadvisorRatingBreakdown.service },
+                            { label: 'Custo-benefício', value: hotel.tripadvisorRatingBreakdown.value },
+                            { label: 'Quartos', value: hotel.tripadvisorRatingBreakdown.rooms },
+                          ].map((item, i) => (
+                            <div key={i} className="text-center">
+                              <div className="font-medium text-foreground">{item.value}</div>
+                              <div className="text-muted-foreground">{item.label}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {hotel.tripadvisorTopReviews && hotel.tripadvisorTopReviews.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-foreground">Avaliações em destaque:</p>
+                          {hotel.tripadvisorTopReviews.map((r, i) => (
+                            <p key={i} className="text-xs text-muted-foreground italic">"{r}"</p>
+                          ))}
+                        </div>
+                      )}
+
+                      {hotel.tripadvisorPopularMentions && hotel.tripadvisorPopularMentions.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {hotel.tripadvisorPopularMentions.map((m, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded-full">#{m}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
