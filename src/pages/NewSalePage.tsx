@@ -61,6 +61,15 @@ interface Receivable { installment_number: number; due_date: string; amount: num
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
 
+interface SupplierPaymentControl {
+  supplier_id: string;
+  payment_method: 'pix' | 'faturado' | 'credito';
+  payment_date: string;
+  installments: number;
+  installment_dates: { date: string; amount: number }[];
+  amount: number;
+}
+
 interface ProposalPaymentOption {
   method: string;
   label: string;
