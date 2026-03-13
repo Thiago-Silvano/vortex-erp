@@ -133,6 +133,7 @@ export default function NewSalePage() {
   const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
   const [uploadingDestImage, setUploadingDestImage] = useState(false);
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
+  const [supplierPayments, setSupplierPayments] = useState<SupplierPaymentControl[]>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
