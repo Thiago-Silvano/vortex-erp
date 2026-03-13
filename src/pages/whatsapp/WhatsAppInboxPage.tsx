@@ -317,7 +317,7 @@ export default function WhatsAppInboxPage() {
       return;
     }
 
-    const phone = normalizePhone(newMsgForm.phone);
+    const phone = normalizePhoneForSend(newMsgForm.phone);
     if (phone.length < 8) {
       toast.error('Número de telefone inválido');
       return;
