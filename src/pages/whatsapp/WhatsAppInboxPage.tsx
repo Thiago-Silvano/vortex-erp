@@ -317,26 +317,31 @@ export default function WhatsAppInboxPage() {
       return;
     }
 
+    const messageText = newMsgForm.message.trim();
+    const contactName = newMsgForm.name || phone;
+
     try {
       // 1. Create/find conversation FIRST so it always exists
-      const { data: convId } = await (supabase.rpc('find_or_create_conversation', {
+      const { data: convId, error: rpcError } = await (supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
         p_phone: phone,
-        p_client_name: newMsgForm.name || phone,
-        p_last_message: newMsgForm.message,
+        p_client_name: contactName,
+        p_last_message: messageText,
       }) as any);
+
+      console.log('[NewMessage] find_or_create result:', convId, 'error:', rpcError);
 
       if (convId) {
         await (supabase.from('whatsapp_messages').insert({
           conversation_id: convId,
           empresa_id: empresaId,
           sender: 'me',
-          content: newMsgForm.message,
+          content: messageText,
           message_type: 'text',
         }) as any);
       }
 
-      // 2. Reload conversations and open immediately
+      // 2. Close modal and reload conversations
       setShowNewMessage(false);
       setNewMsgForm({ phone: '', name: '', message: '' });
 
@@ -351,9 +356,9 @@ export default function WhatsAppInboxPage() {
         if (newConv) openConversation(newConv);
       }
 
-      // 3. Send via server (non-blocking — conversation already exists)
+      // 3. Send via server using captured text
       try {
-        await sendMessage(serverUrl, phone, newMsgForm.message);
+        await sendMessage(serverUrl, phone, messageText);
         toast.success('Mensagem enviada!');
       } catch (sendErr) {
         console.error('Error sending via server:', sendErr);
