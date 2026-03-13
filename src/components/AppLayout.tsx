@@ -279,22 +279,14 @@ export function openWhatsAppChat(phone: string, companySlug: string) {
   const top = Math.round((screen.height - height) / 2);
   const features = `width=${width},height=${height},left=${left},top=${top},menubar=no,status=no,toolbar=no,scrollbars=yes,resizable=yes`;
 
-  let popup: Window | null = null;
-  try {
-    popup = opener.open(url, windowName, features);
-  } catch {
-    popup = window.open(url, windowName, features);
-  }
+  const popup = window.open(url, windowName, features);
 
   if (!popup) {
     window.open(url, '_blank', 'noopener,noreferrer');
     return;
   }
 
-  if (!(opener as any).__whatsappWindows) {
-    (opener as any).__whatsappWindows = {};
-  }
-  (opener as any).__whatsappWindows[windowName] = popup;
+  _whatsappWindows[windowName] = popup;
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
