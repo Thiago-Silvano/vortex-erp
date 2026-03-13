@@ -56,6 +56,19 @@ interface HotelInfo {
   pricePerNight?: number;
   totalPrice?: number;
   observations?: string;
+  tripadvisorRating?: number;
+  tripadvisorReviewsCount?: number;
+  tripadvisorRanking?: string;
+  tripadvisorBadges?: string[];
+  tripadvisorTopReviews?: string[];
+  tripadvisorRatingBreakdown?: {
+    location: number;
+    cleanliness: number;
+    service: number;
+    value: number;
+    rooms: number;
+  };
+  tripadvisorPopularMentions?: string[];
 }
 
 export interface ServiceMetadata {
