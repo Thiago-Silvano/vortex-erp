@@ -47,24 +47,54 @@ Deno.serve(async (req) => {
     }
 
     const targetUrl = `${server_url.replace(/\/$/, "")}${endpoint}`;
+    const normalizedMethod = String(method || "GET").toUpperCase();
 
-    const fetchOptions: RequestInit = {
-      method,
-      headers: { "Content-Type": "application/json" },
+    const executeProxyCall = async (requestPayload?: unknown) => {
+      const fetchOptions: RequestInit = {
+        method: normalizedMethod,
+        headers: { "Content-Type": "application/json" },
+      };
+
+      if (normalizedMethod !== "GET" && requestPayload !== undefined) {
+        fetchOptions.body = JSON.stringify(requestPayload);
+      }
+
+      const response = await fetch(targetUrl, fetchOptions);
+      const responseText = await response.text();
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(responseText);
+      } catch {
+        parsed = { raw: responseText };
+      }
+
+      return { response, parsed, responseText };
     };
 
-    if (method !== "GET" && payload) {
-      fetchOptions.body = JSON.stringify(payload);
-    }
+    let { response, parsed, responseText } = await executeProxyCall(payload);
 
-    const response = await fetch(targetUrl, fetchOptions);
-    const responseData = await response.text();
+    // Some WhatsApp server implementations throw "No LID for user" when @c.us is sent.
+    // Retry once using only digits to improve compatibility.
+    const originalNumber = (payload as { number?: unknown } | null)?.number;
+    const shouldRetryNoLid =
+      response.status >= 400 &&
+      typeof originalNumber === "string" &&
+      originalNumber.includes("@") &&
+      responseText.toLowerCase().includes("no lid for user");
 
-    let parsed;
-    try {
-      parsed = JSON.parse(responseData);
-    } catch {
-      parsed = { raw: responseData };
+    if (shouldRetryNoLid) {
+      const fallbackNumber = originalNumber.replace(/@.*/, "").replace(/\D/g, "");
+      if (fallbackNumber.length >= 8) {
+        const retryPayload = {
+          ...(typeof payload === "object" && payload !== null ? payload as Record<string, unknown> : {}),
+          number: fallbackNumber,
+        };
+
+        const retryResult = await executeProxyCall(retryPayload);
+        response = retryResult.response;
+        parsed = retryResult.parsed;
+      }
     }
 
     return new Response(JSON.stringify(parsed), {
