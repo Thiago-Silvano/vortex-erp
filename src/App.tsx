@@ -43,12 +43,6 @@ import VistosNewSalePage from "./pages/vistos/VistosNewSalePage";
 import VistosProductionPage from "./pages/vistos/VistosProductionPage";
 import VistosReportsPage from "./pages/vistos/VistosReportsPage";
 
-// WhatsApp pages
-import WhatsAppPage from "./pages/whatsapp/WhatsAppPage";
-import WhatsAppFinishedPage from "./pages/whatsapp/WhatsAppFinishedPage";
-import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage";
-import WhatsAppAutomationsPage from "./pages/whatsapp/WhatsAppAutomationsPage";
-import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
 
 // Email pages
 import EmailInboxPage from "./pages/email/EmailInboxPage";
