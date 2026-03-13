@@ -180,7 +180,7 @@ export default function VistosDashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {statCards.map(c => (
                 <Card key={c.label} className={`${c.color} border-0 shadow-md`}>
                   <CardContent className="p-5">
