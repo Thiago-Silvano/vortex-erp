@@ -15,6 +15,7 @@ interface Stats {
   revenueTotal: number;
   revenueServices: number;
   revenueFees: number;
+  cardFees: number;
 }
 
 const STATUS_COLORS: Record<string, string> = {
