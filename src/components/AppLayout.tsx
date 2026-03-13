@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import React from 'react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -12,7 +12,7 @@ import {
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
   Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
-  Mail, FileEdit, MessageCircle,
+  Mail, FileEdit, MessageCircle, Search, Bell, User, Camera,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import PhotoCaptureModal from '@/components/PhotoCaptureModal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Camera } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface MenuItem {
   title: string;
@@ -163,8 +163,13 @@ function AppSidebar() {
       {items.map((item) => (
         <SidebarMenuItem key={item.title + item.url}>
           <SidebarMenuButton asChild>
-            <NavLink to={item.url} end className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-              <item.icon className="h-5 w-5 shrink-0" />
+            <NavLink
+              to={item.url}
+              end
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 text-[13px]"
+              activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+            >
+              <item.icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && <span>{item.title}</span>}
             </NavLink>
           </SidebarMenuButton>
@@ -178,8 +183,8 @@ function AppSidebar() {
     return (
       <SidebarGroup>
         <Collapsible defaultOpen={isActive}>
-          <CollapsibleTrigger className="flex items-center gap-2 px-4 py-2 w-full text-sidebar-foreground/50 text-xs uppercase tracking-wider hover:text-sidebar-foreground/80">
-            {React.createElement(icon, { className: 'h-4 w-4' })}
+          <CollapsibleTrigger className="flex items-center gap-2.5 px-4 py-2 w-full text-sidebar-foreground/40 text-[11px] uppercase tracking-widest font-semibold hover:text-sidebar-foreground/70 transition-colors">
+            {React.createElement(icon, { className: 'h-3.5 w-3.5' })}
             {!collapsed && <>
               <span>{label}</span>
               <ChevronDown className="h-3 w-3 ml-auto transition-transform" />
@@ -195,42 +200,88 @@ function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarContent className="bg-sidebar text-sidebar-foreground">
-        <div className="p-4 flex items-center gap-3 border-b border-sidebar-border">
+      <SidebarContent className="bg-sidebar text-sidebar-foreground scrollbar-thin">
+        {/* Logo area */}
+        <div className="px-4 py-5 flex items-center gap-3">
           {!collapsed ? (
             <div>
-              <h2 className="font-bold text-base text-sidebar-primary">
-                {isVistos ? 'VORTEX VISTOS' : 'GRUPO VORTEX'}
+              <h2 className="font-bold text-[15px] text-sidebar-primary tracking-wide">
+                {isVistos ? 'VORTEX VISTOS' : 'VORTEX VIAGENS'}
               </h2>
-              <p className="text-xs text-sidebar-foreground/60">Gerenciador</p>
+              <p className="text-[11px] text-sidebar-foreground/40 mt-0.5">Enterprise Resource Planning</p>
             </div>
           ) : (
-            <span className="text-sidebar-primary font-bold text-lg">V</span>
+            <div className="w-8 h-8 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
+              <span className="text-sidebar-primary font-bold text-sm">V</span>
+            </div>
           )}
         </div>
 
+        <div className="px-3 mb-1">
+          <div className="h-px bg-sidebar-border" />
+        </div>
+
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[11px] uppercase tracking-widest font-semibold px-4">
+            Menu
+          </SidebarGroupLabel>
           <SidebarGroupContent>{renderMenuItems(filterItems(mainItems))}</SidebarGroupContent>
         </SidebarGroup>
 
-        {renderCollapsibleGroup('Email', Mail, filteredEmail, isEmailActive)}
-        {!isVistos && renderCollapsibleGroup('WhatsApp', MessageCircle, filteredWhatsApp, isWhatsAppActive)}
         {renderCollapsibleGroup('Financeiro', DollarSign, filteredFinancial, isFinancialActive)}
         {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
 
+        <div className="px-3 my-1">
+          <div className="h-px bg-sidebar-border" />
+        </div>
+
+        {/* Apps section */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[11px] uppercase tracking-widest font-semibold px-4">
+            Apps
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            {renderMenuItems(filterItems([
+              { title: 'WhatsApp', url: '/whatsapp', icon: MessageCircle },
+              { title: 'Email', url: '/email', icon: Mail },
+            ]))}
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {isWhatsAppActive && renderCollapsibleGroup('WhatsApp', MessageCircle, filteredWhatsApp, true)}
+        {isEmailActive && renderCollapsibleGroup('Email', Mail, filteredEmail, true)}
+
         {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">Admin</SidebarGroupLabel>
-            <SidebarGroupContent>{renderMenuItems(adminItems)}</SidebarGroupContent>
-          </SidebarGroup>
+          <>
+            <div className="px-3 my-1">
+              <div className="h-px bg-sidebar-border" />
+            </div>
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-sidebar-foreground/40 text-[11px] uppercase tracking-widest font-semibold px-4">
+                Admin
+              </SidebarGroupLabel>
+              <SidebarGroupContent>{renderMenuItems(adminItems)}</SidebarGroupContent>
+            </SidebarGroup>
+          </>
         )}
 
-        <div className="mt-auto p-4 border-t border-sidebar-border">
+        {/* Footer */}
+        <div className="mt-auto p-4">
+          <div className="h-px bg-sidebar-border mb-3" />
           {!collapsed && userEmail && (
-            <p className="text-xs text-sidebar-foreground/50 truncate mb-2">{userEmail}</p>
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <div className="h-7 w-7 rounded-full bg-sidebar-accent flex items-center justify-center shrink-0">
+                <User className="h-3.5 w-3.5 text-sidebar-foreground/60" />
+              </div>
+              <p className="text-[11px] text-sidebar-foreground/40 truncate">{userEmail}</p>
+            </div>
           )}
-          <Button variant="ghost" size={collapsed ? 'icon' : 'sm'} className="w-full text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent" onClick={() => supabase.auth.signOut()}>
+          <Button
+            variant="ghost"
+            size={collapsed ? 'icon' : 'sm'}
+            className="w-full text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent text-[13px] justify-start"
+            onClick={() => supabase.auth.signOut()}
+          >
             <LogOut className="h-4 w-4" />
             {!collapsed && <span className="ml-2">Sair</span>}
           </Button>
@@ -239,9 +290,6 @@ function AppSidebar() {
     </Sidebar>
   );
 }
-
-
-
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
@@ -278,23 +326,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setPendingCompany(null);
   };
 
-
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b bg-card px-4 shrink-0 gap-3">
-            <SidebarTrigger className="mr-1">
+          {/* Modern Header */}
+          <header className="h-[56px] flex items-center bg-card border-b px-4 shrink-0 gap-3">
+            <SidebarTrigger className="mr-1 text-muted-foreground hover:text-foreground">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
-            {showSelector && (
-              <Select
-                value={activeCompany?.id || ''}
-                onValueChange={handleCompanyChange}
-              >
-                <SelectTrigger className="w-[200px] h-9 text-sm">
-                  <Building className="h-4 w-4 mr-2 shrink-0" />
+
+            {/* Company selector */}
+            {showSelector ? (
+              <Select value={activeCompany?.id || ''} onValueChange={handleCompanyChange}>
+                <SelectTrigger className="w-[180px] h-9 text-sm border-border/50 bg-secondary/50 rounded-lg font-medium">
+                  <Building className="h-4 w-4 mr-2 shrink-0 text-primary" />
                   <SelectValue placeholder="Selecione a empresa" />
                 </SelectTrigger>
                 <SelectContent>
@@ -303,49 +350,87 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   ))}
                 </SelectContent>
               </Select>
-            )}
-            {!showSelector && activeCompany && (
-              <span className="text-sm text-muted-foreground flex items-center gap-2">
-                <Building className="h-4 w-4" />
+            ) : activeCompany ? (
+              <span className="text-sm text-muted-foreground flex items-center gap-2 font-medium">
+                <Building className="h-4 w-4 text-primary" />
                 {activeCompany.name}
               </span>
+            ) : null}
+
+            {/* Search bar - center */}
+            {!isMobile && (
+              <div className="flex-1 max-w-md mx-auto">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Pesquisar clientes, vendas, serviços..."
+                    className="pl-9 h-9 bg-secondary/50 border-border/40 rounded-lg text-sm placeholder:text-muted-foreground/60"
+                  />
+                </div>
+              </div>
             )}
 
-            {/* Header shortcut buttons - desktop */}
-            {!isMobile && (
-              <div className="ml-auto flex items-center gap-2">
+            {/* Right actions */}
+            <div className="ml-auto flex items-center gap-2">
+              {!isMobile && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        onClick={() => navigate('/whatsapp')}
+                        size="sm"
+                        className="h-9 rounded-lg gap-2 font-medium bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 shadow-sm"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        WhatsApp
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Abrir WhatsApp</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
                         onClick={() => navigate('/email')}
-                        variant="outline"
-                        className="h-10 rounded-[20px] gap-2 font-medium border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6]/10"
+                        size="sm"
+                        className="h-9 rounded-lg gap-2 font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                       >
                         <Mail className="h-4 w-4" />
                         Email
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Abrir módulo Email</TooltipContent>
+                    <TooltipContent>Abrir Email</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         onClick={() => setShowPhotoModal(true)}
                         variant="outline"
-                        className="h-10 rounded-[20px] gap-2 font-medium border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+                        size="icon"
+                        className="h-9 w-9 rounded-lg border-border/50"
                       >
                         <Camera className="h-4 w-4" />
-                        Foto
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Capturar foto e vincular ao cliente</TooltipContent>
+                    <TooltipContent>Capturar foto</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 rounded-lg border-border/50"
+                      >
+                        <Bell className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Notificações</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              </div>
-            )}
+              )}
+            </div>
           </header>
-          <main className="flex-1 overflow-auto">{children}</main>
+
+          <main className="flex-1 overflow-auto bg-background">{children}</main>
         </div>
       </div>
 
@@ -353,12 +438,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {isMobile && (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
           <button
+            onClick={() => navigate('/whatsapp')}
+            className="h-12 w-12 rounded-full flex items-center justify-center shadow-lg bg-whatsapp text-whatsapp-foreground"
+            title="WhatsApp"
+          >
+            <MessageCircle className="h-5 w-5" />
+          </button>
+          <button
             onClick={() => setShowPhotoModal(true)}
-            className="h-14 w-14 rounded-full flex items-center justify-center shadow-lg text-white"
-            style={{ backgroundColor: '#8B5CF6' }}
+            className="h-12 w-12 rounded-full flex items-center justify-center shadow-lg bg-primary text-primary-foreground"
             title="Capturar foto"
           >
-            <Camera className="h-6 w-6" />
+            <Camera className="h-5 w-5" />
           </button>
         </div>
       )}
