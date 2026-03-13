@@ -334,6 +334,7 @@ export default function VistosNewSalePage() {
       client_email: clientEmail,
       product_id: mainItem?.product_id || null,
       total_value: totalValue,
+      card_fee_value: cardFeeValue,
       payment_method: payments[0]?.payment_type || 'pix',
       installments: payments.length,
       notes,
