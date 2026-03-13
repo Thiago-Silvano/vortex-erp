@@ -1461,6 +1461,7 @@ export type Database = {
           quote_id: string | null
           sale_date: string
           sale_interest: number | null
+          sale_workflow_status: string
           seller_id: string | null
           short_id: string
           show_individual_values: boolean
@@ -1499,6 +1500,7 @@ export type Database = {
           quote_id?: string | null
           sale_date?: string
           sale_interest?: number | null
+          sale_workflow_status?: string
           seller_id?: string | null
           short_id?: string
           show_individual_values?: boolean
@@ -1537,6 +1539,7 @@ export type Database = {
           quote_id?: string | null
           sale_date?: string
           sale_interest?: number | null
+          sale_workflow_status?: string
           seller_id?: string | null
           short_id?: string
           show_individual_values?: boolean
