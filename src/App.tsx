@@ -53,6 +53,13 @@ import DS160PublicPage from "./pages/DS160PublicPage";
 import DS160GroupPublicPage from "./pages/DS160GroupPublicPage";
 import VistosDS160Page from "./pages/vistos/VistosDS160Page";
 
+// WhatsApp pages
+import WhatsAppInboxPage from "./pages/whatsapp/WhatsAppInboxPage";
+import WhatsAppContactsPage from "./pages/whatsapp/WhatsAppContactsPage";
+import WhatsAppLabelsPage from "./pages/whatsapp/WhatsAppLabelsPage";
+import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage";
+import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
