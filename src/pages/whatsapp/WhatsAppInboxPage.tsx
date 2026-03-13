@@ -191,6 +191,7 @@ export default function WhatsAppInboxPage() {
     } else {
       // Fetch from server
       try {
+        if (!conv.phone) throw new Error('No phone');
         const serverMsgs = await fetchMessages(serverUrl, conv.phone);
         if (Array.isArray(serverMsgs)) {
           const mapped = serverMsgs.map((m: any) => ({
