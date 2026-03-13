@@ -422,6 +422,7 @@ export default function NewSalePage() {
   };
 
 
+  const updateItem = (idx: number, field: keyof SaleItem, value: any) => {
     setItems(prev => prev.map((item, i) => {
       if (i !== idx) return item;
       const updated = { ...item, [field]: value };
