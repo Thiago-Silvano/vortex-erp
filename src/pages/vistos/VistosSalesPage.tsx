@@ -31,6 +31,22 @@ export default function VistosSalesPage() {
   const [filter, setFilter] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<VisaSale | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [sortKey, setSortKey] = useState<'client_name' | 'product_name' | 'sale_date' | 'total_value' | 'payment_method'>('sale_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'sale_date' || key === 'total_value' ? 'desc' : 'asc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: typeof sortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
 
   const fetchSales = async () => {
     if (!activeCompany?.id) return;
