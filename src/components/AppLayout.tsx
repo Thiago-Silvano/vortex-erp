@@ -215,6 +215,7 @@ function AppSidebar() {
         </SidebarGroup>
 
         {renderCollapsibleGroup('Email', Mail, filteredEmail, isEmailActive)}
+        {!isVistos && renderCollapsibleGroup('WhatsApp', MessageCircle, filteredWhatsApp, isWhatsAppActive)}
         {renderCollapsibleGroup('Financeiro', DollarSign, filteredFinancial, isFinancialActive)}
         {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
 
