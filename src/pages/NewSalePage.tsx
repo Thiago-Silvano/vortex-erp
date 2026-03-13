@@ -700,59 +700,7 @@ export default function NewSalePage() {
     return saleId;
   };
 
-  const handleSaveDraft = async () => {
-    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
-    setSavingDraft(true);
-    try {
-      const { payload, userEmail } = await buildSalePayload('draft');
-      if (editSaleId) {
-        await supabase.from('receivables').delete().eq('sale_id', editSaleId);
-        await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
-      }
-      const saleId = await saveSaleCore(payload, userEmail);
-      if (!saleId) { setSavingDraft(false); return; }
-      if (!editSaleId) setEditSaleId(saleId);
-      toast.success('Rascunho salvo!');
-    } catch (err) {
-      toast.error('Erro ao salvar rascunho');
-    } finally {
-      setSavingDraft(false);
-    }
-  };
-
-  const handleSilentSaveDraft = async () => {
-    if (!clientName.trim()) return;
-    setSavingDraft(true);
-    try {
-      const { payload, userEmail } = await buildSalePayload('draft');
-      if (editSaleId) {
-        await supabase.from('receivables').delete().eq('sale_id', editSaleId);
-        await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
-      }
-      const saleId = await saveSaleCore(payload, userEmail);
-      if (saleId) {
-        if (!editSaleId) setEditSaleId(saleId);
-        toast.success('Rascunho salvo automaticamente.');
-      }
-    } catch { /* silent */ }
-    finally { setSavingDraft(false); }
-  };
-
-  const handleSave = async () => {
-    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
-    const { payload, userEmail } = await buildSalePayload('active');
-
-    if (editSaleId) {
-      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
-      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
-      await supabase.from('seller_commissions').delete().eq('sale_id', editSaleId);
-      await supabase.from('reservations').delete().eq('sale_id', editSaleId);
-    }
-
-    const saleId = await saveSaleCore(payload, userEmail);
-    if (!saleId) return;
-
-    // Generate receivables from enabled proposal payment options if any, else from legacy receivables
+  const generateReceivablesForSale = async (saleId: string) => {
     const enabledOptions = proposalPaymentOptions.filter(o => o.enabled);
     if (enabledOptions.length > 0) {
       let installmentCounter = 1;
@@ -775,17 +723,30 @@ export default function NewSalePage() {
         }
       }
       if (allReceivables.length > 0) {
-        await supabase.from('receivables').insert(allReceivables);
+        const { error } = await supabase.from('receivables').insert(allReceivables);
+        if (error) console.error('Erro ao gerar recebíveis:', error);
       }
     } else if (receivables.length > 0) {
-      await supabase.from('receivables').insert(receivables.map(r => ({
+      const { error } = await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
+        payment_method: paymentMethod || 'pix',
         empresa_id: activeCompany?.id || null,
       } as any)));
+      if (error) console.error('Erro ao gerar recebíveis:', error);
+    } else if (totalSaleWithInterest > 0) {
+      // Fallback: single receivable with total amount
+      const { error } = await supabase.from('receivables').insert({
+        sale_id: saleId, installment_number: 1, due_date: saleDate || null, amount: totalSaleWithInterest,
+        client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
+        payment_method: paymentMethod || 'pix',
+        empresa_id: activeCompany?.id || null,
+      } as any);
+      if (error) console.error('Erro ao gerar recebível fallback:', error);
     }
+  };
 
-    // Generate accounts_payable from supplier payment controls
+  const generatePayablesForSale = async (saleId: string) => {
     if (supplierPayments.length > 0) {
       const payables: any[] = [];
       for (const sp of supplierPayments) {
@@ -817,17 +778,81 @@ export default function NewSalePage() {
         }
       }
       if (payables.length > 0) {
-        await supabase.from('accounts_payable').insert(payables);
+        const { error } = await supabase.from('accounts_payable').insert(payables);
+        if (error) console.error('Erro ao gerar contas a pagar:', error);
       }
     } else if (totalCost > 0 && selectedSupplierIds.length > 0) {
-      // Fallback: split equally
       const costPerSupplier = totalCost / selectedSupplierIds.length;
-      await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
+      const { error } = await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
         sale_id: saleId, supplier_id: sid, amount: costPerSupplier,
         due_date: saleDate, description: `Venda - ${clientName}`, status: 'open', origin_type: 'sale',
         empresa_id: activeCompany?.id || null,
       })));
+      if (error) console.error('Erro ao gerar contas a pagar fallback:', error);
     }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
+    setSavingDraft(true);
+    try {
+      const { payload, userEmail } = await buildSalePayload('draft');
+      if (editSaleId) {
+        await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+        await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      }
+      const saleId = await saveSaleCore(payload, userEmail);
+      if (!saleId) { setSavingDraft(false); return; }
+      if (!editSaleId) setEditSaleId(saleId);
+      // Regenerate financial records for draft too
+      await generateReceivablesForSale(saleId);
+      await generatePayablesForSale(saleId);
+      toast.success('Rascunho salvo!');
+    } catch (err) {
+      toast.error('Erro ao salvar rascunho');
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const handleSilentSaveDraft = async () => {
+    if (!clientName.trim()) return;
+    setSavingDraft(true);
+    try {
+      const { payload, userEmail } = await buildSalePayload('draft');
+      if (editSaleId) {
+        await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+        await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      }
+      const saleId = await saveSaleCore(payload, userEmail);
+      if (saleId) {
+        if (!editSaleId) setEditSaleId(saleId);
+        // Regenerate financial records
+        await generateReceivablesForSale(saleId);
+        await generatePayablesForSale(saleId);
+        toast.success('Rascunho salvo automaticamente.');
+      }
+    } catch { /* silent */ }
+    finally { setSavingDraft(false); }
+  };
+
+  const handleSave = async () => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
+    const { payload, userEmail } = await buildSalePayload('active');
+
+    if (editSaleId) {
+      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      await supabase.from('seller_commissions').delete().eq('sale_id', editSaleId);
+      await supabase.from('reservations').delete().eq('sale_id', editSaleId);
+    }
+
+    const saleId = await saveSaleCore(payload, userEmail);
+    if (!saleId) return;
+
+    // Generate receivables and payables using shared functions
+    await generateReceivablesForSale(saleId);
+    await generatePayablesForSale(saleId);
 
     if (quoteId) {
       await supabase.from('quotes').update({ status: 'concluido' }).eq('id', quoteId);
