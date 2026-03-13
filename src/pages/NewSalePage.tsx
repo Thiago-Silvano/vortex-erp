@@ -1464,6 +1464,16 @@ export default function NewSalePage() {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* Stock Image Search Modal */}
+            <ImageSearchModal
+              open={stockImageSearchOpen}
+              onClose={() => setStockImageSearchOpen(false)}
+              onSelect={handleStockImageSelect}
+              initialQuery={destinationName}
+              unsplashKey={unsplashApiKey}
+              pexelsKey={pexelsApiKey}
+            />
           </CardContent>
         </Card>
 
