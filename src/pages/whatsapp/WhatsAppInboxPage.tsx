@@ -19,8 +19,7 @@ import { Label } from '@/components/ui/label';
 interface Conversation {
   id: string;
   phone: string;
-  client_name: string;
-  contact_name?: string;
+  contact_name: string;
   last_message: string;
   last_message_at: string;
   unread_count: number;
@@ -87,14 +86,14 @@ export default function WhatsAppInboxPage() {
 
     socket.on('nova_mensagem', async (data: any) => {
       console.log('[WhatsApp Socket] nova_mensagem data:', JSON.stringify(data));
-      const phone = normalizePhone(data.from || data.number || '');
+      const phone = extractIncomingPhone(data);
       const content = data.body || data.message || '';
       if (!phone || phone.length < 8) {
         console.warn('[WhatsApp Socket] Ignoring message - invalid phone:', phone);
         return;
       }
 
-      const whatsappId = data.from || '';
+      const whatsappId = extractWhatsappId(data);
 
       const { data: convId, error: rpcError } = await (supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
@@ -145,6 +144,41 @@ export default function WhatsAppInboxPage() {
   }, [messages]);
 
   const normalizePhone = (phone: string) => phone?.replace(/\D/g, '') || '';
+  const normalizePhoneForSend = (phone: string) => {
+    const digits = normalizePhone(phone);
+    if (!digits) return '';
+    if (digits.startsWith('55')) return digits;
+    if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+    return digits;
+  };
+
+  const extractIncomingPhone = (payload: any) => {
+    const candidates = [
+      payload?.number,
+      payload?.phone,
+      payload?.numero,
+      payload?.from,
+      payload?.chatId,
+      typeof payload?.id === 'string' ? payload.id : payload?.id?.user,
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate !== 'string') continue;
+      const digits = normalizePhone(candidate);
+      if (digits.length >= 8) return normalizePhoneForSend(digits);
+    }
+
+    return '';
+  };
+
+  const extractWhatsappId = (payload: any) => {
+    if (typeof payload?.from === 'string' && payload.from.includes('@')) return payload.from;
+    if (typeof payload?.id === 'string' && payload.id.includes('@')) return payload.id;
+    if (typeof payload?.id?._serialized === 'string' && payload.id._serialized.includes('@')) return payload.id._serialized;
+
+    const number = extractIncomingPhone(payload);
+    return number ? `${number}@c.us` : null;
+  };
 
   const loadConversations = async () => {
     try {
@@ -166,21 +200,20 @@ export default function WhatsAppInboxPage() {
         const chats = await fetchChats(url);
         if (Array.isArray(chats)) {
           const dbPhones = new Set((dbConvs || []).map((c: any) => normalizePhone(c.phone)));
-          const dbWaIds = new Set((dbConvs || []).map((c: any) => c.whatsapp_id).filter(Boolean));
 
           const newChats = chats.filter((chat: any) => {
-            const chatId = chat.id || '';
-            const phone = normalizePhone(chat.numero || chat.id?.user || '');
+            const chatId = extractWhatsappId(chat) || '';
+            const phone = extractIncomingPhone(chat);
             // Skip groups
-            if (typeof chatId === 'string' && (chatId.includes('@g.us'))) return false;
-            return phone.length >= 8 && !dbPhones.has(phone) && !dbWaIds.has(chatId);
+            if (typeof chatId === 'string' && chatId.includes('@g.us')) return false;
+            return phone.length >= 8 && !dbPhones.has(normalizePhone(phone));
           });
 
           if (newChats.length > 0 && newChats.length < 200) {
             for (const chat of newChats) {
-              const phone = normalizePhone(chat.numero || chat.id?.user || '');
+              const phone = extractIncomingPhone(chat);
               const name = chat.nome || chat.name || chat.pushname || phone;
-              const whatsappId = typeof chat.id === 'string' ? chat.id : (chat.id?.user ? `${chat.id.user}@c.us` : null);
+              const whatsappId = extractWhatsappId(chat);
 
               await (supabase.rpc('find_or_create_conversation', {
                 p_empresa_id: empresaId,
@@ -311,7 +344,7 @@ export default function WhatsAppInboxPage() {
       return;
     }
 
-    const phone = normalizePhone(newMsgForm.phone);
+    const phone = normalizePhoneForSend(newMsgForm.phone);
     if (phone.length < 8) {
       toast.error('Número de telefone inválido');
       return;
@@ -405,12 +438,12 @@ export default function WhatsAppInboxPage() {
 
       if (contact) {
         await (supabase.from('whatsapp_conversations')
-          .update({ contact_id: contact.id, client_name: clientForm.full_name })
+          .update({ contact_id: contact.id, contact_name: clientForm.full_name })
           .eq('id', activeConv.id) as any);
 
-        setActiveConv(prev => prev ? { ...prev, client_name: clientForm.full_name, contact_id: contact.id } : null);
+        setActiveConv(prev => prev ? { ...prev, contact_name: clientForm.full_name, contact_id: contact.id } : null);
         setConversations(prev => prev.map(c =>
-          c.id === activeConv.id ? { ...c, client_name: clientForm.full_name, contact_id: contact.id } : c
+          c.id === activeConv.id ? { ...c, contact_name: clientForm.full_name, contact_id: contact.id } : c
         ));
       }
     }
@@ -419,7 +452,7 @@ export default function WhatsAppInboxPage() {
     setShowCreateClient(false);
   };
 
-  const getDisplayName = (conv: Conversation) => conv.client_name || conv.contact_name || conv.phone;
+  const getDisplayName = (conv: Conversation) => conv.contact_name || conv.phone;
 
   const filteredConvs = conversations.filter(c => {
     if (!search) return true;

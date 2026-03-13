@@ -38,7 +38,6 @@ export async function fetchMessages(serverUrl: string, number: string) {
 }
 
 export async function sendMessage(serverUrl: string, number: string, message: string) {
-  // Server expects phone number, try with @c.us format too
   const chatId = formatChatId(number);
   return proxyRequest(serverUrl, '/send', 'POST', { number: chatId, message });
 }
@@ -60,15 +59,22 @@ export async function checkStatus(serverUrl: string) {
 }
 
 /**
- * Format a phone number into WhatsApp chat ID format.
- * If already has @c.us or @g.us suffix, return as-is.
- * Otherwise, strip non-digits and append @c.us.
+ * Normalize outbound number for WhatsApp send.
+ * If local BR number without country code, prepend 55.
  */
+function normalizeOutboundNumber(phone: string): string {
+  const digits = (phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('55')) return digits;
+  if (digits.length === 10 || digits.length === 11) return `55${digits}`;
+  return digits;
+}
+
 function formatChatId(phone: string): string {
   if (!phone) return '';
   if (phone.includes('@')) return phone;
-  const clean = phone.replace(/\D/g, '');
-  return `${clean}@c.us`;
+  const normalized = normalizeOutboundNumber(phone);
+  return normalized ? `${normalized}@c.us` : '';
 }
 
 function fileToBase64(file: File): Promise<string> {
