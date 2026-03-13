@@ -153,11 +153,11 @@ export default function Settings() {
 
     if (existing) {
       await supabase.from('agency_settings')
-        .update({ google_maps_api_key: googleApiKey } as any)
+        .update({ google_maps_api_key: googleApiKey, unsplash_api_key: unsplashKey, pexels_api_key: pexelsKey } as any)
         .eq('id', existing.id);
     } else if (empresaId) {
       await supabase.from('agency_settings')
-        .insert({ empresa_id: empresaId, google_maps_api_key: googleApiKey, name: settings.name } as any);
+        .insert({ empresa_id: empresaId, google_maps_api_key: googleApiKey, unsplash_api_key: unsplashKey, pexels_api_key: pexelsKey, name: settings.name } as any);
     }
 
     // Delete existing rates for this company and insert new ones
