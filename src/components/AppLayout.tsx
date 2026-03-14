@@ -12,7 +12,7 @@ import {
   UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
   Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
-  Mail, FileEdit, MessageCircle, Search, Bell, User, Camera,
+  Mail, FileEdit, MessageCircle, Search, Bell, User, Camera, Landmark, Link2, FileSpreadsheet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
