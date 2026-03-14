@@ -34,6 +34,9 @@ import ReportProfit from "./pages/reports/ReportProfit";
 import SellersPage from "./pages/SellersPage";
 import CommissionsPage from "./pages/CommissionsPage";
 import ServicesCatalogPage from "./pages/ServicesCatalogPage";
+import BankAccountsPage from "./pages/BankAccountsPage";
+import BankReconciliationPage from "./pages/BankReconciliationPage";
+import BankStatementReportPage from "./pages/BankStatementReportPage";
 
 // Vistos pages
 import VistosDashboard from "./pages/vistos/VistosDashboard";
@@ -101,6 +104,9 @@ const App = () => (
           <Route path="/sellers" element={<ProtectedRoute><SellersPage /></ProtectedRoute>} />
           <Route path="/financial/commissions" element={<ProtectedRoute><CommissionsPage /></ProtectedRoute>} />
           <Route path="/services" element={<ProtectedRoute><ServicesCatalogPage /></ProtectedRoute>} />
+          <Route path="/financial/bank-accounts" element={<ProtectedRoute><BankAccountsPage /></ProtectedRoute>} />
+          <Route path="/financial/reconciliation" element={<ProtectedRoute><BankReconciliationPage /></ProtectedRoute>} />
+          <Route path="/financial/bank-report" element={<ProtectedRoute><BankStatementReportPage /></ProtectedRoute>} />
 
           {/* Vistos routes */}
           <Route path="/vistos/dashboard" element={<ProtectedRoute><VistosDashboard /></ProtectedRoute>} />
