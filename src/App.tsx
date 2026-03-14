@@ -34,6 +34,9 @@ import ReportProfit from "./pages/reports/ReportProfit";
 import SellersPage from "./pages/SellersPage";
 import CommissionsPage from "./pages/CommissionsPage";
 import ServicesCatalogPage from "./pages/ServicesCatalogPage";
+import BankAccountsPage from "./pages/BankAccountsPage";
+import BankReconciliationPage from "./pages/BankReconciliationPage";
+import BankStatementReportPage from "./pages/BankStatementReportPage";
 
 // Vistos pages
 import VistosDashboard from "./pages/vistos/VistosDashboard";
