@@ -162,6 +162,187 @@ export type Database = {
           },
         ]
       }
+      bank_accounts: {
+        Row: {
+          account_digit: string | null
+          account_number: string | null
+          account_type: string
+          agency: string | null
+          bank_code: string | null
+          bank_name: string
+          color: string | null
+          created_at: string
+          empresa_id: string
+          holder_document: string | null
+          holder_name: string | null
+          id: string
+          initial_balance: number
+          initial_balance_date: string | null
+          is_default: boolean
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_digit?: string | null
+          account_number?: string | null
+          account_type?: string
+          agency?: string | null
+          bank_code?: string | null
+          bank_name?: string
+          color?: string | null
+          created_at?: string
+          empresa_id: string
+          holder_document?: string | null
+          holder_name?: string | null
+          id?: string
+          initial_balance?: number
+          initial_balance_date?: string | null
+          is_default?: boolean
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_digit?: string | null
+          account_number?: string | null
+          account_type?: string
+          agency?: string | null
+          bank_code?: string | null
+          bank_name?: string
+          color?: string | null
+          created_at?: string
+          empresa_id?: string
+          holder_document?: string | null
+          holder_name?: string | null
+          id?: string
+          initial_balance?: number
+          initial_balance_date?: string | null
+          is_default?: boolean
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transactions: {
+        Row: {
+          amount: number
+          balance_after: number | null
+          bank_account_id: string
+          category: string | null
+          client_name: string | null
+          cost_center_id: string | null
+          created_at: string
+          description: string
+          empresa_id: string
+          id: string
+          import_batch: string | null
+          origin: string
+          payment_method: string | null
+          posting_date: string | null
+          reconciled_with_id: string | null
+          reconciled_with_type: string | null
+          reconciliation_note: string | null
+          reconciliation_status: string
+          reference_number: string | null
+          supplier_id: string | null
+          transaction_date: string
+          transaction_type: string
+          unique_hash: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          balance_after?: number | null
+          bank_account_id: string
+          category?: string | null
+          client_name?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          description?: string
+          empresa_id: string
+          id?: string
+          import_batch?: string | null
+          origin?: string
+          payment_method?: string | null
+          posting_date?: string | null
+          reconciled_with_id?: string | null
+          reconciled_with_type?: string | null
+          reconciliation_note?: string | null
+          reconciliation_status?: string
+          reference_number?: string | null
+          supplier_id?: string | null
+          transaction_date: string
+          transaction_type?: string
+          unique_hash?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number | null
+          bank_account_id?: string
+          category?: string | null
+          client_name?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          description?: string
+          empresa_id?: string
+          id?: string
+          import_batch?: string | null
+          origin?: string
+          payment_method?: string | null
+          posting_date?: string | null
+          reconciled_with_id?: string | null
+          reconciled_with_type?: string | null
+          reconciliation_note?: string | null
+          reconciliation_status?: string
+          reference_number?: string | null
+          supplier_id?: string | null
+          transaction_date?: string
+          transaction_type?: string
+          unique_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           created_at: string
@@ -1010,6 +1191,75 @@ export type Database = {
           },
         ]
       }
+      ofx_imports: {
+        Row: {
+          balance_end: number | null
+          balance_start: number | null
+          bank_account_id: string
+          created_at: string
+          empresa_id: string
+          file_name: string | null
+          id: string
+          import_date: string
+          imported_by: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+          total_credits: number | null
+          total_debits: number | null
+          total_transactions: number | null
+        }
+        Insert: {
+          balance_end?: number | null
+          balance_start?: number | null
+          bank_account_id: string
+          created_at?: string
+          empresa_id: string
+          file_name?: string | null
+          id?: string
+          import_date?: string
+          imported_by?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          total_credits?: number | null
+          total_debits?: number | null
+          total_transactions?: number | null
+        }
+        Update: {
+          balance_end?: number | null
+          balance_start?: number | null
+          bank_account_id?: string
+          created_at?: string
+          empresa_id?: string
+          file_name?: string | null
+          id?: string
+          import_date?: string
+          imported_by?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          total_credits?: number | null
+          total_debits?: number | null
+          total_transactions?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ofx_imports_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ofx_imports_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_audit_log: {
         Row: {
           action: string
@@ -1267,6 +1517,57 @@ export type Database = {
             columns: ["visa_sale_id"]
             isOneToOne: false
             referencedRelation: "visa_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliation_log: {
+        Row: {
+          action: string
+          bank_transaction_id: string
+          created_at: string
+          details: string | null
+          empresa_id: string
+          id: string
+          reconciled_with_id: string | null
+          reconciled_with_type: string | null
+          user_email: string | null
+        }
+        Insert: {
+          action?: string
+          bank_transaction_id: string
+          created_at?: string
+          details?: string | null
+          empresa_id: string
+          id?: string
+          reconciled_with_id?: string | null
+          reconciled_with_type?: string | null
+          user_email?: string | null
+        }
+        Update: {
+          action?: string
+          bank_transaction_id?: string
+          created_at?: string
+          details?: string | null
+          empresa_id?: string
+          id?: string
+          reconciled_with_id?: string | null
+          reconciled_with_type?: string | null
+          user_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_log_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliation_log_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
