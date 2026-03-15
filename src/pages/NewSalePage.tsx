@@ -1297,8 +1297,35 @@ export default function NewSalePage() {
   return (
     <AppLayout>
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
+        {/* Status Banner */}
+        <div className={`rounded-lg border-2 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isQuoteMode ? 'border-amber-400/50 bg-amber-50 dark:bg-amber-950/20' : 'border-emerald-400/50 bg-emerald-50 dark:bg-emerald-950/20'}`}>
+          <div className="flex items-center gap-3">
+            {isQuoteMode ? <FileEdit className="h-6 w-6 text-amber-600" /> : <ShieldCheck className="h-6 w-6 text-emerald-600" />}
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-foreground">{isQuoteMode ? 'Modo Cotação' : 'Modo Venda'}</h2>
+                <Badge variant={isQuoteMode ? 'secondary' : 'default'} className={isQuoteMode ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'}>
+                  {isQuoteMode ? 'Cotação' : 'Venda Ativa'}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {isQuoteMode 
+                  ? 'Monte sua proposta comercial. Após aprovação do cliente, converta em venda para liberar os campos operacionais.'
+                  : 'Venda convertida. Preencha os dados operacionais, financeiros e de reserva.'}
+              </p>
+            </div>
+          </div>
+          {isQuoteMode && (
+            <Button onClick={handleSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0">
+              <ShieldCheck className="h-4 w-4" /> Converter em Venda
+            </Button>
+          )}
+        </div>
+
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">{editSaleId ? 'Editar Venda' : 'Nova Venda'}</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Editar Cotação' : 'Nova Cotação'}
+          </h1>
           <Button variant="outline" onClick={() => setPdfImportOpen(true)}>
             <FileUp className="h-4 w-4 mr-2" />📄 Importar Orçamento (PDF)
           </Button>
@@ -1306,7 +1333,7 @@ export default function NewSalePage() {
 
         {/* Basic Info */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Informações da Venda</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Informações da Cotação' : 'Informações da Venda'}</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {quoteId && (
