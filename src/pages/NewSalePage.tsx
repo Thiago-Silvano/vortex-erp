@@ -2126,7 +2126,8 @@ export default function NewSalePage() {
           </Card>
         )}
 
-        {/* Invoice Upload */}
+        {/* Invoice Upload - only in sale mode */}
+        {!isQuoteMode && (
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Nota Fiscal</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -2148,6 +2149,7 @@ export default function NewSalePage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Notes section moved above suppliers */}
 
