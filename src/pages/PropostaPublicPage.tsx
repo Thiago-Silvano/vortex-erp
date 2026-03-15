@@ -447,15 +447,25 @@ export default function PropostaPublicPage() {
                           </span>
                           <span className="text-sm" style={{ color: isHighlighted ? 'rgba(255,255,255,0.5)' : '#999' }}>de</span>
                           <span className="text-2xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-                            {fmt(opt.installmentValue)}
+                            {fmt(showPerPassenger ? opt.installmentValue / passengersCount : opt.installmentValue)}
                           </span>
                         </div>
                       ) : (
                         <span className="text-3xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-                          {fmt(opt.totalValue)}
+                          {fmt(showPerPassenger ? opt.totalValue / passengersCount : opt.totalValue)}
                         </span>
                       )}
-                      {passengersCount > 1 && (
+                      {showPerPassenger && passengersCount > 1 && (
+                        <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.4)' : '#bbb' }}>
+                          por pessoa
+                        </p>
+                      )}
+                      {showPerPassenger && passengersCount > 1 && (
+                        <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.25)' : '#ccc' }}>
+                          Total: {fmt(opt.installments > 1 ? opt.installmentValue * opt.installments : opt.totalValue)}
+                        </p>
+                      )}
+                      {!showPerPassenger && passengersCount > 1 && (
                         <p className="text-xs mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.3)' : '#bbb' }}>
                           {fmt((opt.installments > 1 ? opt.installmentValue : opt.totalValue) / passengersCount)} /pessoa
                         </p>
