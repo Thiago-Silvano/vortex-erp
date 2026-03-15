@@ -2155,28 +2155,32 @@ export default function NewSalePage() {
 
         {/* Financial Summary */}
         <Card className="border-primary/20 bg-primary/5">
-          <CardHeader><CardTitle className="text-base">Resumo Financeiro</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Resumo da Cotação' : 'Resumo Financeiro'}</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Total da Venda</p>
+                <p className="text-sm text-muted-foreground">{isQuoteMode ? 'Total da Cotação' : 'Total da Venda'}</p>
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
                 {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
               </div>
               <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
-              <div>
-                <Label className="text-sm text-muted-foreground">Comissão (%)</Label>
-                <Input type="number" step="0.01" value={commissionRate} onChange={e => setCommissionRate(parseFloat(e.target.value) || 0)} className="mt-1 w-24" />
-                <p className="text-sm mt-1">{fmt(commissionValue)}</p>
-              </div>
-              {paymentMethod === 'credito' && (
-                <div><p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p><p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p></div>
+              {!isQuoteMode && (
+                <>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Comissão (%)</Label>
+                    <Input type="number" step="0.01" value={commissionRate} onChange={e => setCommissionRate(parseFloat(e.target.value) || 0)} className="mt-1 w-24" />
+                    <p className="text-sm mt-1">{fmt(commissionValue)}</p>
+                  </div>
+                  {paymentMethod === 'credito' && (
+                    <div><p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p><p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p></div>
+                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
+                    <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
+                  </div>
+                </>
               )}
-              <div>
-                <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
-                <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -2187,18 +2191,20 @@ export default function NewSalePage() {
           {saleStatus === 'active' ? (
             <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher</Button>
           ) : (
-            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Rascunho</Button>
+            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação</Button>
           )}
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          {saleStatus !== 'active' && (
+          {isQuoteMode && (
             <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
-              {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Rascunho'}
+              {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Cotação'}
             </Button>
           )}
-          <Button onClick={handleSave} className="w-full sm:w-auto">
-            {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Gerar Venda' : 'Converter em Venda'}
+          <Button onClick={handleSave} className={`w-full sm:w-auto ${isQuoteMode ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
+            {saleStatus === 'active' ? 'Salvar Venda' : (
+              <><ShieldCheck className="h-4 w-4 mr-1" /> Converter em Venda</>
+            )}
           </Button>
         </div>
 
