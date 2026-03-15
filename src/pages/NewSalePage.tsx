@@ -1006,7 +1006,7 @@ export default function NewSalePage() {
       }
     }
 
-    toast.success(editSaleId ? 'Venda atualizada! Financeiro regenerado.' : 'Venda convertida com sucesso! Financeiro gerado.');
+    toast.success(editSaleId && saleStatus === 'active' ? 'Venda atualizada! Financeiro regenerado.' : 'Venda criada com sucesso! Complete agora os dados da reserva, pagamento e operação.');
     navigate('/sales');
   };
 
