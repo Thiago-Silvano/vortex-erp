@@ -1554,7 +1554,7 @@ export default function NewSalePage() {
 
         {/* Notes + Internal Files - moved above suppliers */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Observação da Venda</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Observações da Cotação' : 'Observação da Venda'}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações internas sobre a venda..." rows={6} className="min-h-[120px]" />
             
