@@ -1465,17 +1465,6 @@ export default function NewSalePage() {
                     Buscar Imagens
                   </Button>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAiImageSearch}
-                  disabled={aiImageSearch || !destinationName.trim()}
-                  className="gap-2"
-                >
-                  {aiImageSearch ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  Buscar com I.A.
-                </Button>
               </div>
             </div>
 
