@@ -1509,7 +1509,8 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Passengers */}
+        {/* Passengers - only in sale mode */}
+        {!isQuoteMode && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Passageiros da Reserva</CardTitle>
@@ -1549,6 +1550,7 @@ export default function NewSalePage() {
             ))}
           </CardContent>
         </Card>
+        )}
 
         {/* Notes + Internal Files - moved above suppliers */}
         <Card>
