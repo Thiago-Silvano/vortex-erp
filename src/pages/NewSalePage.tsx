@@ -1585,7 +1585,9 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Suppliers */}
+        {/* Suppliers - only in sale mode */}
+        {!isQuoteMode ? null : null}
+        {!isQuoteMode && (
         <Card>
           <CardHeader><CardTitle className="text-base">Fornecedores da Venda</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -1617,6 +1619,7 @@ export default function NewSalePage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Serviços da Venda */}
         <Card>
