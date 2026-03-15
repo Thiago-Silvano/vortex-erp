@@ -1830,7 +1830,8 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Payment Method */}
+        {/* Payment Method - only in sale mode */}
+        {!isQuoteMode && (
         <Card>
           <CardHeader><CardTitle className="text-base">Forma de Pagamento</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -1919,6 +1920,7 @@ export default function NewSalePage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Proposal Payment Options */}
         <Card>
