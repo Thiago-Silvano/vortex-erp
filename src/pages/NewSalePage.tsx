@@ -14,7 +14,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
@@ -160,6 +161,8 @@ export default function NewSalePage() {
   const [showIndividualValues, setShowIndividualValues] = useState(true);
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
   const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
+
+  const isQuoteMode = saleStatus !== 'active';
 
   useEffect(() => {
     if (initialEditSaleId) loadSale(initialEditSaleId);
@@ -1003,7 +1006,7 @@ export default function NewSalePage() {
       }
     }
 
-    toast.success(editSaleId ? 'Venda atualizada! Financeiro regenerado.' : 'Venda convertida com sucesso! Financeiro gerado.');
+    toast.success(editSaleId && saleStatus === 'active' ? 'Venda atualizada! Financeiro regenerado.' : 'Venda criada com sucesso! Complete agora os dados da reserva, pagamento e operação.');
     navigate('/sales');
   };
 
@@ -1294,8 +1297,35 @@ export default function NewSalePage() {
   return (
     <AppLayout>
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
+        {/* Status Banner */}
+        <div className={`rounded-lg border-2 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isQuoteMode ? 'border-amber-400/50 bg-amber-50 dark:bg-amber-950/20' : 'border-emerald-400/50 bg-emerald-50 dark:bg-emerald-950/20'}`}>
+          <div className="flex items-center gap-3">
+            {isQuoteMode ? <FileEdit className="h-6 w-6 text-amber-600" /> : <ShieldCheck className="h-6 w-6 text-emerald-600" />}
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-foreground">{isQuoteMode ? 'Modo Cotação' : 'Modo Venda'}</h2>
+                <Badge variant={isQuoteMode ? 'secondary' : 'default'} className={isQuoteMode ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'}>
+                  {isQuoteMode ? 'Cotação' : 'Venda Ativa'}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {isQuoteMode 
+                  ? 'Monte sua proposta comercial. Após aprovação do cliente, converta em venda para liberar os campos operacionais.'
+                  : 'Venda convertida. Preencha os dados operacionais, financeiros e de reserva.'}
+              </p>
+            </div>
+          </div>
+          {isQuoteMode && (
+            <Button onClick={handleSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0">
+              <ShieldCheck className="h-4 w-4" /> Converter em Venda
+            </Button>
+          )}
+        </div>
+
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">{editSaleId ? 'Editar Venda' : 'Nova Venda'}</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Editar Cotação' : 'Nova Cotação'}
+          </h1>
           <Button variant="outline" onClick={() => setPdfImportOpen(true)}>
             <FileUp className="h-4 w-4 mr-2" />📄 Importar Orçamento (PDF)
           </Button>
@@ -1303,7 +1333,7 @@ export default function NewSalePage() {
 
         {/* Basic Info */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Informações da Venda</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Informações da Cotação' : 'Informações da Venda'}</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {quoteId && (
@@ -1347,19 +1377,21 @@ export default function NewSalePage() {
                 <Label>Nº Passageiros</Label>
                 <Input type="number" min="1" value={passengersCount} onChange={e => setPassengersCount(parseInt(e.target.value) || 1)} />
               </div>
-              <div>
-                <Label>Status da Venda</Label>
-                <Select value={saleWorkflowStatus} onValueChange={setSaleWorkflowStatus}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="em_aberto">Em aberto</SelectItem>
-                    <SelectItem value="contatando">Contatando</SelectItem>
-                    <SelectItem value="reservado">Reservado</SelectItem>
-                    <SelectItem value="emitido">Emitido</SelectItem>
-                    <SelectItem value="perdido">Perdido</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isQuoteMode && (
+                <div>
+                  <Label>Status da Venda</Label>
+                  <Select value={saleWorkflowStatus} onValueChange={setSaleWorkflowStatus}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="em_aberto">Em aberto</SelectItem>
+                      <SelectItem value="contatando">Contatando</SelectItem>
+                      <SelectItem value="reservado">Reservado</SelectItem>
+                      <SelectItem value="emitido">Emitido</SelectItem>
+                      <SelectItem value="perdido">Perdido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <Label>Data da Venda</Label>
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
@@ -1477,7 +1509,8 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Passengers */}
+        {/* Passengers - only in sale mode */}
+        {!isQuoteMode && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Passageiros da Reserva</CardTitle>
@@ -1517,10 +1550,11 @@ export default function NewSalePage() {
             ))}
           </CardContent>
         </Card>
+        )}
 
         {/* Notes + Internal Files - moved above suppliers */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Observação da Venda</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Observações da Cotação' : 'Observação da Venda'}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações internas sobre a venda..." rows={6} className="min-h-[120px]" />
             
@@ -1551,7 +1585,9 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Suppliers */}
+        {/* Suppliers - only in sale mode */}
+        {!isQuoteMode ? null : null}
+        {!isQuoteMode && (
         <Card>
           <CardHeader><CardTitle className="text-base">Fornecedores da Venda</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -1583,11 +1619,12 @@ export default function NewSalePage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Serviços da Venda */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Serviços da Venda</CardTitle>
+            <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
             <Button size="sm" variant="outline" onClick={() => {
               setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {} }]);
               setTimeout(() => setEditingItemIdx(items.length), 50);
@@ -1793,7 +1830,8 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Payment Method */}
+        {/* Payment Method - only in sale mode */}
+        {!isQuoteMode && (
         <Card>
           <CardHeader><CardTitle className="text-base">Forma de Pagamento</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -1882,6 +1920,7 @@ export default function NewSalePage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Proposal Payment Options */}
         <Card>
@@ -1977,6 +2016,8 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
+        {/* Receivables - only in sale mode */}
+        {!isQuoteMode && (
         <Card>
           <CardHeader><CardTitle className="text-base">Controle de Recebíveis</CardTitle></CardHeader>
           <CardContent className="p-0">
@@ -1994,9 +2035,10 @@ export default function NewSalePage() {
             </Table>
           </CardContent>
         </Card>
+        )}
 
-        {/* Controle de Pagamentos ao Fornecedor */}
-        {selectedSupplierIds.length > 0 && (
+        {/* Controle de Pagamentos ao Fornecedor - only in sale mode */}
+        {!isQuoteMode && selectedSupplierIds.length > 0 && (
           <Card>
             <CardHeader><CardTitle className="text-base">💰 Controle de Pagamentos ao Fornecedor</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -2084,7 +2126,8 @@ export default function NewSalePage() {
           </Card>
         )}
 
-        {/* Invoice Upload */}
+        {/* Invoice Upload - only in sale mode */}
+        {!isQuoteMode && (
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Nota Fiscal</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -2106,33 +2149,38 @@ export default function NewSalePage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Notes section moved above suppliers */}
 
         {/* Financial Summary */}
         <Card className="border-primary/20 bg-primary/5">
-          <CardHeader><CardTitle className="text-base">Resumo Financeiro</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Resumo da Cotação' : 'Resumo Financeiro'}</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Total da Venda</p>
+                <p className="text-sm text-muted-foreground">{isQuoteMode ? 'Total da Cotação' : 'Total da Venda'}</p>
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
                 {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
               </div>
               <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
-              <div>
-                <Label className="text-sm text-muted-foreground">Comissão (%)</Label>
-                <Input type="number" step="0.01" value={commissionRate} onChange={e => setCommissionRate(parseFloat(e.target.value) || 0)} className="mt-1 w-24" />
-                <p className="text-sm mt-1">{fmt(commissionValue)}</p>
-              </div>
-              {paymentMethod === 'credito' && (
-                <div><p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p><p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p></div>
+              {!isQuoteMode && (
+                <>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Comissão (%)</Label>
+                    <Input type="number" step="0.01" value={commissionRate} onChange={e => setCommissionRate(parseFloat(e.target.value) || 0)} className="mt-1 w-24" />
+                    <p className="text-sm mt-1">{fmt(commissionValue)}</p>
+                  </div>
+                  {paymentMethod === 'credito' && (
+                    <div><p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p><p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p></div>
+                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
+                    <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
+                  </div>
+                </>
               )}
-              <div>
-                <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
-                <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -2143,18 +2191,20 @@ export default function NewSalePage() {
           {saleStatus === 'active' ? (
             <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher</Button>
           ) : (
-            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Rascunho</Button>
+            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação</Button>
           )}
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          {saleStatus !== 'active' && (
+          {isQuoteMode && (
             <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
-              {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Rascunho'}
+              {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Cotação'}
             </Button>
           )}
-          <Button onClick={handleSave} className="w-full sm:w-auto">
-            {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Gerar Venda' : 'Converter em Venda'}
+          <Button onClick={handleSave} className={`w-full sm:w-auto ${isQuoteMode ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
+            {saleStatus === 'active' ? 'Salvar Venda' : (
+              <><ShieldCheck className="h-4 w-4 mr-1" /> Converter em Venda</>
+            )}
           </Button>
         </div>
 
