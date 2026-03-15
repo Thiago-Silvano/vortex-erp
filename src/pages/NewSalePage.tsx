@@ -2037,8 +2037,8 @@ export default function NewSalePage() {
         </Card>
         )}
 
-        {/* Controle de Pagamentos ao Fornecedor */}
-        {selectedSupplierIds.length > 0 && (
+        {/* Controle de Pagamentos ao Fornecedor - only in sale mode */}
+        {!isQuoteMode && selectedSupplierIds.length > 0 && (
           <Card>
             <CardHeader><CardTitle className="text-base">💰 Controle de Pagamentos ao Fornecedor</CardTitle></CardHeader>
             <CardContent className="space-y-4">
