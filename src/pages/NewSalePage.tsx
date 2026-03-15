@@ -201,6 +201,9 @@ export default function NewSalePage() {
     if ((sale as any).show_individual_values !== undefined) {
       setShowIndividualValues((sale as any).show_individual_values);
     }
+    if ((sale as any).show_per_passenger !== undefined) {
+      setShowPerPassenger((sale as any).show_per_passenger);
+    }
     if ((sale as any).invoice_url) {
       const parts = (sale as any).invoice_url.split('/');
       setInvoiceFileName(decodeURIComponent(parts[parts.length - 1]) || 'nota-fiscal.pdf');
