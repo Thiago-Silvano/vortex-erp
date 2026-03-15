@@ -207,6 +207,7 @@ export default function PropostaPublicPage() {
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
   const proposalOptions: ProposalPaymentOption[] = (sale as any).proposal_payment_options || [];
+  const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
 
   const methodLabels: Record<string, string> = {
     pix: 'PIX', credito: 'Cartão de Crédito', boleto: 'Boleto Bancário', dinheiro: 'Dinheiro',
