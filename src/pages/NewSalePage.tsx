@@ -162,6 +162,8 @@ export default function NewSalePage() {
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
   const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
 
+  const isQuoteMode = saleStatus !== 'active';
+
   useEffect(() => {
     if (initialEditSaleId) loadSale(initialEditSaleId);
   }, [initialEditSaleId]);
