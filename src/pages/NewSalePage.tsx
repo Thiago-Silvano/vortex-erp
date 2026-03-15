@@ -159,6 +159,7 @@ export default function NewSalePage() {
   // Service edit modal
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
   const [showIndividualValues, setShowIndividualValues] = useState(true);
+  const [showPerPassenger, setShowPerPassenger] = useState(false);
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
   const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
 
