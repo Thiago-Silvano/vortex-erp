@@ -1624,7 +1624,7 @@ export default function NewSalePage() {
         {/* Serviços da Venda */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Serviços da Venda</CardTitle>
+            <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
             <Button size="sm" variant="outline" onClick={() => {
               setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {} }]);
               setTimeout(() => setEditingItemIdx(items.length), 50);
