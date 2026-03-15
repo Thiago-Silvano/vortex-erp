@@ -2016,6 +2016,8 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
+        {/* Receivables - only in sale mode */}
+        {!isQuoteMode && (
         <Card>
           <CardHeader><CardTitle className="text-base">Controle de Recebíveis</CardTitle></CardHeader>
           <CardContent className="p-0">
@@ -2033,6 +2035,7 @@ export default function NewSalePage() {
             </Table>
           </CardContent>
         </Card>
+        )}
 
         {/* Controle de Pagamentos ao Fornecedor */}
         {selectedSupplierIds.length > 0 && (
