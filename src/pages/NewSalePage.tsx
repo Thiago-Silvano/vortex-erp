@@ -1377,19 +1377,21 @@ export default function NewSalePage() {
                 <Label>Nº Passageiros</Label>
                 <Input type="number" min="1" value={passengersCount} onChange={e => setPassengersCount(parseInt(e.target.value) || 1)} />
               </div>
-              <div>
-                <Label>Status da Venda</Label>
-                <Select value={saleWorkflowStatus} onValueChange={setSaleWorkflowStatus}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="em_aberto">Em aberto</SelectItem>
-                    <SelectItem value="contatando">Contatando</SelectItem>
-                    <SelectItem value="reservado">Reservado</SelectItem>
-                    <SelectItem value="emitido">Emitido</SelectItem>
-                    <SelectItem value="perdido">Perdido</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isQuoteMode && (
+                <div>
+                  <Label>Status da Venda</Label>
+                  <Select value={saleWorkflowStatus} onValueChange={setSaleWorkflowStatus}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="em_aberto">Em aberto</SelectItem>
+                      <SelectItem value="contatando">Contatando</SelectItem>
+                      <SelectItem value="reservado">Reservado</SelectItem>
+                      <SelectItem value="emitido">Emitido</SelectItem>
+                      <SelectItem value="perdido">Perdido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <Label>Data da Venda</Label>
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
