@@ -171,7 +171,7 @@ export default function SalesPage() {
                         return <Badge className={`${ws.color} border`} variant="outline">{ws.label}</Badge>;
                       })()}
                     </TableCell>
-                    <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Ativa' : s.status === 'draft' ? 'Rascunho' : s.status}</Badge></TableCell>
+                    <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Venda' : s.status === 'draft' ? 'Cotação' : s.status}</Badge></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
