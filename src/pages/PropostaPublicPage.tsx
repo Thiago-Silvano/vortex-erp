@@ -207,6 +207,7 @@ export default function PropostaPublicPage() {
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
   const proposalOptions: ProposalPaymentOption[] = (sale as any).proposal_payment_options || [];
+  const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
 
   const methodLabels: Record<string, string> = {
     pix: 'PIX', credito: 'Cartão de Crédito', boleto: 'Boleto Bancário', dinheiro: 'Dinheiro',
@@ -337,7 +338,7 @@ export default function PropostaPublicPage() {
             {sale.installments > 1 && receivables.length > 0 && !((sale as any).show_individual_values === true) && (
               <div className="text-center py-10 px-8" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
                 <p className="text-xs font-semibold tracking-[4px] uppercase mb-4" style={{ color: '#C8A45B' }}>
-                  Investimento por pessoa
+                  {showPerPassenger ? 'Investimento por pessoa' : 'Investimento total'}
                 </p>
                 <div className="flex items-baseline justify-center gap-2">
                   <span className="text-5xl md:text-7xl font-bold" style={{ color: '#C8A45B', fontFamily: "'Georgia', serif" }}>
@@ -345,15 +346,18 @@ export default function PropostaPublicPage() {
                   </span>
                   <span className="text-lg md:text-xl text-white/60 font-medium">de</span>
                   <span className="text-4xl md:text-6xl font-bold text-white" style={{ fontFamily: "'Georgia', serif" }}>
-                    {fmt((receivables[0]?.amount || (totalSale / sale.installments)) / passengersCount)}
+                    {fmt(showPerPassenger
+                      ? (receivables[0]?.amount || (totalSale / sale.installments)) / passengersCount
+                      : (receivables[0]?.amount || (totalSale / sale.installments))
+                    )}
                   </span>
                 </div>
-                <p className="text-sm text-white/40 mt-2">por pessoa</p>
+                {showPerPassenger && <p className="text-sm text-white/40 mt-2">por pessoa</p>}
                 <div className="w-16 h-[1px] mx-auto my-5" style={{ background: 'rgba(200,164,91,0.3)' }} />
                 <p className="text-sm text-white/30">
                   Valor total da viagem: <span className="font-semibold text-white/50">{fmt(totalSale)}</span>
                 </p>
-                {passengersCount > 1 && (
+                {showPerPassenger && passengersCount > 1 && (
                   <p className="text-xs text-white/20 mt-1">
                     {fmt(perPersonTotal)} por pessoa à vista · {passengersCount} passageiros
                   </p>
@@ -365,12 +369,12 @@ export default function PropostaPublicPage() {
             {(sale.installments <= 1 || receivables.length === 0) && !((sale as any).show_individual_values === true) && (
               <div className="text-center py-10 px-8" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
                 <p className="text-xs font-semibold tracking-[4px] uppercase mb-4" style={{ color: '#C8A45B' }}>
-                  {passengersCount > 1 ? 'Investimento por pessoa' : 'Investimento total'}
+                  {showPerPassenger ? 'Investimento por pessoa' : 'Investimento total'}
                 </p>
                 <span className="text-5xl md:text-7xl font-bold text-white" style={{ fontFamily: "'Georgia', serif" }}>
-                  {fmt(perPersonTotal)}
+                  {fmt(showPerPassenger ? perPersonTotal : totalSale)}
                 </span>
-                {passengersCount > 1 && (
+                {showPerPassenger && passengersCount > 1 && (
                   <>
                     <p className="text-sm text-white/40 mt-2">por pessoa</p>
                     <div className="w-16 h-[1px] mx-auto my-5" style={{ background: 'rgba(200,164,91,0.3)' }} />
@@ -443,15 +447,25 @@ export default function PropostaPublicPage() {
                           </span>
                           <span className="text-sm" style={{ color: isHighlighted ? 'rgba(255,255,255,0.5)' : '#999' }}>de</span>
                           <span className="text-2xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-                            {fmt(opt.installmentValue)}
+                            {fmt(showPerPassenger ? opt.installmentValue / passengersCount : opt.installmentValue)}
                           </span>
                         </div>
                       ) : (
                         <span className="text-3xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-                          {fmt(opt.totalValue)}
+                          {fmt(showPerPassenger ? opt.totalValue / passengersCount : opt.totalValue)}
                         </span>
                       )}
-                      {passengersCount > 1 && (
+                      {showPerPassenger && passengersCount > 1 && (
+                        <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.4)' : '#bbb' }}>
+                          por pessoa
+                        </p>
+                      )}
+                      {showPerPassenger && passengersCount > 1 && (
+                        <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.25)' : '#ccc' }}>
+                          Total: {fmt(opt.installments > 1 ? opt.installmentValue * opt.installments : opt.totalValue)}
+                        </p>
+                      )}
+                      {!showPerPassenger && passengersCount > 1 && (
                         <p className="text-xs mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.3)' : '#bbb' }}>
                           {fmt((opt.installments > 1 ? opt.installmentValue : opt.totalValue) / passengersCount)} /pessoa
                         </p>
