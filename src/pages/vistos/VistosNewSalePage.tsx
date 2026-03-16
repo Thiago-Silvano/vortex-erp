@@ -199,6 +199,12 @@ export default function VistosNewSalePage() {
           // Auto-fill supplier and cost center from product defaults (only if currently empty)
           if (!updated.supplier_id && prod.supplier_id) updated.supplier_id = prod.supplier_id;
           if (!updated.cost_center_id && prod.cost_center_id) updated.cost_center_id = prod.cost_center_id;
+          // Auto-fill payment due date based on average_days from product
+          if (prod.is_supplier_fee && prod.average_days > 0) {
+            const baseDate = new Date(saleDate);
+            baseDate.setDate(baseDate.getDate() + prod.average_days);
+            updated.payment_due_date = format(baseDate, 'yyyy-MM-dd');
+          }
         }
       }
       if (field === 'quantity') {
