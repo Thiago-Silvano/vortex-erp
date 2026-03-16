@@ -47,6 +47,10 @@ export default function VistosProductsPage() {
   const [price, setPrice] = useState(0);
   const [averageDays, setAverageDays] = useState(30);
   const [isSupplierFee, setIsSupplierFee] = useState(false);
+  const [supplierId, setSupplierId] = useState('');
+  const [costCenterId, setCostCenterId] = useState('');
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchProducts = async () => {
