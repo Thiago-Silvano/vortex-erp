@@ -190,13 +190,25 @@ export default function SalesPage() {
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Data da Venda</TableHead>
-                  <TableHead>Pagamento</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Lucro Líq.</TableHead>
-                  <TableHead>Status Venda</TableHead>
+                 <TableRow>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('client_name')}>
+                    <span className="inline-flex items-center">Cliente <SortIcon col="client_name" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_date')}>
+                    <span className="inline-flex items-center">Data da Venda <SortIcon col="sale_date" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('payment_method')}>
+                    <span className="inline-flex items-center">Pagamento <SortIcon col="payment_method" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('total_sale')}>
+                    <span className="inline-flex items-center">Total <SortIcon col="total_sale" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('net_profit')}>
+                    <span className="inline-flex items-center">Lucro Líq. <SortIcon col="net_profit" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_workflow_status')}>
+                    <span className="inline-flex items-center">Status Venda <SortIcon col="sale_workflow_status" /></span>
+                  </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
