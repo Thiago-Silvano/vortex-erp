@@ -116,6 +116,14 @@ const formatDateBR = (d?: string) => {
   return d;
 };
 
+const formatDateLong = (d?: string) => {
+  if (!d) return '';
+  try {
+    const date = new Date(d + 'T12:00:00');
+    return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+  } catch { return formatDateBR(d); }
+};
+
 function setColor(doc: jsPDF, color: readonly [number, number, number]) {
   doc.setTextColor(color[0], color[1], color[2]);
 }
@@ -155,10 +163,6 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
   doc.rect(0, 0, pw, ph, 'F');
 
-  // Top gold accent
-  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.rect(0, 0, pw, 3, 'F');
-
   let y = 8;
 
   // ─── Header: Logo + Agency Info ─────────────────────────
@@ -177,16 +181,19 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   if (data.agency.email) doc.text(data.agency.email, pw - m, contactY + 4, { align: 'right' });
   if (data.agency.website) doc.text(data.agency.website, pw - m, contactY + 8, { align: 'right' });
 
-  y = 32;
-  drawLine(doc, m, y, pw - m, GOLD, 0.5);
-  y += 6;
+  y = 30;
 
-  // ─── Title: VOUCHER DE VIAGEM ───────────────────────────
+  // ─── Title: VOUCHER (above gold stripe) ─────────────────
   doc.setFont('times', 'bold');
   doc.setFontSize(22);
   setColor(doc, DEEP_BLUE);
-  doc.text('VOUCHER DE VIAGEM', pw / 2, y, { align: 'center' });
-  y += 4;
+  doc.text('VOUCHER', pw / 2, y, { align: 'center' });
+  y += 5;
+
+  // Gold stripe
+  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.rect(0, y, pw, 3, 'F');
+  y += 7;
 
   // Short ID / Sale date
   doc.setFont('helvetica', 'normal');
@@ -196,11 +203,11 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   if (data.shortId) metaInfo.push(`Ref: ${data.shortId.toUpperCase()}`);
   if (data.saleDate) metaInfo.push(`Data: ${formatDateBR(data.saleDate)}`);
   if (metaInfo.length > 0) {
-    doc.text(metaInfo.join('  |  '), pw / 2, y + 3, { align: 'center' });
+    doc.text(metaInfo.join('  |  '), pw / 2, y + 1, { align: 'center' });
     y += 6;
   }
 
-  y += 4;
+  y += 2;
 
   // ─── Client Info ────────────────────────────────────────
   doc.setFillColor(LIGHT_GRAY[0], LIGHT_GRAY[1], LIGHT_GRAY[2]);
@@ -331,7 +338,6 @@ export function generateVoucherPdf(data: VoucherPdfData) {
       const resDetails: string[] = [];
       if (res.supplier) resDetails.push(res.supplier);
       if (res.checkIn && res.checkOut) resDetails.push(`${formatDateBR(res.checkIn)} - ${formatDateBR(res.checkOut)}`);
-      if (res.status) resDetails.push(`Status: ${res.status}`);
 
       if (resDetails.length > 0) {
         doc.setFont('helvetica', 'normal');
@@ -425,105 +431,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
     y += 6;
   }
 
-  // ─── Services (hide when showIndividualValues is true) ──
-  if (data.services.length > 0 && data.showIndividualValues !== true) {
-    y = checkPageBreak(doc, y, 30, m);
-    y = drawSectionTitle(doc, 'Servicos contratados', y, m, pw);
-    y += 4;
-
-    data.services.forEach((svc) => {
-      y = checkPageBreak(doc, y, 14, m);
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      setColor(doc, DEEP_BLUE);
-      doc.text(s(`-  ${svc.name}`), m, y);
-
-      if (svc.value > 0) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        setColor(doc, TEXT_MAIN);
-        doc.text(fmt(svc.value), pw - m, y, { align: 'right' });
-      }
-      y += 4;
-
-      if (svc.description) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
-        setColor(doc, TEXT_MUTED);
-        const descLines = doc.splitTextToSize(s(svc.description), cw - 10);
-        const maxLines = Math.min(descLines.length, 4);
-        doc.text(descLines.slice(0, maxLines), m + 5, y);
-        y += maxLines * 3 + 2;
-      }
-      y += 2;
-    });
-
-    drawLine(doc, m, y, pw - m);
-    y += 6;
-  }
-
-  // ─── Financial Summary ─────────────────────────────────
-  y = checkPageBreak(doc, y, 40, m);
-  y = drawSectionTitle(doc, 'Condicao financeira', y, m, pw);
-  y += 4;
-
-  // Total - only show if showIndividualValues is not true
-  if (data.showIndividualValues !== true) {
-    doc.setFillColor(GOLD_LIGHT[0], GOLD_LIGHT[1], GOLD_LIGHT[2]);
-    doc.rect(m, y - 1, cw, 14, 'F');
-    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.rect(m, y - 1, 2, 14, 'F');
-
-    doc.setFont('times', 'bold');
-    doc.setFontSize(12);
-    setColor(doc, DEEP_BLUE);
-    doc.text('Total da viagem', m + 8, y + 8);
-
-    doc.setFont('times', 'bold');
-    doc.setFontSize(14);
-    setColor(doc, GOLD);
-    doc.text(fmt(data.totalTrip), m + cw - 4, y + 8, { align: 'right' });
-    y += 18;
-  }
-
-  // Payment method
-  const methodLabels: Record<string, string> = {
-    pix: 'PIX',
-    credito: 'Cartao de Credito',
-    boleto: 'Boleto Bancario',
-    dinheiro: 'Dinheiro',
-    debito: 'Cartao de Debito',
-  };
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  setColor(doc, DEEP_BLUE);
-  const methodText = methodLabels[data.payment.method] || data.payment.method;
-  doc.text(s(`Forma: ${methodText}`), m, y);
-  if (data.payment.installments > 1) {
-    doc.setFont('helvetica', 'normal');
-    doc.text(s(`  |  ${data.payment.installments}x`), m + doc.getTextWidth(s(`Forma: ${methodText}`)) + 2, y);
-  }
-  y += 7;
-
-  // Receivables / installments
-  if (data.payment.receivables.length > 0) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    setColor(doc, TEXT_MUTED);
-
-    data.payment.receivables.forEach((r) => {
-      y = checkPageBreak(doc, y, 6, m);
-      const dueLabel = r.dueDate ? formatDateBR(r.dueDate) : '-';
-      doc.text(`Parcela ${r.number}`, m + 4, y);
-      doc.text(fmt(r.amount), m + 45, y);
-      doc.text(`Venc: ${dueLabel}`, m + 85, y);
-      y += 5;
-    });
-  }
-
-  y += 4;
+  // Services and Financial sections removed from voucher
 
   // ─── Notes ─────────────────────────────────────────────
   if (data.notes) {
@@ -583,87 +491,16 @@ function drawSectionTitle(doc: jsPDF, title: string, y: number, m: number, pw: n
   return y + 14;
 }
 
-// ─── Draw Flight Direction Group ────────────────────────────
+// ─── Draw Flight Direction Group (Premium Airline Layout) ───
 function drawFlightDirection(
   doc: jsPDF, label: string, legs: FlightLegVoucher[], y: number, m: number, pw: number, cw: number
 ): number {
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  setColor(doc, GOLD);
-  doc.text(label, m, y);
-  y += 6;
+  const CONNECTION_BG = [240, 240, 240] as const;
+  const ACCENT_LINE = GOLD;
 
-  if (legs[0]?.departureDate) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    setColor(doc, TEXT_MUTED);
-    doc.text(formatDateBR(legs[0].departureDate), m, y);
-    y += 6;
-  }
-
-  legs.forEach((leg, idx) => {
-    y = checkPageBreak(doc, y, 18, m);
-
-    const originX = m + 5;
-    const destX = m + cw - 5;
-    const midX = pw / 2;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    setColor(doc, DEEP_BLUE);
-    doc.text(leg.origin || '---', originX, y);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    setColor(doc, TEXT_MAIN);
-    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 4);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    setColor(doc, DEEP_BLUE);
-    doc.text(leg.destination || '---', destX, y, { align: 'right' });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    setColor(doc, TEXT_MAIN);
-    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 4, { align: 'right' });
-
-    // Dashed line
-    const lineY = y - 1;
-    const lineStart = originX + 18;
-    const lineEnd = destX - 18;
-    doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.setLineWidth(0.3);
-    let dx = lineStart;
-    while (dx < lineEnd - 5) {
-      doc.line(dx, lineY, Math.min(dx + 3, lineEnd - 5), lineY);
-      dx += 5;
-    }
-    // Arrow
-    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.triangle(lineEnd - 3, lineY - 1, lineEnd - 3, lineY + 1, lineEnd, lineY, 'F');
-
-    if (leg.flightCode) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(5);
-      setColor(doc, TEXT_MUTED);
-      doc.text(leg.flightCode, midX, lineY - 2, { align: 'center' });
-    }
-
-    y += 7;
-
-    if (idx < legs.length - 1 && leg.connectionDuration) {
-      doc.setFillColor(LIGHT_GRAY[0], LIGHT_GRAY[1], LIGHT_GRAY[2]);
-      doc.rect(midX - 20, y - 2, 40, 7, 'F');
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      setColor(doc, TEXT_MUTED);
-      doc.text(`Conexao: ${leg.connectionDuration}`, midX, y + 2, { align: 'center' });
-      y += 10;
-    }
-  });
-
-  // Total travel duration
+  // Calculate total travel time & connections
+  let totalDurStr = '';
+  let connectionsCount = 0;
   if (legs.length > 0 && legs[0]?.departureDate && legs[0]?.departureTime && legs[legs.length - 1]?.arrivalDate && legs[legs.length - 1]?.arrivalTime) {
     const dep = new Date(`${legs[0].departureDate}T${legs[0].departureTime}:00`);
     const arr = new Date(`${legs[legs.length - 1].arrivalDate}T${legs[legs.length - 1].arrivalTime}:00`);
@@ -671,14 +508,151 @@ function drawFlightDirection(
       const totalMin = Math.round((arr.getTime() - dep.getTime()) / 60000);
       const h = Math.floor(totalMin / 60);
       const mins = totalMin % 60;
-      const durStr = mins > 0 ? `${h}h ${mins}min` : `${h}h`;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      setColor(doc, TEXT_MUTED);
-      doc.text(`Tempo total: ${durStr}`, m, y);
-      y += 5;
+      totalDurStr = mins > 0 ? `${h}h${mins}min` : `${h}h`;
     }
   }
+  connectionsCount = legs.length > 1 ? legs.length - 1 : 0;
+
+  const routeOrigin = legs[0]?.origin || '';
+  const routeDest = legs[legs.length - 1]?.destination || '';
+
+  // Header block with dark background
+  const headerH = 20;
+  y = checkPageBreak(doc, y, headerH + legs.length * 28 + connectionsCount * 12, m);
+
+  doc.setFillColor(DEEP_BLUE[0], DEEP_BLUE[1], DEEP_BLUE[2]);
+  doc.rect(m, y, cw, headerH, 'F');
+
+  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.rect(m, y, 3, headerH, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+  const dirLabel = label === 'IDA' ? 'VOO DE IDA' : 'VOO DE VOLTA';
+  safeText(doc, dirLabel, m + 8, y + 7);
+
+  if (legs[0]?.departureDate) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    safeText(doc, formatDateLong(legs[0].departureDate), m + 8, y + 13);
+  }
+
+  if (routeOrigin && routeDest) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    safeText(doc, `${routeOrigin}  >  ${routeDest}`, m + cw - 5, y + 7, { align: 'right' });
+  }
+
+  if (totalDurStr) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(200, 200, 200);
+    const summaryParts: string[] = [totalDurStr];
+    if (connectionsCount > 0) summaryParts.push(`${connectionsCount} ${connectionsCount === 1 ? 'conexao' : 'conexoes'}`);
+    safeText(doc, summaryParts.join('  |  '), m + cw - 5, y + 13, { align: 'right' });
+  }
+
+  y += headerH + 4;
+
+  // Render each leg as a card
+  legs.forEach((leg, idx) => {
+    y = checkPageBreak(doc, y, 26, m);
+
+    const cardX = m + 2;
+    const cardW = cw - 4;
+    const cardH = 22;
+
+    doc.setFillColor(252, 252, 252);
+    doc.rect(cardX, y, cardW, cardH, 'F');
+
+    doc.setDrawColor(BORDER_COLOR[0], BORDER_COLOR[1], BORDER_COLOR[2]);
+    doc.setLineWidth(0.2);
+    doc.rect(cardX, y, cardW, cardH, 'S');
+
+    const originBlockX = cardX + 8;
+    const destBlockX = cardX + cardW - 8;
+    const lineStartX = cardX + 45;
+    const lineEndX = cardX + cardW - 45;
+    const midCardX = cardX + cardW / 2;
+
+    // Origin block
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    setColor(doc, DEEP_BLUE);
+    safeText(doc, leg.departureTime || '--:--', originBlockX, y + 9);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    setColor(doc, GOLD);
+    safeText(doc, leg.origin || '---', originBlockX, y + 16);
+
+    // Destination block
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    setColor(doc, DEEP_BLUE);
+    safeText(doc, leg.arrivalTime || '--:--', destBlockX, y + 9, { align: 'right' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    setColor(doc, GOLD);
+    safeText(doc, leg.destination || '---', destBlockX, y + 16, { align: 'right' });
+
+    // Flight line with plane
+    const lineY = y + 8;
+    doc.setDrawColor(ACCENT_LINE[0], ACCENT_LINE[1], ACCENT_LINE[2]);
+    doc.setLineWidth(0.4);
+
+    const planeX = midCardX;
+    doc.line(lineStartX, lineY, planeX - 6, lineY);
+
+    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+    doc.triangle(planeX - 4, lineY - 2, planeX - 4, lineY + 2, planeX + 2, lineY, 'F');
+
+    doc.line(planeX + 4, lineY, lineEndX, lineY);
+
+    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+    doc.circle(lineEndX + 1, lineY, 1, 'F');
+    doc.circle(lineStartX - 1, lineY, 1, 'F');
+
+    // Flight code
+    if (leg.flightCode) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      setColor(doc, TEXT_MUTED);
+      safeText(doc, leg.flightCode, midCardX, y + 17, { align: 'center' });
+    }
+
+    y += cardH + 2;
+
+    // Connection block
+    if (idx < legs.length - 1) {
+      y = checkPageBreak(doc, y, 14, m);
+
+      const connH = 10;
+      const connX = m + 15;
+      const connW = cw - 30;
+
+      doc.setFillColor(CONNECTION_BG[0], CONNECTION_BG[1], CONNECTION_BG[2]);
+      doc.roundedRect(connX, y, connW, connH, 2, 2, 'F');
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      setColor(doc, TEXT_MUTED);
+
+      const connCity = leg.destination || '';
+      const connDuration = leg.connectionDuration || '';
+      let connText = 'Conexao';
+      if (connCity) connText += ` em ${connCity}`;
+      if (connDuration) connText += `  |  ${connDuration}`;
+
+      safeText(doc, connText, m + cw / 2, y + connH / 2 + 1.5, { align: 'center' });
+
+      y += connH + 2;
+    }
+  });
 
   return y;
 }
