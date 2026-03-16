@@ -38,6 +38,8 @@ interface SaleRow {
 export default function SalesPage() {
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [search, setSearch] = useState('');
+  const [showVendas, setShowVendas] = useState(true);
+  const [showCotacoes, setShowCotacoes] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
   const [isMaster, setIsMaster] = useState(false);
   const navigate = useNavigate();
