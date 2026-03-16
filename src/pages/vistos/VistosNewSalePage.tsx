@@ -28,6 +28,9 @@ interface SaleItem {
   unit_price: number;
   total_value: number;
   is_supplier_fee: boolean;
+  supplier_id: string;
+  cost_center_id: string;
+  payment_due_date: string;
 }
 
 interface Applicant {
