@@ -1712,6 +1712,7 @@ export type Database = {
           id: string
           metadata: Json | null
           rav: number | null
+          reservation_number: string | null
           sale_id: string
           service_catalog_id: string | null
           sort_order: number | null
@@ -1725,6 +1726,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           rav?: number | null
+          reservation_number?: string | null
           sale_id: string
           service_catalog_id?: string | null
           sort_order?: number | null
@@ -1738,6 +1740,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           rav?: number | null
+          reservation_number?: string | null
           sale_id?: string
           service_catalog_id?: string | null
           sort_order?: number | null
