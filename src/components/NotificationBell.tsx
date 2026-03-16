@@ -61,7 +61,7 @@ export default function NotificationBell() {
       if (!forms || forms.length === 0) { setSeeded(true); return; }
 
       // Get existing notifications for these forms
-      const formIds = forms.map((f: any) => f.id);
+      const formIds = forms.map((f: any) => f.id) as string[];
       const { data: existing } = await supabase
         .from('notifications' as any)
         .select('reference_id')
