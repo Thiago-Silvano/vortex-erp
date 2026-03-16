@@ -74,7 +74,7 @@ export default function NotificationBell() {
 
       if (toCreate.length > 0) {
         // Get client names
-        const clientIds = [...new Set(toCreate.map((f: any) => f.client_id))];
+        const clientIds = [...new Set(toCreate.map((f: any) => f.client_id))] as string[];
         const { data: clients } = await supabase
           .from('clients')
           .select('id, full_name')
