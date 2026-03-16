@@ -150,6 +150,9 @@ export default function VistosNewSalePage() {
           unit_price: Number(sale.total_value) || prod.price,
           total_value: Number(sale.total_value) || prod.price,
           is_supplier_fee: prod.is_supplier_fee,
+          supplier_id: '',
+          cost_center_id: '',
+          payment_due_date: '',
         }]);
       }
     }
