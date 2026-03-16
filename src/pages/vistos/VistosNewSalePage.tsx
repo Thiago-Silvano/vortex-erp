@@ -632,6 +632,32 @@ export default function VistosNewSalePage() {
                     <Input className="h-9" value={maskCurrencyInput(item.unit_price)} onChange={e => updateSaleItem(idx, 'unit_price', parseCurrency(e.target.value))} />
                   </div>
                 </div>
+                {item.is_supplier_fee && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-dashed">
+                    <div>
+                      <Label className="text-xs">Fornecedor</Label>
+                      <Select value={item.supplier_id} onValueChange={v => updateSaleItem(idx, 'supplier_id', v)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Selecione o fornecedor" /></SelectTrigger>
+                        <SelectContent>
+                          {allSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Centro de Custo</Label>
+                      <Select value={item.cost_center_id} onValueChange={v => updateSaleItem(idx, 'cost_center_id', v)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {allCostCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Data de Pagamento</Label>
+                      <Input className="h-9" type="date" value={item.payment_due_date} onChange={e => updateSaleItem(idx, 'payment_due_date', e.target.value)} />
+                    </div>
+                  </div>
+                )}
                 <div className="text-sm text-right text-muted-foreground">
                   Subtotal: <strong className="text-foreground">{fmt(item.total_value)}</strong>
                 </div>
