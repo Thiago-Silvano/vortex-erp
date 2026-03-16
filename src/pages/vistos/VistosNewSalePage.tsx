@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, validateEmail, maskCurrencyInput, parseCurrency } from '@/lib/masks';
 
-interface Product { id: string; name: string; price: number; is_supplier_fee: boolean; supplier_id: string | null; cost_center_id: string | null; }
+interface Product { id: string; name: string; price: number; is_supplier_fee: boolean; supplier_id: string | null; cost_center_id: string | null; average_days: number; }
 
 interface SaleItem {
   product_id: string;
