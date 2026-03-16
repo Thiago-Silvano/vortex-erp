@@ -565,6 +565,13 @@ export default function NewSalePage() {
     }));
   };
 
+  // Auto-select Safra Pay supplier for machine fee
+  useEffect(() => {
+    if (hasMachineFeeMethod && !machineFeeSupplierId && allSuppliers.length > 0) {
+      const safra = allSuppliers.find(s => s.name.toLowerCase().includes('safra pay') || s.name.toLowerCase().includes('safrapay'));
+      if (safra) setMachineFeeSupplierId(safra.id);
+    }
+  }, [hasMachineFeeMethod, allSuppliers, machineFeeSupplierId]);
 
   const updateItem = (idx: number, field: keyof SaleItem, value: any) => {
     setItems(prev => prev.map((item, i) => {
