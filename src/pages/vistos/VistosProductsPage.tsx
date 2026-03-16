@@ -22,6 +22,19 @@ interface Product {
   average_days: number;
   status: string;
   is_supplier_fee: boolean;
+  supplier_id: string | null;
+  cost_center_id: string | null;
+}
+
+interface Supplier {
+  id: string;
+  name: string;
+}
+
+interface CostCenter {
+  id: string;
+  name: string;
+  description: string | null;
 }
 
 export default function VistosProductsPage() {
