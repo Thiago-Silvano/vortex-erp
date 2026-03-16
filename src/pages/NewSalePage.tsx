@@ -2092,6 +2092,24 @@ export default function NewSalePage() {
                 )}
               </div>
             )}
+
+            {hasMachineFeeMethod && (
+              <div className="space-y-3 pt-4 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div>
+                    <Label>Taxa de Máquina (R$)</Label>
+                    <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
+                    <p className="text-xs text-muted-foreground mt-1">Valor descontado do lucro. Gera contas a pagar automaticamente.</p>
+                  </div>
+                  {machineFee > 0 && (
+                    <>
+                      <div><p className="text-sm text-muted-foreground">Lucro antes da taxa</p><p className="text-sm font-medium">{fmt(netProfit + machineFee)}</p></div>
+                      <div><p className="text-sm text-muted-foreground">Lucro após taxa</p><p className="text-sm font-bold text-destructive">{fmt(netProfit)}</p></div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
         )}
