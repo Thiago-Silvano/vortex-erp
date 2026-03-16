@@ -846,6 +846,7 @@ export default function NewSalePage() {
         destination_image_url: destinationImageUrl || null,
         sale_interest: saleInterest,
         machine_fee: machineFee,
+        machine_fee_supplier_id: machineFeeSupplierId || null,
         operator_taxes: operatorTaxes,
         passengers_count: passengersCount,
         trip_nights: tripNights,
