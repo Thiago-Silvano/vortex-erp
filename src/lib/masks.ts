@@ -22,6 +22,55 @@ export function maskCpf(value: string): string {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
+export function maskCpfCnpj(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 14);
+  if (digits.length <= 11) {
+    return maskCpf(value);
+  }
+  return maskCnpj(value);
+}
+
+export function isCnpj(value: string): boolean {
+  return value.replace(/\D/g, '').length > 11;
+}
+
+export async function fetchCnpjData(cnpj: string): Promise<{
+  razao_social?: string;
+  nome_fantasia?: string;
+  email?: string;
+  telefone?: string;
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  municipio?: string;
+  uf?: string;
+} | null> {
+  const digits = cnpj.replace(/\D/g, '');
+  if (digits.length !== 14) return null;
+  try {
+    const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      razao_social: data.razao_social || '',
+      nome_fantasia: data.nome_fantasia || '',
+      email: data.email || '',
+      telefone: data.ddd_telefone_1 ? `(${data.ddd_telefone_1.slice(0,2)}) ${data.ddd_telefone_1.slice(2)}` : '',
+      cep: data.cep ? data.cep.replace(/(\d{5})(\d{3})/, '$1-$2') : '',
+      logradouro: data.logradouro || '',
+      numero: data.numero || '',
+      complemento: data.complemento || '',
+      bairro: data.bairro || '',
+      municipio: data.municipio || '',
+      uf: data.uf || '',
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function maskEmail(value: string): string {
   // Just lowercase and trim, no special masking needed for email
   return value.toLowerCase().trim();

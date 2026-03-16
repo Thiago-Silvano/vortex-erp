@@ -18,7 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { maskCpf, maskPhone, validateEmail } from '@/lib/masks';
+import { maskCpfCnpj, isCnpj, fetchCnpjData, maskPhone, validateEmail } from '@/lib/masks';
 
 interface Client {
   id: string;
