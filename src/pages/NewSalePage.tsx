@@ -357,7 +357,7 @@ export default function NewSalePage() {
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
   const grossProfit = totalSale + saleInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
-  const cardFeeValue = paymentMethod === 'credito' ? totalSaleWithInterest * (feeRate / 100) : 0;
+  const cardFeeValue = hasCredito ? totalSaleWithInterest * (feeRate / 100) : 0;
   const netProfit = grossProfit - commissionValue - cardFeeValue;
 
   // No longer need auto-recalculate since we store only discount % now
