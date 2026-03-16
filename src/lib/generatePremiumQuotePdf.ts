@@ -376,7 +376,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
             doc.setFontSize(7);
             const descLines = doc.splitTextToSize(s(hotel.description), cw - 12);
             doc.text(descLines.slice(0, 3), m + 4, y);
-            y += Math.min(descLines.length, 3) * 3 + 2;
+            y += Math.min(descLines.length, 3) * 3.5 + 3;
           }
         });
       }
