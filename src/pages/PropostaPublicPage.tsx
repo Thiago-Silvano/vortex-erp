@@ -292,7 +292,7 @@ export default function PropostaPublicPage() {
               Viagem personalizada para
             </p>
             <h1 className="text-4xl md:text-6xl font-bold mb-5 text-white" style={{ fontFamily: "'Georgia', serif", textShadow: '0 4px 30px rgba(0,0,0,0.4)', letterSpacing: '-0.02em' }}>
-              {sale.client_name}
+              {(sale as any).quote_title || sale.client_name}
             </h1>
             <div className="w-20 h-[2px] mx-auto mb-5" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
             {destination && (
