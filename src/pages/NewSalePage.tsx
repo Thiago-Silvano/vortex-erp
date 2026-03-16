@@ -900,7 +900,7 @@ export default function NewSalePage() {
       const { error } = await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
-        payment_method: enabledOptions.length > 0 ? (enabledOptions[0]?.method || paymentMethod || 'pix') : (paymentMethod || 'pix'),
+        payment_method: r.payment_method || paymentMethod || 'pix',
         empresa_id: activeCompany?.id || null,
         cost_center_id: r.cost_center_id || null,
       } as any)));
