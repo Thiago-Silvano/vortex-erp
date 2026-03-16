@@ -322,45 +322,57 @@ export default function BankReconciliationPage() {
     loadTransactions();
   };
 
-  // Manual reconcile
+  // Manual reconcile (single)
   const manualReconcile = async (tx: BankTx, title: FinancialTitle) => {
+    await multiReconcile(tx, [title]);
+  };
+
+  // Multi-reconcile: reconcile one bank tx with multiple titles
+  const multiReconcile = async (tx: BankTx, selectedTitles: FinancialTitle[]) => {
+    if (selectedTitles.length === 0) return;
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
+    const titleIds = selectedTitles.map(t => t.id).join(',');
+    const titleTypes = [...new Set(selectedTitles.map(t => t.type === "payable" ? "pagar" : "receber"))].join(',');
 
     await supabase
       .from("bank_transactions")
       .update({
         reconciliation_status: "reconciled",
-        reconciled_with_type: title.type === "payable" ? "pagar" : "receber",
-        reconciled_with_id: title.id,
-        reconciliation_note: "Conciliação manual",
+        reconciled_with_type: titleTypes,
+        reconciled_with_id: titleIds,
+        reconciliation_note: `Conciliação manual com ${selectedTitles.length} título(s)`,
       } as any)
       .eq("id", tx.id);
 
-    if (title.type === "payable") {
-      await supabase
-        .from("accounts_payable")
-        .update({ status: "paid", payment_date: tx.transaction_date } as any)
-        .eq("id", title.id);
-    } else {
-      await supabase
-        .from("receivables")
-        .update({ status: "paid", payment_date: tx.transaction_date } as any)
-        .eq("id", title.id);
+    for (const title of selectedTitles) {
+      if (title.type === "payable") {
+        await supabase
+          .from("accounts_payable")
+          .update({ status: "paid", payment_date: tx.transaction_date } as any)
+          .eq("id", title.id);
+      } else {
+        await supabase
+          .from("receivables")
+          .update({ status: "paid", payment_date: tx.transaction_date } as any)
+          .eq("id", title.id);
+      }
     }
 
     await supabase.from("reconciliation_log").insert({
       empresa_id: activeCompany!.id,
       bank_transaction_id: tx.id,
       action: "manual_reconcile",
-      reconciled_with_type: title.type === "payable" ? "pagar" : "receber",
-      reconciled_with_id: title.id,
+      reconciled_with_type: titleTypes,
+      reconciled_with_id: titleIds,
       user_email: user?.email || "",
-      details: `Conciliação manual com ${title.description}`,
+      details: `Conciliação manual com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')}`,
     } as any);
 
-    toast.success("Lançamento conciliado");
+    setSelectedTitleIds(new Set());
+    toast.success(`Lançamento conciliado com ${selectedTitles.length} título(s)`);
     loadTransactions();
   };
 
