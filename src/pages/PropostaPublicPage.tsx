@@ -330,12 +330,43 @@ export default function PropostaPublicPage() {
       {/* ── Main Content ── */}
       <main className="w-full max-w-5xl mx-auto px-6 md:px-10 py-14 space-y-16">
 
+        {/* Option Selector */}
+        {quoteOptions.length > 1 && (
+          <section>
+            <div className="rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+              <div className="px-6 py-4" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
+                <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: '#C8A45B' }}>
+                  Selecione uma opção
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {quoteOptions.map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setSelectedOptionId(opt.id)}
+                      className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      style={{
+                        background: selectedOptionId === opt.id
+                          ? 'linear-gradient(135deg, #C8A45B, #E8D5A3)'
+                          : 'rgba(255,255,255,0.08)',
+                        color: selectedOptionId === opt.id ? '#0D1B2A' : 'rgba(255,255,255,0.6)',
+                        border: selectedOptionId === opt.id ? 'none' : '1px solid rgba(255,255,255,0.15)',
+                      }}
+                    >
+                      {opt.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Services */}
-        {items.length > 0 && (
+        {filteredItems.length > 0 && (
           <section>
             <SectionTitle>O que está incluso</SectionTitle>
             <div className="mt-8 space-y-5">
-              {items.map((item, idx) => {
+              {filteredItems.map((item, idx) => {
                 const name = item.description || (item.service_catalog_id ? catalogNames[item.service_catalog_id] : null) || `Serviço ${idx + 1}`;
                 return (
                   <ServiceCard
