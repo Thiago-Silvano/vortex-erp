@@ -1319,7 +1319,7 @@ export default function NewSalePage() {
 
     const pdfData: PremiumPdfData = {
       agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
-      client: { name: clientName },
+      client: { name: quoteTitle || clientName },
       seller: sellerName,
       destination: destinationName || items.find(i => i.metadata?.type === 'hotel')?.metadata?.hotel?.hotelName || '',
       origin: '',
