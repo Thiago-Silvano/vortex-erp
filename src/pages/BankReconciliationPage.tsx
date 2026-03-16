@@ -102,14 +102,18 @@ export default function BankReconciliationPage() {
       draftIds = (drafts || []).map(d => d.id);
     }
 
-    const payables: FinancialTitle[] = ((payRes.data as any[]) || []).map(p => ({
-      id: p.id, type: 'payable', description: p.description || '', amount: Number(p.amount) || 0,
-      due_date: p.due_date || '', status: p.status, supplier_name: '',
-    }));
-    const receivables: FinancialTitle[] = ((recRes.data as any[]) || []).map(r => ({
-      id: r.id, type: 'receivable', description: r.description || '', amount: Number(r.amount) || 0,
-      due_date: r.due_date || '', status: r.status, client_name: r.client_name || '',
-    }));
+    const payables: FinancialTitle[] = ((payRes.data as any[]) || [])
+      .filter(p => !p.sale_id || !draftIds.includes(p.sale_id))
+      .map(p => ({
+        id: p.id, type: 'payable', description: p.description || '', amount: Number(p.amount) || 0,
+        due_date: p.due_date || '', status: p.status, supplier_name: '',
+      }));
+    const receivables: FinancialTitle[] = ((recRes.data as any[]) || [])
+      .filter(r => !r.sale_id || !draftIds.includes(r.sale_id))
+      .map(r => ({
+        id: r.id, type: 'receivable', description: r.description || '', amount: Number(r.amount) || 0,
+        due_date: r.due_date || '', status: r.status, client_name: r.client_name || '',
+      }));
     setTitles([...payables, ...receivables]);
     setLoading(false);
   }, [selectedAccount, activeCompany]);
