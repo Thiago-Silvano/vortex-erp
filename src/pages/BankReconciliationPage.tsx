@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/contexts/CompanyContext";
 import { toast } from "sonner";
 import { parseOFX, generateTransactionHash, type OFXTransaction } from "@/lib/ofxParser";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Upload,
   Check,
