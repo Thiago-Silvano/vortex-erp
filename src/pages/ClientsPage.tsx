@@ -57,6 +57,7 @@ export default function ClientsPage() {
   const [form, setForm] = useState<Omit<Client, 'id'>>(emptyClient());
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [emailError, setEmailError] = useState('');
+  const [cnpjLoading, setCnpjLoading] = useState(false);
   const [isDependent, setIsDependent] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const fetchClients = async () => {
