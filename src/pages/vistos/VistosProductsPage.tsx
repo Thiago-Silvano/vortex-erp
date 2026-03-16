@@ -84,7 +84,7 @@ export default function VistosProductsPage() {
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setName(p.name); setDescription(p.description); setPrice(p.price); setAverageDays(p.average_days); setIsSupplierFee(p.is_supplier_fee);
+    setName(p.name); setDescription(p.description); setPrice(p.price); setAverageDays(p.average_days); setIsSupplierFee(p.is_supplier_fee); setSupplierId(p.supplier_id || ''); setCostCenterId(p.cost_center_id || '');
     setDialogOpen(true);
   };
 
