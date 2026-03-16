@@ -112,7 +112,7 @@ export default function ReportDashboard() {
           <Card>
             <CardHeader><CardTitle className="text-base">Receita vs Custos vs Lucro</CardTitle></CardHeader>
             <CardContent>
-              <div className="h-72">
+              <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={salesByMonth}>
                     <CartesianGrid strokeDasharray="3 3" />
