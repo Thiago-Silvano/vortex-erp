@@ -219,6 +219,7 @@ export default function NewSalePage() {
         total_value: Number(i.total_value), service_catalog_id: i.service_catalog_id || undefined,
         cost_center_id: i.cost_center_id || undefined,
         metadata: (i as any).metadata || {},
+        reservation_number: (i as any).reservation_number || '',
       })));
       
       const imgMap: Record<number, string[]> = {};
