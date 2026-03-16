@@ -176,7 +176,7 @@ export default function VistosNewSalePage() {
 
   // --- Sale Items management ---
   const addSaleItem = () => {
-    setSaleItems(prev => [...prev, { product_id: '', product_name: '', quantity: 1, unit_price: 0, total_value: 0, is_supplier_fee: false }]);
+    setSaleItems(prev => [...prev, { product_id: '', product_name: '', quantity: 1, unit_price: 0, total_value: 0, is_supplier_fee: false, supplier_id: '', cost_center_id: '', payment_due_date: '' }]);
   };
 
   const updateSaleItem = (idx: number, field: keyof SaleItem, value: any) => {
