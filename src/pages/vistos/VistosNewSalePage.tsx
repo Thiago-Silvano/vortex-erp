@@ -381,6 +381,9 @@ export default function VistosNewSalePage() {
       unit_price: item.unit_price,
       total_value: item.total_value,
       is_supplier_fee: item.is_supplier_fee,
+      supplier_id: item.supplier_id || null,
+      cost_center_id: item.cost_center_id || null,
+      payment_due_date: item.payment_due_date || null,
       sort_order: i,
     }));
     await (supabase.from('visa_sale_items' as any) as any).insert(itemPayloads);
