@@ -8,18 +8,24 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { format, subDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function ReportFinancial() {
+  const { activeCompany } = useCompany();
   const [receivables, setReceivables] = useState<any[]>([]);
   const [payables, setPayables] = useState<any[]>([]);
   const [range, setRange] = useState({ start: format(subDays(new Date(), 30), 'yyyy-MM-dd'), end: format(new Date(), 'yyyy-MM-dd') });
 
   useEffect(() => {
-    supabase.from('receivables').select('*').gte('due_date', range.start).lte('due_date', range.end).order('due_date').then(({ data }) => { if (data) setReceivables(data); });
-    supabase.from('accounts_payable').select('*').gte('due_date', range.start).lte('due_date', range.end).order('due_date').then(({ data }) => { if (data) setPayables(data); });
-  }, [range]);
+    let qRec = supabase.from('receivables').select('*').gte('due_date', range.start).lte('due_date', range.end).order('due_date');
+    let qPay = supabase.from('accounts_payable').select('*').gte('due_date', range.start).lte('due_date', range.end).order('due_date');
+    if (activeCompany?.id) {
+      qRec = qRec.eq('empresa_id', activeCompany.id);
+      qPay = qPay.eq('empresa_id', activeCompany.id);
+    }
+    qRec.then(({ data }) => { if (data) setReceivables(data); });
+    qPay.then(({ data }) => { if (data) setPayables(data); });
+  }, [range, activeCompany?.id]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

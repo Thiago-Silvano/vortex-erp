@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,8 +9,10 @@ import ReportFilters from '@/components/ReportFilters';
 import { format, subDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function ReportSales() {
+  const { activeCompany } = useCompany();
   const [sales, setSales] = useState<any[]>([]);
   const [saleItems, setSaleItems] = useState<any[]>([]);
   const [range, setRange] = useState({ start: format(subDays(new Date(), 30), 'yyyy-MM-dd'), end: format(new Date(), 'yyyy-MM-dd') });
@@ -18,8 +20,9 @@ export default function ReportSales() {
   const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
-    supabase.from('sales').select('*').gte('sale_date', range.start).lte('sale_date', range.end).order('sale_date', { ascending: false })
-      .then(({ data }) => {
+    let q = supabase.from('sales').select('*').gte('sale_date', range.start).lte('sale_date', range.end).order('sale_date', { ascending: false });
+    if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
+    q.then(({ data }) => {
         if (data) {
           setSales(data);
           const ids = data.map(s => s.id);
@@ -28,7 +31,7 @@ export default function ReportSales() {
           }
         }
       });
-  }, [range]);
+  }, [range, activeCompany?.id]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

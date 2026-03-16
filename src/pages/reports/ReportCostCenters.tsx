@@ -4,19 +4,29 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { useCompany } from '@/contexts/CompanyContext';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f43f5e', '#14b8a6'];
 
 export default function ReportCostCenters() {
+  const { activeCompany } = useCompany();
   const [costCenters, setCostCenters] = useState<any[]>([]);
   const [receivables, setReceivables] = useState<any[]>([]);
   const [payables, setPayables] = useState<any[]>([]);
 
   useEffect(() => {
-    supabase.from('cost_centers').select('*').order('name').then(({ data }) => { if (data) setCostCenters(data); });
-    supabase.from('receivables').select('*').then(({ data }) => { if (data) setReceivables(data); });
-    supabase.from('accounts_payable').select('*').then(({ data }) => { if (data) setPayables(data); });
-  }, []);
+    let qCC = supabase.from('cost_centers').select('*').order('name');
+    let qRec = supabase.from('receivables').select('*');
+    let qPay = supabase.from('accounts_payable').select('*');
+    if (activeCompany?.id) {
+      qCC = qCC.eq('empresa_id', activeCompany.id);
+      qRec = qRec.eq('empresa_id', activeCompany.id);
+      qPay = qPay.eq('empresa_id', activeCompany.id);
+    }
+    qCC.then(({ data }) => { if (data) setCostCenters(data); });
+    qRec.then(({ data }) => { if (data) setReceivables(data); });
+    qPay.then(({ data }) => { if (data) setPayables(data); });
+  }, [activeCompany?.id]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

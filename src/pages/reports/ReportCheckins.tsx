@@ -6,14 +6,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function ReportCheckins() {
+  const { activeCompany } = useCompany();
   const [reservations, setReservations] = useState<any[]>([]);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    supabase.from('reservations').select('*').order('check_in').then(({ data }) => { if (data) setReservations(data); });
-  }, []);
+    let q = supabase.from('reservations').select('*').order('check_in');
+    if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
+    q.then(({ data }) => { if (data) setReservations(data); });
+  }, [activeCompany?.id]);
 
   const filtered = reservations.filter(r => {
     if (filter === 'upcoming') return r.status === 'pending';
