@@ -802,28 +802,29 @@ export default function BankReconciliationPage() {
                     : ""}
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  "Tarifa bancária",
-                  "Juros",
-                  "IOF",
-                  "Imposto",
-                  "Transferência",
-                  "Estorno",
-                  "Ajuste manual",
-                  "Investimento aut. em CDB",
-                  "Resgate aut. de CDB",
-                ].map((type) => (
-                  <Button
-                    key={type}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs justify-start"
-                    onClick={() => markAs(selectedTx, type)}
-                  >
-                    {type}
-                  </Button>
-                ))}
+              <div className="space-y-2">
+                <Select onValueChange={(val) => markAs(selectedTx, val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a classificação" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[
+                      "Tarifa bancária",
+                      "Juros",
+                      "IOF",
+                      "Imposto",
+                      "Transferência",
+                      "Estorno",
+                      "Ajuste manual",
+                      "Investimento automático em CDB",
+                      "Resgate automático de CDB",
+                      "Recebimento valor adiantado",
+                      "Pagamento valor adiantado",
+                    ].map((type) => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
