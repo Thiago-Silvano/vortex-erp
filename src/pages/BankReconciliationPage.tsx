@@ -552,6 +552,7 @@ export default function BankReconciliationPage() {
                       <TableHead className="text-xs">Descrição</TableHead>
                       <TableHead className="text-xs">Vencimento</TableHead>
                       <TableHead className="text-xs text-right">Valor</TableHead>
+                      <TableHead className="text-xs">Conciliação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
