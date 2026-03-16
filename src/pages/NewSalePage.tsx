@@ -69,7 +69,7 @@ interface Passenger {
 interface SupplierOption { id: string; name: string; }
 interface SellerOption { id: string; full_name: string; commission_type?: string; commission_percentage?: number; commission_base?: string; }
 interface ClientOption { id: string; full_name: string; }
-interface Receivable { installment_number: number; due_date: string; amount: number; cost_center_id?: string; }
+interface Receivable { installment_number: number; due_date: string; amount: number; cost_center_id?: string; payment_method?: string; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
 
@@ -254,7 +254,7 @@ export default function NewSalePage() {
     if (saleSups) setSelectedSupplierIds(saleSups.map(s => s.supplier_id));
 
     const { data: recs } = await supabase.from('receivables').select('*').eq('sale_id', id).order('installment_number');
-    if (recs) setReceivables(recs.map(r => ({ installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount), cost_center_id: r.cost_center_id || undefined })));
+    if (recs) setReceivables(recs.map(r => ({ installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount), cost_center_id: r.cost_center_id || undefined, payment_method: r.payment_method || undefined })));
 
     const { data: pax } = await supabase.from('sale_passengers' as any).select('*').eq('sale_id', id).order('sort_order');
     if (pax) setPassengers((pax as any[]).map(p => ({
@@ -363,43 +363,55 @@ export default function NewSalePage() {
   // No longer need auto-recalculate since we store only discount % now
 
   useEffect(() => {
-    if (hasBoleto && installments > 1 && boletoInterestRate > 0) {
-      const monthlyRate = boletoInterestRate / 100;
-      const pmt = totalSaleWithInterest * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
-      const recs: Receivable[] = [];
-      const baseDate = new Date(saleDate || new Date());
-      for (let i = 1; i <= installments; i++) {
-        const dueDate = new Date(baseDate);
-        dueDate.setMonth(dueDate.getMonth() + i);
-        recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100 });
-      }
-      setReceivables(recs);
-      return;
-    }
-    if (hasBoleto && installments > 1) {
-      const perInstallment = totalSaleWithInterest / installments;
-      const recs: Receivable[] = [];
-      const baseDate = new Date(saleDate || new Date());
-      for (let i = 1; i <= installments; i++) {
-        const dueDate = new Date(baseDate);
-        dueDate.setMonth(dueDate.getMonth() + i);
-        recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100 });
-      }
-      setReceivables(recs);
-      return;
-    }
-    if (!hasCredito) {
-      setReceivables([{ installment_number: 1, due_date: '', amount: totalSaleWithInterest }]);
-      return;
-    }
-    const perInstallment = installments > 0 ? totalSaleWithInterest / installments : totalSaleWithInterest;
     const recs: Receivable[] = [];
     const baseDate = new Date(saleDate || new Date());
-    for (let i = 1; i <= installments; i++) {
-      const dueDate = new Date(baseDate);
-      dueDate.setDate(dueDate.getDate() + i * 30);
-      recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: perInstallment });
+    let recIndex = 1;
+
+    // Split total equally among selected payment methods
+    const methodCount = paymentMethods.length;
+    const amountPerMethod = methodCount > 0 ? totalSaleWithInterest / methodCount : totalSaleWithInterest;
+
+    for (const method of paymentMethods) {
+      if (method === 'boleto' && installments > 1) {
+        // Boleto with installments
+        const boletoAmount = amountPerMethod;
+        if (boletoInterestRate > 0) {
+          const monthlyRate = boletoInterestRate / 100;
+          const pmt = boletoAmount * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
+          for (let i = 1; i <= installments; i++) {
+            const dueDate = new Date(baseDate);
+            dueDate.setMonth(dueDate.getMonth() + i);
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto' });
+          }
+        } else {
+          const perInstallment = boletoAmount / installments;
+          for (let i = 1; i <= installments; i++) {
+            const dueDate = new Date(baseDate);
+            dueDate.setMonth(dueDate.getMonth() + i);
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto' });
+          }
+        }
+      } else if (method === 'credito') {
+        // Credit card with installments
+        const creditAmount = amountPerMethod;
+        const numInst = installments > 0 ? installments : 1;
+        const perInstallment = creditAmount / numInst;
+        for (let i = 1; i <= numInst; i++) {
+          const dueDate = new Date(baseDate);
+          dueDate.setDate(dueDate.getDate() + i * 30);
+          recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
+        }
+      } else {
+        // Single installment methods: pix, dinheiro, debito, transferencia
+        const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
+        recs.push({ installment_number: recIndex++, due_date: baseDate.toISOString().split('T')[0], amount: Math.round(amountPerMethod * 100) / 100, payment_method: labelMap[method] || method });
+      }
     }
+
+    if (recs.length === 0) {
+      recs.push({ installment_number: 1, due_date: '', amount: totalSaleWithInterest });
+    }
+
     setReceivables(recs);
   }, [installments, paymentMethods, totalSaleWithInterest, boletoInterestRate, saleDate, hasCredito, hasBoleto]);
 
@@ -888,7 +900,7 @@ export default function NewSalePage() {
       const { error } = await supabase.from('receivables').insert(receivables.map(r => ({
         sale_id: saleId, installment_number: r.installment_number, due_date: r.due_date || null, amount: r.amount,
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
-        payment_method: enabledOptions.length > 0 ? (enabledOptions[0]?.method || paymentMethod || 'pix') : (paymentMethod || 'pix'),
+        payment_method: r.payment_method || paymentMethod || 'pix',
         empresa_id: activeCompany?.id || null,
         cost_center_id: r.cost_center_id || null,
       } as any)));
@@ -2186,13 +2198,14 @@ export default function NewSalePage() {
           <CardHeader><CardTitle className="text-base">Controle de Recebíveis</CardTitle></CardHeader>
           <CardContent className="p-0">
             <Table>
-              <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead className="w-36">Forma</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
               <TableBody>
                 {receivables.map((r, idx) => (
                   <TableRow key={idx}>
                     <TableCell className="font-medium">{r.installment_number}ª</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{r.payment_method || '-'}</TableCell>
                     <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
-                    <TableCell className="font-medium">{fmt(r.amount)}</TableCell>
+                    <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
                     <TableCell>
                       <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
