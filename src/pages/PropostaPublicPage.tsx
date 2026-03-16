@@ -166,10 +166,18 @@ export default function PropostaPublicPage() {
           id: item.id, description: item.description, total_value: Number(item.total_value),
           service_catalog_id: item.service_catalog_id, images: imgs?.map((i: any) => i.image_url) || [],
           metadata: (item as any).metadata || {},
+          quote_option_id: (item as any).quote_option_id || null,
         });
       }
     }
     setItems(loadedItems);
+
+    // Load quote options
+    const { data: optionsData } = await (supabase.from('sale_quote_options' as any) as any).select('*').eq('sale_id', saleId).order('order_index');
+    if (optionsData && optionsData.length > 1) {
+      setQuoteOptions(optionsData);
+      setSelectedOptionId(optionsData[0].id);
+    }
 
     if (passengersRes.data) setPassengers(passengersRes.data as any);
     if (receivablesRes.data) setReceivables(receivablesRes.data as any);
