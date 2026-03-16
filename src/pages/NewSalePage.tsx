@@ -1598,6 +1598,7 @@ export default function NewSalePage() {
                   </Button>
                 )}
               </div>
+              </div>
             </div>
 
             {/* AI Image Selection Dialog */}
