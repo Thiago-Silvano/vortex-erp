@@ -762,7 +762,7 @@ export default function NewSalePage() {
 
     if (editSaleId) {
       const { error } = await supabase.from('sales').update({ ...salePayload, updated_by: userEmail } as any).eq('id', editSaleId);
-      if (error) { toast.error('Erro ao atualizar venda'); return null; }
+      if (error) { console.error('Erro ao atualizar venda:', error); toast.error('Erro ao atualizar venda: ' + error.message); return null; }
       const { data: oldItems } = await supabase.from('sale_items').select('id').eq('sale_id', editSaleId);
       if (oldItems) {
         for (const oi of oldItems) {
