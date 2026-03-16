@@ -632,7 +632,7 @@ function ServiceCard({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h3 className="font-bold text-lg mb-1" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-              {catalogName || name}
+              {metadata?.hotel?.hotelName || name}
             </h3>
             {/* Detailed description */}
             {metadata?.detailedDescription && (
