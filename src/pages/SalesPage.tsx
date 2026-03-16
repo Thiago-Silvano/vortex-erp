@@ -261,14 +261,19 @@ export default function SalesPage() {
                     </TableCell>
                     <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Venda' : s.status === 'draft' ? 'Cotação' : s.status}</Badge></TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
-                        {canDelete(s) && (
-                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
+                       <div className="flex items-center gap-1">
+                         <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
+                         {s.status === 'active' && isMaster && (
+                           <Button size="icon" variant="ghost" title="Reverter para rascunho" onClick={(e) => { e.stopPropagation(); setRevertTarget(s); }}>
+                             <Undo2 className="h-4 w-4 text-orange-500" />
+                           </Button>
+                         )}
+                         {canDelete(s) && (
+                           <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}>
+                             <Trash2 className="h-4 w-4 text-destructive" />
+                           </Button>
+                         )}
+                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
