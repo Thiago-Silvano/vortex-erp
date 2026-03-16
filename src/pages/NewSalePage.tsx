@@ -73,6 +73,7 @@ interface SupplierPaymentControl {
   installment_dates: { date: string; amount: number }[];
   amount: number;
   cost_center_id?: string;
+  description: string;
 }
 
 interface ProposalPaymentOption {
@@ -394,6 +395,7 @@ export default function NewSalePage() {
           installments: 1,
           installment_dates: [{ date: today, amount: costPerSupplier }],
           amount: costPerSupplier,
+          description: 'Pagamento de operadoras',
         };
       });
     });
@@ -848,31 +850,32 @@ export default function NewSalePage() {
       const payables: any[] = [];
       for (const sp of supplierPayments) {
         if (sp.amount <= 0) continue;
-        if (sp.payment_method === 'pix') {
-          payables.push({
-            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
-            due_date: sp.payment_date, description: `Venda - ${clientName} (Pix)`,
-            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
-          });
-        } else if (sp.payment_method === 'faturado') {
-          payables.push({
-            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
-            due_date: sp.installment_dates[0]?.date || sp.payment_date,
-            description: `Venda - ${clientName} (Faturado)`,
-            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
-          });
-        } else if (sp.payment_method === 'credito') {
-          sp.installment_dates.forEach((inst, idx) => {
+          const desc = sp.description || 'Pagamento de operadoras';
+          if (sp.payment_method === 'pix') {
             payables.push({
-              sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
-              due_date: inst.date, description: `Venda - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
+              sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+              due_date: sp.payment_date, description: `${desc} - ${clientName} (Pix)`,
               status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-              installment_number: idx + 1, total_installments: sp.installments, cost_center_id: sp.cost_center_id || null,
+              installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
             });
-          });
-        }
+          } else if (sp.payment_method === 'faturado') {
+            payables.push({
+              sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+              due_date: sp.installment_dates[0]?.date || sp.payment_date,
+              description: `${desc} - ${clientName} (Faturado)`,
+              status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+              installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
+            });
+          } else if (sp.payment_method === 'credito') {
+            sp.installment_dates.forEach((inst, idx) => {
+              payables.push({
+                sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
+                due_date: inst.date, description: `${desc} - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
+                status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+                installment_number: idx + 1, total_installments: sp.installments, cost_center_id: sp.cost_center_id || null,
+              });
+            });
+          }
       }
       if (payables.length > 0) {
         const { error } = await supabase.from('accounts_payable').insert(payables);
@@ -2106,7 +2109,11 @@ export default function NewSalePage() {
                       <p className="font-medium text-sm">{sup?.name || 'Fornecedor'}</p>
                       <p className="text-sm text-muted-foreground">Valor: <span className="font-semibold text-foreground">{fmt(sp.amount)}</span></p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <div className="md:col-span-4">
+                        <Label className="text-xs">Descrição</Label>
+                        <Input value={sp.description} onChange={e => setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, description: e.target.value } : s))} placeholder="Pagamento de operadoras" />
+                      </div>
                       <div>
                         <Label className="text-xs">Forma de Pagamento</Label>
                         <Select value={sp.payment_method} onValueChange={v => updateSupplierPayment(sp.supplier_id, 'payment_method', v)}>
