@@ -236,6 +236,7 @@ export default function NewSalePage() {
         cost_center_id: i.cost_center_id || undefined,
         metadata: (i as any).metadata || {},
         reservation_number: (i as any).reservation_number || '',
+        quote_option_id: (i as any).quote_option_id || undefined,
       })));
       
       const imgMap: Record<number, string[]> = {};
