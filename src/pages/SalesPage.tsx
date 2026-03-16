@@ -347,6 +347,23 @@ export default function SalesPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <AlertDialog open={!!revertTarget} onOpenChange={(open) => { if (!open) setRevertTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reverter Venda para Rascunho</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja reverter a venda de "{revertTarget?.client_name}" para rascunho? Todos os lançamentos financeiros (contas a receber, contas a pagar, comissões), reservas e eventos no calendário relacionados serão removidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleRevertToDraft} className="bg-orange-500 text-white hover:bg-orange-600">
+                Reverter para Rascunho
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
