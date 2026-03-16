@@ -51,7 +51,7 @@ export default function ReportDashboard() {
     return Array.from(map.entries()).map(([name, data]) => ({ name, ...data }));
   }, [activeSales]);
 
-  const [saleItems, setSaleItems] = useState<any[]>([]);
+  const [receivableItems, setReceivableItems] = useState<any[]>([]);
   const [costCenters, setCostCenters] = useState<any[]>([]);
 
   useEffect(() => {
@@ -63,19 +63,19 @@ export default function ReportDashboard() {
   const activeIds = useMemo(() => activeSales.map(s => s.id), [activeSales]);
 
   useEffect(() => {
-    if (activeIds.length === 0) { setSaleItems([]); return; }
-    supabase.from('sale_items').select('*').in('sale_id', activeIds).then(({ data }) => { if (data) setSaleItems(data); });
+    if (activeIds.length === 0) { setReceivableItems([]); return; }
+    supabase.from('receivables').select('sale_id, cost_center_id, amount').in('sale_id', activeIds).then(({ data }) => { if (data) setReceivableItems(data); });
   }, [activeIds]);
 
   const productData = useMemo(() => {
     const ccMap = new Map(costCenters.map(cc => [cc.id, cc.name]));
     const categories: Record<string, number> = {};
-    saleItems.forEach(item => {
+    receivableItems.forEach(item => {
       const cat = (item.cost_center_id && ccMap.get(item.cost_center_id)) || 'Sem Centro de Custo';
-      categories[cat] = (categories[cat] || 0) + Number(item.total_value || 0);
+      categories[cat] = (categories[cat] || 0) + Number(item.amount || 0);
     });
     return Object.entries(categories).map(([name, value]) => ({ name, value }));
-  }, [saleItems, costCenters]);
+  }, [receivableItems, costCenters]);
 
   const indicators = [
     { label: 'Total de Vendas', value: totalVendas, icon: ShoppingCart },
@@ -112,7 +112,7 @@ export default function ReportDashboard() {
           <Card>
             <CardHeader><CardTitle className="text-base">Receita vs Custos vs Lucro</CardTitle></CardHeader>
             <CardContent>
-              <div className="h-72">
+              <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={salesByMonth}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -132,7 +132,7 @@ export default function ReportDashboard() {
           <Card>
             <CardHeader><CardTitle className="text-base">Vendas por Serviço</CardTitle></CardHeader>
             <CardContent>
-              <div className="h-72">
+              <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={productData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
