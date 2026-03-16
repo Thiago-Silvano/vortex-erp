@@ -855,7 +855,7 @@ export default function NewSalePage() {
               sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
               due_date: inst.date, description: `Venda - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
               status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-              installment_number: idx + 1, total_installments: sp.installments,
+              installment_number: idx + 1, total_installments: sp.installments, cost_center_id: sp.cost_center_id || null,
             });
           });
         }
