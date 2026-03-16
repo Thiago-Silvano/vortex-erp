@@ -67,7 +67,7 @@ export default function BankReconciliationPage() {
 
   useEffect(() => {
     if (!activeCompany) return;
-    supabase.from('bank_accounts').select('id, bank_name, account_number, account_digit, agency, color')
+    supabase.from('bank_accounts').select('id, bank_name, account_number, account_digit, agency, color, empresa_id')
       .eq('empresa_id', activeCompany.id).eq('status', 'active').order('bank_name')
       .then(({ data }) => setAccounts((data as any[]) || []));
   }, [activeCompany]);
