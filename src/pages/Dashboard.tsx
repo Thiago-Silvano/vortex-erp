@@ -36,7 +36,7 @@ export default function Dashboard() {
   const loadStats = async () => {
     setLoading(true);
     try {
-      let query = supabase.from('sales').select('id, client_name, total_sale, total_supplier_cost, gross_profit, net_profit, status');
+      let query = supabase.from('sales').select('id, client_name, total_sale, total_supplier_cost, gross_profit, net_profit, status, passengers_count');
       if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
       const { data: sales } = await query;
       if (!sales) { setLoading(false); return; }
@@ -48,7 +48,7 @@ export default function Dashboard() {
       const grossProfit = activeSales.reduce((s, v) => s + Number(v.gross_profit || 0), 0);
       const netProfit = activeSales.reduce((s, v) => s + Number(v.net_profit || 0), 0);
       const totalCosts = activeSales.reduce((s, v) => s + Number(v.total_supplier_cost || 0), 0);
-      const clientsCount = new Set(activeSales.map(s => s.client_name)).size;
+      const clientsCount = activeSales.reduce((s, v) => s + Number(v.passengers_count || 0), 0);
 
       setStats({ totalSales, totalRevenue, grossProfit, netProfit, totalCosts, clientsCount });
     } catch (err) {
