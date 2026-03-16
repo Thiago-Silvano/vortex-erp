@@ -111,6 +111,7 @@ export default function NewSalePage() {
   const [tripEndDate, setTripEndDate] = useState('');
   const [nightsManuallySet, setNightsManuallySet] = useState(false);
   const [destinationName, setDestinationName] = useState('');
+  const [quoteTitle, setQuoteTitle] = useState('');
 
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([]);
   const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);
