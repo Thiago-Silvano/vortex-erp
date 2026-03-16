@@ -1979,6 +1979,7 @@ export type Database = {
           payment_method: string | null
           proposal_payment_options: Json | null
           quote_id: string | null
+          quote_title: string | null
           sale_date: string
           sale_interest: number | null
           sale_workflow_status: string
@@ -2019,6 +2020,7 @@ export type Database = {
           payment_method?: string | null
           proposal_payment_options?: Json | null
           quote_id?: string | null
+          quote_title?: string | null
           sale_date?: string
           sale_interest?: number | null
           sale_workflow_status?: string
@@ -2059,6 +2061,7 @@ export type Database = {
           payment_method?: string | null
           proposal_payment_options?: Json | null
           quote_id?: string | null
+          quote_title?: string | null
           sale_date?: string
           sale_interest?: number | null
           sale_workflow_status?: string

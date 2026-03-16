@@ -111,6 +111,7 @@ export default function NewSalePage() {
   const [tripEndDate, setTripEndDate] = useState('');
   const [nightsManuallySet, setNightsManuallySet] = useState(false);
   const [destinationName, setDestinationName] = useState('');
+  const [quoteTitle, setQuoteTitle] = useState('');
 
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([]);
   const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);
@@ -202,6 +203,7 @@ export default function NewSalePage() {
     setTripStartDate((sale as any).trip_start_date || '');
     setTripEndDate((sale as any).trip_end_date || '');
     setDestinationName((sale as any).destination_name || '');
+    setQuoteTitle((sale as any).quote_title || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
     // Load proposal payment options
@@ -771,6 +773,7 @@ export default function NewSalePage() {
         trip_start_date: tripStartDate || null,
         trip_end_date: tripEndDate || null,
         destination_name: destinationName || '',
+        quote_title: quoteTitle || '',
         sale_workflow_status: saleWorkflowStatus,
       } as any,
       userEmail,
@@ -1316,7 +1319,7 @@ export default function NewSalePage() {
 
     const pdfData: PremiumPdfData = {
       agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
-      client: { name: clientName },
+      client: { name: quoteTitle || clientName },
       seller: sellerName,
       destination: destinationName || items.find(i => i.metadata?.type === 'hotel')?.metadata?.hotel?.hotelName || '',
       origin: '',
@@ -1551,9 +1554,15 @@ export default function NewSalePage() {
                 <Label>Nome do Destino</Label>
                 <Input value={destinationName} onChange={e => setDestinationName(e.target.value)} placeholder="Ex: Orlando, Paris, Cancún..." />
                 <p className="text-xs text-muted-foreground mt-1">Exibido nas propostas e orçamentos</p>
-              </div>
+             </div>
             </div>
-            <div className="col-span-full mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              <div>
+                <Label>Titulo da Cotacao</Label>
+                <Input value={quoteTitle} onChange={e => setQuoteTitle(e.target.value)} placeholder="Ex: Viagem Las Vegas - Família Silva" />
+                <p className="text-xs text-muted-foreground mt-1">Substitui o nome do cliente na proposta e PDF</p>
+              </div>
+              <div>
               <Label>Imagem do Destino (para proposta)</Label>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
                 {destinationImageUrl ? (
@@ -1588,6 +1597,7 @@ export default function NewSalePage() {
                     Buscar Imagens
                   </Button>
                 )}
+              </div>
               </div>
             </div>
 
