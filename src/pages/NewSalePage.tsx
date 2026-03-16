@@ -1554,9 +1554,15 @@ export default function NewSalePage() {
                 <Label>Nome do Destino</Label>
                 <Input value={destinationName} onChange={e => setDestinationName(e.target.value)} placeholder="Ex: Orlando, Paris, Cancún..." />
                 <p className="text-xs text-muted-foreground mt-1">Exibido nas propostas e orçamentos</p>
-              </div>
+             </div>
             </div>
-            <div className="col-span-full mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              <div>
+                <Label>Titulo da Cotacao</Label>
+                <Input value={quoteTitle} onChange={e => setQuoteTitle(e.target.value)} placeholder="Ex: Viagem Las Vegas - Família Silva" />
+                <p className="text-xs text-muted-foreground mt-1">Substitui o nome do cliente na proposta e PDF</p>
+              </div>
+              <div>
               <Label>Imagem do Destino (para proposta)</Label>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
                 {destinationImageUrl ? (
