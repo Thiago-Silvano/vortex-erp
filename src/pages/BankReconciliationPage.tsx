@@ -477,18 +477,26 @@ export default function BankReconciliationPage() {
                               {statusLabels[tx.reconciliation_status] || tx.reconciliation_status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right flex items-center justify-end gap-1">
                             {tx.reconciliation_status === 'pending' && (
                               <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100"
                                 onClick={() => { setSelectedTx(tx); setShowManualModal(true); }}>
                                 <FileText className="h-3 w-3" />
                               </Button>
                             )}
-                            {tx.reconciliation_status === 'reconciled' && (
-                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500"
-                                onClick={() => undoReconcile(tx)}>
-                                <Unlink className="h-3 w-3" />
-                              </Button>
+                            {(tx.reconciliation_status === 'reconciled' || tx.reconciliation_status === 'ignored') && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500"
+                                  title="Desfazer"
+                                  onClick={() => undoReconcile(tx)}>
+                                  <Unlink className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-primary"
+                                  title="Reclassificar"
+                                  onClick={() => { setSelectedTx(tx); setShowManualModal(true); }}>
+                                  <FileText className="h-3 w-3" />
+                                </Button>
+                              </>
                             )}
                           </TableCell>
                         </TableRow>
