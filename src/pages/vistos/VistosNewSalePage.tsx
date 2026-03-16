@@ -112,6 +112,10 @@ export default function VistosNewSalePage() {
       .then(({ data }) => { if (data) setProducts(data as Product[]); });
     supabase.from('clients').select('id, full_name, phone, email').eq('empresa_id', activeCompany.id).order('full_name')
       .then(({ data }) => { if (data) setAllClients(data); });
+    supabase.from('suppliers').select('id, name').order('name')
+      .then(({ data }) => { if (data) setAllSuppliers(data); });
+    supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name')
+      .then(({ data }) => { if (data) setAllCostCenters(data); });
   }, [activeCompany?.id]);
 
   useEffect(() => {
