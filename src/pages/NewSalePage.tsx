@@ -1667,12 +1667,50 @@ export default function NewSalePage() {
 
         {/* Suppliers card removed - moved to Controle de Pagamentos */}
 
+        {/* Opções da Cotação */}
+        {isQuoteMode && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">📋 Opções da Cotação</CardTitle>
+            <Button size="sm" variant="outline" onClick={() => {
+              setQuoteOptions(prev => [...prev, { name: `Opção ${prev.length + 1}`, order_index: prev.length }]);
+            }}>
+              <Plus className="h-4 w-4 mr-1" />Adicionar Opção
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-sm text-muted-foreground">Cada opção representa um cenário diferente de viagem. Os serviços serão vinculados a uma opção.</p>
+            <div className="flex flex-wrap gap-2">
+              {quoteOptions.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-muted/30">
+                  <Input
+                    value={opt.name}
+                    onChange={e => setQuoteOptions(prev => prev.map((o, i) => i === idx ? { ...o, name: e.target.value } : o))}
+                    className="h-7 text-sm w-40 border-0 bg-transparent p-0 focus-visible:ring-0"
+                  />
+                  {quoteOptions.length > 1 && (
+                    <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => {
+                      setQuoteOptions(prev => prev.filter((_, i) => i !== idx).map((o, i) => ({ ...o, order_index: i })));
+                      // Remove option from items that had it
+                      const removedId = opt.id || String(idx);
+                      setItems(prev => prev.map(item => item.quote_option_id === removedId ? { ...item, quote_option_id: quoteOptions[0]?.id || '0' } : item));
+                    }}>
+                      <X className="h-3 w-3 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
         {/* Serviços da Venda */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
             <Button size="sm" variant="outline" onClick={() => {
-              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {} }]);
+              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {}, quote_option_id: quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0) }]);
               setTimeout(() => setEditingItemIdx(items.length), 50);
             }}>
               <Plus className="h-4 w-4 mr-1" />Adicionar
