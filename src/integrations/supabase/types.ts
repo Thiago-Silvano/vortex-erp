@@ -82,13 +82,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "accounts_payable_sale_id_fkey"
-            columns: ["sale_id"]
-            isOneToOne: false
-            referencedRelation: "sales"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "accounts_payable_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
