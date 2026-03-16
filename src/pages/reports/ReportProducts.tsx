@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { useCompany } from '@/contexts/CompanyContext';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16'];
 
@@ -18,11 +19,22 @@ const categorize = (desc: string): string => {
 };
 
 export default function ReportProducts() {
+  const { activeCompany } = useCompany();
   const [saleItems, setSaleItems] = useState<any[]>([]);
 
   useEffect(() => {
-    supabase.from('sale_items').select('*').then(({ data }) => { if (data) setSaleItems(data); });
-  }, []);
+    // First get sales for this company, then get their items
+    let qSales = supabase.from('sales').select('id');
+    if (activeCompany?.id) qSales = qSales.eq('empresa_id', activeCompany.id);
+    qSales.then(({ data: salesData }) => {
+      if (salesData && salesData.length > 0) {
+        const ids = salesData.map(s => s.id);
+        supabase.from('sale_items').select('*').in('sale_id', ids).then(({ data }) => { if (data) setSaleItems(data); });
+      } else {
+        setSaleItems([]);
+      }
+    });
+  }, [activeCompany?.id]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

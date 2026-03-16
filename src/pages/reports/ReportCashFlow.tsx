@@ -5,19 +5,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { format, subDays, addMonths, eachMonthOfInterval, eachWeekOfInterval, startOfWeek, endOfWeek } from 'date-fns';
+import { format, addMonths, eachMonthOfInterval, eachWeekOfInterval, startOfWeek, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function ReportCashFlow() {
+  const { activeCompany } = useCompany();
   const [receivables, setReceivables] = useState<any[]>([]);
   const [payables, setPayables] = useState<any[]>([]);
   const [view, setView] = useState<'month' | 'week'>('month');
 
   useEffect(() => {
-    supabase.from('receivables').select('*').then(({ data }) => { if (data) setReceivables(data); });
-    supabase.from('accounts_payable').select('*').then(({ data }) => { if (data) setPayables(data); });
-  }, []);
+    let qRec = supabase.from('receivables').select('*');
+    let qPay = supabase.from('accounts_payable').select('*');
+    if (activeCompany?.id) {
+      qRec = qRec.eq('empresa_id', activeCompany.id);
+      qPay = qPay.eq('empresa_id', activeCompany.id);
+    }
+    qRec.then(({ data }) => { if (data) setReceivables(data); });
+    qPay.then(({ data }) => { if (data) setPayables(data); });
+  }, [activeCompany?.id]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -47,7 +55,6 @@ export default function ReportCashFlow() {
   const totalEntradas = chartData.reduce((s, d) => s + d.entradas, 0);
   const totalSaidas = chartData.reduce((s, d) => s + d.saidas, 0);
 
-  // Detail table
   const allItems = [
     ...receivables.map(r => ({ ...r, tipo: 'Entrada', desc: r.description || r.client_name || 'Recebível' })),
     ...payables.map(r => ({ ...r, tipo: 'Saída', desc: r.description || 'Pagamento' })),

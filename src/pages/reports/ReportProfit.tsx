@@ -6,19 +6,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import ReportFilters from '@/components/ReportFilters';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function ReportProfit() {
+  const { activeCompany } = useCompany();
   const [sales, setSales] = useState<any[]>([]);
   const [range, setRange] = useState({ start: format(subDays(new Date(), 30), 'yyyy-MM-dd'), end: format(new Date(), 'yyyy-MM-dd') });
 
   useEffect(() => {
-    supabase.from('sales').select('*').gte('sale_date', range.start).lte('sale_date', range.end).order('sale_date', { ascending: false })
-      .then(({ data }) => { if (data) setSales(data); });
-  }, [range]);
+    let q = supabase.from('sales').select('*').gte('sale_date', range.start).lte('sale_date', range.end).order('sale_date', { ascending: false });
+    if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
+    q.then(({ data }) => { if (data) setSales(data); });
+  }, [range, activeCompany?.id]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const chartData = sales.map((s, i) => ({
+  const chartData = sales.map((s) => ({
     name: `${s.client_name?.slice(0, 12) || 'Venda'}`,
     lucro: Number(s.net_profit || 0),
   }));

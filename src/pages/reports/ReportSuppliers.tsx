@@ -4,17 +4,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function ReportSuppliers() {
+  const { activeCompany } = useCompany();
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [sales, setSales] = useState<any[]>([]);
   const [saleSups, setSaleSups] = useState<any[]>([]);
 
   useEffect(() => {
-    supabase.from('suppliers').select('*').order('name').then(({ data }) => { if (data) setSuppliers(data); });
-    supabase.from('sales').select('*').then(({ data }) => { if (data) setSales(data); });
-    supabase.from('sale_suppliers').select('*').then(({ data }) => { if (data) setSaleSups(data); });
-  }, []);
+    let qSup = supabase.from('suppliers').select('*').order('name');
+    let qSales = supabase.from('sales').select('*');
+    let qSaleSups = supabase.from('sale_suppliers').select('*');
+    if (activeCompany?.id) {
+      qSup = qSup.eq('empresa_id', activeCompany.id);
+      qSales = qSales.eq('empresa_id', activeCompany.id);
+    }
+    qSup.then(({ data }) => { if (data) setSuppliers(data); });
+    qSales.then(({ data }) => { if (data) setSales(data); });
+    qSaleSups.then(({ data }) => { if (data) setSaleSups(data); });
+  }, [activeCompany?.id]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

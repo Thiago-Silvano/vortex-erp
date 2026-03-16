@@ -6,15 +6,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function ReportClients() {
+  const { activeCompany } = useCompany();
   const [clients, setClients] = useState<any[]>([]);
   const [sales, setSales] = useState<any[]>([]);
 
   useEffect(() => {
-    supabase.from('clients').select('*').order('full_name').then(({ data }) => { if (data) setClients(data); });
-    supabase.from('sales').select('*').then(({ data }) => { if (data) setSales(data); });
-  }, []);
+    let qClients = supabase.from('clients').select('*').order('full_name');
+    let qSales = supabase.from('sales').select('*');
+    if (activeCompany?.id) {
+      qClients = qClients.eq('empresa_id', activeCompany.id);
+      qSales = qSales.eq('empresa_id', activeCompany.id);
+    }
+    qClients.then(({ data }) => { if (data) setClients(data); });
+    qSales.then(({ data }) => { if (data) setSales(data); });
+  }, [activeCompany?.id]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -33,7 +41,6 @@ export default function ReportClients() {
   const comCompras = clientStats.filter(c => c.numCompras > 0).length;
   const semCompras = totalClientes - comCompras;
 
-  // Clients registered by month
   const clientsByMonth = useMemo(() => {
     const map = new Map<string, number>();
     clients.forEach(c => {

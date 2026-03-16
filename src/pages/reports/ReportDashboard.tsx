@@ -4,21 +4,29 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ReportFilters from '@/components/ReportFilters';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
-import { format, subDays, parseISO, startOfMonth } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ShoppingCart, DollarSign, TrendingUp, Users, BookOpen, BarChart3 } from 'lucide-react';
+import { useCompany } from '@/contexts/CompanyContext';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export default function ReportDashboard() {
+  const { activeCompany } = useCompany();
   const [sales, setSales] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
   const [range, setRange] = useState({ start: format(subDays(new Date(), 30), 'yyyy-MM-dd'), end: format(new Date(), 'yyyy-MM-dd') });
 
   useEffect(() => {
-    supabase.from('sales').select('*').gte('sale_date', range.start).lte('sale_date', range.end).then(({ data }) => { if (data) setSales(data); });
-    supabase.from('reservations').select('*').then(({ data }) => { if (data) setReservations(data); });
-  }, [range]);
+    let qSales = supabase.from('sales').select('*').gte('sale_date', range.start).lte('sale_date', range.end);
+    let qRes = supabase.from('reservations').select('*');
+    if (activeCompany?.id) {
+      qSales = qSales.eq('empresa_id', activeCompany.id);
+      qRes = qRes.eq('empresa_id', activeCompany.id);
+    }
+    qSales.then(({ data }) => { if (data) setSales(data); });
+    qRes.then(({ data }) => { if (data) setReservations(data); });
+  }, [range, activeCompany?.id]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -29,7 +37,6 @@ export default function ReportDashboard() {
   const clientesAtendidos = new Set(sales.map(s => s.client_name)).size;
   const totalReservas = reservations.length;
 
-  // Sales by month chart
   const salesByMonth = useMemo(() => {
     const map = new Map<string, { faturamento: number; custos: number; lucro: number }>();
     sales.forEach(s => {
@@ -43,7 +50,6 @@ export default function ReportDashboard() {
     return Array.from(map.entries()).map(([name, data]) => ({ name, ...data }));
   }, [sales]);
 
-  // Sales by service (from sale_items)
   const [saleItems, setSaleItems] = useState<any[]>([]);
   useEffect(() => {
     if (sales.length === 0) return;
