@@ -2198,13 +2198,14 @@ export default function NewSalePage() {
           <CardHeader><CardTitle className="text-base">Controle de Recebíveis</CardTitle></CardHeader>
           <CardContent className="p-0">
             <Table>
-              <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead className="w-36">Forma</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
               <TableBody>
                 {receivables.map((r, idx) => (
                   <TableRow key={idx}>
                     <TableCell className="font-medium">{r.installment_number}ª</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{r.payment_method || '-'}</TableCell>
                     <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
-                    <TableCell className="font-medium">{fmt(r.amount)}</TableCell>
+                    <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
                     <TableCell>
                       <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
