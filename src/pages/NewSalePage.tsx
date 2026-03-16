@@ -850,31 +850,32 @@ export default function NewSalePage() {
       const payables: any[] = [];
       for (const sp of supplierPayments) {
         if (sp.amount <= 0) continue;
-        if (sp.payment_method === 'pix') {
-          payables.push({
-            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
-            due_date: sp.payment_date, description: `Venda - ${clientName} (Pix)`,
-            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
-          });
-        } else if (sp.payment_method === 'faturado') {
-          payables.push({
-            sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
-            due_date: sp.installment_dates[0]?.date || sp.payment_date,
-            description: `Venda - ${clientName} (Faturado)`,
-            status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
-          });
-        } else if (sp.payment_method === 'credito') {
-          sp.installment_dates.forEach((inst, idx) => {
+          const desc = sp.description || 'Pagamento de operadoras';
+          if (sp.payment_method === 'pix') {
             payables.push({
-              sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
-              due_date: inst.date, description: `Venda - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
+              sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+              due_date: sp.payment_date, description: `${desc} - ${clientName} (Pix)`,
               status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-              installment_number: idx + 1, total_installments: sp.installments, cost_center_id: sp.cost_center_id || null,
+              installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
             });
-          });
-        }
+          } else if (sp.payment_method === 'faturado') {
+            payables.push({
+              sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+              due_date: sp.installment_dates[0]?.date || sp.payment_date,
+              description: `${desc} - ${clientName} (Faturado)`,
+              status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+              installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
+            });
+          } else if (sp.payment_method === 'credito') {
+            sp.installment_dates.forEach((inst, idx) => {
+              payables.push({
+                sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
+                due_date: inst.date, description: `${desc} - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
+                status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+                installment_number: idx + 1, total_installments: sp.installments, cost_center_id: sp.cost_center_id || null,
+              });
+            });
+          }
       }
       if (payables.length > 0) {
         const { error } = await supabase.from('accounts_payable').insert(payables);
