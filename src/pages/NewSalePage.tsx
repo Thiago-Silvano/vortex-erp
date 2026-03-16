@@ -1259,11 +1259,23 @@ export default function NewSalePage() {
     for (const item of items) {
       if (item.metadata?.type === 'hotel' && item.metadata.hotel) {
         const h = item.metadata.hotel;
+        // Calculate nights from checkIn/checkOut dates
+        let hotelNights = 0;
+        if (h.checkInDate && h.checkOutDate) {
+          const ci = new Date(h.checkInDate + 'T12:00:00');
+          const co = new Date(h.checkOutDate + 'T12:00:00');
+          if (!isNaN(ci.getTime()) && !isNaN(co.getTime()) && co > ci) {
+            hotelNights = Math.round((co.getTime() - ci.getTime()) / (1000 * 60 * 60 * 24));
+          }
+        }
         hotels.push({
           name: h.hotelName,
           description: h.description,
           checkIn: h.checkInDate,
           checkOut: h.checkOutDate,
+          nights: hotelNights,
+          room: h.roomType || h.room || '',
+          meal: h.mealPlan || h.meal || '',
           stars: h.stars,
           amenities: h.amenities,
         });
