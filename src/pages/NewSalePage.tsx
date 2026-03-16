@@ -59,9 +59,9 @@ interface Passenger {
 }
 
 interface SupplierOption { id: string; name: string; }
-interface SellerOption { id: string; full_name: string; }
+interface SellerOption { id: string; full_name: string; commission_type?: string; commission_percentage?: number; commission_base?: string; }
 interface ClientOption { id: string; full_name: string; }
-interface Receivable { installment_number: number; due_date: string; amount: number; }
+interface Receivable { installment_number: number; due_date: string; amount: number; cost_center_id?: string; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
 
@@ -72,6 +72,7 @@ interface SupplierPaymentControl {
   installments: number;
   installment_dates: { date: string; amount: number }[];
   amount: number;
+  cost_center_id?: string;
 }
 
 interface ProposalPaymentOption {
@@ -232,7 +233,7 @@ export default function NewSalePage() {
     if (saleSups) setSelectedSupplierIds(saleSups.map(s => s.supplier_id));
 
     const { data: recs } = await supabase.from('receivables').select('*').eq('sale_id', id).order('installment_number');
-    if (recs) setReceivables(recs.map(r => ({ installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount) })));
+    if (recs) setReceivables(recs.map(r => ({ installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount), cost_center_id: r.cost_center_id || undefined })));
 
     const { data: pax } = await supabase.from('sale_passengers' as any).select('*').eq('sale_id', id).order('sort_order');
     if (pax) setPassengers((pax as any[]).map(p => ({
@@ -268,7 +269,7 @@ export default function NewSalePage() {
       });
     })();
     if (activeCompany) {
-      (supabase.from('sellers') as any).select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
+      (supabase.from('sellers') as any).select('id, full_name, commission_type, commission_percentage, commission_base').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
       // Load stock image API keys
       supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1).single().then(({ data }) => {
         if (data) {
@@ -397,6 +398,20 @@ export default function NewSalePage() {
       });
     });
   }, [selectedSupplierIds, totalCost]);
+
+  // Auto-set commission rate from seller config
+  useEffect(() => {
+    if (sellerId && sellerId !== 'none') {
+      const seller = allSellers.find(s => s.id === sellerId);
+      if (seller && seller.commission_type !== 'none') {
+        setCommissionRate(seller.commission_percentage || 0);
+      } else {
+        setCommissionRate(0);
+      }
+    } else {
+      setCommissionRate(0);
+    }
+  }, [sellerId, allSellers]);
 
   const updateSupplierPayment = (sid: string, field: string, value: any) => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -814,6 +829,7 @@ export default function NewSalePage() {
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
         payment_method: enabledOptions.length > 0 ? (enabledOptions[0]?.method || paymentMethod || 'pix') : (paymentMethod || 'pix'),
         empresa_id: activeCompany?.id || null,
+        cost_center_id: r.cost_center_id || null,
       } as any)));
       if (error) console.error('Erro ao gerar recebíveis:', error);
     } else if (totalSaleWithInterest > 0) {
@@ -837,7 +853,7 @@ export default function NewSalePage() {
             sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
             due_date: sp.payment_date, description: `Venda - ${clientName} (Pix)`,
             status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1,
+            installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
           });
         } else if (sp.payment_method === 'faturado') {
           payables.push({
@@ -845,7 +861,7 @@ export default function NewSalePage() {
             due_date: sp.installment_dates[0]?.date || sp.payment_date,
             description: `Venda - ${clientName} (Faturado)`,
             status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1,
+            installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
           });
         } else if (sp.payment_method === 'credito') {
           sp.installment_dates.forEach((inst, idx) => {
@@ -853,7 +869,7 @@ export default function NewSalePage() {
               sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
               due_date: inst.date, description: `Venda - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
               status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-              installment_number: idx + 1, total_installments: sp.installments,
+              installment_number: idx + 1, total_installments: sp.installments, cost_center_id: sp.cost_center_id || null,
             });
           });
         }
@@ -2023,13 +2039,22 @@ export default function NewSalePage() {
           <CardHeader><CardTitle className="text-base">Controle de Recebíveis</CardTitle></CardHeader>
           <CardContent className="p-0">
             <Table>
-              <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
               <TableBody>
                 {receivables.map((r, idx) => (
                   <TableRow key={idx}>
                     <TableCell className="font-medium">{r.installment_number}ª</TableCell>
                     <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
                     <TableCell className="font-medium">{fmt(r.amount)}</TableCell>
+                    <TableCell>
+                      <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -2038,12 +2063,42 @@ export default function NewSalePage() {
         </Card>
         )}
 
-        {/* Controle de Pagamentos ao Fornecedor - only in sale mode */}
-        {!isQuoteMode && selectedSupplierIds.length > 0 && (
+        {/* Controle de Pagamentos - only in sale mode */}
+        {!isQuoteMode && (
           <Card>
-            <CardHeader><CardTitle className="text-base">💰 Controle de Pagamentos ao Fornecedor</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">💰 Controle de Pagamentos</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              {supplierPayments.map(sp => {
+              {/* Seller commission info */}
+              {sellerId && sellerId !== 'none' && (() => {
+                const seller = allSellers.find(s => s.id === sellerId);
+                if (!seller || seller.commission_type === 'none') return null;
+                const pct = seller.commission_percentage || 0;
+                const sellerCommValue = (() => {
+                  if (seller.commission_type === 'sales_percentage') {
+                    const base = seller.commission_base === 'net_received' ? totalSaleWithInterest - cardFeeValue
+                      : seller.commission_base === 'sale_profit' ? grossProfit : totalSaleWithInterest;
+                    return base * (pct / 100);
+                  } else if (seller.commission_type === 'profit_percentage') {
+                    return grossProfit * (pct / 100);
+                  } else if (seller.commission_type === 'company_profit_percentage') {
+                    return commissionValue * (pct / 100);
+                  }
+                  return grossProfit * (pct / 100);
+                })();
+                return (
+                  <div className="border rounded-lg p-4 bg-muted/30 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-sm">Comissão - {seller.full_name}</p>
+                      <Badge variant="outline" className="text-xs">{pct}%</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Valor estimado: <span className="font-semibold text-foreground">{fmt(sellerCommValue)}</span></p>
+                    <p className="text-xs text-muted-foreground">Será gerado automaticamente no Contas a Pagar ao salvar a venda</p>
+                  </div>
+                );
+              })()}
+
+              {/* Supplier payments */}
+              {selectedSupplierIds.length > 0 && supplierPayments.map(sp => {
                 const sup = allSuppliers.find(s => s.id === sp.supplier_id);
                 return (
                   <div key={sp.supplier_id} className="border rounded-lg p-4 space-y-3">
@@ -2060,6 +2115,17 @@ export default function NewSalePage() {
                             <SelectItem value="pix">Pix</SelectItem>
                             <SelectItem value="faturado">Faturado</SelectItem>
                             <SelectItem value="credito">Cartão de Crédito</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Centro de Custo</Label>
+                        <Select value={sp.cost_center_id || 'none'} onValueChange={v => setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, cost_center_id: v === 'none' ? undefined : v } : s))}>
+                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
@@ -2123,6 +2189,10 @@ export default function NewSalePage() {
                   </div>
                 );
               })}
+
+              {selectedSupplierIds.length === 0 && (!sellerId || sellerId === 'none' || allSellers.find(s => s.id === sellerId)?.commission_type === 'none') && (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum fornecedor ou comissão configurada</p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -2168,13 +2238,11 @@ export default function NewSalePage() {
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
               {!isQuoteMode && (
                 <>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Comissão (%)</Label>
-                    <Input type="number" step="0.01" value={commissionRate} onChange={e => setCommissionRate(parseFloat(e.target.value) || 0)} className="mt-1 w-24" />
-                    <p className="text-sm mt-1">{fmt(commissionValue)}</p>
-                  </div>
                   {paymentMethod === 'credito' && (
                     <div><p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p><p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p></div>
+                  )}
+                  {commissionValue > 0 && (
+                    <div><p className="text-sm text-muted-foreground">Comissão ({commissionRate}%)</p><p className="text-lg font-semibold">{fmt(commissionValue)}</p></div>
                   )}
                   <div>
                     <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>

@@ -28,6 +28,7 @@ interface BankTx {
 interface FinancialTitle {
   id: string; type: 'payable' | 'receivable'; description: string; amount: number;
   due_date: string; status: string; client_name?: string; supplier_name?: string;
+  is_reconciled?: boolean;
 }
 
 const statusColors: Record<string, string> = {
@@ -102,17 +103,27 @@ export default function BankReconciliationPage() {
       draftIds = (drafts || []).map(d => d.id);
     }
 
+    // Get reconciled title IDs from bank transactions
+    const { data: reconciledTxs } = await supabase.from('bank_transactions')
+      .select('reconciled_with_id')
+      .eq('empresa_id', activeCompany.id)
+      .eq('reconciliation_status', 'reconciled')
+      .not('reconciled_with_id', 'is', null);
+    const reconciledIds = new Set((reconciledTxs || []).map(t => t.reconciled_with_id).filter(Boolean));
+
     const payables: FinancialTitle[] = ((payRes.data as any[]) || [])
       .filter(p => !p.sale_id || !draftIds.includes(p.sale_id))
       .map(p => ({
         id: p.id, type: 'payable', description: p.description || '', amount: Number(p.amount) || 0,
         due_date: p.due_date || '', status: p.status, supplier_name: '',
+        is_reconciled: reconciledIds.has(p.id),
       }));
     const receivables: FinancialTitle[] = ((recRes.data as any[]) || [])
       .filter(r => !r.sale_id || !draftIds.includes(r.sale_id))
       .map(r => ({
         id: r.id, type: 'receivable', description: r.description || '', amount: Number(r.amount) || 0,
         due_date: r.due_date || '', status: r.status, client_name: r.client_name || '',
+        is_reconciled: reconciledIds.has(r.id),
       }));
     setTitles([...payables, ...receivables]);
     setLoading(false);
@@ -541,12 +552,13 @@ export default function BankReconciliationPage() {
                       <TableHead className="text-xs">Descrição</TableHead>
                       <TableHead className="text-xs">Vencimento</TableHead>
                       <TableHead className="text-xs text-right">Valor</TableHead>
+                      <TableHead className="text-xs">Conciliação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredTitles.length === 0 ? (
-                      <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground text-xs">
-                        Nenhum título pendente
+                      <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
+                        Nenhum título encontrado
                       </TableCell></TableRow>
                     ) : filteredTitles.map(t => (
                       <TableRow key={t.id}>
@@ -563,6 +575,11 @@ export default function BankReconciliationPage() {
                           {t.due_date ? new Date(t.due_date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
                         </TableCell>
                         <TableCell className="text-xs text-right font-medium">{fmt(t.amount)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={`text-[10px] ${t.is_reconciled ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
+                            {t.is_reconciled ? 'Conciliado' : 'Pendente'}
+                          </Badge>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
