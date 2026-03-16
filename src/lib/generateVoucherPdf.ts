@@ -491,87 +491,16 @@ function drawSectionTitle(doc: jsPDF, title: string, y: number, m: number, pw: n
   return y + 14;
 }
 
-// ─── Draw Flight Direction Group ────────────────────────────
+// ─── Draw Flight Direction Group (Premium Airline Layout) ───
 function drawFlightDirection(
   doc: jsPDF, label: string, legs: FlightLegVoucher[], y: number, m: number, pw: number, cw: number
 ): number {
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  setColor(doc, GOLD);
-  doc.text(label, m, y);
-  y += 6;
+  const CONNECTION_BG = [240, 240, 240] as const;
+  const ACCENT_LINE = GOLD;
 
-  if (legs[0]?.departureDate) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    setColor(doc, TEXT_MUTED);
-    doc.text(formatDateBR(legs[0].departureDate), m, y);
-    y += 6;
-  }
-
-  legs.forEach((leg, idx) => {
-    y = checkPageBreak(doc, y, 18, m);
-
-    const originX = m + 5;
-    const destX = m + cw - 5;
-    const midX = pw / 2;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    setColor(doc, DEEP_BLUE);
-    doc.text(leg.origin || '---', originX, y);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    setColor(doc, TEXT_MAIN);
-    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 4);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    setColor(doc, DEEP_BLUE);
-    doc.text(leg.destination || '---', destX, y, { align: 'right' });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    setColor(doc, TEXT_MAIN);
-    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 4, { align: 'right' });
-
-    // Dashed line
-    const lineY = y - 1;
-    const lineStart = originX + 18;
-    const lineEnd = destX - 18;
-    doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.setLineWidth(0.3);
-    let dx = lineStart;
-    while (dx < lineEnd - 5) {
-      doc.line(dx, lineY, Math.min(dx + 3, lineEnd - 5), lineY);
-      dx += 5;
-    }
-    // Arrow
-    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.triangle(lineEnd - 3, lineY - 1, lineEnd - 3, lineY + 1, lineEnd, lineY, 'F');
-
-    if (leg.flightCode) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(5);
-      setColor(doc, TEXT_MUTED);
-      doc.text(leg.flightCode, midX, lineY - 2, { align: 'center' });
-    }
-
-    y += 7;
-
-    if (idx < legs.length - 1 && leg.connectionDuration) {
-      doc.setFillColor(LIGHT_GRAY[0], LIGHT_GRAY[1], LIGHT_GRAY[2]);
-      doc.rect(midX - 20, y - 2, 40, 7, 'F');
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      setColor(doc, TEXT_MUTED);
-      doc.text(`Conexao: ${leg.connectionDuration}`, midX, y + 2, { align: 'center' });
-      y += 10;
-    }
-  });
-
-  // Total travel duration
+  // Calculate total travel time & connections
+  let totalDurStr = '';
+  let connectionsCount = 0;
   if (legs.length > 0 && legs[0]?.departureDate && legs[0]?.departureTime && legs[legs.length - 1]?.arrivalDate && legs[legs.length - 1]?.arrivalTime) {
     const dep = new Date(`${legs[0].departureDate}T${legs[0].departureTime}:00`);
     const arr = new Date(`${legs[legs.length - 1].arrivalDate}T${legs[legs.length - 1].arrivalTime}:00`);
@@ -579,14 +508,151 @@ function drawFlightDirection(
       const totalMin = Math.round((arr.getTime() - dep.getTime()) / 60000);
       const h = Math.floor(totalMin / 60);
       const mins = totalMin % 60;
-      const durStr = mins > 0 ? `${h}h ${mins}min` : `${h}h`;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      setColor(doc, TEXT_MUTED);
-      doc.text(`Tempo total: ${durStr}`, m, y);
-      y += 5;
+      totalDurStr = mins > 0 ? `${h}h${mins}min` : `${h}h`;
     }
   }
+  connectionsCount = legs.length > 1 ? legs.length - 1 : 0;
+
+  const routeOrigin = legs[0]?.origin || '';
+  const routeDest = legs[legs.length - 1]?.destination || '';
+
+  // Header block with dark background
+  const headerH = 20;
+  y = checkPageBreak(doc, y, headerH + legs.length * 28 + connectionsCount * 12, m);
+
+  doc.setFillColor(DEEP_BLUE[0], DEEP_BLUE[1], DEEP_BLUE[2]);
+  doc.rect(m, y, cw, headerH, 'F');
+
+  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.rect(m, y, 3, headerH, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+  const dirLabel = label === 'IDA' ? 'VOO DE IDA' : 'VOO DE VOLTA';
+  safeText(doc, dirLabel, m + 8, y + 7);
+
+  if (legs[0]?.departureDate) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    safeText(doc, formatDateLong(legs[0].departureDate), m + 8, y + 13);
+  }
+
+  if (routeOrigin && routeDest) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    safeText(doc, `${routeOrigin}  >  ${routeDest}`, m + cw - 5, y + 7, { align: 'right' });
+  }
+
+  if (totalDurStr) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(200, 200, 200);
+    const summaryParts: string[] = [totalDurStr];
+    if (connectionsCount > 0) summaryParts.push(`${connectionsCount} ${connectionsCount === 1 ? 'conexao' : 'conexoes'}`);
+    safeText(doc, summaryParts.join('  |  '), m + cw - 5, y + 13, { align: 'right' });
+  }
+
+  y += headerH + 4;
+
+  // Render each leg as a card
+  legs.forEach((leg, idx) => {
+    y = checkPageBreak(doc, y, 26, m);
+
+    const cardX = m + 2;
+    const cardW = cw - 4;
+    const cardH = 22;
+
+    doc.setFillColor(252, 252, 252);
+    doc.rect(cardX, y, cardW, cardH, 'F');
+
+    doc.setDrawColor(BORDER_COLOR[0], BORDER_COLOR[1], BORDER_COLOR[2]);
+    doc.setLineWidth(0.2);
+    doc.rect(cardX, y, cardW, cardH, 'S');
+
+    const originBlockX = cardX + 8;
+    const destBlockX = cardX + cardW - 8;
+    const lineStartX = cardX + 45;
+    const lineEndX = cardX + cardW - 45;
+    const midCardX = cardX + cardW / 2;
+
+    // Origin block
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    setColor(doc, DEEP_BLUE);
+    safeText(doc, leg.departureTime || '--:--', originBlockX, y + 9);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    setColor(doc, GOLD);
+    safeText(doc, leg.origin || '---', originBlockX, y + 16);
+
+    // Destination block
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    setColor(doc, DEEP_BLUE);
+    safeText(doc, leg.arrivalTime || '--:--', destBlockX, y + 9, { align: 'right' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    setColor(doc, GOLD);
+    safeText(doc, leg.destination || '---', destBlockX, y + 16, { align: 'right' });
+
+    // Flight line with plane
+    const lineY = y + 8;
+    doc.setDrawColor(ACCENT_LINE[0], ACCENT_LINE[1], ACCENT_LINE[2]);
+    doc.setLineWidth(0.4);
+
+    const planeX = midCardX;
+    doc.line(lineStartX, lineY, planeX - 6, lineY);
+
+    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+    doc.triangle(planeX - 4, lineY - 2, planeX - 4, lineY + 2, planeX + 2, lineY, 'F');
+
+    doc.line(planeX + 4, lineY, lineEndX, lineY);
+
+    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+    doc.circle(lineEndX + 1, lineY, 1, 'F');
+    doc.circle(lineStartX - 1, lineY, 1, 'F');
+
+    // Flight code
+    if (leg.flightCode) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      setColor(doc, TEXT_MUTED);
+      safeText(doc, leg.flightCode, midCardX, y + 17, { align: 'center' });
+    }
+
+    y += cardH + 2;
+
+    // Connection block
+    if (idx < legs.length - 1) {
+      y = checkPageBreak(doc, y, 14, m);
+
+      const connH = 10;
+      const connX = m + 15;
+      const connW = cw - 30;
+
+      doc.setFillColor(CONNECTION_BG[0], CONNECTION_BG[1], CONNECTION_BG[2]);
+      doc.roundedRect(connX, y, connW, connH, 2, 2, 'F');
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      setColor(doc, TEXT_MUTED);
+
+      const connCity = leg.destination || '';
+      const connDuration = leg.connectionDuration || '';
+      let connText = 'Conexao';
+      if (connCity) connText += ` em ${connCity}`;
+      if (connDuration) connText += `  |  ${connDuration}`;
+
+      safeText(doc, connText, m + cw / 2, y + connH / 2 + 1.5, { align: 'center' });
+
+      y += connH + 2;
+    }
+  });
 
   return y;
 }
