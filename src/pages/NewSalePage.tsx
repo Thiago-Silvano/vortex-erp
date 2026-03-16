@@ -38,6 +38,13 @@ interface SaleItem {
   cost_center_id?: string;
   metadata?: ServiceMetadata;
   reservation_number?: string;
+  quote_option_id?: string;
+}
+
+interface QuoteOption {
+  id?: string;
+  name: string;
+  order_index: number;
 }
 
 interface ServiceCatalogOption {
