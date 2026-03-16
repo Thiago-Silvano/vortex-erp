@@ -30,7 +30,7 @@ export default function ReportDashboard() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const activeSales = sales.filter(s => s.status === 'active');
+  const activeSales = useMemo(() => sales.filter(s => s.status === 'active'), [sales]);
   const totalVendas = activeSales.length;
   const totalFaturado = activeSales.reduce((s, v) => s + Number(v.total_sale || 0), 0);
   const lucroBruto = activeSales.reduce((s, v) => s + Number(v.gross_profit || 0), 0);
@@ -53,17 +53,19 @@ export default function ReportDashboard() {
 
   const [saleItems, setSaleItems] = useState<any[]>([]);
   const [costCenters, setCostCenters] = useState<any[]>([]);
+
   useEffect(() => {
     if (activeCompany?.id) {
       supabase.from('cost_centers').select('id, name').eq('empresa_id', activeCompany.id).then(({ data }) => { if (data) setCostCenters(data); });
     }
   }, [activeCompany?.id]);
 
+  const activeIds = useMemo(() => activeSales.map(s => s.id), [activeSales]);
+
   useEffect(() => {
-    if (activeSales.length === 0) { setSaleItems([]); return; }
-    const ids = activeSales.map(s => s.id);
-    supabase.from('sale_items').select('*').in('sale_id', ids).then(({ data }) => { if (data) setSaleItems(data); });
-  }, [activeSales]);
+    if (activeIds.length === 0) { setSaleItems([]); return; }
+    supabase.from('sale_items').select('*').in('sale_id', activeIds).then(({ data }) => { if (data) setSaleItems(data); });
+  }, [activeIds]);
 
   const productData = useMemo(() => {
     const ccMap = new Map(costCenters.map(cc => [cc.id, cc.name]));
