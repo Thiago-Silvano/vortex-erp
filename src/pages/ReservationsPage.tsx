@@ -131,7 +131,7 @@ export default function ReservationsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Descrição</TableHead>
-                  <TableHead>Número da Reserva</TableHead>
+                  <TableHead className="min-w-[200px]">Número da Reserva</TableHead>
                   <TableHead>Check-in</TableHead>
                   <TableHead>Check-out</TableHead>
                   <TableHead>Status</TableHead>
