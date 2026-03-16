@@ -436,10 +436,14 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
         data.proposalPaymentOptions.forEach((payOpt) => {
           y = checkPageBreak(doc, y, 6, m);
           const optTotal = option.totalTrip;
-          const perInstallment = payOpt.installments > 0 ? Math.round((optTotal / payOpt.installments) * 100) / 100 : optTotal;
-          const text = payOpt.installments > 1
+          const discount = payOpt.discountPercent || 0;
+          const adjustedTotal = Math.round(optTotal * (1 - discount / 100) * 100) / 100;
+          const perInstallment = payOpt.installments > 0 ? Math.round((adjustedTotal / payOpt.installments) * 100) / 100 : adjustedTotal;
+          let text = payOpt.installments > 1
             ? `${payOpt.label}: ${payOpt.installments}x de ${fmt(perInstallment)}`
-            : `${payOpt.label}: ${fmt(optTotal)}`;
+            : `${payOpt.label}: ${fmt(adjustedTotal)}`;
+          if (discount > 0) text += ` (${discount}% desc.)`;
+          else if (discount < 0) text += ` (${Math.abs(discount)}% acresc.)`;
           doc.text(text, m + 6, y);
           y += 5;
         });
