@@ -215,7 +215,12 @@ export default function PropostaPublicPage() {
     );
   }
 
-  const totalSale = items.reduce((s, i) => s + i.total_value, 0);
+  // Filter items by selected option if options exist
+  const filteredItems = quoteOptions.length > 1 && selectedOptionId
+    ? items.filter(i => i.quote_option_id === selectedOptionId)
+    : items;
+
+  const totalSale = filteredItems.reduce((s, i) => s + i.total_value, 0);
   const destination = (sale as any).destination_name || quoteData?.trip_destination || '';
   const origin = quoteData?.trip_origin || '';
   const departureDate = quoteData?.trip_departure_date || (sale as any).trip_start_date;
@@ -223,7 +228,12 @@ export default function PropostaPublicPage() {
   const nights = (sale as any).trip_nights || quoteData?.trip_nights || 0;
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
-  const proposalOptions: ProposalPaymentOption[] = (sale as any).proposal_payment_options || [];
+  const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).map((opt: ProposalPaymentOption) => {
+    // Recalculate payment options based on filtered items total
+    const optTotal = totalSale;
+    const perInstallment = opt.installments > 0 ? Math.round((optTotal / opt.installments) * 100) / 100 : optTotal;
+    return { ...opt, totalValue: optTotal, installmentValue: perInstallment };
+  });
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
 
   const methodLabels: Record<string, string> = {
