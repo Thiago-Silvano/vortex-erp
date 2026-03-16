@@ -41,7 +41,7 @@ export default function Dashboard() {
       const { data: sales } = await query;
       if (!sales) { setLoading(false); return; }
 
-      const activeSales = sales.filter(s => s.status !== 'cancelled');
+      const activeSales = sales.filter(s => s.status === 'active');
 
       const totalSales = activeSales.length;
       const totalRevenue = activeSales.reduce((s, v) => s + Number(v.total_sale || 0), 0);
