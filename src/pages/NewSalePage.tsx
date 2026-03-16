@@ -157,6 +157,7 @@ export default function NewSalePage() {
   const [hasStockKeys, setHasStockKeys] = useState(false);
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [supplierPayments, setSupplierPayments] = useState<SupplierPaymentControl[]>([]);
+  const supplierPaymentsLoadedRef = useRef(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
