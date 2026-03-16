@@ -116,6 +116,14 @@ const formatDateBR = (d?: string) => {
   return d;
 };
 
+const formatDateLong = (d?: string) => {
+  if (!d) return '';
+  try {
+    const date = new Date(d + 'T12:00:00');
+    return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+  } catch { return formatDateBR(d); }
+};
+
 function setColor(doc: jsPDF, color: readonly [number, number, number]) {
   doc.setTextColor(color[0], color[1], color[2]);
 }
