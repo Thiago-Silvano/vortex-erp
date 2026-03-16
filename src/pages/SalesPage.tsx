@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Undo2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +41,7 @@ export default function SalesPage() {
   const [showVendas, setShowVendas] = useState(true);
   const [showCotacoes, setShowCotacoes] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
+  const [revertTarget, setRevertTarget] = useState<SaleRow | null>(null);
   const [isMaster, setIsMaster] = useState(false);
   const [sortKey, setSortKey] = useState<'client_name' | 'sale_date' | 'payment_method' | 'total_sale' | 'net_profit' | 'sale_workflow_status'>('sale_date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -130,6 +131,35 @@ export default function SalesPage() {
       fetchSales();
     } catch (err: any) {
       toast.error('Erro ao excluir: ' + (err.message || ''));
+    }
+  };
+
+  const handleRevertToDraft = async () => {
+    if (!revertTarget) return;
+    const saleId = revertTarget.id;
+    try {
+      // Remove financial records
+      await supabase.from('receivables').delete().eq('sale_id', saleId);
+      await supabase.from('accounts_payable').delete().eq('sale_id', saleId);
+      await supabase.from('seller_commissions').delete().eq('sale_id', saleId);
+      // Remove reservations
+      await supabase.from('reservations').delete().eq('sale_id', saleId);
+      // Remove calendar events related to this sale
+      if (revertTarget.client_name && activeCompany?.id) {
+        await supabase.from('calendar_events')
+          .delete()
+          .eq('empresa_id', activeCompany.id)
+          .ilike('title', `%${revertTarget.client_name}%`);
+      }
+      // Revert sale status to draft
+      const { error } = await supabase.from('sales').update({ status: 'draft' }).eq('id', saleId);
+      if (error) throw error;
+
+      toast.success('Venda revertida para rascunho! Lançamentos financeiros, reservas e eventos foram removidos.');
+      setRevertTarget(null);
+      fetchSales();
+    } catch (err: any) {
+      toast.error('Erro ao reverter: ' + (err.message || ''));
     }
   };
 
@@ -231,14 +261,19 @@ export default function SalesPage() {
                     </TableCell>
                     <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Venda' : s.status === 'draft' ? 'Cotação' : s.status}</Badge></TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
-                        {canDelete(s) && (
-                          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
+                       <div className="flex items-center gap-1">
+                         <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
+                         {s.status === 'active' && isMaster && (
+                           <Button size="icon" variant="ghost" title="Reverter para rascunho" onClick={(e) => { e.stopPropagation(); setRevertTarget(s); }}>
+                             <Undo2 className="h-4 w-4 text-orange-500" />
+                           </Button>
+                         )}
+                         {canDelete(s) && (
+                           <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}>
+                             <Trash2 className="h-4 w-4 text-destructive" />
+                           </Button>
+                         )}
+                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -275,8 +310,13 @@ export default function SalesPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
+                  {s.status === 'active' && isMaster && (
+                    <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setRevertTarget(s); }}>
+                      <Undo2 className="h-4 w-4 text-orange-500" />
+                    </Button>
+                  )}
                   {canDelete(s) && (
-                    <Button size="icon" variant="ghost" onClick={() => setDeleteTarget(s)}>
+                    <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   )}
@@ -303,6 +343,23 @@ export default function SalesPage() {
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!revertTarget} onOpenChange={(open) => { if (!open) setRevertTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reverter Venda para Rascunho</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja reverter a venda de "{revertTarget?.client_name}" para rascunho? Todos os lançamentos financeiros (contas a receber, contas a pagar, comissões), reservas e eventos no calendário relacionados serão removidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleRevertToDraft} className="bg-orange-500 text-white hover:bg-orange-600">
+                Reverter para Rascunho
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
