@@ -457,7 +457,23 @@ export default function VistosNewSalePage() {
       await supabase.from('receivables').insert(receivablePayloads as any);
     }
 
-    // Insert applicants
+    // Generate accounts payable for fee items (taxa de fornecedor)
+    const feeItems = saleItems.filter(i => i.is_supplier_fee && i.total_value > 0);
+    if (feeItems.length > 0) {
+      const apPayloads = feeItems.map(item => ({
+        sale_id: saleId,
+        description: `Taxa - ${item.product_name} - ${clientName.trim()}`,
+        amount: item.total_value,
+        supplier_id: item.supplier_id || null,
+        cost_center_id: item.cost_center_id || null,
+        due_date: item.payment_due_date || null,
+        status: 'open',
+        origin_type: 'visa_sale',
+        empresa_id: activeCompany?.id || null,
+      }));
+      await supabase.from('accounts_payable').insert(apPayloads as any);
+    }
+
     const appPayloads = applicants.map((a, i) => ({
       visa_sale_id: saleId,
       full_name: a.full_name.trim(),
