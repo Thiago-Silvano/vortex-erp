@@ -388,8 +388,7 @@ export default function PropostaPublicPage() {
 
             {/* Items breakdown - show service names when show_individual_values is true */}
             {(sale as any).show_individual_values === true && items.map((item, idx) => {
-              const catalogName = item.service_catalog_id ? catalogNames[item.service_catalog_id] : null;
-              const name = catalogName || item.description;
+              const name = item.description || (item.service_catalog_id ? catalogNames[item.service_catalog_id] : null) || `Serviço ${idx + 1}`;
               return (
                 <div key={idx} className="py-4 px-8" style={{
                   background: idx % 2 === 0 ? '#fff' : '#faf9f6', borderBottom: '1px solid #f0ede8'
