@@ -122,7 +122,7 @@ export default function NewSalePage() {
   const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
 
-  const [paymentMethod, setPaymentMethod] = useState('pix');
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(['pix']);
   const [installments, setInstallments] = useState(1);
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
@@ -188,7 +188,8 @@ export default function NewSalePage() {
     setQuoteId(sale.quote_id || '');
     setClientName(sale.client_name);
     setSaleDate(sale.sale_date);
-    setPaymentMethod(sale.payment_method || 'pix');
+    const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
+    setPaymentMethods(savedMethods.length > 0 ? savedMethods : ['pix']);
     setInstallments(sale.installments || 1);
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
@@ -340,25 +341,29 @@ export default function NewSalePage() {
     }
   }, [tripStartDate, tripEndDate, nightsManuallySet]);
 
+  const paymentMethod = paymentMethods.join(',');
+  const hasCredito = paymentMethods.includes('credito');
+  const hasBoleto = paymentMethods.includes('boleto');
+
   useEffect(() => {
-    if (paymentMethod !== 'credito' || !cardPaymentType) return;
+    if (!hasCredito || !cardPaymentType) return;
     const rates = cardPaymentType === 'ec' ? ecRates : linkRates;
     const found = rates.find(r => r.installments === installments);
     if (found) setFeeRate(found.rate);
-  }, [cardPaymentType, installments, ecRates, linkRates, paymentMethod]);
+  }, [cardPaymentType, installments, ecRates, linkRates, hasCredito]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
   const totalSaleWithInterest = totalSale + saleInterest + operatorTaxes;
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
   const grossProfit = totalSale + saleInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
-  const cardFeeValue = paymentMethod === 'credito' ? totalSaleWithInterest * (feeRate / 100) : 0;
+  const cardFeeValue = hasCredito ? totalSaleWithInterest * (feeRate / 100) : 0;
   const netProfit = grossProfit - commissionValue - cardFeeValue;
 
   // No longer need auto-recalculate since we store only discount % now
 
   useEffect(() => {
-    if (paymentMethod === 'boleto' && installments > 1 && boletoInterestRate > 0) {
+    if (hasBoleto && installments > 1 && boletoInterestRate > 0) {
       const monthlyRate = boletoInterestRate / 100;
       const pmt = totalSaleWithInterest * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
       const recs: Receivable[] = [];
@@ -371,7 +376,7 @@ export default function NewSalePage() {
       setReceivables(recs);
       return;
     }
-    if (paymentMethod === 'boleto' && installments > 1) {
+    if (hasBoleto && installments > 1) {
       const perInstallment = totalSaleWithInterest / installments;
       const recs: Receivable[] = [];
       const baseDate = new Date(saleDate || new Date());
@@ -383,7 +388,7 @@ export default function NewSalePage() {
       setReceivables(recs);
       return;
     }
-    if (paymentMethod !== 'credito') {
+    if (!hasCredito) {
       setReceivables([{ installment_number: 1, due_date: '', amount: totalSaleWithInterest }]);
       return;
     }
@@ -396,7 +401,7 @@ export default function NewSalePage() {
       recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: perInstallment });
     }
     setReceivables(recs);
-  }, [installments, paymentMethod, totalSaleWithInterest, boletoInterestRate, saleDate]);
+  }, [installments, paymentMethods, totalSaleWithInterest, boletoInterestRate, saleDate, hasCredito, hasBoleto]);
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
@@ -745,10 +750,10 @@ export default function NewSalePage() {
         client_name: clientName,
         sale_date: saleDate,
         payment_method: paymentMethod,
-        installments: paymentMethod === 'credito' ? installments : 1,
+        installments: hasCredito ? installments : 1,
         card_charge_type: '',
-        card_payment_type: paymentMethod === 'credito' ? cardPaymentType : '',
-        card_fee_rate: paymentMethod === 'credito' ? feeRate : 0,
+        card_payment_type: hasCredito ? cardPaymentType : '',
+        card_fee_rate: hasCredito ? feeRate : 0,
         total_sale: totalSaleWithInterest,
         total_supplier_cost: totalCost,
         gross_profit: grossProfit,
@@ -1997,8 +2002,8 @@ export default function NewSalePage() {
                 { value: 'credito', label: 'Cartão de Crédito' },
                 { value: 'debito', label: 'Cartão de Débito' },
               ].map(opt => (
-                <Button key={opt.value} variant={paymentMethod === opt.value ? 'default' : 'outline'} className="w-full" onClick={() => setPaymentMethod(opt.value)}>
-                  {opt.label}
+                <Button key={opt.value} variant={paymentMethods.includes(opt.value) ? 'default' : 'outline'} className="w-full" onClick={() => setPaymentMethods(prev => prev.includes(opt.value) ? (prev.length > 1 ? prev.filter(m => m !== opt.value) : prev) : [...prev, opt.value])}>
+                  {paymentMethods.includes(opt.value) && <span className="mr-1">✓</span>}{opt.label}
                 </Button>
               ))}
             </div>
@@ -2019,7 +2024,7 @@ export default function NewSalePage() {
               </div>
             </div>
 
-            {paymentMethod === 'credito' && (
+            {hasCredito && (
               <div className="space-y-4 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -2045,7 +2050,7 @@ export default function NewSalePage() {
               </div>
             )}
 
-            {paymentMethod === 'boleto' && (
+            {hasBoleto && (
               <div className="space-y-4 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -2275,9 +2280,27 @@ export default function NewSalePage() {
                 const sup = allSuppliers.find(s => s.id === sp.supplier_id);
                 return (
                   <div key={sp.supplier_id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <p className="font-medium text-sm">{sup?.name || 'Fornecedor'}</p>
-                      <p className="text-sm text-muted-foreground">Valor: <span className="font-semibold text-foreground">{fmt(sp.amount)}</span></p>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-muted-foreground">Valor:</Label>
+                        <Input
+                          className="w-36 h-8 text-sm font-semibold"
+                          value={sp.amount ? `R$ ${sp.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                          onChange={e => {
+                            const digits = e.target.value.replace(/[^\d]/g, '');
+                            const newAmount = parseInt(digits || '0', 10) / 100;
+                            setSupplierPayments(prev => prev.map(s => {
+                              if (s.supplier_id !== sp.supplier_id) return s;
+                              const updatedDates = s.payment_method === 'credito'
+                                ? s.installment_dates.map(d => ({ ...d, amount: newAmount / (s.installments || 1) }))
+                                : [{ date: s.installment_dates[0]?.date || s.payment_date, amount: newAmount }];
+                              return { ...s, amount: newAmount, installment_dates: updatedDates };
+                            }));
+                          }}
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div className="md:col-span-4">
@@ -2310,8 +2333,18 @@ export default function NewSalePage() {
                       {sp.payment_method === 'pix' && (
                         <div>
                           <Label className="text-xs">Data do Pagamento</Label>
-                          <Input type="date" value={sp.payment_date} disabled className="bg-muted" />
-                          <p className="text-xs text-muted-foreground mt-1">Data de hoje (automático)</p>
+                          <Input
+                            type="date"
+                            value={sp.payment_date}
+                            onChange={e => {
+                              const newDate = e.target.value;
+                              setSupplierPayments(prev => prev.map(s =>
+                                s.supplier_id === sp.supplier_id
+                                  ? { ...s, payment_date: newDate, installment_dates: [{ date: newDate, amount: s.amount }] }
+                                  : s
+                              ));
+                            }}
+                          />
                         </div>
                       )}
 
