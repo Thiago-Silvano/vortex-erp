@@ -1705,7 +1705,7 @@ export default function NewSalePage() {
                                   value={item.reservation_number || ''}
                                   onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)}
                                   placeholder="Ex: ABC123"
-                                  className="h-7 text-xs w-32"
+                                  className="h-7 text-xs w-48"
                                 />
                               </div>
                             )}

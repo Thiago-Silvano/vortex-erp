@@ -131,7 +131,7 @@ export default function ReservationsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Descrição</TableHead>
-                  <TableHead>Número da Reserva</TableHead>
+                  <TableHead className="min-w-[200px]">Número da Reserva</TableHead>
                   <TableHead>Check-in</TableHead>
                   <TableHead>Check-out</TableHead>
                   <TableHead>Status</TableHead>
@@ -157,7 +157,7 @@ export default function ReservationsPage() {
                       </TableCell>
                       <TableCell>
                         {isEditing ? (
-                          <Input value={editData.confirmation_code || ''} onChange={e => setEditData(p => ({ ...p, confirmation_code: e.target.value }))} className="h-8 text-sm" onClick={e => e.stopPropagation()} />
+                          <Input value={editData.confirmation_code || ''} onChange={e => setEditData(p => ({ ...p, confirmation_code: e.target.value }))} className="h-8 text-sm min-w-[180px]" onClick={e => e.stopPropagation()} />
                         ) : (
                           r.confirmation_code || '-'
                         )}
