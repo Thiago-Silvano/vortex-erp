@@ -1,135 +1,195 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import AppLayout from '@/components/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
-import { useCompany } from '@/contexts/CompanyContext';
-import { toast } from 'sonner';
-import { parseOFX, generateTransactionHash, type OFXTransaction } from '@/lib/ofxParser';
+import { useState, useEffect, useCallback, useRef } from "react";
+import AppLayout from "@/components/AppLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useCompany } from "@/contexts/CompanyContext";
+import { toast } from "sonner";
+import { parseOFX, generateTransactionHash, type OFXTransaction } from "@/lib/ofxParser";
 import {
-  Upload, Check, X, Link2, Unlink, AlertCircle, CheckCircle2,
-  Clock, FileText, ArrowDownCircle, ArrowUpCircle, Banknote, Search,
-} from 'lucide-react';
+  Upload,
+  Check,
+  X,
+  Link2,
+  Unlink,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  FileText,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Banknote,
+  Search,
+} from "lucide-react";
 
-interface BankAccount { id: string; bank_name: string; account_number: string; account_digit: string; agency: string; color: string; empresa_id: string; }
+interface BankAccount {
+  id: string;
+  bank_name: string;
+  account_number: string;
+  account_digit: string;
+  agency: string;
+  color: string;
+  empresa_id: string;
+}
 interface BankTx {
-  id: string; transaction_date: string; description: string; amount: number;
-  transaction_type: string; reconciliation_status: string; reference_number: string;
-  reconciled_with_type: string | null; reconciled_with_id: string | null;
-  reconciliation_note: string; import_batch: string;
+  id: string;
+  transaction_date: string;
+  description: string;
+  amount: number;
+  transaction_type: string;
+  reconciliation_status: string;
+  reference_number: string;
+  reconciled_with_type: string | null;
+  reconciled_with_id: string | null;
+  reconciliation_note: string;
+  import_batch: string;
 }
 interface FinancialTitle {
-  id: string; type: 'payable' | 'receivable'; description: string; amount: number;
-  due_date: string; status: string; client_name?: string; supplier_name?: string;
+  id: string;
+  type: "payable" | "receivable";
+  description: string;
+  amount: number;
+  due_date: string;
+  status: string;
+  client_name?: string;
+  supplier_name?: string;
   is_reconciled?: boolean;
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-800 border-amber-200',
-  reconciled: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  partial: 'bg-blue-100 text-blue-800 border-blue-200',
-  ignored: 'bg-gray-100 text-gray-600 border-gray-200',
+  pending: "bg-amber-100 text-amber-800 border-amber-200",
+  reconciled: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  partial: "bg-blue-100 text-blue-800 border-blue-200",
+  ignored: "bg-gray-100 text-gray-600 border-gray-200",
 };
 const statusLabels: Record<string, string> = {
-  pending: 'Pendente', reconciled: 'Conciliado', partial: 'Parcial', ignored: 'Ignorado',
+  pending: "Pendente",
+  reconciled: "Conciliado",
+  partial: "Parcial",
+  ignored: "Ignorado",
 };
 
 export default function BankReconciliationPage() {
   const { activeCompany } = useCompany();
   const fileRef = useRef<HTMLInputElement>(null);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState('');
+  const [selectedAccount, setSelectedAccount] = useState("");
   const [transactions, setTransactions] = useState<BankTx[]>([]);
   const [titles, setTitles] = useState<FinancialTitle[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterType, setFilterType] = useState('all');
-  const [searchTx, setSearchTx] = useState('');
-  const [searchTitle, setSearchTitle] = useState('');
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [searchTx, setSearchTx] = useState("");
+  const [searchTitle, setSearchTitle] = useState("");
   const [showManualModal, setShowManualModal] = useState(false);
   const [selectedTx, setSelectedTx] = useState<BankTx | null>(null);
-  const [manualNote, setManualNote] = useState('');
-  const [manualType, setManualType] = useState('');
+  const [manualNote, setManualNote] = useState("");
+  const [manualType, setManualType] = useState("");
 
   // Stats
   const totalImported = transactions.length;
-  const totalReconciled = transactions.filter(t => t.reconciliation_status === 'reconciled').length;
-  const totalPending = transactions.filter(t => t.reconciliation_status === 'pending').length;
-  const totalIgnored = transactions.filter(t => t.reconciliation_status === 'ignored').length;
-  const sumCredits = transactions.filter(t => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
-  const sumDebits = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Number(t.amount), 0);
+  const totalReconciled = transactions.filter((t) => t.reconciliation_status === "reconciled").length;
+  const totalPending = transactions.filter((t) => t.reconciliation_status === "pending").length;
+  const totalIgnored = transactions.filter((t) => t.reconciliation_status === "ignored").length;
+  const sumCredits = transactions.filter((t) => t.amount > 0).reduce((s, t) => s + Number(t.amount), 0);
+  const sumDebits = transactions.filter((t) => t.amount < 0).reduce((s, t) => s + Number(t.amount), 0);
 
   useEffect(() => {
     if (!activeCompany) return;
-    supabase.from('bank_accounts').select('id, bank_name, account_number, account_digit, agency, color, empresa_id')
-      .eq('empresa_id', activeCompany.id).eq('status', 'active').order('bank_name')
+    supabase
+      .from("bank_accounts")
+      .select("id, bank_name, account_number, account_digit, agency, color, empresa_id")
+      .eq("empresa_id", activeCompany.id)
+      .eq("status", "active")
+      .order("bank_name")
       .then(({ data }) => setAccounts((data as any[]) || []));
   }, [activeCompany]);
 
   const loadTransactions = useCallback(async () => {
     if (!selectedAccount || !activeCompany) return;
     setLoading(true);
-    const { data } = await supabase.from('bank_transactions').select('*')
-      .eq('bank_account_id', selectedAccount).eq('empresa_id', activeCompany.id)
-      .order('transaction_date', { ascending: false }).limit(500);
+    const { data } = await supabase
+      .from("bank_transactions")
+      .select("*")
+      .eq("bank_account_id", selectedAccount)
+      .eq("empresa_id", activeCompany.id)
+      .order("transaction_date", { ascending: false })
+      .limit(500);
     setTransactions((data as any[]) || []);
 
     // Load financial titles — use the bank account's empresa_id so titles
     // always match the company that owns the bank account being reconciled.
-    const acct = accounts.find(a => a.id === selectedAccount);
+    const acct = accounts.find((a) => a.id === selectedAccount);
     const titlesEmpresaId = (acct as any)?.empresa_id || activeCompany.id;
     const [payRes, recRes] = await Promise.all([
-      supabase.from('accounts_payable').select('id, description, amount, due_date, status, supplier_id, sale_id')
-        .eq('empresa_id', titlesEmpresaId),
-      supabase.from('receivables').select('id, description, amount, due_date, status, client_name, sale_id')
-        .eq('empresa_id', titlesEmpresaId),
+      supabase
+        .from("accounts_payable")
+        .select("id, description, amount, due_date, status, supplier_id, sale_id")
+        .eq("empresa_id", titlesEmpresaId),
+      supabase
+        .from("receivables")
+        .select("id, description, amount, due_date, status, client_name, sale_id")
+        .eq("empresa_id", titlesEmpresaId),
     ]);
     // Exclude titles linked to draft sales
     const allSaleIds = [
-      ...((payRes.data as any[]) || []).map(p => p.sale_id),
-      ...((recRes.data as any[]) || []).map(r => r.sale_id),
+      ...((payRes.data as any[]) || []).map((p) => p.sale_id),
+      ...((recRes.data as any[]) || []).map((r) => r.sale_id),
     ].filter(Boolean);
     const uniqueSaleIds = [...new Set(allSaleIds)];
     let draftIds: string[] = [];
     if (uniqueSaleIds.length > 0) {
-      const { data: drafts } = await supabase.from('sales').select('id').in('id', uniqueSaleIds).eq('status', 'draft');
-      draftIds = (drafts || []).map(d => d.id);
+      const { data: drafts } = await supabase.from("sales").select("id").in("id", uniqueSaleIds).eq("status", "draft");
+      draftIds = (drafts || []).map((d) => d.id);
     }
 
     // Get reconciled title IDs from bank transactions
-    const { data: reconciledTxs } = await supabase.from('bank_transactions')
-      .select('reconciled_with_id')
-      .eq('empresa_id', activeCompany.id)
-      .eq('reconciliation_status', 'reconciled')
-      .not('reconciled_with_id', 'is', null);
-    const reconciledIds = new Set((reconciledTxs || []).map(t => t.reconciled_with_id).filter(Boolean));
+    const { data: reconciledTxs } = await supabase
+      .from("bank_transactions")
+      .select("reconciled_with_id")
+      .eq("empresa_id", activeCompany.id)
+      .eq("reconciliation_status", "reconciled")
+      .not("reconciled_with_id", "is", null);
+    const reconciledIds = new Set((reconciledTxs || []).map((t) => t.reconciled_with_id).filter(Boolean));
 
     const payables: FinancialTitle[] = ((payRes.data as any[]) || [])
-      .filter(p => !p.sale_id || !draftIds.includes(p.sale_id))
-      .map(p => ({
-        id: p.id, type: 'payable', description: p.description || '', amount: Number(p.amount) || 0,
-        due_date: p.due_date || '', status: p.status, supplier_name: '',
+      .filter((p) => !p.sale_id || !draftIds.includes(p.sale_id))
+      .map((p) => ({
+        id: p.id,
+        type: "payable",
+        description: p.description || "",
+        amount: Number(p.amount) || 0,
+        due_date: p.due_date || "",
+        status: p.status,
+        supplier_name: "",
         is_reconciled: reconciledIds.has(p.id),
       }));
     const receivables: FinancialTitle[] = ((recRes.data as any[]) || [])
-      .filter(r => !r.sale_id || !draftIds.includes(r.sale_id))
-      .map(r => ({
-        id: r.id, type: 'receivable', description: r.description || '', amount: Number(r.amount) || 0,
-        due_date: r.due_date || '', status: r.status, client_name: r.client_name || '',
+      .filter((r) => !r.sale_id || !draftIds.includes(r.sale_id))
+      .map((r) => ({
+        id: r.id,
+        type: "receivable",
+        description: r.description || "",
+        amount: Number(r.amount) || 0,
+        due_date: r.due_date || "",
+        status: r.status,
+        client_name: r.client_name || "",
         is_reconciled: reconciledIds.has(r.id),
       }));
     setTitles([...payables, ...receivables]);
     setLoading(false);
   }, [selectedAccount, activeCompany]);
 
-  useEffect(() => { loadTransactions(); }, [loadTransactions]);
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
 
   // OFX Import
   const handleOFXImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,20 +200,23 @@ export default function BankReconciliationPage() {
     const ofx = parseOFX(text);
 
     if (ofx.transactions.length === 0) {
-      toast.error('Nenhuma transação encontrada no arquivo OFX');
+      toast.error("Nenhuma transação encontrada no arquivo OFX");
       return;
     }
 
     const batchId = `${Date.now()}_${file.name}`;
-    let imported = 0, duplicates = 0;
+    let imported = 0,
+      duplicates = 0;
 
     // Get user email
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     for (const tx of ofx.transactions) {
       const hash = generateTransactionHash(selectedAccount, tx.fitId, tx.datePosted, tx.amount);
 
-      const { error } = await supabase.from('bank_transactions').insert({
+      const { error } = await supabase.from("bank_transactions").insert({
         empresa_id: activeCompany.id,
         bank_account_id: selectedAccount,
         transaction_date: tx.datePosted,
@@ -163,11 +226,11 @@ export default function BankReconciliationPage() {
         transaction_type: tx.type,
         unique_hash: hash,
         import_batch: batchId,
-        origin: 'ofx',
+        origin: "ofx",
       } as any);
 
       if (error) {
-        if (error.message.includes('unique') || error.message.includes('duplicate')) duplicates++;
+        if (error.message.includes("unique") || error.message.includes("duplicate")) duplicates++;
         else console.error(error);
       } else {
         imported++;
@@ -175,7 +238,7 @@ export default function BankReconciliationPage() {
     }
 
     // Save import batch
-    await supabase.from('ofx_imports').insert({
+    await supabase.from("ofx_imports").insert({
       empresa_id: activeCompany.id,
       bank_account_id: selectedAccount,
       file_name: file.name,
@@ -184,59 +247,72 @@ export default function BankReconciliationPage() {
       balance_start: ofx.balanceStart ?? null,
       balance_end: ofx.balanceEnd ?? null,
       total_transactions: imported,
-      total_credits: ofx.transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
-      total_debits: ofx.transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
-      imported_by: user?.email || '',
+      total_credits: ofx.transactions.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0),
+      total_debits: ofx.transactions.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
+      imported_by: user?.email || "",
     } as any);
 
-    toast.success(`Importação concluída: ${imported} lançamentos importados${duplicates > 0 ? `, ${duplicates} duplicados ignorados` : ''}`);
-    if (fileRef.current) fileRef.current.value = '';
+    toast.success(
+      `Importação concluída: ${imported} lançamentos importados${duplicates > 0 ? `, ${duplicates} duplicados ignorados` : ""}`,
+    );
+    if (fileRef.current) fileRef.current.value = "";
     loadTransactions();
   };
 
   // Auto-reconcile
   const autoReconcile = async () => {
-    const pendingTxs = transactions.filter(t => t.reconciliation_status === 'pending');
+    const pendingTxs = transactions.filter((t) => t.reconciliation_status === "pending");
     let matched = 0;
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     for (const tx of pendingTxs) {
       const absAmount = Math.abs(Number(tx.amount));
       const isDebit = Number(tx.amount) < 0;
-      const candidateTitles = titles.filter(t =>
-        (isDebit ? t.type === 'payable' : t.type === 'receivable') &&
-        Math.abs(Number(t.amount) - absAmount) < 0.01
+      const candidateTitles = titles.filter(
+        (t) =>
+          (isDebit ? t.type === "payable" : t.type === "receivable") && Math.abs(Number(t.amount) - absAmount) < 0.01,
       );
 
       if (candidateTitles.length === 1) {
         const title = candidateTitles[0];
-        await supabase.from('bank_transactions').update({
-          reconciliation_status: 'reconciled',
-          reconciled_with_type: title.type === 'payable' ? 'pagar' : 'receber',
-          reconciled_with_id: title.id,
-          reconciliation_note: 'Conciliação automática por valor exato',
-        } as any).eq('id', tx.id);
+        await supabase
+          .from("bank_transactions")
+          .update({
+            reconciliation_status: "reconciled",
+            reconciled_with_type: title.type === "payable" ? "pagar" : "receber",
+            reconciled_with_id: title.id,
+            reconciliation_note: "Conciliação automática por valor exato",
+          } as any)
+          .eq("id", tx.id);
 
         // Update financial title status
-        if (title.type === 'payable') {
-          await supabase.from('accounts_payable').update({ status: 'paid', payment_date: tx.transaction_date } as any).eq('id', title.id);
+        if (title.type === "payable") {
+          await supabase
+            .from("accounts_payable")
+            .update({ status: "paid", payment_date: tx.transaction_date } as any)
+            .eq("id", title.id);
         } else {
-          await supabase.from('receivables').update({ status: 'paid', payment_date: tx.transaction_date } as any).eq('id', title.id);
+          await supabase
+            .from("receivables")
+            .update({ status: "paid", payment_date: tx.transaction_date } as any)
+            .eq("id", title.id);
         }
 
         // Audit log
-        await supabase.from('reconciliation_log').insert({
+        await supabase.from("reconciliation_log").insert({
           empresa_id: activeCompany!.id,
           bank_transaction_id: tx.id,
-          action: 'auto_reconcile',
-          reconciled_with_type: title.type === 'payable' ? 'pagar' : 'receber',
+          action: "auto_reconcile",
+          reconciled_with_type: title.type === "payable" ? "pagar" : "receber",
           reconciled_with_id: title.id,
-          user_email: user?.email || '',
+          user_email: user?.email || "",
           details: `Conciliação automática - valor: ${absAmount}`,
         } as any);
 
         matched++;
-        setTitles(prev => prev.filter(t => t.id !== title.id));
+        setTitles((prev) => prev.filter((t) => t.id !== title.id));
       }
     }
 
@@ -246,84 +322,128 @@ export default function BankReconciliationPage() {
 
   // Manual reconcile
   const manualReconcile = async (tx: BankTx, title: FinancialTitle) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    await supabase.from('bank_transactions').update({
-      reconciliation_status: 'reconciled',
-      reconciled_with_type: title.type === 'payable' ? 'pagar' : 'receber',
-      reconciled_with_id: title.id,
-      reconciliation_note: 'Conciliação manual',
-    } as any).eq('id', tx.id);
+    await supabase
+      .from("bank_transactions")
+      .update({
+        reconciliation_status: "reconciled",
+        reconciled_with_type: title.type === "payable" ? "pagar" : "receber",
+        reconciled_with_id: title.id,
+        reconciliation_note: "Conciliação manual",
+      } as any)
+      .eq("id", tx.id);
 
-    if (title.type === 'payable') {
-      await supabase.from('accounts_payable').update({ status: 'paid', payment_date: tx.transaction_date } as any).eq('id', title.id);
+    if (title.type === "payable") {
+      await supabase
+        .from("accounts_payable")
+        .update({ status: "paid", payment_date: tx.transaction_date } as any)
+        .eq("id", title.id);
     } else {
-      await supabase.from('receivables').update({ status: 'paid', payment_date: tx.transaction_date } as any).eq('id', title.id);
+      await supabase
+        .from("receivables")
+        .update({ status: "paid", payment_date: tx.transaction_date } as any)
+        .eq("id", title.id);
     }
 
-    await supabase.from('reconciliation_log').insert({
-      empresa_id: activeCompany!.id, bank_transaction_id: tx.id, action: 'manual_reconcile',
-      reconciled_with_type: title.type === 'payable' ? 'pagar' : 'receber',
-      reconciled_with_id: title.id, user_email: user?.email || '',
+    await supabase.from("reconciliation_log").insert({
+      empresa_id: activeCompany!.id,
+      bank_transaction_id: tx.id,
+      action: "manual_reconcile",
+      reconciled_with_type: title.type === "payable" ? "pagar" : "receber",
+      reconciled_with_id: title.id,
+      user_email: user?.email || "",
       details: `Conciliação manual com ${title.description}`,
     } as any);
 
-    toast.success('Lançamento conciliado');
+    toast.success("Lançamento conciliado");
     loadTransactions();
   };
 
   // Undo reconciliation
   const undoReconcile = async (tx: BankTx) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (tx.reconciled_with_id) {
-      if (tx.reconciled_with_type === 'pagar') {
-        await supabase.from('accounts_payable').update({ status: 'open', payment_date: null } as any).eq('id', tx.reconciled_with_id);
-      } else if (tx.reconciled_with_type === 'receber') {
-        await supabase.from('receivables').update({ status: 'pending', payment_date: null } as any).eq('id', tx.reconciled_with_id);
+      if (tx.reconciled_with_type === "pagar") {
+        await supabase
+          .from("accounts_payable")
+          .update({ status: "open", payment_date: null } as any)
+          .eq("id", tx.reconciled_with_id);
+      } else if (tx.reconciled_with_type === "receber") {
+        await supabase
+          .from("receivables")
+          .update({ status: "pending", payment_date: null } as any)
+          .eq("id", tx.reconciled_with_id);
       }
     }
 
-    await supabase.from('bank_transactions').update({
-      reconciliation_status: 'pending', reconciled_with_type: null,
-      reconciled_with_id: null, reconciliation_note: '',
-    } as any).eq('id', tx.id);
+    await supabase
+      .from("bank_transactions")
+      .update({
+        reconciliation_status: "pending",
+        reconciled_with_type: null,
+        reconciled_with_id: null,
+        reconciliation_note: "",
+      } as any)
+      .eq("id", tx.id);
 
-    await supabase.from('reconciliation_log').insert({
-      empresa_id: activeCompany!.id, bank_transaction_id: tx.id, action: 'undo_reconcile',
-      user_email: user?.email || '', details: 'Conciliação desfeita',
+    await supabase.from("reconciliation_log").insert({
+      empresa_id: activeCompany!.id,
+      bank_transaction_id: tx.id,
+      action: "undo_reconcile",
+      user_email: user?.email || "",
+      details: "Conciliação desfeita",
     } as any);
 
-    toast.success('Conciliação desfeita');
+    toast.success("Conciliação desfeita");
     loadTransactions();
   };
 
   // Mark as ignored/tarifa/etc
   const markAs = async (tx: BankTx, type: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     // If reclassifying from reconciled/ignored, undo first
-    if (tx.reconciliation_status !== 'pending') {
+    if (tx.reconciliation_status !== "pending") {
       if (tx.reconciled_with_id) {
-        if (tx.reconciled_with_type === 'pagar') {
-          await supabase.from('accounts_payable').update({ status: 'open', payment_date: null } as any).eq('id', tx.reconciled_with_id);
-        } else if (tx.reconciled_with_type === 'receber') {
-          await supabase.from('receivables').update({ status: 'pending', payment_date: null } as any).eq('id', tx.reconciled_with_id);
+        if (tx.reconciled_with_type === "pagar") {
+          await supabase
+            .from("accounts_payable")
+            .update({ status: "open", payment_date: null } as any)
+            .eq("id", tx.reconciled_with_id);
+        } else if (tx.reconciled_with_type === "receber") {
+          await supabase
+            .from("receivables")
+            .update({ status: "pending", payment_date: null } as any)
+            .eq("id", tx.reconciled_with_id);
         }
       }
     }
 
-    await supabase.from('bank_transactions').update({
-      reconciliation_status: 'ignored',
-      reconciliation_note: type,
-      category: type,
-      reconciled_with_type: null,
-      reconciled_with_id: null,
-    } as any).eq('id', tx.id);
+    await supabase
+      .from("bank_transactions")
+      .update({
+        reconciliation_status: "ignored",
+        reconciliation_note: type,
+        category: type,
+        reconciled_with_type: null,
+        reconciled_with_id: null,
+      } as any)
+      .eq("id", tx.id);
 
-    await supabase.from('reconciliation_log').insert({
-      empresa_id: activeCompany!.id, bank_transaction_id: tx.id, action: 'mark_as',
-      user_email: user?.email || '', details: `Marcado como: ${type}`,
+    await supabase.from("reconciliation_log").insert({
+      empresa_id: activeCompany!.id,
+      bank_transaction_id: tx.id,
+      action: "mark_as",
+      user_email: user?.email || "",
+      details: `Marcado como: ${type}`,
     } as any);
 
     toast.success(`Marcado como ${type}`);
@@ -331,29 +451,33 @@ export default function BankReconciliationPage() {
     loadTransactions();
   };
 
-  const filteredTx = transactions.filter(t => {
-    if (filterStatus !== 'all' && t.reconciliation_status !== filterStatus) return false;
-    if (filterType === 'credit' && Number(t.amount) < 0) return false;
-    if (filterType === 'debit' && Number(t.amount) > 0) return false;
+  const filteredTx = transactions.filter((t) => {
+    if (filterStatus !== "all" && t.reconciliation_status !== filterStatus) return false;
+    if (filterType === "credit" && Number(t.amount) < 0) return false;
+    if (filterType === "debit" && Number(t.amount) > 0) return false;
     if (searchTx && !t.description.toLowerCase().includes(searchTx.toLowerCase())) return false;
     return true;
   });
 
-  const filteredTitles = titles.filter(t => {
-    if (searchTitle && !t.description.toLowerCase().includes(searchTitle.toLowerCase()) &&
-        !(t.client_name || '').toLowerCase().includes(searchTitle.toLowerCase())) return false;
+  const filteredTitles = titles.filter((t) => {
+    if (
+      searchTitle &&
+      !t.description.toLowerCase().includes(searchTitle.toLowerCase()) &&
+      !(t.client_name || "").toLowerCase().includes(searchTitle.toLowerCase())
+    )
+      return false;
     return true;
   });
 
-  const fmt = (v: number) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmt = (v: number) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   // Suggestions for a transaction
   const getSuggestions = (tx: BankTx): FinancialTitle[] => {
     const absAmount = Math.abs(Number(tx.amount));
     const isDebit = Number(tx.amount) < 0;
     return titles
-      .filter(t => (isDebit ? t.type === 'payable' : t.type === 'receivable'))
-      .filter(t => Math.abs(Number(t.amount) - absAmount) / absAmount < 0.05) // 5% tolerance
+      .filter((t) => (isDebit ? t.type === "payable" : t.type === "receivable"))
+      .filter((t) => Math.abs(Number(t.amount) - absAmount) / absAmount < 0.05) // 5% tolerance
       .slice(0, 3);
   };
 
@@ -367,9 +491,11 @@ export default function BankReconciliationPage() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-              <SelectTrigger className="w-[220px]"><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Selecione a conta" />
+              </SelectTrigger>
               <SelectContent>
-                {accounts.map(a => (
+                {accounts.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
                     <span className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: a.color }} />
@@ -383,10 +509,12 @@ export default function BankReconciliationPage() {
               <>
                 <input ref={fileRef} type="file" accept=".ofx,.OFX" onChange={handleOFXImport} className="hidden" />
                 <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="gap-2">
-                  <Upload className="h-4 w-4" />Importar OFX
+                  <Upload className="h-4 w-4" />
+                  Importar OFX
                 </Button>
                 <Button size="sm" onClick={autoReconcile} className="gap-2">
-                  <Link2 className="h-4 w-4" />Conciliar Auto
+                  <Link2 className="h-4 w-4" />
+                  Conciliar Auto
                 </Button>
               </>
             )}
@@ -429,11 +557,14 @@ export default function BankReconciliationPage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Banknote className="h-4 w-4" />Extrato Bancário
+                  <Banknote className="h-4 w-4" />
+                  Extrato Bancário
                 </CardTitle>
                 <div className="flex gap-2 flex-wrap mt-2">
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-[130px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="pending">Pendentes</SelectItem>
@@ -442,7 +573,9 @@ export default function BankReconciliationPage() {
                     </SelectContent>
                   </Select>
                   <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-[120px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="credit">Entradas</SelectItem>
@@ -451,8 +584,12 @@ export default function BankReconciliationPage() {
                   </Select>
                   <div className="relative flex-1 min-w-[120px]">
                     <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                    <Input value={searchTx} onChange={e => setSearchTx(e.target.value)} placeholder="Buscar..."
-                      className="h-8 text-xs pl-7" />
+                    <Input
+                      value={searchTx}
+                      onChange={(e) => setSearchTx(e.target.value)}
+                      placeholder="Buscar..."
+                      className="h-8 text-xs pl-7"
+                    />
                   </div>
                 </div>
               </CardHeader>
@@ -469,64 +606,98 @@ export default function BankReconciliationPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredTx.length === 0 ? (
-                      <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
-                        {transactions.length === 0 ? 'Importe um arquivo OFX para começar' : 'Nenhum resultado'}
-                      </TableCell></TableRow>
-                    ) : filteredTx.map(tx => {
-                      const suggestions = tx.reconciliation_status === 'pending' ? getSuggestions(tx) : [];
-                      return (
-                        <TableRow key={tx.id} className="group">
-                          <TableCell className="text-xs whitespace-nowrap">
-                            {tx.transaction_date ? new Date(tx.transaction_date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
-                          </TableCell>
-                          <TableCell className="text-xs max-w-[180px] truncate" title={tx.description}>
-                            {tx.description}
-                            {suggestions.length > 0 && (
-                              <div className="mt-1 space-y-1">
-                                {suggestions.map(s => (
-                                  <button key={s.id}
-                                    onClick={() => manualReconcile(tx, s)}
-                                    className="flex items-center gap-1 text-[10px] text-primary hover:underline w-full text-left bg-primary/5 rounded px-1.5 py-0.5">
-                                    <Link2 className="h-3 w-3 shrink-0" />
-                                    <span className="truncate">{s.description} - {fmt(s.amount)}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className={`text-xs text-right font-medium ${Number(tx.amount) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {fmt(Number(tx.amount))}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={`text-[10px] ${statusColors[tx.reconciliation_status] || ''}`}>
-                              {statusLabels[tx.reconciliation_status] || tx.reconciliation_status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right flex items-center justify-end gap-1">
-                            {tx.reconciliation_status === 'pending' && (
-                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                                onClick={() => { setSelectedTx(tx); setShowManualModal(true); }}>
-                                <FileText className="h-3 w-3" />
-                              </Button>
-                            )}
-                            {(tx.reconciliation_status === 'reconciled' || tx.reconciliation_status === 'ignored') && (
-                              <>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500"
-                                  title="Desfazer"
-                                  onClick={() => undoReconcile(tx)}>
-                                  <Unlink className="h-3 w-3" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-primary"
-                                  title="Reclassificar"
-                                  onClick={() => { setSelectedTx(tx); setShowManualModal(true); }}>
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
+                          {transactions.length === 0 ? "Importe um arquivo OFX para começar" : "Nenhum resultado"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredTx.map((tx) => {
+                        const suggestions = tx.reconciliation_status === "pending" ? getSuggestions(tx) : [];
+                        return (
+                          <TableRow key={tx.id} className="group">
+                            <TableCell className="text-xs whitespace-nowrap">
+                              {tx.transaction_date
+                                ? new Date(tx.transaction_date + "T12:00:00").toLocaleDateString("pt-BR")
+                                : ""}
+                            </TableCell>
+                            <TableCell className="text-xs max-w-[180px] truncate" title={tx.description}>
+                              {tx.description}
+                              {suggestions.length > 0 && (
+                                <div className="mt-1 space-y-1">
+                                  {suggestions.map((s) => (
+                                    <button
+                                      key={s.id}
+                                      onClick={() => manualReconcile(tx, s)}
+                                      className="flex items-center gap-1 text-[10px] text-primary hover:underline w-full text-left bg-primary/5 rounded px-1.5 py-0.5"
+                                    >
+                                      <Link2 className="h-3 w-3 shrink-0" />
+                                      <span className="truncate">
+                                        {s.description} - {fmt(s.amount)}
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell
+                              className={`text-xs text-right font-medium ${Number(tx.amount) >= 0 ? "text-emerald-600" : "text-red-600"}`}
+                            >
+                              {fmt(Number(tx.amount))}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] ${statusColors[tx.reconciliation_status] || ""}`}
+                              >
+                                {statusLabels[tx.reconciliation_status] || tx.reconciliation_status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right flex items-center justify-end gap-1">
+                              {tx.reconciliation_status === "pending" && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                                  onClick={() => {
+                                    setSelectedTx(tx);
+                                    setShowManualModal(true);
+                                  }}
+                                >
                                   <FileText className="h-3 w-3" />
                                 </Button>
-                              </>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                              )}
+                              {(tx.reconciliation_status === "reconciled" ||
+                                tx.reconciliation_status === "ignored") && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500"
+                                    title="Desfazer"
+                                    onClick={() => undoReconcile(tx)}
+                                  >
+                                    <Unlink className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 text-primary"
+                                    title="Reclassificar"
+                                    onClick={() => {
+                                      setSelectedTx(tx);
+                                      setShowManualModal(true);
+                                    }}
+                                  >
+                                    <FileText className="h-3 w-3" />
+                                  </Button>
+                                </>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -536,12 +707,17 @@ export default function BankReconciliationPage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <FileText className="h-4 w-4" />Títulos Financeiros
+                  <FileText className="h-4 w-4" />
+                  Títulos Financeiros
                 </CardTitle>
                 <div className="relative mt-2">
                   <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                  <Input value={searchTitle} onChange={e => setSearchTitle(e.target.value)} placeholder="Buscar título..."
-                    className="h-8 text-xs pl-7" />
+                  <Input
+                    value={searchTitle}
+                    onChange={(e) => setSearchTitle(e.target.value)}
+                    placeholder="Buscar título..."
+                    className="h-8 text-xs pl-7"
+                  />
                 </div>
               </CardHeader>
               <CardContent className="p-0 max-h-[500px] overflow-y-auto">
@@ -557,31 +733,41 @@ export default function BankReconciliationPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredTitles.length === 0 ? (
-                      <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
-                        Nenhum título encontrado
-                      </TableCell></TableRow>
-                    ) : filteredTitles.map(t => (
-                      <TableRow key={t.id}>
-                        <TableCell>
-                          <Badge variant="outline" className={`text-[10px] ${t.type === 'payable' ? 'text-red-600 border-red-200' : 'text-emerald-600 border-emerald-200'}`}>
-                            {t.type === 'payable' ? 'Pagar' : 'Receber'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs max-w-[200px] truncate">
-                          {t.description}
-                          {t.client_name && <span className="block text-muted-foreground">{t.client_name}</span>}
-                        </TableCell>
-                        <TableCell className="text-xs whitespace-nowrap">
-                          {t.due_date ? new Date(t.due_date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
-                        </TableCell>
-                        <TableCell className="text-xs text-right font-medium">{fmt(t.amount)}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={`text-[10px] ${t.is_reconciled ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
-                            {t.is_reconciled ? 'Conciliado' : 'Pendente'}
-                          </Badge>
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
+                          Nenhum título encontrado
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      filteredTitles.map((t) => (
+                        <TableRow key={t.id}>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] ${t.type === "payable" ? "text-red-600 border-red-200" : "text-emerald-600 border-emerald-200"}`}
+                            >
+                              {t.type === "payable" ? "Pagar" : "Receber"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs max-w-[200px] truncate">
+                            {t.description}
+                            {t.client_name && <span className="block text-muted-foreground">{t.client_name}</span>}
+                          </TableCell>
+                          <TableCell className="text-xs whitespace-nowrap">
+                            {t.due_date ? new Date(t.due_date + "T12:00:00").toLocaleDateString("pt-BR") : ""}
+                          </TableCell>
+                          <TableCell className="text-xs text-right font-medium">{fmt(t.amount)}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] ${t.is_reconciled ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-amber-100 text-amber-800 border-amber-200"}`}
+                            >
+                              {t.is_reconciled ? "Conciliado" : "Pendente"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -600,22 +786,41 @@ export default function BankReconciliationPage() {
       {/* Manual action modal */}
       <Dialog open={showManualModal} onOpenChange={setShowManualModal}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Classificar Movimentação</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Classificar Movimentação</DialogTitle>
+          </DialogHeader>
           {selectedTx && (
             <div className="space-y-3">
               <div className="bg-muted/50 rounded-lg p-3 text-sm">
                 <p className="font-medium">{selectedTx.description}</p>
-                <p className={`font-bold ${Number(selectedTx.amount) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <p className={`font-bold ${Number(selectedTx.amount) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                   {fmt(Number(selectedTx.amount))}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {selectedTx.transaction_date ? new Date(selectedTx.transaction_date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
+                  {selectedTx.transaction_date
+                    ? new Date(selectedTx.transaction_date + "T12:00:00").toLocaleDateString("pt-BR")
+                    : ""}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {['Tarifa bancária', 'Juros', 'IOF', 'Imposto', 'Transferência', 'Estorno', 'Ajuste manual', 'Investimento automático em CDB', 'Resgate automático de CDB'].map(type => (
-                  <Button key={type} variant="outline" size="sm" className="text-xs justify-start"
-                    onClick={() => markAs(selectedTx, type)}>
+                {[
+                  "Tarifa bancária",
+                  "Juros",
+                  "IOF",
+                  "Imposto",
+                  "Transferência",
+                  "Estorno",
+                  "Ajuste manual",
+                  "Investimento aut. em CDB",
+                  "Resgate aut. de CDB",
+                ].map((type) => (
+                  <Button
+                    key={type}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs justify-start"
+                    onClick={() => markAs(selectedTx, type)}
+                  >
                     {type}
                   </Button>
                 ))}
