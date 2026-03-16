@@ -939,39 +939,29 @@ function drawFlightDirection(
   }
 
   legs.forEach((leg, idx) => {
-    y = checkPageBreak(doc, y, 14, m);
+    y = checkPageBreak(doc, y, 20, m);
 
     const segW = cw;
     const originX = m + 5;
     const destX = m + segW - 5;
     const midX = pw / 2;
+    const codeY = y;
+    const lineY = y + 1.5;
+    const timeY = y + 11;
 
     // Origin code
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     setColor(doc, DEEP_BLUE);
-    doc.text(leg.origin || '---', originX, y);
-
-    // Departure time
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    setColor(doc, TEXT_MAIN);
-    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 8);
+    doc.text(leg.origin || '---', originX, codeY);
 
     // Destination code
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     setColor(doc, DEEP_BLUE);
-    doc.text(leg.destination || '---', destX, y, { align: 'right' });
-
-    // Arrival time
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    setColor(doc, TEXT_MAIN);
-    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 8, { align: 'right' });
+    doc.text(leg.destination || '---', destX, codeY, { align: 'right' });
 
     // Flight line with arrow
-    const lineY = y - 1;
     const lineStart = originX + 18;
     const lineEnd = destX - 18;
 
@@ -997,7 +987,19 @@ function drawFlightDirection(
       doc.text(leg.flightCode, midX, lineY - 2, { align: 'center' });
     }
 
-    y += 7;
+    // Departure time
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    setColor(doc, TEXT_MAIN);
+    if (leg.departureTime) doc.text(leg.departureTime, originX, timeY);
+
+    // Arrival time
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    setColor(doc, TEXT_MAIN);
+    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, timeY, { align: 'right' });
+
+    y += 12;
 
     // Connection info
     if (idx < legs.length - 1 && leg.connectionDuration) {
