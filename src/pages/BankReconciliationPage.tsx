@@ -85,11 +85,22 @@ export default function BankReconciliationPage() {
     const acct = accounts.find(a => a.id === selectedAccount);
     const titlesEmpresaId = (acct as any)?.empresa_id || activeCompany.id;
     const [payRes, recRes] = await Promise.all([
-      supabase.from('accounts_payable').select('id, description, amount, due_date, status, supplier_id')
+      supabase.from('accounts_payable').select('id, description, amount, due_date, status, supplier_id, sale_id')
         .eq('empresa_id', titlesEmpresaId).in('status', ['open', 'pending']),
-      supabase.from('receivables').select('id, description, amount, due_date, status, client_name')
+      supabase.from('receivables').select('id, description, amount, due_date, status, client_name, sale_id')
         .eq('empresa_id', titlesEmpresaId).in('status', ['pending']),
     ]);
+    // Exclude titles linked to draft sales
+    const allSaleIds = [
+      ...((payRes.data as any[]) || []).map(p => p.sale_id),
+      ...((recRes.data as any[]) || []).map(r => r.sale_id),
+    ].filter(Boolean);
+    const uniqueSaleIds = [...new Set(allSaleIds)];
+    let draftIds: string[] = [];
+    if (uniqueSaleIds.length > 0) {
+      const { data: drafts } = await supabase.from('sales').select('id').in('id', uniqueSaleIds).eq('status', 'draft');
+      draftIds = (drafts || []).map(d => d.id);
+    }
 
     const payables: FinancialTitle[] = ((payRes.data as any[]) || []).map(p => ({
       id: p.id, type: 'payable', description: p.description || '', amount: Number(p.amount) || 0,
