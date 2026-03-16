@@ -49,12 +49,12 @@ export default function ReportDashboard() {
       map.set(key, cur);
     });
     return Array.from(map.entries()).map(([name, data]) => ({ name, ...data }));
-  }, [sales]);
+  }, [activeSales]);
 
   const [saleItems, setSaleItems] = useState<any[]>([]);
   useEffect(() => {
-    if (sales.length === 0) return;
-    const ids = sales.map(s => s.id);
+    if (activeSales.length === 0) return;
+    const ids = activeSales.map(s => s.id);
     supabase.from('sale_items').select('*').in('sale_id', ids).then(({ data }) => { if (data) setSaleItems(data); });
   }, [sales]);
 
