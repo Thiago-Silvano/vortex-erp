@@ -52,6 +52,17 @@ export interface ProposalPaymentOptionPdf {
   enabled: boolean;
 }
 
+export interface QuoteOptionPdf {
+  name: string;
+  items: Array<{ name: string; value: number; description?: string }>;
+  hotels: HotelPdf[];
+  flightLegs: FlightLegPdf[];
+  flightGroups?: FlightLegPdf[][];
+  services: ServicePdf[];
+  totalProducts: number;
+  totalTrip: number;
+}
+
 export interface PremiumPdfData {
   agency: {
     name: string;
@@ -91,6 +102,7 @@ export interface PremiumPdfData {
   proposalPaymentOptions?: ProposalPaymentOptionPdf[];
   notes?: string;
   destinationImageBase64?: string;
+  quoteOptions?: QuoteOptionPdf[];
 }
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -306,6 +318,142 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
     });
     y += Math.ceil(summaryItems.length / 2) * (cardH + 4) + 6;
   }
+
+  // ═══════════════════════════════════════════════════════════
+  // QUOTE OPTIONS: Render each option as a separate block
+  // ═══════════════════════════════════════════════════════════
+  if (data.quoteOptions && data.quoteOptions.length > 1) {
+    data.quoteOptions.forEach((option, optIdx) => {
+      y = checkPageBreak(doc, y, 40, m);
+
+      // Option header with gold background
+      doc.setFillColor(DEEP_BLUE[0], DEEP_BLUE[1], DEEP_BLUE[2]);
+      doc.rect(m, y, cw, 12, 'F');
+      doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+      doc.rect(m, y, 3, 12, 'F');
+
+      doc.setFont('times', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+      doc.text(s(option.name), m + 8, y + 8);
+
+      doc.setFont('times', 'bold');
+      doc.setFontSize(14);
+      setColor(doc, GOLD);
+      doc.text(fmt(option.totalTrip), m + cw - 4, y + 8, { align: 'right' });
+
+      y += 16;
+
+      // Hotels for this option
+      if (option.hotels.length > 0) {
+        option.hotels.forEach((hotel) => {
+          y = checkPageBreak(doc, y, 25, m);
+          doc.setFont('times', 'bold');
+          doc.setFontSize(11);
+          setColor(doc, DEEP_BLUE);
+          doc.text(s(hotel.name), m + 4, y);
+          y += 5;
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          setColor(doc, TEXT_MUTED);
+          const details: string[] = [];
+          details.push(`${formatDateBR(hotel.checkIn)} - ${formatDateBR(hotel.checkOut)}`);
+          details.push(`${hotel.nights} noites`);
+          if (hotel.meal) details.push(hotel.meal);
+          doc.text(details.join('  ·  '), m + 4, y);
+          y += 5;
+
+          if (hotel.description) {
+            doc.setFontSize(7);
+            const descLines = doc.splitTextToSize(s(hotel.description), cw - 12);
+            doc.text(descLines.slice(0, 3), m + 4, y);
+            y += Math.min(descLines.length, 3) * 3 + 2;
+          }
+        });
+      }
+
+      // Flight legs for this option
+      const optFlightGroups = option.flightGroups && option.flightGroups.length > 0
+        ? option.flightGroups
+        : option.flightLegs.length > 0 ? [option.flightLegs] : [];
+
+      if (optFlightGroups.length > 0) {
+        optFlightGroups.forEach((groupLegs) => {
+          const outbound = groupLegs.filter(l => l.direction !== 'volta');
+          const returnLegs = groupLegs.filter(l => l.direction === 'volta');
+          if (outbound.length > 0) {
+            y = checkPageBreak(doc, y, 20, m);
+            y = drawFlightDirection(doc, 'IDA', outbound, y, m, pw, cw);
+            y += 2;
+          }
+          if (returnLegs.length > 0) {
+            y = checkPageBreak(doc, y, 20, m);
+            y = drawFlightDirection(doc, 'VOLTA', returnLegs, y, m, pw, cw);
+            y += 2;
+          }
+        });
+      }
+
+      // Services for this option
+      if (option.services.length > 0) {
+        option.services.forEach((svc) => {
+          y = checkPageBreak(doc, y, 12, m);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          setColor(doc, DEEP_BLUE);
+          doc.text(s(`-  ${svc.name}`), m + 4, y);
+          if (svc.value > 0) {
+            doc.setFont('helvetica', 'normal');
+            setColor(doc, TEXT_MAIN);
+            doc.text(fmt(svc.value), pw - m, y, { align: 'right' });
+          }
+          y += 5;
+        });
+      }
+
+      // Option total with payment breakdown
+      y = checkPageBreak(doc, y, 20, m);
+      doc.setFillColor(GOLD_LIGHT[0], GOLD_LIGHT[1], GOLD_LIGHT[2]);
+      doc.rect(m, y, cw, 10, 'F');
+      doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+      doc.rect(m, y, 2, 10, 'F');
+
+      doc.setFont('times', 'bold');
+      doc.setFontSize(11);
+      setColor(doc, DEEP_BLUE);
+      doc.text('Total', m + 6, y + 7);
+      doc.setFont('times', 'bold');
+      doc.setFontSize(13);
+      setColor(doc, GOLD);
+      doc.text(fmt(option.totalTrip), m + cw - 4, y + 7, { align: 'right' });
+      y += 14;
+
+      // Payment options per option
+      if (data.proposalPaymentOptions && data.proposalPaymentOptions.length > 0) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        setColor(doc, TEXT_MUTED);
+        data.proposalPaymentOptions.forEach((payOpt) => {
+          y = checkPageBreak(doc, y, 6, m);
+          const optTotal = option.totalTrip;
+          const perInstallment = payOpt.installments > 0 ? Math.round((optTotal / payOpt.installments) * 100) / 100 : optTotal;
+          const text = payOpt.installments > 1
+            ? `${payOpt.label}: ${payOpt.installments}x de ${fmt(perInstallment)}`
+            : `${payOpt.label}: ${fmt(optTotal)}`;
+          doc.text(text, m + 6, y);
+          y += 5;
+        });
+      }
+
+      y += 6;
+      if (optIdx < data.quoteOptions!.length - 1) {
+        drawLine(doc, m + 10, y, pw - m - 10, GOLD, 0.3);
+        y += 8;
+      }
+    });
+  } else {
+    // ─── Original single-option layout ──────────────────────
 
   // ─── Section: Hospedagem ─────────────────────────────────
   if (data.hotels.length > 0) {
@@ -564,6 +712,8 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   }
 
   y = boxY + 18;
+
+  } // end single-option else
 
   // ─── Section: Forma de Pagamento ─────────────────────────
   y = checkPageBreak(doc, y, 40, m);

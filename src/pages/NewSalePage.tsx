@@ -1358,6 +1358,44 @@ export default function NewSalePage() {
       },
       notes: notes || undefined,
       destinationImageBase64,
+      quoteOptions: quoteOptions.length > 1 ? quoteOptions.map((opt) => {
+        const optId = opt.id || '';
+        const optItems = items.filter(i => (i.quote_option_id || quoteOptions[0]?.id) === optId);
+        const optHotels: any[] = [];
+        const optFlightLegs: any[] = [];
+        const optFlightGroups: any[][] = [];
+        const optServices: any[] = [];
+
+        for (const item of optItems) {
+          if (item.metadata?.type === 'hotel' && item.metadata.hotel) {
+            const h = item.metadata.hotel;
+            optHotels.push({ name: h.hotelName, description: h.description, checkIn: h.checkInDate, checkOut: h.checkOutDate, nights: tripNights || 0 });
+          }
+          if (item.metadata?.flightLegs?.length > 0) {
+            optFlightGroups.push(item.metadata.flightLegs);
+            optFlightLegs.push(...item.metadata.flightLegs);
+          }
+          const catalogName = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
+          if (item.metadata?.type !== 'hotel' && item.metadata?.type !== 'aereo') {
+            optServices.push({ name: catalogName || item.description || 'Serviço', description: item.metadata?.detailedDescription || item.description, value: item.total_value });
+          }
+        }
+
+        const optTotalProducts = optItems.reduce((s, i) => s + i.total_value, 0);
+        return {
+          name: opt.name,
+          items: optItems.map((item, idx) => {
+            const cn = item.service_catalog_id ? serviceCatalog.find(s => s.id === item.service_catalog_id)?.name || '' : '';
+            return { name: cn || item.description || `Serviço ${idx + 1}`, value: item.total_value, description: item.description || '' };
+          }),
+          hotels: optHotels,
+          flightLegs: optFlightLegs,
+          flightGroups: optFlightGroups,
+          services: optServices,
+          totalProducts: optTotalProducts,
+          totalTrip: optTotalProducts + saleInterest + operatorTaxes,
+        };
+      }) : undefined,
     };
 
     const doc = generatePremiumQuotePdf(pdfData);
