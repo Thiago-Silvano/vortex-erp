@@ -321,9 +321,18 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   // ═══════════════════════════════════════════════════════════
   // QUOTE OPTIONS: Render each option as a separate block
   // ═══════════════════════════════════════════════════════════
-  if (data.quoteOptions && data.quoteOptions.length > 1) {
-    data.quoteOptions.forEach((option, optIdx) => {
-      y = checkPageBreak(doc, y, 40, m);
+  const hasMultiOptions = data.quoteOptions && data.quoteOptions.length > 1;
+  if (hasMultiOptions) {
+    data.quoteOptions!.forEach((option, optIdx) => {
+      // Start each option on a new page for clean layout (except first if enough space)
+      if (optIdx > 0) {
+        doc.addPage();
+        doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
+        doc.rect(0, 0, pw, ph, 'F');
+        y = m;
+      } else {
+        y = checkPageBreak(doc, y, 60, m);
+      }
 
       // Option header with gold background
       doc.setFillColor(DEEP_BLUE[0], DEEP_BLUE[1], DEEP_BLUE[2]);
