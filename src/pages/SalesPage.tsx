@@ -139,6 +139,16 @@ export default function SalesPage() {
       if (!showVendas && s.status === 'active') return false;
       if (!showCotacoes && s.status === 'draft') return false;
       return normalize(s.client_name).includes(normalize(search));
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'client_name') cmp = a.client_name.localeCompare(b.client_name);
+      else if (sortKey === 'sale_date') cmp = (a.sale_date || '').localeCompare(b.sale_date || '');
+      else if (sortKey === 'payment_method') cmp = (a.payment_method || '').localeCompare(b.payment_method || '');
+      else if (sortKey === 'total_sale') cmp = Number(a.total_sale || 0) - Number(b.total_sale || 0);
+      else if (sortKey === 'net_profit') cmp = Number(a.net_profit || 0) - Number(b.net_profit || 0);
+      else if (sortKey === 'sale_workflow_status') cmp = (a.sale_workflow_status || '').localeCompare(b.sale_workflow_status || '');
+      return sortDir === 'asc' ? cmp : -cmp;
     });
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
