@@ -73,6 +73,7 @@ interface SupplierPaymentControl {
   installment_dates: { date: string; amount: number }[];
   amount: number;
   cost_center_id?: string;
+  description: string;
 }
 
 interface ProposalPaymentOption {
