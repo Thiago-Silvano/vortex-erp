@@ -2002,6 +2002,7 @@ export default function NewSalePage() {
             </Button>
           </CardContent>
         </Card>
+        )}
 
         {/* Receivables - only in sale mode */}
         {!isQuoteMode && (
