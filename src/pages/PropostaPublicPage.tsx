@@ -40,6 +40,13 @@ interface SaleItemData {
   service_catalog_id: string | null;
   images: string[];
   metadata?: any;
+  quote_option_id?: string | null;
+}
+
+interface QuoteOptionData {
+  id: string;
+  name: string;
+  order_index: number;
 }
 
 interface PassengerData { first_name: string; last_name: string; is_main: boolean; }
