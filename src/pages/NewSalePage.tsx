@@ -643,6 +643,8 @@ export default function NewSalePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== 'application/pdf') { toast.error('Apenas arquivos PDF são aceitos'); return; }
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) { toast.error('Arquivo muito grande. Máximo permitido: 10MB'); return; }
     setUploadingInvoice(true);
     const ext = file.name.split('.').pop();
     const fileName = `invoices/${crypto.randomUUID()}.${ext}`;
