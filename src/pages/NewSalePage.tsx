@@ -1028,6 +1028,7 @@ export default function NewSalePage() {
     if (machineFee > 0) {
       await supabase.from('accounts_payable').insert({
         sale_id: saleId, amount: machineFee,
+        supplier_id: machineFeeSupplierId || null,
         due_date: saleDate, description: `Taxa de máquina - ${clientName}`,
         status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
         installment_number: 1, total_installments: 1,
