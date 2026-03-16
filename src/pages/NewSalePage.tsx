@@ -256,6 +256,19 @@ export default function NewSalePage() {
     // Load internal files
     const { data: files } = await (supabase.from('sale_internal_files' as any) as any).select('*').eq('sale_id', id).order('created_at');
     if (files) setInternalFiles(files.map((f: any) => ({ id: f.id, file_name: f.file_name, file_url: f.file_url })));
+
+    // Load quote options
+    const { data: options } = await (supabase.from('sale_quote_options' as any) as any).select('*').eq('sale_id', id).order('order_index');
+    if (options && options.length > 0) {
+      setQuoteOptions(options.map((o: any) => ({ id: o.id, name: o.name, order_index: o.order_index })));
+      // Update items with their quote_option_id
+      if (saleItems) {
+        setItems(prev => prev.map(item => {
+          const dbItem = saleItems.find((si: any) => si.id === item.id);
+          return { ...item, quote_option_id: (dbItem as any)?.quote_option_id || undefined };
+        }));
+      }
+    }
   };
 
   const fetchClients = () => {
