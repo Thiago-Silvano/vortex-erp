@@ -839,7 +839,7 @@ export default function NewSalePage() {
             sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
             due_date: sp.payment_date, description: `Venda - ${clientName} (Pix)`,
             status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1,
+            installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
           });
         } else if (sp.payment_method === 'faturado') {
           payables.push({
