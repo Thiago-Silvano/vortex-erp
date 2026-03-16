@@ -1747,6 +1747,16 @@ export default function NewSalePage() {
                             </Button>
                           </div>
                         </TableCell>
+                        {isQuoteMode && quoteOptions.length > 1 && (
+                          <TableCell>
+                            <Select value={item.quote_option_id || String(quoteOptions[0]?.order_index ?? 0)} onValueChange={v => updateItem(idx, 'quote_option_id' as keyof SaleItem, v)}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Opção..." /></SelectTrigger>
+                              <SelectContent>
+                                {quoteOptions.map((opt, oi) => <SelectItem key={oi} value={opt.id || String(oi)}>{opt.name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        )}
                         <TableCell>
                           <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -1790,7 +1800,7 @@ export default function NewSalePage() {
                         </TableCell>
                       </TableRow>
                       <TableRow className="border-b-2">
-                        <TableCell colSpan={7} className="py-2">
+                        <TableCell colSpan={isQuoteMode && quoteOptions.length > 1 ? 8 : 7} className="py-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             {!isQuoteMode && (
                               <div className="flex items-center gap-1">
