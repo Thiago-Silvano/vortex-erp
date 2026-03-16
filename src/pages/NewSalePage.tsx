@@ -964,6 +964,16 @@ export default function NewSalePage() {
       })));
       if (error) console.error('Erro ao gerar contas a pagar fallback:', error);
     }
+
+    // Machine fee as accounts payable
+    if (machineFee > 0) {
+      await supabase.from('accounts_payable').insert({
+        sale_id: saleId, amount: machineFee,
+        due_date: saleDate, description: `Taxa de máquina - ${clientName}`,
+        status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+        installment_number: 1, total_installments: 1,
+      } as any);
+    }
   };
 
   const handleSaveDraft = async () => {
