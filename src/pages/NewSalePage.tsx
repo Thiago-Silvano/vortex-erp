@@ -972,11 +972,18 @@ export default function NewSalePage() {
     }
 
     if (selectedSupplierIds.length > 0) {
+      // Collect reservation numbers from sale items to populate confirmation_code
+      const reservationNumbers = items
+        .map(i => i.reservation_number)
+        .filter(Boolean)
+        .join(', ');
+
       await supabase.from('reservations').insert(selectedSupplierIds.map(sid => {
         const sup = allSuppliers.find(s => s.id === sid);
         return {
           sale_id: saleId, supplier_id: sid,
           description: `${sup?.name || 'Fornecedor'} - ${clientName}`,
+          confirmation_code: reservationNumbers || '',
           status: 'pending', check_in: tripStartDate || null, check_out: tripEndDate || null,
           empresa_id: activeCompany?.id || null,
         };
