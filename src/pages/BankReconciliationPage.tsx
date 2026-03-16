@@ -290,10 +290,24 @@ export default function BankReconciliationPage() {
   // Mark as ignored/tarifa/etc
   const markAs = async (tx: BankTx, type: string) => {
     const { data: { user } } = await supabase.auth.getUser();
+
+    // If reclassifying from reconciled/ignored, undo first
+    if (tx.reconciliation_status !== 'pending') {
+      if (tx.reconciled_with_id) {
+        if (tx.reconciled_with_type === 'pagar') {
+          await supabase.from('accounts_payable').update({ status: 'open', payment_date: null } as any).eq('id', tx.reconciled_with_id);
+        } else if (tx.reconciled_with_type === 'receber') {
+          await supabase.from('receivables').update({ status: 'pending', payment_date: null } as any).eq('id', tx.reconciled_with_id);
+        }
+      }
+    }
+
     await supabase.from('bank_transactions').update({
       reconciliation_status: 'ignored',
       reconciliation_note: type,
       category: type,
+      reconciled_with_type: null,
+      reconciled_with_id: null,
     } as any).eq('id', tx.id);
 
     await supabase.from('reconciliation_log').insert({
