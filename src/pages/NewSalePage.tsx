@@ -399,6 +399,20 @@ export default function NewSalePage() {
     });
   }, [selectedSupplierIds, totalCost]);
 
+  // Auto-set commission rate from seller config
+  useEffect(() => {
+    if (sellerId && sellerId !== 'none') {
+      const seller = allSellers.find(s => s.id === sellerId);
+      if (seller && seller.commission_type !== 'none') {
+        setCommissionRate(seller.commission_percentage || 0);
+      } else {
+        setCommissionRate(0);
+      }
+    } else {
+      setCommissionRate(0);
+    }
+  }, [sellerId, allSellers]);
+
   const updateSupplierPayment = (sid: string, field: string, value: any) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     setSupplierPayments(prev => prev.map(sp => {
