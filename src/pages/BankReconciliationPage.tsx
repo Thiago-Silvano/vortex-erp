@@ -18,7 +18,7 @@ import {
   Clock, FileText, ArrowDownCircle, ArrowUpCircle, Banknote, Search,
 } from 'lucide-react';
 
-interface BankAccount { id: string; bank_name: string; account_number: string; account_digit: string; agency: string; color: string; }
+interface BankAccount { id: string; bank_name: string; account_number: string; account_digit: string; agency: string; color: string; empresa_id: string; }
 interface BankTx {
   id: string; transaction_date: string; description: string; amount: number;
   transaction_type: string; reconciliation_status: string; reference_number: string;
