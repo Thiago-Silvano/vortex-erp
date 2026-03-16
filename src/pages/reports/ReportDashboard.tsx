@@ -132,7 +132,7 @@ export default function ReportDashboard() {
           <Card>
             <CardHeader><CardTitle className="text-base">Vendas por Serviço</CardTitle></CardHeader>
             <CardContent>
-              <div className="h-72">
+              <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={productData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
