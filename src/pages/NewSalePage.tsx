@@ -2108,7 +2108,11 @@ export default function NewSalePage() {
                       <p className="font-medium text-sm">{sup?.name || 'Fornecedor'}</p>
                       <p className="text-sm text-muted-foreground">Valor: <span className="font-semibold text-foreground">{fmt(sp.amount)}</span></p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <div className="md:col-span-4">
+                        <Label className="text-xs">Descrição</Label>
+                        <Input value={sp.description} onChange={e => setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, description: e.target.value } : s))} placeholder="Pagamento de operadoras" />
+                      </div>
                       <div>
                         <Label className="text-xs">Forma de Pagamento</Label>
                         <Select value={sp.payment_method} onValueChange={v => updateSupplierPayment(sp.supplier_id, 'payment_method', v)}>
