@@ -1972,6 +1972,7 @@ export type Database = {
           id: string
           installments: number | null
           invoice_url: string | null
+          machine_fee: number | null
           net_profit: number | null
           notes: string | null
           operator_taxes: number | null
@@ -2013,6 +2014,7 @@ export type Database = {
           id?: string
           installments?: number | null
           invoice_url?: string | null
+          machine_fee?: number | null
           net_profit?: number | null
           notes?: string | null
           operator_taxes?: number | null
@@ -2054,6 +2056,7 @@ export type Database = {
           id?: string
           installments?: number | null
           invoice_url?: string | null
+          machine_fee?: number | null
           net_profit?: number | null
           notes?: string | null
           operator_taxes?: number | null
