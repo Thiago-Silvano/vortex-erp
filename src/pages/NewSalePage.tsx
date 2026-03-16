@@ -2333,8 +2333,18 @@ export default function NewSalePage() {
                       {sp.payment_method === 'pix' && (
                         <div>
                           <Label className="text-xs">Data do Pagamento</Label>
-                          <Input type="date" value={sp.payment_date} disabled className="bg-muted" />
-                          <p className="text-xs text-muted-foreground mt-1">Data de hoje (automático)</p>
+                          <Input
+                            type="date"
+                            value={sp.payment_date}
+                            onChange={e => {
+                              const newDate = e.target.value;
+                              setSupplierPayments(prev => prev.map(s =>
+                                s.supplier_id === sp.supplier_id
+                                  ? { ...s, payment_date: newDate, installment_dates: [{ date: newDate, amount: s.amount }] }
+                                  : s
+                              ));
+                            }}
+                          />
                         </div>
                       )}
 
