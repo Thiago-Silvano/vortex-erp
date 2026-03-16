@@ -338,7 +338,6 @@ export function generateVoucherPdf(data: VoucherPdfData) {
       const resDetails: string[] = [];
       if (res.supplier) resDetails.push(res.supplier);
       if (res.checkIn && res.checkOut) resDetails.push(`${formatDateBR(res.checkIn)} - ${formatDateBR(res.checkOut)}`);
-      if (res.status) resDetails.push(`Status: ${res.status}`);
 
       if (resDetails.length > 0) {
         doc.setFont('helvetica', 'normal');
