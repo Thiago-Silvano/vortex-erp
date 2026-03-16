@@ -817,12 +817,25 @@ export default function NewSalePage() {
     }
 
     if (items.length > 0) {
-      const { data: insertedItems } = await supabase.from('sale_items').insert(items.map((item, idx) => ({
-        sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
-        total_value: item.total_value, sort_order: idx,
-        service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
-        metadata: item.metadata || {}, reservation_number: item.reservation_number || '',
-      } as any))).select('id');
+      const { data: insertedItems } = await supabase.from('sale_items').insert(items.map((item, idx) => {
+        // Resolve the quote_option_id: match by option order_index
+        let resolvedOptionId: string | null = null;
+        if (item.quote_option_id) {
+          // Find which option index this item belongs to
+          const optIdx = quoteOptions.findIndex(o => o.id === item.quote_option_id || String(o.order_index) === item.quote_option_id);
+          if (optIdx >= 0 && optionIdMap[optIdx]) resolvedOptionId = optionIdMap[optIdx];
+          else if (optionIdMap[0]) resolvedOptionId = optionIdMap[0]; // fallback to first
+        } else if (optionIdMap[0]) {
+          resolvedOptionId = optionIdMap[0]; // default to first option
+        }
+        return {
+          sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
+          total_value: item.total_value, sort_order: idx,
+          service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
+          metadata: item.metadata || {}, reservation_number: item.reservation_number || '',
+          quote_option_id: resolvedOptionId,
+        };
+      } as any)).select('id');
 
       if (insertedItems) {
         for (let idx = 0; idx < insertedItems.length; idx++) {
