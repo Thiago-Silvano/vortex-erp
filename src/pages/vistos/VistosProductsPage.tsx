@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,19 @@ interface Product {
   average_days: number;
   status: string;
   is_supplier_fee: boolean;
+  supplier_id: string | null;
+  cost_center_id: string | null;
+}
+
+interface Supplier {
+  id: string;
+  name: string;
+}
+
+interface CostCenter {
+  id: string;
+  name: string;
+  description: string | null;
 }
 
 export default function VistosProductsPage() {
@@ -34,6 +48,10 @@ export default function VistosProductsPage() {
   const [price, setPrice] = useState(0);
   const [averageDays, setAverageDays] = useState(30);
   const [isSupplierFee, setIsSupplierFee] = useState(false);
+  const [supplierId, setSupplierId] = useState('');
+  const [costCenterId, setCostCenterId] = useState('');
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchProducts = async () => {
@@ -46,29 +64,42 @@ export default function VistosProductsPage() {
     if (data) setProducts(data as Product[]);
   };
 
-  useEffect(() => { fetchProducts(); }, [activeCompany?.id]);
+  const fetchSuppliers = async () => {
+    if (!activeCompany?.id) return;
+    const { data } = await supabase.from('suppliers').select('id, name').eq('empresa_id', activeCompany.id).order('name');
+    if (data) setSuppliers(data as Supplier[]);
+  };
+
+  const fetchCostCenters = async () => {
+    const { data } = await supabase.from('cost_centers').select('id, name, description').eq('status', 'active').order('name');
+    if (data) setCostCenters(data as CostCenter[]);
+  };
+
+  useEffect(() => { fetchProducts(); fetchSuppliers(); fetchCostCenters(); }, [activeCompany?.id]);
 
   const openNew = () => {
     setEditing(null);
-    setName(''); setDescription(''); setPrice(0); setAverageDays(30); setIsSupplierFee(false);
+    setName(''); setDescription(''); setPrice(0); setAverageDays(30); setIsSupplierFee(false); setSupplierId(''); setCostCenterId('');
     setDialogOpen(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setName(p.name); setDescription(p.description); setPrice(p.price); setAverageDays(p.average_days); setIsSupplierFee(p.is_supplier_fee);
+    setName(p.name); setDescription(p.description); setPrice(p.price); setAverageDays(p.average_days); setIsSupplierFee(p.is_supplier_fee); setSupplierId(p.supplier_id || ''); setCostCenterId(p.cost_center_id || '');
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Informe o nome do serviço.'); return; }
     setLoading(true);
-    const payload = {
+    const payload: any = {
       name: name.trim(),
       description: description.trim(),
       price,
       average_days: averageDays,
       is_supplier_fee: isSupplierFee,
+      supplier_id: supplierId || null,
+      cost_center_id: costCenterId || null,
       empresa_id: activeCompany?.id,
     };
 
@@ -156,6 +187,32 @@ export default function VistosProductsPage() {
                   <Label htmlFor="is_supplier_fee" className="cursor-pointer text-sm font-medium">Taxa de fornecedor</Label>
                   <p className="text-xs text-muted-foreground">Marque se este serviço é uma taxa repassada ao fornecedor (ex: taxa consular, CASV). Será separado nos relatórios financeiros.</p>
                 </div>
+              </div>
+              <div>
+                <Label>Fornecedor padrão</Label>
+                <Select value={supplierId} onValueChange={setSupplierId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um fornecedor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {suppliers.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Centro de Custo padrão</Label>
+                <Select value={costCenterId} onValueChange={setCostCenterId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um centro de custo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {costCenters.map(cc => (
+                      <SelectItem key={cc.id} value={cc.id}>
+                        {cc.description ? <><span className="text-xs text-muted-foreground">[{cc.description}]</span> {cc.name}</> : cc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>

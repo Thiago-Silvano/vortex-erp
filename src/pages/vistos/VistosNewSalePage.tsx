@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, validateEmail, maskCurrencyInput, parseCurrency } from '@/lib/masks';
 
-interface Product { id: string; name: string; price: number; is_supplier_fee: boolean; }
+interface Product { id: string; name: string; price: number; is_supplier_fee: boolean; supplier_id: string | null; cost_center_id: string | null; }
 
 interface SaleItem {
   product_id: string;
@@ -108,7 +108,7 @@ export default function VistosNewSalePage() {
 
   useEffect(() => {
     if (!activeCompany?.id) return;
-    supabase.from('visa_products').select('id, name, price, is_supplier_fee').eq('empresa_id', activeCompany.id).order('name')
+    supabase.from('visa_products').select('id, name, price, is_supplier_fee, supplier_id, cost_center_id').eq('empresa_id', activeCompany.id).order('name')
       .then(({ data }) => { if (data) setProducts(data as Product[]); });
     supabase.from('clients').select('id, full_name, phone, email').eq('empresa_id', activeCompany.id).order('full_name')
       .then(({ data }) => { if (data) setAllClients(data); });
@@ -196,6 +196,9 @@ export default function VistosNewSalePage() {
           updated.unit_price = prod.price;
           updated.is_supplier_fee = prod.is_supplier_fee;
           updated.total_value = prod.price * updated.quantity;
+          // Auto-fill supplier and cost center from product defaults (only if currently empty)
+          if (!updated.supplier_id && prod.supplier_id) updated.supplier_id = prod.supplier_id;
+          if (!updated.cost_center_id && prod.cost_center_id) updated.cost_center_id = prod.cost_center_id;
         }
       }
       if (field === 'quantity') {

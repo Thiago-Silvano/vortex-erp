@@ -1,0 +1,2 @@
+ALTER TABLE public.visa_products ADD COLUMN IF NOT EXISTS supplier_id uuid REFERENCES public.suppliers(id) DEFAULT NULL;
+ALTER TABLE public.visa_products ADD COLUMN IF NOT EXISTS cost_center_id uuid REFERENCES public.cost_centers(id) DEFAULT NULL;

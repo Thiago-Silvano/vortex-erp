@@ -2901,6 +2901,7 @@ export type Database = {
       visa_products: {
         Row: {
           average_days: number | null
+          cost_center_id: string | null
           created_at: string
           description: string | null
           empresa_id: string | null
@@ -2909,10 +2910,12 @@ export type Database = {
           name: string
           price: number
           status: string
+          supplier_id: string | null
           updated_at: string
         }
         Insert: {
           average_days?: number | null
+          cost_center_id?: string | null
           created_at?: string
           description?: string | null
           empresa_id?: string | null
@@ -2921,10 +2924,12 @@ export type Database = {
           name?: string
           price?: number
           status?: string
+          supplier_id?: string | null
           updated_at?: string
         }
         Update: {
           average_days?: number | null
+          cost_center_id?: string | null
           created_at?: string
           description?: string | null
           empresa_id?: string | null
@@ -2933,14 +2938,29 @@ export type Database = {
           name?: string
           price?: number
           status?: string
+          supplier_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "visa_products_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "visa_products_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visa_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
