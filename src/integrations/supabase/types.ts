@@ -2468,6 +2468,152 @@ export type Database = {
           },
         ]
       }
+      system_theme_settings: {
+        Row: {
+          background_color: string
+          border_color: string
+          button_order: string
+          button_position: string
+          button_primary_color: string
+          button_secondary_color: string
+          button_size: string
+          button_style: string
+          created_at: string
+          element_spacing: string
+          empresa_id: string | null
+          field_color: string
+          field_columns: number
+          field_height: string
+          field_layout: string
+          font_family: string
+          font_family_tables: string
+          font_family_titles: string
+          font_size_body: string
+          font_size_button: string
+          font_size_tab: string
+          font_size_table: string
+          font_size_title: string
+          header_color: string
+          hover_color: string
+          id: string
+          inner_padding: string
+          layout_density: string
+          line_height: string
+          primary_color: string
+          row_height: string
+          secondary_color: string
+          tab_active_color: string
+          tab_border: string
+          tab_inactive_color: string
+          tab_style: string
+          table_alt_color: string
+          table_borders: string
+          table_color: string
+          table_row_height: string
+          table_style: string
+          theme_name: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string
+          border_color?: string
+          button_order?: string
+          button_position?: string
+          button_primary_color?: string
+          button_secondary_color?: string
+          button_size?: string
+          button_style?: string
+          created_at?: string
+          element_spacing?: string
+          empresa_id?: string | null
+          field_color?: string
+          field_columns?: number
+          field_height?: string
+          field_layout?: string
+          font_family?: string
+          font_family_tables?: string
+          font_family_titles?: string
+          font_size_body?: string
+          font_size_button?: string
+          font_size_tab?: string
+          font_size_table?: string
+          font_size_title?: string
+          header_color?: string
+          hover_color?: string
+          id?: string
+          inner_padding?: string
+          layout_density?: string
+          line_height?: string
+          primary_color?: string
+          row_height?: string
+          secondary_color?: string
+          tab_active_color?: string
+          tab_border?: string
+          tab_inactive_color?: string
+          tab_style?: string
+          table_alt_color?: string
+          table_borders?: string
+          table_color?: string
+          table_row_height?: string
+          table_style?: string
+          theme_name?: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string
+          border_color?: string
+          button_order?: string
+          button_position?: string
+          button_primary_color?: string
+          button_secondary_color?: string
+          button_size?: string
+          button_style?: string
+          created_at?: string
+          element_spacing?: string
+          empresa_id?: string | null
+          field_color?: string
+          field_columns?: number
+          field_height?: string
+          field_layout?: string
+          font_family?: string
+          font_family_tables?: string
+          font_family_titles?: string
+          font_size_body?: string
+          font_size_button?: string
+          font_size_tab?: string
+          font_size_table?: string
+          font_size_title?: string
+          header_color?: string
+          hover_color?: string
+          id?: string
+          inner_padding?: string
+          layout_density?: string
+          line_height?: string
+          primary_color?: string
+          row_height?: string
+          secondary_color?: string
+          tab_active_color?: string
+          tab_border?: string
+          tab_inactive_color?: string
+          tab_style?: string
+          table_alt_color?: string
+          table_borders?: string
+          table_color?: string
+          table_row_height?: string
+          table_style?: string
+          theme_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_theme_settings_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_permissions: {
         Row: {
           created_at: string
