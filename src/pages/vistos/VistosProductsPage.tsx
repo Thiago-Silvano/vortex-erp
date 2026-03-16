@@ -63,7 +63,18 @@ export default function VistosProductsPage() {
     if (data) setProducts(data as Product[]);
   };
 
-  useEffect(() => { fetchProducts(); }, [activeCompany?.id]);
+  const fetchSuppliers = async () => {
+    if (!activeCompany?.id) return;
+    const { data } = await supabase.from('suppliers').select('id, name').eq('empresa_id', activeCompany.id).order('name');
+    if (data) setSuppliers(data as Supplier[]);
+  };
+
+  const fetchCostCenters = async () => {
+    const { data } = await supabase.from('cost_centers').select('id, name, description').eq('status', 'active').order('name');
+    if (data) setCostCenters(data as CostCenter[]);
+  };
+
+  useEffect(() => { fetchProducts(); fetchSuppliers(); fetchCostCenters(); }, [activeCompany?.id]);
 
   const openNew = () => {
     setEditing(null);
