@@ -701,17 +701,30 @@ export default function BankReconciliationPage() {
                             </TableCell>
                             <TableCell className="text-right flex items-center justify-end gap-1">
                               {tx.reconciliation_status === "pending" && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                                  onClick={() => {
-                                    setSelectedTx(tx);
-                                    setShowManualModal(true);
-                                  }}
-                                >
-                                  <FileText className="h-3 w-3" />
-                                </Button>
+                                <>
+                                  {selectedTitleIds.size > 0 && (
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      className="h-6 text-[10px] opacity-0 group-hover:opacity-100"
+                                      onClick={() => reconcileWithSelected(tx)}
+                                    >
+                                      <Link2 className="h-3 w-3 mr-1" />
+                                      Conciliar ({selectedTitleIds.size})
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                                    onClick={() => {
+                                      setSelectedTx(tx);
+                                      setShowManualModal(true);
+                                    }}
+                                  >
+                                    <FileText className="h-3 w-3" />
+                                  </Button>
+                                </>
                               )}
                               {(tx.reconciliation_status === "reconciled" ||
                                 tx.reconciliation_status === "ignored") && (
