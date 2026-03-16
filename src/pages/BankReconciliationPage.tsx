@@ -93,6 +93,7 @@ export default function BankReconciliationPage() {
   const [selectedTx, setSelectedTx] = useState<BankTx | null>(null);
   const [manualNote, setManualNote] = useState("");
   const [manualType, setManualType] = useState("");
+  const [selectedTitleIds, setSelectedTitleIds] = useState<Set<string>>(new Set());
 
   // Stats
   const totalImported = transactions.length;
