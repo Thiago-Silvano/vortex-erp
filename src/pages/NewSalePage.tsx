@@ -2002,8 +2002,8 @@ export default function NewSalePage() {
                 { value: 'credito', label: 'Cartão de Crédito' },
                 { value: 'debito', label: 'Cartão de Débito' },
               ].map(opt => (
-                <Button key={opt.value} variant={paymentMethod === opt.value ? 'default' : 'outline'} className="w-full" onClick={() => setPaymentMethod(opt.value)}>
-                  {opt.label}
+                <Button key={opt.value} variant={paymentMethods.includes(opt.value) ? 'default' : 'outline'} className="w-full" onClick={() => setPaymentMethods(prev => prev.includes(opt.value) ? (prev.length > 1 ? prev.filter(m => m !== opt.value) : prev) : [...prev, opt.value])}>
+                  {paymentMethods.includes(opt.value) && <span className="mr-1">✓</span>}{opt.label}
                 </Button>
               ))}
             </div>
