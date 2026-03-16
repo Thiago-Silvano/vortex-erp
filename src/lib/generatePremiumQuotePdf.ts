@@ -739,6 +739,10 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       y = checkPageBreak(doc, y, 22, m);
       const isHighlighted = opt.installments === maxInstallments;
 
+      const discount = opt.discountPercent || 0;
+      const optTotalValue = Math.round(data.totalTrip * (1 - discount / 100) * 100) / 100;
+      const optInstallmentValue = opt.installments > 0 ? Math.round((optTotalValue / opt.installments) * 100) / 100 : optTotalValue;
+
       // Option box
       const optBoxH = isHighlighted ? 22 : 18;
       if (isHighlighted) {
@@ -760,7 +764,11 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
         doc.text('MAIS POPULAR', m + 8, y);
       }
 
-      // Label
+      // Label + discount info
+      let labelText = s(opt.label);
+      if (discount > 0) labelText += ` (${discount}% desc.)`;
+      else if (discount < 0) labelText += ` (${Math.abs(discount)}% acresc.)`;
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       if (isHighlighted) {
@@ -768,12 +776,12 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       } else {
         setColor(doc, DEEP_BLUE);
       }
-      doc.text(s(opt.label), m + 8, y + (isHighlighted ? 6 : 3));
+      doc.text(labelText, m + 8, y + (isHighlighted ? 6 : 3));
 
       // Installment value
       const installText = opt.installments > 1
-        ? `${opt.installments}x de ${fmt(opt.installmentValue)}`
-        : fmt(opt.totalValue);
+        ? `${opt.installments}x de ${fmt(optInstallmentValue)}`
+        : fmt(optTotalValue);
       doc.setFont('times', 'bold');
       doc.setFontSize(isHighlighted ? 15 : 13);
       setColor(doc, GOLD);
@@ -782,8 +790,8 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       // Per person
       if (paxCount > 1) {
         const perPerson = opt.installments > 1
-          ? fmt(opt.installmentValue / paxCount)
-          : fmt(opt.totalValue / paxCount);
+          ? fmt(optInstallmentValue / paxCount)
+          : fmt(optTotalValue / paxCount);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         if (isHighlighted) {
