@@ -163,10 +163,6 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
   doc.rect(0, 0, pw, ph, 'F');
 
-  // Top gold accent
-  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.rect(0, 0, pw, 3, 'F');
-
   let y = 8;
 
   // ─── Header: Logo + Agency Info ─────────────────────────
@@ -185,16 +181,19 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   if (data.agency.email) doc.text(data.agency.email, pw - m, contactY + 4, { align: 'right' });
   if (data.agency.website) doc.text(data.agency.website, pw - m, contactY + 8, { align: 'right' });
 
-  y = 32;
-  drawLine(doc, m, y, pw - m, GOLD, 0.5);
-  y += 6;
+  y = 30;
 
-  // ─── Title: VOUCHER DE VIAGEM ───────────────────────────
+  // ─── Title: VOUCHER (above gold stripe) ─────────────────
   doc.setFont('times', 'bold');
   doc.setFontSize(22);
   setColor(doc, DEEP_BLUE);
-  doc.text('VOUCHER DE VIAGEM', pw / 2, y, { align: 'center' });
-  y += 4;
+  doc.text('VOUCHER', pw / 2, y, { align: 'center' });
+  y += 5;
+
+  // Gold stripe
+  doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.rect(0, y, pw, 3, 'F');
+  y += 7;
 
   // Short ID / Sale date
   doc.setFont('helvetica', 'normal');
@@ -204,11 +203,11 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   if (data.shortId) metaInfo.push(`Ref: ${data.shortId.toUpperCase()}`);
   if (data.saleDate) metaInfo.push(`Data: ${formatDateBR(data.saleDate)}`);
   if (metaInfo.length > 0) {
-    doc.text(metaInfo.join('  |  '), pw / 2, y + 3, { align: 'center' });
+    doc.text(metaInfo.join('  |  '), pw / 2, y + 1, { align: 'center' });
     y += 6;
   }
 
-  y += 4;
+  y += 2;
 
   // ─── Client Info ────────────────────────────────────────
   doc.setFillColor(LIGHT_GRAY[0], LIGHT_GRAY[1], LIGHT_GRAY[2]);
