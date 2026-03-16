@@ -203,6 +203,7 @@ export default function NewSalePage() {
     setTripStartDate((sale as any).trip_start_date || '');
     setTripEndDate((sale as any).trip_end_date || '');
     setDestinationName((sale as any).destination_name || '');
+    setQuoteTitle((sale as any).quote_title || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
     // Load proposal payment options
