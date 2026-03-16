@@ -195,6 +195,7 @@ export default function NewSalePage() {
     setInstallments(sale.installments || 1);
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
+    setMachineFee(Number((sale as any).machine_fee) || 0);
     setCommissionRate(Number(sale.commission_rate) || 0);
     setSaleInterest(Number((sale as any).sale_interest) || 0);
     setOperatorTaxes(Number((sale as any).operator_taxes) || 0);
