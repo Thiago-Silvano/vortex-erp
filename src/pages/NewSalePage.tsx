@@ -997,12 +997,18 @@ export default function NewSalePage() {
     }
 
     if (passengers.length > 0) {
-      if (editSaleId && activeCompany?.id) {
-        await supabase.from('calendar_events').delete().eq('empresa_id', activeCompany.id).ilike('title', `%${clientName}%`);
-      }
       const mainPassenger = passengers.find(p => p.is_main) || passengers[0];
       const eventTitle = `${mainPassenger.first_name} ${mainPassenger.last_name}`.trim() || clientName;
       const eventDate = tripStartDate || saleDate;
+
+      // Remove existing calendar event for this sale to avoid duplicates
+      if (activeCompany?.id) {
+        await supabase.from('calendar_events').delete()
+          .eq('empresa_id', activeCompany.id)
+          .eq('title', eventTitle)
+          .eq('event_type', 'embarque');
+      }
+
       await supabase.from('calendar_events').insert({
         title: eventTitle, event_date: eventDate, passengers: passengers.length,
         empresa_id: activeCompany?.id || null, event_type: 'embarque',
