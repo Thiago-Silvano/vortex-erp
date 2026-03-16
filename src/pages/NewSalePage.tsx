@@ -971,19 +971,25 @@ export default function NewSalePage() {
       await supabase.from('quotes').update({ status: 'concluido' }).eq('id', quoteId);
     }
 
-    if (selectedSupplierIds.length > 0) {
-      // Collect reservation numbers from sale items to populate confirmation_code
-      const reservationNumbers = items
-        .map(i => i.reservation_number)
-        .filter(Boolean)
-        .join(', ');
-
+    // Create individual reservations for each sale item that has a reservation_number
+    const itemsWithReservation = items.filter(i => i.reservation_number && i.reservation_number.trim() !== '');
+    if (itemsWithReservation.length > 0) {
+      await supabase.from('reservations').insert(itemsWithReservation.map(item => ({
+        sale_id: saleId,
+        description: `${item.description} - ${clientName}`,
+        confirmation_code: item.reservation_number || '',
+        status: 'pending',
+        check_in: tripStartDate || null,
+        check_out: tripEndDate || null,
+        empresa_id: activeCompany?.id || null,
+      })));
+    } else if (selectedSupplierIds.length > 0) {
+      // Fallback: create reservations per supplier if no items have reservation numbers
       await supabase.from('reservations').insert(selectedSupplierIds.map(sid => {
         const sup = allSuppliers.find(s => s.id === sid);
         return {
           sale_id: saleId, supplier_id: sid,
           description: `${sup?.name || 'Fornecedor'} - ${clientName}`,
-          confirmation_code: reservationNumbers || '',
           status: 'pending', check_in: tripStartDate || null, check_out: tripEndDate || null,
           empresa_id: activeCompany?.id || null,
         };
