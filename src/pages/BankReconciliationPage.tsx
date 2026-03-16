@@ -441,16 +441,15 @@ export default function BankReconciliationPage() {
     // If reclassifying from reconciled/ignored, undo first
     if (tx.reconciliation_status !== "pending") {
       if (tx.reconciled_with_id) {
-        if (tx.reconciled_with_type === "pagar") {
-          await supabase
-            .from("accounts_payable")
-            .update({ status: "open", payment_date: null } as any)
-            .eq("id", tx.reconciled_with_id);
-        } else if (tx.reconciled_with_type === "receber") {
-          await supabase
-            .from("receivables")
-            .update({ status: "pending", payment_date: null } as any)
-            .eq("id", tx.reconciled_with_id);
+        const ids = tx.reconciled_with_id.split(',').map(s => s.trim()).filter(Boolean);
+        const types = (tx.reconciled_with_type || '').split(',').map(s => s.trim());
+        for (const rid of ids) {
+          if (types.includes('pagar')) {
+            await supabase.from("accounts_payable").update({ status: "open", payment_date: null } as any).eq("id", rid);
+          }
+          if (types.includes('receber')) {
+            await supabase.from("receivables").update({ status: "pending", payment_date: null } as any).eq("id", rid);
+          }
         }
       }
     }
