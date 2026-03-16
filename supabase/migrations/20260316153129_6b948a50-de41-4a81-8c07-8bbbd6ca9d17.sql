@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN quote_title text NULL DEFAULT '';
