@@ -1274,8 +1274,8 @@ export default function NewSalePage() {
           checkIn: h.checkInDate,
           checkOut: h.checkOutDate,
           nights: hotelNights,
-          room: h.roomType || h.room || '',
-          meal: h.mealPlan || h.meal || '',
+          room: h.roomType || '',
+          meal: h.mealPlan || '',
           stars: h.stars,
           amenities: h.amenities,
         });
