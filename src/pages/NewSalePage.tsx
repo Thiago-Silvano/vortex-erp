@@ -126,6 +126,7 @@ export default function NewSalePage() {
   const [installments, setInstallments] = useState(1);
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
+  const [machineFee, setMachineFee] = useState(0);
   const [boletoInterestRate, setBoletoInterestRate] = useState(0);
   const [saleInterest, setSaleInterest] = useState(0);
   const [operatorTaxes, setOperatorTaxes] = useState(0);
@@ -344,6 +345,8 @@ export default function NewSalePage() {
   const paymentMethod = paymentMethods.join(',');
   const hasCredito = paymentMethods.includes('credito');
   const hasBoleto = paymentMethods.includes('boleto');
+  const hasDebito = paymentMethods.includes('debito');
+  const hasMachineFeeMethod = hasCredito || hasDebito || hasBoleto;
 
   useEffect(() => {
     if (!hasCredito || !cardPaymentType) return;
@@ -358,7 +361,7 @@ export default function NewSalePage() {
   const grossProfit = totalSale + saleInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
   const cardFeeValue = hasCredito ? totalSaleWithInterest * (feeRate / 100) : 0;
-  const netProfit = grossProfit - commissionValue - cardFeeValue;
+  const netProfit = grossProfit - commissionValue - cardFeeValue - machineFee;
 
   // No longer need auto-recalculate since we store only discount % now
 
@@ -960,6 +963,16 @@ export default function NewSalePage() {
         empresa_id: activeCompany?.id || null,
       })));
       if (error) console.error('Erro ao gerar contas a pagar fallback:', error);
+    }
+
+    // Machine fee as accounts payable
+    if (machineFee > 0) {
+      await supabase.from('accounts_payable').insert({
+        sale_id: saleId, amount: machineFee,
+        due_date: saleDate, description: `Taxa de máquina - ${clientName}`,
+        status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+        installment_number: 1, total_installments: 1,
+      } as any);
     }
   };
 
@@ -2087,6 +2100,24 @@ export default function NewSalePage() {
                     <p>Valor de cada parcela: <strong>{fmt(receivables[0]?.amount || 0)}</strong></p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {hasMachineFeeMethod && (
+              <div className="space-y-3 pt-4 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div>
+                    <Label>Taxa de Máquina (R$)</Label>
+                    <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
+                    <p className="text-xs text-muted-foreground mt-1">Valor descontado do lucro. Gera contas a pagar automaticamente.</p>
+                  </div>
+                  {machineFee > 0 && (
+                    <>
+                      <div><p className="text-sm text-muted-foreground">Lucro antes da taxa</p><p className="text-sm font-medium">{fmt(netProfit + machineFee)}</p></div>
+                      <div><p className="text-sm text-muted-foreground">Lucro após taxa</p><p className="text-sm font-bold text-destructive">{fmt(netProfit)}</p></div>
+                    </>
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
