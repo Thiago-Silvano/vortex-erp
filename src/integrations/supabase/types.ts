@@ -1973,6 +1973,7 @@ export type Database = {
           installments: number | null
           invoice_url: string | null
           machine_fee: number | null
+          machine_fee_supplier_id: string | null
           net_profit: number | null
           notes: string | null
           operator_taxes: number | null
@@ -2015,6 +2016,7 @@ export type Database = {
           installments?: number | null
           invoice_url?: string | null
           machine_fee?: number | null
+          machine_fee_supplier_id?: string | null
           net_profit?: number | null
           notes?: string | null
           operator_taxes?: number | null
@@ -2057,6 +2059,7 @@ export type Database = {
           installments?: number | null
           invoice_url?: string | null
           machine_fee?: number | null
+          machine_fee_supplier_id?: string | null
           net_profit?: number | null
           notes?: string | null
           operator_taxes?: number | null
@@ -2087,6 +2090,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_machine_fee_supplier_id_fkey"
+            columns: ["machine_fee_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
           {

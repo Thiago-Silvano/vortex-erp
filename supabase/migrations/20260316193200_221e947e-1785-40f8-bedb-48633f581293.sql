@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN machine_fee_supplier_id uuid REFERENCES public.suppliers(id) DEFAULT NULL;
