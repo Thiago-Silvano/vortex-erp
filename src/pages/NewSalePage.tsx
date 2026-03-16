@@ -157,6 +157,7 @@ export default function NewSalePage() {
   const [hasStockKeys, setHasStockKeys] = useState(false);
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [supplierPayments, setSupplierPayments] = useState<SupplierPaymentControl[]>([]);
+  const supplierPaymentsLoadedRef = useRef(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
@@ -252,7 +253,57 @@ export default function NewSalePage() {
     }
 
     const { data: saleSups } = await supabase.from('sale_suppliers').select('supplier_id').eq('sale_id', id);
-    if (saleSups) setSelectedSupplierIds(saleSups.map(s => s.supplier_id));
+    const supplierIds = saleSups ? saleSups.map(s => s.supplier_id) : [];
+    setSelectedSupplierIds(supplierIds);
+
+    // Load accounts_payable to reconstruct supplier payment controls
+    const { data: payables } = await supabase.from('accounts_payable').select('*').eq('sale_id', id).order('installment_number');
+    if (payables && payables.length > 0) {
+      // Group payables by supplier_id (null supplier_id = machine fee / commission, skip)
+      const bySupplier: Record<string, typeof payables> = {};
+      for (const p of payables) {
+        if (!p.supplier_id) continue;
+        if (!bySupplier[p.supplier_id]) bySupplier[p.supplier_id] = [];
+        bySupplier[p.supplier_id].push(p);
+      }
+      const loadedPayments: SupplierPaymentControl[] = [];
+      for (const sid of supplierIds) {
+        const records = bySupplier[sid];
+        if (records && records.length > 0) {
+          const totalAmount = records.reduce((s, r) => s + Number(r.amount || 0), 0);
+          const totalInstallments = records[0].total_installments || 1;
+          const desc = records[0].description || 'Pagamento de operadoras';
+          // Detect payment method from description
+          let method: 'pix' | 'faturado' | 'credito' = 'pix';
+          if (desc.includes('Crédito')) method = 'credito';
+          else if (desc.includes('Faturado')) method = 'faturado';
+          loadedPayments.push({
+            supplier_id: sid,
+            payment_method: method,
+            payment_date: records[0].due_date || format(new Date(), 'yyyy-MM-dd'),
+            installments: totalInstallments,
+            installment_dates: records.map(r => ({ date: r.due_date || '', amount: Number(r.amount || 0) })),
+            amount: totalAmount,
+            cost_center_id: records[0].cost_center_id || undefined,
+            description: desc.replace(/ - .*$/, ''),
+          });
+        } else {
+          // Supplier with no payable records yet
+          const costPerSupplier = supplierIds.length > 0 ? totalCost / supplierIds.length : 0;
+          loadedPayments.push({
+            supplier_id: sid,
+            payment_method: 'pix',
+            payment_date: format(new Date(), 'yyyy-MM-dd'),
+            installments: 1,
+            installment_dates: [{ date: format(new Date(), 'yyyy-MM-dd'), amount: costPerSupplier }],
+            amount: costPerSupplier,
+            description: 'Pagamento de operadoras',
+          });
+        }
+      }
+      setSupplierPayments(loadedPayments);
+      supplierPaymentsLoadedRef.current = true;
+    }
 
     const { data: recs } = await supabase.from('receivables').select('*').eq('sale_id', id).order('installment_number');
     if (recs) setReceivables(recs.map(r => ({ installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount), cost_center_id: r.cost_center_id || undefined, payment_method: r.payment_method || undefined })));
@@ -420,18 +471,19 @@ export default function NewSalePage() {
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
+    // Skip the first sync if we just loaded data from the database
+    if (supplierPaymentsLoadedRef.current) {
+      supplierPaymentsLoadedRef.current = false;
+      return;
+    }
     setSupplierPayments(prev => {
       const today = format(new Date(), 'yyyy-MM-dd');
       const costPerSupplier = selectedSupplierIds.length > 0 ? totalCost / selectedSupplierIds.length : 0;
       return selectedSupplierIds.map(sid => {
         const existing = prev.find(sp => sp.supplier_id === sid);
         if (existing) {
-          // Update amount but keep payment config
-          const newAmount = costPerSupplier;
-          const updatedDates = existing.payment_method === 'credito'
-            ? existing.installment_dates.map(d => ({ ...d, amount: newAmount / (existing.installments || 1) }))
-            : existing.installment_dates;
-          return { ...existing, amount: newAmount, installment_dates: updatedDates };
+          // Only update amount if it hasn't been manually edited (check if it matches old cost split)
+          return existing;
         }
         return {
           supplier_id: sid,
@@ -591,6 +643,8 @@ export default function NewSalePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== 'application/pdf') { toast.error('Apenas arquivos PDF são aceitos'); return; }
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) { toast.error('Arquivo muito grande. Máximo permitido: 10MB'); return; }
     setUploadingInvoice(true);
     const ext = file.name.split('.').pop();
     const fileName = `invoices/${crypto.randomUUID()}.${ext}`;
