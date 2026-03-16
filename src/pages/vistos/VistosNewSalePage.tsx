@@ -365,8 +365,7 @@ export default function VistosNewSalePage() {
       await supabase.from('visa_applicants').delete().eq('visa_sale_id', editSaleId);
       await supabase.from('visa_sale_payments').delete().eq('visa_sale_id', editSaleId);
       await (supabase.from('visa_sale_items' as any) as any).delete().eq('visa_sale_id', editSaleId);
-      await supabase.from('receivables').delete().eq('visa_sale_id', editSaleId);
-      await (supabase.from('accounts_payable') as any).delete().eq('sale_id', editSaleId).eq('origin_type', 'visa_sale');
+      // Receivables and AP will be handled with smart upsert below
     } else {
       const { data: newSale, error } = await supabase.from('visa_sales').insert(salePayload).select('id').single();
       if (error || !newSale) { toast.error('Erro ao salvar venda.'); setSaving(false); return; }
