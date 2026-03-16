@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Search, Plus, Trash2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -37,6 +38,8 @@ interface SaleRow {
 export default function SalesPage() {
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [search, setSearch] = useState('');
+  const [showVendas, setShowVendas] = useState(true);
+  const [showCotacoes, setShowCotacoes] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
   const [isMaster, setIsMaster] = useState(false);
   const navigate = useNavigate();
@@ -115,7 +118,12 @@ export default function SalesPage() {
   };
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const filtered = sales.filter(s => normalize(s.client_name).includes(normalize(search)));
+  const filtered = sales
+    .filter(s => {
+      if (!showVendas && s.status === 'active') return false;
+      if (!showCotacoes && s.status === 'draft') return false;
+      return normalize(s.client_name).includes(normalize(search));
+    });
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -134,9 +142,21 @@ export default function SalesPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Vendas & Cotações</h1>
           <Button onClick={() => navigate('/sales/new')} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Nova Cotação</Button>
         </div>
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Buscar por cliente..." value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Buscar por cliente..." value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox checked={showVendas} onCheckedChange={(v) => setShowVendas(!!v)} />
+              <Badge variant="default" className="cursor-pointer">Emitidas</Badge>
+            </label>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <Checkbox checked={showCotacoes} onCheckedChange={(v) => setShowCotacoes(!!v)} />
+              <Badge variant="outline" className="cursor-pointer">Cotações</Badge>
+            </label>
+          </div>
         </div>
 
         {/* Desktop Table */}
