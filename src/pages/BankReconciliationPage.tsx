@@ -103,17 +103,27 @@ export default function BankReconciliationPage() {
       draftIds = (drafts || []).map(d => d.id);
     }
 
+    // Get reconciled title IDs from bank transactions
+    const { data: reconciledTxs } = await supabase.from('bank_transactions')
+      .select('reconciled_with_id')
+      .eq('empresa_id', activeCompany.id)
+      .eq('reconciliation_status', 'reconciled')
+      .not('reconciled_with_id', 'is', null);
+    const reconciledIds = new Set((reconciledTxs || []).map(t => t.reconciled_with_id).filter(Boolean));
+
     const payables: FinancialTitle[] = ((payRes.data as any[]) || [])
       .filter(p => !p.sale_id || !draftIds.includes(p.sale_id))
       .map(p => ({
         id: p.id, type: 'payable', description: p.description || '', amount: Number(p.amount) || 0,
         due_date: p.due_date || '', status: p.status, supplier_name: '',
+        is_reconciled: reconciledIds.has(p.id),
       }));
     const receivables: FinancialTitle[] = ((recRes.data as any[]) || [])
       .filter(r => !r.sale_id || !draftIds.includes(r.sale_id))
       .map(r => ({
         id: r.id, type: 'receivable', description: r.description || '', amount: Number(r.amount) || 0,
         due_date: r.due_date || '', status: r.status, client_name: r.client_name || '',
+        is_reconciled: reconciledIds.has(r.id),
       }));
     setTitles([...payables, ...receivables]);
     setLoading(false);
