@@ -363,7 +363,7 @@ export default function NewSalePage() {
   // No longer need auto-recalculate since we store only discount % now
 
   useEffect(() => {
-    if (paymentMethod === 'boleto' && installments > 1 && boletoInterestRate > 0) {
+    if (hasBoleto && installments > 1 && boletoInterestRate > 0) {
       const monthlyRate = boletoInterestRate / 100;
       const pmt = totalSaleWithInterest * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
       const recs: Receivable[] = [];
@@ -376,7 +376,7 @@ export default function NewSalePage() {
       setReceivables(recs);
       return;
     }
-    if (paymentMethod === 'boleto' && installments > 1) {
+    if (hasBoleto && installments > 1) {
       const perInstallment = totalSaleWithInterest / installments;
       const recs: Receivable[] = [];
       const baseDate = new Date(saleDate || new Date());
@@ -388,7 +388,7 @@ export default function NewSalePage() {
       setReceivables(recs);
       return;
     }
-    if (paymentMethod !== 'credito') {
+    if (!hasCredito) {
       setReceivables([{ installment_number: 1, due_date: '', amount: totalSaleWithInterest }]);
       return;
     }
@@ -401,7 +401,7 @@ export default function NewSalePage() {
       recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: perInstallment });
     }
     setReceivables(recs);
-  }, [installments, paymentMethod, totalSaleWithInterest, boletoInterestRate, saleDate]);
+  }, [installments, paymentMethods, totalSaleWithInterest, boletoInterestRate, saleDate, hasCredito, hasBoleto]);
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
