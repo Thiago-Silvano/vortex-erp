@@ -365,18 +365,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </span>
             ) : null}
 
-            {/* Search bar - center */}
-            {!isMobile && (
-              <div className="flex-1 max-w-md mx-auto">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Pesquisar clientes, vendas, serviços..."
-                    className="pl-9 h-9 bg-secondary/50 border-border/40 rounded-lg text-sm placeholder:text-muted-foreground/60"
-                  />
-                </div>
-              </div>
-            )}
 
             {/* Right actions */}
             <div className="ml-auto flex items-center gap-2">
