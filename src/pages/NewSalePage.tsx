@@ -2048,12 +2048,42 @@ export default function NewSalePage() {
         </Card>
         )}
 
-        {/* Controle de Pagamentos ao Fornecedor - only in sale mode */}
-        {!isQuoteMode && selectedSupplierIds.length > 0 && (
+        {/* Controle de Pagamentos - only in sale mode */}
+        {!isQuoteMode && (
           <Card>
-            <CardHeader><CardTitle className="text-base">💰 Controle de Pagamentos ao Fornecedor</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">💰 Controle de Pagamentos</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              {supplierPayments.map(sp => {
+              {/* Seller commission info */}
+              {sellerId && sellerId !== 'none' && (() => {
+                const seller = allSellers.find(s => s.id === sellerId);
+                if (!seller || seller.commission_type === 'none') return null;
+                const pct = seller.commission_percentage || 0;
+                const sellerCommValue = (() => {
+                  if (seller.commission_type === 'sales_percentage') {
+                    const base = seller.commission_base === 'net_received' ? totalSaleWithInterest - cardFeeValue
+                      : seller.commission_base === 'sale_profit' ? grossProfit : totalSaleWithInterest;
+                    return base * (pct / 100);
+                  } else if (seller.commission_type === 'profit_percentage') {
+                    return grossProfit * (pct / 100);
+                  } else if (seller.commission_type === 'company_profit_percentage') {
+                    return commissionValue * (pct / 100);
+                  }
+                  return grossProfit * (pct / 100);
+                })();
+                return (
+                  <div className="border rounded-lg p-4 bg-muted/30 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-sm">Comissão - {seller.full_name}</p>
+                      <Badge variant="outline" className="text-xs">{pct}%</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Valor estimado: <span className="font-semibold text-foreground">{fmt(sellerCommValue)}</span></p>
+                    <p className="text-xs text-muted-foreground">Será gerado automaticamente no Contas a Pagar ao salvar a venda</p>
+                  </div>
+                );
+              })()}
+
+              {/* Supplier payments */}
+              {selectedSupplierIds.length > 0 && supplierPayments.map(sp => {
                 const sup = allSuppliers.find(s => s.id === sp.supplier_id);
                 return (
                   <div key={sp.supplier_id} className="border rounded-lg p-4 space-y-3">
@@ -2070,6 +2100,17 @@ export default function NewSalePage() {
                             <SelectItem value="pix">Pix</SelectItem>
                             <SelectItem value="faturado">Faturado</SelectItem>
                             <SelectItem value="credito">Cartão de Crédito</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs">Centro de Custo</Label>
+                        <Select value={sp.cost_center_id || 'none'} onValueChange={v => setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, cost_center_id: v === 'none' ? undefined : v } : s))}>
+                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
@@ -2133,6 +2174,10 @@ export default function NewSalePage() {
                   </div>
                 );
               })}
+
+              {selectedSupplierIds.length === 0 && (!sellerId || sellerId === 'none' || allSellers.find(s => s.id === sellerId)?.commission_type === 'none') && (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum fornecedor ou comissão configurada</p>
+              )}
             </CardContent>
           </Card>
         )}
