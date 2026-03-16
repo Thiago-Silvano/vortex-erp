@@ -156,6 +156,27 @@ export default function DS160PublicPage() {
     if (error) {
       toast.error('Erro ao enviar formulário.');
     } else {
+      // Create notification for the ERP users
+      if (formRecord) {
+        const clientName = (await supabase.from('clients').select('full_name').eq('id', formRecord.client_id).single()).data?.full_name || 'Cliente';
+        
+        // Get all users of this company to notify
+        const { data: companyUsers } = await (supabase.from('user_permissions' as any).select('user_id').eq('empresa_id', formRecord.empresa_id) as any);
+        const userIds = (companyUsers || []).map((u: any) => u.user_id).filter(Boolean);
+        
+        if (userIds.length > 0) {
+          const notifRows = userIds.map((uid: string) => ({
+            empresa_id: formRecord.empresa_id,
+            user_id: uid,
+            type: 'ds160_submitted',
+            title: 'DS-160 preenchido',
+            message: `${clientName} concluiu o formulário DS-160`,
+            reference_id: formId,
+            reference_type: 'ds160_form',
+          }));
+          await (supabase.from('notifications' as any).insert(notifRows) as any);
+        }
+      }
       setSubmitted(true);
     }
   };

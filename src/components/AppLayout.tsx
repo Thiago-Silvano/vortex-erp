@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import PhotoCaptureModal from '@/components/PhotoCaptureModal';
+import NotificationBell from '@/components/NotificationBell';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 
@@ -411,13 +412,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-lg border-border/50"
-                      >
-                        <Bell className="h-4 w-4" />
-                      </Button>
+                      <div>
+                        <NotificationBell />
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent>Notificações</TooltipContent>
                   </Tooltip>
