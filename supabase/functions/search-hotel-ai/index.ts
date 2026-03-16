@@ -152,50 +152,7 @@ Be accurate and factual based on your knowledge of this hotel's TripAdvisor pres
       }
     }
 
-    // Generate 10 hotel images in parallel (2 batches of 5 to avoid rate limits)
-    const images: string[] = [];
-    const imagePrompts = [
-      `A stunning professional photograph of the exterior facade of ${hotelName}${location ? ` in ${location}` : ''}, luxury hotel photography, golden hour, high resolution, 16:9`,
-      `A beautiful interior lobby photograph of ${hotelName}, luxury hotel interior design, elegant lighting, professional photography, 16:9`,
-      `A gorgeous swimming pool area at ${hotelName}, resort pool photography, crystal clear water, tropical setting, professional travel photography, 16:9`,
-      `A luxurious hotel room or suite at ${hotelName}, interior design photography, king bed, elegant decor, natural light, 16:9`,
-      `A beautiful restaurant or dining area at ${hotelName}, fine dining, elegant atmosphere, professional food photography setting, 16:9`,
-      `An aerial panoramic view of ${hotelName}${location ? ` in ${location}` : ''}, drone photography, showing the full property and surroundings, 16:9`,
-      `A relaxing spa and wellness area at ${hotelName}, tranquil atmosphere, luxury spa photography, candles, natural elements, 16:9`,
-      `A stunning sunset view from ${hotelName}${location ? ` in ${location}` : ''}, breathtaking scenery, professional travel photography, 16:9`,
-      `A beautiful garden or outdoor lounge area at ${hotelName}, landscaped gardens, tropical plants, professional photography, 16:9`,
-      `A gorgeous bar or entertainment area at ${hotelName}, cocktail bar, ambient lighting, luxury nightlife, professional photography, 16:9`,
-    ];
-
-    for (let batch = 0; batch < 2; batch++) {
-      const batchPrompts = imagePrompts.slice(batch * 5, (batch + 1) * 5);
-      const batchResults = await Promise.allSettled(
-        batchPrompts.map(async (imgPrompt) => {
-          const imgResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'google/gemini-3.1-flash-image-preview',
-              messages: [{ role: 'user', content: imgPrompt }],
-              modalities: ['image', 'text'],
-            }),
-          });
-          if (!imgResponse.ok) return null;
-          const imgData = await imgResponse.json();
-          return imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url || null;
-        })
-      );
-      for (const r of batchResults) {
-        if (r.status === 'fulfilled' && r.value) {
-          images.push(r.value);
-        }
-      }
-    }
-
-    return new Response(JSON.stringify({ success: true, data: hotelInfo, images }), {
+    return new Response(JSON.stringify({ success: true, data: hotelInfo, images: [] }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
