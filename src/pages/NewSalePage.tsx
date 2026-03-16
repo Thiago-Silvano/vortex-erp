@@ -750,7 +750,7 @@ export default function NewSalePage() {
         client_name: clientName,
         sale_date: saleDate,
         payment_method: paymentMethod,
-        installments: paymentMethod === 'credito' ? installments : 1,
+        installments: hasCredito ? installments : 1,
         card_charge_type: '',
         card_payment_type: paymentMethod === 'credito' ? cardPaymentType : '',
         card_fee_rate: paymentMethod === 'credito' ? feeRate : 0,
