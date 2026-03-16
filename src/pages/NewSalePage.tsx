@@ -2229,11 +2229,14 @@ export default function NewSalePage() {
           <CardHeader>
             <CardTitle className="text-base">Controle de Recebíveis</CardTitle>
             {(() => {
-              const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
-              const diff = totalSaleWithInterest - totalReceivables;
-              return (
-                <div className="flex items-center gap-4 text-sm mt-1">
-                  <span className="text-muted-foreground">Total da Venda: <strong className="text-foreground">{fmt(totalSaleWithInterest)}</strong></span>
+               const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
+               const expectedReceivables = totalSaleWithInterest - machineFee;
+               const diff = expectedReceivables - totalReceivables;
+               return (
+                 <div className="flex items-center gap-4 text-sm mt-1">
+                   <span className="text-muted-foreground">Total da Venda: <strong className="text-foreground">{fmt(totalSaleWithInterest)}</strong></span>
+                   {machineFee > 0 && <span className="text-muted-foreground">Taxa Máquina: <strong className="text-foreground">-{fmt(machineFee)}</strong></span>}
+                   <span className="text-muted-foreground">A Receber: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
                   <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
                   {Math.abs(diff) > 0.01 ? (
                     <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
