@@ -221,12 +221,46 @@ export default function ClientsPage() {
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>CPF</Label>
-                  <Input
-                    value={form.cpf}
-                    onChange={e => setForm(p => ({ ...p, cpf: maskCpf(e.target.value) }))}
-                    placeholder="000.000.000-00"
-                  />
+                  <Label>CPF / CNPJ</Label>
+                  <div className="flex gap-1">
+                    <Input
+                      value={form.cpf}
+                      onChange={e => setForm(p => ({ ...p, cpf: maskCpfCnpj(e.target.value) }))}
+                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      className="flex-1"
+                    />
+                    {isCnpj(form.cpf) && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        disabled={cnpjLoading}
+                        onClick={async () => {
+                          setCnpjLoading(true);
+                          const data = await fetchCnpjData(form.cpf);
+                          setCnpjLoading(false);
+                          if (!data) { toast.error('CNPJ não encontrado'); return; }
+                          setForm(p => ({
+                            ...p,
+                            full_name: data.nome_fantasia || data.razao_social || p.full_name,
+                            email: data.email || p.email,
+                            phone: data.telefone || p.phone,
+                            cep: data.cep || p.cep,
+                            address: data.logradouro || p.address,
+                            address_number: data.numero || p.address_number,
+                            complement: data.complemento || p.complement,
+                            neighborhood: data.bairro || p.neighborhood,
+                            city: data.municipio || p.city,
+                            state: data.uf || p.state,
+                          }));
+                          toast.success('Dados do CNPJ preenchidos!');
+                        }}
+                        title="Buscar dados do CNPJ"
+                      >
+                        {cnpjLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <Label>Data de nascimento</Label>
