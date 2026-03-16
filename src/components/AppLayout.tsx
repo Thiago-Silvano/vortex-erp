@@ -13,6 +13,7 @@ import {
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
   Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
   Mail, FileEdit, MessageCircle, Search, Bell, User, Camera, Landmark, Link2, FileSpreadsheet,
+  Palette,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
