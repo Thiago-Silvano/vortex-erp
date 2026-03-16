@@ -140,6 +140,15 @@ export default function EmailInboxPage() {
     if (hasSettings) syncEmails();
   }, [userId, hasSettings]);
 
+  // Auto-sync every 60 seconds, even when tab is not focused
+  useEffect(() => {
+    if (!userId || !hasSettings) return;
+    const interval = setInterval(() => {
+      syncEmails();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [userId, hasSettings]);
+
   const filteredEmails = useMemo(() => {
     if (!search) return emails;
     const q = search.toLowerCase();
