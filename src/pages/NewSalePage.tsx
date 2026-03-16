@@ -126,6 +126,7 @@ export default function NewSalePage() {
   const [installments, setInstallments] = useState(1);
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
+  const [machineFee, setMachineFee] = useState(0);
   const [boletoInterestRate, setBoletoInterestRate] = useState(0);
   const [saleInterest, setSaleInterest] = useState(0);
   const [operatorTaxes, setOperatorTaxes] = useState(0);
