@@ -471,18 +471,19 @@ export default function NewSalePage() {
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
+    // Skip the first sync if we just loaded data from the database
+    if (supplierPaymentsLoadedRef.current) {
+      supplierPaymentsLoadedRef.current = false;
+      return;
+    }
     setSupplierPayments(prev => {
       const today = format(new Date(), 'yyyy-MM-dd');
       const costPerSupplier = selectedSupplierIds.length > 0 ? totalCost / selectedSupplierIds.length : 0;
       return selectedSupplierIds.map(sid => {
         const existing = prev.find(sp => sp.supplier_id === sid);
         if (existing) {
-          // Update amount but keep payment config
-          const newAmount = costPerSupplier;
-          const updatedDates = existing.payment_method === 'credito'
-            ? existing.installment_dates.map(d => ({ ...d, amount: newAmount / (existing.installments || 1) }))
-            : existing.installment_dates;
-          return { ...existing, amount: newAmount, installment_dates: updatedDates };
+          // Only update amount if it hasn't been manually edited (check if it matches old cost split)
+          return existing;
         }
         return {
           supplier_id: sid,
