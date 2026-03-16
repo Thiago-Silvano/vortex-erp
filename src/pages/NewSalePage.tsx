@@ -1898,7 +1898,8 @@ export default function NewSalePage() {
         </Card>
         )}
 
-        {/* Proposal Payment Options */}
+        {/* Proposal Payment Options - only in draft/quote mode */}
+        {isQuoteMode && (
         <Card>
           <CardHeader><CardTitle className="text-base">💳 Opções de Pagamento para Proposta</CardTitle></CardHeader>
           <CardContent className="space-y-3">
