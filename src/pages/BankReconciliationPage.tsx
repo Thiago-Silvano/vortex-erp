@@ -768,21 +768,34 @@ export default function BankReconciliationPage() {
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Títulos Financeiros
+                  {selectedTitleIds.size > 0 && (
+                    <Badge variant="secondary" className="text-[10px] ml-2">
+                      {selectedTitleIds.size} selecionado(s) = {fmt(selectedTitlesTotal)}
+                    </Badge>
+                  )}
                 </CardTitle>
-                <div className="relative mt-2">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                  <Input
-                    value={searchTitle}
-                    onChange={(e) => setSearchTitle(e.target.value)}
-                    placeholder="Buscar título..."
-                    className="h-8 text-xs pl-7"
-                  />
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <Input
+                      value={searchTitle}
+                      onChange={(e) => setSearchTitle(e.target.value)}
+                      placeholder="Buscar título..."
+                      className="h-8 text-xs pl-7"
+                    />
+                  </div>
+                  {selectedTitleIds.size > 0 && (
+                    <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setSelectedTitleIds(new Set())}>
+                      Limpar
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="p-0 max-h-[500px] overflow-y-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="text-xs w-8"></TableHead>
                       <TableHead className="text-xs">Tipo</TableHead>
                       <TableHead className="text-xs">Descrição</TableHead>
                       <TableHead className="text-xs">Vencimento</TableHead>
@@ -793,13 +806,21 @@ export default function BankReconciliationPage() {
                   <TableBody>
                     {filteredTitles.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-xs">
                           Nenhum título encontrado
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredTitles.map((t) => (
-                        <TableRow key={t.id}>
+                        <TableRow key={t.id} className={selectedTitleIds.has(t.id) ? "bg-primary/5" : ""}>
+                          <TableCell className="px-2">
+                            {!t.is_reconciled && (
+                              <Checkbox
+                                checked={selectedTitleIds.has(t.id)}
+                                onCheckedChange={() => toggleTitleSelection(t.id)}
+                              />
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Badge
                               variant="outline"
