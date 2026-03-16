@@ -879,15 +879,14 @@ export default function NewSalePage() {
     try {
       const { payload, userEmail } = await buildSalePayload('draft');
       if (editSaleId) {
+        // Clean up any existing financial records (in case it was previously converted)
         await supabase.from('receivables').delete().eq('sale_id', editSaleId);
         await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
       }
       const saleId = await saveSaleCore(payload, userEmail);
       if (!saleId) { setSavingDraft(false); return; }
       if (!editSaleId) setEditSaleId(saleId);
-      // Regenerate financial records for draft too
-      await generateReceivablesForSale(saleId);
-      await generatePayablesForSale(saleId);
+      // Drafts (cotações) do NOT generate financial records
       toast.success('Rascunho salvo!');
     } catch (err) {
       toast.error('Erro ao salvar rascunho');
@@ -908,9 +907,7 @@ export default function NewSalePage() {
       const saleId = await saveSaleCore(payload, userEmail);
       if (saleId) {
         if (!editSaleId) setEditSaleId(saleId);
-        // Regenerate financial records
-        await generateReceivablesForSale(saleId);
-        await generatePayablesForSale(saleId);
+        // Drafts (cotações) do NOT generate financial records
         toast.success('Rascunho salvo automaticamente.');
       }
     } catch { /* silent */ }
