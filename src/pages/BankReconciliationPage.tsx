@@ -575,6 +575,11 @@ export default function BankReconciliationPage() {
                           {t.due_date ? new Date(t.due_date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
                         </TableCell>
                         <TableCell className="text-xs text-right font-medium">{fmt(t.amount)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={`text-[10px] ${t.is_reconciled ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
+                            {t.is_reconciled ? 'Conciliado' : 'Pendente'}
+                          </Badge>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
