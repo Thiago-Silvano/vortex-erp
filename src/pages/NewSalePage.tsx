@@ -907,9 +907,7 @@ export default function NewSalePage() {
       const saleId = await saveSaleCore(payload, userEmail);
       if (saleId) {
         if (!editSaleId) setEditSaleId(saleId);
-        // Regenerate financial records
-        await generateReceivablesForSale(saleId);
-        await generatePayablesForSale(saleId);
+        // Drafts (cotações) do NOT generate financial records
         toast.success('Rascunho salvo automaticamente.');
       }
     } catch { /* silent */ }
