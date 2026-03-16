@@ -53,13 +53,24 @@ Deno.serve(async (req) => {
       const fetchOptions: RequestInit = {
         method: normalizedMethod,
         headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(15000),
       };
 
       if (normalizedMethod !== "GET" && requestPayload !== undefined) {
         fetchOptions.body = JSON.stringify(requestPayload);
       }
 
-      const response = await fetch(targetUrl, fetchOptions);
+      let response: Response;
+      try {
+        response = await fetch(targetUrl, fetchOptions);
+      } catch (fetchErr) {
+        const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+        if (msg.includes("timed out") || msg.includes("aborted")) {
+          throw new Error(`Servidor WhatsApp indisponível (timeout ao conectar em ${server_url}). Verifique se o servidor está online e acessível.`);
+        }
+        throw fetchErr;
+      }
+
       const responseText = await response.text();
 
       let parsed: unknown;
