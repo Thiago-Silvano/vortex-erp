@@ -37,6 +37,7 @@ interface SaleItem {
   service_catalog_id?: string;
   cost_center_id?: string;
   metadata?: ServiceMetadata;
+  reservation_number?: string;
 }
 
 interface ServiceCatalogOption {
