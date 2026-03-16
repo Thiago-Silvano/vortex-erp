@@ -538,14 +538,19 @@ export default function PropostaPublicPage() {
                                 por pessoa
                               </p>
                             )}
+                            {showPerPassenger && passengersCount > 1 && opt.installments > 1 && (
+                              <p className="text-sm font-semibold mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.7)' : '#555' }}>
+                                {fmt(displayTotal)} por pessoa
+                              </p>
+                            )}
                             {showPerPassenger && passengersCount > 1 && (
                               <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.25)' : '#ccc' }}>
-                                Total: {fmt(optTotal)}
+                                Total geral: {fmt(optTotal)}
                               </p>
                             )}
                             {!showPerPassenger && passengersCount > 1 && (
                               <p className="text-xs mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.3)' : '#bbb' }}>
-                                {fmt(displayTotal / passengersCount)} /pessoa
+                                {fmt(optTotal / passengersCount)} /pessoa
                               </p>
                             )}
                           </>
