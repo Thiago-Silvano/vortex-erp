@@ -1893,6 +1893,7 @@ export type Database = {
           seller_id: string | null
           short_id: string
           show_individual_values: boolean
+          show_per_passenger: boolean | null
           status: string
           total_sale: number | null
           total_supplier_cost: number | null
@@ -1932,6 +1933,7 @@ export type Database = {
           seller_id?: string | null
           short_id?: string
           show_individual_values?: boolean
+          show_per_passenger?: boolean | null
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null
@@ -1971,6 +1973,7 @@ export type Database = {
           seller_id?: string | null
           short_id?: string
           show_individual_values?: boolean
+          show_per_passenger?: boolean | null
           status?: string
           total_sale?: number | null
           total_supplier_cost?: number | null
