@@ -127,6 +127,7 @@ export default function NewSalePage() {
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
   const [machineFee, setMachineFee] = useState(0);
+  const [machineFeeSupplierId, setMachineFeeSupplierId] = useState<string>('');
   const [boletoInterestRate, setBoletoInterestRate] = useState(0);
   const [saleInterest, setSaleInterest] = useState(0);
   const [operatorTaxes, setOperatorTaxes] = useState(0);
@@ -196,6 +197,7 @@ export default function NewSalePage() {
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setMachineFee(Number((sale as any).machine_fee) || 0);
+    setMachineFeeSupplierId((sale as any).machine_fee_supplier_id || '');
     setCommissionRate(Number(sale.commission_rate) || 0);
     setSaleInterest(Number((sale as any).sale_interest) || 0);
     setOperatorTaxes(Number((sale as any).operator_taxes) || 0);
@@ -563,6 +565,13 @@ export default function NewSalePage() {
     }));
   };
 
+  // Auto-select Safra Pay supplier for machine fee
+  useEffect(() => {
+    if (hasMachineFeeMethod && !machineFeeSupplierId && allSuppliers.length > 0) {
+      const safra = allSuppliers.find(s => s.name.toLowerCase().includes('safra pay') || s.name.toLowerCase().includes('safrapay'));
+      if (safra) setMachineFeeSupplierId(safra.id);
+    }
+  }, [hasMachineFeeMethod, allSuppliers, machineFeeSupplierId]);
 
   const updateItem = (idx: number, field: keyof SaleItem, value: any) => {
     setItems(prev => prev.map((item, i) => {
@@ -844,6 +853,7 @@ export default function NewSalePage() {
         destination_image_url: destinationImageUrl || null,
         sale_interest: saleInterest,
         machine_fee: machineFee,
+        machine_fee_supplier_id: machineFeeSupplierId || null,
         operator_taxes: operatorTaxes,
         passengers_count: passengersCount,
         trip_nights: tripNights,
@@ -1025,6 +1035,7 @@ export default function NewSalePage() {
     if (machineFee > 0) {
       await supabase.from('accounts_payable').insert({
         sale_id: saleId, amount: machineFee,
+        supplier_id: machineFeeSupplierId || null,
         due_date: saleDate, description: `Taxa de máquina - ${clientName}`,
         status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
         installment_number: 1, total_installments: 1,
@@ -2161,11 +2172,21 @@ export default function NewSalePage() {
 
             {hasMachineFeeMethod && (
               <div className="space-y-3 pt-4 border-t">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                   <div>
                     <Label>Taxa de Máquina (R$)</Label>
                     <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
                     <p className="text-xs text-muted-foreground mt-1">Valor descontado do lucro. Gera contas a pagar automaticamente.</p>
+                  </div>
+                  <div>
+                    <Label>Fornecedor da Taxa</Label>
+                    <Select value={machineFeeSupplierId || 'none'} onValueChange={v => setMachineFeeSupplierId(v === 'none' ? '' : v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {allSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   {machineFee > 0 && (
                     <>
