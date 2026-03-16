@@ -227,13 +227,18 @@ export default function PropostaPublicPage() {
   const nights = (sale as any).trip_nights || quoteData?.trip_nights || 0;
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
-  const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).map((opt: ProposalPaymentOption) => {
-    // Recalculate payment options based on filtered items total
-    const optTotal = totalSale;
-    const perInstallment = opt.installments > 0 ? Math.round((optTotal / opt.installments) * 100) / 100 : optTotal;
-    return { ...opt, totalValue: optTotal, installmentValue: perInstallment };
-  });
+  const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).filter((opt: any) => opt.enabled !== false);
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
+
+  // Helper to compute option total/installment from discount
+  const getOptTotal = (opt: ProposalPaymentOption) => {
+    const discount = opt.discountPercent || 0;
+    return Math.round(totalSale * (1 - discount / 100) * 100) / 100;
+  };
+  const getOptInstallment = (opt: ProposalPaymentOption) => {
+    const optTotal = getOptTotal(opt);
+    return opt.installments > 0 ? Math.round((optTotal / opt.installments) * 100) / 100 : optTotal;
+  };
 
   const methodLabels: Record<string, string> = {
     pix: 'PIX', credito: 'Cartão de Crédito', boleto: 'Boleto Bancário', dinheiro: 'Dinheiro',
