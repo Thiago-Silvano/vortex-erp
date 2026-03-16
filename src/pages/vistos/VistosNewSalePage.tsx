@@ -108,7 +108,7 @@ export default function VistosNewSalePage() {
 
   useEffect(() => {
     if (!activeCompany?.id) return;
-    supabase.from('visa_products').select('id, name, price, is_supplier_fee, supplier_id, cost_center_id').eq('empresa_id', activeCompany.id).order('name')
+    supabase.from('visa_products').select('id, name, price, is_supplier_fee, supplier_id, cost_center_id, average_days').eq('empresa_id', activeCompany.id).order('name')
       .then(({ data }) => { if (data) setProducts(data as Product[]); });
     supabase.from('clients').select('id, full_name, phone, email').eq('empresa_id', activeCompany.id).order('full_name')
       .then(({ data }) => { if (data) setAllClients(data); });
