@@ -72,6 +72,8 @@ export default function VistosNewSalePage() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
+  const [allSuppliers, setAllSuppliers] = useState<{ id: string; name: string }[]>([]);
+  const [allCostCenters, setAllCostCenters] = useState<{ id: string; name: string }[]>([]);
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
