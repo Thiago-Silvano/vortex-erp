@@ -42,14 +42,17 @@ export async function fetchChats(serverUrl: string) {
 }
 
 export async function fetchMessages(serverUrl: string, number: string) {
-  // Ensure we use the whatsapp ID format with @c.us suffix
   const chatId = formatChatId(number);
   return proxyRequest(serverUrl, `/messages/${encodeURIComponent(chatId)}`);
 }
 
-export async function sendMessage(serverUrl: string, number: string, message: string) {
+export async function sendMessage(serverUrl: string, number: string, message: string, quotedMsgId?: string) {
   const chatId = formatChatId(number);
-  return proxyRequest(serverUrl, '/send', 'POST', { number: chatId, message });
+  const payload: any = { number: chatId, message };
+  if (quotedMsgId) {
+    payload.quotedMsgId = quotedMsgId;
+  }
+  return proxyRequest(serverUrl, '/send', 'POST', payload);
 }
 
 export async function sendMedia(serverUrl: string, number: string, file: File, caption?: string) {
@@ -64,13 +67,64 @@ export async function sendMedia(serverUrl: string, number: string, file: File, c
   });
 }
 
+export async function fetchMedia(serverUrl: string, msgId: string): Promise<{ data: string; mimetype: string } | null> {
+  try {
+    const result = await proxyRequest(serverUrl, `/media/${encodeURIComponent(msgId)}`);
+    if (result && result.data && result.mimetype) {
+      return { data: result.data, mimetype: result.mimetype };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function checkStatus(serverUrl: string) {
   return proxyRequest(serverUrl, '/status');
 }
 
 /**
+ * Upload media to storage and return the public URL
+ */
+export async function uploadMediaToStorage(
+  base64Data: string,
+  mimetype: string,
+  empresaId: string,
+  msgId: string
+): Promise<string | null> {
+  try {
+    const ext = mimetype.split('/')[1]?.split(';')[0] || 'bin';
+    const fileName = `${empresaId}/${msgId}.${ext}`;
+
+    // Convert base64 to Uint8Array
+    const binaryStr = atob(base64Data);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
+
+    const { error } = await supabase.storage
+      .from('whatsapp-media')
+      .upload(fileName, bytes, {
+        contentType: mimetype,
+        upsert: true,
+      });
+
+    if (error) {
+      console.error('Error uploading media:', error);
+      return null;
+    }
+
+    const { data } = supabase.storage.from('whatsapp-media').getPublicUrl(fileName);
+    return data.publicUrl;
+  } catch (err) {
+    console.error('Error in uploadMediaToStorage:', err);
+    return null;
+  }
+}
+
+/**
  * Normalize outbound number for WhatsApp send.
- * If local BR number without country code, prepend 55.
  */
 function normalizeOutboundNumber(phone: string): string {
   const digits = (phone || '').replace(/\D/g, '');
