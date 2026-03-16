@@ -321,9 +321,18 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   // ═══════════════════════════════════════════════════════════
   // QUOTE OPTIONS: Render each option as a separate block
   // ═══════════════════════════════════════════════════════════
-  if (data.quoteOptions && data.quoteOptions.length > 1) {
-    data.quoteOptions.forEach((option, optIdx) => {
-      y = checkPageBreak(doc, y, 40, m);
+  const hasMultiOptions = data.quoteOptions && data.quoteOptions.length > 1;
+  if (hasMultiOptions) {
+    data.quoteOptions!.forEach((option, optIdx) => {
+      // Start each option on a new page for clean layout (except first if enough space)
+      if (optIdx > 0) {
+        doc.addPage();
+        doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
+        doc.rect(0, 0, pw, ph, 'F');
+        y = m;
+      } else {
+        y = checkPageBreak(doc, y, 60, m);
+      }
 
       // Option header with gold background
       doc.setFillColor(DEEP_BLUE[0], DEEP_BLUE[1], DEEP_BLUE[2]);
@@ -367,7 +376,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
             doc.setFontSize(7);
             const descLines = doc.splitTextToSize(s(hotel.description), cw - 12);
             doc.text(descLines.slice(0, 3), m + 4, y);
-            y += Math.min(descLines.length, 3) * 3 + 2;
+            y += Math.min(descLines.length, 3) * 3.5 + 3;
           }
         });
       }
@@ -719,123 +728,124 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
   } // end single-option else
 
   // ─── Section: Forma de Pagamento ─────────────────────────
-  y = checkPageBreak(doc, y, 40, m);
-  y = drawSectionTitle(doc, 'Opcoes de pagamento', y, m, pw);
-  y += 6;
+  // Skip global payment section when multi-options (already shown per-option above)
+  if (!hasMultiOptions) {
+    y = checkPageBreak(doc, y, 40, m);
+    y = drawSectionTitle(doc, 'Opcoes de pagamento', y, m, pw);
+    y += 6;
 
-  const methodLabels: Record<string, string> = {
-    pix: 'PIX',
-    credito: 'Cartao de Credito',
-    boleto: 'Boleto Bancario',
-    dinheiro: 'Dinheiro',
-  };
+    const methodLabels: Record<string, string> = {
+      pix: 'PIX',
+      credito: 'Cartao de Credito',
+      boleto: 'Boleto Bancario',
+      dinheiro: 'Dinheiro',
+    };
 
-  // Show proposal payment options if available
-  if (data.proposalPaymentOptions && data.proposalPaymentOptions.length > 0) {
-    const paxCount = data.passengersCount || 1;
-    const maxInstallments = Math.max(...data.proposalPaymentOptions.map(o => o.installments));
+    if (data.proposalPaymentOptions && data.proposalPaymentOptions.length > 0) {
+      const paxCount = data.passengersCount || 1;
+      const maxInstallments = Math.max(...data.proposalPaymentOptions.map(o => o.installments));
 
-    data.proposalPaymentOptions.forEach((opt, idx) => {
-      y = checkPageBreak(doc, y, 22, m);
-      const isHighlighted = opt.installments === maxInstallments;
+      data.proposalPaymentOptions.forEach((opt, idx) => {
+        y = checkPageBreak(doc, y, 22, m);
+        const isHighlighted = opt.installments === maxInstallments;
 
-      const discount = opt.discountPercent || 0;
-      const optTotalValue = Math.round(data.totalTrip * (1 - discount / 100) * 100) / 100;
-      const optInstallmentValue = opt.installments > 0 ? Math.round((optTotalValue / opt.installments) * 100) / 100 : optTotalValue;
+        const discount = opt.discountPercent || 0;
+        const optTotalValue = Math.round(data.totalTrip * (1 - discount / 100) * 100) / 100;
+        const optInstallmentValue = opt.installments > 0 ? Math.round((optTotalValue / opt.installments) * 100) / 100 : optTotalValue;
 
-      // Option box
-      const optBoxH = isHighlighted ? 22 : 18;
-      if (isHighlighted) {
-        doc.setFillColor(DEEP_BLUE[0], DEEP_BLUE[1], DEEP_BLUE[2]);
-      } else {
-        doc.setFillColor(idx % 2 === 0 ? LIGHT_GRAY[0] : WHITE[0], idx % 2 === 0 ? LIGHT_GRAY[1] : WHITE[1], idx % 2 === 0 ? LIGHT_GRAY[2] : WHITE[2]);
-      }
-      doc.rect(m, y - 3, cw, optBoxH, 'F');
+        const optBoxH = isHighlighted ? 22 : 18;
+        if (isHighlighted) {
+          doc.setFillColor(DEEP_BLUE[0], DEEP_BLUE[1], DEEP_BLUE[2]);
+        } else {
+          doc.setFillColor(idx % 2 === 0 ? LIGHT_GRAY[0] : WHITE[0], idx % 2 === 0 ? LIGHT_GRAY[1] : WHITE[1], idx % 2 === 0 ? LIGHT_GRAY[2] : WHITE[2]);
+        }
+        doc.rect(m, y - 3, cw, optBoxH, 'F');
 
-      // Gold left accent
-      doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-      doc.rect(m, y - 3, 3, optBoxH, 'F');
+        doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
+        doc.rect(m, y - 3, 3, optBoxH, 'F');
 
-      // "Mais popular" tag for highlighted
-      if (isHighlighted) {
+        if (isHighlighted) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7);
+          doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+          doc.text('MAIS POPULAR', m + 8, y);
+        }
+
+        let labelText = s(opt.label);
+        if (discount > 0) labelText += ` (${discount}% desc.)`;
+        else if (discount < 0) labelText += ` (${Math.abs(discount)}% acresc.)`;
+
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
-        doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-        doc.text('MAIS POPULAR', m + 8, y);
-      }
+        doc.setFontSize(10);
+        if (isHighlighted) {
+          doc.setTextColor(255, 255, 255);
+        } else {
+          setColor(doc, DEEP_BLUE);
+        }
+        doc.text(labelText, m + 8, y + (isHighlighted ? 6 : 3));
 
-      // Label + discount info
-      let labelText = s(opt.label);
-      if (discount > 0) labelText += ` (${discount}% desc.)`;
-      else if (discount < 0) labelText += ` (${Math.abs(discount)}% acresc.)`;
+        const installText = opt.installments > 1
+          ? `${opt.installments}x de ${fmt(optInstallmentValue)}`
+          : fmt(optTotalValue);
+        doc.setFont('times', 'bold');
+        doc.setFontSize(isHighlighted ? 15 : 13);
+        setColor(doc, GOLD);
+        doc.text(installText, m + cw - 4, y + (isHighlighted ? 6 : 3), { align: 'right' });
 
+        if (paxCount > 1) {
+          const perPerson = opt.installments > 1
+            ? fmt(optInstallmentValue / paxCount)
+            : fmt(optTotalValue / paxCount);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          if (isHighlighted) {
+            doc.setTextColor(200, 200, 200);
+          } else {
+            setColor(doc, TEXT_MUTED);
+          }
+          doc.text(`${perPerson} /pessoa`, m + cw - 4, y + (isHighlighted ? 13 : 10), { align: 'right' });
+        }
+
+        y += optBoxH + 2;
+      });
+    } else {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      if (isHighlighted) {
-        doc.setTextColor(255, 255, 255);
-      } else {
-        setColor(doc, DEEP_BLUE);
-      }
-      doc.text(labelText, m + 8, y + (isHighlighted ? 6 : 3));
+      setColor(doc, DEEP_BLUE);
+      const methodLabelsInner: Record<string, string> = {
+        pix: 'PIX',
+        credito: 'Cartao de Credito',
+        boleto: 'Boleto Bancario',
+        dinheiro: 'Dinheiro',
+      };
+      const methodText = methodLabelsInner[data.payment.method] || data.payment.method;
+      doc.text(methodText, m, y);
 
-      // Installment value
-      const installText = opt.installments > 1
-        ? `${opt.installments}x de ${fmt(optInstallmentValue)}`
-        : fmt(optTotalValue);
-      doc.setFont('times', 'bold');
-      doc.setFontSize(isHighlighted ? 15 : 13);
-      setColor(doc, GOLD);
-      doc.text(installText, m + cw - 4, y + (isHighlighted ? 6 : 3), { align: 'right' });
-
-      // Per person
-      if (paxCount > 1) {
-        const perPerson = opt.installments > 1
-          ? fmt(optInstallmentValue / paxCount)
-          : fmt(optTotalValue / paxCount);
+      if (data.payment.installments > 1) {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        if (isHighlighted) {
-          doc.setTextColor(200, 200, 200);
-        } else {
-          setColor(doc, TEXT_MUTED);
-        }
-        doc.text(`${perPerson} /pessoa`, m + cw - 4, y + (isHighlighted ? 13 : 10), { align: 'right' });
+        setColor(doc, TEXT_MAIN);
+        doc.text(`  ·  ${data.payment.installments}x`, m + doc.getTextWidth(methodText) + 2, y);
       }
+      y += 7;
 
-      y += optBoxH + 2;
-    });
-  } else {
-    // Fallback: show single payment method
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    setColor(doc, DEEP_BLUE);
-    const methodText = methodLabels[data.payment.method] || data.payment.method;
-    doc.text(methodText, m, y);
+      if (data.payment.receivables.length > 0) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        setColor(doc, TEXT_MUTED);
 
-    if (data.payment.installments > 1) {
-      doc.setFont('helvetica', 'normal');
-      setColor(doc, TEXT_MAIN);
-      doc.text(`  ·  ${data.payment.installments}x`, m + doc.getTextWidth(methodText) + 2, y);
+        data.payment.receivables.forEach((r) => {
+          y = checkPageBreak(doc, y, 6, m);
+          const dueLabel = r.dueDate ? formatDateBR(r.dueDate) : '-';
+          doc.text(`Parcela ${r.number}`, m + 4, y);
+          doc.text(fmt(r.amount), m + 50, y);
+          doc.text(`Venc: ${dueLabel}`, m + 90, y);
+          y += 5;
+        });
+      }
     }
-    y += 7;
 
-    if (data.payment.receivables.length > 0) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      setColor(doc, TEXT_MUTED);
-
-      data.payment.receivables.forEach((r) => {
-        y = checkPageBreak(doc, y, 6, m);
-        const dueLabel = r.dueDate ? formatDateBR(r.dueDate) : '-';
-        doc.text(`Parcela ${r.number}`, m + 4, y);
-        doc.text(fmt(r.amount), m + 50, y);
-        doc.text(`Venc: ${dueLabel}`, m + 90, y);
-        y += 5;
-      });
-    }
+    y += 4;
   }
-
-  y += 4;
 
   // ─── Section: Observações ────────────────────────────────
   if (data.notes) {
@@ -1013,7 +1023,7 @@ function drawFlightDirection(
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       setColor(doc, TEXT_MUTED);
-      doc.text(`⏱ Tempo total: ${durStr}`, m, y);
+      doc.text(sanitize(`Tempo total: ${durStr}`), m, y);
       y += 5;
     }
   }
