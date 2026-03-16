@@ -124,7 +124,7 @@ export default function QuickClientModal({ open, onClose, onClientCreated, initi
                 <Input
                   value={form.cpf}
                   onChange={e => setForm(p => ({ ...p, cpf: maskCpfCnpj(e.target.value) }))}
-                  placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                  placeholder=""
                   className="flex-1"
                 />
                 {isCnpj(form.cpf) && (
