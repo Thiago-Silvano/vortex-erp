@@ -122,7 +122,7 @@ export default function NewSalePage() {
   const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
 
-  const [paymentMethod, setPaymentMethod] = useState('pix');
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(['pix']);
   const [installments, setInstallments] = useState(1);
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
