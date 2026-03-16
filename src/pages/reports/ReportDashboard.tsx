@@ -40,7 +40,7 @@ export default function ReportDashboard() {
 
   const salesByMonth = useMemo(() => {
     const map = new Map<string, { faturamento: number; custos: number; lucro: number }>();
-    sales.forEach(s => {
+    activeSales.forEach(s => {
       const key = format(parseISO(s.sale_date), 'MMM/yy', { locale: ptBR });
       const cur = map.get(key) || { faturamento: 0, custos: 0, lucro: 0 };
       cur.faturamento += Number(s.total_sale || 0);
