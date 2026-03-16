@@ -376,23 +376,31 @@ export default function BankReconciliationPage() {
     loadTransactions();
   };
 
-  // Undo reconciliation
+  // Undo reconciliation (supports multi-id)
   const undoReconcile = async (tx: BankTx) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (tx.reconciled_with_id) {
-      if (tx.reconciled_with_type === "pagar") {
-        await supabase
-          .from("accounts_payable")
-          .update({ status: "open", payment_date: null } as any)
-          .eq("id", tx.reconciled_with_id);
-      } else if (tx.reconciled_with_type === "receber") {
-        await supabase
-          .from("receivables")
-          .update({ status: "pending", payment_date: null } as any)
-          .eq("id", tx.reconciled_with_id);
+      const ids = tx.reconciled_with_id.split(',').map(s => s.trim()).filter(Boolean);
+      const types = (tx.reconciled_with_type || '').split(',').map(s => s.trim());
+      for (const rid of ids) {
+        // Determine type - if single type use it, otherwise check each
+        const isPagar = types.includes('pagar');
+        const isReceber = types.includes('receber');
+        if (isPagar) {
+          await supabase
+            .from("accounts_payable")
+            .update({ status: "open", payment_date: null } as any)
+            .eq("id", rid);
+        }
+        if (isReceber) {
+          await supabase
+            .from("receivables")
+            .update({ status: "pending", payment_date: null } as any)
+            .eq("id", rid);
+        }
       }
     }
 
