@@ -2280,7 +2280,7 @@ export default function NewSalePage() {
             <CardHeader>
               <CardTitle className="text-base">💰 Controle de Pagamentos</CardTitle>
               {(() => {
-                const totalPayments = supplierPayments.reduce((s, sp) => s + sp.amount, 0) + machineFee;
+                const totalPayments = supplierPayments.reduce((s, sp) => s + sp.amount, 0);
                 const diff = totalCost - totalPayments;
                 return (
                   <div className="flex items-center gap-4 text-sm mt-1">
