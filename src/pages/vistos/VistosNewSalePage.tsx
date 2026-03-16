@@ -135,6 +135,9 @@ export default function VistosNewSalePage() {
         unit_price: Number(item.unit_price) || 0,
         total_value: Number(item.total_value) || 0,
         is_supplier_fee: item.is_supplier_fee || false,
+        supplier_id: item.supplier_id || '',
+        cost_center_id: item.cost_center_id || '',
+        payment_due_date: item.payment_due_date || '',
       })));
     } else if (sale.product_id) {
       // Legacy: single product_id on sale
