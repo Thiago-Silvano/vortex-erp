@@ -28,6 +28,7 @@ interface BankTx {
 interface FinancialTitle {
   id: string; type: 'payable' | 'receivable'; description: string; amount: number;
   due_date: string; status: string; client_name?: string; supplier_name?: string;
+  is_reconciled?: boolean;
 }
 
 const statusColors: Record<string, string> = {
