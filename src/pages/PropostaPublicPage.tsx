@@ -129,6 +129,8 @@ export default function PropostaPublicPage() {
   const [quoteData, setQuoteData] = useState<any>(null);
   const [catalogNames, setCatalogNames] = useState<Record<string, string>>({});
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+  const [quoteOptions, setQuoteOptions] = useState<QuoteOptionData[]>([]);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!shortId) return;
