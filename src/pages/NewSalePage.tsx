@@ -395,6 +395,7 @@ export default function NewSalePage() {
           installments: 1,
           installment_dates: [{ date: today, amount: costPerSupplier }],
           amount: costPerSupplier,
+          description: 'Pagamento de operadoras',
         };
       });
     });
