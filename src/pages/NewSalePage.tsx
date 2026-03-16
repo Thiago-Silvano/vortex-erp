@@ -847,7 +847,7 @@ export default function NewSalePage() {
             due_date: sp.installment_dates[0]?.date || sp.payment_date,
             description: `Venda - ${clientName} (Faturado)`,
             status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-            installment_number: 1, total_installments: 1,
+            installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
           });
         } else if (sp.payment_method === 'credito') {
           sp.installment_dates.forEach((inst, idx) => {
