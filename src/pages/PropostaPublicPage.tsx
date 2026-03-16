@@ -309,7 +309,7 @@ export default function PropostaPublicPage() {
             <SectionTitle>O que está incluso</SectionTitle>
             <div className="mt-8 space-y-5">
               {items.map((item, idx) => {
-                const name = item.service_catalog_id ? catalogNames[item.service_catalog_id] || item.description : item.description;
+                const name = item.description || (item.service_catalog_id ? catalogNames[item.service_catalog_id] : null) || `Serviço ${idx + 1}`;
                 return (
                   <ServiceCard
                     key={idx}
