@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Search, Plus, Trash2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCompany } from '@/contexts/CompanyContext';
