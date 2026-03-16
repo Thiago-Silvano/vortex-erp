@@ -341,12 +341,16 @@ export default function NewSalePage() {
     }
   }, [tripStartDate, tripEndDate, nightsManuallySet]);
 
+  const paymentMethod = paymentMethods.join(',');
+  const hasCredito = paymentMethods.includes('credito');
+  const hasBoleto = paymentMethods.includes('boleto');
+
   useEffect(() => {
-    if (paymentMethod !== 'credito' || !cardPaymentType) return;
+    if (!hasCredito || !cardPaymentType) return;
     const rates = cardPaymentType === 'ec' ? ecRates : linkRates;
     const found = rates.find(r => r.installments === installments);
     if (found) setFeeRate(found.rate);
-  }, [cardPaymentType, installments, ecRates, linkRates, paymentMethod]);
+  }, [cardPaymentType, installments, ecRates, linkRates, hasCredito]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
   const totalSaleWithInterest = totalSale + saleInterest + operatorTaxes;
