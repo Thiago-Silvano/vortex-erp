@@ -157,7 +157,7 @@ export default function ReservationsPage() {
                       </TableCell>
                       <TableCell>
                         {isEditing ? (
-                          <Input value={editData.confirmation_code || ''} onChange={e => setEditData(p => ({ ...p, confirmation_code: e.target.value }))} className="h-8 text-sm" onClick={e => e.stopPropagation()} />
+                          <Input value={editData.confirmation_code || ''} onChange={e => setEditData(p => ({ ...p, confirmation_code: e.target.value }))} className="h-8 text-sm min-w-[180px]" onClick={e => e.stopPropagation()} />
                         ) : (
                           r.confirmation_code || '-'
                         )}
