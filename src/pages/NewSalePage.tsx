@@ -345,6 +345,8 @@ export default function NewSalePage() {
   const paymentMethod = paymentMethods.join(',');
   const hasCredito = paymentMethods.includes('credito');
   const hasBoleto = paymentMethods.includes('boleto');
+  const hasDebito = paymentMethods.includes('debito');
+  const hasMachineFeeMethod = hasCredito || hasDebito || hasBoleto;
 
   useEffect(() => {
     if (!hasCredito || !cardPaymentType) return;
@@ -359,7 +361,7 @@ export default function NewSalePage() {
   const grossProfit = totalSale + saleInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
   const cardFeeValue = hasCredito ? totalSaleWithInterest * (feeRate / 100) : 0;
-  const netProfit = grossProfit - commissionValue - cardFeeValue;
+  const netProfit = grossProfit - commissionValue - cardFeeValue - machineFee;
 
   // No longer need auto-recalculate since we store only discount % now
 
