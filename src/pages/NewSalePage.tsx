@@ -37,6 +37,7 @@ interface SaleItem {
   service_catalog_id?: string;
   cost_center_id?: string;
   metadata?: ServiceMetadata;
+  reservation_number?: string;
 }
 
 interface ServiceCatalogOption {
@@ -218,6 +219,7 @@ export default function NewSalePage() {
         total_value: Number(i.total_value), service_catalog_id: i.service_catalog_id || undefined,
         cost_center_id: i.cost_center_id || undefined,
         metadata: (i as any).metadata || {},
+        reservation_number: (i as any).reservation_number || '',
       })));
       
       const imgMap: Record<number, string[]> = {};
@@ -783,7 +785,7 @@ export default function NewSalePage() {
         sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
         total_value: item.total_value, sort_order: idx,
         service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
-        metadata: item.metadata || {},
+        metadata: item.metadata || {}, reservation_number: item.reservation_number || '',
       } as any))).select('id');
 
       if (insertedItems) {
@@ -1683,6 +1685,17 @@ export default function NewSalePage() {
                       <TableRow className="border-b-2">
                         <TableCell colSpan={7} className="py-2">
                           <div className="flex items-center gap-2 flex-wrap">
+                            {!isQuoteMode && (
+                              <div className="flex items-center gap-1">
+                                <Label className="text-xs text-muted-foreground whitespace-nowrap">Nº Reserva:</Label>
+                                <Input
+                                  value={item.reservation_number || ''}
+                                  onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)}
+                                  placeholder="Ex: ABC123"
+                                  className="h-7 text-xs w-32"
+                                />
+                              </div>
+                            )}
                             {uploadingItemImages[idx] ? (
                               <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />Carregando...</span>
                             ) : (
