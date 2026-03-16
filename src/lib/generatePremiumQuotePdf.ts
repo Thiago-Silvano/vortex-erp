@@ -47,8 +47,7 @@ export interface ProposalPaymentOptionPdf {
   method: string;
   label: string;
   installments: number;
-  installmentValue: number;
-  totalValue: number;
+  discountPercent: number;
   enabled: boolean;
 }
 
@@ -437,10 +436,14 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
         data.proposalPaymentOptions.forEach((payOpt) => {
           y = checkPageBreak(doc, y, 6, m);
           const optTotal = option.totalTrip;
-          const perInstallment = payOpt.installments > 0 ? Math.round((optTotal / payOpt.installments) * 100) / 100 : optTotal;
-          const text = payOpt.installments > 1
+          const discount = payOpt.discountPercent || 0;
+          const adjustedTotal = Math.round(optTotal * (1 - discount / 100) * 100) / 100;
+          const perInstallment = payOpt.installments > 0 ? Math.round((adjustedTotal / payOpt.installments) * 100) / 100 : adjustedTotal;
+          let text = payOpt.installments > 1
             ? `${payOpt.label}: ${payOpt.installments}x de ${fmt(perInstallment)}`
-            : `${payOpt.label}: ${fmt(optTotal)}`;
+            : `${payOpt.label}: ${fmt(adjustedTotal)}`;
+          if (discount > 0) text += ` (${discount}% desc.)`;
+          else if (discount < 0) text += ` (${Math.abs(discount)}% acresc.)`;
           doc.text(text, m + 6, y);
           y += 5;
         });
@@ -736,6 +739,10 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       y = checkPageBreak(doc, y, 22, m);
       const isHighlighted = opt.installments === maxInstallments;
 
+      const discount = opt.discountPercent || 0;
+      const optTotalValue = Math.round(data.totalTrip * (1 - discount / 100) * 100) / 100;
+      const optInstallmentValue = opt.installments > 0 ? Math.round((optTotalValue / opt.installments) * 100) / 100 : optTotalValue;
+
       // Option box
       const optBoxH = isHighlighted ? 22 : 18;
       if (isHighlighted) {
@@ -757,7 +764,11 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
         doc.text('MAIS POPULAR', m + 8, y);
       }
 
-      // Label
+      // Label + discount info
+      let labelText = s(opt.label);
+      if (discount > 0) labelText += ` (${discount}% desc.)`;
+      else if (discount < 0) labelText += ` (${Math.abs(discount)}% acresc.)`;
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       if (isHighlighted) {
@@ -765,12 +776,12 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       } else {
         setColor(doc, DEEP_BLUE);
       }
-      doc.text(s(opt.label), m + 8, y + (isHighlighted ? 6 : 3));
+      doc.text(labelText, m + 8, y + (isHighlighted ? 6 : 3));
 
       // Installment value
       const installText = opt.installments > 1
-        ? `${opt.installments}x de ${fmt(opt.installmentValue)}`
-        : fmt(opt.totalValue);
+        ? `${opt.installments}x de ${fmt(optInstallmentValue)}`
+        : fmt(optTotalValue);
       doc.setFont('times', 'bold');
       doc.setFontSize(isHighlighted ? 15 : 13);
       setColor(doc, GOLD);
@@ -779,8 +790,8 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
       // Per person
       if (paxCount > 1) {
         const perPerson = opt.installments > 1
-          ? fmt(opt.installmentValue / paxCount)
-          : fmt(opt.totalValue / paxCount);
+          ? fmt(optInstallmentValue / paxCount)
+          : fmt(optTotalValue / paxCount);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         if (isHighlighted) {

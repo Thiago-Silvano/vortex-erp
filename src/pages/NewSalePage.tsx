@@ -88,8 +88,7 @@ interface ProposalPaymentOption {
   method: string;
   label: string;
   installments: number;
-  installmentValue: number;
-  totalValue: number;
+  discountPercent: number;
   enabled: boolean;
 }
 interface InternalFile { id?: string; file_name: string; file_url: string; }
@@ -159,12 +158,12 @@ export default function NewSalePage() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
-    { method: 'pix', label: 'PIX / À Vista', installments: 1, installmentValue: 0, totalValue: 0, enabled: false },
-    { method: 'credito_3x', label: 'Cartão 3x', installments: 3, installmentValue: 0, totalValue: 0, enabled: false },
-    { method: 'credito_6x', label: 'Cartão 6x', installments: 6, installmentValue: 0, totalValue: 0, enabled: false },
-    { method: 'credito_10x', label: 'Cartão 10x', installments: 10, installmentValue: 0, totalValue: 0, enabled: false },
-    { method: 'credito_12x', label: 'Cartão 12x', installments: 12, installmentValue: 0, totalValue: 0, enabled: false },
-    { method: 'boleto', label: 'Boleto Bancário', installments: 1, installmentValue: 0, totalValue: 0, enabled: false },
+    { method: 'pix', label: 'PIX / À Vista', installments: 1, discountPercent: 0, enabled: false },
+    { method: 'credito_3x', label: 'Cartão 3x', installments: 3, discountPercent: 0, enabled: false },
+    { method: 'credito_6x', label: 'Cartão 6x', installments: 6, discountPercent: 0, enabled: false },
+    { method: 'credito_10x', label: 'Cartão 10x', installments: 10, discountPercent: 0, enabled: false },
+    { method: 'credito_12x', label: 'Cartão 12x', installments: 12, discountPercent: 0, enabled: false },
+    { method: 'boleto', label: 'Boleto Bancário', installments: 1, discountPercent: 0, enabled: false },
   ]);
 
   // Service edit modal
@@ -207,7 +206,14 @@ export default function NewSalePage() {
     setDestinationImageUrl((sale as any).destination_image_url || '');
     // Load proposal payment options
     if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
-      setProposalPaymentOptions((sale as any).proposal_payment_options);
+      // Migrate old format (installmentValue/totalValue) to new format (discountPercent)
+      setProposalPaymentOptions((sale as any).proposal_payment_options.map((o: any) => ({
+        method: o.method,
+        label: o.label,
+        installments: o.installments || 1,
+        discountPercent: o.discountPercent ?? 0,
+        enabled: o.enabled !== false,
+      })));
     }
     if ((sale as any).show_individual_values !== undefined) {
       setShowIndividualValues((sale as any).show_individual_values);
@@ -346,14 +352,7 @@ export default function NewSalePage() {
   const cardFeeValue = paymentMethod === 'credito' ? totalSaleWithInterest * (feeRate / 100) : 0;
   const netProfit = grossProfit - commissionValue - cardFeeValue;
 
-  // Auto-recalculate proposal payment options when total changes
-  useEffect(() => {
-    setProposalPaymentOptions(prev => prev.map(opt => {
-      const val = totalSaleWithInterest;
-      const perInstallment = opt.installments > 0 ? Math.round((val / opt.installments) * 100) / 100 : val;
-      return { ...opt, totalValue: val, installmentValue: perInstallment };
-    }));
-  }, [totalSaleWithInterest]);
+  // No longer need auto-recalculate since we store only discount % now
 
   useEffect(() => {
     if (paymentMethod === 'boleto' && installments > 1 && boletoInterestRate > 0) {
@@ -2118,38 +2117,32 @@ export default function NewSalePage() {
                                 setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
                                   ...o,
                                   installments: inst,
-                                  installmentValue: Math.round((o.totalValue / inst) * 100) / 100,
                                 } : o));
                               }}
                               className="h-8"
                             />
                           </div>
                           <div>
-                            <Label className="text-xs text-muted-foreground">Valor/Parcela</Label>
+                            <Label className="text-xs text-muted-foreground">Desconto / Acréscimo (%)</Label>
                             <Input
-                              value={opt.installmentValue ? `R$ ${opt.installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                              type="number"
+                              step="0.5"
+                              value={opt.discountPercent || 0}
                               onChange={e => {
-                                const digits = e.target.value.replace(/[^\d]/g, '');
-                                const val = parseInt(digits || '0', 10) / 100;
+                                const val = parseFloat(e.target.value) || 0;
                                 setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
                                   ...o,
-                                  installmentValue: val,
-                                  totalValue: val * o.installments,
+                                  discountPercent: val,
                                 } : o));
                               }}
-                              placeholder="R$ 0,00"
+                              placeholder="Ex: 5 = 5% desconto, -3 = 3% acréscimo"
                               className="h-8"
                             />
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Positivo = desconto · Negativo = acréscimo</p>
                           </div>
                         </div>
                       )}
                     </div>
-                    {opt.enabled && (
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">Total</p>
-                        <p className="text-sm font-bold text-primary">{fmt(opt.totalValue)}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -2161,8 +2154,7 @@ export default function NewSalePage() {
                 method: `custom_${Date.now()}`,
                 label: 'Personalizado',
                 installments: 1,
-                installmentValue: totalSaleWithInterest,
-                totalValue: totalSaleWithInterest,
+                discountPercent: 0,
                 enabled: true,
               }])}
             >

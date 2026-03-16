@@ -28,8 +28,7 @@ interface ProposalPaymentOption {
   method: string;
   label: string;
   installments: number;
-  installmentValue: number;
-  totalValue: number;
+  discountPercent: number;
   enabled: boolean;
 }
 
@@ -228,13 +227,18 @@ export default function PropostaPublicPage() {
   const nights = (sale as any).trip_nights || quoteData?.trip_nights || 0;
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
-  const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).map((opt: ProposalPaymentOption) => {
-    // Recalculate payment options based on filtered items total
-    const optTotal = totalSale;
-    const perInstallment = opt.installments > 0 ? Math.round((optTotal / opt.installments) * 100) / 100 : optTotal;
-    return { ...opt, totalValue: optTotal, installmentValue: perInstallment };
-  });
+  const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).filter((opt: any) => opt.enabled !== false);
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
+
+  // Helper to compute option total/installment from discount
+  const getOptTotal = (opt: ProposalPaymentOption) => {
+    const discount = opt.discountPercent || 0;
+    return Math.round(totalSale * (1 - discount / 100) * 100) / 100;
+  };
+  const getOptInstallment = (opt: ProposalPaymentOption) => {
+    const optTotal = getOptTotal(opt);
+    return opt.installments > 0 ? Math.round((optTotal / opt.installments) * 100) / 100 : optTotal;
+  };
 
   const methodLabels: Record<string, string> = {
     pix: 'PIX', credito: 'Cartão de Crédito', boleto: 'Boleto Bancário', dinheiro: 'Dinheiro',
@@ -496,37 +500,62 @@ export default function PropostaPublicPage() {
                     <div className="py-6 px-6 text-center" style={{ background: isHighlighted ? 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' : '#fff' }}>
                       <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: isHighlighted ? '#C8A45B' : '#999' }}>
                         {opt.label}
+                        {(opt.discountPercent || 0) > 0 && (
+                          <span className="block text-[10px] mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.5)' : '#bbb' }}>
+                            ({opt.discountPercent}% de desconto)
+                          </span>
+                        )}
+                        {(opt.discountPercent || 0) < 0 && (
+                          <span className="block text-[10px] mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.5)' : '#bbb' }}>
+                            ({Math.abs(opt.discountPercent)}% de acréscimo)
+                          </span>
+                        )}
                       </p>
-                      {opt.installments > 1 ? (
-                        <div className="flex items-baseline justify-center gap-1.5">
-                          <span className="text-3xl font-bold" style={{ color: isHighlighted ? '#C8A45B' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-                            {opt.installments}x
-                          </span>
-                          <span className="text-sm" style={{ color: isHighlighted ? 'rgba(255,255,255,0.5)' : '#999' }}>de</span>
-                          <span className="text-2xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-                            {fmt(showPerPassenger ? opt.installmentValue / passengersCount : opt.installmentValue)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-3xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-                          {fmt(showPerPassenger ? opt.totalValue / passengersCount : opt.totalValue)}
-                        </span>
-                      )}
-                      {showPerPassenger && passengersCount > 1 && (
-                        <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.4)' : '#bbb' }}>
-                          por pessoa
-                        </p>
-                      )}
-                      {showPerPassenger && passengersCount > 1 && (
-                        <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.25)' : '#ccc' }}>
-                          Total: {fmt(opt.installments > 1 ? opt.installmentValue * opt.installments : opt.totalValue)}
-                        </p>
-                      )}
-                      {!showPerPassenger && passengersCount > 1 && (
-                        <p className="text-xs mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.3)' : '#bbb' }}>
-                          {fmt((opt.installments > 1 ? opt.installmentValue : opt.totalValue) / passengersCount)} /pessoa
-                        </p>
-                      )}
+                      {(() => {
+                        const optTotal = getOptTotal(opt);
+                        const optInstallment = getOptInstallment(opt);
+                        const displayTotal = showPerPassenger ? optTotal / passengersCount : optTotal;
+                        const displayInstallment = showPerPassenger ? optInstallment / passengersCount : optInstallment;
+                        return (
+                          <>
+                            {opt.installments > 1 ? (
+                              <div className="flex items-baseline justify-center gap-1.5">
+                                <span className="text-3xl font-bold" style={{ color: isHighlighted ? '#C8A45B' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                                  {opt.installments}x
+                                </span>
+                                <span className="text-sm" style={{ color: isHighlighted ? 'rgba(255,255,255,0.5)' : '#999' }}>de</span>
+                                <span className="text-2xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                                  {fmt(displayInstallment)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-3xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                                {fmt(displayTotal)}
+                              </span>
+                            )}
+                            {showPerPassenger && passengersCount > 1 && (
+                              <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.4)' : '#bbb' }}>
+                                por pessoa
+                              </p>
+                            )}
+                            {showPerPassenger && passengersCount > 1 && opt.installments > 1 && (
+                              <p className="text-sm font-semibold mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.7)' : '#555' }}>
+                                {fmt(displayTotal)} por pessoa
+                              </p>
+                            )}
+                            {showPerPassenger && passengersCount > 1 && (
+                              <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.25)' : '#ccc' }}>
+                                Total geral: {fmt(optTotal)}
+                              </p>
+                            )}
+                            {!showPerPassenger && passengersCount > 1 && (
+                              <p className="text-xs mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.3)' : '#bbb' }}>
+                                {fmt(optTotal / passengersCount)} /pessoa
+                              </p>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     {isHighlighted && (
                       <div className="h-1" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }} />
