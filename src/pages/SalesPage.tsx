@@ -134,6 +134,35 @@ export default function SalesPage() {
     }
   };
 
+  const handleRevertToDraft = async () => {
+    if (!revertTarget) return;
+    const saleId = revertTarget.id;
+    try {
+      // Remove financial records
+      await supabase.from('receivables').delete().eq('sale_id', saleId);
+      await supabase.from('accounts_payable').delete().eq('sale_id', saleId);
+      await supabase.from('seller_commissions').delete().eq('sale_id', saleId);
+      // Remove reservations
+      await supabase.from('reservations').delete().eq('sale_id', saleId);
+      // Remove calendar events related to this sale
+      if (revertTarget.client_name && activeCompany?.id) {
+        await supabase.from('calendar_events')
+          .delete()
+          .eq('empresa_id', activeCompany.id)
+          .ilike('title', `%${revertTarget.client_name}%`);
+      }
+      // Revert sale status to draft
+      const { error } = await supabase.from('sales').update({ status: 'draft' }).eq('id', saleId);
+      if (error) throw error;
+
+      toast.success('Venda revertida para rascunho! Lançamentos financeiros, reservas e eventos foram removidos.');
+      setRevertTarget(null);
+      fetchSales();
+    } catch (err: any) {
+      toast.error('Erro ao reverter: ' + (err.message || ''));
+    }
+  };
+
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const filtered = sales
     .filter(s => {
