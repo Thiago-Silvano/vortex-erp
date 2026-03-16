@@ -815,6 +815,7 @@ export default function NewSalePage() {
         client_name: clientName, description: `Venda - ${clientName}`, status: 'pending', origin_type: 'sale',
         payment_method: enabledOptions.length > 0 ? (enabledOptions[0]?.method || paymentMethod || 'pix') : (paymentMethod || 'pix'),
         empresa_id: activeCompany?.id || null,
+        cost_center_id: r.cost_center_id || null,
       } as any)));
       if (error) console.error('Erro ao gerar recebíveis:', error);
     } else if (totalSaleWithInterest > 0) {
