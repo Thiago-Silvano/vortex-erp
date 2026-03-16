@@ -412,13 +412,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-lg border-border/50"
-                      >
-                        <Bell className="h-4 w-4" />
-                      </Button>
+                      <div>
+                        <NotificationBell />
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent>Notificações</TooltipContent>
                   </Tooltip>
