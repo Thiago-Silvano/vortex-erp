@@ -3203,6 +3203,8 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           message_type: string
+          reply_to_content: string | null
+          reply_to_id: string | null
           sender: string
           whatsapp_msg_id: string | null
         }
@@ -3216,6 +3218,8 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           message_type?: string
+          reply_to_content?: string | null
+          reply_to_id?: string | null
           sender?: string
           whatsapp_msg_id?: string | null
         }
@@ -3229,6 +3233,8 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           message_type?: string
+          reply_to_content?: string | null
+          reply_to_id?: string | null
           sender?: string
           whatsapp_msg_id?: string | null
         }
@@ -3245,6 +3251,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_messages"
             referencedColumns: ["id"]
           },
         ]

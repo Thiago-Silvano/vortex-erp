@@ -7,14 +7,15 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus } from 'lucide-react';
+import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { fetchChats, fetchMessages, sendMessage, getServerUrl } from '@/lib/whatsappApi';
+import { fetchChats, fetchMessages, sendMessage, sendMedia, getServerUrl } from '@/lib/whatsappApi';
 import { io, Socket } from 'socket.io-client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import MessageBubble from '@/components/whatsapp/MessageBubble';
 
 interface Conversation {
   id: string;
@@ -34,6 +35,9 @@ interface Message {
   message_type: string;
   media_url: string;
   created_at: string;
+  whatsapp_msg_id?: string;
+  reply_to_id?: string;
+  reply_to_content?: string;
 }
 
 export default function WhatsAppInboxPage() {
@@ -51,6 +55,8 @@ export default function WhatsAppInboxPage() {
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [newMsgForm, setNewMsgForm] = useState({ phone: '', name: '', message: '' });
   const [clientForm, setClientForm] = useState({ full_name: '', phone: '', email: '' });
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [sendingFile, setSendingFile] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -94,34 +100,38 @@ export default function WhatsAppInboxPage() {
       }
 
       const whatsappId = extractWhatsappId(data);
+      const msgType = data.type || 'chat';
+      const hasMediaFlag = data.hasMedia || false;
 
       const { data: convId, error: rpcError } = await (supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
         p_phone: phone,
         p_client_name: data.name || data.pushname || phone,
-        p_last_message: content,
+        p_last_message: content || (hasMediaFlag ? getMsgTypeLabel(msgType) : ''),
         p_whatsapp_id: whatsappId || null,
       }) as any);
 
-      console.log('[WhatsApp Socket] find_or_create result:', convId, 'error:', rpcError);
-
       if (convId) {
-        await (supabase.from('whatsapp_messages').insert({
+        const insertData: any = {
           conversation_id: convId,
           empresa_id: empresaId,
           sender: 'them',
           content,
-          message_type: 'text',
-        }) as any);
+          message_type: msgType,
+          whatsapp_msg_id: data.id?._serialized || data.id || '',
+        };
+
+        await (supabase.from('whatsapp_messages').insert(insertData) as any);
 
         if (activeConv?.id === convId || (activeConv?.phone && normalizePhone(activeConv.phone) === phone)) {
           setMessages(prev => [...prev, {
             id: crypto.randomUUID(),
             sender: 'them',
             content,
-            message_type: 'text',
+            message_type: msgType,
             media_url: '',
             created_at: new Date().toISOString(),
+            whatsapp_msg_id: insertData.whatsapp_msg_id,
           }]);
         }
 
@@ -150,6 +160,17 @@ export default function WhatsAppInboxPage() {
     if (digits.startsWith('55')) return digits;
     if (digits.length === 10 || digits.length === 11) return `55${digits}`;
     return digits;
+  };
+
+  const getMsgTypeLabel = (type: string) => {
+    switch (type) {
+      case 'image': return '📷 Imagem';
+      case 'video': return '🎥 Vídeo';
+      case 'ptt': case 'audio': return '🎤 Áudio';
+      case 'document': return '📎 Documento';
+      case 'sticker': return '🏷️ Figurinha';
+      default: return '';
+    }
   };
 
   const extractIncomingPhone = (payload: any) => {
@@ -204,7 +225,6 @@ export default function WhatsAppInboxPage() {
           const newChats = chats.filter((chat: any) => {
             const chatId = extractWhatsappId(chat) || '';
             const phone = extractIncomingPhone(chat);
-            // Skip groups
             if (typeof chatId === 'string' && chatId.includes('@g.us')) return false;
             return phone.length >= 8 && !dbPhones.has(normalizePhone(phone));
           });
@@ -246,6 +266,7 @@ export default function WhatsAppInboxPage() {
   const openConversation = async (conv: Conversation) => {
     setActiveConv(conv);
     setLoading(true);
+    setReplyTo(null);
 
     await (supabase.from('whatsapp_conversations').update({ unread_count: 0 }).eq('id', conv.id) as any);
     setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c));
@@ -259,7 +280,7 @@ export default function WhatsAppInboxPage() {
     if (dbMsgs?.length) {
       setMessages(dbMsgs);
     } else {
-      // Fetch from server using whatsapp_id or phone
+      // Fetch from server
       try {
         const queryId = conv.whatsapp_id || conv.phone;
         if (!queryId) throw new Error('No phone');
@@ -269,13 +290,14 @@ export default function WhatsAppInboxPage() {
             id: m.id || crypto.randomUUID(),
             sender: m.fromMe ? 'me' : 'them',
             content: m.body || '',
-            message_type: m.type || 'text',
+            message_type: m.type || 'chat',
             media_url: m.mediaUrl || '',
             created_at: m.timestamp ? new Date(m.timestamp * 1000).toISOString() : new Date().toISOString(),
+            whatsapp_msg_id: typeof m.id === 'string' ? m.id : m.id?._serialized || '',
+            reply_to_content: m.quotedMsg?.body || '',
           }));
           setMessages(mapped);
 
-          // Save to DB in batch (don't await each one)
           const inserts = mapped.map((msg: any) => ({
             conversation_id: conv.id,
             empresa_id: empresaId,
@@ -283,6 +305,8 @@ export default function WhatsAppInboxPage() {
             content: msg.content,
             message_type: msg.message_type,
             media_url: msg.media_url,
+            whatsapp_msg_id: msg.whatsapp_msg_id,
+            reply_to_content: msg.reply_to_content || null,
           }));
           if (inserts.length > 0) {
             await (supabase.from('whatsapp_messages').insert(inserts) as any);
@@ -305,23 +329,29 @@ export default function WhatsAppInboxPage() {
       id: crypto.randomUUID(),
       sender: 'me',
       content: text,
-      message_type: 'text',
+      message_type: 'chat',
       media_url: '',
       created_at: new Date().toISOString(),
+      reply_to_content: replyTo?.content || undefined,
+      reply_to_id: replyTo?.id || undefined,
     };
     setMessages(prev => [...prev, newMsg]);
 
+    const quotedMsgId = replyTo?.whatsapp_msg_id;
+    setReplyTo(null);
+
     try {
-      // Use whatsapp_id if available, otherwise phone
       const targetId = activeConv.whatsapp_id || activeConv.phone;
-      await sendMessage(serverUrl, targetId, text);
+      await sendMessage(serverUrl, targetId, text, quotedMsgId);
 
       await (supabase.from('whatsapp_messages').insert({
         conversation_id: activeConv.id,
         empresa_id: empresaId,
         sender: 'me',
         content: text,
-        message_type: 'text',
+        message_type: 'chat',
+        reply_to_content: newMsg.reply_to_content || null,
+        reply_to_id: newMsg.reply_to_id || null,
       }) as any);
 
       await (supabase.from('whatsapp_conversations').update({
@@ -336,6 +366,78 @@ export default function WhatsAppInboxPage() {
       console.error('Error sending message:', err);
       toast.error('Erro ao enviar mensagem. Verifique a conexão com o servidor.');
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeConv) return;
+
+    setSendingFile(true);
+
+    // Add optimistic message
+    const newMsg: Message = {
+      id: crypto.randomUUID(),
+      sender: 'me',
+      content: file.name,
+      message_type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'document',
+      media_url: URL.createObjectURL(file),
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, newMsg]);
+
+    try {
+      const targetId = activeConv.whatsapp_id || activeConv.phone;
+      await sendMedia(serverUrl, targetId, file);
+
+      // Upload to storage
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        const ext = file.name.split('.').pop() || 'bin';
+        const storagePath = `${empresaId}/${newMsg.id}.${ext}`;
+
+        const binaryStr = atob(base64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+
+        const { error: uploadError } = await supabase.storage
+          .from('whatsapp-media')
+          .upload(storagePath, bytes, { contentType: file.type, upsert: true });
+
+        let finalUrl = '';
+        if (!uploadError) {
+          const { data } = supabase.storage.from('whatsapp-media').getPublicUrl(storagePath);
+          finalUrl = data.publicUrl;
+        }
+
+        await (supabase.from('whatsapp_messages').insert({
+          conversation_id: activeConv.id,
+          empresa_id: empresaId,
+          sender: 'me',
+          content: file.name,
+          message_type: newMsg.message_type,
+          media_url: finalUrl,
+          media_type: file.type,
+        }) as any);
+      };
+      reader.readAsDataURL(file);
+
+      const label = getMsgTypeLabel(newMsg.message_type) || file.name;
+      await (supabase.from('whatsapp_conversations').update({
+        last_message: label,
+        last_message_at: new Date().toISOString(),
+      }).eq('id', activeConv.id) as any);
+
+      toast.success('Arquivo enviado!');
+    } catch (err) {
+      console.error('Error sending file:', err);
+      toast.error('Erro ao enviar arquivo.');
+    }
+
+    setSendingFile(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleNewMessage = async () => {
@@ -354,7 +456,6 @@ export default function WhatsAppInboxPage() {
     const contactName = newMsgForm.name || phone;
 
     try {
-      // 1. Create/find conversation FIRST so it always exists
       const { data: convId, error: rpcError } = await (supabase.rpc('find_or_create_conversation', {
         p_empresa_id: empresaId,
         p_phone: phone,
@@ -362,19 +463,16 @@ export default function WhatsAppInboxPage() {
         p_last_message: messageText,
       }) as any);
 
-      console.log('[NewMessage] find_or_create result:', convId, 'error:', rpcError);
-
       if (convId) {
         await (supabase.from('whatsapp_messages').insert({
           conversation_id: convId,
           empresa_id: empresaId,
           sender: 'me',
           content: messageText,
-          message_type: 'text',
+          message_type: 'chat',
         }) as any);
       }
 
-      // 2. Close modal and reload conversations
       setShowNewMessage(false);
       setNewMsgForm({ phone: '', name: '', message: '' });
 
@@ -389,7 +487,6 @@ export default function WhatsAppInboxPage() {
         if (newConv) openConversation(newConv);
       }
 
-      // 3. Send via server using captured text
       try {
         await sendMessage(serverUrl, phone, messageText);
         toast.success('Mensagem enviada!');
@@ -471,6 +568,12 @@ export default function WhatsAppInboxPage() {
     } catch { return ''; }
   };
 
+  const getLastMsgPreview = (conv: Conversation) => {
+    const msg = conv.last_message || '';
+    if (!msg) return 'Sem mensagens';
+    return msg;
+  };
+
   return (
     <AppLayout>
       <div className="flex h-[calc(100vh-3.5rem)] bg-background">
@@ -518,7 +621,7 @@ export default function WhatsAppInboxPage() {
                       <span className="text-xs text-muted-foreground shrink-0">{formatTime(conv.last_message_at)}</span>
                     </div>
                     <div className="flex items-center justify-between mt-0.5">
-                      <p className="text-xs text-muted-foreground truncate pr-2">{conv.last_message || 'Sem mensagens'}</p>
+                      <p className="text-xs text-muted-foreground truncate pr-2">{getLastMsgPreview(conv)}</p>
                       {conv.unread_count > 0 && (
                         <Badge className="h-5 min-w-5 flex items-center justify-center rounded-full text-[10px] bg-primary text-primary-foreground shrink-0">
                           {conv.unread_count}
@@ -557,39 +660,52 @@ export default function WhatsAppInboxPage() {
                 <div className="max-w-3xl mx-auto space-y-2">
                   {loading && <p className="text-center text-muted-foreground text-sm py-8">Carregando...</p>}
                   {messages.map((msg) => (
-                    <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
-                        msg.sender === 'me'
-                          ? 'bg-primary text-primary-foreground rounded-br-md'
-                          : 'bg-muted rounded-bl-md'
-                      }`}>
-                        {msg.media_url && (
-                          <div className="mb-1">
-                            {msg.message_type === 'image' ? (
-                              <img src={msg.media_url} alt="" className="rounded-lg max-w-full" />
-                            ) : (
-                              <a href={msg.media_url} target="_blank" rel="noopener noreferrer" className="underline text-xs">
-                                📎 Anexo
-                              </a>
-                            )}
-                          </div>
-                        )}
-                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                        <p className={`text-[10px] mt-1 ${msg.sender === 'me' ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
-                          {formatTime(msg.created_at)}
-                        </p>
-                      </div>
-                    </div>
+                    <MessageBubble
+                      key={msg.id}
+                      msg={msg}
+                      serverUrl={serverUrl}
+                      empresaId={empresaId}
+                      onReply={(m) => setReplyTo(m as Message)}
+                    />
                   ))}
                   <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
 
+              {/* Reply preview bar */}
+              {replyTo && (
+                <div className="px-3 pt-2 border-t bg-muted/50 flex items-center gap-2">
+                  <div className="flex-1 bg-card border-l-2 border-primary rounded px-3 py-1.5 min-w-0">
+                    <p className="text-[11px] font-medium text-primary">
+                      {replyTo.sender === 'me' ? 'Você' : getDisplayName(activeConv)}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {replyTo.content || getMsgTypeLabel(replyTo.message_type) || 'Mídia'}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7" onClick={() => setReplyTo(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+
               <div className="p-3 border-t bg-card flex items-center gap-2 shrink-0">
-                <Button variant="ghost" size="icon" className="shrink-0" onClick={() => fileInputRef.current?.click()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={sendingFile}
+                >
                   <Paperclip className="h-5 w-5 text-muted-foreground" />
                 </Button>
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.pdf" />
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar"
+                  onChange={handleFileUpload}
+                />
                 <Input
                   placeholder="Digite uma mensagem..."
                   value={msgText}
