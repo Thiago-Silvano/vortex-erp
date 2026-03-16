@@ -23,7 +23,17 @@ async function proxyRequest(serverUrl: string, endpoint: string, method = 'GET',
   const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
     body: { server_url: serverUrl, endpoint, method, payload },
   });
-  if (error) throw new Error(error.message || 'Erro ao comunicar com servidor WhatsApp');
+  if (error) {
+    throw new Error(error.message || 'Erro ao comunicar com servidor WhatsApp');
+  }
+  // Check if the response itself contains an error (e.g. connection timeout)
+  if (data && typeof data === 'object' && data.error) {
+    const msg = String(data.error);
+    if (msg.includes('timed out') || msg.includes('Connection') || msg.includes('connect error')) {
+      throw new Error(`Servidor WhatsApp indisponível. Verifique se o servidor em ${serverUrl} está online e com a porta aberta para conexões externas.`);
+    }
+    throw new Error(msg);
+  }
   return data;
 }
 
