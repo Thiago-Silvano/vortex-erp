@@ -159,7 +159,13 @@ export default function BankReconciliationPage() {
       .eq("empresa_id", activeCompany.id)
       .eq("reconciliation_status", "reconciled")
       .not("reconciled_with_id", "is", null);
-    const reconciledIds = new Set((reconciledTxs || []).map((t) => t.reconciled_with_id).filter(Boolean));
+    // Support comma-separated IDs in reconciled_with_id
+    const reconciledIds = new Set<string>();
+    (reconciledTxs || []).forEach((t) => {
+      if (t.reconciled_with_id) {
+        t.reconciled_with_id.split(',').map((s: string) => s.trim()).filter(Boolean).forEach((id: string) => reconciledIds.add(id));
+      }
+    });
 
     const payables: FinancialTitle[] = ((payRes.data as any[]) || [])
       .filter((p) => !p.sale_id || !draftIds.includes(p.sale_id))
