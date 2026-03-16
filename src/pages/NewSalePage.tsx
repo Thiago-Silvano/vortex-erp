@@ -835,7 +835,7 @@ export default function NewSalePage() {
           metadata: item.metadata || {}, reservation_number: item.reservation_number || '',
           quote_option_id: resolvedOptionId,
         };
-      } as any)).select('id');
+      }) as any).select('id');
 
       if (insertedItems) {
         for (let idx = 0; idx < insertedItems.length; idx++) {
