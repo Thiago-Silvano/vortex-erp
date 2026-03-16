@@ -42,8 +42,24 @@ export default function SalesPage() {
   const [showCotacoes, setShowCotacoes] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
   const [isMaster, setIsMaster] = useState(false);
+  const [sortKey, setSortKey] = useState<'client_name' | 'sale_date' | 'payment_method' | 'total_sale' | 'net_profit' | 'sale_workflow_status'>('sale_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'sale_date' || key === 'total_sale' || key === 'net_profit' ? 'desc' : 'asc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: typeof sortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
 
   const fetchSales = () => {
     let query = supabase.from('sales').select('*').order('created_at', { ascending: false });
