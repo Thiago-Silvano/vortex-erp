@@ -2223,13 +2223,11 @@ export default function NewSalePage() {
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
               {!isQuoteMode && (
                 <>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Comissão (%)</Label>
-                    <Input type="number" step="0.01" value={commissionRate} onChange={e => setCommissionRate(parseFloat(e.target.value) || 0)} className="mt-1 w-24" />
-                    <p className="text-sm mt-1">{fmt(commissionValue)}</p>
-                  </div>
                   {paymentMethod === 'credito' && (
                     <div><p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p><p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p></div>
+                  )}
+                  {commissionValue > 0 && (
+                    <div><p className="text-sm text-muted-foreground">Comissão ({commissionRate}%)</p><p className="text-lg font-semibold">{fmt(commissionValue)}</p></div>
                   )}
                   <div>
                     <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
