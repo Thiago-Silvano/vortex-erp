@@ -613,7 +613,7 @@ export default function BankReconciliationPage() {
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {['Tarifa bancária', 'Juros', 'IOF', 'Imposto', 'Transferência', 'Estorno', 'Ajuste manual'].map(type => (
+                {['Tarifa bancária', 'Juros', 'IOF', 'Imposto', 'Transferência', 'Estorno', 'Ajuste manual', 'Investimento automático em CDB', 'Resgate automático de CDB'].map(type => (
                   <Button key={type} variant="outline" size="sm" className="text-xs justify-start"
                     onClick={() => markAs(selectedTx, type)}>
                     {type}
