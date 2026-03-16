@@ -52,26 +52,28 @@ export default function ReportDashboard() {
   }, [activeSales]);
 
   const [saleItems, setSaleItems] = useState<any[]>([]);
+  const [costCenters, setCostCenters] = useState<any[]>([]);
   useEffect(() => {
-    if (activeSales.length === 0) return;
+    if (activeCompany?.id) {
+      supabase.from('cost_centers').select('id, name').eq('empresa_id', activeCompany.id).then(({ data }) => { if (data) setCostCenters(data); });
+    }
+  }, [activeCompany?.id]);
+
+  useEffect(() => {
+    if (activeSales.length === 0) { setSaleItems([]); return; }
     const ids = activeSales.map(s => s.id);
     supabase.from('sale_items').select('*').in('sale_id', ids).then(({ data }) => { if (data) setSaleItems(data); });
   }, [activeSales]);
 
   const productData = useMemo(() => {
+    const ccMap = new Map(costCenters.map(cc => [cc.id, cc.name]));
     const categories: Record<string, number> = {};
     saleItems.forEach(item => {
-      const desc = (item.description || '').toLowerCase();
-      let cat = 'Outros';
-      if (desc.includes('aere') || desc.includes('voo') || desc.includes('passag')) cat = 'Passagens Aéreas';
-      else if (desc.includes('hotel') || desc.includes('hosped')) cat = 'Hotéis';
-      else if (desc.includes('pacote')) cat = 'Pacotes';
-      else if (desc.includes('seguro')) cat = 'Seguro Viagem';
-      else if (desc.includes('cruzeiro')) cat = 'Cruzeiros';
+      const cat = (item.cost_center_id && ccMap.get(item.cost_center_id)) || 'Sem Centro de Custo';
       categories[cat] = (categories[cat] || 0) + Number(item.total_value || 0);
     });
     return Object.entries(categories).map(([name, value]) => ({ name, value }));
-  }, [saleItems]);
+  }, [saleItems, costCenters]);
 
   const indicators = [
     { label: 'Total de Vendas', value: totalVendas, icon: ShoppingCart },
