@@ -80,12 +80,15 @@ export default function BankReconciliationPage() {
       .order('transaction_date', { ascending: false }).limit(500);
     setTransactions((data as any[]) || []);
 
-    // Load financial titles
+    // Load financial titles — use the bank account's empresa_id so titles
+    // always match the company that owns the bank account being reconciled.
+    const acct = accounts.find(a => a.id === selectedAccount);
+    const titlesEmpresaId = (acct as any)?.empresa_id || activeCompany.id;
     const [payRes, recRes] = await Promise.all([
       supabase.from('accounts_payable').select('id, description, amount, due_date, status, supplier_id')
-        .eq('empresa_id', activeCompany.id).in('status', ['open', 'pending']),
+        .eq('empresa_id', titlesEmpresaId).in('status', ['open', 'pending']),
       supabase.from('receivables').select('id, description, amount, due_date, status, client_name')
-        .eq('empresa_id', activeCompany.id).in('status', ['pending']),
+        .eq('empresa_id', titlesEmpresaId).in('status', ['pending']),
     ]);
 
     const payables: FinancialTitle[] = ((payRes.data as any[]) || []).map(p => ({
