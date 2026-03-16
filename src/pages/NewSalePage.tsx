@@ -2276,7 +2276,26 @@ export default function NewSalePage() {
         {/* Controle de Pagamentos - only in sale mode */}
         {!isQuoteMode && (
           <Card>
-            <CardHeader><CardTitle className="text-base">💰 Controle de Pagamentos</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">💰 Controle de Pagamentos</CardTitle>
+              {(() => {
+                const totalPayments = supplierPayments.reduce((s, sp) => s + sp.amount, 0) + machineFee;
+                const diff = totalCost - totalPayments;
+                return (
+                  <div className="flex items-center gap-4 text-sm mt-1">
+                    <span className="text-muted-foreground">Custo Total: <strong className="text-foreground">{fmt(totalCost)}</strong></span>
+                    <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalPayments)}</strong></span>
+                    {Math.abs(diff) > 0.01 ? (
+                      <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
+                        {diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`}
+                      </span>
+                    ) : (
+                      <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
+                    )}
+                  </div>
+                );
+              })()}
+            </CardHeader>
             <CardContent className="space-y-4">
               {/* Supplier selection */}
               <div className="space-y-3">
