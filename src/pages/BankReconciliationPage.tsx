@@ -290,10 +290,24 @@ export default function BankReconciliationPage() {
   // Mark as ignored/tarifa/etc
   const markAs = async (tx: BankTx, type: string) => {
     const { data: { user } } = await supabase.auth.getUser();
+
+    // If reclassifying from reconciled/ignored, undo first
+    if (tx.reconciliation_status !== 'pending') {
+      if (tx.reconciled_with_id) {
+        if (tx.reconciled_with_type === 'pagar') {
+          await supabase.from('accounts_payable').update({ status: 'open', payment_date: null } as any).eq('id', tx.reconciled_with_id);
+        } else if (tx.reconciled_with_type === 'receber') {
+          await supabase.from('receivables').update({ status: 'pending', payment_date: null } as any).eq('id', tx.reconciled_with_id);
+        }
+      }
+    }
+
     await supabase.from('bank_transactions').update({
       reconciliation_status: 'ignored',
       reconciliation_note: type,
       category: type,
+      reconciled_with_type: null,
+      reconciled_with_id: null,
     } as any).eq('id', tx.id);
 
     await supabase.from('reconciliation_log').insert({
@@ -477,18 +491,26 @@ export default function BankReconciliationPage() {
                               {statusLabels[tx.reconciliation_status] || tx.reconciliation_status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right flex items-center justify-end gap-1">
                             {tx.reconciliation_status === 'pending' && (
                               <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100"
                                 onClick={() => { setSelectedTx(tx); setShowManualModal(true); }}>
                                 <FileText className="h-3 w-3" />
                               </Button>
                             )}
-                            {tx.reconciliation_status === 'reconciled' && (
-                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500"
-                                onClick={() => undoReconcile(tx)}>
-                                <Unlink className="h-3 w-3" />
-                              </Button>
+                            {(tx.reconciliation_status === 'reconciled' || tx.reconciliation_status === 'ignored') && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500"
+                                  title="Desfazer"
+                                  onClick={() => undoReconcile(tx)}>
+                                  <Unlink className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-primary"
+                                  title="Reclassificar"
+                                  onClick={() => { setSelectedTx(tx); setShowManualModal(true); }}>
+                                  <FileText className="h-3 w-3" />
+                                </Button>
+                              </>
                             )}
                           </TableCell>
                         </TableRow>
