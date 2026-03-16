@@ -187,6 +187,32 @@ export default function VistosProductsPage() {
                   <p className="text-xs text-muted-foreground">Marque se este serviço é uma taxa repassada ao fornecedor (ex: taxa consular, CASV). Será separado nos relatórios financeiros.</p>
                 </div>
               </div>
+              <div>
+                <Label>Fornecedor padrão</Label>
+                <Select value={supplierId} onValueChange={setSupplierId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um fornecedor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {suppliers.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Centro de Custo padrão</Label>
+                <Select value={costCenterId} onValueChange={setCostCenterId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um centro de custo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {costCenters.map(cc => (
+                      <SelectItem key={cc.id} value={cc.id}>
+                        {cc.description ? <><span className="text-xs text-muted-foreground">[{cc.description}]</span> {cc.name}</> : cc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
