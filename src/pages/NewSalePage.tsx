@@ -2280,9 +2280,27 @@ export default function NewSalePage() {
                 const sup = allSuppliers.find(s => s.id === sp.supplier_id);
                 return (
                   <div key={sp.supplier_id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <p className="font-medium text-sm">{sup?.name || 'Fornecedor'}</p>
-                      <p className="text-sm text-muted-foreground">Valor: <span className="font-semibold text-foreground">{fmt(sp.amount)}</span></p>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-muted-foreground">Valor:</Label>
+                        <Input
+                          className="w-36 h-8 text-sm font-semibold"
+                          value={sp.amount ? `R$ ${sp.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                          onChange={e => {
+                            const digits = e.target.value.replace(/[^\d]/g, '');
+                            const newAmount = parseInt(digits || '0', 10) / 100;
+                            setSupplierPayments(prev => prev.map(s => {
+                              if (s.supplier_id !== sp.supplier_id) return s;
+                              const updatedDates = s.payment_method === 'credito'
+                                ? s.installment_dates.map(d => ({ ...d, amount: newAmount / (s.installments || 1) }))
+                                : [{ date: s.installment_dates[0]?.date || s.payment_date, amount: newAmount }];
+                              return { ...s, amount: newAmount, installment_dates: updatedDates };
+                            }));
+                          }}
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div className="md:col-span-4">
