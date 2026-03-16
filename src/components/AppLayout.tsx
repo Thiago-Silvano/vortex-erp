@@ -152,6 +152,7 @@ function AppSidebar() {
 
   const adminItems: MenuItem[] = [
     { title: 'Configurações', url: '/settings', icon: Settings, permKey: 'settings_access' },
+    { title: 'Aparência', url: '/settings/appearance', icon: Palette, permKey: 'settings_access' },
     { title: 'Usuários', url: '/users', icon: Users },
   ];
 
