@@ -28,6 +28,9 @@ interface SaleItem {
   unit_price: number;
   total_value: number;
   is_supplier_fee: boolean;
+  supplier_id: string;
+  cost_center_id: string;
+  payment_due_date: string;
 }
 
 interface Applicant {
@@ -69,6 +72,8 @@ export default function VistosNewSalePage() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
+  const [allSuppliers, setAllSuppliers] = useState<{ id: string; name: string }[]>([]);
+  const [allCostCenters, setAllCostCenters] = useState<{ id: string; name: string }[]>([]);
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -107,6 +112,10 @@ export default function VistosNewSalePage() {
       .then(({ data }) => { if (data) setProducts(data as Product[]); });
     supabase.from('clients').select('id, full_name, phone, email').eq('empresa_id', activeCompany.id).order('full_name')
       .then(({ data }) => { if (data) setAllClients(data); });
+    supabase.from('suppliers').select('id, name').order('name')
+      .then(({ data }) => { if (data) setAllSuppliers(data); });
+    supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name')
+      .then(({ data }) => { if (data) setAllCostCenters(data); });
   }, [activeCompany?.id]);
 
   useEffect(() => {
@@ -132,6 +141,9 @@ export default function VistosNewSalePage() {
         unit_price: Number(item.unit_price) || 0,
         total_value: Number(item.total_value) || 0,
         is_supplier_fee: item.is_supplier_fee || false,
+        supplier_id: item.supplier_id || '',
+        cost_center_id: item.cost_center_id || '',
+        payment_due_date: item.payment_due_date || '',
       })));
     } else if (sale.product_id) {
       // Legacy: single product_id on sale
@@ -144,6 +156,9 @@ export default function VistosNewSalePage() {
           unit_price: Number(sale.total_value) || prod.price,
           total_value: Number(sale.total_value) || prod.price,
           is_supplier_fee: prod.is_supplier_fee,
+          supplier_id: '',
+          cost_center_id: '',
+          payment_due_date: '',
         }]);
       }
     }
@@ -167,7 +182,7 @@ export default function VistosNewSalePage() {
 
   // --- Sale Items management ---
   const addSaleItem = () => {
-    setSaleItems(prev => [...prev, { product_id: '', product_name: '', quantity: 1, unit_price: 0, total_value: 0, is_supplier_fee: false }]);
+    setSaleItems(prev => [...prev, { product_id: '', product_name: '', quantity: 1, unit_price: 0, total_value: 0, is_supplier_fee: false, supplier_id: '', cost_center_id: '', payment_due_date: '' }]);
   };
 
   const updateSaleItem = (idx: number, field: keyof SaleItem, value: any) => {
@@ -351,6 +366,7 @@ export default function VistosNewSalePage() {
       await supabase.from('visa_sale_payments').delete().eq('visa_sale_id', editSaleId);
       await (supabase.from('visa_sale_items' as any) as any).delete().eq('visa_sale_id', editSaleId);
       await supabase.from('receivables').delete().eq('visa_sale_id', editSaleId);
+      await (supabase.from('accounts_payable') as any).delete().eq('sale_id', editSaleId).eq('origin_type', 'visa_sale');
     } else {
       const { data: newSale, error } = await supabase.from('visa_sales').insert(salePayload).select('id').single();
       if (error || !newSale) { toast.error('Erro ao salvar venda.'); setSaving(false); return; }
@@ -366,6 +382,9 @@ export default function VistosNewSalePage() {
       unit_price: item.unit_price,
       total_value: item.total_value,
       is_supplier_fee: item.is_supplier_fee,
+      supplier_id: item.supplier_id || null,
+      cost_center_id: item.cost_center_id || null,
+      payment_due_date: item.payment_due_date || null,
       sort_order: i,
     }));
     await (supabase.from('visa_sale_items' as any) as any).insert(itemPayloads);
@@ -438,7 +457,23 @@ export default function VistosNewSalePage() {
       await supabase.from('receivables').insert(receivablePayloads as any);
     }
 
-    // Insert applicants
+    // Generate accounts payable for fee items (taxa de fornecedor)
+    const feeItems = saleItems.filter(i => i.is_supplier_fee && i.total_value > 0);
+    if (feeItems.length > 0) {
+      const apPayloads = feeItems.map(item => ({
+        sale_id: saleId,
+        description: `Taxa - ${item.product_name} - ${clientName.trim()}`,
+        amount: item.total_value,
+        supplier_id: item.supplier_id || null,
+        cost_center_id: item.cost_center_id || null,
+        due_date: item.payment_due_date || null,
+        status: 'open',
+        origin_type: 'visa_sale',
+        empresa_id: activeCompany?.id || null,
+      }));
+      await supabase.from('accounts_payable').insert(apPayloads as any);
+    }
+
     const appPayloads = applicants.map((a, i) => ({
       visa_sale_id: saleId,
       full_name: a.full_name.trim(),
@@ -617,6 +652,32 @@ export default function VistosNewSalePage() {
                     <Input className="h-9" value={maskCurrencyInput(item.unit_price)} onChange={e => updateSaleItem(idx, 'unit_price', parseCurrency(e.target.value))} />
                   </div>
                 </div>
+                {item.is_supplier_fee && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-dashed">
+                    <div>
+                      <Label className="text-xs">Fornecedor</Label>
+                      <Select value={item.supplier_id} onValueChange={v => updateSaleItem(idx, 'supplier_id', v)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Selecione o fornecedor" /></SelectTrigger>
+                        <SelectContent>
+                          {allSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Centro de Custo</Label>
+                      <Select value={item.cost_center_id} onValueChange={v => updateSaleItem(idx, 'cost_center_id', v)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {allCostCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Data de Pagamento</Label>
+                      <Input className="h-9" type="date" value={item.payment_due_date} onChange={e => updateSaleItem(idx, 'payment_due_date', e.target.value)} />
+                    </div>
+                  </div>
+                )}
                 <div className="text-sm text-right text-muted-foreground">
                   Subtotal: <strong className="text-foreground">{fmt(item.total_value)}</strong>
                 </div>

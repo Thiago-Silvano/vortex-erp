@@ -2954,47 +2954,70 @@ export type Database = {
       }
       visa_sale_items: {
         Row: {
+          cost_center_id: string | null
           created_at: string
           id: string
           is_supplier_fee: boolean
+          payment_due_date: string | null
           product_id: string | null
           product_name: string
           quantity: number
           sort_order: number
+          supplier_id: string | null
           total_value: number
           unit_price: number
           visa_sale_id: string
         }
         Insert: {
+          cost_center_id?: string | null
           created_at?: string
           id?: string
           is_supplier_fee?: boolean
+          payment_due_date?: string | null
           product_id?: string | null
           product_name?: string
           quantity?: number
           sort_order?: number
+          supplier_id?: string | null
           total_value?: number
           unit_price?: number
           visa_sale_id: string
         }
         Update: {
+          cost_center_id?: string | null
           created_at?: string
           id?: string
           is_supplier_fee?: boolean
+          payment_due_date?: string | null
           product_id?: string | null
           product_name?: string
           quantity?: number
           sort_order?: number
+          supplier_id?: string | null
           total_value?: number
           unit_price?: number
           visa_sale_id?: string
         }
         Relationships: [
           {
+            foreignKeyName: "visa_sale_items_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "visa_sale_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "visa_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visa_sale_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
           {
