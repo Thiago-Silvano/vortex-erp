@@ -28,8 +28,7 @@ interface ProposalPaymentOption {
   method: string;
   label: string;
   installments: number;
-  installmentValue: number;
-  totalValue: number;
+  discountPercent: number;
   enabled: boolean;
 }
 

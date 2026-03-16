@@ -2110,38 +2110,32 @@ export default function NewSalePage() {
                                 setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
                                   ...o,
                                   installments: inst,
-                                  installmentValue: Math.round((o.totalValue / inst) * 100) / 100,
                                 } : o));
                               }}
                               className="h-8"
                             />
                           </div>
                           <div>
-                            <Label className="text-xs text-muted-foreground">Valor/Parcela</Label>
+                            <Label className="text-xs text-muted-foreground">Desconto / Acréscimo (%)</Label>
                             <Input
-                              value={opt.installmentValue ? `R$ ${opt.installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                              type="number"
+                              step="0.5"
+                              value={opt.discountPercent || 0}
                               onChange={e => {
-                                const digits = e.target.value.replace(/[^\d]/g, '');
-                                const val = parseInt(digits || '0', 10) / 100;
+                                const val = parseFloat(e.target.value) || 0;
                                 setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
                                   ...o,
-                                  installmentValue: val,
-                                  totalValue: val * o.installments,
+                                  discountPercent: val,
                                 } : o));
                               }}
-                              placeholder="R$ 0,00"
+                              placeholder="Ex: 5 = 5% desconto, -3 = 3% acréscimo"
                               className="h-8"
                             />
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Positivo = desconto · Negativo = acréscimo</p>
                           </div>
                         </div>
                       )}
                     </div>
-                    {opt.enabled && (
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">Total</p>
-                        <p className="text-sm font-bold text-primary">{fmt(opt.totalValue)}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -2153,8 +2147,7 @@ export default function NewSalePage() {
                 method: `custom_${Date.now()}`,
                 label: 'Personalizado',
                 installments: 1,
-                installmentValue: totalSaleWithInterest,
-                totalValue: totalSaleWithInterest,
+                discountPercent: 0,
                 enabled: true,
               }])}
             >
