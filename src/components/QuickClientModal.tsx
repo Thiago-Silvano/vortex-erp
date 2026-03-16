@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
-import { maskCpf, maskPhone, validateEmail } from '@/lib/masks';
+import { maskCpfCnpj, isCnpj, fetchCnpjData, maskPhone, validateEmail } from '@/lib/masks';
 import CepLookup from '@/components/CepLookup';
-import { Users } from 'lucide-react';
+import { Users, Search, Loader2 } from 'lucide-react';
 
 interface QuickClientModalProps {
   open: boolean;
