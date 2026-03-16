@@ -206,7 +206,14 @@ export default function NewSalePage() {
     setDestinationImageUrl((sale as any).destination_image_url || '');
     // Load proposal payment options
     if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
-      setProposalPaymentOptions((sale as any).proposal_payment_options);
+      // Migrate old format (installmentValue/totalValue) to new format (discountPercent)
+      setProposalPaymentOptions((sale as any).proposal_payment_options.map((o: any) => ({
+        method: o.method,
+        label: o.label,
+        installments: o.installments || 1,
+        discountPercent: o.discountPercent ?? 0,
+        enabled: o.enabled !== false,
+      })));
     }
     if ((sale as any).show_individual_values !== undefined) {
       setShowIndividualValues((sale as any).show_individual_values);
