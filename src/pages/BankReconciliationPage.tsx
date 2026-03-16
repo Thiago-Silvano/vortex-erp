@@ -18,7 +18,7 @@ import {
   Clock, FileText, ArrowDownCircle, ArrowUpCircle, Banknote, Search,
 } from 'lucide-react';
 
-interface BankAccount { id: string; bank_name: string; account_number: string; account_digit: string; agency: string; color: string; }
+interface BankAccount { id: string; bank_name: string; account_number: string; account_digit: string; agency: string; color: string; empresa_id: string; }
 interface BankTx {
   id: string; transaction_date: string; description: string; amount: number;
   transaction_type: string; reconciliation_status: string; reference_number: string;
@@ -67,7 +67,7 @@ export default function BankReconciliationPage() {
 
   useEffect(() => {
     if (!activeCompany) return;
-    supabase.from('bank_accounts').select('id, bank_name, account_number, account_digit, agency, color')
+    supabase.from('bank_accounts').select('id, bank_name, account_number, account_digit, agency, color, empresa_id')
       .eq('empresa_id', activeCompany.id).eq('status', 'active').order('bank_name')
       .then(({ data }) => setAccounts((data as any[]) || []));
   }, [activeCompany]);
@@ -80,12 +80,15 @@ export default function BankReconciliationPage() {
       .order('transaction_date', { ascending: false }).limit(500);
     setTransactions((data as any[]) || []);
 
-    // Load financial titles
+    // Load financial titles — use the bank account's empresa_id so titles
+    // always match the company that owns the bank account being reconciled.
+    const acct = accounts.find(a => a.id === selectedAccount);
+    const titlesEmpresaId = (acct as any)?.empresa_id || activeCompany.id;
     const [payRes, recRes] = await Promise.all([
       supabase.from('accounts_payable').select('id, description, amount, due_date, status, supplier_id')
-        .eq('empresa_id', activeCompany.id).in('status', ['open', 'pending']),
+        .eq('empresa_id', titlesEmpresaId).in('status', ['open', 'pending']),
       supabase.from('receivables').select('id, description, amount, due_date, status, client_name')
-        .eq('empresa_id', activeCompany.id).in('status', ['pending']),
+        .eq('empresa_id', titlesEmpresaId).in('status', ['pending']),
     ]);
 
     const payables: FinancialTitle[] = ((payRes.data as any[]) || []).map(p => ({
