@@ -52,6 +52,17 @@ export interface ProposalPaymentOptionPdf {
   enabled: boolean;
 }
 
+export interface QuoteOptionPdf {
+  name: string;
+  items: Array<{ name: string; value: number; description?: string }>;
+  hotels: HotelPdf[];
+  flightLegs: FlightLegPdf[];
+  flightGroups?: FlightLegPdf[][];
+  services: ServicePdf[];
+  totalProducts: number;
+  totalTrip: number;
+}
+
 export interface PremiumPdfData {
   agency: {
     name: string;
@@ -91,6 +102,7 @@ export interface PremiumPdfData {
   proposalPaymentOptions?: ProposalPaymentOptionPdf[];
   notes?: string;
   destinationImageBase64?: string;
+  quoteOptions?: QuoteOptionPdf[];
 }
 
 // ─── Helpers ────────────────────────────────────────────────
