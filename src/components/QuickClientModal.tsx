@@ -32,6 +32,7 @@ export default function QuickClientModal({ open, onClose, onClientCreated, initi
   const [form, setForm] = useState(() => ({ ...emptyForm(), full_name: initialName || '' }));
   const [saving, setSaving] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [cnpjLoading, setCnpjLoading] = useState(false);
   const [isDependent, setIsDependent] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [existingClients, setExistingClients] = useState<any[]>([]);
