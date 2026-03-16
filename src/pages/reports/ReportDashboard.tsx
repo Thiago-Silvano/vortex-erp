@@ -30,16 +30,17 @@ export default function ReportDashboard() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const totalVendas = sales.length;
-  const totalFaturado = sales.reduce((s, v) => s + Number(v.total_sale || 0), 0);
-  const lucroBruto = sales.reduce((s, v) => s + Number(v.gross_profit || 0), 0);
-  const lucroLiquido = sales.reduce((s, v) => s + Number(v.net_profit || 0), 0);
-  const clientesAtendidos = new Set(sales.map(s => s.client_name)).size;
+  const activeSales = sales.filter(s => s.status === 'active');
+  const totalVendas = activeSales.length;
+  const totalFaturado = activeSales.reduce((s, v) => s + Number(v.total_sale || 0), 0);
+  const lucroBruto = activeSales.reduce((s, v) => s + Number(v.gross_profit || 0), 0);
+  const lucroLiquido = activeSales.reduce((s, v) => s + Number(v.net_profit || 0), 0);
+  const clientesAtendidos = activeSales.reduce((s, v) => s + Number(v.passengers_count || 0), 0);
   const totalReservas = reservations.length;
 
   const salesByMonth = useMemo(() => {
     const map = new Map<string, { faturamento: number; custos: number; lucro: number }>();
-    sales.forEach(s => {
+    activeSales.forEach(s => {
       const key = format(parseISO(s.sale_date), 'MMM/yy', { locale: ptBR });
       const cur = map.get(key) || { faturamento: 0, custos: 0, lucro: 0 };
       cur.faturamento += Number(s.total_sale || 0);
@@ -48,14 +49,14 @@ export default function ReportDashboard() {
       map.set(key, cur);
     });
     return Array.from(map.entries()).map(([name, data]) => ({ name, ...data }));
-  }, [sales]);
+  }, [activeSales]);
 
   const [saleItems, setSaleItems] = useState<any[]>([]);
   useEffect(() => {
-    if (sales.length === 0) return;
-    const ids = sales.map(s => s.id);
+    if (activeSales.length === 0) return;
+    const ids = activeSales.map(s => s.id);
     supabase.from('sale_items').select('*').in('sale_id', ids).then(({ data }) => { if (data) setSaleItems(data); });
-  }, [sales]);
+  }, [activeSales]);
 
   const productData = useMemo(() => {
     const categories: Record<string, number> = {};
