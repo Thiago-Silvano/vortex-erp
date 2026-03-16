@@ -1723,6 +1723,7 @@ export default function NewSalePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12" />
+                    {isQuoteMode && quoteOptions.length > 1 && <TableHead className="w-36">Opção</TableHead>}
                     <TableHead className="min-w-[140px]">Serviço</TableHead>
                     <TableHead className="min-w-[100px]">Descrição</TableHead>
                     <TableHead className="w-36">Custo</TableHead>
