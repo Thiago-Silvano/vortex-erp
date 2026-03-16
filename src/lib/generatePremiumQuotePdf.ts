@@ -1013,7 +1013,7 @@ function drawFlightDirection(
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       setColor(doc, TEXT_MUTED);
-      doc.text(`⏱ Tempo total: ${durStr}`, m, y);
+      doc.text(s(`Tempo total: ${durStr}`), m, y);
       y += 5;
     }
   }
