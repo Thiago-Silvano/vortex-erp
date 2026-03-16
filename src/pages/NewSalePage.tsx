@@ -188,7 +188,8 @@ export default function NewSalePage() {
     setQuoteId(sale.quote_id || '');
     setClientName(sale.client_name);
     setSaleDate(sale.sale_date);
-    setPaymentMethod(sale.payment_method || 'pix');
+    const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
+    setPaymentMethods(savedMethods.length > 0 ? savedMethods : ['pix']);
     setInstallments(sale.installments || 1);
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
