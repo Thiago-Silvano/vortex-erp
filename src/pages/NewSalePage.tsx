@@ -753,7 +753,7 @@ export default function NewSalePage() {
         installments: hasCredito ? installments : 1,
         card_charge_type: '',
         card_payment_type: hasCredito ? cardPaymentType : '',
-        card_fee_rate: paymentMethod === 'credito' ? feeRate : 0,
+        card_fee_rate: hasCredito ? feeRate : 0,
         total_sale: totalSaleWithInterest,
         total_supplier_cost: totalCost,
         gross_profit: grossProfit,
