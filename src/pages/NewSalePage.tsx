@@ -1685,6 +1685,17 @@ export default function NewSalePage() {
                       <TableRow className="border-b-2">
                         <TableCell colSpan={7} className="py-2">
                           <div className="flex items-center gap-2 flex-wrap">
+                            {!isQuoteMode && (
+                              <div className="flex items-center gap-1">
+                                <Label className="text-xs text-muted-foreground whitespace-nowrap">Nº Reserva:</Label>
+                                <Input
+                                  value={item.reservation_number || ''}
+                                  onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)}
+                                  placeholder="Ex: ABC123"
+                                  className="h-7 text-xs w-32"
+                                />
+                              </div>
+                            )}
                             {uploadingItemImages[idx] ? (
                               <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />Carregando...</span>
                             ) : (
