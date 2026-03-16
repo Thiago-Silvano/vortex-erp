@@ -785,7 +785,7 @@ export default function NewSalePage() {
         sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
         total_value: item.total_value, sort_order: idx,
         service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
-        metadata: item.metadata || {},
+        metadata: item.metadata || {}, reservation_number: item.reservation_number || '',
       } as any))).select('id');
 
       if (insertedItems) {
