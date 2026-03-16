@@ -196,6 +196,9 @@ export default function VistosNewSalePage() {
           updated.unit_price = prod.price;
           updated.is_supplier_fee = prod.is_supplier_fee;
           updated.total_value = prod.price * updated.quantity;
+          // Auto-fill supplier and cost center from product defaults (only if currently empty)
+          if (!updated.supplier_id && prod.supplier_id) updated.supplier_id = prod.supplier_id;
+          if (!updated.cost_center_id && prod.cost_center_id) updated.cost_center_id = prod.cost_center_id;
         }
       }
       if (field === 'quantity') {
