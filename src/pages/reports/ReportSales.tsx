@@ -36,6 +36,7 @@ export default function ReportSales() {
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const filtered = sales.filter(s => {
+    if (s.status !== 'active' && s.status !== 'cancelled') return false;
     if (filterClient && !s.client_name?.toLowerCase().includes(filterClient.toLowerCase())) return false;
     if (filterStatus !== 'all' && s.status !== filterStatus) return false;
     return true;
