@@ -1761,6 +1761,7 @@ export type Database = {
           description: string
           id: string
           metadata: Json | null
+          quote_option_id: string | null
           rav: number | null
           reservation_number: string | null
           sale_id: string
@@ -1775,6 +1776,7 @@ export type Database = {
           description?: string
           id?: string
           metadata?: Json | null
+          quote_option_id?: string | null
           rav?: number | null
           reservation_number?: string | null
           sale_id: string
@@ -1789,6 +1791,7 @@ export type Database = {
           description?: string
           id?: string
           metadata?: Json | null
+          quote_option_id?: string | null
           rav?: number | null
           reservation_number?: string | null
           sale_id?: string
@@ -1802,6 +1805,13 @@ export type Database = {
             columns: ["cost_center_id"]
             isOneToOne: false
             referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_quote_option_id_fkey"
+            columns: ["quote_option_id"]
+            isOneToOne: false
+            referencedRelation: "sale_quote_options"
             referencedColumns: ["id"]
           },
           {
@@ -1869,6 +1879,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sale_passengers_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_quote_options: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          order_index: number
+          sale_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          sale_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_quote_options_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"

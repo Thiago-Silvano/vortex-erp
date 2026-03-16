@@ -40,6 +40,13 @@ interface SaleItemData {
   service_catalog_id: string | null;
   images: string[];
   metadata?: any;
+  quote_option_id?: string | null;
+}
+
+interface QuoteOptionData {
+  id: string;
+  name: string;
+  order_index: number;
 }
 
 interface PassengerData { first_name: string; last_name: string; is_main: boolean; }
@@ -122,6 +129,8 @@ export default function PropostaPublicPage() {
   const [quoteData, setQuoteData] = useState<any>(null);
   const [catalogNames, setCatalogNames] = useState<Record<string, string>>({});
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+  const [quoteOptions, setQuoteOptions] = useState<QuoteOptionData[]>([]);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!shortId) return;
@@ -157,10 +166,18 @@ export default function PropostaPublicPage() {
           id: item.id, description: item.description, total_value: Number(item.total_value),
           service_catalog_id: item.service_catalog_id, images: imgs?.map((i: any) => i.image_url) || [],
           metadata: (item as any).metadata || {},
+          quote_option_id: (item as any).quote_option_id || null,
         });
       }
     }
     setItems(loadedItems);
+
+    // Load quote options
+    const { data: optionsData } = await (supabase.from('sale_quote_options' as any) as any).select('*').eq('sale_id', saleId).order('order_index');
+    if (optionsData && optionsData.length > 1) {
+      setQuoteOptions(optionsData);
+      setSelectedOptionId(optionsData[0].id);
+    }
 
     if (passengersRes.data) setPassengers(passengersRes.data as any);
     if (receivablesRes.data) setReceivables(receivablesRes.data as any);
@@ -198,7 +215,12 @@ export default function PropostaPublicPage() {
     );
   }
 
-  const totalSale = items.reduce((s, i) => s + i.total_value, 0);
+  // Filter items by selected option if options exist
+  const filteredItems = quoteOptions.length > 1 && selectedOptionId
+    ? items.filter(i => i.quote_option_id === selectedOptionId)
+    : items;
+
+  const totalSale = filteredItems.reduce((s, i) => s + i.total_value, 0);
   const destination = (sale as any).destination_name || quoteData?.trip_destination || '';
   const origin = quoteData?.trip_origin || '';
   const departureDate = quoteData?.trip_departure_date || (sale as any).trip_start_date;
@@ -206,7 +228,12 @@ export default function PropostaPublicPage() {
   const nights = (sale as any).trip_nights || quoteData?.trip_nights || 0;
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
-  const proposalOptions: ProposalPaymentOption[] = (sale as any).proposal_payment_options || [];
+  const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).map((opt: ProposalPaymentOption) => {
+    // Recalculate payment options based on filtered items total
+    const optTotal = totalSale;
+    const perInstallment = opt.installments > 0 ? Math.round((optTotal / opt.installments) * 100) / 100 : optTotal;
+    return { ...opt, totalValue: optTotal, installmentValue: perInstallment };
+  });
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
 
   const methodLabels: Record<string, string> = {

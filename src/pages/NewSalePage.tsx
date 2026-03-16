@@ -38,6 +38,13 @@ interface SaleItem {
   cost_center_id?: string;
   metadata?: ServiceMetadata;
   reservation_number?: string;
+  quote_option_id?: string;
+}
+
+interface QuoteOption {
+  id?: string;
+  name: string;
+  order_index: number;
 }
 
 interface ServiceCatalogOption {
@@ -113,6 +120,7 @@ export default function NewSalePage() {
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [serviceCatalog, setServiceCatalog] = useState<ServiceCatalogOption[]>([]);
   const [passengers, setPassengers] = useState<Passenger[]>([]);
+  const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
 
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [installments, setInstallments] = useState(1);
@@ -248,6 +256,19 @@ export default function NewSalePage() {
     // Load internal files
     const { data: files } = await (supabase.from('sale_internal_files' as any) as any).select('*').eq('sale_id', id).order('created_at');
     if (files) setInternalFiles(files.map((f: any) => ({ id: f.id, file_name: f.file_name, file_url: f.file_url })));
+
+    // Load quote options
+    const { data: options } = await (supabase.from('sale_quote_options' as any) as any).select('*').eq('sale_id', id).order('order_index');
+    if (options && options.length > 0) {
+      setQuoteOptions(options.map((o: any) => ({ id: o.id, name: o.name, order_index: o.order_index })));
+      // Update items with their quote_option_id
+      if (saleItems) {
+        setItems(prev => prev.map(item => {
+          const dbItem = saleItems.find((si: any) => si.id === item.id);
+          return { ...item, quote_option_id: (dbItem as any)?.quote_option_id || undefined };
+        }));
+      }
+    }
   };
 
   const fetchClients = () => {
@@ -774,19 +795,47 @@ export default function NewSalePage() {
       await (supabase.from('sale_passengers' as any) as any).delete().eq('sale_id', editSaleId);
       // Clean old internal files
       await (supabase.from('sale_internal_files' as any) as any).delete().eq('sale_id', editSaleId);
+      // Clean old quote options
+      await (supabase.from('sale_quote_options' as any) as any).delete().eq('sale_id', editSaleId);
     } else {
       const { data, error } = await supabase.from('sales').insert(salePayload as any).select('id').single();
       if (error || !data) { toast.error('Erro ao criar venda'); return null; }
       saleId = data.id;
     }
 
+    // Save quote options first to get IDs for items
+    const optionIdMap: Record<number, string> = {};
+    if (quoteOptions.length > 0) {
+      const { data: insertedOptions } = await (supabase.from('sale_quote_options' as any) as any).insert(
+        quoteOptions.map((opt, idx) => ({
+          sale_id: saleId, name: opt.name, order_index: idx,
+        }))
+      ).select('id, order_index');
+      if (insertedOptions) {
+        insertedOptions.forEach((o: any) => { optionIdMap[o.order_index] = o.id; });
+      }
+    }
+
     if (items.length > 0) {
-      const { data: insertedItems } = await supabase.from('sale_items').insert(items.map((item, idx) => ({
-        sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
-        total_value: item.total_value, sort_order: idx,
-        service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
-        metadata: item.metadata || {}, reservation_number: item.reservation_number || '',
-      } as any))).select('id');
+      const { data: insertedItems } = await supabase.from('sale_items').insert(items.map((item, idx) => {
+        // Resolve the quote_option_id: match by option order_index
+        let resolvedOptionId: string | null = null;
+        if (item.quote_option_id) {
+          // Find which option index this item belongs to
+          const optIdx = quoteOptions.findIndex(o => o.id === item.quote_option_id || String(o.order_index) === item.quote_option_id);
+          if (optIdx >= 0 && optionIdMap[optIdx]) resolvedOptionId = optionIdMap[optIdx];
+          else if (optionIdMap[0]) resolvedOptionId = optionIdMap[0]; // fallback to first
+        } else if (optionIdMap[0]) {
+          resolvedOptionId = optionIdMap[0]; // default to first option
+        }
+        return {
+          sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
+          total_value: item.total_value, sort_order: idx,
+          service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
+          metadata: item.metadata || {}, reservation_number: item.reservation_number || '',
+          quote_option_id: resolvedOptionId,
+        };
+      }) as any).select('id');
 
       if (insertedItems) {
         for (let idx = 0; idx < insertedItems.length; idx++) {
@@ -1618,12 +1667,50 @@ export default function NewSalePage() {
 
         {/* Suppliers card removed - moved to Controle de Pagamentos */}
 
+        {/* Opções da Cotação */}
+        {isQuoteMode && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">📋 Opções da Cotação</CardTitle>
+            <Button size="sm" variant="outline" onClick={() => {
+              setQuoteOptions(prev => [...prev, { name: `Opção ${prev.length + 1}`, order_index: prev.length }]);
+            }}>
+              <Plus className="h-4 w-4 mr-1" />Adicionar Opção
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-sm text-muted-foreground">Cada opção representa um cenário diferente de viagem. Os serviços serão vinculados a uma opção.</p>
+            <div className="flex flex-wrap gap-2">
+              {quoteOptions.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-muted/30">
+                  <Input
+                    value={opt.name}
+                    onChange={e => setQuoteOptions(prev => prev.map((o, i) => i === idx ? { ...o, name: e.target.value } : o))}
+                    className="h-7 text-sm w-40 border-0 bg-transparent p-0 focus-visible:ring-0"
+                  />
+                  {quoteOptions.length > 1 && (
+                    <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => {
+                      setQuoteOptions(prev => prev.filter((_, i) => i !== idx).map((o, i) => ({ ...o, order_index: i })));
+                      // Remove option from items that had it
+                      const removedId = opt.id || String(idx);
+                      setItems(prev => prev.map(item => item.quote_option_id === removedId ? { ...item, quote_option_id: quoteOptions[0]?.id || '0' } : item));
+                    }}>
+                      <X className="h-3 w-3 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
         {/* Serviços da Venda */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
             <Button size="sm" variant="outline" onClick={() => {
-              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {} }]);
+              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {}, quote_option_id: quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0) }]);
               setTimeout(() => setEditingItemIdx(items.length), 50);
             }}>
               <Plus className="h-4 w-4 mr-1" />Adicionar
@@ -1636,6 +1723,7 @@ export default function NewSalePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12" />
+                    {isQuoteMode && quoteOptions.length > 1 && <TableHead className="w-36">Opção</TableHead>}
                     <TableHead className="min-w-[140px]">Serviço</TableHead>
                     <TableHead className="min-w-[100px]">Descrição</TableHead>
                     <TableHead className="w-36">Custo</TableHead>
@@ -1659,6 +1747,16 @@ export default function NewSalePage() {
                             </Button>
                           </div>
                         </TableCell>
+                        {isQuoteMode && quoteOptions.length > 1 && (
+                          <TableCell>
+                            <Select value={item.quote_option_id || String(quoteOptions[0]?.order_index ?? 0)} onValueChange={v => updateItem(idx, 'quote_option_id' as keyof SaleItem, v)}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Opção..." /></SelectTrigger>
+                              <SelectContent>
+                                {quoteOptions.map((opt, oi) => <SelectItem key={oi} value={opt.id || String(oi)}>{opt.name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        )}
                         <TableCell>
                           <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -1702,7 +1800,7 @@ export default function NewSalePage() {
                         </TableCell>
                       </TableRow>
                       <TableRow className="border-b-2">
-                        <TableCell colSpan={7} className="py-2">
+                        <TableCell colSpan={isQuoteMode && quoteOptions.length > 1 ? 8 : 7} className="py-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             {!isQuoteMode && (
                               <div className="flex items-center gap-1">
@@ -2266,9 +2364,29 @@ export default function NewSalePage() {
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Resumo da Cotação' : 'Resumo Financeiro'}</CardTitle></CardHeader>
           <CardContent>
+            {/* Per-option totals in quote mode */}
+            {isQuoteMode && quoteOptions.length > 1 && (
+              <div className="mb-4 space-y-2">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Totais por Opção:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {quoteOptions.map((opt, oi) => {
+                    const optionId = opt.id || String(oi);
+                    const optItems = items.filter(it => (it.quote_option_id || String(quoteOptions[0]?.order_index ?? 0)) === optionId);
+                    const optTotal = optItems.reduce((s, i) => s + i.total_value, 0) + saleInterest + operatorTaxes;
+                    return (
+                      <div key={oi} className="border rounded-lg p-3 bg-background">
+                        <p className="text-xs font-semibold text-muted-foreground">{opt.name}</p>
+                        <p className="text-lg font-bold text-primary">{fmt(optTotal)}</p>
+                        <p className="text-xs text-muted-foreground">{optItems.length} serviço(s)</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">{isQuoteMode ? 'Total da Cotação' : 'Total da Venda'}</p>
+                <p className="text-sm text-muted-foreground">{isQuoteMode ? 'Total Geral (todos)' : 'Total da Venda'}</p>
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
                 {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
               </div>
