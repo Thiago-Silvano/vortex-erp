@@ -30,11 +30,12 @@ export default function ReportDashboard() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const totalVendas = sales.length;
-  const totalFaturado = sales.reduce((s, v) => s + Number(v.total_sale || 0), 0);
-  const lucroBruto = sales.reduce((s, v) => s + Number(v.gross_profit || 0), 0);
-  const lucroLiquido = sales.reduce((s, v) => s + Number(v.net_profit || 0), 0);
-  const clientesAtendidos = new Set(sales.map(s => s.client_name)).size;
+  const activeSales = sales.filter(s => s.status === 'active');
+  const totalVendas = activeSales.length;
+  const totalFaturado = activeSales.reduce((s, v) => s + Number(v.total_sale || 0), 0);
+  const lucroBruto = activeSales.reduce((s, v) => s + Number(v.gross_profit || 0), 0);
+  const lucroLiquido = activeSales.reduce((s, v) => s + Number(v.net_profit || 0), 0);
+  const clientesAtendidos = activeSales.reduce((s, v) => s + Number(v.passengers_count || 0), 0);
   const totalReservas = reservations.length;
 
   const salesByMonth = useMemo(() => {
