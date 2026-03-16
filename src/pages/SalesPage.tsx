@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Search, Plus, Trash2 } from 'lucide-react';
+import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -42,8 +42,24 @@ export default function SalesPage() {
   const [showCotacoes, setShowCotacoes] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
   const [isMaster, setIsMaster] = useState(false);
+  const [sortKey, setSortKey] = useState<'client_name' | 'sale_date' | 'payment_method' | 'total_sale' | 'net_profit' | 'sale_workflow_status'>('sale_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'sale_date' || key === 'total_sale' || key === 'net_profit' ? 'desc' : 'asc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: typeof sortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
 
   const fetchSales = () => {
     let query = supabase.from('sales').select('*').order('created_at', { ascending: false });
@@ -123,6 +139,16 @@ export default function SalesPage() {
       if (!showVendas && s.status === 'active') return false;
       if (!showCotacoes && s.status === 'draft') return false;
       return normalize(s.client_name).includes(normalize(search));
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'client_name') cmp = a.client_name.localeCompare(b.client_name);
+      else if (sortKey === 'sale_date') cmp = (a.sale_date || '').localeCompare(b.sale_date || '');
+      else if (sortKey === 'payment_method') cmp = (a.payment_method || '').localeCompare(b.payment_method || '');
+      else if (sortKey === 'total_sale') cmp = Number(a.total_sale || 0) - Number(b.total_sale || 0);
+      else if (sortKey === 'net_profit') cmp = Number(a.net_profit || 0) - Number(b.net_profit || 0);
+      else if (sortKey === 'sale_workflow_status') cmp = (a.sale_workflow_status || '').localeCompare(b.sale_workflow_status || '');
+      return sortDir === 'asc' ? cmp : -cmp;
     });
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -164,13 +190,25 @@ export default function SalesPage() {
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Data da Venda</TableHead>
-                  <TableHead>Pagamento</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Lucro Líq.</TableHead>
-                  <TableHead>Status Venda</TableHead>
+                 <TableRow>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('client_name')}>
+                    <span className="inline-flex items-center">Cliente <SortIcon col="client_name" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_date')}>
+                    <span className="inline-flex items-center">Data da Venda <SortIcon col="sale_date" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('payment_method')}>
+                    <span className="inline-flex items-center">Pagamento <SortIcon col="payment_method" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('total_sale')}>
+                    <span className="inline-flex items-center">Total <SortIcon col="total_sale" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('net_profit')}>
+                    <span className="inline-flex items-center">Lucro Líq. <SortIcon col="net_profit" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_workflow_status')}>
+                    <span className="inline-flex items-center">Status Venda <SortIcon col="sale_workflow_status" /></span>
+                  </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
