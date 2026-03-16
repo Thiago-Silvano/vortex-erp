@@ -508,6 +508,25 @@ export default function BankReconciliationPage() {
       .slice(0, 3);
   };
 
+  const selectedTitlesTotal = Array.from(selectedTitleIds).reduce((sum, id) => {
+    const t = titles.find(tt => tt.id === id);
+    return sum + (t ? Number(t.amount) : 0);
+  }, 0);
+
+  const toggleTitleSelection = (id: string) => {
+    setSelectedTitleIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const reconcileWithSelected = async (tx: BankTx) => {
+    const selectedTitles = titles.filter(t => selectedTitleIds.has(t.id));
+    if (selectedTitles.length === 0) { toast.error("Selecione ao menos um título"); return; }
+    await multiReconcile(tx, selectedTitles);
+  };
+
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
