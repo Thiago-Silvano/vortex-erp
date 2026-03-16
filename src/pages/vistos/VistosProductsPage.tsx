@@ -91,12 +91,14 @@ export default function VistosProductsPage() {
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Informe o nome do serviço.'); return; }
     setLoading(true);
-    const payload = {
+    const payload: any = {
       name: name.trim(),
       description: description.trim(),
       price,
       average_days: averageDays,
       is_supplier_fee: isSupplierFee,
+      supplier_id: supplierId || null,
+      cost_center_id: costCenterId || null,
       empresa_id: activeCompany?.id,
     };
 
