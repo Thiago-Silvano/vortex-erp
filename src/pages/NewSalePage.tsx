@@ -363,43 +363,55 @@ export default function NewSalePage() {
   // No longer need auto-recalculate since we store only discount % now
 
   useEffect(() => {
-    if (hasBoleto && installments > 1 && boletoInterestRate > 0) {
-      const monthlyRate = boletoInterestRate / 100;
-      const pmt = totalSaleWithInterest * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
-      const recs: Receivable[] = [];
-      const baseDate = new Date(saleDate || new Date());
-      for (let i = 1; i <= installments; i++) {
-        const dueDate = new Date(baseDate);
-        dueDate.setMonth(dueDate.getMonth() + i);
-        recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100 });
-      }
-      setReceivables(recs);
-      return;
-    }
-    if (hasBoleto && installments > 1) {
-      const perInstallment = totalSaleWithInterest / installments;
-      const recs: Receivable[] = [];
-      const baseDate = new Date(saleDate || new Date());
-      for (let i = 1; i <= installments; i++) {
-        const dueDate = new Date(baseDate);
-        dueDate.setMonth(dueDate.getMonth() + i);
-        recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100 });
-      }
-      setReceivables(recs);
-      return;
-    }
-    if (!hasCredito) {
-      setReceivables([{ installment_number: 1, due_date: '', amount: totalSaleWithInterest }]);
-      return;
-    }
-    const perInstallment = installments > 0 ? totalSaleWithInterest / installments : totalSaleWithInterest;
     const recs: Receivable[] = [];
     const baseDate = new Date(saleDate || new Date());
-    for (let i = 1; i <= installments; i++) {
-      const dueDate = new Date(baseDate);
-      dueDate.setDate(dueDate.getDate() + i * 30);
-      recs.push({ installment_number: i, due_date: dueDate.toISOString().split('T')[0], amount: perInstallment });
+    let recIndex = 1;
+
+    // Split total equally among selected payment methods
+    const methodCount = paymentMethods.length;
+    const amountPerMethod = methodCount > 0 ? totalSaleWithInterest / methodCount : totalSaleWithInterest;
+
+    for (const method of paymentMethods) {
+      if (method === 'boleto' && installments > 1) {
+        // Boleto with installments
+        const boletoAmount = amountPerMethod;
+        if (boletoInterestRate > 0) {
+          const monthlyRate = boletoInterestRate / 100;
+          const pmt = boletoAmount * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
+          for (let i = 1; i <= installments; i++) {
+            const dueDate = new Date(baseDate);
+            dueDate.setMonth(dueDate.getMonth() + i);
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto' });
+          }
+        } else {
+          const perInstallment = boletoAmount / installments;
+          for (let i = 1; i <= installments; i++) {
+            const dueDate = new Date(baseDate);
+            dueDate.setMonth(dueDate.getMonth() + i);
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto' });
+          }
+        }
+      } else if (method === 'credito') {
+        // Credit card with installments
+        const creditAmount = amountPerMethod;
+        const numInst = installments > 0 ? installments : 1;
+        const perInstallment = creditAmount / numInst;
+        for (let i = 1; i <= numInst; i++) {
+          const dueDate = new Date(baseDate);
+          dueDate.setDate(dueDate.getDate() + i * 30);
+          recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
+        }
+      } else {
+        // Single installment methods: pix, dinheiro, debito, transferencia
+        const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
+        recs.push({ installment_number: recIndex++, due_date: baseDate.toISOString().split('T')[0], amount: Math.round(amountPerMethod * 100) / 100, payment_method: labelMap[method] || method });
+      }
     }
+
+    if (recs.length === 0) {
+      recs.push({ installment_number: 1, due_date: '', amount: totalSaleWithInterest });
+    }
+
     setReceivables(recs);
   }, [installments, paymentMethods, totalSaleWithInterest, boletoInterestRate, saleDate, hasCredito, hasBoleto]);
 
