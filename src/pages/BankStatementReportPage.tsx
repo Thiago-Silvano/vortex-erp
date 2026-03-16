@@ -67,7 +67,31 @@ export default function BankStatementReportPage() {
     if (filterCostCenter !== 'all') query = query.eq('cost_center_id', filterCostCenter);
 
     const { data } = await query.limit(2000);
-    setTransactions((data as any[]) || []);
+    const txs = (data as any[]) || [];
+
+    // Enrich transactions with cost_center_id from reconciled receivables/payables
+    const reconciledRecIds = txs.filter(t => !t.cost_center_id && t.reconciled_with_id && t.reconciled_with_type === 'receivable').map(t => t.reconciled_with_id);
+    const reconciledPayIds = txs.filter(t => !t.cost_center_id && t.reconciled_with_id && t.reconciled_with_type === 'payable').map(t => t.reconciled_with_id);
+
+    const ccMap = new Map<string, string | null>();
+
+    if (reconciledRecIds.length > 0) {
+      const { data: recs } = await supabase.from('receivables').select('id, cost_center_id').in('id', reconciledRecIds);
+      recs?.forEach(r => ccMap.set(r.id, r.cost_center_id));
+    }
+    if (reconciledPayIds.length > 0) {
+      const { data: pays } = await supabase.from('accounts_payable').select('id, cost_center_id').in('id', reconciledPayIds);
+      pays?.forEach(p => ccMap.set(p.id, p.cost_center_id));
+    }
+
+    const enriched = txs.map(t => {
+      if (!t.cost_center_id && t.reconciled_with_id && ccMap.has(t.reconciled_with_id)) {
+        return { ...t, cost_center_id: ccMap.get(t.reconciled_with_id) };
+      }
+      return t;
+    });
+
+    setTransactions(enriched);
     setLoading(false);
   }, [selectedAccount, activeCompany, dateFrom, dateTo, filterStatus, filterOrigin, filterCostCenter]);
 
