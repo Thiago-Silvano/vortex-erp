@@ -208,8 +208,8 @@ export default function NotificationBell() {
                   className={`px-4 py-3 border-b border-border/50 flex gap-3 cursor-pointer hover:bg-accent/50 transition-colors ${!n.is_read ? 'bg-primary/5' : ''}`}
                   onClick={() => handleClick(n)}
                 >
-                  <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0 mt-0.5">
-                    <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center shrink-0 mt-0.5">
+                    <FileText className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground leading-tight">{n.title}</p>
