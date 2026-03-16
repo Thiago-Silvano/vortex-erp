@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import AppLayout from '@/components/AppLayout';
@@ -138,6 +138,15 @@ export default function EmailInboxPage() {
     if (!userId) return;
     fetchCounts();
     if (hasSettings) syncEmails();
+  }, [userId, hasSettings]);
+
+  // Auto-sync every 60 seconds, even when tab is not focused
+  useEffect(() => {
+    if (!userId || !hasSettings) return;
+    const interval = setInterval(() => {
+      syncEmails();
+    }, 60000);
+    return () => clearInterval(interval);
   }, [userId, hasSettings]);
 
   const filteredEmails = useMemo(() => {
