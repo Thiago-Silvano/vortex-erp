@@ -2050,7 +2050,7 @@ export default function NewSalePage() {
               </div>
             )}
 
-            {paymentMethod === 'boleto' && (
+            {hasBoleto && (
               <div className="space-y-4 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
