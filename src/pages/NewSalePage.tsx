@@ -120,6 +120,7 @@ export default function NewSalePage() {
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [serviceCatalog, setServiceCatalog] = useState<ServiceCatalogOption[]>([]);
   const [passengers, setPassengers] = useState<Passenger[]>([]);
+  const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
 
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [installments, setInstallments] = useState(1);
