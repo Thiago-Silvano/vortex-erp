@@ -2226,7 +2226,26 @@ export default function NewSalePage() {
         {/* Receivables - only in sale mode */}
         {!isQuoteMode && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Controle de Recebíveis</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base">Controle de Recebíveis</CardTitle>
+            {(() => {
+              const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
+              const diff = totalSaleWithInterest - totalReceivables;
+              return (
+                <div className="flex items-center gap-4 text-sm mt-1">
+                  <span className="text-muted-foreground">Total da Venda: <strong className="text-foreground">{fmt(totalSaleWithInterest)}</strong></span>
+                  <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
+                  {Math.abs(diff) > 0.01 ? (
+                    <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
+                      {diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`}
+                    </span>
+                  ) : (
+                    <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
+                  )}
+                </div>
+              );
+            })()}
+          </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead className="w-36">Forma</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
