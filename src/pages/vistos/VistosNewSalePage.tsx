@@ -365,8 +365,7 @@ export default function VistosNewSalePage() {
       await supabase.from('visa_applicants').delete().eq('visa_sale_id', editSaleId);
       await supabase.from('visa_sale_payments').delete().eq('visa_sale_id', editSaleId);
       await (supabase.from('visa_sale_items' as any) as any).delete().eq('visa_sale_id', editSaleId);
-      await supabase.from('receivables').delete().eq('visa_sale_id', editSaleId);
-      await (supabase.from('accounts_payable') as any).delete().eq('sale_id', editSaleId).eq('origin_type', 'visa_sale');
+      // Receivables and AP will be handled with smart upsert below
     } else {
       const { data: newSale, error } = await supabase.from('visa_sales').insert(salePayload).select('id').single();
       if (error || !newSale) { toast.error('Erro ao salvar venda.'); setSaving(false); return; }
@@ -414,53 +413,118 @@ export default function VistosNewSalePage() {
     });
     await supabase.from('visa_sale_payments').insert(paymentRows);
 
-    // Generate receivables
-    const receivablePayloads: any[] = [];
-    let recIdx = 0;
-    payments.forEach(p => {
-      const typeLabel = PAYMENT_TYPES.find(t => t.value === p.payment_type)?.label || p.payment_type;
-      if (p.installments.length > 1) {
-        p.installments.forEach((inst, i) => {
+    // Smart upsert for receivables
+    if (editSaleId) {
+      const { data: existingRec } = await supabase.from('receivables').select('*').eq('visa_sale_id', saleId).eq('origin_type', 'visa_sale');
+      const existingRecList = existingRec || [];
+
+      const newRecPayloads: any[] = [];
+      let recIdx = 0;
+      payments.forEach(p => {
+        const typeLabel = PAYMENT_TYPES.find(t => t.value === p.payment_type)?.label || p.payment_type;
+        if (p.installments.length > 1) {
+          p.installments.forEach((inst, i) => {
+            recIdx++;
+            newRecPayloads.push({
+              installment_number: recIdx,
+              due_date: inst.payment_date || null,
+              amount: inst.value,
+              client_name: clientName.trim(),
+              description: `Visto - ${clientName.trim()} (${typeLabel} ${i + 1}/${p.installments.length})`,
+              status: inst.is_received ? 'paid' : 'pending',
+              payment_date: inst.is_received ? inst.payment_date || null : null,
+              payment_method: p.payment_type,
+              origin_type: 'visa_sale',
+              empresa_id: activeCompany?.id || null,
+              visa_sale_id: saleId,
+            });
+          });
+        } else {
+          recIdx++;
+          newRecPayloads.push({
+            installment_number: recIdx,
+            due_date: p.payment_date || null,
+            amount: p.value,
+            client_name: clientName.trim(),
+            description: `Visto - ${clientName.trim()} (${typeLabel})`,
+            status: p.is_received ? 'paid' : 'pending',
+            payment_date: p.is_received ? p.payment_date || null : null,
+            payment_method: p.payment_type,
+            origin_type: 'visa_sale',
+            empresa_id: activeCompany?.id || null,
+            visa_sale_id: saleId,
+          });
+        }
+      });
+
+      // Update existing, insert new, delete orphans
+      const toUpdate = newRecPayloads.slice(0, existingRecList.length);
+      const toInsert = newRecPayloads.slice(existingRecList.length);
+      const toDelete = existingRecList.slice(newRecPayloads.length);
+
+      for (let i = 0; i < toUpdate.length; i++) {
+        const { visa_sale_id, ...updateData } = toUpdate[i];
+        await supabase.from('receivables').update(updateData).eq('id', existingRecList[i].id);
+      }
+      if (toInsert.length > 0) {
+        await supabase.from('receivables').insert(toInsert as any);
+      }
+      if (toDelete.length > 0) {
+        const deleteIds = toDelete.map((r: any) => r.id);
+        await supabase.from('receivables').delete().in('id', deleteIds);
+      }
+    } else {
+      // New sale: insert all receivables
+      const receivablePayloads: any[] = [];
+      let recIdx = 0;
+      payments.forEach(p => {
+        const typeLabel = PAYMENT_TYPES.find(t => t.value === p.payment_type)?.label || p.payment_type;
+        if (p.installments.length > 1) {
+          p.installments.forEach((inst, i) => {
+            recIdx++;
+            receivablePayloads.push({
+              visa_sale_id: saleId,
+              installment_number: recIdx,
+              due_date: inst.payment_date || null,
+              amount: inst.value,
+              client_name: clientName.trim(),
+              description: `Visto - ${clientName.trim()} (${typeLabel} ${i + 1}/${p.installments.length})`,
+              status: inst.is_received ? 'paid' : 'pending',
+              payment_date: inst.is_received ? inst.payment_date || null : null,
+              payment_method: p.payment_type,
+              origin_type: 'visa_sale',
+              empresa_id: activeCompany?.id || null,
+            });
+          });
+        } else {
           recIdx++;
           receivablePayloads.push({
             visa_sale_id: saleId,
             installment_number: recIdx,
-            due_date: inst.payment_date || null,
-            amount: inst.value,
+            due_date: p.payment_date || null,
+            amount: p.value,
             client_name: clientName.trim(),
-            description: `Visto - ${clientName.trim()} (${typeLabel} ${i + 1}/${p.installments.length})`,
-            status: inst.is_received ? 'paid' : 'pending',
-            payment_date: inst.is_received ? inst.payment_date || null : null,
+            description: `Visto - ${clientName.trim()} (${typeLabel})`,
+            status: p.is_received ? 'paid' : 'pending',
+            payment_date: p.is_received ? p.payment_date || null : null,
             payment_method: p.payment_type,
             origin_type: 'visa_sale',
             empresa_id: activeCompany?.id || null,
           });
-        });
-      } else {
-        recIdx++;
-        receivablePayloads.push({
-          visa_sale_id: saleId,
-          installment_number: recIdx,
-          due_date: p.payment_date || null,
-          amount: p.value,
-          client_name: clientName.trim(),
-          description: `Visto - ${clientName.trim()} (${typeLabel})`,
-          status: p.is_received ? 'paid' : 'pending',
-          payment_date: p.is_received ? p.payment_date || null : null,
-          payment_method: p.payment_type,
-          origin_type: 'visa_sale',
-          empresa_id: activeCompany?.id || null,
-        });
+        }
+      });
+      if (receivablePayloads.length > 0) {
+        await supabase.from('receivables').insert(receivablePayloads as any);
       }
-    });
-    if (receivablePayloads.length > 0) {
-      await supabase.from('receivables').insert(receivablePayloads as any);
     }
 
-    // Generate accounts payable for fee items (taxa de fornecedor)
+    // Smart upsert for accounts payable (fee items)
     const feeItems = saleItems.filter(i => i.is_supplier_fee && i.total_value > 0);
-    if (feeItems.length > 0) {
-      const apPayloads = feeItems.map(item => ({
+    if (editSaleId) {
+      const { data: existingAp } = await supabase.from('accounts_payable').select('*').eq('sale_id', saleId).eq('origin_type', 'visa_sale');
+      const existingApList = existingAp || [];
+
+      const newApPayloads = feeItems.map(item => ({
         sale_id: saleId,
         description: `Taxa - ${item.product_name} - ${clientName.trim()}`,
         amount: item.total_value,
@@ -471,7 +535,42 @@ export default function VistosNewSalePage() {
         origin_type: 'visa_sale',
         empresa_id: activeCompany?.id || null,
       }));
-      await supabase.from('accounts_payable').insert(apPayloads as any);
+
+      // Update existing, insert new, delete orphans
+      const apToUpdate = newApPayloads.slice(0, existingApList.length);
+      const apToInsert = newApPayloads.slice(existingApList.length);
+      const apToDelete = existingApList.slice(newApPayloads.length);
+
+      for (let i = 0; i < apToUpdate.length; i++) {
+        const { sale_id, origin_type, ...updateData } = apToUpdate[i];
+        // Preserve payment status if already paid
+        const existing = existingApList[i];
+        const finalStatus = existing.status === 'paid' ? 'paid' : updateData.status;
+        await supabase.from('accounts_payable').update({ ...updateData, status: finalStatus }).eq('id', existing.id);
+      }
+      if (apToInsert.length > 0) {
+        await supabase.from('accounts_payable').insert(apToInsert as any);
+      }
+      if (apToDelete.length > 0) {
+        const deleteIds = apToDelete.map((r: any) => r.id);
+        await supabase.from('accounts_payable').delete().in('id', deleteIds);
+      }
+    } else {
+      // New sale: insert all AP
+      if (feeItems.length > 0) {
+        const apPayloads = feeItems.map(item => ({
+          sale_id: saleId,
+          description: `Taxa - ${item.product_name} - ${clientName.trim()}`,
+          amount: item.total_value,
+          supplier_id: item.supplier_id || null,
+          cost_center_id: item.cost_center_id || null,
+          due_date: item.payment_due_date || null,
+          status: 'open',
+          origin_type: 'visa_sale',
+          empresa_id: activeCompany?.id || null,
+        }));
+        await supabase.from('accounts_payable').insert(apPayloads as any);
+      }
     }
 
     const appPayloads = applicants.map((a, i) => ({
