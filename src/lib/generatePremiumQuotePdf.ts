@@ -954,9 +954,9 @@ function drawFlightDirection(
 
     // Departure time
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
+    doc.setFontSize(10);
     setColor(doc, TEXT_MAIN);
-    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 4);
+    if (leg.departureTime) doc.text(leg.departureTime, originX, y + 5);
 
     // Destination code
     doc.setFont('helvetica', 'bold');
@@ -966,9 +966,9 @@ function drawFlightDirection(
 
     // Arrival time
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
+    doc.setFontSize(10);
     setColor(doc, TEXT_MAIN);
-    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 4, { align: 'right' });
+    if (leg.arrivalTime) doc.text(leg.arrivalTime, destX, y + 5, { align: 'right' });
 
     // Flight line with arrow
     const lineY = y - 1;
