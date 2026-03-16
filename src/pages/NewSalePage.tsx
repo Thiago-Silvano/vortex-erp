@@ -254,7 +254,7 @@ export default function NewSalePage() {
     if (saleSups) setSelectedSupplierIds(saleSups.map(s => s.supplier_id));
 
     const { data: recs } = await supabase.from('receivables').select('*').eq('sale_id', id).order('installment_number');
-    if (recs) setReceivables(recs.map(r => ({ installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount), cost_center_id: r.cost_center_id || undefined })));
+    if (recs) setReceivables(recs.map(r => ({ installment_number: r.installment_number, due_date: r.due_date || '', amount: Number(r.amount), cost_center_id: r.cost_center_id || undefined, payment_method: r.payment_method || undefined })));
 
     const { data: pax } = await supabase.from('sale_passengers' as any).select('*').eq('sale_id', id).order('sort_order');
     if (pax) setPassengers((pax as any[]).map(p => ({
