@@ -56,7 +56,7 @@ export default function ReportDashboard() {
     if (activeSales.length === 0) return;
     const ids = activeSales.map(s => s.id);
     supabase.from('sale_items').select('*').in('sale_id', ids).then(({ data }) => { if (data) setSaleItems(data); });
-  }, [sales]);
+  }, [activeSales]);
 
   const productData = useMemo(() => {
     const categories: Record<string, number> = {};
