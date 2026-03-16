@@ -795,10 +795,25 @@ export default function NewSalePage() {
       await (supabase.from('sale_passengers' as any) as any).delete().eq('sale_id', editSaleId);
       // Clean old internal files
       await (supabase.from('sale_internal_files' as any) as any).delete().eq('sale_id', editSaleId);
+      // Clean old quote options
+      await (supabase.from('sale_quote_options' as any) as any).delete().eq('sale_id', editSaleId);
     } else {
       const { data, error } = await supabase.from('sales').insert(salePayload as any).select('id').single();
       if (error || !data) { toast.error('Erro ao criar venda'); return null; }
       saleId = data.id;
+    }
+
+    // Save quote options first to get IDs for items
+    const optionIdMap: Record<number, string> = {};
+    if (quoteOptions.length > 0) {
+      const { data: insertedOptions } = await (supabase.from('sale_quote_options' as any) as any).insert(
+        quoteOptions.map((opt, idx) => ({
+          sale_id: saleId, name: opt.name, order_index: idx,
+        }))
+      ).select('id, order_index');
+      if (insertedOptions) {
+        insertedOptions.forEach((o: any) => { optionIdMap[o.order_index] = o.id; });
+      }
     }
 
     if (items.length > 0) {
