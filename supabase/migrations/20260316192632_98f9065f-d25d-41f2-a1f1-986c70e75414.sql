@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN machine_fee numeric DEFAULT 0;
