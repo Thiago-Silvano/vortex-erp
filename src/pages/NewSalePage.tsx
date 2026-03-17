@@ -1721,6 +1721,15 @@ export default function NewSalePage() {
               </div>
             </div>
 
+            {/* Image Position Editor */}
+            <ImagePositionEditor
+              open={imagePositionEditorOpen}
+              onOpenChange={setImagePositionEditorOpen}
+              imageUrl={destinationImageUrl}
+              initialConfig={destinationImageConfig}
+              onSave={(config) => setDestinationImageConfig(config)}
+            />
+
             {/* AI Image Selection Dialog */}
             <Dialog open={aiImageDialog} onOpenChange={setAiImageDialog}>
               <DialogContent className="max-w-2xl">
