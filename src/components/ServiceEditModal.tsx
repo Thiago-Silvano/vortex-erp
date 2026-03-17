@@ -296,6 +296,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     }
   };
 
+  const handleSave = () => {
     const selectedImages = hotelImages.filter((_, i) => selectedImageIndices.has(i));
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
     if (type === 'aereo') {
@@ -308,6 +309,9 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     }
     if (type === 'hotel') {
       meta.hotel = { ...hotel, images: selectedImages };
+    }
+    if (type === 'experiencia') {
+      meta.experience = experience;
     }
     onSave(desc, meta);
     if (type === 'hotel' && selectedImages.length > 0 && onHotelImagesFound) {
