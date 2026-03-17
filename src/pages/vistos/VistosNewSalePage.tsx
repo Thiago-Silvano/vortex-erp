@@ -341,7 +341,7 @@ export default function VistosNewSalePage() {
     if (!clientName.trim()) { toast.error('Informe o nome do cliente.'); return; }
     if (saleItems.length === 0) { toast.error('Adicione pelo menos um serviço.'); return; }
     if (saleItems.some(item => !item.product_id)) { toast.error('Selecione o serviço em todos os itens.'); return; }
-    if (applicants.some(a => !a.full_name.trim())) { toast.error('Preencha o nome de todos os aplicantes.'); return; }
+    if (applicants.length > 0 && applicants.some(a => !a.full_name.trim())) { toast.error('Preencha o nome de todos os aplicantes.'); return; }
     if (Math.abs(paymentsDiff) > 0.01) { toast.error('A soma dos pagamentos deve ser igual ao valor total.'); return; }
 
     setSaving(true);
