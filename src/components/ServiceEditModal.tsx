@@ -404,7 +404,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
 
           <div>
             <Label>Descrição detalhada (aparece na proposta)</Label>
-            <Textarea value={detailedDesc} onChange={e => setDetailedDesc(e.target.value)} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
+            <RichTextEditor value={detailedDesc} onChange={setDetailedDesc} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
           </div>
 
           {/* ── AÉREO ── */}
