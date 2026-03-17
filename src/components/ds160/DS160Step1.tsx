@@ -27,7 +27,7 @@ export default function DS160Step1({ data, onChange }: DS160StepProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label>Estado Civil</Label>
-          <Select value={data.estado_civil || ''} onValueChange={v => onChange('estado_civil', v)}>
+          <Select value={data.estado_civil || undefined} onValueChange={v => onChange('estado_civil', v)}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent>
               {['Solteiro','Casado','União Estável','Divorciado','Viúvo'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
