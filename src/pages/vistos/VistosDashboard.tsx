@@ -125,17 +125,17 @@ export default function VistosDashboard() {
     products?.forEach(p => { productMap[p.id] = p.name; });
 
     const statusCounts: Record<string, number> = {};
-    let inProd = 0, sched = 0, appr = 0, den = 0;
+    let inProd = 0, appr = 0, den = 0;
+    const productionStatuses = ['falta_passaporte', 'produzindo', 'agendado', 'aguardando_renovacao'];
     processes?.forEach(p => {
       statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
-      if (p.status === 'produzindo' || p.status === 'falta_passaporte' || p.status === 'aguardando_renovacao') inProd++;
-      if (p.status === 'agendado') sched++;
+      if (productionStatuses.includes(p.status)) inProd++;
       if (p.status === 'aprovado') appr++;
       if (p.status === 'negado') den++;
     });
 
     setStats({
-      salesThisMonth: sales?.length || 0,
+      salesThisMonth: completeSales.length,
       inProduction: inProd,
       scheduled: sched,
       approved: appr,
