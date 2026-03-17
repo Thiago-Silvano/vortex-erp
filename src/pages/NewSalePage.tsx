@@ -215,6 +215,7 @@ export default function NewSalePage() {
     setQuoteTitle((sale as any).quote_title || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
+    setDestinationImageConfig((sale as any).destination_image_config || null);
     // Load proposal payment options
     if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
       // Migrate old format (installmentValue/totalValue) to new format (discountPercent)
