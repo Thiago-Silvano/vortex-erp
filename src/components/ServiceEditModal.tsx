@@ -265,7 +265,37 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     }
   };
 
-  const handleSave = () => {
+  const calcExperienceDays = () => {
+    if (!experience.startDate || !experience.endDate) return 0;
+    const start = new Date(experience.startDate);
+    const end = new Date(experience.endDate);
+    return Math.max(0, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  };
+
+  const handleGenerateItinerary = async () => {
+    if (!desc.trim()) { toast.error('Preencha o nome da cidade na descrição resumida'); return; }
+    if (!experience.startDate || !experience.endDate) { toast.error('Preencha as datas de início e fim'); return; }
+    const totalDays = calcExperienceDays();
+    if (totalDays <= 0) { toast.error('A data final deve ser posterior à data inicial'); return; }
+    setGeneratingItinerary(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-itinerary', {
+        body: { city: desc.trim(), totalDays, freeDays: experience.freeDays || 0 },
+      });
+      if (error) throw error;
+      if (data?.success && data.itinerary) {
+        setDetailedDesc(data.itinerary);
+        toast.success('Roteiro gerado com sucesso!');
+      } else {
+        toast.error(data?.error || 'Erro ao gerar roteiro');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao gerar roteiro');
+    } finally {
+      setGeneratingItinerary(false);
+    }
+  };
+
     const selectedImages = hotelImages.filter((_, i) => selectedImageIndices.has(i));
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
     if (type === 'aereo') {
