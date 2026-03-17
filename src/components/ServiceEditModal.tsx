@@ -281,7 +281,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     setGeneratingItinerary(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-itinerary', {
-        body: { city: desc.trim(), totalDays, freeDays: experience.freeDays || 0 },
+        body: { city: desc.trim(), totalDays, freeDays: experience.freeDays || 0, aiTips: experience.aiTips || '' },
       });
       if (error) throw error;
       if (data?.success && data.itinerary) {
