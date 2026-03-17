@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingCart, Cog, CalendarDays, CheckCircle, XCircle, DollarSign, Receipt, CreditCard, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Cog, DollarSign, Receipt, CreditCard, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface Stats {
@@ -144,12 +144,15 @@ export default function VistosDashboard() {
       cardFees: totalCardFees,
     });
 
+    const productionOnlyStatuses = ['falta_passaporte', 'produzindo', 'agendado', 'aguardando_renovacao'];
     setStatusChart(
-      Object.entries(statusCounts).map(([k, v]) => ({
-        name: STATUS_LABELS[k] || k,
-        value: v,
-        color: STATUS_COLORS[k] || '#94a3b8',
-      }))
+      Object.entries(statusCounts)
+        .filter(([k]) => productionOnlyStatuses.includes(k))
+        .map(([k, v]) => ({
+          name: STATUS_LABELS[k] || k,
+          value: v,
+          color: STATUS_COLORS[k] || '#94a3b8',
+        }))
     );
 
     const prodSales: Record<string, number> = {};
@@ -168,6 +171,11 @@ export default function VistosDashboard() {
 
   const profit = stats.revenueServices - stats.cardFees;
 
+  const approvalChart = [
+    { name: 'Aprovados', value: stats.approved, fill: '#22c55e' },
+    { name: 'Negados', value: stats.denied, fill: '#ef4444' },
+  ];
+
   const statCards = [
     { label: 'Vendas do Mês', value: stats.salesThisMonth.toString(), icon: ShoppingCart, color: 'bg-primary text-primary-foreground' },
     { label: 'Faturamento Total', value: fmt(stats.revenueTotal), icon: DollarSign, color: 'bg-yellow-500 text-white' },
@@ -176,8 +184,6 @@ export default function VistosDashboard() {
     { label: 'Taxa Máquina', value: fmt(stats.cardFees), icon: CreditCard, color: 'bg-red-500 text-white' },
     { label: 'Lucro (Serv. - Máq.)', value: fmt(profit), icon: TrendingUp, color: 'bg-teal-600 text-white' },
     { label: 'Em Produção', value: stats.inProduction.toString(), icon: Cog, color: 'bg-blue-600 text-white' },
-    { label: 'Aprovados', value: stats.approved.toString(), icon: CheckCircle, color: 'bg-emerald-600 text-white' },
-    { label: 'Negados', value: stats.denied.toString(), icon: XCircle, color: 'bg-destructive text-destructive-foreground' },
   ];
 
   return (
@@ -208,16 +214,30 @@ export default function VistosDashboard() {
               ))}
             </div>
 
-            {approvalRate > 0 && (
-              <Card>
-                <CardContent className="p-5">
-                  <p className="text-sm text-muted-foreground mb-1">Taxa de Aprovação</p>
-                  <p className="text-3xl font-bold text-foreground">{approvalRate}%</p>
-                </CardContent>
-              </Card>
-            )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {(stats.approved > 0 || stats.denied > 0) && (
+                <Card>
+                  <CardContent className="p-5">
+                    <h3 className="font-semibold mb-4 text-foreground">Aprovados vs Negados</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={approvalChart}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {approvalChart.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    {approvalRate > 0 && (
+                      <p className="text-center text-sm text-muted-foreground mt-2">Taxa de Aprovação: <span className="font-bold text-foreground">{approvalRate}%</span></p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
               {statusChart.length > 0 && (
                 <Card>
                   <CardContent className="p-5">
