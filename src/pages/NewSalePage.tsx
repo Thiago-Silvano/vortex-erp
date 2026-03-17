@@ -2262,6 +2262,16 @@ export default function NewSalePage() {
                 Mostrar o valor da parcela por pessoa? (divide o total e as parcelas pelo nº de passageiros)
               </Label>
             </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <Checkbox
+                id="showOnlyTotal"
+                checked={showOnlyTotal}
+                onCheckedChange={(checked) => setShowOnlyTotal(!!checked)}
+              />
+              <Label htmlFor="showOnlyTotal" className="text-sm cursor-pointer">
+                Mostrar somente o valor total? (oculta todas as opções de pagamento na proposta)
+              </Label>
+            </div>
             <p className="text-sm text-muted-foreground">Selecione quais formas de pagamento deseja ofertar ao cliente na proposta (PDF e interativa).</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {proposalPaymentOptions.map((opt, idx) => (
