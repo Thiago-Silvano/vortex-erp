@@ -171,6 +171,11 @@ export default function VistosDashboard() {
 
   const profit = stats.revenueServices - stats.cardFees;
 
+  const approvalChart = [
+    { name: 'Aprovados', value: stats.approved, fill: '#22c55e' },
+    { name: 'Negados', value: stats.denied, fill: '#ef4444' },
+  ];
+
   const statCards = [
     { label: 'Vendas do Mês', value: stats.salesThisMonth.toString(), icon: ShoppingCart, color: 'bg-primary text-primary-foreground' },
     { label: 'Faturamento Total', value: fmt(stats.revenueTotal), icon: DollarSign, color: 'bg-yellow-500 text-white' },
@@ -179,8 +184,6 @@ export default function VistosDashboard() {
     { label: 'Taxa Máquina', value: fmt(stats.cardFees), icon: CreditCard, color: 'bg-red-500 text-white' },
     { label: 'Lucro (Serv. - Máq.)', value: fmt(profit), icon: TrendingUp, color: 'bg-teal-600 text-white' },
     { label: 'Em Produção', value: stats.inProduction.toString(), icon: Cog, color: 'bg-blue-600 text-white' },
-    { label: 'Aprovados', value: stats.approved.toString(), icon: CheckCircle, color: 'bg-emerald-600 text-white' },
-    { label: 'Negados', value: stats.denied.toString(), icon: XCircle, color: 'bg-destructive text-destructive-foreground' },
   ];
 
   return (
