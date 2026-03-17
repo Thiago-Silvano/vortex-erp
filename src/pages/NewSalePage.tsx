@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import ImagePositionEditor, { ImagePositionConfig } from '@/components/ImagePositionEditor';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
@@ -146,6 +147,8 @@ export default function NewSalePage() {
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [destinationImageUrl, setDestinationImageUrl] = useState('');
+  const [destinationImageConfig, setDestinationImageConfig] = useState<ImagePositionConfig | null>(null);
+  const [imagePositionEditorOpen, setImagePositionEditorOpen] = useState(false);
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
   const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
   const [uploadingDestImage, setUploadingDestImage] = useState(false);
@@ -212,6 +215,7 @@ export default function NewSalePage() {
     setQuoteTitle((sale as any).quote_title || '');
     setInvoiceUrl((sale as any).invoice_url || '');
     setDestinationImageUrl((sale as any).destination_image_url || '');
+    setDestinationImageConfig((sale as any).destination_image_config || null);
     // Load proposal payment options
     if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
       // Migrate old format (installmentValue/totalValue) to new format (discountPercent)
@@ -851,6 +855,7 @@ export default function NewSalePage() {
         seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
         invoice_url: invoiceUrl || null,
         destination_image_url: destinationImageUrl || null,
+        destination_image_config: destinationImageConfig || null,
         sale_interest: saleInterest,
         machine_fee: machineFee,
         machine_fee_supplier_id: machineFeeSupplierId || null,
@@ -1676,12 +1681,17 @@ export default function NewSalePage() {
               <Label>Imagem do Destino (para proposta)</Label>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
                 {destinationImageUrl ? (
-                  <div className="relative">
-                    <img src={destinationImageUrl} alt="Destino" className="h-20 w-32 object-cover rounded border" />
-                    <Button size="icon" variant="destructive" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => setDestinationImageUrl('')}>
-                      <X className="h-3 w-3" />
+                  <>
+                    <div className="relative">
+                      <img src={destinationImageUrl} alt="Destino" className="h-20 w-32 object-cover rounded border" />
+                      <Button size="icon" variant="destructive" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => { setDestinationImageUrl(''); setDestinationImageConfig(null); }}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setImagePositionEditorOpen(true)} className="gap-1">
+                      <Move className="h-3.5 w-3.5" /> Ajustar Posição
                     </Button>
-                  </div>
+                  </>
                 ) : uploadingDestImage ? (
                   <div className="flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground">
                     <span className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
@@ -1710,6 +1720,15 @@ export default function NewSalePage() {
               </div>
               </div>
             </div>
+
+            {/* Image Position Editor */}
+            <ImagePositionEditor
+              open={imagePositionEditorOpen}
+              onOpenChange={setImagePositionEditorOpen}
+              imageUrl={destinationImageUrl}
+              initialConfig={destinationImageConfig}
+              onSave={(config) => setDestinationImageConfig(config)}
+            />
 
             {/* AI Image Selection Dialog */}
             <Dialog open={aiImageDialog} onOpenChange={setAiImageDialog}>

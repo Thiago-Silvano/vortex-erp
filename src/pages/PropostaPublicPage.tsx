@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getImageStyle, type ImagePositionConfig } from '@/components/ImagePositionEditor';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Moon, Users, Plane } from 'lucide-react';
@@ -227,6 +228,7 @@ export default function PropostaPublicPage() {
   const nights = (sale as any).trip_nights || quoteData?.trip_nights || 0;
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
+  const heroImageConfig: ImagePositionConfig | null = (sale as any).destination_image_config || null;
   const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).filter((opt: any) => opt.enabled !== false);
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
 
@@ -260,8 +262,8 @@ export default function PropostaPublicPage() {
       {/* ── Hero ── */}
       <div className="relative" style={{ minHeight: heroImage ? 520 : 340 }}>
         {heroImage && (
-          <div className="absolute inset-0" style={{ border: '4px solid #C8A45B' }}>
-            <img src={heroImage} alt={destination || 'Destino'} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 overflow-hidden" style={{ border: '4px solid #C8A45B' }}>
+            <img src={heroImage} alt={destination || 'Destino'} className="w-full h-full" style={getImageStyle(heroImageConfig)} />
           </div>
         )}
         <div className="absolute inset-0" style={{

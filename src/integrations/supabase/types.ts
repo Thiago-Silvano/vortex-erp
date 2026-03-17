@@ -1958,6 +1958,7 @@ export type Database = {
           commission_value: number | null
           created_at: string
           created_by: string | null
+          destination_image_config: Json | null
           destination_image_url: string | null
           destination_name: string | null
           empresa_id: string | null
@@ -2001,6 +2002,7 @@ export type Database = {
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
+          destination_image_config?: Json | null
           destination_image_url?: string | null
           destination_name?: string | null
           empresa_id?: string | null
@@ -2044,6 +2046,7 @@ export type Database = {
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
+          destination_image_config?: Json | null
           destination_image_url?: string | null
           destination_name?: string | null
           empresa_id?: string | null
