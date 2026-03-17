@@ -491,11 +491,11 @@ export default function PropostaPublicPage() {
               <div className="mt-8 p-8 rounded-2xl text-center" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
                 <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: '#999' }}>Valor Total</p>
                 <span className="text-4xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-                  {fmt(totalTrip)}
+                  {fmt(totalSale)}
                 </span>
                 {showPerPassenger && passengersCount > 1 && (
                   <p className="text-sm mt-2" style={{ color: '#888' }}>
-                    {fmt(totalTrip / passengersCount)} por pessoa
+                    {fmt(totalSale / passengersCount)} por pessoa
                   </p>
                 )}
               </div>
