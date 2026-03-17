@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
@@ -40,6 +40,7 @@ interface SaleItem {
   metadata?: ServiceMetadata;
   reservation_number?: string;
   quote_option_id?: string;
+  quote_option_ids?: string[];
 }
 
 interface QuoteOption {
@@ -164,6 +165,8 @@ export default function NewSalePage() {
   const supplierPaymentsLoadedRef = useRef(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [searchingItemImages, setSearchingItemImages] = useState<Record<number, boolean>>({});
+  const [googleApiKey, setGoogleApiKey] = useState('');
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
     { method: 'pix', label: 'PIX / À Vista', installments: 1, discountPercent: 0, enabled: false },
     { method: 'credito_3x', label: 'Cartão 3x', installments: 3, discountPercent: 0, enabled: false },
@@ -243,6 +246,7 @@ export default function NewSalePage() {
     }
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
+    const imgMap: Record<number, string[]> = {};
     if (saleItems) {
       setItems(saleItems.map(i => ({
         id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav),
@@ -251,9 +255,9 @@ export default function NewSalePage() {
         metadata: (i as any).metadata || {},
         reservation_number: (i as any).reservation_number || '',
         quote_option_id: (i as any).quote_option_id || undefined,
+        quote_option_ids: (i as any).quote_option_id ? [(i as any).quote_option_id] : undefined,
       })));
       
-      const imgMap: Record<number, string[]> = {};
       for (let idx = 0; idx < saleItems.length; idx++) {
         const { data: imgs } = await (supabase.from('sale_item_images' as any) as any).select('*').eq('sale_item_id', saleItems[idx].id).order('sort_order');
         if (imgs && imgs.length > 0) {
@@ -336,10 +340,44 @@ export default function NewSalePage() {
       setQuoteOptions(options.map((o: any) => ({ id: o.id, name: o.name, order_index: o.order_index })));
       // Update items with their quote_option_id
       if (saleItems) {
-        setItems(prev => prev.map(item => {
-          const dbItem = saleItems.find((si: any) => si.id === item.id);
-          return { ...item, quote_option_id: (dbItem as any)?.quote_option_id || undefined };
-        }));
+        // Merge items that share the same base data but different quote_option_ids
+        const mergedMap = new Map<string, { item: any; optionIds: string[] }>();
+        saleItems.forEach((si: any) => {
+          // Create a fingerprint excluding quote_option_id and id
+          const fp = `${si.description}|${si.cost_price}|${si.total_value}|${si.rav}|${si.service_catalog_id || ''}|${JSON.stringify(si.metadata || {})}`;
+          if (mergedMap.has(fp)) {
+            const entry = mergedMap.get(fp)!;
+            if (si.quote_option_id) entry.optionIds.push(si.quote_option_id);
+          } else {
+            mergedMap.set(fp, {
+              item: si,
+              optionIds: si.quote_option_id ? [si.quote_option_id] : [],
+            });
+          }
+        });
+        
+        const mergedItems: SaleItem[] = [];
+        const mergedImageMap: Record<number, string[]> = {};
+        let mergedIdx = 0;
+        for (const [, { item: si, optionIds }] of mergedMap) {
+          mergedItems.push({
+            id: si.id, description: si.description, cost_price: Number(si.cost_price), rav: Number(si.rav),
+            total_value: Number(si.total_value), service_catalog_id: si.service_catalog_id || undefined,
+            cost_center_id: si.cost_center_id || undefined,
+            metadata: si.metadata || {},
+            reservation_number: si.reservation_number || '',
+            quote_option_id: optionIds[0] || undefined,
+            quote_option_ids: optionIds.length > 0 ? optionIds : undefined,
+          });
+          // Get images for the first occurrence
+          const origIdx = saleItems.findIndex((s: any) => s.id === si.id);
+          if (origIdx >= 0 && imgMap[origIdx]) {
+            mergedImageMap[mergedIdx] = imgMap[origIdx];
+          }
+          mergedIdx++;
+        }
+        setItems(mergedItems);
+        setItemImages(mergedImageMap);
       }
     }
   };
@@ -373,6 +411,7 @@ export default function NewSalePage() {
           const d = data as any;
           if (d.unsplash_api_key) { setUnsplashApiKey(d.unsplash_api_key); setHasStockKeys(true); }
           if (d.pexels_api_key) { setPexelsApiKey(d.pexels_api_key); setHasStockKeys(true); }
+          if (d.google_maps_api_key) { setGoogleApiKey(d.google_maps_api_key); }
         }
       });
     }
@@ -807,6 +846,30 @@ export default function NewSalePage() {
     });
   };
 
+  const handleSearchServiceImages = async (itemIdx: number) => {
+    const item = items[itemIdx];
+    const searchQuery = item.metadata?.hotel?.hotelName || item.description || '';
+    if (!searchQuery.trim()) { toast.error('Preencha a descrição do serviço primeiro'); return; }
+    if (!googleApiKey) { toast.error('Configure a Google Maps API Key em Configurações → Integrações'); return; }
+    setSearchingItemImages(prev => ({ ...prev, [itemIdx]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke('google-places', {
+        body: { action: 'search_photos', query: searchQuery.trim(), apiKey: googleApiKey },
+      });
+      if (error) throw error;
+      if (data?.success && data.photos?.length > 0) {
+        setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...data.photos] }));
+        toast.success(`${data.photos.length} imagem(ns) encontrada(s)!`);
+      } else {
+        toast.error('Nenhuma imagem encontrada para este serviço');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao buscar imagens');
+    } finally {
+      setSearchingItemImages(prev => ({ ...prev, [itemIdx]: false }));
+    }
+  };
+
   const handleInternalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -916,20 +979,30 @@ export default function NewSalePage() {
     }
 
     if (items.length > 0) {
-      const { data: insertedItems } = await supabase.from('sale_items').insert(items.map((item, idx) => {
-        // Resolve the quote_option_id: match by option order_index
+      // Expand items with multiple quote_option_ids into separate rows
+      const expandedItems: { item: SaleItem; idx: number; optionId: string | null }[] = [];
+      items.forEach((item, idx) => {
+        const optionIds = item.quote_option_ids && item.quote_option_ids.length > 0
+          ? item.quote_option_ids
+          : item.quote_option_id ? [item.quote_option_id] : [null as any];
+        for (const optId of optionIds) {
+          expandedItems.push({ item, idx, optionId: optId });
+        }
+      });
+
+      const { data: insertedItems } = await supabase.from('sale_items').insert(expandedItems.map((entry, sortIdx) => {
+        const { item, optionId } = entry;
         let resolvedOptionId: string | null = null;
-        if (item.quote_option_id) {
-          // Find which option index this item belongs to
-          const optIdx = quoteOptions.findIndex(o => o.id === item.quote_option_id || String(o.order_index) === item.quote_option_id);
+        if (optionId) {
+          const optIdx = quoteOptions.findIndex(o => o.id === optionId || String(o.order_index) === optionId);
           if (optIdx >= 0 && optionIdMap[optIdx]) resolvedOptionId = optionIdMap[optIdx];
-          else if (optionIdMap[0]) resolvedOptionId = optionIdMap[0]; // fallback to first
+          else if (optionIdMap[0]) resolvedOptionId = optionIdMap[0];
         } else if (optionIdMap[0]) {
-          resolvedOptionId = optionIdMap[0]; // default to first option
+          resolvedOptionId = optionIdMap[0];
         }
         return {
           sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
-          total_value: item.total_value, sort_order: idx,
+          total_value: item.total_value, sort_order: sortIdx,
           service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
           metadata: item.metadata || {}, reservation_number: item.reservation_number || '',
           quote_option_id: resolvedOptionId,
@@ -937,12 +1010,17 @@ export default function NewSalePage() {
       }) as any).select('id');
 
       if (insertedItems) {
-        for (let idx = 0; idx < insertedItems.length; idx++) {
-          const images = itemImages[idx];
+        // Map expanded items back to original indices for images
+        const processedOrigIndices = new Set<number>();
+        for (let eIdx = 0; eIdx < insertedItems.length; eIdx++) {
+          const origIdx = expandedItems[eIdx].idx;
+          if (processedOrigIndices.has(origIdx)) continue;
+          processedOrigIndices.add(origIdx);
+          const images = itemImages[origIdx];
           if (images && images.length > 0) {
             await (supabase.from('sale_item_images' as any) as any).insert(
               images.map((url: string, sortIdx: number) => ({
-                sale_item_id: insertedItems[idx].id, image_url: url, sort_order: sortIdx,
+                sale_item_id: insertedItems[eIdx].id, image_url: url, sort_order: sortIdx,
               }))
             );
           }
@@ -1891,7 +1969,8 @@ export default function NewSalePage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
             <Button size="sm" variant="outline" onClick={() => {
-              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {}, quote_option_id: quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0) }]);
+              const defaultOptIds = quoteOptions.length > 0 ? [quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0)] : [];
+              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {}, quote_option_id: defaultOptIds[0], quote_option_ids: defaultOptIds }]);
               setTimeout(() => setEditingItemIdx(items.length), 50);
             }}>
               <Plus className="h-4 w-4 mr-1" />Adicionar
@@ -1930,12 +2009,39 @@ export default function NewSalePage() {
                         </TableCell>
                         {isQuoteMode && quoteOptions.length > 1 && (
                           <TableCell>
-                            <Select value={item.quote_option_id || String(quoteOptions[0]?.order_index ?? 0)} onValueChange={v => updateItem(idx, 'quote_option_id' as keyof SaleItem, v)}>
-                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Opção..." /></SelectTrigger>
-                              <SelectContent>
-                                {quoteOptions.map((opt, oi) => <SelectItem key={oi} value={opt.id || String(oi)}>{opt.name}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-8 text-xs w-full justify-start">
+                                  <ChevronsUpDown className="h-3 w-3 mr-1" />
+                                  {(() => {
+                                    const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
+                                    if (ids.length === 0) return 'Selecionar...';
+                                    if (ids.length === quoteOptions.length) return 'Todas';
+                                    return ids.map(id => quoteOptions.find(o => (o.id || String(o.order_index)) === id)?.name || '?').join(', ');
+                                  })()}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-48 p-2">
+                                {quoteOptions.map((opt, oi) => {
+                                  const optId = opt.id || String(oi);
+                                  const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
+                                  const checked = ids.includes(optId);
+                                  return (
+                                    <label key={oi} className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer">
+                                      <Checkbox checked={checked} onCheckedChange={(v) => {
+                                        setItems(prev => prev.map((it, i) => {
+                                          if (i !== idx) return it;
+                                          const currentIds = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                                          const newIds = v ? [...currentIds, optId] : currentIds.filter(id => id !== optId);
+                                          return { ...it, quote_option_ids: newIds, quote_option_id: newIds[0] || undefined };
+                                        }));
+                                      }} />
+                                      <span className="text-xs">{opt.name}</span>
+                                    </label>
+                                  );
+                                })}
+                              </PopoverContent>
+                            </Popover>
                           </TableCell>
                         )}
                         <TableCell>
@@ -2000,6 +2106,13 @@ export default function NewSalePage() {
                               <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
                                 <ImagePlus className="h-3 w-3" />Imagens<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
                               </label>
+                            )}
+                            {searchingItemImages[idx] ? (
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><Loader2 className="h-3 w-3 animate-spin" />Buscando...</span>
+                            ) : (
+                              <Button variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1" onClick={() => handleSearchServiceImages(idx)}>
+                                <Search className="h-3 w-3" />Buscar Imagens
+                              </Button>
                             )}
                             {(itemImages[idx] || []).map((url, imgIdx) => (
                               <div key={imgIdx} className="relative group flex flex-col items-center">
@@ -2076,6 +2189,13 @@ export default function NewSalePage() {
                       <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
                         <ImagePlus className="h-3 w-3" />Imagens<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
                       </label>
+                    )}
+                    {searchingItemImages[idx] ? (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><Loader2 className="h-3 w-3 animate-spin" />Buscando...</span>
+                    ) : (
+                      <Button variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1" onClick={() => handleSearchServiceImages(idx)}>
+                        <Search className="h-3 w-3" />Buscar Imagens
+                      </Button>
                     )}
                     {(itemImages[idx] || []).map((url, imgIdx) => (
                       <div key={imgIdx} className="relative group flex flex-col items-center">
