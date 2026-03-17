@@ -107,6 +107,7 @@ Notes:
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
+        max_tokens: 16000,
         messages: [
           { role: "system", content: systemPrompt },
           {
@@ -114,7 +115,7 @@ Notes:
             content: [
               {
                 type: "text",
-                text: "Analyze this PDF document from a travel supplier. Extract all services with detailed flight itineraries, hotel info, car rentals, insurance, transfers, tours. Group all flight legs into one service. Return the structured JSON as specified."
+                text: "Analyze this COMPLETE PDF document from a travel supplier. You MUST read ALL pages from start to end. Extract ALL services with detailed flight itineraries, hotel info, car rentals, insurance, transfers, tours. Group all flight legs into one service. Do NOT skip any page or any service. Return the structured JSON as specified."
               },
               {
                 type: "image_url",
