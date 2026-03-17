@@ -1681,15 +1681,17 @@ export default function NewSalePage() {
               <Label>Imagem do Destino (para proposta)</Label>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
                 {destinationImageUrl ? (
-                  <div className="relative">
-                    <img src={destinationImageUrl} alt="Destino" className="h-20 w-32 object-cover rounded border" />
-                    <Button size="icon" variant="destructive" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => { setDestinationImageUrl(''); setDestinationImageConfig(null); }}>
-                      <X className="h-3 w-3" />
+                  <>
+                    <div className="relative">
+                      <img src={destinationImageUrl} alt="Destino" className="h-20 w-32 object-cover rounded border" />
+                      <Button size="icon" variant="destructive" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => { setDestinationImageUrl(''); setDestinationImageConfig(null); }}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setImagePositionEditorOpen(true)} className="gap-1">
+                      <Move className="h-3.5 w-3.5" /> Ajustar Posição
                     </Button>
-                  </div>
-                  <Button type="button" variant="outline" size="sm" onClick={() => setImagePositionEditorOpen(true)} className="gap-1">
-                    <Move className="h-3.5 w-3.5" /> Ajustar Posição
-                  </Button>
+                  </>
                 ) : uploadingDestImage ? (
                   <div className="flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground">
                     <span className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
