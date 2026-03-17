@@ -79,9 +79,7 @@ export default function VistosNewSalePage() {
   const [clientEmail, setClientEmail] = useState('');
   const [notes, setNotes] = useState('');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [applicants, setApplicants] = useState<Applicant[]>([
-    { full_name: '', is_main: true },
-  ]);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [payerIsApplicant, setPayerIsApplicant] = useState(false);
   const [cardFeeValue, setCardFeeValue] = useState(0);
   const [saving, setSaving] = useState(false);
