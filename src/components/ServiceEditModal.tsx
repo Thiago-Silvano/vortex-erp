@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from '@/components/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, MapPin, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -403,7 +404,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
 
           <div>
             <Label>Descrição detalhada (aparece na proposta)</Label>
-            <Textarea value={detailedDesc} onChange={e => setDetailedDesc(e.target.value)} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
+            <RichTextEditor value={detailedDesc} onChange={setDetailedDesc} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
           </div>
 
           {/* ── AÉREO ── */}

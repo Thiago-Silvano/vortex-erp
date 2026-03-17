@@ -669,25 +669,42 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: number }) {
   const [expanded, setExpanded] = useState(false);
+  const isHtml = /<[a-z][\s\S]*>/i.test(text);
   const lines = text.split('\n');
-  const needsTruncate = lines.length > maxLines;
+  const needsTruncate = isHtml ? text.length > 300 : lines.length > maxLines;
 
   return (
     <div className="mt-2">
-      <p
-        className="text-sm leading-relaxed whitespace-pre-line"
-        style={{
-          color: '#888',
-          ...(needsTruncate && !expanded ? {
-            display: '-webkit-box',
-            WebkitLineClamp: maxLines,
-            WebkitBoxOrient: 'vertical' as const,
-            overflow: 'hidden',
-          } : {}),
-        }}
-      >
-        {text}
-      </p>
+      {isHtml ? (
+        <div
+          className="text-sm leading-relaxed [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic"
+          style={{
+            color: '#888',
+            ...(needsTruncate && !expanded ? {
+              display: '-webkit-box',
+              WebkitLineClamp: maxLines,
+              WebkitBoxOrient: 'vertical' as const,
+              overflow: 'hidden',
+            } : {}),
+          }}
+          dangerouslySetInnerHTML={{ __html: text }}
+        />
+      ) : (
+        <p
+          className="text-sm leading-relaxed whitespace-pre-line"
+          style={{
+            color: '#888',
+            ...(needsTruncate && !expanded ? {
+              display: '-webkit-box',
+              WebkitLineClamp: maxLines,
+              WebkitBoxOrient: 'vertical' as const,
+              overflow: 'hidden',
+            } : {}),
+          }}
+        >
+          {text}
+        </p>
+      )}
       {needsTruncate && (
         <button
           onClick={() => setExpanded(!expanded)}
