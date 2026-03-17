@@ -376,6 +376,7 @@ export default function NewSalePage() {
           const d = data as any;
           if (d.unsplash_api_key) { setUnsplashApiKey(d.unsplash_api_key); setHasStockKeys(true); }
           if (d.pexels_api_key) { setPexelsApiKey(d.pexels_api_key); setHasStockKeys(true); }
+          if (d.google_maps_api_key) { setGoogleApiKey(d.google_maps_api_key); }
         }
       });
     }
