@@ -581,41 +581,41 @@ export default function VistosNewSalePage() {
       }
     }
 
-    const appPayloads = applicants.map((a, i) => ({
-      visa_sale_id: saleId,
-      full_name: a.full_name.trim(),
-      birth_date: null,
-      phone: '',
-      email: '',
-      passport_number: '',
-      is_main: a.is_main,
-      sort_order: i,
-    }));
+    if (applicants.length > 0) {
+      const appPayloads = applicants.map((a, i) => ({
+        visa_sale_id: saleId,
+        full_name: a.full_name.trim(),
+        birth_date: null,
+        phone: '',
+        email: '',
+        passport_number: '',
+        is_main: a.is_main,
+        sort_order: i,
+      }));
 
-    const { data: insertedApplicants } = await supabase.from('visa_applicants').insert(appPayloads).select('id, full_name');
+      const { data: insertedApplicants } = await supabase.from('visa_applicants').insert(appPayloads).select('id, full_name');
 
-    if (insertedApplicants) {
-      // Create processes only for non-fee products
-      const serviceProducts = saleItems.filter(item => !item.is_supplier_fee && item.product_id);
-      const processPayloads: any[] = [];
+      if (insertedApplicants) {
+        const serviceProducts = saleItems.filter(item => !item.is_supplier_fee && item.product_id);
+        const processPayloads: any[] = [];
 
-      insertedApplicants.forEach(app => {
-        serviceProducts.forEach(item => {
-          processPayloads.push({
-            empresa_id: activeCompany?.id,
-            visa_sale_id: saleId,
-            applicant_id: app.id,
-            product_id: item.product_id,
-            client_name: clientName.trim(),
-            applicant_name: app.full_name,
-            status: 'falta_passaporte',
+        insertedApplicants.forEach(app => {
+          serviceProducts.forEach(item => {
+            processPayloads.push({
+              empresa_id: activeCompany?.id,
+              visa_sale_id: saleId,
+              applicant_id: app.id,
+              product_id: item.product_id,
+              client_name: clientName.trim(),
+              applicant_name: app.full_name,
+              status: 'falta_passaporte',
+            });
           });
         });
-      });
 
-
-      if (processPayloads.length > 0) {
-        await supabase.from('visa_processes').insert(processPayloads);
+        if (processPayloads.length > 0) {
+          await supabase.from('visa_processes').insert(processPayloads);
+        }
       }
     }
 
