@@ -153,7 +153,7 @@ export default function VistosDashboard() {
     );
 
     const prodSales: Record<string, number> = {};
-    sales?.forEach(s => {
+    completeSales.forEach(s => {
       const name = productMap[s.product_id] || 'Outro';
       prodSales[name] = (prodSales[name] || 0) + 1;
     });
