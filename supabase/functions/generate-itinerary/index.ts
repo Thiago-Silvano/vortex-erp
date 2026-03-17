@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { city, totalDays, freeDays } = await req.json();
+    const { city, totalDays, freeDays, aiTips } = await req.json();
 
     if (!city || !totalDays) {
       return new Response(JSON.stringify({ error: "city and totalDays are required" }), {
