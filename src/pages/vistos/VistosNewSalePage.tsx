@@ -79,10 +79,8 @@ export default function VistosNewSalePage() {
   const [clientEmail, setClientEmail] = useState('');
   const [notes, setNotes] = useState('');
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [applicants, setApplicants] = useState<Applicant[]>([
-    { full_name: '', is_main: true },
-  ]);
-  const [payerIsApplicant, setPayerIsApplicant] = useState(true);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [payerIsApplicant, setPayerIsApplicant] = useState(false);
   const [cardFeeValue, setCardFeeValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; phone?: string; email?: string }[]>([]);
@@ -320,9 +318,8 @@ export default function VistosNewSalePage() {
   };
 
   const removeApplicant = (idx: number) => {
-    if (applicants.length <= 1) return;
     const updated = applicants.filter((_, i) => i !== idx);
-    if (!updated.some(a => a.is_main)) updated[0].is_main = true;
+    if (updated.length > 0 && !updated.some(a => a.is_main)) updated[0].is_main = true;
     setApplicants(updated);
   };
 
@@ -342,7 +339,7 @@ export default function VistosNewSalePage() {
     if (!clientName.trim()) { toast.error('Informe o nome do cliente.'); return; }
     if (saleItems.length === 0) { toast.error('Adicione pelo menos um serviço.'); return; }
     if (saleItems.some(item => !item.product_id)) { toast.error('Selecione o serviço em todos os itens.'); return; }
-    if (applicants.some(a => !a.full_name.trim())) { toast.error('Preencha o nome de todos os aplicantes.'); return; }
+    if (applicants.length > 0 && applicants.some(a => !a.full_name.trim())) { toast.error('Preencha o nome de todos os aplicantes.'); return; }
     if (Math.abs(paymentsDiff) > 0.01) { toast.error('A soma dos pagamentos deve ser igual ao valor total.'); return; }
 
     setSaving(true);
@@ -582,68 +579,41 @@ export default function VistosNewSalePage() {
       }
     }
 
-    const appPayloads = applicants.map((a, i) => ({
-      visa_sale_id: saleId,
-      full_name: a.full_name.trim(),
-      birth_date: null,
-      phone: '',
-      email: '',
-      passport_number: '',
-      is_main: a.is_main,
-      sort_order: i,
-    }));
+    if (applicants.length > 0) {
+      const appPayloads = applicants.map((a, i) => ({
+        visa_sale_id: saleId,
+        full_name: a.full_name.trim(),
+        birth_date: null,
+        phone: '',
+        email: '',
+        passport_number: '',
+        is_main: a.is_main,
+        sort_order: i,
+      }));
 
-    const { data: insertedApplicants } = await supabase.from('visa_applicants').insert(appPayloads).select('id, full_name');
+      const { data: insertedApplicants } = await supabase.from('visa_applicants').insert(appPayloads).select('id, full_name');
 
-    if (insertedApplicants) {
-      // Create processes only for non-fee products
-      const serviceProducts = saleItems.filter(item => !item.is_supplier_fee && item.product_id);
-      const processPayloads: any[] = [];
+      if (insertedApplicants) {
+        const serviceProducts = saleItems.filter(item => !item.is_supplier_fee && item.product_id);
+        const processPayloads: any[] = [];
 
-      insertedApplicants.forEach(app => {
-        serviceProducts.forEach(item => {
-          processPayloads.push({
-            empresa_id: activeCompany?.id,
-            visa_sale_id: saleId,
-            applicant_id: app.id,
-            product_id: item.product_id,
-            client_name: clientName.trim(),
-            applicant_name: app.full_name,
-            status: 'falta_passaporte',
+        insertedApplicants.forEach(app => {
+          serviceProducts.forEach(item => {
+            processPayloads.push({
+              empresa_id: activeCompany?.id,
+              visa_sale_id: saleId,
+              applicant_id: app.id,
+              product_id: item.product_id,
+              client_name: clientName.trim(),
+              applicant_name: app.full_name,
+              status: 'falta_passaporte',
+            });
           });
         });
-      });
 
-      if (payerIsApplicant) {
-        const payerAlreadyListed = insertedApplicants.some(
-          app => app.full_name.trim().toLowerCase() === clientName.trim().toLowerCase()
-        );
-        if (!payerAlreadyListed) {
-          const { data: payerApplicant } = await supabase.from('visa_applicants').insert({
-            visa_sale_id: saleId,
-            full_name: clientName.trim(),
-            is_main: false,
-            sort_order: insertedApplicants.length,
-          }).select('id, full_name').single();
-
-          if (payerApplicant) {
-            serviceProducts.forEach(item => {
-              processPayloads.push({
-                empresa_id: activeCompany?.id,
-                visa_sale_id: saleId,
-                applicant_id: payerApplicant.id,
-                product_id: item.product_id,
-                client_name: clientName.trim(),
-                applicant_name: payerApplicant.full_name,
-                status: 'falta_passaporte',
-              });
-            });
-          }
+        if (processPayloads.length > 0) {
+          await supabase.from('visa_processes').insert(processPayloads);
         }
-      }
-
-      if (processPayloads.length > 0) {
-        await supabase.from('visa_processes').insert(processPayloads);
       }
     }
 
@@ -926,10 +896,6 @@ export default function VistosNewSalePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
-              <Checkbox id="payerIsApplicant" checked={payerIsApplicant} onCheckedChange={(v) => setPayerIsApplicant(v === true)} />
-              <Label htmlFor="payerIsApplicant" className="cursor-pointer text-sm">O pagante da venda é um aplicante?</Label>
-            </div>
             {applicants.map((app, idx) => (
               <div key={idx} className="flex items-center gap-3 border rounded-lg p-3">
                 <span className="text-sm font-semibold text-foreground whitespace-nowrap">
