@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getImageStyle, type ImagePositionConfig } from '@/components/ImagePositionEditor';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChevronLeft, ChevronRight, X, MapPin, Calendar, Moon, Users, Plane } from 'lucide-react';
