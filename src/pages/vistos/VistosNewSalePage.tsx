@@ -614,33 +614,6 @@ export default function VistosNewSalePage() {
         });
       });
 
-      if (payerIsApplicant) {
-        const payerAlreadyListed = insertedApplicants.some(
-          app => app.full_name.trim().toLowerCase() === clientName.trim().toLowerCase()
-        );
-        if (!payerAlreadyListed) {
-          const { data: payerApplicant } = await supabase.from('visa_applicants').insert({
-            visa_sale_id: saleId,
-            full_name: clientName.trim(),
-            is_main: false,
-            sort_order: insertedApplicants.length,
-          }).select('id, full_name').single();
-
-          if (payerApplicant) {
-            serviceProducts.forEach(item => {
-              processPayloads.push({
-                empresa_id: activeCompany?.id,
-                visa_sale_id: saleId,
-                applicant_id: payerApplicant.id,
-                product_id: item.product_id,
-                client_name: clientName.trim(),
-                applicant_name: payerApplicant.full_name,
-                status: 'falta_passaporte',
-              });
-            });
-          }
-        }
-      }
 
       if (processPayloads.length > 0) {
         await supabase.from('visa_processes').insert(processPayloads);
