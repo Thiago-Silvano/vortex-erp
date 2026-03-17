@@ -46,6 +46,18 @@ interface ExtractedService {
   baggage?: BaggageInfo;
   total_travel_duration_outbound?: string;
   total_travel_duration_return?: string;
+  quote_option_key?: string;
+}
+
+interface ExtractedQuoteOption {
+  title: string;
+  services: ExtractedService[];
+}
+
+interface ExtractedPaymentTerm {
+  label: string;
+  installments: number;
+  notes: string;
 }
 
 interface TripInfo {
@@ -71,13 +83,22 @@ interface ImportedItem {
   service_catalog_id?: string;
   cost_center_id?: string;
   metadata?: any;
+  quote_option_id?: string;
+}
+
+interface PdfImportResult {
+  items: ImportedItem[];
+  tripInfo: TripInfo;
+  quoteOptions: { title: string }[];
+  paymentTerms: ExtractedPaymentTerm[];
+  generalNotes: string;
 }
 
 interface PdfImportModalProps {
   open: boolean;
   onClose: () => void;
   serviceCatalog: ServiceCatalogOption[];
-  onImport: (items: ImportedItem[], tripInfo: TripInfo) => void;
+  onImport: (result: PdfImportResult) => void;
   marginMode: 'none' | 'fixed' | 'manual';
   marginPercent: number;
 }
@@ -126,6 +147,9 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState<'upload' | 'review'>('upload');
   const [services, setServices] = useState<ExtractedService[]>([]);
+  const [quoteOptions, setQuoteOptions] = useState<ExtractedQuoteOption[]>([]);
+  const [paymentTerms, setPaymentTerms] = useState<ExtractedPaymentTerm[]>([]);
+  const [generalNotes, setGeneralNotes] = useState('');
   const [tripInfo, setTripInfo] = useState<TripInfo>({ client_name: '', origin: '', destination: '', departure_date: '', return_date: '' });
   const [marginMode, setMarginMode] = useState<'none' | 'fixed' | 'manual'>(initialMarginMode);
   const [marginPercent, setMarginPercent] = useState(initialMarginPercent);
@@ -162,7 +186,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
       if (error) { toast.error('Erro ao analisar PDF.'); setAnalyzing(false); setProgress(0); return; }
       if (data?.error) { toast.error(data.error); setAnalyzing(false); setProgress(0); return; }
 
-      const extractedServices: ExtractedService[] = (data?.services || []).map((s: any) => ({
+      const normalizeService = (s: any, quoteOptionKey?: string): ExtractedService => ({
         service_type: s.service_type || '',
         description: s.description || '',
         cost_price: Number(s.cost_price) || 0,
@@ -176,11 +200,30 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
         baggage: s.baggage || undefined,
         total_travel_duration_outbound: s.total_travel_duration_outbound || '',
         total_travel_duration_return: s.total_travel_duration_return || '',
+        quote_option_key: quoteOptionKey,
+      });
+
+      const extractedQuoteOptions: ExtractedQuoteOption[] = (data?.quote_options || []).map((option: any, index: number) => ({
+        title: option.title || `Opção ${index + 1}`,
+        services: (option.services || []).map((service: any) => normalizeService(service, String(index))),
+      }));
+
+      const extractedServices: ExtractedService[] = extractedQuoteOptions.length > 0
+        ? extractedQuoteOptions.flatMap(option => option.services)
+        : (data?.services || []).map((s: any) => normalizeService(s));
+
+      const extractedPaymentTerms: ExtractedPaymentTerm[] = (data?.payment_info?.payment_terms || []).map((term: any) => ({
+        label: term.label || '',
+        installments: Number(term.installments) || 1,
+        notes: term.notes || '',
       }));
 
       const extractedTrip = data?.trip_info || {};
 
       setServices(extractedServices);
+      setQuoteOptions(extractedQuoteOptions);
+      setPaymentTerms(extractedPaymentTerms);
+      setGeneralNotes(data?.payment_info?.general_notes || '');
       setTripInfo({
         client_name: extractedTrip.client_name || '',
         origin: extractedTrip.origin || '',
@@ -268,10 +311,17 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
         service_catalog_id: matchedCatalog?.id,
         cost_center_id: matchedCatalog?.cost_center_id || undefined,
         metadata,
+        quote_option_id: s.quote_option_key,
       };
     });
 
-    onImport(items, tripInfo);
+    onImport({
+      items,
+      tripInfo,
+      quoteOptions: quoteOptions.map(option => ({ title: option.title })),
+      paymentTerms,
+      generalNotes,
+    });
     handleReset();
     onClose();
   };
@@ -281,6 +331,9 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
     setPdfUrl('');
     setStep('upload');
     setServices([]);
+    setQuoteOptions([]);
+    setPaymentTerms([]);
+    setGeneralNotes('');
     setTripInfo({ client_name: '', origin: '', destination: '', departure_date: '', return_date: '' });
     setProgress(0);
   };
@@ -554,6 +607,45 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
                       </div>
                     )}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {(quoteOptions.length > 0 || paymentTerms.length > 0 || generalNotes) && (
+              <Card>
+                <CardContent className="p-4 space-y-4">
+                  {quoteOptions.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-foreground mb-2">🧾 Opções identificadas</p>
+                      <div className="flex flex-wrap gap-2">
+                        {quoteOptions.map((option, index) => (
+                          <Badge key={`${option.title}-${index}`} variant="secondary">{option.title}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {paymentTerms.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-foreground mb-2">💳 Formas de pagamento detectadas</p>
+                      <div className="space-y-2">
+                        {paymentTerms.map((term, index) => (
+                          <div key={`${term.label}-${index}`} className="rounded-md border border-border p-3 text-sm">
+                            <p className="font-medium">{term.label}</p>
+                            {term.installments > 1 && <p className="text-muted-foreground">Até {term.installments}x</p>}
+                            {term.notes && <p className="text-muted-foreground mt-1">{term.notes}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {generalNotes && (
+                    <div>
+                      <p className="text-sm font-semibold text-foreground mb-2">📝 Observações gerais</p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line">{generalNotes}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
