@@ -347,12 +347,52 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
 
           {/* Description */}
           <div>
-            <Label>Descrição resumida</Label>
-            <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Título do serviço" />
+            <Label>Descrição resumida {type === 'experiencia' && '(nome da cidade/destino)'}</Label>
+            <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder={type === 'experiencia' ? "Ex: Paris, Roma, Nova York..." : "Título do serviço"} />
           </div>
+
+          {/* ── EXPERIÊNCIA dates ── */}
+          {type === 'experiencia' && (
+            <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <h3 className="font-semibold text-sm">Dados da Experiência</h3>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs">Data Inicial</Label>
+                  <Input type="date" value={experience.startDate} onChange={e => setExperience(p => ({ ...p, startDate: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Data Final</Label>
+                  <Input type="date" value={experience.endDate} onChange={e => setExperience(p => ({ ...p, endDate: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Total de Dias</Label>
+                  <Input type="number" value={calcExperienceDays()} readOnly className="bg-muted" />
+                </div>
+                <div>
+                  <Label className="text-xs">Dias Livres</Label>
+                  <Input type="number" min="0" max={Math.max(0, calcExperienceDays() - 1)} value={experience.freeDays} onChange={e => setExperience(p => ({ ...p, freeDays: parseInt(e.target.value) || 0 }))} />
+                </div>
+              </div>
+              {calcExperienceDays() > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {calcExperienceDays() - (experience.freeDays || 0)} dia(s) de roteiro serão gerados
+                  </span>
+                  <Button size="sm" variant="outline" onClick={handleGenerateItinerary} disabled={generatingItinerary}>
+                    {generatingItinerary ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Calendar className="h-3 w-3 mr-1" />}
+                    {generatingItinerary ? 'Gerando roteiro...' : 'Gerar Roteiro com IA'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <Label>Descrição detalhada (aparece na proposta)</Label>
-            <Textarea value={detailedDesc} onChange={e => setDetailedDesc(e.target.value)} placeholder="Descrição completa para o cliente..." rows={3} />
+            <Textarea value={detailedDesc} onChange={e => setDetailedDesc(e.target.value)} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
           </div>
 
           {/* ── AÉREO ── */}
