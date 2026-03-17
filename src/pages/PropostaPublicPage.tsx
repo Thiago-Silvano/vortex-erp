@@ -453,17 +453,19 @@ export default function PropostaPublicPage() {
 
             {/* Items breakdown - show service names when show_individual_values is true */}
             {(sale as any).show_individual_values === true && filteredItems.map((item, idx) => {
-              const name = item.description || (item.service_catalog_id ? catalogNames[item.service_catalog_id] : null) || `Serviço ${idx + 1}`;
+              const meta = item.metadata as any;
+              const title = meta?.hotelName || meta?.name || item.description || (item.service_catalog_id ? catalogNames[item.service_catalog_id] : null) || `Serviço ${idx + 1}`;
+              const subtitle = meta?.detailedDescription || null;
               return (
                 <div key={idx} className="py-4 px-8" style={{
                   background: idx % 2 === 0 ? '#fff' : '#faf9f6', borderBottom: '1px solid #f0ede8'
                 }}>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium" style={{ color: '#2d2d2d' }}>{name || `Serviço ${idx + 1}`}</span>
+                    <span className="text-sm font-medium" style={{ color: '#2d2d2d' }}>{title}</span>
                     <span className="text-sm font-semibold tabular-nums" style={{ color: '#C8A45B' }}>{fmt(item.total_value)}</span>
                   </div>
-                  {item.description && (
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: '#999' }}>{item.description}</p>
+                  {subtitle && (
+                    <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: '#999' }}>{subtitle}</p>
                   )}
                 </div>
               );
