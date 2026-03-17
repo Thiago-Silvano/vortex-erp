@@ -176,7 +176,6 @@ export default function VistosDashboard() {
     { label: 'Taxa Máquina', value: fmt(stats.cardFees), icon: CreditCard, color: 'bg-red-500 text-white' },
     { label: 'Lucro (Serv. - Máq.)', value: fmt(profit), icon: TrendingUp, color: 'bg-teal-600 text-white' },
     { label: 'Em Produção', value: stats.inProduction.toString(), icon: Cog, color: 'bg-blue-600 text-white' },
-    { label: 'Agendadas', value: stats.scheduled.toString(), icon: CalendarDays, color: 'bg-violet-600 text-white' },
     { label: 'Aprovados', value: stats.approved.toString(), icon: CheckCircle, color: 'bg-emerald-600 text-white' },
     { label: 'Negados', value: stats.denied.toString(), icon: XCircle, color: 'bg-destructive text-destructive-foreground' },
   ];
