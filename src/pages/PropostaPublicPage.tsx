@@ -683,6 +683,7 @@ function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: numbe
   );
 }
 
+function ServiceCard({
   name, description, catalogName, value, images, metadata, passengersCount, showValue = true, onImageClick,
 }: {
   name: string;
