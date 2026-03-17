@@ -2009,12 +2009,39 @@ export default function NewSalePage() {
                         </TableCell>
                         {isQuoteMode && quoteOptions.length > 1 && (
                           <TableCell>
-                            <Select value={item.quote_option_id || String(quoteOptions[0]?.order_index ?? 0)} onValueChange={v => updateItem(idx, 'quote_option_id' as keyof SaleItem, v)}>
-                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Opção..." /></SelectTrigger>
-                              <SelectContent>
-                                {quoteOptions.map((opt, oi) => <SelectItem key={oi} value={opt.id || String(oi)}>{opt.name}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-8 text-xs w-full justify-start">
+                                  <ChevronsUpDown className="h-3 w-3 mr-1" />
+                                  {(() => {
+                                    const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
+                                    if (ids.length === 0) return 'Selecionar...';
+                                    if (ids.length === quoteOptions.length) return 'Todas';
+                                    return ids.map(id => quoteOptions.find(o => (o.id || String(o.order_index)) === id)?.name || '?').join(', ');
+                                  })()}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-48 p-2">
+                                {quoteOptions.map((opt, oi) => {
+                                  const optId = opt.id || String(oi);
+                                  const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
+                                  const checked = ids.includes(optId);
+                                  return (
+                                    <label key={oi} className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer">
+                                      <Checkbox checked={checked} onCheckedChange={(v) => {
+                                        setItems(prev => prev.map((it, i) => {
+                                          if (i !== idx) return it;
+                                          const currentIds = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                                          const newIds = v ? [...currentIds, optId] : currentIds.filter(id => id !== optId);
+                                          return { ...it, quote_option_ids: newIds, quote_option_id: newIds[0] || undefined };
+                                        }));
+                                      }} />
+                                      <span className="text-xs">{opt.name}</span>
+                                    </label>
+                                  );
+                                })}
+                              </PopoverContent>
+                            </Popover>
                           </TableCell>
                         )}
                         <TableCell>
