@@ -231,6 +231,7 @@ export default function PropostaPublicPage() {
   const heroImageConfig: ImagePositionConfig | null = (sale as any).destination_image_config || null;
   const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).filter((opt: any) => opt.enabled !== false);
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
+  const showOnlyTotal = (sale as any).show_only_total === true;
 
   // Helper to compute option total/installment from discount
   const getOptTotal = (opt: ProposalPaymentOption) => {
