@@ -852,6 +852,7 @@ export default function NewSalePage() {
         proposal_payment_options: proposalPaymentOptions.filter(o => o.enabled),
         show_individual_values: showIndividualValues,
         show_per_passenger: showPerPassenger,
+        show_only_total: showOnlyTotal,
         status,
         created_by: userEmail,
         updated_by: userEmail,
