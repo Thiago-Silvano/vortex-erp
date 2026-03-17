@@ -2,12 +2,13 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { ZoomIn, ZoomOut, Move, RotateCcw } from 'lucide-react';
+import { ZoomIn, ZoomOut, Move, RotateCcw, Sun } from 'lucide-react';
 
 export interface ImagePositionConfig {
-  offsetX: number; // percentage -100 to 100
-  offsetY: number; // percentage -100 to 100
+  offsetX: number; // percentage -50 to 50
+  offsetY: number; // percentage -50 to 50
   zoom: number;    // 1 to 3
+  brightness: number; // 0.3 to 1.5 (1 = normal)
 }
 
 interface ImagePositionEditorProps {
@@ -18,14 +19,16 @@ interface ImagePositionEditorProps {
   onSave: (config: ImagePositionConfig) => void;
 }
 
-const DEFAULT_CONFIG: ImagePositionConfig = { offsetX: 0, offsetY: 0, zoom: 1 };
+const DEFAULT_CONFIG: ImagePositionConfig = { offsetX: 0, offsetY: 0, zoom: 1, brightness: 1 };
 
 export function getImageStyle(config?: ImagePositionConfig | null): React.CSSProperties {
   if (!config) return { objectFit: 'cover' as const, objectPosition: 'center' };
+  const brightness = config.brightness ?? 1;
   return {
     objectFit: 'cover' as const,
     objectPosition: `${50 + config.offsetX}% ${50 + config.offsetY}%`,
     transform: `scale(${config.zoom})`,
+    filter: brightness !== 1 ? `brightness(${brightness})` : undefined,
   };
 }
 
@@ -36,7 +39,7 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open) setConfig(initialConfig || DEFAULT_CONFIG);
+    if (open) setConfig({ ...DEFAULT_CONFIG, ...(initialConfig || {}) });
   }, [open, initialConfig]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -90,12 +93,12 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Move className="h-5 w-5" />
-            Ajustar Posição da Imagem
+            Ajustar Imagem do Destino
           </DialogTitle>
         </DialogHeader>
 
         <p className="text-sm text-muted-foreground -mt-2">
-          Arraste a imagem para centralizar e use o controle de zoom. O resultado será exibido na proposta interativa.
+          Arraste para posicionar, ajuste zoom e brilho. O resultado será exibido na proposta interativa.
         </p>
 
         {/* Preview container simulating the hero */}
@@ -128,19 +131,36 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
           </div>
         </div>
 
-        {/* Zoom control */}
-        <div className="flex items-center gap-4 px-2">
-          <ZoomOut className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <Slider
-            value={[config.zoom]}
-            onValueChange={([v]) => setConfig(prev => ({ ...prev, zoom: v }))}
-            min={1}
-            max={3}
-            step={0.05}
-            className="flex-1"
-          />
-          <ZoomIn className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <span className="text-xs text-muted-foreground w-12 text-right">{Math.round(config.zoom * 100)}%</span>
+        {/* Controls */}
+        <div className="space-y-3 px-2">
+          {/* Zoom */}
+          <div className="flex items-center gap-4">
+            <ZoomOut className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <Slider
+              value={[config.zoom]}
+              onValueChange={([v]) => setConfig(prev => ({ ...prev, zoom: v }))}
+              min={1}
+              max={3}
+              step={0.05}
+              className="flex-1"
+            />
+            <ZoomIn className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs text-muted-foreground w-12 text-right">{Math.round(config.zoom * 100)}%</span>
+          </div>
+
+          {/* Brightness */}
+          <div className="flex items-center gap-4">
+            <Sun className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <Slider
+              value={[config.brightness]}
+              onValueChange={([v]) => setConfig(prev => ({ ...prev, brightness: v }))}
+              min={0.3}
+              max={1.5}
+              step={0.05}
+              className="flex-1"
+            />
+            <span className="text-xs text-muted-foreground w-20 text-right">Brilho {Math.round(config.brightness * 100)}%</span>
+          </div>
         </div>
 
         <DialogFooter className="flex items-center justify-between sm:justify-between">
@@ -149,7 +169,7 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
           </Button>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button onClick={() => { onSave(config); onOpenChange(false); }}>Salvar posição</Button>
+            <Button onClick={() => { onSave(config); onOpenChange(false); }}>Salvar</Button>
           </div>
         </DialogFooter>
       </DialogContent>
