@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN IF NOT EXISTS destination_image_config jsonb DEFAULT NULL;
