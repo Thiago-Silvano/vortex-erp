@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, MapPin, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import HotelSearchAutocomplete, { HotelDetails } from '@/components/HotelSearchAutocomplete';
@@ -71,11 +71,18 @@ interface HotelInfo {
   tripadvisorPopularMentions?: string[];
 }
 
+export interface ExperienceInfo {
+  startDate: string;
+  endDate: string;
+  freeDays: number;
+}
+
 export interface ServiceMetadata {
   type?: 'aereo' | 'hotel' | 'carro' | 'seguro' | 'experiencia' | 'adicional';
   flightLegs?: FlightLeg[];
   baggage?: BaggageInfo;
   hotel?: HotelInfo;
+  experience?: ExperienceInfo;
   detailedDescription?: string;
   totalTravelDurationOutbound?: string;
   totalTravelDurationReturn?: string;
@@ -131,6 +138,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
   const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(new Set());
   const [googleApiKey, setGoogleApiKey] = useState('');
+  const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0 });
+  const [generatingItinerary, setGeneratingItinerary] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -142,6 +151,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setHotel(metadata.hotel || emptyHotel());
       setHotelImages(metadata.hotel?.images || []);
       setSelectedImageIndices(new Set());
+      setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0 });
       loadGoogleApiKey();
     }
   }, [open]);
@@ -255,6 +265,37 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     }
   };
 
+  const calcExperienceDays = () => {
+    if (!experience.startDate || !experience.endDate) return 0;
+    const start = new Date(experience.startDate);
+    const end = new Date(experience.endDate);
+    return Math.max(0, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  };
+
+  const handleGenerateItinerary = async () => {
+    if (!desc.trim()) { toast.error('Preencha o nome da cidade na descrição resumida'); return; }
+    if (!experience.startDate || !experience.endDate) { toast.error('Preencha as datas de início e fim'); return; }
+    const totalDays = calcExperienceDays();
+    if (totalDays <= 0) { toast.error('A data final deve ser posterior à data inicial'); return; }
+    setGeneratingItinerary(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-itinerary', {
+        body: { city: desc.trim(), totalDays, freeDays: experience.freeDays || 0 },
+      });
+      if (error) throw error;
+      if (data?.success && data.itinerary) {
+        setDetailedDesc(data.itinerary);
+        toast.success('Roteiro gerado com sucesso!');
+      } else {
+        toast.error(data?.error || 'Erro ao gerar roteiro');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao gerar roteiro');
+    } finally {
+      setGeneratingItinerary(false);
+    }
+  };
+
   const handleSave = () => {
     const selectedImages = hotelImages.filter((_, i) => selectedImageIndices.has(i));
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
@@ -268,6 +309,9 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     }
     if (type === 'hotel') {
       meta.hotel = { ...hotel, images: selectedImages };
+    }
+    if (type === 'experiencia') {
+      meta.experience = experience;
     }
     onSave(desc, meta);
     if (type === 'hotel' && selectedImages.length > 0 && onHotelImagesFound) {
@@ -303,12 +347,52 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
 
           {/* Description */}
           <div>
-            <Label>Descrição resumida</Label>
-            <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder="Título do serviço" />
+            <Label>Descrição resumida {type === 'experiencia' && '(nome da cidade/destino)'}</Label>
+            <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder={type === 'experiencia' ? "Ex: Paris, Roma, Nova York..." : "Título do serviço"} />
           </div>
+
+          {/* ── EXPERIÊNCIA dates ── */}
+          {type === 'experiencia' && (
+            <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <h3 className="font-semibold text-sm">Dados da Experiência</h3>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs">Data Inicial</Label>
+                  <Input type="date" value={experience.startDate} onChange={e => setExperience(p => ({ ...p, startDate: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Data Final</Label>
+                  <Input type="date" value={experience.endDate} onChange={e => setExperience(p => ({ ...p, endDate: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Total de Dias</Label>
+                  <Input type="number" value={calcExperienceDays()} readOnly className="bg-muted" />
+                </div>
+                <div>
+                  <Label className="text-xs">Dias Livres</Label>
+                  <Input type="number" min="0" max={Math.max(0, calcExperienceDays() - 1)} value={experience.freeDays} onChange={e => setExperience(p => ({ ...p, freeDays: parseInt(e.target.value) || 0 }))} />
+                </div>
+              </div>
+              {calcExperienceDays() > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {calcExperienceDays() - (experience.freeDays || 0)} dia(s) de roteiro serão gerados
+                  </span>
+                  <Button size="sm" variant="outline" onClick={handleGenerateItinerary} disabled={generatingItinerary}>
+                    {generatingItinerary ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Calendar className="h-3 w-3 mr-1" />}
+                    {generatingItinerary ? 'Gerando roteiro...' : 'Gerar Roteiro com IA'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <Label>Descrição detalhada (aparece na proposta)</Label>
-            <Textarea value={detailedDesc} onChange={e => setDetailedDesc(e.target.value)} placeholder="Descrição completa para o cliente..." rows={3} />
+            <Textarea value={detailedDesc} onChange={e => setDetailedDesc(e.target.value)} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
           </div>
 
           {/* ── AÉREO ── */}
