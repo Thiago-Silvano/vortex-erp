@@ -75,6 +75,7 @@ export interface ExperienceInfo {
   startDate: string;
   endDate: string;
   freeDays: number;
+  aiTips: string;
 }
 
 export interface ServiceMetadata {
@@ -138,7 +139,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
   const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(new Set());
   const [googleApiKey, setGoogleApiKey] = useState('');
-  const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0 });
+  const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
 
   useEffect(() => {
@@ -151,7 +152,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setHotel(metadata.hotel || emptyHotel());
       setHotelImages(metadata.hotel?.images || []);
       setSelectedImageIndices(new Set());
-      setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0 });
+      setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       loadGoogleApiKey();
     }
   }, [open]);
@@ -280,7 +281,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     setGeneratingItinerary(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-itinerary', {
-        body: { city: desc.trim(), totalDays, freeDays: experience.freeDays || 0 },
+        body: { city: desc.trim(), totalDays, freeDays: experience.freeDays || 0, aiTips: experience.aiTips || '' },
       });
       if (error) throw error;
       if (data?.success && data.itinerary) {
@@ -375,6 +376,16 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   <Label className="text-xs">Dias Livres</Label>
                   <Input type="number" min="0" max={Math.max(0, calcExperienceDays() - 1)} value={experience.freeDays} onChange={e => setExperience(p => ({ ...p, freeDays: parseInt(e.target.value) || 0 }))} />
                 </div>
+              </div>
+              <div>
+                <Label className="text-xs">Dicas para I.A</Label>
+                <Textarea
+                  value={experience.aiTips || ''}
+                  onChange={e => setExperience(p => ({ ...p, aiTips: e.target.value }))}
+                  placeholder="Ex: Dia 18 chegada de avião, fazer check-in, tarde livre. Dia 20 jantar especial no restaurante X..."
+                  rows={3}
+                  className="text-xs"
+                />
               </div>
               {calcExperienceDays() > 0 && (
                 <div className="flex items-center justify-between">
