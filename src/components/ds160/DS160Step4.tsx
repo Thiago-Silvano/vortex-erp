@@ -25,7 +25,7 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
       <p className="text-sm text-slate-500">Se você não possui uma viagem com data e local definidos, preencha com uma intenção de viagem.</p>
       <div>
         <Label>Motivo da Viagem</Label>
-        <Select value={data.motivo_viagem || ''} onValueChange={v => onChange('motivo_viagem', v)}>
+        <Select value={data.motivo_viagem || undefined} onValueChange={v => onChange('motivo_viagem', v)}>
           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
           <SelectContent>
             {['Turismo e Negócios B1/B2','Negócios B1','Turismo B2','Estudo F1'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
