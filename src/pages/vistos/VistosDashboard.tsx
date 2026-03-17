@@ -70,14 +70,33 @@ export default function VistosDashboard() {
       .eq('empresa_id', empresaId)
       .gte('sale_date', monthStart);
 
-    // Fetch sale items for revenue breakdown
-    const saleIds = sales?.map(s => s.id) || [];
+    const allSaleIds = sales?.map(s => s.id) || [];
+
+    // Check which sales have items AND financial records (complete sales only)
+    let completeSaleIds: string[] = [];
+    if (allSaleIds.length > 0) {
+      const [{ data: itemsAll }, { data: receivablesAll }, { data: payablesAll }] = await Promise.all([
+        (supabase.from('visa_sale_items' as any) as any).select('visa_sale_id').in('visa_sale_id', allSaleIds),
+        supabase.from('receivables').select('visa_sale_id').in('visa_sale_id', allSaleIds),
+        supabase.from('accounts_payable').select('sale_id').in('sale_id', allSaleIds),
+      ]);
+      const salesWithItems = new Set((itemsAll || []).map((i: any) => i.visa_sale_id));
+      const salesWithFinancial = new Set([
+        ...(receivablesAll || []).map((r: any) => r.visa_sale_id).filter(Boolean),
+        ...(payablesAll || []).map((p: any) => p.sale_id).filter(Boolean),
+      ]);
+      completeSaleIds = allSaleIds.filter(id => salesWithItems.has(id) && salesWithFinancial.has(id));
+    }
+
+    const completeSales = sales?.filter(s => completeSaleIds.includes(s.id)) || [];
+
+    // Fetch sale items for revenue breakdown (only complete sales)
     let totalServices = 0;
     let totalFees = 0;
-    if (saleIds.length > 0) {
+    if (completeSaleIds.length > 0) {
       const { data: items } = await (supabase.from('visa_sale_items' as any) as any)
         .select('total_value, is_supplier_fee')
-        .in('visa_sale_id', saleIds);
+        .in('visa_sale_id', completeSaleIds);
       if (items) {
         items.forEach((item: any) => {
           if (item.is_supplier_fee) totalFees += Number(item.total_value) || 0;
@@ -85,8 +104,8 @@ export default function VistosDashboard() {
         });
       }
     }
-    const totalRevenue = sales?.reduce((s, v) => s + Number(v.total_value || 0), 0) || 0;
-    const totalCardFees = sales?.reduce((s, v) => s + Number((v as any).card_fee_value || 0), 0) || 0;
+    const totalRevenue = completeSales.reduce((s, v) => s + Number(v.total_value || 0), 0);
+    const totalCardFees = completeSales.reduce((s, v) => s + Number((v as any).card_fee_value || 0), 0);
     // If no items found (legacy), put all in services
     if (totalServices === 0 && totalFees === 0 && totalRevenue > 0) {
       totalServices = totalRevenue;
