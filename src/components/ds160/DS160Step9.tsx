@@ -22,7 +22,7 @@ export default function DS160Step9({ data, onChange }: DS160StepProps) {
       <div>
         <Label>Países visitados nos últimos 5 anos</Label>
         <div className="flex gap-2 mt-1">
-          <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+          <Select value={selectedCountry || undefined} onValueChange={setSelectedCountry}>
             <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione um país" /></SelectTrigger>
             <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
           </Select>

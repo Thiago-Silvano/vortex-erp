@@ -12,7 +12,7 @@ export default function DS160Step2({ data, onChange }: DS160StepProps) {
         <div><Label>Nº Passaporte</Label><Input value={data.passaporte_numero || ''} onChange={e => onChange('passaporte_numero', e.target.value)} placeholder="Número do Passaporte" /></div>
         <div>
           <Label>País Emissor</Label>
-          <Select value={data.passaporte_pais_emissor || ''} onValueChange={v => onChange('passaporte_pais_emissor', v)}>
+          <Select value={data.passaporte_pais_emissor || undefined} onValueChange={v => onChange('passaporte_pais_emissor', v)}>
             <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
             <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
           </Select>

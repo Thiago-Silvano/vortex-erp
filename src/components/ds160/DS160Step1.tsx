@@ -52,7 +52,7 @@ export default function DS160Step1({ data, onChange }: DS160StepProps) {
         <>
           <div>
             <Label>País da Outra Nacionalidade</Label>
-            <Select value={data.pais_outra_nacionalidade || ''} onValueChange={v => onChange('pais_outra_nacionalidade', v)}>
+            <Select value={data.pais_outra_nacionalidade || undefined} onValueChange={v => onChange('pais_outra_nacionalidade', v)}>
               <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
               <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>

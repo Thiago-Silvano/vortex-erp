@@ -41,7 +41,7 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
       <div><Label>Local de Hospedagem (Nome do Hotel ou Endereço)</Label><Input value={data.local_hospedagem || ''} onChange={e => onChange('local_hospedagem', e.target.value)} /></div>
       <div>
         <Label>Quem pagará a viagem?</Label>
-        <Select value={data.pagador_viagem || ''} onValueChange={v => onChange('pagador_viagem', v)}>
+        <Select value={data.pagador_viagem || undefined} onValueChange={v => onChange('pagador_viagem', v)}>
           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
           <SelectContent>
             {['Eu mesmo','Pai/Mãe','Empregador atual','Outro'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
