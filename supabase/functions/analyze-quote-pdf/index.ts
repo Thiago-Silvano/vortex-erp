@@ -10,14 +10,83 @@ const corsHeaders = {
 type ExtractedPdfResult = {
   text: string;
   pageCount: number;
-  quality: "good" | "poor";
+};
+
+const serviceSchema = {
+  type: "object",
+  properties: {
+    service_type: { type: "string" },
+    description: { type: "string" },
+    cost_price: { type: "number" },
+    quantity: { type: "number" },
+    start_date: { type: "string" },
+    end_date: { type: "string" },
+    location: { type: "string" },
+    supplier: { type: "string" },
+    details: { type: "string" },
+    flight_legs: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          origin: { type: "string" },
+          destination: { type: "string" },
+          departure_date: { type: "string" },
+          departure_time: { type: "string" },
+          arrival_date: { type: "string" },
+          arrival_time: { type: "string" },
+          airline: { type: "string" },
+          flight_number: { type: "string" },
+          direction: { type: "string", enum: ["ida", "volta"] },
+          connection_duration: { type: "string" },
+        },
+        required: [
+          "origin",
+          "destination",
+          "departure_date",
+          "departure_time",
+          "arrival_date",
+          "arrival_time",
+          "airline",
+          "flight_number",
+          "direction",
+          "connection_duration",
+        ],
+        additionalProperties: false,
+      },
+    },
+    baggage: {
+      type: "object",
+      properties: {
+        personal_item: { type: "number" },
+        carry_on: { type: "number" },
+        checked_bag: { type: "number" },
+      },
+      required: ["personal_item", "carry_on", "checked_bag"],
+      additionalProperties: false,
+    },
+    total_travel_duration_outbound: { type: "string" },
+    total_travel_duration_return: { type: "string" },
+  },
+  required: [
+    "service_type",
+    "description",
+    "cost_price",
+    "quantity",
+    "start_date",
+    "end_date",
+    "location",
+    "supplier",
+    "details",
+  ],
+  additionalProperties: false,
 };
 
 const extractionTool = {
   type: "function",
   function: {
     name: "extract_quote_data",
-    description: "Extract structured trip and service information from a travel supplier quote or itinerary document.",
+    description: "Extract complete structured data from a travel supplier quote or itinerary PDF, including multiple quote options and payment terms.",
     parameters: {
       type: "object",
       properties: {
@@ -36,78 +105,46 @@ const extractionTool = {
         },
         services: {
           type: "array",
+          items: serviceSchema,
+        },
+        quote_options: {
+          type: "array",
           items: {
             type: "object",
             properties: {
-              service_type: { type: "string" },
-              description: { type: "string" },
-              cost_price: { type: "number" },
-              quantity: { type: "number" },
-              start_date: { type: "string" },
-              end_date: { type: "string" },
-              location: { type: "string" },
-              supplier: { type: "string" },
-              details: { type: "string" },
-              flight_legs: {
+              title: { type: "string" },
+              services: {
                 type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    origin: { type: "string" },
-                    destination: { type: "string" },
-                    departure_date: { type: "string" },
-                    departure_time: { type: "string" },
-                    arrival_date: { type: "string" },
-                    arrival_time: { type: "string" },
-                    airline: { type: "string" },
-                    flight_number: { type: "string" },
-                    direction: { type: "string", enum: ["ida", "volta"] },
-                    connection_duration: { type: "string" },
-                  },
-                  required: [
-                    "origin",
-                    "destination",
-                    "departure_date",
-                    "departure_time",
-                    "arrival_date",
-                    "arrival_time",
-                    "airline",
-                    "flight_number",
-                    "direction",
-                    "connection_duration",
-                  ],
-                  additionalProperties: false,
-                },
+                items: serviceSchema,
               },
-              baggage: {
-                type: "object",
-                properties: {
-                  personal_item: { type: "number" },
-                  carry_on: { type: "number" },
-                  checked_bag: { type: "number" },
-                },
-                required: ["personal_item", "carry_on", "checked_bag"],
-                additionalProperties: false,
-              },
-              total_travel_duration_outbound: { type: "string" },
-              total_travel_duration_return: { type: "string" },
             },
-            required: [
-              "service_type",
-              "description",
-              "cost_price",
-              "quantity",
-              "start_date",
-              "end_date",
-              "location",
-              "supplier",
-              "details",
-            ],
+            required: ["title", "services"],
             additionalProperties: false,
           },
         },
+        payment_info: {
+          type: "object",
+          properties: {
+            payment_terms: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  label: { type: "string" },
+                  installments: { type: "number" },
+                  notes: { type: "string" },
+                },
+                required: ["label", "installments", "notes"],
+                additionalProperties: false,
+              },
+            },
+            general_notes: { type: "string" },
+          },
+          required: ["payment_terms", "general_notes"],
+          additionalProperties: false,
+        },
       },
-      required: ["trip_info", "services"],
+      required: ["trip_info", "services", "quote_options", "payment_info"],
       additionalProperties: false,
     },
   },
@@ -126,23 +163,36 @@ async function extractPdfText(pdfBase64: string): Promise<ExtractedPdfResult> {
   try {
     const pdfBuffer = Buffer.from(pdfBase64, "base64");
     const parsed = await pdfParse(pdfBuffer);
-    const text = sanitizeExtractedText(parsed.text || "");
-    const letterCount = (text.match(/\p{L}/gu) || []).length;
-    const quality = text.length > 800 && letterCount > 200 ? "good" : "poor";
-
     return {
-      text,
+      text: sanitizeExtractedText(parsed.text || ""),
       pageCount: Number(parsed.numpages) || 0,
-      quality,
     };
   } catch (error) {
     console.error("Failed to extract PDF text natively:", error);
     return {
       text: "",
       pageCount: 0,
-      quality: "poor",
     };
   }
+}
+
+function normalizeResult(parsed: any) {
+  return {
+    trip_info: {
+      client_name: parsed?.trip_info?.client_name || "",
+      origin: parsed?.trip_info?.origin || "",
+      destination: parsed?.trip_info?.destination || "",
+      departure_date: parsed?.trip_info?.departure_date || "",
+      return_date: parsed?.trip_info?.return_date || "",
+      passengers: Number(parsed?.trip_info?.passengers) || 1,
+    },
+    services: Array.isArray(parsed?.services) ? parsed.services : [],
+    quote_options: Array.isArray(parsed?.quote_options) ? parsed.quote_options : [],
+    payment_info: {
+      payment_terms: Array.isArray(parsed?.payment_info?.payment_terms) ? parsed.payment_info.payment_terms : [],
+      general_notes: parsed?.payment_info?.general_notes || "",
+    },
+  };
 }
 
 serve(async (req) => {
@@ -168,60 +218,38 @@ IMPORTANT GLOBAL RULES:
 - Read and analyze the COMPLETE document, including all pages.
 - Never stop after the first page.
 - Never omit services found on later pages.
-- If the same booking spans multiple pages, merge the information into the same service when appropriate.
+- Some PDFs contain MULTIPLE QUOTE OPTIONS (for example: ORÇAMENTO 1, ORÇAMENTO 2, ORÇAMENTO 3). When that happens, populate quote_options.
+- If a quote option is a full package, repeat shared services (such as flights or common hotels) inside each quote option so that each option is complete on its own.
+- Use the top-level services array only when the document has a single option or when there are truly common standalone services outside any option.
 
 IMPORTANT RULES FOR FLIGHTS / AIR TICKETS:
 - Group ALL flight segments (legs) into a SINGLE service item with service_type "Passagem aérea" (or best match from catalog).
-- Extract EACH flight leg/segment separately in the "flight_legs" array.
-- For each leg include: origin (airport code like GRU, FLN, MIA), destination (airport code), departure_date (YYYY-MM-DD), departure_time (HH:MM), arrival_date (YYYY-MM-DD), arrival_time (HH:MM), airline, flight_number, direction ("ida" for outbound, "volta" for return).
-- Calculate connection_duration between consecutive legs of the same direction (format: "Xh Ymin").
-- Calculate total_travel_duration for each direction (format: "Xh Ymin").
-- The description should summarize the full itinerary, e.g. "FLN → GRU → MIA | LATAM | 15/03 - 22/03".
-- The cost_price should be the TOTAL price for all flights combined.
+- Extract EACH flight leg/segment separately in the flight_legs array.
+- For each leg include: origin, destination, departure_date (YYYY-MM-DD), departure_time (HH:MM), arrival_date (YYYY-MM-DD), arrival_time (HH:MM), airline, flight_number, direction (ida or volta).
+- Calculate connection_duration between consecutive legs of the same direction.
+- Calculate total_travel_duration for each direction.
+- The description should summarize the full itinerary.
+- The cost_price should be the TOTAL price for all flights in that option.
 
 RULES FOR BAGGAGE:
-- If baggage info is found, include it in "baggage" object with fields: personal_item (number of items), carry_on (number), checked_bag (number).
+- If baggage info is found, include it in baggage with personal_item, carry_on, checked_bag.
 
-FOR OTHER SERVICES (hotels, car rentals, insurance, transfers, tours, cruises, experiences):
-- Each service is a separate item.
-- Extract: service_type, description, cost_price, quantity, start_date (YYYY-MM-DD), end_date (YYYY-MM-DD), location, supplier, details.
+FOR OTHER SERVICES:
+- Each hotel, insurance, transfer, car rental, tour or additional item is a separate service.
+- Extract: service_type, description, cost_price, quantity, start_date, end_date, location, supplier, details.
 
-Also extract general trip info:
-- client_name: passenger/client name if found
-- origin: departure city/airport
-- destination: arrival city/destination
-- departure_date: departure date (YYYY-MM-DD)
-- return_date: return date (YYYY-MM-DD)
-- passengers: number of passengers if found
+PAYMENT / GENERAL INFO RULES:
+- Extract payment conditions, installment rules and important restrictions from pages such as "Formas de Pagamento".
+- Put payment options in payment_info.payment_terms.
+- Put warnings, restrictions and important operational notes in payment_info.general_notes.
 
 If you cannot read certain values, leave them empty or 0.
 Prices should be numbers without currency symbols.
 Always try your best to extract every service found.`;
 
-    const userMessage = nativeExtraction.quality === "good"
-      ? {
-          role: "user",
-          content: `The full text below was extracted from all ${nativeExtraction.pageCount || "multiple"} page(s) of the PDF. Analyze the COMPLETE extracted text from start to end and extract every service mentioned, including services that appear only on later pages.
-
-PDF FULL TEXT START
-${nativeExtraction.text}
-PDF FULL TEXT END`,
-        }
-      : {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analyze this COMPLETE PDF document from a travel supplier. It has ${nativeExtraction.pageCount || "multiple"} page(s). You MUST read ALL pages from start to end. Extract ALL services with detailed flight itineraries, hotel info, car rentals, insurance, transfers, tours, and any other service found anywhere in the document. Do NOT stop at the first page.`
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/pdf;base64,${pdfBase64}`
-              }
-            }
-          ]
-        };
+    const extractedTextBlock = nativeExtraction.text
+      ? `The following text was extracted from the complete PDF (${nativeExtraction.pageCount || "multiple"} page(s)). Use it together with the PDF itself to make sure you capture all pages, quote options, payment terms and general notes.\n\nPDF FULL TEXT START\n${nativeExtraction.text}\nPDF FULL TEXT END`
+      : `Native text extraction was limited. Rely on the PDF visual content and still analyze all ${nativeExtraction.pageCount || "multiple"} page(s).`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -236,7 +264,21 @@ PDF FULL TEXT END`,
         tool_choice: { type: "function", function: { name: "extract_quote_data" } },
         messages: [
           { role: "system", content: systemPrompt },
-          userMessage,
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Analyze this COMPLETE supplier PDF. ${extractedTextBlock}`,
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:application/pdf;base64,${pdfBase64}`,
+                },
+              },
+            ],
+          },
         ],
       }),
     });
@@ -244,18 +286,21 @@ PDF FULL TEXT END`,
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
       return new Response(JSON.stringify({ error: "Erro ao analisar PDF" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -282,17 +327,19 @@ PDF FULL TEXT END`,
     } catch {
       console.error("Failed to parse AI response:", data);
       return new Response(JSON.stringify({ error: "Não foi possível interpretar o PDF. Tente com outro arquivo." }), {
-        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 422,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify(parsed), {
+    return new Response(JSON.stringify(normalizeResult(parsed)), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("analyze-quote-pdf error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

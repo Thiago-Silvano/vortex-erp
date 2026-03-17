@@ -611,6 +611,45 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
               </Card>
             )}
 
+            {(quoteOptions.length > 0 || paymentTerms.length > 0 || generalNotes) && (
+              <Card>
+                <CardContent className="p-4 space-y-4">
+                  {quoteOptions.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-foreground mb-2">🧾 Opções identificadas</p>
+                      <div className="flex flex-wrap gap-2">
+                        {quoteOptions.map((option, index) => (
+                          <Badge key={`${option.title}-${index}`} variant="secondary">{option.title}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {paymentTerms.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-foreground mb-2">💳 Formas de pagamento detectadas</p>
+                      <div className="space-y-2">
+                        {paymentTerms.map((term, index) => (
+                          <div key={`${term.label}-${index}`} className="rounded-md border border-border p-3 text-sm">
+                            <p className="font-medium">{term.label}</p>
+                            {term.installments > 1 && <p className="text-muted-foreground">Até {term.installments}x</p>}
+                            {term.notes && <p className="text-muted-foreground mt-1">{term.notes}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {generalNotes && (
+                    <div>
+                      <p className="text-sm font-semibold text-foreground mb-2">📝 Observações gerais</p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-line">{generalNotes}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Services */}
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold">{services.length} serviço(s) identificado(s)</p>

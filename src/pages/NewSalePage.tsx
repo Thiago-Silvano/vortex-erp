@@ -2735,7 +2735,23 @@ export default function NewSalePage() {
           serviceCatalog={serviceCatalog}
           marginMode="none"
           marginPercent={20}
-          onImport={(importedItems, _tripInfo) => {
+          onImport={({ items: importedItems, tripInfo, quoteOptions: importedQuoteOptions, paymentTerms, generalNotes }) => {
+            const importBatchId = Date.now();
+            const mappedOptions = importedQuoteOptions.map((option, index) => ({
+              id: `imported-option-${importBatchId}-${index}`,
+              name: option.title,
+              order_index: index,
+            }));
+            const optionIdMap = new Map(mappedOptions.map((option, index) => [String(index), option.id]));
+
+            if (mappedOptions.length > 1) {
+              setQuoteOptions(prev => {
+                const shouldReplaceDefault = items.length === 0 && prev.length === 1 && !prev[0]?.id;
+                if (shouldReplaceDefault) return mappedOptions;
+                return [...prev, ...mappedOptions.map((option, index) => ({ ...option, order_index: prev.length + index }))];
+              });
+            }
+
             setItems(prev => [...prev, ...importedItems.map(item => ({
               description: item.description,
               cost_price: item.cost_price,
@@ -2744,7 +2760,33 @@ export default function NewSalePage() {
               service_catalog_id: item.service_catalog_id,
               cost_center_id: item.cost_center_id,
               metadata: item.metadata || {},
+              quote_option_id: mappedOptions.length > 1 ? optionIdMap.get(item.quote_option_id || '0') : item.quote_option_id,
             }))]);
+
+            if (tripInfo.client_name && tripInfo.client_name.toLowerCase() !== 'não informado') setClientName(tripInfo.client_name);
+            if (tripInfo.destination) setDestinationName(tripInfo.destination);
+            if (tripInfo.departure_date) setTripStartDate(tripInfo.departure_date);
+            if (tripInfo.return_date) setTripEndDate(tripInfo.return_date);
+            if (tripInfo.passengers) setPassengersCount(Number(tripInfo.passengers) || 1);
+            setNightsManuallySet(false);
+
+            if (paymentTerms.length > 0) {
+              setProposalPaymentOptions(prev => [
+                ...prev.filter(option => !option.method.startsWith('pdf_import_')),
+                ...paymentTerms.map((term, index) => ({
+                  method: `pdf_import_${index}`,
+                  label: term.notes ? `${term.label} — ${term.notes}` : term.label,
+                  installments: Math.max(1, Number(term.installments) || 1),
+                  discountPercent: 0,
+                  enabled: true,
+                })),
+              ]);
+            }
+
+            if (generalNotes) {
+              setNotes(prev => prev ? `${prev}\n\n${generalNotes}` : generalNotes);
+            }
+
             toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
           }}
         />
