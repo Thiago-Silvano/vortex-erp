@@ -228,6 +228,7 @@ export default function PropostaPublicPage() {
   const nights = (sale as any).trip_nights || quoteData?.trip_nights || 0;
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
+  const heroImageConfig: ImagePositionConfig | null = (sale as any).destination_image_config || null;
   const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).filter((opt: any) => opt.enabled !== false);
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
 
