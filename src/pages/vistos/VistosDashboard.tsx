@@ -136,7 +136,6 @@ export default function VistosDashboard() {
     setStats({
       salesThisMonth: completeSales.length,
       inProduction: inProd,
-      scheduled: sched,
       approved: appr,
       denied: den,
       revenueTotal: totalRevenue,
