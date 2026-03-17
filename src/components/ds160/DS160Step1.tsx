@@ -18,7 +18,7 @@ export default function DS160Step1({ data, onChange }: DS160StepProps) {
         <div><Label>CPF</Label><Input value={data.cpf || ''} onChange={e => onChange('cpf', maskCpf(e.target.value))} placeholder="000.000.000-00" /></div>
         <div>
           <Label>Sexo</Label>
-          <Select value={data.sexo || ''} onValueChange={v => onChange('sexo', v)}>
+          <Select value={data.sexo || undefined} onValueChange={v => onChange('sexo', v)}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent><SelectItem value="Masculino">Masculino</SelectItem><SelectItem value="Feminino">Feminino</SelectItem></SelectContent>
           </Select>
