@@ -377,6 +377,16 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   <Input type="number" min="0" max={Math.max(0, calcExperienceDays() - 1)} value={experience.freeDays} onChange={e => setExperience(p => ({ ...p, freeDays: parseInt(e.target.value) || 0 }))} />
                 </div>
               </div>
+              <div>
+                <Label className="text-xs">Dicas para I.A</Label>
+                <Textarea
+                  value={experience.aiTips || ''}
+                  onChange={e => setExperience(p => ({ ...p, aiTips: e.target.value }))}
+                  placeholder="Ex: Dia 18 chegada de avião, fazer check-in, tarde livre. Dia 20 jantar especial no restaurante X..."
+                  rows={3}
+                  className="text-xs"
+                />
+              </div>
               {calcExperienceDays() > 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">

@@ -28,8 +28,10 @@ serve(async (req) => {
 
     const itineraryDays = Math.max(1, totalDays - (freeDays || 0));
 
+    const tipsSection = aiTips ? `\n\nDicas e particularidades do viajante (IMPORTANTE - adapte o roteiro conforme estas instruções):\n${aiTips}` : '';
+
     const prompt = `Crie um roteiro turístico detalhado para ${city} com ${itineraryDays} dia(s) de atividades.
-${freeDays > 0 ? `O viajante terá ${freeDays} dia(s) livre(s) além desses ${itineraryDays} dias de roteiro.` : ''}
+${freeDays > 0 ? `O viajante terá ${freeDays} dia(s) livre(s) além desses ${itineraryDays} dias de roteiro.` : ''}${tipsSection}
 
 Formato do roteiro:
 - Para cada dia, liste as atividades com horários sugeridos (manhã, tarde, noite)
