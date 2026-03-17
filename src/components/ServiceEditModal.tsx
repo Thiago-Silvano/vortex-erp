@@ -71,11 +71,18 @@ interface HotelInfo {
   tripadvisorPopularMentions?: string[];
 }
 
+export interface ExperienceInfo {
+  startDate: string;
+  endDate: string;
+  freeDays: number;
+}
+
 export interface ServiceMetadata {
   type?: 'aereo' | 'hotel' | 'carro' | 'seguro' | 'experiencia' | 'adicional';
   flightLegs?: FlightLeg[];
   baggage?: BaggageInfo;
   hotel?: HotelInfo;
+  experience?: ExperienceInfo;
   detailedDescription?: string;
   totalTravelDurationOutbound?: string;
   totalTravelDurationReturn?: string;
