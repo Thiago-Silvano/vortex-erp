@@ -151,6 +151,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setHotel(metadata.hotel || emptyHotel());
       setHotelImages(metadata.hotel?.images || []);
       setSelectedImageIndices(new Set());
+      setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0 });
       loadGoogleApiKey();
     }
   }, [open]);
