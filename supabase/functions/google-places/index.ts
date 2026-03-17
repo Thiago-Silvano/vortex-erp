@@ -191,6 +191,52 @@ serve(async (req) => {
       });
     }
 
+    // ACTION: search_photos - Search for photos of any place/service
+    if (action === 'search_photos') {
+      if (!query) {
+        return new Response(JSON.stringify({ error: 'Query é obrigatória' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Search for places matching the query
+      const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&language=pt-BR&key=${apiKey}`;
+      const searchResp = await fetch(searchUrl);
+      const searchData = await searchResp.json();
+
+      if (searchData.status !== 'OK') {
+        return new Response(JSON.stringify({ success: false, photos: [], error: `Nenhum resultado para "${query}"` }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Get details for top 3 results to collect photos
+      const topResults = (searchData.results || []).slice(0, 3);
+      const allPhotos: string[] = [];
+
+      for (const place of topResults) {
+        if (allPhotos.length >= 10) break;
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=photos&language=pt-BR&key=${apiKey}`;
+        const detailsResp = await fetch(detailsUrl);
+        const detailsData = await detailsResp.json();
+
+        if (detailsData.status === 'OK' && detailsData.result?.photos) {
+          const refs = detailsData.result.photos.slice(0, Math.max(1, 10 - allPhotos.length));
+          for (const p of refs) {
+            if (allPhotos.length >= 10) break;
+            allPhotos.push(
+              `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${p.photo_reference}&key=${apiKey}`
+            );
+          }
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, photos: allPhotos }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // ACTION: test - Test API key
     if (action === 'test') {
       const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=hotel+test&key=${apiKey}`;

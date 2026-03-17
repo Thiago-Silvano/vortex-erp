@@ -340,10 +340,44 @@ export default function NewSalePage() {
       setQuoteOptions(options.map((o: any) => ({ id: o.id, name: o.name, order_index: o.order_index })));
       // Update items with their quote_option_id
       if (saleItems) {
-        setItems(prev => prev.map(item => {
-          const dbItem = saleItems.find((si: any) => si.id === item.id);
-          return { ...item, quote_option_id: (dbItem as any)?.quote_option_id || undefined };
-        }));
+        // Merge items that share the same base data but different quote_option_ids
+        const mergedMap = new Map<string, { item: any; optionIds: string[] }>();
+        saleItems.forEach((si: any) => {
+          // Create a fingerprint excluding quote_option_id and id
+          const fp = `${si.description}|${si.cost_price}|${si.total_value}|${si.rav}|${si.service_catalog_id || ''}|${JSON.stringify(si.metadata || {})}`;
+          if (mergedMap.has(fp)) {
+            const entry = mergedMap.get(fp)!;
+            if (si.quote_option_id) entry.optionIds.push(si.quote_option_id);
+          } else {
+            mergedMap.set(fp, {
+              item: si,
+              optionIds: si.quote_option_id ? [si.quote_option_id] : [],
+            });
+          }
+        });
+        
+        const mergedItems: SaleItem[] = [];
+        const mergedImageMap: Record<number, string[]> = {};
+        let mergedIdx = 0;
+        for (const [, { item: si, optionIds }] of mergedMap) {
+          mergedItems.push({
+            id: si.id, description: si.description, cost_price: Number(si.cost_price), rav: Number(si.rav),
+            total_value: Number(si.total_value), service_catalog_id: si.service_catalog_id || undefined,
+            cost_center_id: si.cost_center_id || undefined,
+            metadata: si.metadata || {},
+            reservation_number: si.reservation_number || '',
+            quote_option_id: optionIds[0] || undefined,
+            quote_option_ids: optionIds.length > 0 ? optionIds : undefined,
+          });
+          // Get images for the first occurrence
+          const origIdx = saleItems.findIndex((s: any) => s.id === si.id);
+          if (origIdx >= 0 && imgMap[origIdx]) {
+            mergedImageMap[mergedIdx] = imgMap[origIdx];
+          }
+          mergedIdx++;
+        }
+        setItems(mergedItems);
+        setItemImages(mergedImageMap);
       }
     }
   };
