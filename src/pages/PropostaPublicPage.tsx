@@ -650,7 +650,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: number }) {
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(false);
   const lines = text.split('\n');
   const needsTruncate = lines.length > maxLines;
 
