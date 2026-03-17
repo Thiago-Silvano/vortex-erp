@@ -147,6 +147,9 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState<'upload' | 'review'>('upload');
   const [services, setServices] = useState<ExtractedService[]>([]);
+  const [quoteOptions, setQuoteOptions] = useState<ExtractedQuoteOption[]>([]);
+  const [paymentTerms, setPaymentTerms] = useState<ExtractedPaymentTerm[]>([]);
+  const [generalNotes, setGeneralNotes] = useState('');
   const [tripInfo, setTripInfo] = useState<TripInfo>({ client_name: '', origin: '', destination: '', departure_date: '', return_date: '' });
   const [marginMode, setMarginMode] = useState<'none' | 'fixed' | 'manual'>(initialMarginMode);
   const [marginPercent, setMarginPercent] = useState(initialMarginPercent);
