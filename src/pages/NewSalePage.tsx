@@ -40,6 +40,7 @@ interface SaleItem {
   metadata?: ServiceMetadata;
   reservation_number?: string;
   quote_option_id?: string;
+  quote_option_ids?: string[];
 }
 
 interface QuoteOption {
