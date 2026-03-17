@@ -223,7 +223,29 @@ export default function VistosDashboard() {
               </Card>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {(stats.approved > 0 || stats.denied > 0) && (
+                <Card>
+                  <CardContent className="p-5">
+                    <h3 className="font-semibold mb-4 text-foreground">Aprovados vs Negados</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={approvalChart}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {approvalChart.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    {approvalRate > 0 && (
+                      <p className="text-center text-sm text-muted-foreground mt-2">Taxa de Aprovação: <span className="font-bold text-foreground">{approvalRate}%</span></p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
               {statusChart.length > 0 && (
                 <Card>
                   <CardContent className="p-5">
