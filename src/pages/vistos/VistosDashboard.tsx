@@ -4,7 +4,7 @@ import { useCompany } from '@/contexts/CompanyContext';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { ShoppingCart, Cog, DollarSign, Receipt, CreditCard, TrendingUp } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 interface Stats {
   salesThisMonth: number;
@@ -215,7 +215,7 @@ export default function VistosDashboard() {
             </div>
 
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {(stats.approved > 0 || stats.denied > 0) && (
                 <Card>
                   <CardContent className="p-5">
@@ -238,22 +238,6 @@ export default function VistosDashboard() {
                 </Card>
               )}
 
-              {statusChart.length > 0 && (
-                <Card>
-                  <CardContent className="p-5">
-                    <h3 className="font-semibold mb-4 text-foreground">Processos por Status</h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie data={statusChart} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, value }) => `${name}: ${value}`}>
-                          {statusChart.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              )}
-
               {productChart.length > 0 && (
                 <Card>
                   <CardContent className="p-5">
@@ -271,6 +255,23 @@ export default function VistosDashboard() {
                 </Card>
               )}
             </div>
+
+            {statusChart.length > 0 && (
+              <Card>
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-4 text-foreground">Processos por Status</h3>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <PieChart>
+                      <Pie data={statusChart} dataKey="value" nameKey="name" cx="50%" cy="45%" outerRadius={120} label={({ name, value }) => `${name}: ${value}`}>
+                        {statusChart.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                      <Tooltip />
+                      <Legend wrapperStyle={{ fontSize: 14, paddingTop: 10 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
       </div>
