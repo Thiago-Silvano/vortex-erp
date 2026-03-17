@@ -144,12 +144,15 @@ export default function VistosDashboard() {
       cardFees: totalCardFees,
     });
 
+    const productionOnlyStatuses = ['falta_passaporte', 'produzindo', 'agendado', 'aguardando_renovacao'];
     setStatusChart(
-      Object.entries(statusCounts).map(([k, v]) => ({
-        name: STATUS_LABELS[k] || k,
-        value: v,
-        color: STATUS_COLORS[k] || '#94a3b8',
-      }))
+      Object.entries(statusCounts)
+        .filter(([k]) => productionOnlyStatuses.includes(k))
+        .map(([k, v]) => ({
+          name: STATUS_LABELS[k] || k,
+          value: v,
+          color: STATUS_COLORS[k] || '#94a3b8',
+        }))
     );
 
     const prodSales: Record<string, number> = {};
