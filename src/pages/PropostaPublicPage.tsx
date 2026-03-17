@@ -649,6 +649,40 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const lines = text.split('\n');
+  const needsTruncate = lines.length > maxLines;
+
+  return (
+    <div className="mt-2">
+      <p
+        className="text-sm leading-relaxed whitespace-pre-line"
+        style={{
+          color: '#888',
+          ...(needsTruncate && !expanded ? {
+            display: '-webkit-box',
+            WebkitLineClamp: maxLines,
+            WebkitBoxOrient: 'vertical' as const,
+            overflow: 'hidden',
+          } : {}),
+        }}
+      >
+        {text}
+      </p>
+      {needsTruncate && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs font-medium mt-1 hover:underline"
+          style={{ color: '#C8A45B' }}
+        >
+          {expanded ? 'Ver menos ▲' : 'Ver mais ▼'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ServiceCard({
   name, description, catalogName, value, images, metadata, passengersCount, showValue = true, onImageClick,
 }: {
@@ -723,12 +757,12 @@ function ServiceCard({
             <h3 className="font-bold text-lg mb-1" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
               {metadata?.hotel?.hotelName || name}
             </h3>
-            {/* Detailed description */}
+            {/* Detailed description with expand/collapse */}
             {metadata?.detailedDescription && (
-              <p className="text-sm leading-relaxed mt-2" style={{ color: '#888' }}>{metadata.detailedDescription}</p>
+              <ExpandableText text={metadata.detailedDescription} />
             )}
             {!metadata?.detailedDescription && catalogName && description !== catalogName && description && (
-              <p className="text-sm leading-relaxed mt-2" style={{ color: '#888' }}>{description}</p>
+              <ExpandableText text={description} />
             )}
           </div>
           {showValue && (
