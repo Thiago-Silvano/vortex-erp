@@ -147,6 +147,8 @@ export default function NewSalePage() {
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [destinationImageUrl, setDestinationImageUrl] = useState('');
+  const [destinationImageConfig, setDestinationImageConfig] = useState<ImagePositionConfig | null>(null);
+  const [imagePositionEditorOpen, setImagePositionEditorOpen] = useState(false);
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
   const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
   const [uploadingDestImage, setUploadingDestImage] = useState(false);
