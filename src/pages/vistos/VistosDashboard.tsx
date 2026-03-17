@@ -9,7 +9,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface Stats {
   salesThisMonth: number;
   inProduction: number;
-  scheduled: number;
   approved: number;
   denied: number;
   revenueTotal: number;
@@ -38,7 +37,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function VistosDashboard() {
   const { activeCompany } = useCompany();
-  const [stats, setStats] = useState<Stats>({ salesThisMonth: 0, inProduction: 0, scheduled: 0, approved: 0, denied: 0, revenueTotal: 0, revenueServices: 0, revenueFees: 0, cardFees: 0 });
+  const [stats, setStats] = useState<Stats>({ salesThisMonth: 0, inProduction: 0, approved: 0, denied: 0, revenueTotal: 0, revenueServices: 0, revenueFees: 0, cardFees: 0 });
   const [statusChart, setStatusChart] = useState<{ name: string; value: number; color: string }[]>([]);
   const [productChart, setProductChart] = useState<{ name: string; vendas: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,14 +69,33 @@ export default function VistosDashboard() {
       .eq('empresa_id', empresaId)
       .gte('sale_date', monthStart);
 
-    // Fetch sale items for revenue breakdown
-    const saleIds = sales?.map(s => s.id) || [];
+    const allSaleIds = sales?.map(s => s.id) || [];
+
+    // Check which sales have items AND financial records (complete sales only)
+    let completeSaleIds: string[] = [];
+    if (allSaleIds.length > 0) {
+      const [{ data: itemsAll }, { data: receivablesAll }, { data: payablesAll }] = await Promise.all([
+        (supabase.from('visa_sale_items' as any) as any).select('visa_sale_id').in('visa_sale_id', allSaleIds),
+        supabase.from('receivables').select('visa_sale_id').in('visa_sale_id', allSaleIds),
+        supabase.from('accounts_payable').select('sale_id').in('sale_id', allSaleIds),
+      ]);
+      const salesWithItems = new Set((itemsAll || []).map((i: any) => i.visa_sale_id));
+      const salesWithFinancial = new Set([
+        ...(receivablesAll || []).map((r: any) => r.visa_sale_id).filter(Boolean),
+        ...(payablesAll || []).map((p: any) => p.sale_id).filter(Boolean),
+      ]);
+      completeSaleIds = allSaleIds.filter(id => salesWithItems.has(id) && salesWithFinancial.has(id));
+    }
+
+    const completeSales = sales?.filter(s => completeSaleIds.includes(s.id)) || [];
+
+    // Fetch sale items for revenue breakdown (only complete sales)
     let totalServices = 0;
     let totalFees = 0;
-    if (saleIds.length > 0) {
+    if (completeSaleIds.length > 0) {
       const { data: items } = await (supabase.from('visa_sale_items' as any) as any)
         .select('total_value, is_supplier_fee')
-        .in('visa_sale_id', saleIds);
+        .in('visa_sale_id', completeSaleIds);
       if (items) {
         items.forEach((item: any) => {
           if (item.is_supplier_fee) totalFees += Number(item.total_value) || 0;
@@ -85,8 +103,8 @@ export default function VistosDashboard() {
         });
       }
     }
-    const totalRevenue = sales?.reduce((s, v) => s + Number(v.total_value || 0), 0) || 0;
-    const totalCardFees = sales?.reduce((s, v) => s + Number((v as any).card_fee_value || 0), 0) || 0;
+    const totalRevenue = completeSales.reduce((s, v) => s + Number(v.total_value || 0), 0);
+    const totalCardFees = completeSales.reduce((s, v) => s + Number((v as any).card_fee_value || 0), 0);
     // If no items found (legacy), put all in services
     if (totalServices === 0 && totalFees === 0 && totalRevenue > 0) {
       totalServices = totalRevenue;
@@ -106,19 +124,18 @@ export default function VistosDashboard() {
     products?.forEach(p => { productMap[p.id] = p.name; });
 
     const statusCounts: Record<string, number> = {};
-    let inProd = 0, sched = 0, appr = 0, den = 0;
+    let inProd = 0, appr = 0, den = 0;
+    const productionStatuses = ['falta_passaporte', 'produzindo', 'agendado', 'aguardando_renovacao'];
     processes?.forEach(p => {
       statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
-      if (p.status === 'produzindo' || p.status === 'falta_passaporte' || p.status === 'aguardando_renovacao') inProd++;
-      if (p.status === 'agendado') sched++;
+      if (productionStatuses.includes(p.status)) inProd++;
       if (p.status === 'aprovado') appr++;
       if (p.status === 'negado') den++;
     });
 
     setStats({
-      salesThisMonth: sales?.length || 0,
+      salesThisMonth: completeSales.length,
       inProduction: inProd,
-      scheduled: sched,
       approved: appr,
       denied: den,
       revenueTotal: totalRevenue,
@@ -136,7 +153,7 @@ export default function VistosDashboard() {
     );
 
     const prodSales: Record<string, number> = {};
-    sales?.forEach(s => {
+    completeSales.forEach(s => {
       const name = productMap[s.product_id] || 'Outro';
       prodSales[name] = (prodSales[name] || 0) + 1;
     });
@@ -159,7 +176,6 @@ export default function VistosDashboard() {
     { label: 'Taxa Máquina', value: fmt(stats.cardFees), icon: CreditCard, color: 'bg-red-500 text-white' },
     { label: 'Lucro (Serv. - Máq.)', value: fmt(profit), icon: TrendingUp, color: 'bg-teal-600 text-white' },
     { label: 'Em Produção', value: stats.inProduction.toString(), icon: Cog, color: 'bg-blue-600 text-white' },
-    { label: 'Agendadas', value: stats.scheduled.toString(), icon: CalendarDays, color: 'bg-violet-600 text-white' },
     { label: 'Aprovados', value: stats.approved.toString(), icon: CheckCircle, color: 'bg-emerald-600 text-white' },
     { label: 'Negados', value: stats.denied.toString(), icon: XCircle, color: 'bg-destructive text-destructive-foreground' },
   ];
