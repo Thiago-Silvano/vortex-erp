@@ -246,6 +246,7 @@ export default function NewSalePage() {
     }
 
     const { data: saleItems } = await supabase.from('sale_items').select('*').eq('sale_id', id).order('sort_order');
+    const imgMap: Record<number, string[]> = {};
     if (saleItems) {
       setItems(saleItems.map(i => ({
         id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav),
@@ -257,7 +258,6 @@ export default function NewSalePage() {
         quote_option_ids: (i as any).quote_option_id ? [(i as any).quote_option_id] : undefined,
       })));
       
-      const imgMap: Record<number, string[]> = {};
       for (let idx = 0; idx < saleItems.length; idx++) {
         const { data: imgs } = await (supabase.from('sale_item_images' as any) as any).select('*').eq('sale_item_id', saleItems[idx].id).order('sort_order');
         if (imgs && imgs.length > 0) {
