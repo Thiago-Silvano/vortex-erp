@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingCart, Cog, CalendarDays, CheckCircle, XCircle, DollarSign, Receipt, CreditCard, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Cog, DollarSign, Receipt, CreditCard, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface Stats {
