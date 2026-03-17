@@ -811,6 +811,30 @@ export default function NewSalePage() {
     });
   };
 
+  const handleSearchServiceImages = async (itemIdx: number) => {
+    const item = items[itemIdx];
+    const searchQuery = item.metadata?.hotel?.hotelName || item.description || '';
+    if (!searchQuery.trim()) { toast.error('Preencha a descrição do serviço primeiro'); return; }
+    if (!googleApiKey) { toast.error('Configure a Google Maps API Key em Configurações → Integrações'); return; }
+    setSearchingItemImages(prev => ({ ...prev, [itemIdx]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke('google-places', {
+        body: { action: 'search_photos', query: searchQuery.trim(), apiKey: googleApiKey },
+      });
+      if (error) throw error;
+      if (data?.success && data.photos?.length > 0) {
+        setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...data.photos] }));
+        toast.success(`${data.photos.length} imagem(ns) encontrada(s)!`);
+      } else {
+        toast.error('Nenhuma imagem encontrada para este serviço');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao buscar imagens');
+    } finally {
+      setSearchingItemImages(prev => ({ ...prev, [itemIdx]: false }));
+    }
+  };
+
   const handleInternalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
