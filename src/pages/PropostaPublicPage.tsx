@@ -649,7 +649,40 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ServiceCard({
+function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: number }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const lines = text.split('\n');
+  const needsTruncate = lines.length > maxLines;
+
+  return (
+    <div className="mt-2">
+      <p
+        className="text-sm leading-relaxed whitespace-pre-line"
+        style={{
+          color: '#888',
+          ...(needsTruncate && !expanded ? {
+            display: '-webkit-box',
+            WebkitLineClamp: maxLines,
+            WebkitBoxOrient: 'vertical' as const,
+            overflow: 'hidden',
+          } : {}),
+        }}
+      >
+        {text}
+      </p>
+      {needsTruncate && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs font-medium mt-1 hover:underline"
+          style={{ color: '#C8A45B' }}
+        >
+          {expanded ? 'Ver menos ▲' : 'Ver mais ▼'}
+        </button>
+      )}
+    </div>
+  );
+}
+
   name, description, catalogName, value, images, metadata, passengersCount, showValue = true, onImageClick,
 }: {
   name: string;
