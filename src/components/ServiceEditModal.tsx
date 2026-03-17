@@ -138,6 +138,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
   const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(new Set());
   const [googleApiKey, setGoogleApiKey] = useState('');
+  const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0 });
+  const [generatingItinerary, setGeneratingItinerary] = useState(false);
 
   useEffect(() => {
     if (open) {
