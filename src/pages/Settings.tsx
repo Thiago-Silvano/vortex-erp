@@ -152,12 +152,20 @@ export default function Settings() {
     const { data: existing } = await query.limit(1).single();
 
     if (existing) {
-      await supabase.from('agency_settings')
+      const { error: updateErr } = await supabase.from('agency_settings')
         .update({ google_maps_api_key: googleApiKey, unsplash_api_key: unsplashKey, pexels_api_key: pexelsKey } as any)
         .eq('id', existing.id);
+      if (updateErr) {
+        console.error('Error updating agency_settings:', updateErr);
+        toast.error('Erro ao salvar chaves de API: ' + updateErr.message);
+      }
     } else if (empresaId) {
-      await supabase.from('agency_settings')
+      const { error: insertErr } = await supabase.from('agency_settings')
         .insert({ empresa_id: empresaId, google_maps_api_key: googleApiKey, unsplash_api_key: unsplashKey, pexels_api_key: pexelsKey, name: settings.name } as any);
+      if (insertErr) {
+        console.error('Error inserting agency_settings:', insertErr);
+        toast.error('Erro ao salvar chaves de API: ' + insertErr.message);
+      }
     }
 
     // Delete existing rates for this company and insert new ones
