@@ -1969,7 +1969,8 @@ export default function NewSalePage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
             <Button size="sm" variant="outline" onClick={() => {
-              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {}, quote_option_id: quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0) }]);
+              const defaultOptIds = quoteOptions.length > 0 ? [quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0)] : [];
+              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {}, quote_option_id: defaultOptIds[0], quote_option_ids: defaultOptIds }]);
               setTimeout(() => setEditingItemIdx(items.length), 50);
             }}>
               <Plus className="h-4 w-4 mr-1" />Adicionar
