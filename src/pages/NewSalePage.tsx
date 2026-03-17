@@ -1010,12 +1010,9 @@ export default function NewSalePage() {
       }) as any).select('id');
 
       if (insertedItems) {
-        // Map expanded items back to original indices for images
-        const processedOrigIndices = new Set<number>();
+        // Save images for ALL expanded rows (including duplicates across options)
         for (let eIdx = 0; eIdx < insertedItems.length; eIdx++) {
           const origIdx = expandedItems[eIdx].idx;
-          if (processedOrigIndices.has(origIdx)) continue;
-          processedOrigIndices.add(origIdx);
           const images = itemImages[origIdx];
           if (images && images.length > 0) {
             await (supabase.from('sale_item_images' as any) as any).insert(
