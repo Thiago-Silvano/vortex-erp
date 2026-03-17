@@ -186,7 +186,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
       if (error) { toast.error('Erro ao analisar PDF.'); setAnalyzing(false); setProgress(0); return; }
       if (data?.error) { toast.error(data.error); setAnalyzing(false); setProgress(0); return; }
 
-      const extractedServices: ExtractedService[] = (data?.services || []).map((s: any) => ({
+      const normalizeService = (s: any, quoteOptionKey?: string): ExtractedService => ({
         service_type: s.service_type || '',
         description: s.description || '',
         cost_price: Number(s.cost_price) || 0,
@@ -200,11 +200,30 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
         baggage: s.baggage || undefined,
         total_travel_duration_outbound: s.total_travel_duration_outbound || '',
         total_travel_duration_return: s.total_travel_duration_return || '',
+        quote_option_key: quoteOptionKey,
+      });
+
+      const extractedQuoteOptions: ExtractedQuoteOption[] = (data?.quote_options || []).map((option: any, index: number) => ({
+        title: option.title || `Opção ${index + 1}`,
+        services: (option.services || []).map((service: any) => normalizeService(service, String(index))),
+      }));
+
+      const extractedServices: ExtractedService[] = extractedQuoteOptions.length > 0
+        ? extractedQuoteOptions.flatMap(option => option.services)
+        : (data?.services || []).map((s: any) => normalizeService(s));
+
+      const extractedPaymentTerms: ExtractedPaymentTerm[] = (data?.payment_info?.payment_terms || []).map((term: any) => ({
+        label: term.label || '',
+        installments: Number(term.installments) || 1,
+        notes: term.notes || '',
       }));
 
       const extractedTrip = data?.trip_info || {};
 
       setServices(extractedServices);
+      setQuoteOptions(extractedQuoteOptions);
+      setPaymentTerms(extractedPaymentTerms);
+      setGeneralNotes(data?.payment_info?.general_notes || '');
       setTripInfo({
         client_name: extractedTrip.client_name || '',
         origin: extractedTrip.origin || '',
