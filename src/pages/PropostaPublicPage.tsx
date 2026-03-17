@@ -465,7 +465,7 @@ export default function PropostaPublicPage() {
                     <span className="text-sm font-semibold tabular-nums" style={{ color: '#C8A45B' }}>{fmt(item.total_value)}</span>
                   </div>
                   {subtitle && (
-                    <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: '#999' }}>{subtitle}</p>
+                    <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: '#999' }} dangerouslySetInnerHTML={{ __html: subtitle }} />
                   )}
                 </div>
               );
