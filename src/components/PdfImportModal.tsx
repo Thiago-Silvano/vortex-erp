@@ -311,10 +311,17 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
         service_catalog_id: matchedCatalog?.id,
         cost_center_id: matchedCatalog?.cost_center_id || undefined,
         metadata,
+        quote_option_id: s.quote_option_key,
       };
     });
 
-    onImport(items, tripInfo);
+    onImport({
+      items,
+      tripInfo,
+      quoteOptions: quoteOptions.map(option => ({ title: option.title })),
+      paymentTerms,
+      generalNotes,
+    });
     handleReset();
     onClose();
   };
@@ -324,6 +331,9 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
     setPdfUrl('');
     setStep('upload');
     setServices([]);
+    setQuoteOptions([]);
+    setPaymentTerms([]);
+    setGeneralNotes('');
     setTripInfo({ client_name: '', origin: '', destination: '', departure_date: '', return_date: '' });
     setProgress(0);
   };
