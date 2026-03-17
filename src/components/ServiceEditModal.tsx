@@ -75,6 +75,7 @@ export interface ExperienceInfo {
   startDate: string;
   endDate: string;
   freeDays: number;
+  aiTips: string;
 }
 
 export interface ServiceMetadata {
