@@ -2107,6 +2107,13 @@ export default function NewSalePage() {
                                 <ImagePlus className="h-3 w-3" />Imagens<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
                               </label>
                             )}
+                            {searchingItemImages[idx] ? (
+                              <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><Loader2 className="h-3 w-3 animate-spin" />Buscando...</span>
+                            ) : (
+                              <Button variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1" onClick={() => handleSearchServiceImages(idx)}>
+                                <Search className="h-3 w-3" />Buscar Imagens
+                              </Button>
+                            )}
                             {(itemImages[idx] || []).map((url, imgIdx) => (
                               <div key={imgIdx} className="relative group flex flex-col items-center">
                                 {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
