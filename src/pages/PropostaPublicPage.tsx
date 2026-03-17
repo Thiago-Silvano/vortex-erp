@@ -723,12 +723,12 @@ function ServiceCard({
             <h3 className="font-bold text-lg mb-1" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
               {metadata?.hotel?.hotelName || name}
             </h3>
-            {/* Detailed description */}
+            {/* Detailed description with expand/collapse */}
             {metadata?.detailedDescription && (
-              <p className="text-sm leading-relaxed mt-2" style={{ color: '#888' }}>{metadata.detailedDescription}</p>
+              <ExpandableText text={metadata.detailedDescription} />
             )}
             {!metadata?.detailedDescription && catalogName && description !== catalogName && description && (
-              <p className="text-sm leading-relaxed mt-2" style={{ color: '#888' }}>{description}</p>
+              <ExpandableText text={description} />
             )}
           </div>
           {showValue && (
