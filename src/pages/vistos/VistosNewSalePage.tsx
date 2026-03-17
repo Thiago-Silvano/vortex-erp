@@ -898,10 +898,6 @@ export default function VistosNewSalePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
-              <Checkbox id="payerIsApplicant" checked={payerIsApplicant} onCheckedChange={(v) => setPayerIsApplicant(v === true)} />
-              <Label htmlFor="payerIsApplicant" className="cursor-pointer text-sm">O pagante da venda é um aplicante?</Label>
-            </div>
             {applicants.map((app, idx) => (
               <div key={idx} className="flex items-center gap-3 border rounded-lg p-3">
                 <span className="text-sm font-semibold text-foreground whitespace-nowrap">
