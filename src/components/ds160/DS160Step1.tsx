@@ -18,7 +18,7 @@ export default function DS160Step1({ data, onChange }: DS160StepProps) {
         <div><Label>CPF</Label><Input value={data.cpf || ''} onChange={e => onChange('cpf', maskCpf(e.target.value))} placeholder="000.000.000-00" /></div>
         <div>
           <Label>Sexo</Label>
-          <Select value={data.sexo || ''} onValueChange={v => onChange('sexo', v)}>
+          <Select value={data.sexo || undefined} onValueChange={v => onChange('sexo', v)}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent><SelectItem value="Masculino">Masculino</SelectItem><SelectItem value="Feminino">Feminino</SelectItem></SelectContent>
           </Select>
@@ -27,7 +27,7 @@ export default function DS160Step1({ data, onChange }: DS160StepProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label>Estado Civil</Label>
-          <Select value={data.estado_civil || ''} onValueChange={v => onChange('estado_civil', v)}>
+          <Select value={data.estado_civil || undefined} onValueChange={v => onChange('estado_civil', v)}>
             <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent>
               {['Solteiro','Casado','União Estável','Divorciado','Viúvo'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -52,7 +52,7 @@ export default function DS160Step1({ data, onChange }: DS160StepProps) {
         <>
           <div>
             <Label>País da Outra Nacionalidade</Label>
-            <Select value={data.pais_outra_nacionalidade || ''} onValueChange={v => onChange('pais_outra_nacionalidade', v)}>
+            <Select value={data.pais_outra_nacionalidade || undefined} onValueChange={v => onChange('pais_outra_nacionalidade', v)}>
               <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
               <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>

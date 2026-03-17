@@ -25,7 +25,7 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
       <p className="text-sm text-slate-500">Se você não possui uma viagem com data e local definidos, preencha com uma intenção de viagem.</p>
       <div>
         <Label>Motivo da Viagem</Label>
-        <Select value={data.motivo_viagem || ''} onValueChange={v => onChange('motivo_viagem', v)}>
+        <Select value={data.motivo_viagem || undefined} onValueChange={v => onChange('motivo_viagem', v)}>
           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
           <SelectContent>
             {['Turismo e Negócios B1/B2','Negócios B1','Turismo B2','Estudo F1'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
@@ -41,7 +41,7 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
       <div><Label>Local de Hospedagem (Nome do Hotel ou Endereço)</Label><Input value={data.local_hospedagem || ''} onChange={e => onChange('local_hospedagem', e.target.value)} /></div>
       <div>
         <Label>Quem pagará a viagem?</Label>
-        <Select value={data.pagador_viagem || ''} onValueChange={v => onChange('pagador_viagem', v)}>
+        <Select value={data.pagador_viagem || undefined} onValueChange={v => onChange('pagador_viagem', v)}>
           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
           <SelectContent>
             {['Eu mesmo','Pai/Mãe','Empregador atual','Outro'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}

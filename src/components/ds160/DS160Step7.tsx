@@ -10,7 +10,7 @@ export default function DS160Step7({ data, onChange }: DS160StepProps) {
       <h2 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-3">7. Histórico Profissional Atual</h2>
       <div>
         <Label>Status Profissional Atual</Label>
-        <Select value={data.status_profissional || ''} onValueChange={v => onChange('status_profissional', v)}>
+        <Select value={data.status_profissional || undefined} onValueChange={v => onChange('status_profissional', v)}>
           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
           <SelectContent>
             {['Empregado Atualmente','Estudante','Autônomo','Empresário','Desempregado','Aposentado','Outro'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
