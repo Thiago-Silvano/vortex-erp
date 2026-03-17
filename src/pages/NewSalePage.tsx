@@ -855,6 +855,7 @@ export default function NewSalePage() {
         seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
         invoice_url: invoiceUrl || null,
         destination_image_url: destinationImageUrl || null,
+        destination_image_config: destinationImageConfig || null,
         sale_interest: saleInterest,
         machine_fee: machineFee,
         machine_fee_supplier_id: machineFeeSupplierId || null,
