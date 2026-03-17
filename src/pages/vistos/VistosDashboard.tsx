@@ -214,14 +214,6 @@ export default function VistosDashboard() {
               ))}
             </div>
 
-            {approvalRate > 0 && (
-              <Card>
-                <CardContent className="p-5">
-                  <p className="text-sm text-muted-foreground mb-1">Taxa de Aprovação</p>
-                  <p className="text-3xl font-bold text-foreground">{approvalRate}%</p>
-                </CardContent>
-              </Card>
-            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {(stats.approved > 0 || stats.denied > 0) && (
