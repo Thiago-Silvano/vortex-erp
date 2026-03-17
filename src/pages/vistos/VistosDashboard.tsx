@@ -9,7 +9,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface Stats {
   salesThisMonth: number;
   inProduction: number;
-  scheduled: number;
   approved: number;
   denied: number;
   revenueTotal: number;
