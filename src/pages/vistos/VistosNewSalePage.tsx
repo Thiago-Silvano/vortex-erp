@@ -320,9 +320,8 @@ export default function VistosNewSalePage() {
   };
 
   const removeApplicant = (idx: number) => {
-    if (applicants.length <= 1) return;
     const updated = applicants.filter((_, i) => i !== idx);
-    if (!updated.some(a => a.is_main)) updated[0].is_main = true;
+    if (updated.length > 0 && !updated.some(a => a.is_main)) updated[0].is_main = true;
     setApplicants(updated);
   };
 
