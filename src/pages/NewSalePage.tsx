@@ -177,6 +177,7 @@ export default function NewSalePage() {
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
   const [showIndividualValues, setShowIndividualValues] = useState(true);
   const [showPerPassenger, setShowPerPassenger] = useState(false);
+  const [showOnlyTotal, setShowOnlyTotal] = useState(false);
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
   const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
 
@@ -232,6 +233,9 @@ export default function NewSalePage() {
     }
     if ((sale as any).show_per_passenger !== undefined) {
       setShowPerPassenger((sale as any).show_per_passenger);
+    }
+    if ((sale as any).show_only_total !== undefined) {
+      setShowOnlyTotal((sale as any).show_only_total);
     }
     if ((sale as any).invoice_url) {
       const parts = (sale as any).invoice_url.split('/');
@@ -848,6 +852,7 @@ export default function NewSalePage() {
         proposal_payment_options: proposalPaymentOptions.filter(o => o.enabled),
         show_individual_values: showIndividualValues,
         show_per_passenger: showPerPassenger,
+        show_only_total: showOnlyTotal,
         status,
         created_by: userEmail,
         updated_by: userEmail,
@@ -2255,6 +2260,16 @@ export default function NewSalePage() {
               />
               <Label htmlFor="showPerPassenger" className="text-sm cursor-pointer">
                 Mostrar o valor da parcela por pessoa? (divide o total e as parcelas pelo nº de passageiros)
+              </Label>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <Checkbox
+                id="showOnlyTotal"
+                checked={showOnlyTotal}
+                onCheckedChange={(checked) => setShowOnlyTotal(!!checked)}
+              />
+              <Label htmlFor="showOnlyTotal" className="text-sm cursor-pointer">
+                Mostrar somente o valor total? (oculta todas as opções de pagamento na proposta)
               </Label>
             </div>
             <p className="text-sm text-muted-foreground">Selecione quais formas de pagamento deseja ofertar ao cliente na proposta (PDF e interativa).</p>

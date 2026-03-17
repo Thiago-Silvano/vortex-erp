@@ -231,6 +231,7 @@ export default function PropostaPublicPage() {
   const heroImageConfig: ImagePositionConfig | null = (sale as any).destination_image_config || null;
   const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).filter((opt: any) => opt.enabled !== false);
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
+  const showOnlyTotal = (sale as any).show_only_total === true;
 
   // Helper to compute option total/installment from discount
   const getOptTotal = (opt: ProposalPaymentOption) => {
@@ -484,6 +485,22 @@ export default function PropostaPublicPage() {
 
         {/* Payment Options + Notes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {showOnlyTotal ? (
+            <section className="md:col-span-2">
+              <SectionTitle>Investimento</SectionTitle>
+              <div className="mt-8 p-8 rounded-2xl text-center" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+                <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: '#999' }}>Valor Total</p>
+                <span className="text-4xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                  {fmt(totalSale)}
+                </span>
+                {showPerPassenger && passengersCount > 1 && (
+                  <p className="text-sm mt-2" style={{ color: '#888' }}>
+                    {fmt(totalSale / passengersCount)} por pessoa
+                  </p>
+                )}
+              </div>
+            </section>
+          ) : (
           <section className={proposalOptions.length > 0 ? 'md:col-span-2' : ''}>
             <SectionTitle>Opções de pagamento</SectionTitle>
             {proposalOptions.length > 0 ? (() => {
@@ -592,6 +609,7 @@ export default function PropostaPublicPage() {
               </div>
             )}
           </section>
+          )}
 
           {sale.notes && (
             <section>
