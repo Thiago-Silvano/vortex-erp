@@ -46,6 +46,18 @@ interface ExtractedService {
   baggage?: BaggageInfo;
   total_travel_duration_outbound?: string;
   total_travel_duration_return?: string;
+  quote_option_key?: string;
+}
+
+interface ExtractedQuoteOption {
+  title: string;
+  services: ExtractedService[];
+}
+
+interface ExtractedPaymentTerm {
+  label: string;
+  installments: number;
+  notes: string;
 }
 
 interface TripInfo {
@@ -71,13 +83,22 @@ interface ImportedItem {
   service_catalog_id?: string;
   cost_center_id?: string;
   metadata?: any;
+  quote_option_id?: string;
+}
+
+interface PdfImportResult {
+  items: ImportedItem[];
+  tripInfo: TripInfo;
+  quoteOptions: { title: string }[];
+  paymentTerms: ExtractedPaymentTerm[];
+  generalNotes: string;
 }
 
 interface PdfImportModalProps {
   open: boolean;
   onClose: () => void;
   serviceCatalog: ServiceCatalogOption[];
-  onImport: (items: ImportedItem[], tripInfo: TripInfo) => void;
+  onImport: (result: PdfImportResult) => void;
   marginMode: 'none' | 'fixed' | 'manual';
   marginPercent: number;
 }
