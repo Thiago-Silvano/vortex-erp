@@ -1982,14 +1982,14 @@ export default function NewSalePage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12" />
-                    {isQuoteMode && quoteOptions.length > 1 && <TableHead className="w-36">Opção</TableHead>}
-                    <TableHead className="min-w-[140px]">Serviço</TableHead>
-                    <TableHead className="min-w-[100px]">Descrição</TableHead>
-                    <TableHead className="w-36">Custo</TableHead>
-                    <TableHead className="w-32">RAV</TableHead>
-                    <TableHead className="w-36">Total</TableHead>
                     <TableHead className="w-10" />
+                    {isQuoteMode && quoteOptions.length > 1 && <TableHead className="min-w-[130px]">Opção</TableHead>}
+                    <TableHead className="min-w-[120px]">Serviço</TableHead>
+                    <TableHead className="min-w-[100px]">Descrição</TableHead>
+                    <TableHead className="w-28 text-right">Custo</TableHead>
+                    <TableHead className="w-20 text-right">RAV</TableHead>
+                    <TableHead className="w-28 text-right">Total</TableHead>
+                    <TableHead className="w-8" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1998,30 +1998,35 @@ export default function NewSalePage() {
                       <TableRow>
                         <TableCell className="px-1">
                           <div className="flex flex-col items-center gap-0.5">
-                            <Button size="icon" variant="ghost" className="h-6 w-6" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
+                            <Button size="icon" variant="ghost" className="h-5 w-5" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
                               <ArrowUp className="h-3 w-3" />
                             </Button>
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
-                            <Button size="icon" variant="ghost" className="h-6 w-6" disabled={idx === items.length - 1} onClick={() => moveItem(idx, 'down')}>
+                            <GripVertical className="h-3 w-3 text-muted-foreground" />
+                            <Button size="icon" variant="ghost" className="h-5 w-5" disabled={idx === items.length - 1} onClick={() => moveItem(idx, 'down')}>
                               <ArrowDown className="h-3 w-3" />
                             </Button>
                           </div>
                         </TableCell>
                         {isQuoteMode && quoteOptions.length > 1 && (
-                          <TableCell>
+                          <TableCell className="px-1">
                             <Popover>
                               <PopoverTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-8 text-xs w-full justify-start">
-                                  <ChevronsUpDown className="h-3 w-3 mr-1" />
+                                <Button variant="outline" size="sm" className="h-7 text-xs w-full justify-start truncate max-w-[130px]">
+                                  <ChevronsUpDown className="h-3 w-3 mr-1 flex-shrink-0" />
+                                  <span className="truncate">
                                   {(() => {
                                     const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
                                     if (ids.length === 0) return 'Selecionar...';
                                     if (ids.length === quoteOptions.length) return 'Todas';
-                                    return ids.map(id => quoteOptions.find(o => (o.id || String(o.order_index)) === id)?.name || '?').join(', ');
+                                    return ids.map(id => {
+                                      const opt = quoteOptions.find(o => (o.id || String(o.order_index)) === id);
+                                      return opt ? opt.name.replace(/^Opção \d+ - /, '') : '?';
+                                    }).join(', ');
                                   })()}
+                                  </span>
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-48 p-2">
+                              <PopoverContent className="w-56 p-2">
                                 {quoteOptions.map((opt, oi) => {
                                   const optId = opt.id || String(oi);
                                   const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
@@ -2036,7 +2041,7 @@ export default function NewSalePage() {
                                           return { ...it, quote_option_ids: newIds, quote_option_id: newIds[0] || undefined };
                                         }));
                                       }} />
-                                      <span className="text-xs">{opt.name}</span>
+                                      <span className="text-xs truncate">{opt.name}</span>
                                     </label>
                                   );
                                 })}
@@ -2044,93 +2049,101 @@ export default function NewSalePage() {
                             </Popover>
                           </TableCell>
                         )}
-                        <TableCell>
+                        <TableCell className="px-1">
                           <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
-                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="manual">Selecione um serviço</SelectItem>
                               {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
-                          <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal max-w-[120px]" onClick={() => setEditingItemIdx(idx)}>
+                        <TableCell className="px-1">
+                          <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal h-7 max-w-[140px]" onClick={() => setEditingItemIdx(idx)}>
                             <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
                             <span className="truncate text-xs">{getServiceTypeLabel(item.metadata)}{item.description || 'Editar...'}</span>
                           </Button>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-1">
                           <Input
                             value={maskCurrency(item.cost_price)}
                             onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))}
-                            className="text-right"
+                            className="text-right h-7 text-xs"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-1">
                           <Input
                             value={maskCurrency(item.rav)}
                             onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))}
-                            className="text-right"
+                            className="text-right h-7 text-xs w-20"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-1">
                           <Input
                             value={maskCurrency(item.total_value)}
                             disabled
-                            className="bg-muted text-right"
+                            className="bg-muted text-right h-7 text-xs"
                           />
                         </TableCell>
-                        <TableCell>
-                          <Button size="icon" variant="ghost" onClick={() => removeItem(idx)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                        <TableCell className="px-0">
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(idx)}>
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
                           </Button>
                         </TableCell>
                       </TableRow>
+                      {/* Second row: reservation + images */}
                       <TableRow className="border-b-2">
-                        <TableCell colSpan={isQuoteMode && quoteOptions.length > 1 ? 8 : 7} className="py-2">
-                          <div className="flex items-center gap-2 flex-wrap">
+                        <TableCell colSpan={isQuoteMode && quoteOptions.length > 1 ? 8 : 7} className="py-1.5 px-2">
+                          <div className="flex items-center gap-2">
                             {!isQuoteMode && (
-                              <div className="flex items-center gap-1">
-                                <Label className="text-xs text-muted-foreground whitespace-nowrap">Nº Reserva:</Label>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <Label className="text-xs text-muted-foreground whitespace-nowrap">Reserva:</Label>
                                 <Input
                                   value={item.reservation_number || ''}
                                   onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)}
-                                  placeholder="Ex: ABC123"
-                                  className="h-7 text-xs w-48"
+                                  placeholder="ABC123"
+                                  className="h-6 text-xs w-28"
                                 />
                               </div>
                             )}
-                            {uploadingItemImages[idx] ? (
-                              <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />Carregando...</span>
-                            ) : (
-                              <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
-                                <ImagePlus className="h-3 w-3" />Imagens<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
-                              </label>
-                            )}
-                            {searchingItemImages[idx] ? (
-                              <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><Loader2 className="h-3 w-3 animate-spin" />Buscando...</span>
-                            ) : (
-                              <Button variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1" onClick={() => handleSearchServiceImages(idx)}>
-                                <Search className="h-3 w-3" />Buscar Imagens
-                              </Button>
-                            )}
-                            {(itemImages[idx] || []).map((url, imgIdx) => (
-                              <div key={imgIdx} className="relative group flex flex-col items-center">
-                                {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
-                                  <span className="text-[9px] font-semibold text-primary mb-0.5">CAPA</span>
-                                )}
-                                <div className="relative">
-                                  <img src={url} alt="" className={`h-10 w-14 object-cover rounded border ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} />
-                                  <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-                                </div>
-                                {(itemImages[idx] || []).length > 1 && (
-                                  <div className="flex gap-0.5 mt-0.5">
-                                    <button type="button" disabled={imgIdx === 0} onClick={() => moveItemImage(idx, imgIdx, 'left')} className="text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-30">◀</button>
-                                    <button type="button" disabled={imgIdx === (itemImages[idx] || []).length - 1} onClick={() => moveItemImage(idx, imgIdx, 'right')} className="text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-30">▶</button>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {uploadingItemImages[idx] ? (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-1.5 py-0.5"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" /></span>
+                              ) : (
+                                <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-1.5 py-0.5">
+                                  <ImagePlus className="h-3 w-3" /><span className="hidden lg:inline">Imagens</span><input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                                </label>
+                              )}
+                              {searchingItemImages[idx] ? (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-1.5 py-0.5"><Loader2 className="h-3 w-3 animate-spin" /></span>
+                              ) : (
+                                <Button variant="ghost" size="sm" className="h-6 text-xs px-1.5 gap-0.5" onClick={() => handleSearchServiceImages(idx)}>
+                                  <Search className="h-3 w-3" /><span className="hidden lg:inline">Buscar</span>
+                                </Button>
+                              )}
+                            </div>
+                            {/* Scrollable images container */}
+                            {(itemImages[idx] || []).length > 0 && (
+                              <div className="flex items-center gap-1.5 overflow-x-auto flex-1 min-w-0 py-0.5">
+                                {(itemImages[idx] || []).map((url, imgIdx) => (
+                                  <div key={imgIdx} className="relative group flex flex-col items-center flex-shrink-0">
+                                    {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
+                                      <span className="text-[8px] font-semibold text-primary leading-none">CAPA</span>
+                                    )}
+                                    <div className="relative">
+                                      <img src={url} alt="" className={`h-9 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} />
+                                      <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                                    </div>
+                                    {(itemImages[idx] || []).length > 1 && (
+                                      <div className="flex gap-0.5">
+                                        <button type="button" disabled={imgIdx === 0} onClick={() => moveItemImage(idx, imgIdx, 'left')} className="text-[9px] text-muted-foreground hover:text-foreground disabled:opacity-30">◀</button>
+                                        <button type="button" disabled={imgIdx === (itemImages[idx] || []).length - 1} onClick={() => moveItemImage(idx, imgIdx, 'right')} className="text-[9px] text-muted-foreground hover:text-foreground disabled:opacity-30">▶</button>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
+                                ))}
                               </div>
-                            ))}
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
