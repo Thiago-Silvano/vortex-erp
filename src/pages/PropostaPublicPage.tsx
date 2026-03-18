@@ -710,10 +710,10 @@ function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: numbe
       {needsTruncate && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-sm font-semibold mt-1.5 hover:underline"
+          className="text-base font-bold mt-2 hover:underline tracking-wide"
           style={{ color: '#C8A45B' }}
         >
-          {expanded ? 'Ver menos ▲' : 'Ver mais ▼'}
+          {expanded ? '▲ Ver menos' : '▼ Ver mais'}
         </button>
       )}
     </div>
