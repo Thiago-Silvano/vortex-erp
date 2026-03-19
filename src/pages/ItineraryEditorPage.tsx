@@ -584,6 +584,22 @@ export default function ItineraryEditorPage() {
     }
   };
 
+  const uploadThankYouImage = async (file: File) => {
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { toast.error('Arquivo muito grande (máx 5MB)'); return; }
+    if (!file.type.startsWith('image/')) { toast.error('Selecione um arquivo de imagem'); return; }
+    const ext = file.name.split('.').pop();
+    const path = `itinerary-thankyou/${id}/${Date.now()}.${ext}`;
+    toast.info('Enviando imagem...');
+    const { error } = await supabase.storage.from('quote-images').upload(path, file);
+    if (error) { toast.error('Erro ao enviar imagem'); return; }
+    const { data: urlData } = supabase.storage.from('quote-images').getPublicUrl(path);
+    if (itinerary) {
+      setItinerary({ ...itinerary, thank_you_image_url: urlData.publicUrl });
+      toast.success('Imagem de agradecimento enviada!');
+    }
+  };
+
   const searchCoverImage = async () => {
     const query = destinations.map(d => d.name).filter(Boolean).join(' ') || itinerary?.title || '';
     if (!query) { toast.error('Adicione destinos ou título primeiro'); return; }
@@ -918,7 +934,15 @@ export default function ItineraryEditorPage() {
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Imagem Institucional (URL)</Label>
+                        <div className="flex items-center justify-between mb-1">
+                          <Label className="text-xs">Imagem Institucional</Label>
+                          <label>
+                            <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" asChild>
+                              <span><Upload className="h-3 w-3" /> Upload</span>
+                            </Button>
+                            <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadThankYouImage(f); e.target.value = ''; } }} />
+                          </label>
+                        </div>
                         <Input
                           value={itinerary.thank_you_image_url}
                           onChange={e => updateItinerary('thank_you_image_url', e.target.value)}
