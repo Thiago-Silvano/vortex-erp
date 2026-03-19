@@ -1445,7 +1445,14 @@ function AttractionEditorBlock({
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
         </div>
-        <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={save} placeholder="URL da imagem" className="h-7 text-xs" />
+        <div className="flex gap-1">
+          <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={save} placeholder="URL da imagem" className="h-7 text-xs flex-1" />
+          {attr.image_url && (
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => { onUpdate(dayIdx, attrIdx, 'image_url', ''); onUpdate(dayIdx, attrIdx, 'image_position', null); setTimeout(save, 100); }} title="Apagar foto">
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
         {attr.image_url && (
           <div
             className="mt-2 h-20 w-full overflow-hidden rounded cursor-pointer relative group"
