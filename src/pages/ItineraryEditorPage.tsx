@@ -874,7 +874,7 @@ export default function ItineraryEditorPage() {
                               onSaveDay={saveDay}
                               onAddAttraction={addAttraction}
                               onUpdateAttraction={updateAttraction}
-                              onSaveAttraction={(dayI: number, attrI: number) => saveAttraction(days[dayI].attractions[attrI])}
+                              onSaveAttraction={saveAttractionByIndex}
                               onRemoveAttraction={removeAttraction}
                               onGenerateDescription={generateDescription}
                               onSearchImage={searchImage}
