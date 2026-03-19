@@ -1108,6 +1108,7 @@ function AttractionEditorBlock({
   dragListeners, dragAttributes,
 }: any) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const save = () => onSave(dayIdx, attrIdx);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1124,7 +1125,7 @@ function AttractionEditorBlock({
         <Input
           value={attr.name}
           onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'name', e.target.value)}
-          onBlur={() => onSave(attr)}
+          onBlur={save}
           placeholder="Nome da atração"
           className="h-8 font-medium"
         />
@@ -1135,16 +1136,16 @@ function AttractionEditorBlock({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-[10px]">Local</Label>
-          <Input value={attr.location} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'location', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" />
+          <Input value={attr.location} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'location', e.target.value)} onBlur={save} className="h-7 text-xs" />
         </div>
         <div>
           <Label className="text-[10px]">Cidade</Label>
-          <Input value={attr.city} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'city', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" />
+          <Input value={attr.city} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'city', e.target.value)} onBlur={save} className="h-7 text-xs" />
         </div>
       </div>
       <div>
         <Label className="text-[10px]">Categoria</Label>
-        <Select value={attr.category} onValueChange={(v: any) => { onUpdate(dayIdx, attrIdx, 'category', v); onSave({ ...attr, category: v }); }}>
+        <Select value={attr.category} onValueChange={(v: any) => { onUpdate(dayIdx, attrIdx, 'category', v); setTimeout(() => onSave(dayIdx, attrIdx), 50); }}>
           <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
@@ -1158,7 +1159,7 @@ function AttractionEditorBlock({
             <Sparkles className="h-3 w-3" /> IA
           </Button>
         </div>
-        <Textarea value={attr.description} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'description', e.target.value)} onBlur={() => onSave(attr)} rows={3} className="text-xs" />
+        <Textarea value={attr.description} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'description', e.target.value)} onBlur={save} rows={3} className="text-xs" />
       </div>
       <div>
         <div className="flex items-center justify-between mb-1">
@@ -1183,7 +1184,7 @@ function AttractionEditorBlock({
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
         </div>
-        <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={() => onSave(attr)} placeholder="URL da imagem" className="h-7 text-xs" />
+        <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={save} placeholder="URL da imagem" className="h-7 text-xs" />
         {attr.image_url && (
           <div
             className="mt-2 h-20 w-full overflow-hidden rounded cursor-pointer relative group"
@@ -1200,11 +1201,11 @@ function AttractionEditorBlock({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-[10px]">Horário</Label>
-          <Input value={attr.time} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'time', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" placeholder="Ex: 09:00" />
+          <Input value={attr.time} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'time', e.target.value)} onBlur={save} className="h-7 text-xs" placeholder="Ex: 09:00" />
         </div>
         <div>
           <Label className="text-[10px]">Duração</Label>
-          <Input value={attr.duration} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'duration', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" placeholder="Ex: 2h" />
+          <Input value={attr.duration} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'duration', e.target.value)} onBlur={save} className="h-7 text-xs" placeholder="Ex: 2h" />
         </div>
       </div>
     </div>
