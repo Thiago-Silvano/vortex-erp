@@ -353,6 +353,13 @@ export default function ItineraryEditorPage() {
           <Button size="sm" variant="outline" onClick={saveItinerary} className="gap-2">
             <Save className="h-3.5 w-3.5" /> Salvar
           </Button>
+          <Button size="sm" variant="outline" onClick={() => {
+            const url = `${window.location.origin}/roteiro/${itinerary.token}`;
+            navigator.clipboard.writeText(url);
+            toast.success('Link copiado!');
+          }} className="gap-2">
+            <ExternalLink className="h-3.5 w-3.5" /> Link
+          </Button>
         </div>
       </div>
 
