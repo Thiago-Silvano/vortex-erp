@@ -118,31 +118,47 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
         <h2 className="text-2xl font-bold text-gray-900 mb-8">Conteúdo do Roteiro</h2>
         <div className="space-y-4">
           {destinations.length > 0 && (
-            <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <button
+              onClick={() => document.getElementById('section-destinations')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="flex items-center justify-between py-3 border-b border-gray-100 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+            >
               <span className="text-gray-700 font-medium">Destinos</span>
               <span className="text-gray-400 text-sm">{destinationNames.join(', ')}</span>
-            </div>
+            </button>
           )}
           {days.map((day) => (
-            <div key={day.id} className="flex items-center justify-between py-3 border-b border-gray-100">
+            <button
+              key={day.id}
+              onClick={() => document.getElementById(`section-day-${day.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="flex items-center justify-between py-3 border-b border-gray-100 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+            >
               <span className="text-gray-700 font-medium">{day.title || `Dia ${day.day_number}`}</span>
               <span className="text-gray-400 text-sm">{day.attractions.length} atração(ões)</span>
-            </div>
+            </button>
           ))}
           {checklist.length > 0 && (
-            <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <button
+              onClick={() => document.getElementById('section-checklist')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="flex items-center justify-between py-3 border-b border-gray-100 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+            >
               <span className="text-gray-700 font-medium">Checklist de Viagem</span>
               <span className="text-gray-400 text-sm">✓</span>
-            </div>
+            </button>
           )}
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <button
+            onClick={() => document.getElementById('section-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="flex items-center justify-between py-3 border-b border-gray-100 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+          >
             <span className="text-gray-700 font-medium">Mapa da Viagem</span>
             <span className="text-gray-400 text-sm">🗺</span>
-          </div>
-          <div className="flex items-center justify-between py-3">
+          </button>
+          <button
+            onClick={() => document.getElementById('section-thankyou')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="flex items-center justify-between py-3 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+          >
             <span className="text-gray-700 font-medium">Agradecimento</span>
             <span className="text-gray-400 text-sm">♥</span>
-          </div>
+          </button>
         </div>
       </div>
 
