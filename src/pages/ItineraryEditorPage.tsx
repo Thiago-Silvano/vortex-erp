@@ -168,8 +168,8 @@ export default function ItineraryEditorPage() {
 
   // Load API keys
   useEffect(() => {
-    if (!activeCompany) return;
-    supabase.from('agency_settings').select('google_maps_api_key, unsplash_api_key, pexels_api_key').eq('empresa_id', activeCompany).single().then(({ data }) => {
+    if (!activeCompany?.id) return;
+    supabase.from('agency_settings').select('google_maps_api_key, unsplash_api_key, pexels_api_key').eq('empresa_id', activeCompany.id).single().then(({ data }) => {
       if (data) {
         setGoogleMapsApiKey((data as any).google_maps_api_key || '');
         setUnsplashKey((data as any).unsplash_api_key || '');
