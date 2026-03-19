@@ -446,6 +446,12 @@ export default function ItineraryEditorPage() {
     } as any).eq('id', attr.id);
   };
 
+  const saveAttractionByIndex = (dayIdx: number, attrIdx: number) => {
+    const currentDays = daysRef.current;
+    const attr = currentDays[dayIdx]?.attractions[attrIdx];
+    if (attr) saveAttraction(attr);
+  };
+
   const saveImagePosition = (config: ImagePositionConfig) => {
     if (!positionEditor) return;
     const { dayIdx, attrIdx } = positionEditor;
