@@ -419,7 +419,7 @@ export default function ItineraryEditorPage() {
       toast.info('Buscando imagem...');
       try {
         const { data, error } = await supabase.functions.invoke('google-places', {
-          body: { query: `${attr.name} ${attr.location || attr.city}`.trim(), type: 'photo' },
+          body: { action: 'search_photos', query: `${attr.name} ${attr.location || attr.city}`.trim(), apiKey: googleMapsApiKey },
         });
         if (error) throw error;
         const url = data?.photoUrl || data?.photo_url || '';
