@@ -38,10 +38,17 @@ interface Itinerary {
   thank_you_image_url: string;
 }
 
+interface ChecklistItem {
+  id: string;
+  category: string;
+  item: string;
+}
+
 interface Props {
   itinerary: Itinerary;
   destinations: Destination[];
   days: Day[];
+  checklist?: ChecklistItem[];
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
