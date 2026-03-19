@@ -156,6 +156,7 @@ export default function ItineraryEditorPage() {
   const [coverImageModalOpen, setCoverImageModalOpen] = useState(false);
   const [attrImageModal, setAttrImageModal] = useState<{ dayIdx: number; attrIdx: number } | null>(null);
   const [searchingCoverImage, setSearchingCoverImage] = useState(false);
+  const [positionEditor, setPositionEditor] = useState<{ dayIdx: number; attrIdx: number } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
