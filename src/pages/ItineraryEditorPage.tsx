@@ -934,7 +934,15 @@ export default function ItineraryEditorPage() {
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Imagem Institucional (URL)</Label>
+                        <div className="flex items-center justify-between mb-1">
+                          <Label className="text-xs">Imagem Institucional</Label>
+                          <label>
+                            <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" asChild>
+                              <span><Upload className="h-3 w-3" /> Upload</span>
+                            </Button>
+                            <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadThankYouImage(f); e.target.value = ''; } }} />
+                          </label>
+                        </div>
                         <Input
                           value={itinerary.thank_you_image_url}
                           onChange={e => updateItinerary('thank_you_image_url', e.target.value)}
