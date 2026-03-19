@@ -249,6 +249,7 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
       {/* ===== MAP PAGE ===== */}
       <ItineraryMapSection
         destinations={destinations}
+        attractions={days.flatMap(d => d.attractions).filter(a => a.name)}
         googleMapsApiKey={googleMapsApiKey}
         interactive={interactive}
       />
