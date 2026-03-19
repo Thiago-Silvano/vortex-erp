@@ -947,6 +947,8 @@ function DayEditorBlock({
                       onRemove={onRemoveAttraction}
                       onGenerateDescription={onGenerateDescription}
                       onSearchImage={onSearchImage}
+                      onRefreshImage={onRefreshImage}
+                      onUploadImage={onUploadImage}
                       onPositionEdit={onPositionEdit}
                     />
                   </SortableAttractionItem>
