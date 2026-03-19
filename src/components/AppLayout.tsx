@@ -83,6 +83,7 @@ function AppSidebar() {
     { title: 'Vendedores', url: '/sellers', icon: UserCheck, permKey: 'sellers_view' },
     { title: 'Serviços', url: '/services', icon: ClipboardList, permKey: 'services_view' },
     { title: 'Reservas', url: '/reservations', icon: BookOpen, permKey: 'reservations_view' },
+    { title: 'Roteiros', url: '/itineraries', icon: Map },
     { title: 'Calendário', url: '/calendar', icon: CalendarDays },
   ];
 
