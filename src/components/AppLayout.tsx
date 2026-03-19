@@ -175,8 +175,8 @@ function AppSidebar() {
             <NavLink
               to={item.url}
               end
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 text-[13px]"
-              activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-md text-foreground/70 hover:bg-primary/10 hover:text-primary transition-all duration-150 text-[14px]"
+              activeClassName="bg-primary/10 text-primary font-semibold"
             >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && <span>{item.title}</span>}
