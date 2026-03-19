@@ -887,7 +887,7 @@ export default function ItineraryEditorPage() {
 function DayEditorBlock({
   day, dayIdx, expanded, onToggle, onRemove, onDuplicate,
   onUpdateDay, onSaveDay, onAddAttraction, onUpdateAttraction,
-  onSaveAttraction, onRemoveAttraction, onGenerateDescription, onSearchImage, onPositionEdit,
+  onSaveAttraction, onRemoveAttraction, onGenerateDescription, onSearchImage, onRefreshImage, onUploadImage, onPositionEdit,
   sensors, onAttractionDragEnd,
   dragListeners, dragAttributes,
 }: any) {
