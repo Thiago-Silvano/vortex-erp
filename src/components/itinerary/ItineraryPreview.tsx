@@ -295,7 +295,7 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
         const fontStyle = itinerary.thank_you_font_style || 'normal';
         const fontEffect = itinerary.thank_you_font_effect || 'none';
         const imageSize = itinerary.thank_you_image_size || 100;
-        const textAlign = (itinerary.thank_you_text_align || 'center') as 'left' | 'center' | 'right';
+        const textAlign = (itinerary.thank_you_text_align || 'center') as 'left' | 'center' | 'right' | 'justify';
         const title = itinerary.thank_you_title || 'Obrigado';
         const imgPos = itinerary.thank_you_image_position as ImagePositionConfig | null;
 
