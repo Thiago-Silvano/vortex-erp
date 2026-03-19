@@ -1283,7 +1283,9 @@ export default function NewSalePage() {
     }
 
     toast.success(editSaleId && saleStatus === 'active' ? 'Venda atualizada! Financeiro regenerado.' : 'Venda criada com sucesso! Complete agora os dados da reserva, pagamento e operação.');
-    navigate('/sales');
+    if (!editSaleId) setEditSaleId(saleId);
+    setSaleStatus('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
