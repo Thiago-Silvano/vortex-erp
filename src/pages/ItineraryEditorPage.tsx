@@ -627,6 +627,7 @@ export default function ItineraryEditorPage() {
                   itinerary={itinerary}
                   destinations={destinations}
                   days={days}
+                  checklist={checklist}
                 />
               </div>
             </div>
