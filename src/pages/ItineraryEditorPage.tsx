@@ -145,6 +145,9 @@ export default function ItineraryEditorPage() {
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [days, setDays] = useState<Day[]>([]);
+  const daysRef = useRef<Day[]>([]);
+  // Keep ref in sync
+  useEffect(() => { daysRef.current = days; }, [days]);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
