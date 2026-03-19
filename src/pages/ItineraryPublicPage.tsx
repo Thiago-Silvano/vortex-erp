@@ -27,10 +27,12 @@ export default function ItineraryPublicPage() {
     if (!it) { setNotFound(true); setLoading(false); return; }
     setItinerary(it);
 
-    const [destRes, daysRes] = await Promise.all([
+    const [destRes, daysRes, checkRes] = await Promise.all([
       supabase.from('itinerary_destinations').select('*').eq('itinerary_id', (it as any).id).order('sort_order'),
       supabase.from('itinerary_days').select('*').eq('itinerary_id', (it as any).id).order('sort_order'),
+      supabase.from('itinerary_checklist').select('*').eq('itinerary_id', (it as any).id).order('sort_order'),
     ]);
+    setChecklist((checkRes.data as any[]) || []);
 
     setDestinations((destRes.data as any[]) || []);
 
