@@ -414,6 +414,7 @@ export default function ItineraryEditorPage() {
 
     if (unsplashKey || pexelsKey) {
       setAttrImageModal({ dayIdx, attrIdx });
+    } else if (googleMapsApiKey) {
     } else {
       // Fallback to google-places
       toast.info('Buscando imagem...');
