@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { supabase } from '@/integrations/supabase/client';
 
 const AMBER = [200, 164, 91] as const;
 const DARK = [26, 26, 26] as const;
@@ -52,6 +53,18 @@ interface Itinerary {
   cover_image_url: string;
   thank_you_text: string;
   thank_you_image_url: string;
+  thank_you_title?: string;
+  thank_you_text_align?: string;
+  thank_you_font_color?: string;
+  thank_you_font_size?: number;
+  thank_you_font_style?: string;
+  thank_you_font_effect?: string;
+  thank_you_image_size?: number;
+  thank_you_image_position?: any;
+  thank_you_title_font_color?: string;
+  thank_you_title_font_size?: number;
+  thank_you_title_font_style?: string;
+  thank_you_title_font_effect?: string;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -78,10 +91,16 @@ function sanitize(text: string): string {
     .trim();
 }
 
-async function loadImage(url: string): Promise<string | null> {
-  if (!url) return null;
+// Cache for loaded images to avoid duplicate fetches
+const imageCache = new Map<string, string | null>();
 
-  // Try fetch first (works for same-origin and CORS-enabled URLs)
+async function loadImageViaProxy(url: string): Promise<string | null> {
+  if (!url) return null;
+  
+  // Check cache
+  if (imageCache.has(url)) return imageCache.get(url)!;
+
+  // Try direct fetch first (works for Supabase storage URLs and same-origin)
   try {
     const res = await fetch(url, { mode: 'cors' });
     if (res.ok) {
@@ -92,15 +111,31 @@ async function loadImage(url: string): Promise<string | null> {
         reader.onerror = () => resolve(null);
         reader.readAsDataURL(blob);
       });
-      if (dataUrl) return dataUrl;
+      if (dataUrl) {
+        imageCache.set(url, dataUrl);
+        return dataUrl;
+      }
     }
   } catch {
-    // fetch failed, try img element fallback
+    // Direct fetch failed (likely CORS), use proxy
   }
 
-  // Fallback: load via <img> + canvas (handles more cross-origin cases)
+  // Use edge function proxy for cross-origin images (Google Maps, etc.)
   try {
-    return await new Promise<string | null>((resolve) => {
+    const { data, error } = await supabase.functions.invoke('proxy-image', {
+      body: { url },
+    });
+    if (!error && data?.dataUrl) {
+      imageCache.set(url, data.dataUrl);
+      return data.dataUrl;
+    }
+  } catch {
+    // Proxy also failed
+  }
+
+  // Final fallback: img + canvas
+  try {
+    const result = await new Promise<string | null>((resolve) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
@@ -120,11 +155,13 @@ async function loadImage(url: string): Promise<string | null> {
         }
       };
       img.onerror = () => resolve(null);
-      // Add cache-busting to avoid stale CORS preflight
       const separator = url.includes('?') ? '&' : '?';
       img.src = `${url}${separator}t=${Date.now()}`;
     });
+    imageCache.set(url, result);
+    return result;
   } catch {
+    imageCache.set(url, null);
     return null;
   }
 }
@@ -147,12 +184,31 @@ export async function generateItineraryPdf(
   const pdf = new jsPDF('p', 'mm', 'a4');
   const destinationNames = destinations.map(d => d.name).filter(Boolean);
 
+  // Clear image cache for fresh generation
+  imageCache.clear();
+
+  // Pre-load all images in parallel for speed
+  const allImageUrls: string[] = [];
+  if (itinerary.cover_image_url) allImageUrls.push(itinerary.cover_image_url);
+  if (itinerary.thank_you_image_url) allImageUrls.push(itinerary.thank_you_image_url);
+  if (mapImageUrl) allImageUrls.push(mapImageUrl);
+  days.forEach(day => {
+    day.attractions.forEach(attr => {
+      if (attr.image_url) allImageUrls.push(attr.image_url);
+    });
+  });
+  
+  // Load all images in parallel (batch of 5 to avoid overwhelming)
+  for (let i = 0; i < allImageUrls.length; i += 5) {
+    const batch = allImageUrls.slice(i, i + 5);
+    await Promise.all(batch.map(url => loadImageViaProxy(url)));
+  }
+
   // ===== COVER PAGE =====
-  const coverImg = await loadImage(itinerary.cover_image_url);
+  const coverImg = await loadImageViaProxy(itinerary.cover_image_url);
   if (coverImg) {
     pdf.addImage(coverImg, 'JPEG', 0, 0, PAGE_W, PAGE_H);
   } else {
-    // Gradient fallback
     for (let i = 0; i < PAGE_H; i++) {
       const r = Math.round(30 + (i / PAGE_H) * 50);
       const g = Math.round(50 + (i / PAGE_H) * 30);
@@ -255,7 +311,6 @@ export async function generateItineraryPdf(
 
       let dy = 0;
 
-      // Day header (first page only)
       if (pageIdx === 0) {
         pdf.setFillColor(30, 30, 35);
         pdf.rect(0, 0, PAGE_W, 35, 'F');
@@ -287,7 +342,7 @@ export async function generateItineraryPdf(
         const textX = isEven ? MARGIN + imgW + 6 : MARGIN;
 
         // Image
-        const imgData = await loadImage(attr.image_url);
+        const imgData = await loadImageViaProxy(attr.image_url);
         if (imgData) {
           try {
             pdf.addImage(imgData, 'JPEG', imgX, dy, imgW, blockH - 5);
@@ -351,7 +406,6 @@ export async function generateItineraryPdf(
         dy += blockH + 5;
       }
 
-      // Page indicator
       if (pages.length > 1) {
         pdf.setFontSize(7);
         pdf.setTextColor(...MUTED);
@@ -386,7 +440,6 @@ export async function generateItineraryPdf(
       const items = checklist.filter(c => c.category === cat);
       const blockH = 12 + items.length * 7;
 
-      // Check if fits, switch column
       if (colY[col] + blockH > PAGE_H - 20) {
         col = col === 0 ? 1 : 0;
         if (colY[col] + blockH > PAGE_H - 20) {
@@ -440,47 +493,125 @@ export async function generateItineraryPdf(
     pdf.text('Mapa da Viagem', MARGIN, my);
     my += 14;
 
-    const mapImg = await loadImage(mapImageUrl);
+    const mapImg = await loadImageViaProxy(mapImageUrl);
     if (mapImg) {
       try {
-        pdf.addImage(mapImg, 'PNG', MARGIN, my, CONTENT_W, 180);
+        // Static map is 800x500 (ratio 1.6), fit within content area preserving aspect ratio
+        const mapW = CONTENT_W;
+        const mapH = mapW / 1.6; // preserve 800x500 ratio = 106.25mm
+        const mapX = MARGIN;
+        // Center vertically in available space
+        const availableH = PAGE_H - my - 20;
+        const mapY = my + Math.max(0, (availableH - mapH) / 2);
+        pdf.addImage(mapImg, 'PNG', mapX, mapY, mapW, mapH);
       } catch { /* ignore */ }
     }
   }
 
   // ===== THANK YOU PAGE =====
   pdf.addPage();
-  const tyImg = await loadImage(itinerary.thank_you_image_url);
-  if (tyImg) {
-    try {
-      pdf.addImage(tyImg, 'JPEG', 0, 0, PAGE_W, PAGE_H);
-    } catch {
-      pdf.setFillColor(250, 248, 240);
-      pdf.rect(0, 0, PAGE_W, PAGE_H, 'F');
-    }
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(0, 0, PAGE_W, PAGE_H, 'F');
+
+  // Apply text alignment
+  const textAlign = itinerary.thank_you_text_align || 'center';
+  const pdfAlign = textAlign === 'left' ? 'left' : textAlign === 'right' ? 'right' : 'center';
+  const textX = pdfAlign === 'center' ? PAGE_W / 2 : pdfAlign === 'right' ? PAGE_W - MARGIN : MARGIN;
+
+  // Title
+  const titleText = sanitize(itinerary.thank_you_title || 'OBRIGADO');
+  const titleFontStyle = itinerary.thank_you_title_font_style || 'bold';
+  const titleSize = itinerary.thank_you_title_font_size || 12;
+  const titleColor = itinerary.thank_you_title_font_color || '#d97706';
+
+  // Parse hex color
+  const parseHex = (hex: string): [number, number, number] => {
+    const h = hex.replace('#', '');
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  };
+
+  let thankY = 80;
+
+  // Draw title
+  const isTitleBold = titleFontStyle === 'bold' || titleFontStyle === 'bold-italic';
+  const isTitleItalic = titleFontStyle === 'italic' || titleFontStyle === 'bold-italic';
+  const titleJsPdfStyle = isTitleBold && isTitleItalic ? 'bolditalic' : isTitleBold ? 'bold' : isTitleItalic ? 'italic' : 'normal';
+  pdf.setFont('helvetica', titleJsPdfStyle);
+  pdf.setFontSize(titleSize);
+  const [tr, tg, tb] = parseHex(titleColor);
+  pdf.setTextColor(tr, tg, tb);
+  const titleEffect = itinerary.thank_you_title_font_effect || 'spaced';
+  // For spaced effect in PDF we add spaces between chars
+  const displayTitle = titleEffect === 'spaced' ? titleText.split('').join(' ') : titleText;
+  pdf.text(displayTitle.toUpperCase(), textX, thankY, { align: pdfAlign as any });
+  thankY += titleSize * 0.6 + 8;
+
+  // Draw body text
+  const bodyFontStyle = itinerary.thank_you_font_style || 'normal';
+  const bodySize = itinerary.thank_you_font_size || 16;
+  const bodyColor = itinerary.thank_you_font_color || '#374151';
+  const isBodyBold = bodyFontStyle === 'bold' || bodyFontStyle === 'bold-italic';
+  const isBodyItalic = bodyFontStyle === 'italic' || bodyFontStyle === 'bold-italic';
+  const bodyJsPdfStyle = isBodyBold && isBodyItalic ? 'bolditalic' : isBodyBold ? 'bold' : isBodyItalic ? 'italic' : 'normal';
+
+  pdf.setFont('helvetica', bodyJsPdfStyle);
+  pdf.setFontSize(Math.min(bodySize, 14)); // Cap at 14 for PDF readability
+  const [br, bg, bb] = parseHex(bodyColor);
+  pdf.setTextColor(br, bg, bb);
+
+  const bodyText = sanitize(itinerary.thank_you_text || 'Obrigado por escolher viajar conosco!');
+  const maxTextW = textAlign === 'justify' ? CONTENT_W : 140;
+  const bodyLines = pdf.splitTextToSize(bodyText, maxTextW);
+  const lineH = Math.min(bodySize, 14) * 0.45 + 1.5;
+  
+  if (textAlign === 'justify') {
+    // Justify: distribute words across line width
+    bodyLines.forEach((line: string, i: number) => {
+      const isLast = i === bodyLines.length - 1 || line.trim() === '';
+      if (isLast || line.trim() === '') {
+        // Last line or empty line: left-align
+        pdf.text(line, MARGIN, thankY);
+      } else {
+        // Justify by stretching word spacing
+        const words = line.split(/\s+/);
+        if (words.length <= 1) {
+          pdf.text(line, MARGIN, thankY);
+        } else {
+          const totalTextW = words.reduce((sum, w) => sum + pdf.getTextWidth(w), 0);
+          const spaceW = (CONTENT_W - totalTextW) / (words.length - 1);
+          let wx = MARGIN;
+          words.forEach((word, wi) => {
+            pdf.text(word, wx, thankY);
+            wx += pdf.getTextWidth(word) + spaceW;
+          });
+        }
+      }
+      thankY += lineH;
+    });
   } else {
-    pdf.setFillColor(250, 248, 240);
-    pdf.rect(0, 0, PAGE_W, PAGE_H, 'F');
+    bodyLines.forEach((line: string) => {
+      pdf.text(line, textX, thankY, { align: pdfAlign as any });
+      thankY += lineH;
+    });
   }
 
-  // Semi-transparent overlay
-  pdf.setFillColor(255, 255, 255);
-  pdf.setGState(pdf.GState({ opacity: 0.7 }));
-  pdf.rect(0, 0, PAGE_W, PAGE_H, 'F');
-  pdf.setGState(pdf.GState({ opacity: 1 }));
-
-  const thankY = PAGE_H / 2 - 20;
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
-  pdf.setTextColor(...AMBER);
-  pdf.text('OBRIGADO', PAGE_W / 2, thankY, { align: 'center' });
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(11);
-  pdf.setTextColor(80, 80, 80);
-  const thankLines = pdf.splitTextToSize(sanitize(itinerary.thank_you_text || 'Obrigado por escolher viajar conosco!'), 120);
-  thankLines.forEach((line: string, i: number) => {
-    pdf.text(line, PAGE_W / 2, thankY + 12 + i * 6, { align: 'center' });
-  });
+  // Thank you image (below text)
+  thankY += 10;
+  const tyImg = await loadImageViaProxy(itinerary.thank_you_image_url);
+  if (tyImg) {
+    try {
+      const imgSizePct = (itinerary.thank_you_image_size || 100) / 100;
+      const imgW = CONTENT_W * imgSizePct;
+      const imgH = imgW * 0.5; // Approximate aspect ratio
+      const imgX = MARGIN + (CONTENT_W - imgW) / 2;
+      // Make sure it fits on the page
+      const maxH = PAGE_H - thankY - 15;
+      const finalH = Math.min(imgH, maxH);
+      if (finalH > 10) {
+        pdf.addImage(tyImg, 'JPEG', imgX, thankY, imgW, finalH);
+      }
+    } catch { /* ignore */ }
+  }
 
   return pdf;
 }
