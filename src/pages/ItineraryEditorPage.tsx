@@ -373,11 +373,22 @@ export default function ItineraryEditorPage() {
       city: attr.city,
       description: attr.description,
       image_url: attr.image_url,
+      image_position: attr.image_position,
       time: attr.time,
       duration: attr.duration,
       observation: attr.observation,
       category: attr.category,
     } as any).eq('id', attr.id);
+  };
+
+  const saveImagePosition = (config: ImagePositionConfig) => {
+    if (!positionEditor) return;
+    const { dayIdx, attrIdx } = positionEditor;
+    const updated = [...days];
+    updated[dayIdx].attractions[attrIdx].image_position = config;
+    setDays(updated);
+    saveAttraction(updated[dayIdx].attractions[attrIdx]);
+    toast.success('Posição da imagem salva!');
   };
 
   const removeAttraction = async (dayIdx: number, attrId: string) => {
