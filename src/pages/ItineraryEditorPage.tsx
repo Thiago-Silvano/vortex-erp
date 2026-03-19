@@ -527,12 +527,10 @@ export default function ItineraryEditorPage() {
         const otherPhotos = photos.filter((p: string) => p !== currentUrl);
         if (otherPhotos.length > 0) {
           const randomPhoto = otherPhotos[Math.floor(Math.random() * otherPhotos.length)];
-          updateAttraction(dayIdx, attrIdx, 'image_url', randomPhoto);
-          updateAttraction(dayIdx, attrIdx, 'image_position', null);
+          updateAndSaveAttraction(dayIdx, attrIdx, { image_url: randomPhoto, image_position: null });
           toast.success('Nova imagem carregada!');
         } else if (photos.length > 0) {
-          updateAttraction(dayIdx, attrIdx, 'image_url', photos[Math.floor(Math.random() * photos.length)]);
-          updateAttraction(dayIdx, attrIdx, 'image_position', null);
+          updateAndSaveAttraction(dayIdx, attrIdx, { image_url: photos[Math.floor(Math.random() * photos.length)], image_position: null });
           toast.success('Imagem atualizada!');
         } else {
           toast.info('Nenhuma imagem alternativa encontrada');
