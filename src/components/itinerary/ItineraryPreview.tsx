@@ -47,6 +47,10 @@ interface Itinerary {
   thank_you_font_style?: string;
   thank_you_font_effect?: string;
   thank_you_image_size?: number;
+  thank_you_title_font_color?: string;
+  thank_you_title_font_size?: number;
+  thank_you_title_font_style?: string;
+  thank_you_title_font_effect?: string;
 }
 
 interface ChecklistItem {
