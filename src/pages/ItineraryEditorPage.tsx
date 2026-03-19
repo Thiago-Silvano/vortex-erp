@@ -1115,7 +1115,7 @@ export default function ItineraryEditorPage() {
                               onValueChange={v => { updateItinerary('thank_you_text_align', v); setTimeout(saveItinerary, 100); }}
                             >
                               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                              <SelectContent>
+                              <SelectContent position="popper" side="top" className="max-h-[200px]">
                                 <SelectItem value="left">Esquerda</SelectItem>
                                 <SelectItem value="center">Centro</SelectItem>
                                 <SelectItem value="right">Direita</SelectItem>
