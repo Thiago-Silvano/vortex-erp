@@ -53,6 +53,7 @@ interface Attraction {
   city: string;
   description: string;
   image_url: string;
+  image_position: ImagePositionConfig | null;
   time: string;
   duration: string;
   observation: string;
