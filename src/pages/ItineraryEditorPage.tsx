@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -145,6 +145,9 @@ export default function ItineraryEditorPage() {
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [days, setDays] = useState<Day[]>([]);
+  const daysRef = useRef<Day[]>([]);
+  // Keep ref in sync
+  useEffect(() => { daysRef.current = days; }, [days]);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -412,10 +415,19 @@ export default function ItineraryEditorPage() {
     }
   };
 
-  const updateAttraction = (dayIdx: number, attrIdx: number, field: string, value: string) => {
+  const updateAttraction = (dayIdx: number, attrIdx: number, field: string, value: any) => {
     const updated = [...days];
     (updated[dayIdx].attractions[attrIdx] as any)[field] = value;
     setDays(updated);
+  };
+
+  const updateAndSaveAttraction = (dayIdx: number, attrIdx: number, fields: Record<string, any>) => {
+    const updated = [...days];
+    Object.entries(fields).forEach(([field, value]) => {
+      (updated[dayIdx].attractions[attrIdx] as any)[field] = value;
+    });
+    setDays(updated);
+    saveAttraction(updated[dayIdx].attractions[attrIdx]);
   };
 
   const saveAttraction = async (attr: Attraction) => {
@@ -432,6 +444,12 @@ export default function ItineraryEditorPage() {
       observation: attr.observation,
       category: attr.category,
     } as any).eq('id', attr.id);
+  };
+
+  const saveAttractionByIndex = (dayIdx: number, attrIdx: number) => {
+    const currentDays = daysRef.current;
+    const attr = currentDays[dayIdx]?.attractions[attrIdx];
+    if (attr) saveAttraction(attr);
   };
 
   const saveImagePosition = (config: ImagePositionConfig) => {
@@ -467,7 +485,7 @@ export default function ItineraryEditorPage() {
       if (error) throw error;
       const text = data?.description || data?.text || '';
       if (text) {
-        updateAttraction(dayIdx, attrIdx, 'description', text);
+        updateAndSaveAttraction(dayIdx, attrIdx, { description: text });
         toast.success('Descrição gerada!');
       }
     } catch {
@@ -490,7 +508,7 @@ export default function ItineraryEditorPage() {
         if (error) throw error;
         const photos = data?.photos || [];
         if (photos.length > 0) {
-          updateAttraction(dayIdx, attrIdx, 'image_url', photos[0]);
+          updateAndSaveAttraction(dayIdx, attrIdx, { image_url: photos[0], image_position: null });
           toast.success('Imagem encontrada!');
         } else {
           toast.info('Nenhuma imagem encontrada');
@@ -518,12 +536,10 @@ export default function ItineraryEditorPage() {
         const otherPhotos = photos.filter((p: string) => p !== currentUrl);
         if (otherPhotos.length > 0) {
           const randomPhoto = otherPhotos[Math.floor(Math.random() * otherPhotos.length)];
-          updateAttraction(dayIdx, attrIdx, 'image_url', randomPhoto);
-          updateAttraction(dayIdx, attrIdx, 'image_position', null);
+          updateAndSaveAttraction(dayIdx, attrIdx, { image_url: randomPhoto, image_position: null });
           toast.success('Nova imagem carregada!');
         } else if (photos.length > 0) {
-          updateAttraction(dayIdx, attrIdx, 'image_url', photos[Math.floor(Math.random() * photos.length)]);
-          updateAttraction(dayIdx, attrIdx, 'image_position', null);
+          updateAndSaveAttraction(dayIdx, attrIdx, { image_url: photos[Math.floor(Math.random() * photos.length)], image_position: null });
           toast.success('Imagem atualizada!');
         } else {
           toast.info('Nenhuma imagem alternativa encontrada');
@@ -548,8 +564,7 @@ export default function ItineraryEditorPage() {
     const { error } = await supabase.storage.from('quote-images').upload(path, file);
     if (error) { toast.error('Erro ao enviar imagem'); return; }
     const { data: urlData } = supabase.storage.from('quote-images').getPublicUrl(path);
-    updateAttraction(dayIdx, attrIdx, 'image_url', urlData.publicUrl);
-    updateAttraction(dayIdx, attrIdx, 'image_position', null);
+    updateAndSaveAttraction(dayIdx, attrIdx, { image_url: urlData.publicUrl, image_position: null });
     toast.success('Imagem enviada!');
   };
 
@@ -859,7 +874,7 @@ export default function ItineraryEditorPage() {
                               onSaveDay={saveDay}
                               onAddAttraction={addAttraction}
                               onUpdateAttraction={updateAttraction}
-                              onSaveAttraction={saveAttraction}
+                              onSaveAttraction={saveAttractionByIndex}
                               onRemoveAttraction={removeAttraction}
                               onGenerateDescription={generateDescription}
                               onSearchImage={searchImage}
@@ -963,7 +978,7 @@ export default function ItineraryEditorPage() {
           onClose={() => setAttrImageModal(null)}
           onSelect={(img: StockImage) => {
             if (attrImageModal) {
-              updateAttraction(attrImageModal.dayIdx, attrImageModal.attrIdx, 'image_url', img.url_full || img.url_download);
+              updateAndSaveAttraction(attrImageModal.dayIdx, attrImageModal.attrIdx, { image_url: img.url_full || img.url_download, image_position: null });
               setAttrImageModal(null);
               toast.success('Imagem selecionada!');
             }
@@ -1093,6 +1108,7 @@ function AttractionEditorBlock({
   dragListeners, dragAttributes,
 }: any) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const save = () => onSave(dayIdx, attrIdx);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1109,7 +1125,7 @@ function AttractionEditorBlock({
         <Input
           value={attr.name}
           onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'name', e.target.value)}
-          onBlur={() => onSave(attr)}
+          onBlur={save}
           placeholder="Nome da atração"
           className="h-8 font-medium"
         />
@@ -1120,16 +1136,16 @@ function AttractionEditorBlock({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-[10px]">Local</Label>
-          <Input value={attr.location} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'location', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" />
+          <Input value={attr.location} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'location', e.target.value)} onBlur={save} className="h-7 text-xs" />
         </div>
         <div>
           <Label className="text-[10px]">Cidade</Label>
-          <Input value={attr.city} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'city', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" />
+          <Input value={attr.city} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'city', e.target.value)} onBlur={save} className="h-7 text-xs" />
         </div>
       </div>
       <div>
         <Label className="text-[10px]">Categoria</Label>
-        <Select value={attr.category} onValueChange={(v: any) => { onUpdate(dayIdx, attrIdx, 'category', v); onSave({ ...attr, category: v }); }}>
+        <Select value={attr.category} onValueChange={(v: any) => { onUpdate(dayIdx, attrIdx, 'category', v); setTimeout(() => onSave(dayIdx, attrIdx), 50); }}>
           <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
@@ -1143,7 +1159,7 @@ function AttractionEditorBlock({
             <Sparkles className="h-3 w-3" /> IA
           </Button>
         </div>
-        <Textarea value={attr.description} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'description', e.target.value)} onBlur={() => onSave(attr)} rows={3} className="text-xs" />
+        <Textarea value={attr.description} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'description', e.target.value)} onBlur={save} rows={3} className="text-xs" />
       </div>
       <div>
         <div className="flex items-center justify-between mb-1">
@@ -1168,7 +1184,7 @@ function AttractionEditorBlock({
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
         </div>
-        <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={() => onSave(attr)} placeholder="URL da imagem" className="h-7 text-xs" />
+        <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={save} placeholder="URL da imagem" className="h-7 text-xs" />
         {attr.image_url && (
           <div
             className="mt-2 h-20 w-full overflow-hidden rounded cursor-pointer relative group"
@@ -1185,11 +1201,11 @@ function AttractionEditorBlock({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-[10px]">Horário</Label>
-          <Input value={attr.time} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'time', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" placeholder="Ex: 09:00" />
+          <Input value={attr.time} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'time', e.target.value)} onBlur={save} className="h-7 text-xs" placeholder="Ex: 09:00" />
         </div>
         <div>
           <Label className="text-[10px]">Duração</Label>
-          <Input value={attr.duration} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'duration', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" placeholder="Ex: 2h" />
+          <Input value={attr.duration} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'duration', e.target.value)} onBlur={save} className="h-7 text-xs" placeholder="Ex: 2h" />
         </div>
       </div>
     </div>
