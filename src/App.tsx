@@ -39,6 +39,8 @@ import ServicesCatalogPage from "./pages/ServicesCatalogPage";
 import BankAccountsPage from "./pages/BankAccountsPage";
 import BankReconciliationPage from "./pages/BankReconciliationPage";
 import BankStatementReportPage from "./pages/BankStatementReportPage";
+import ItinerariesPage from "./pages/ItinerariesPage";
+import ItineraryEditorPage from "./pages/ItineraryEditorPage";
 
 // Vistos pages
 import VistosDashboard from "./pages/vistos/VistosDashboard";
