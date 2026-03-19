@@ -332,6 +332,7 @@ export default function ItineraryEditorPage() {
         city: attr.city,
         description: attr.description,
         image_url: attr.image_url,
+        image_position: attr.image_position,
         time: attr.time,
         duration: attr.duration,
         observation: attr.observation,
