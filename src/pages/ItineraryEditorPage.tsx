@@ -553,6 +553,22 @@ export default function ItineraryEditorPage() {
     toast.success('Imagem enviada!');
   };
 
+  const uploadCoverImage = async (file: File) => {
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { toast.error('Arquivo muito grande (máx 5MB)'); return; }
+    if (!file.type.startsWith('image/')) { toast.error('Selecione um arquivo de imagem'); return; }
+    const ext = file.name.split('.').pop();
+    const path = `itinerary-covers/${id}/${Date.now()}.${ext}`;
+    toast.info('Enviando imagem...');
+    const { error } = await supabase.storage.from('quote-images').upload(path, file);
+    if (error) { toast.error('Erro ao enviar imagem'); return; }
+    const { data: urlData } = supabase.storage.from('quote-images').getPublicUrl(path);
+    if (itinerary) {
+      setItinerary({ ...itinerary, cover_image_url: urlData.publicUrl });
+      toast.success('Imagem de capa enviada!');
+    }
+  };
+
   const searchCoverImage = async () => {
     const query = destinations.map(d => d.name).filter(Boolean).join(' ') || itinerary?.title || '';
     if (!query) { toast.error('Adicione destinos ou título primeiro'); return; }
