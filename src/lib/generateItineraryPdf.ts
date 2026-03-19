@@ -80,14 +80,49 @@ function sanitize(text: string): string {
 
 async function loadImage(url: string): Promise<string | null> {
   if (!url) return null;
+
+  // Try fetch first (works for same-origin and CORS-enabled URLs)
   try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
+    const res = await fetch(url, { mode: 'cors' });
+    if (res.ok) {
+      const blob = await res.blob();
+      const dataUrl = await new Promise<string | null>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+      if (dataUrl) return dataUrl;
+    }
+  } catch {
+    // fetch failed, try img element fallback
+  }
+
+  // Fallback: load via <img> + canvas (handles more cross-origin cases)
+  try {
+    return await new Promise<string | null>((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+          } else {
+            resolve(null);
+          }
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      // Add cache-busting to avoid stale CORS preflight
+      const separator = url.includes('?') ? '&' : '?';
+      img.src = `${url}${separator}t=${Date.now()}`;
     });
   } catch {
     return null;
