@@ -101,7 +101,12 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
+        <div className="absolute inset-0 flex flex-col justify-between p-8 md:p-12">
+          {/* Logo top-left */}
+          <div>
+            <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[252px] opacity-90" />
+          </div>
+          {/* Title bottom */}
           <div className="space-y-3">
             {itinerary.subtitle && (
               <p className="text-white/70 text-sm tracking-[0.3em] uppercase font-light">{itinerary.subtitle}</p>
