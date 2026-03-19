@@ -250,7 +250,7 @@ export default function ItineraryEditorPage() {
     toast.success('Salvo!');
   }, [itinerary, id]);
 
-  const updateItinerary = (field: keyof Itinerary, value: string) => {
+  const updateItinerary = (field: keyof Itinerary, value: string | number) => {
     if (!itinerary) return;
     setItinerary({ ...itinerary, [field]: value });
   };
