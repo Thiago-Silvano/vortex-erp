@@ -1199,9 +1199,12 @@ export type Database = {
           thank_you_font_effect: string | null
           thank_you_font_size: number | null
           thank_you_font_style: string | null
+          thank_you_image_position: Json | null
           thank_you_image_size: number | null
           thank_you_image_url: string | null
           thank_you_text: string | null
+          thank_you_text_align: string | null
+          thank_you_title: string | null
           title: string
           token: string
           travel_date: string | null
@@ -1221,9 +1224,12 @@ export type Database = {
           thank_you_font_effect?: string | null
           thank_you_font_size?: number | null
           thank_you_font_style?: string | null
+          thank_you_image_position?: Json | null
           thank_you_image_size?: number | null
           thank_you_image_url?: string | null
           thank_you_text?: string | null
+          thank_you_text_align?: string | null
+          thank_you_title?: string | null
           title?: string
           token?: string
           travel_date?: string | null
@@ -1243,9 +1249,12 @@ export type Database = {
           thank_you_font_effect?: string | null
           thank_you_font_size?: number | null
           thank_you_font_style?: string | null
+          thank_you_image_position?: Json | null
           thank_you_image_size?: number | null
           thank_you_image_url?: string | null
           thank_you_text?: string | null
+          thank_you_text_align?: string | null
+          thank_you_title?: string | null
           title?: string
           token?: string
           travel_date?: string | null
