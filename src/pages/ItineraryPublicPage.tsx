@@ -8,6 +8,7 @@ export default function ItineraryPublicPage() {
   const [itinerary, setItinerary] = useState<any>(null);
   const [destinations, setDestinations] = useState<any[]>([]);
   const [days, setDays] = useState<any[]>([]);
+  const [checklist, setChecklist] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
