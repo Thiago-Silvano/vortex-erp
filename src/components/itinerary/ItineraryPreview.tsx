@@ -69,7 +69,7 @@ function paginateAttractions(attractions: Attraction[]): Attraction[][] {
   return pages.length > 0 ? pages : [[]];
 }
 
-export default function ItineraryPreview({ itinerary, destinations, days }: Props) {
+export default function ItineraryPreview({ itinerary, destinations, days, checklist = [] }: Props) {
   const destinationNames = destinations.map(d => d.name).filter(Boolean);
 
   return (
