@@ -814,6 +814,17 @@ export default function ItineraryEditorPage() {
           pexelsKey={pexelsKey}
         />
       )}
+
+      {/* Image Position Editor */}
+      {positionEditor && days[positionEditor.dayIdx]?.attractions[positionEditor.attrIdx]?.image_url && (
+        <ImagePositionEditor
+          open={!!positionEditor}
+          onOpenChange={(open) => { if (!open) setPositionEditor(null); }}
+          imageUrl={days[positionEditor.dayIdx].attractions[positionEditor.attrIdx].image_url}
+          initialConfig={days[positionEditor.dayIdx].attractions[positionEditor.attrIdx].image_position}
+          onSave={saveImagePosition}
+        />
+      )}
     </div>
   );
 }
