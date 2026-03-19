@@ -1,0 +1,1 @@
+ALTER TABLE public.itinerary_attractions ADD COLUMN IF NOT EXISTS image_position jsonb DEFAULT null;

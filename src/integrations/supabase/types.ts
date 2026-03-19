@@ -1256,6 +1256,7 @@ export type Database = {
           description: string | null
           duration: string | null
           id: string
+          image_position: Json | null
           image_url: string | null
           location: string | null
           name: string
@@ -1272,6 +1273,7 @@ export type Database = {
           description?: string | null
           duration?: string | null
           id?: string
+          image_position?: Json | null
           image_url?: string | null
           location?: string | null
           name?: string
@@ -1288,6 +1290,7 @@ export type Database = {
           description?: string | null
           duration?: string | null
           id?: string
+          image_position?: Json | null
           image_url?: string | null
           location?: string | null
           name?: string
