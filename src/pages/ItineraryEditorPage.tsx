@@ -553,6 +553,22 @@ export default function ItineraryEditorPage() {
     toast.success('Imagem enviada!');
   };
 
+  const uploadCoverImage = async (file: File) => {
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { toast.error('Arquivo muito grande (máx 5MB)'); return; }
+    if (!file.type.startsWith('image/')) { toast.error('Selecione um arquivo de imagem'); return; }
+    const ext = file.name.split('.').pop();
+    const path = `itinerary-covers/${id}/${Date.now()}.${ext}`;
+    toast.info('Enviando imagem...');
+    const { error } = await supabase.storage.from('quote-images').upload(path, file);
+    if (error) { toast.error('Erro ao enviar imagem'); return; }
+    const { data: urlData } = supabase.storage.from('quote-images').getPublicUrl(path);
+    if (itinerary) {
+      setItinerary({ ...itinerary, cover_image_url: urlData.publicUrl });
+      toast.success('Imagem de capa enviada!');
+    }
+  };
+
   const searchCoverImage = async () => {
     const query = destinations.map(d => d.name).filter(Boolean).join(' ') || itinerary?.title || '';
     if (!query) { toast.error('Adicione destinos ou título primeiro'); return; }
@@ -736,10 +752,18 @@ export default function ItineraryEditorPage() {
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <Label className="text-xs">Imagem de Capa (URL)</Label>
-                          <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={searchCoverImage} disabled={searchingCoverImage}>
-                            {searchingCoverImage ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />} Buscar
-                          </Button>
+                          <Label className="text-xs">Imagem de Capa</Label>
+                          <div className="flex items-center gap-1">
+                            <label className="cursor-pointer">
+                              <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" asChild>
+                                <span><Upload className="h-3 w-3" /> Upload</span>
+                              </Button>
+                              <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadCoverImage(f); e.target.value = ''; } }} />
+                            </label>
+                            <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={searchCoverImage} disabled={searchingCoverImage}>
+                              {searchingCoverImage ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Buscar
+                            </Button>
+                          </div>
                         </div>
                         <Input value={itinerary.cover_image_url} onChange={e => updateItinerary('cover_image_url', e.target.value)} onBlur={saveItinerary} placeholder="URL da imagem" />
                         {itinerary.cover_image_url && (
