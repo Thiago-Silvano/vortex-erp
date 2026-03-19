@@ -950,6 +950,26 @@ export default function ItineraryEditorPage() {
         />
       )}
 
+      {/* Destination image search modal */}
+      {destImageModal !== null && (
+        <ImageSearchModal
+          open={destImageModal !== null}
+          onClose={() => setDestImageModal(null)}
+          onSelect={(img: StockImage) => {
+            if (destImageModal !== null) {
+              const url = img.url_full || img.url_download;
+              updateDestination(destImageModal, 'image_url', url);
+              saveDestination({ ...destinations[destImageModal], image_url: url });
+              setDestImageModal(null);
+              toast.success('Imagem selecionada!');
+            }
+          }}
+          initialQuery={destImageModal !== null ? destinations[destImageModal]?.name || '' : ''}
+          unsplashKey={unsplashKey}
+          pexelsKey={pexelsKey}
+        />
+      )}
+
       {/* Image Position Editor */}
       {positionEditor && days[positionEditor.dayIdx]?.attractions[positionEditor.attrIdx]?.image_url && (
         <ImagePositionEditor
