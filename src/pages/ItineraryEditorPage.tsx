@@ -758,6 +758,8 @@ export default function ItineraryEditorPage() {
                               onRemoveAttraction={removeAttraction}
                               onGenerateDescription={generateDescription}
                               onSearchImage={searchImage}
+                              onRefreshImage={refreshImage}
+                              onUploadImage={uploadAttractionImage}
                               onPositionEdit={(dI: number, aI: number) => setPositionEditor({ dayIdx: dI, attrIdx: aI })}
                               sensors={sensors}
                               onAttractionDragEnd={(e) => handleAttractionDragEnd(e, dayIdx)}
