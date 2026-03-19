@@ -282,21 +282,47 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
       </div>
 
       {/* ===== THANK YOU PAGE ===== */}
-      <div id="section-thankyou" className="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div className="relative" style={{ aspectRatio: '16/8' }}>
-          {itinerary.thank_you_image_url ? (
-            <img src={itinerary.thank_you_image_url} alt="Thank you" className="absolute inset-0 w-full h-full object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-white to-blue-50" />
-          )}
-          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-            <div className="text-center max-w-md px-6">
+      {(() => {
+        const fontColor = itinerary.thank_you_font_color || '#374151';
+        const fontSize = itinerary.thank_you_font_size || 16;
+        const fontStyle = itinerary.thank_you_font_style || 'normal';
+        const fontEffect = itinerary.thank_you_font_effect || 'none';
+        const imageSize = itinerary.thank_you_image_size || 100;
+
+        const textStyle: React.CSSProperties = {
+          color: fontColor,
+          fontSize: `${fontSize}px`,
+          fontStyle: fontStyle === 'italic' ? 'italic' : 'normal',
+          fontWeight: fontStyle === 'bold' ? 'bold' : fontStyle === 'bold-italic' ? 'bold' : 'normal',
+          ...(fontStyle === 'bold-italic' && { fontStyle: 'italic' as const }),
+          textShadow: fontEffect === 'shadow' ? '2px 2px 4px rgba(0,0,0,0.3)' : fontEffect === 'glow' ? '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.4)' : 'none',
+          letterSpacing: fontEffect === 'spaced' ? '0.15em' : 'normal',
+        };
+
+        return (
+          <div id="section-thankyou" className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="flex flex-col items-center py-12 px-8">
               <p className="text-xs tracking-[0.3em] uppercase text-amber-600 font-semibold mb-4">Obrigado</p>
-              <p className="text-gray-700 leading-relaxed">{itinerary.thank_you_text || 'Obrigado por escolher viajar conosco!'}</p>
+              <p className="leading-relaxed text-center max-w-lg mb-8" style={textStyle}>
+                {itinerary.thank_you_text || 'Obrigado por escolher viajar conosco!'}
+              </p>
+              {itinerary.thank_you_image_url && (
+                <div className="w-full flex justify-center">
+                  <img
+                    src={itinerary.thank_you_image_url}
+                    alt="Thank you"
+                    className="rounded-xl object-cover"
+                    style={{ width: `${imageSize}%`, maxHeight: '400px' }}
+                  />
+                </div>
+              )}
+              {!itinerary.thank_you_image_url && (
+                <div className="w-full rounded-xl bg-gradient-to-br from-amber-50 via-white to-blue-50" style={{ height: '120px' }} />
+              )}
             </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
     </div>
   );
 }

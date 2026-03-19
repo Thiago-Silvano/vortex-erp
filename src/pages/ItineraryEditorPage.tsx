@@ -943,6 +943,77 @@ export default function ItineraryEditorPage() {
                           rows={4}
                         />
                       </div>
+
+                      {/* Font customization */}
+                      <div className="border border-border rounded-lg p-3 space-y-3 bg-muted/30">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Fonte do Texto</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Cor</Label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={itinerary.thank_you_font_color || '#374151'}
+                                onChange={e => updateItinerary('thank_you_font_color', e.target.value)}
+                                onBlur={saveItinerary}
+                                className="h-8 w-10 rounded border border-border cursor-pointer"
+                              />
+                              <Input
+                                value={itinerary.thank_you_font_color || '#374151'}
+                                onChange={e => updateItinerary('thank_you_font_color', e.target.value)}
+                                onBlur={saveItinerary}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Tamanho ({itinerary.thank_you_font_size || 16}px)</Label>
+                            <input
+                              type="range"
+                              min={10}
+                              max={36}
+                              value={itinerary.thank_you_font_size || 16}
+                              onChange={e => updateItinerary('thank_you_font_size', Number(e.target.value))}
+                              onMouseUp={saveItinerary}
+                              onTouchEnd={saveItinerary}
+                              className="w-full mt-1"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Estilo</Label>
+                            <Select
+                              value={itinerary.thank_you_font_style || 'normal'}
+                              onValueChange={v => { updateItinerary('thank_you_font_style', v); setTimeout(saveItinerary, 100); }}
+                            >
+                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="bold">Negrito</SelectItem>
+                                <SelectItem value="italic">Itálico</SelectItem>
+                                <SelectItem value="bold-italic">Negrito Itálico</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Efeito</Label>
+                            <Select
+                              value={itinerary.thank_you_font_effect || 'none'}
+                              onValueChange={v => { updateItinerary('thank_you_font_effect', v); setTimeout(saveItinerary, 100); }}
+                            >
+                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">Nenhum</SelectItem>
+                                <SelectItem value="shadow">Sombra</SelectItem>
+                                <SelectItem value="glow">Brilho</SelectItem>
+                                <SelectItem value="spaced">Espaçado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <Label className="text-xs">Imagem Institucional</Label>
@@ -960,6 +1031,23 @@ export default function ItineraryEditorPage() {
                           placeholder="URL da imagem"
                         />
                       </div>
+
+                      {/* Image size slider */}
+                      {itinerary.thank_you_image_url && (
+                        <div>
+                          <Label className="text-xs">Tamanho da Imagem ({itinerary.thank_you_image_size || 100}%)</Label>
+                          <input
+                            type="range"
+                            min={20}
+                            max={100}
+                            value={itinerary.thank_you_image_size || 100}
+                            onChange={e => updateItinerary('thank_you_image_size', Number(e.target.value))}
+                            onMouseUp={saveItinerary}
+                            onTouchEnd={saveItinerary}
+                            className="w-full mt-1"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
