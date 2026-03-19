@@ -239,6 +239,11 @@ export default function ItineraryEditorPage() {
       cover_image_url: itinerary.cover_image_url,
       thank_you_text: itinerary.thank_you_text,
       thank_you_image_url: itinerary.thank_you_image_url,
+      thank_you_font_color: itinerary.thank_you_font_color,
+      thank_you_font_size: itinerary.thank_you_font_size,
+      thank_you_font_style: itinerary.thank_you_font_style,
+      thank_you_font_effect: itinerary.thank_you_font_effect,
+      thank_you_image_size: itinerary.thank_you_image_size,
       updated_at: new Date().toISOString(),
     } as any).eq('id', id);
     setSaving(false);
