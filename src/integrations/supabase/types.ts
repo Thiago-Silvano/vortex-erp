@@ -1195,6 +1195,11 @@ export type Database = {
           short_id: string
           status: string
           subtitle: string | null
+          thank_you_font_color: string | null
+          thank_you_font_effect: string | null
+          thank_you_font_size: number | null
+          thank_you_font_style: string | null
+          thank_you_image_size: number | null
           thank_you_image_url: string | null
           thank_you_text: string | null
           title: string
@@ -1212,6 +1217,11 @@ export type Database = {
           short_id?: string
           status?: string
           subtitle?: string | null
+          thank_you_font_color?: string | null
+          thank_you_font_effect?: string | null
+          thank_you_font_size?: number | null
+          thank_you_font_style?: string | null
+          thank_you_image_size?: number | null
           thank_you_image_url?: string | null
           thank_you_text?: string | null
           title?: string
@@ -1229,6 +1239,11 @@ export type Database = {
           short_id?: string
           status?: string
           subtitle?: string | null
+          thank_you_font_color?: string | null
+          thank_you_font_effect?: string | null
+          thank_you_font_size?: number | null
+          thank_you_font_style?: string | null
+          thank_you_image_size?: number | null
           thank_you_image_url?: string | null
           thank_you_text?: string | null
           title?: string
