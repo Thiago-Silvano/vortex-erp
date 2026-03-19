@@ -192,11 +192,11 @@ function AppSidebar() {
     return (
       <SidebarGroup>
         <Collapsible defaultOpen={isActive}>
-          <CollapsibleTrigger className="flex items-center gap-2.5 px-4 py-2 w-full text-sidebar-foreground/40 text-[11px] uppercase tracking-widest font-semibold hover:text-sidebar-foreground/70 transition-colors">
-            {React.createElement(icon, { className: 'h-3.5 w-3.5' })}
+          <CollapsibleTrigger className="flex items-center gap-2.5 px-4 py-2.5 w-full text-muted-foreground text-[12px] uppercase tracking-widest font-semibold hover:text-foreground transition-colors">
+            {React.createElement(icon, { className: 'h-4 w-4' })}
             {!collapsed && <>
               <span>{label}</span>
-              <ChevronDown className="h-3 w-3 ml-auto transition-transform" />
+              <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform" />
             </>}
           </CollapsibleTrigger>
           <CollapsibleContent>
