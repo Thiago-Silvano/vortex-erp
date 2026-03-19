@@ -263,6 +263,7 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
       )}
 
       {/* ===== MAP PAGE ===== */}
+      <div id="section-map">
       <ItineraryMapSection
         destinations={destinations}
         attractions={days.flatMap(d => d.attractions).filter(a => a.name)}
