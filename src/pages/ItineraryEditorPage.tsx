@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import {
   ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, MapPin, Sparkles,
   ImageIcon, GripVertical, Save, Eye, FileDown, ExternalLink, Copy, Search, Loader2, Move,
+  RefreshCw, Upload,
 } from 'lucide-react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import ItineraryPreview from '@/components/itinerary/ItineraryPreview';
@@ -451,6 +452,56 @@ export default function ItineraryEditorPage() {
     }
   };
 
+  const refreshImage = async (dayIdx: number, attrIdx: number) => {
+    const attr = days[dayIdx].attractions[attrIdx];
+    if (!attr.name) { toast.error('Preencha o nome da atração primeiro'); return; }
+    toast.info('Buscando outra imagem...');
+    try {
+      if (googleMapsApiKey) {
+        const { data, error } = await supabase.functions.invoke('google-places', {
+          body: { action: 'search_photos', query: `${attr.name} ${attr.location || attr.city}`.trim(), apiKey: googleMapsApiKey },
+        });
+        if (error) throw error;
+        const photos = (data?.photos || []) as string[];
+        const currentUrl = attr.image_url;
+        const otherPhotos = photos.filter((p: string) => p !== currentUrl);
+        if (otherPhotos.length > 0) {
+          const randomPhoto = otherPhotos[Math.floor(Math.random() * otherPhotos.length)];
+          updateAttraction(dayIdx, attrIdx, 'image_url', randomPhoto);
+          updateAttraction(dayIdx, attrIdx, 'image_position', null);
+          toast.success('Nova imagem carregada!');
+        } else if (photos.length > 0) {
+          updateAttraction(dayIdx, attrIdx, 'image_url', photos[Math.floor(Math.random() * photos.length)]);
+          updateAttraction(dayIdx, attrIdx, 'image_position', null);
+          toast.success('Imagem atualizada!');
+        } else {
+          toast.info('Nenhuma imagem alternativa encontrada');
+        }
+      } else if (unsplashKey || pexelsKey) {
+        setAttrImageModal({ dayIdx, attrIdx });
+      } else {
+        toast.error('Configure API Keys nas configurações da agência');
+      }
+    } catch {
+      toast.error('Erro ao buscar imagem');
+    }
+  };
+
+  const uploadAttractionImage = async (dayIdx: number, attrIdx: number, file: File) => {
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { toast.error('Arquivo muito grande (máx 5MB)'); return; }
+    if (!file.type.startsWith('image/')) { toast.error('Selecione um arquivo de imagem'); return; }
+    const ext = file.name.split('.').pop();
+    const path = `itinerary-attractions/${id}/${Date.now()}.${ext}`;
+    toast.info('Enviando imagem...');
+    const { error } = await supabase.storage.from('quote-images').upload(path, file);
+    if (error) { toast.error('Erro ao enviar imagem'); return; }
+    const { data: urlData } = supabase.storage.from('quote-images').getPublicUrl(path);
+    updateAttraction(dayIdx, attrIdx, 'image_url', urlData.publicUrl);
+    updateAttraction(dayIdx, attrIdx, 'image_position', null);
+    toast.success('Imagem enviada!');
+  };
+
   const searchCoverImage = async () => {
     const query = destinations.map(d => d.name).filter(Boolean).join(' ') || itinerary?.title || '';
     if (!query) { toast.error('Adicione destinos ou título primeiro'); return; }
@@ -707,6 +758,8 @@ export default function ItineraryEditorPage() {
                               onRemoveAttraction={removeAttraction}
                               onGenerateDescription={generateDescription}
                               onSearchImage={searchImage}
+                              onRefreshImage={refreshImage}
+                              onUploadImage={uploadAttractionImage}
                               onPositionEdit={(dI: number, aI: number) => setPositionEditor({ dayIdx: dI, attrIdx: aI })}
                               sensors={sensors}
                               onAttractionDragEnd={(e) => handleAttractionDragEnd(e, dayIdx)}
@@ -834,7 +887,7 @@ export default function ItineraryEditorPage() {
 function DayEditorBlock({
   day, dayIdx, expanded, onToggle, onRemove, onDuplicate,
   onUpdateDay, onSaveDay, onAddAttraction, onUpdateAttraction,
-  onSaveAttraction, onRemoveAttraction, onGenerateDescription, onSearchImage, onPositionEdit,
+  onSaveAttraction, onRemoveAttraction, onGenerateDescription, onSearchImage, onRefreshImage, onUploadImage, onPositionEdit,
   sensors, onAttractionDragEnd,
   dragListeners, dragAttributes,
 }: any) {
@@ -894,6 +947,8 @@ function DayEditorBlock({
                       onRemove={onRemoveAttraction}
                       onGenerateDescription={onGenerateDescription}
                       onSearchImage={onSearchImage}
+                      onRefreshImage={onRefreshImage}
+                      onUploadImage={onUploadImage}
                       onPositionEdit={onPositionEdit}
                     />
                   </SortableAttractionItem>
@@ -909,9 +964,19 @@ function DayEditorBlock({
 
 // ===== Attraction Editor Block =====
 function AttractionEditorBlock({
-  attr, dayIdx, attrIdx, onUpdate, onSave, onRemove, onGenerateDescription, onSearchImage, onPositionEdit,
+  attr, dayIdx, attrIdx, onUpdate, onSave, onRemove, onGenerateDescription, onSearchImage, onRefreshImage, onUploadImage, onPositionEdit,
   dragListeners, dragAttributes,
 }: any) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onUploadImage(dayIdx, attrIdx, file);
+      e.target.value = '';
+    }
+  };
+
   return (
     <div className="p-3 border rounded-md space-y-2 bg-background">
       <div className="flex items-center gap-2">
@@ -960,13 +1025,22 @@ function AttractionEditorBlock({
           <Label className="text-[10px]">Imagem</Label>
           <div className="flex gap-1">
             {attr.image_url && (
-              <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={() => onPositionEdit(dayIdx, attrIdx)} title="Ajustar posição">
-                <Move className="h-3 w-3" /> Posicionar
-              </Button>
+              <>
+                <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={() => onPositionEdit(dayIdx, attrIdx)} title="Ajustar posição">
+                  <Move className="h-3 w-3" /> Posicionar
+                </Button>
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => onRefreshImage(dayIdx, attrIdx)} title="Buscar outra imagem">
+                  <RefreshCw className="h-3 w-3" />
+                </Button>
+              </>
             )}
             <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={() => onSearchImage(dayIdx, attrIdx)}>
               <ImageIcon className="h-3 w-3" /> Buscar
             </Button>
+            <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-primary" onClick={() => fileInputRef.current?.click()} title="Enviar imagem manualmente">
+              <Upload className="h-3 w-3" />
+            </Button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
         </div>
         <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={() => onSave(attr)} placeholder="URL da imagem" className="h-7 text-xs" />
