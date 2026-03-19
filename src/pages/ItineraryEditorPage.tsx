@@ -446,7 +446,7 @@ export default function ItineraryEditorPage() {
       setSearchingCoverImage(true);
       try {
         const { data, error } = await supabase.functions.invoke('google-places', {
-          body: { query, type: 'photo' },
+          body: { action: 'search_photos', query, apiKey: googleMapsApiKey },
         });
         if (error) throw error;
         const url = data?.photoUrl || data?.photo_url || '';
