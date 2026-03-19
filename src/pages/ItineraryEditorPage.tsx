@@ -964,9 +964,19 @@ function DayEditorBlock({
 
 // ===== Attraction Editor Block =====
 function AttractionEditorBlock({
-  attr, dayIdx, attrIdx, onUpdate, onSave, onRemove, onGenerateDescription, onSearchImage, onPositionEdit,
+  attr, dayIdx, attrIdx, onUpdate, onSave, onRemove, onGenerateDescription, onSearchImage, onRefreshImage, onUploadImage, onPositionEdit,
   dragListeners, dragAttributes,
 }: any) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onUploadImage(dayIdx, attrIdx, file);
+      e.target.value = '';
+    }
+  };
+
   return (
     <div className="p-3 border rounded-md space-y-2 bg-background">
       <div className="flex items-center gap-2">
@@ -1015,13 +1025,22 @@ function AttractionEditorBlock({
           <Label className="text-[10px]">Imagem</Label>
           <div className="flex gap-1">
             {attr.image_url && (
-              <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={() => onPositionEdit(dayIdx, attrIdx)} title="Ajustar posição">
-                <Move className="h-3 w-3" /> Posicionar
-              </Button>
+              <>
+                <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={() => onPositionEdit(dayIdx, attrIdx)} title="Ajustar posição">
+                  <Move className="h-3 w-3" /> Posicionar
+                </Button>
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => onRefreshImage(dayIdx, attrIdx)} title="Buscar outra imagem">
+                  <RefreshCw className="h-3 w-3" />
+                </Button>
+              </>
             )}
             <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={() => onSearchImage(dayIdx, attrIdx)}>
               <ImageIcon className="h-3 w-3" /> Buscar
             </Button>
+            <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-primary" onClick={() => fileInputRef.current?.click()} title="Enviar imagem manualmente">
+              <Upload className="h-3 w-3" />
+            </Button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
         </div>
         <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={() => onSave(attr)} placeholder="URL da imagem" className="h-7 text-xs" />
