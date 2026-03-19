@@ -131,21 +131,3 @@ export function getStaticMapUrl(destinations: { name: string }[], attractions: {
   if (!googleMapsApiKey || (destNames.length === 0 && attrLocs.length === 0)) return null;
   return buildStaticUrl(destNames, attrLocs, googleMapsApiKey);
 }
-  const destNames = destinations.map(d => d.name).filter(Boolean);
-  const attrLocs = attractions.map(a => [a.name, a.location, a.city].filter(Boolean).join(', ')).filter(Boolean);
-  if (!googleMapsApiKey || (destNames.length === 0 && attrLocs.length === 0)) return null;
-
-  const allMarkers: string[] = [];
-  destNames.forEach((d, i) => {
-    allMarkers.push(`markers=color:blue%7Clabel:${i + 1}%7C${encodeURIComponent(d)}`);
-  });
-  attrLocs.forEach((loc) => {
-    allMarkers.push(`markers=color:red%7Csize:small%7C${encodeURIComponent(loc)}`);
-  });
-
-  const markersStr = allMarkers.join('&');
-  const pathPlaces = destNames.length >= 2
-    ? `&path=color:0x0000ff80|weight:3|${destNames.map(d => encodeURIComponent(d)).join('|')}`
-    : '';
-  return `https://maps.googleapis.com/maps/api/staticmap?size=800x500&maptype=roadmap&${markersStr}${pathPlaces}&key=${googleMapsApiKey}`;
-}
