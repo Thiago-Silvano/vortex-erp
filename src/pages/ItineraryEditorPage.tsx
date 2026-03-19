@@ -580,7 +580,8 @@ export default function ItineraryEditorPage() {
     setGeneratingPdf(true);
     toast.info('Gerando PDF...');
     try {
-      const mapUrl = googleMapsApiKey ? getStaticMapUrl(destinations, googleMapsApiKey) || undefined : undefined;
+      const allAttractions = days.flatMap(d => d.attractions).filter(a => a.name);
+      const mapUrl = googleMapsApiKey ? getStaticMapUrl(destinations, allAttractions, googleMapsApiKey) || undefined : undefined;
       const pdf = await generateItineraryPdf(itinerary, destinations, days, checklist, mapUrl);
       pdf.save(`${itinerary.title || 'roteiro'}.pdf`);
       toast.success('PDF gerado com sucesso!');
