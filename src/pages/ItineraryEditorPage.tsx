@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import ItineraryPreview from '@/components/itinerary/ItineraryPreview';
+import ChecklistEditor from '@/components/itinerary/ChecklistEditor';
 
 interface Destination {
   id: string;
