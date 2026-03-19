@@ -325,13 +325,13 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
           textAlign,
         };
 
-        const alignItems = textAlign === 'left' ? 'items-start' : textAlign === 'right' ? 'items-end' : 'items-center';
+        const alignItems = textAlign === 'left' ? 'items-start' : textAlign === 'right' ? 'items-end' : textAlign === 'justify' ? 'items-stretch' : 'items-center';
 
         return (
           <div id="section-thankyou" className="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div className={`flex flex-col ${alignItems} py-12 px-8`}>
               <p className="mb-4" style={titleStyle}>{title}</p>
-              <p className={`leading-relaxed max-w-lg mb-8 ${textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'}`} style={textStyle}>
+              <p className="leading-relaxed max-w-lg mb-8 w-full" style={textStyle}>
                 {itinerary.thank_you_text || 'Obrigado por escolher viajar conosco!'}
               </p>
               {itinerary.thank_you_image_url && (
