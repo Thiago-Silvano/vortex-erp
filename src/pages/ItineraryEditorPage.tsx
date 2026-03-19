@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import {
   ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, MapPin, Sparkles,
   ImageIcon, GripVertical, Save, Eye, FileDown, ExternalLink, Copy, Search, Loader2, Move,
+  RefreshCw, Upload,
 } from 'lucide-react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import ItineraryPreview from '@/components/itinerary/ItineraryPreview';
