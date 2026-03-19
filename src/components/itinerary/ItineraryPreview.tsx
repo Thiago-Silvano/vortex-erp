@@ -291,31 +291,36 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
         const fontStyle = itinerary.thank_you_font_style || 'normal';
         const fontEffect = itinerary.thank_you_font_effect || 'none';
         const imageSize = itinerary.thank_you_image_size || 100;
+        const textAlign = (itinerary.thank_you_text_align || 'center') as 'left' | 'center' | 'right';
+        const title = itinerary.thank_you_title || 'Obrigado';
+        const imgPos = itinerary.thank_you_image_position as ImagePositionConfig | null;
 
         const textStyle: React.CSSProperties = {
           color: fontColor,
           fontSize: `${fontSize}px`,
-          fontStyle: fontStyle === 'italic' ? 'italic' : 'normal',
-          fontWeight: fontStyle === 'bold' ? 'bold' : fontStyle === 'bold-italic' ? 'bold' : 'normal',
-          ...(fontStyle === 'bold-italic' && { fontStyle: 'italic' as const }),
+          fontStyle: fontStyle === 'italic' || fontStyle === 'bold-italic' ? 'italic' : 'normal',
+          fontWeight: fontStyle === 'bold' || fontStyle === 'bold-italic' ? 'bold' : 'normal',
           textShadow: fontEffect === 'shadow' ? '2px 2px 4px rgba(0,0,0,0.3)' : fontEffect === 'glow' ? '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.4)' : 'none',
           letterSpacing: fontEffect === 'spaced' ? '0.15em' : 'normal',
+          textAlign,
         };
+
+        const alignItems = textAlign === 'left' ? 'items-start' : textAlign === 'right' ? 'items-end' : 'items-center';
 
         return (
           <div id="section-thankyou" className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="flex flex-col items-center py-12 px-8">
-              <p className="text-xs tracking-[0.3em] uppercase text-amber-600 font-semibold mb-4">Obrigado</p>
-              <p className="leading-relaxed text-center max-w-lg mb-8" style={textStyle}>
+            <div className={`flex flex-col ${alignItems} py-12 px-8`}>
+              <p className="text-xs tracking-[0.3em] uppercase text-amber-600 font-semibold mb-4">{title}</p>
+              <p className={`leading-relaxed max-w-lg mb-8 ${textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'}`} style={textStyle}>
                 {itinerary.thank_you_text || 'Obrigado por escolher viajar conosco!'}
               </p>
               {itinerary.thank_you_image_url && (
-                <div className="w-full flex justify-center">
+                <div className="w-full flex justify-center overflow-hidden rounded-xl" style={{ maxHeight: '400px' }}>
                   <img
                     src={itinerary.thank_you_image_url}
                     alt="Thank you"
-                    className="rounded-xl object-cover"
-                    style={{ width: `${imageSize}%`, maxHeight: '400px' }}
+                    className="rounded-xl"
+                    style={{ width: `${imageSize}%`, maxHeight: '400px', ...getImageStyle(imgPos) }}
                   />
                 </div>
               )}
