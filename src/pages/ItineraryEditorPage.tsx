@@ -449,9 +449,9 @@ export default function ItineraryEditorPage() {
           body: { action: 'search_photos', query, apiKey: googleMapsApiKey },
         });
         if (error) throw error;
-        const url = data?.photoUrl || data?.photo_url || '';
-        if (url && itinerary) {
-          setItinerary({ ...itinerary, cover_image_url: url });
+        const photos = data?.photos || [];
+        if (photos.length > 0 && itinerary) {
+          setItinerary({ ...itinerary, cover_image_url: photos[0] });
           toast.success('Imagem de capa encontrada!');
         } else {
           toast.info('Nenhuma imagem encontrada');
