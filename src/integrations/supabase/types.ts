@@ -1184,6 +1184,251 @@ export type Database = {
           },
         ]
       }
+      itineraries: {
+        Row: {
+          client_name: string | null
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string | null
+          id: string
+          short_id: string
+          status: string
+          subtitle: string | null
+          thank_you_image_url: string | null
+          thank_you_text: string | null
+          title: string
+          token: string
+          travel_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          id?: string
+          short_id?: string
+          status?: string
+          subtitle?: string | null
+          thank_you_image_url?: string | null
+          thank_you_text?: string | null
+          title?: string
+          token?: string
+          travel_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          id?: string
+          short_id?: string
+          status?: string
+          subtitle?: string | null
+          thank_you_image_url?: string | null
+          thank_you_text?: string | null
+          title?: string
+          token?: string
+          travel_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itineraries_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_attractions: {
+        Row: {
+          address: string | null
+          category: string
+          city: string | null
+          created_at: string
+          day_id: string
+          description: string | null
+          duration: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          name: string
+          observation: string | null
+          sort_order: number
+          time: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string
+          city?: string | null
+          created_at?: string
+          day_id: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          name?: string
+          observation?: string | null
+          sort_order?: number
+          time?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string
+          city?: string | null
+          created_at?: string
+          day_id?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          name?: string
+          observation?: string | null
+          sort_order?: number
+          time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_attractions_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "itinerary_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_checklist: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          item: string
+          itinerary_id: string
+          sort_order: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          item?: string
+          itinerary_id: string
+          sort_order?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          item?: string
+          itinerary_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_checklist_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_days: {
+        Row: {
+          created_at: string
+          day_number: number
+          description: string | null
+          destination_id: string | null
+          id: string
+          itinerary_id: string
+          notes: string | null
+          sort_order: number
+          subtitle: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_number?: number
+          description?: string | null
+          destination_id?: string | null
+          id?: string
+          itinerary_id: string
+          notes?: string | null
+          sort_order?: number
+          subtitle?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_number?: number
+          description?: string | null
+          destination_id?: string | null
+          id?: string
+          itinerary_id?: string
+          notes?: string | null
+          sort_order?: number
+          subtitle?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_days_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "itinerary_destinations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itinerary_days_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itinerary_destinations: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          itinerary_id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          itinerary_id: string
+          name?: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          itinerary_id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_destinations_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
