@@ -412,10 +412,19 @@ export default function ItineraryEditorPage() {
     }
   };
 
-  const updateAttraction = (dayIdx: number, attrIdx: number, field: string, value: string) => {
+  const updateAttraction = (dayIdx: number, attrIdx: number, field: string, value: any) => {
     const updated = [...days];
     (updated[dayIdx].attractions[attrIdx] as any)[field] = value;
     setDays(updated);
+  };
+
+  const updateAndSaveAttraction = (dayIdx: number, attrIdx: number, fields: Record<string, any>) => {
+    const updated = [...days];
+    Object.entries(fields).forEach(([field, value]) => {
+      (updated[dayIdx].attractions[attrIdx] as any)[field] = value;
+    });
+    setDays(updated);
+    saveAttraction(updated[dayIdx].attractions[attrIdx]);
   };
 
   const saveAttraction = async (attr: Attraction) => {
