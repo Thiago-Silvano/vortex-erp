@@ -909,7 +909,7 @@ function DayEditorBlock({
 
 // ===== Attraction Editor Block =====
 function AttractionEditorBlock({
-  attr, dayIdx, attrIdx, onUpdate, onSave, onRemove, onGenerateDescription, onSearchImage,
+  attr, dayIdx, attrIdx, onUpdate, onSave, onRemove, onGenerateDescription, onSearchImage, onPositionEdit,
   dragListeners, dragAttributes,
 }: any) {
   return (
@@ -958,13 +958,29 @@ function AttractionEditorBlock({
       <div>
         <div className="flex items-center justify-between mb-1">
           <Label className="text-[10px]">Imagem</Label>
-          <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={() => onSearchImage(dayIdx, attrIdx)}>
-            <ImageIcon className="h-3 w-3" /> Buscar
-          </Button>
+          <div className="flex gap-1">
+            {attr.image_url && (
+              <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={() => onPositionEdit(dayIdx, attrIdx)} title="Ajustar posição">
+                <Move className="h-3 w-3" /> Posicionar
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={() => onSearchImage(dayIdx, attrIdx)}>
+              <ImageIcon className="h-3 w-3" /> Buscar
+            </Button>
+          </div>
         </div>
         <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={() => onSave(attr)} placeholder="URL da imagem" className="h-7 text-xs" />
         {attr.image_url && (
-          <img src={attr.image_url} alt={attr.name} className="mt-2 h-20 w-full object-cover rounded" />
+          <div
+            className="mt-2 h-20 w-full overflow-hidden rounded cursor-pointer relative group"
+            onClick={() => onPositionEdit(dayIdx, attrIdx)}
+            title="Clique para ajustar posição da imagem"
+          >
+            <img src={attr.image_url} alt={attr.name} className="w-full h-full pointer-events-none" style={getImageStyle(attr.image_position)} />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+              <Move className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
         )}
       </div>
       <div className="grid grid-cols-2 gap-2">
