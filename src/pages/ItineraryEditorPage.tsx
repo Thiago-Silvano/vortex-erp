@@ -414,17 +414,16 @@ export default function ItineraryEditorPage() {
 
     if (unsplashKey || pexelsKey) {
       setAttrImageModal({ dayIdx, attrIdx });
-    } else {
-      // Fallback to google-places
+    } else if (googleMapsApiKey) {
       toast.info('Buscando imagem...');
       try {
         const { data, error } = await supabase.functions.invoke('google-places', {
-          body: { query: `${attr.name} ${attr.location || attr.city}`.trim(), type: 'photo' },
+          body: { action: 'search_photos', query: `${attr.name} ${attr.location || attr.city}`.trim(), apiKey: googleMapsApiKey },
         });
         if (error) throw error;
-        const url = data?.photoUrl || data?.photo_url || '';
-        if (url) {
-          updateAttraction(dayIdx, attrIdx, 'image_url', url);
+        const photos = data?.photos || [];
+        if (photos.length > 0) {
+          updateAttraction(dayIdx, attrIdx, 'image_url', photos[0]);
           toast.success('Imagem encontrada!');
         } else {
           toast.info('Nenhuma imagem encontrada');
@@ -432,6 +431,8 @@ export default function ItineraryEditorPage() {
       } catch {
         toast.error('Erro ao buscar imagem');
       }
+    } else {
+      toast.error('Configure API Keys nas configurações da agência');
     }
   };
 
@@ -445,12 +446,12 @@ export default function ItineraryEditorPage() {
       setSearchingCoverImage(true);
       try {
         const { data, error } = await supabase.functions.invoke('google-places', {
-          body: { query, type: 'photo' },
+          body: { action: 'search_photos', query, apiKey: googleMapsApiKey },
         });
         if (error) throw error;
-        const url = data?.photoUrl || data?.photo_url || '';
-        if (url && itinerary) {
-          setItinerary({ ...itinerary, cover_image_url: url });
+        const photos = data?.photos || [];
+        if (photos.length > 0 && itinerary) {
+          setItinerary({ ...itinerary, cover_image_url: photos[0] });
           toast.success('Imagem de capa encontrada!');
         } else {
           toast.info('Nenhuma imagem encontrada');
