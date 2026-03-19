@@ -640,7 +640,11 @@ export default function ItineraryEditorPage() {
         if (error) throw error;
         const photos = data?.photos || [];
         if (photos.length > 0 && itinerary) {
-          setItinerary({ ...itinerary, cover_image_url: photos[0] });
+          const currentUrl = itinerary.cover_image_url;
+          const otherPhotos = photos.filter((p: string) => p !== currentUrl);
+          const pool = otherPhotos.length > 0 ? otherPhotos : photos;
+          const picked = pool[Math.floor(Math.random() * pool.length)];
+          setItinerary({ ...itinerary, cover_image_url: picked });
           toast.success('Imagem de capa encontrada!');
         } else {
           toast.info('Nenhuma imagem encontrada');
