@@ -171,9 +171,9 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
 
                 return (
                   <div key={attr.id} className={`flex flex-col md:flex-row gap-6 items-stretch ${!isEven ? 'md:flex-row-reverse' : ''}`}>
-                    <div className="md:w-1/2 shrink-0">
+                    <div className="md:w-1/2 shrink-0 overflow-hidden rounded-xl">
                       {attr.image_url ? (
-                        <img src={attr.image_url} alt={attr.name} className="w-full h-48 md:h-56 rounded-xl" style={getImageStyle(attr.image_position)} />
+                        <img src={attr.image_url} alt={attr.name} className="w-full h-48 md:h-56" style={getImageStyle(attr.image_position)} />
                       ) : (
                         <div className="w-full h-48 md:h-56 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
                           <span className="text-gray-300 text-4xl">📷</span>
