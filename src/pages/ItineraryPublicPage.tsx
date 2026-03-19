@@ -9,6 +9,7 @@ export default function ItineraryPublicPage() {
   const [destinations, setDestinations] = useState<any[]>([]);
   const [days, setDays] = useState<any[]>([]);
   const [checklist, setChecklist] = useState<any[]>([]);
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -27,13 +28,22 @@ export default function ItineraryPublicPage() {
     if (!it) { setNotFound(true); setLoading(false); return; }
     setItinerary(it);
 
+    // Load API key for map
+    if ((it as any).empresa_id) {
+      const { data: settings } = await supabase
+        .from('agency_settings')
+        .select('google_maps_api_key')
+        .eq('empresa_id', (it as any).empresa_id)
+        .single();
+      if (settings) setGoogleMapsApiKey((settings as any).google_maps_api_key || '');
+    }
+
     const [destRes, daysRes, checkRes] = await Promise.all([
       supabase.from('itinerary_destinations').select('*').eq('itinerary_id', (it as any).id).order('sort_order'),
       supabase.from('itinerary_days').select('*').eq('itinerary_id', (it as any).id).order('sort_order'),
       supabase.from('itinerary_checklist').select('*').eq('itinerary_id', (it as any).id).order('sort_order'),
     ]);
     setChecklist((checkRes.data as any[]) || []);
-
     setDestinations((destRes.data as any[]) || []);
 
     if (daysRes.data) {
@@ -87,6 +97,8 @@ export default function ItineraryPublicPage() {
           destinations={destinations}
           days={days}
           checklist={checklist}
+          googleMapsApiKey={googleMapsApiKey}
+          interactive={true}
         />
 
         {/* Footer branding */}
