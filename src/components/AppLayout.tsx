@@ -84,7 +84,6 @@ function AppSidebar() {
     { title: 'Serviços', url: '/services', icon: ClipboardList, permKey: 'services_view' },
     { title: 'Reservas', url: '/reservations', icon: BookOpen, permKey: 'reservations_view' },
     { title: 'Roteiros', url: '/itineraries', icon: Map },
-    { title: 'Calendário', url: '/calendar', icon: CalendarDays },
   ];
 
   const viagensFinancial: MenuItem[] = [
@@ -176,8 +175,8 @@ function AppSidebar() {
             <NavLink
               to={item.url}
               end
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 text-[13px]"
-              activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-md text-foreground/70 hover:bg-primary/10 hover:text-primary transition-all duration-150 text-[14px]"
+              activeClassName="bg-primary/10 text-primary font-semibold"
             >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && <span>{item.title}</span>}
@@ -193,11 +192,11 @@ function AppSidebar() {
     return (
       <SidebarGroup>
         <Collapsible defaultOpen={isActive}>
-          <CollapsibleTrigger className="flex items-center gap-2.5 px-4 py-2 w-full text-sidebar-foreground/40 text-[11px] uppercase tracking-widest font-semibold hover:text-sidebar-foreground/70 transition-colors">
-            {React.createElement(icon, { className: 'h-3.5 w-3.5' })}
+          <CollapsibleTrigger className="flex items-center gap-2.5 px-4 py-2.5 w-full text-muted-foreground text-[12px] uppercase tracking-widest font-semibold hover:text-foreground transition-colors">
+            {React.createElement(icon, { className: 'h-4 w-4' })}
             {!collapsed && <>
               <span>{label}</span>
-              <ChevronDown className="h-3 w-3 ml-auto transition-transform" />
+              <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform" />
             </>}
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -208,46 +207,59 @@ function AppSidebar() {
     );
   };
 
+  // Calendar + Reports inline items (shown after main menu)
+  const calendarItem: MenuItem[] = [
+    { title: 'Calendário', url: '/calendar', icon: CalendarDays },
+  ];
+
   return (
-    <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarContent className="bg-sidebar text-sidebar-foreground scrollbar-thin">
+    <Sidebar collapsible="icon" className="border-r border-border">
+      <SidebarContent className="bg-card text-foreground scrollbar-thin">
         {/* Logo area */}
         <div className="px-4 py-5 flex items-center gap-3">
           {!collapsed ? (
             <div>
-              <h2 className="font-bold text-[15px] text-sidebar-primary tracking-wide">
+              <h2 className="font-bold text-[16px] text-primary tracking-wide">
                 {isVistos ? 'VORTEX VISTOS' : 'VORTEX VIAGENS'}
               </h2>
-              <p className="text-[11px] text-sidebar-foreground/40 mt-0.5">Enterprise Resource Planning</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Enterprise Resource Planning</p>
             </div>
           ) : (
-            <div className="w-8 h-8 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
-              <span className="text-sidebar-primary font-bold text-sm">V</span>
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <span className="text-primary font-bold text-sm">V</span>
             </div>
           )}
         </div>
 
         <div className="px-3 mb-1">
-          <div className="h-px bg-sidebar-border" />
+          <div className="h-px bg-border" />
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[11px] uppercase tracking-widest font-semibold px-4">
+          <SidebarGroupLabel className="text-muted-foreground text-[12px] uppercase tracking-widest font-semibold px-4">
             Menu
           </SidebarGroupLabel>
           <SidebarGroupContent>{renderMenuItems(filterItems(mainItems))}</SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Financeiro right after Vendas (main menu) */}
         {renderCollapsibleGroup('Financeiro', DollarSign, filteredFinancial, isFinancialActive)}
+
+        {/* Calendário */}
+        <SidebarGroup>
+          <SidebarGroupContent>{renderMenuItems(calendarItem)}</SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Relatórios right after Calendário */}
         {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
 
         <div className="px-3 my-1">
-          <div className="h-px bg-sidebar-border" />
+          <div className="h-px bg-border" />
         </div>
 
         {/* Apps section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[11px] uppercase tracking-widest font-semibold px-4">
+          <SidebarGroupLabel className="text-muted-foreground text-[12px] uppercase tracking-widest font-semibold px-4">
             Apps
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -264,10 +276,10 @@ function AppSidebar() {
         {isAdmin && (
           <>
             <div className="px-3 my-1">
-              <div className="h-px bg-sidebar-border" />
+              <div className="h-px bg-border" />
             </div>
             <SidebarGroup>
-              <SidebarGroupLabel className="text-sidebar-foreground/40 text-[11px] uppercase tracking-widest font-semibold px-4">
+              <SidebarGroupLabel className="text-muted-foreground text-[12px] uppercase tracking-widest font-semibold px-4">
                 Admin
               </SidebarGroupLabel>
               <SidebarGroupContent>{renderMenuItems(adminItems)}</SidebarGroupContent>
@@ -277,19 +289,19 @@ function AppSidebar() {
 
         {/* Footer */}
         <div className="mt-auto p-4">
-          <div className="h-px bg-sidebar-border mb-3" />
+          <div className="h-px bg-border mb-3" />
           {!collapsed && userEmail && (
             <div className="flex items-center gap-2 mb-3 px-1">
-              <div className="h-7 w-7 rounded-full bg-sidebar-accent flex items-center justify-center shrink-0">
-                <User className="h-3.5 w-3.5 text-sidebar-foreground/60" />
+              <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
-              <p className="text-[11px] text-sidebar-foreground/40 truncate">{userEmail}</p>
+              <p className="text-[12px] text-muted-foreground truncate">{userEmail}</p>
             </div>
           )}
           <Button
             variant="ghost"
             size={collapsed ? 'icon' : 'sm'}
-            className="w-full text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent text-[13px] justify-start"
+            className="w-full text-muted-foreground hover:text-foreground hover:bg-muted text-[14px] justify-start"
             onClick={() => supabase.auth.signOut()}
           >
             <LogOut className="h-4 w-4" />
