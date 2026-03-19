@@ -118,31 +118,51 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
         <h2 className="text-2xl font-bold text-gray-900 mb-8">Conteúdo do Roteiro</h2>
         <div className="space-y-4">
           {destinations.length > 0 && (
-            <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <button
+              onClick={() => {
+                const firstDayId = days[0]?.id;
+                const el = firstDayId ? document.getElementById(`section-day-${firstDayId}`) : null;
+                el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="flex items-center justify-between py-3 border-b border-gray-100 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+            >
               <span className="text-gray-700 font-medium">Destinos</span>
               <span className="text-gray-400 text-sm">{destinationNames.join(', ')}</span>
-            </div>
+            </button>
           )}
           {days.map((day) => (
-            <div key={day.id} className="flex items-center justify-between py-3 border-b border-gray-100">
+            <button
+              key={day.id}
+              onClick={() => document.getElementById(`section-day-${day.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="flex items-center justify-between py-3 border-b border-gray-100 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+            >
               <span className="text-gray-700 font-medium">{day.title || `Dia ${day.day_number}`}</span>
               <span className="text-gray-400 text-sm">{day.attractions.length} atração(ões)</span>
-            </div>
+            </button>
           ))}
           {checklist.length > 0 && (
-            <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <button
+              onClick={() => document.getElementById('section-checklist')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="flex items-center justify-between py-3 border-b border-gray-100 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+            >
               <span className="text-gray-700 font-medium">Checklist de Viagem</span>
               <span className="text-gray-400 text-sm">✓</span>
-            </div>
+            </button>
           )}
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <button
+            onClick={() => document.getElementById('section-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="flex items-center justify-between py-3 border-b border-gray-100 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+          >
             <span className="text-gray-700 font-medium">Mapa da Viagem</span>
             <span className="text-gray-400 text-sm">🗺</span>
-          </div>
-          <div className="flex items-center justify-between py-3">
+          </button>
+          <button
+            onClick={() => document.getElementById('section-thankyou')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="flex items-center justify-between py-3 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
+          >
             <span className="text-gray-700 font-medium">Agradecimento</span>
             <span className="text-gray-400 text-sm">♥</span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -150,7 +170,7 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
       {days.map(day => {
         const pages = paginateAttractions(day.attractions);
         return pages.map((pageAttractions, pageIdx) => (
-          <div key={`${day.id}-page-${pageIdx}`} className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div key={`${day.id}-page-${pageIdx}`} id={pageIdx === 0 ? `section-day-${day.id}` : undefined} className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {pageIdx === 0 && (
               <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-8 py-6">
                 <p className="text-amber-400 text-xs tracking-[0.3em] uppercase font-semibold mb-1">
@@ -220,7 +240,7 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
 
       {/* ===== CHECKLIST PAGE ===== */}
       {checklist.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+        <div id="section-checklist" className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
           <p className="text-xs tracking-[0.3em] uppercase text-amber-600 font-semibold mb-2">Preparação</p>
           <h2 className="text-2xl font-bold text-gray-900 mb-8">Checklist de Viagem</h2>
           {(() => {
@@ -247,15 +267,17 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
       )}
 
       {/* ===== MAP PAGE ===== */}
+      <div id="section-map">
       <ItineraryMapSection
         destinations={destinations}
         attractions={days.flatMap(d => d.attractions).filter(a => a.name)}
         googleMapsApiKey={googleMapsApiKey}
         interactive={interactive}
       />
+      </div>
 
       {/* ===== THANK YOU PAGE ===== */}
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div id="section-thankyou" className="bg-white rounded-2xl shadow-lg overflow-hidden">
         <div className="relative" style={{ aspectRatio: '16/8' }}>
           {itinerary.thank_you_image_url ? (
             <img src={itinerary.thank_you_image_url} alt="Thank you" className="absolute inset-0 w-full h-full object-cover" />
