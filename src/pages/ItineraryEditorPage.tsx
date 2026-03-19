@@ -84,8 +84,11 @@ interface Itinerary {
   status: string;
   short_id: string;
   token: string;
+  thank_you_title: string;
   thank_you_text: string;
+  thank_you_text_align: string;
   thank_you_image_url: string;
+  thank_you_image_position: ImagePositionConfig | null;
   thank_you_font_color: string;
   thank_you_font_size: number;
   thank_you_font_style: string;
