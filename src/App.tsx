@@ -143,6 +143,7 @@ const App = () => (
           <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
           <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
+          <Route path="/roteiro/:token" element={<ItineraryPublicPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
