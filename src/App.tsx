@@ -59,6 +59,7 @@ import PropostaPublicPage from "./pages/PropostaPublicPage";
 import DS160PublicPage from "./pages/DS160PublicPage";
 import DS160GroupPublicPage from "./pages/DS160GroupPublicPage";
 import VistosDS160Page from "./pages/vistos/VistosDS160Page";
+import ItineraryPublicPage from "./pages/ItineraryPublicPage";
 
 // WhatsApp pages
 import WhatsAppInboxPage from "./pages/whatsapp/WhatsAppInboxPage";
@@ -142,6 +143,7 @@ const App = () => (
           <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
           <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
+          <Route path="/roteiro/:token" element={<ItineraryPublicPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

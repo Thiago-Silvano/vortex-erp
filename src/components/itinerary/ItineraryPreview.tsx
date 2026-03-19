@@ -38,10 +38,17 @@ interface Itinerary {
   thank_you_image_url: string;
 }
 
+interface ChecklistItem {
+  id: string;
+  category: string;
+  item: string;
+}
+
 interface Props {
   itinerary: Itinerary;
   destinations: Destination[];
   days: Day[];
+  checklist?: ChecklistItem[];
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -62,7 +69,7 @@ function paginateAttractions(attractions: Attraction[]): Attraction[][] {
   return pages.length > 0 ? pages : [[]];
 }
 
-export default function ItineraryPreview({ itinerary, destinations, days }: Props) {
+export default function ItineraryPreview({ itinerary, destinations, days, checklist = [] }: Props) {
   const destinationNames = destinations.map(d => d.name).filter(Boolean);
 
   return (
@@ -214,6 +221,34 @@ export default function ItineraryPreview({ itinerary, destinations, days }: Prop
           </div>
         ));
       })}
+
+      {/* ===== CHECKLIST PAGE ===== */}
+      {checklist.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+          <p className="text-xs tracking-[0.3em] uppercase text-amber-600 font-semibold mb-2">Preparação</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-8">Checklist de Viagem</h2>
+          {(() => {
+            const cats = Array.from(new Set(checklist.map(c => c.category)));
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {cats.map(cat => (
+                  <div key={cat}>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide mb-3 pb-2 border-b border-gray-100">{cat}</h3>
+                    <div className="space-y-2">
+                      {checklist.filter(c => c.category === cat).map(item => (
+                        <div key={item.id} className="flex items-center gap-3">
+                          <div className="h-4 w-4 rounded border-2 border-gray-300 shrink-0" />
+                          <span className="text-sm text-gray-600">{item.item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* ===== THANK YOU PAGE ===== */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import ItineraryPreview from '@/components/itinerary/ItineraryPreview';
+import ChecklistEditor from '@/components/itinerary/ChecklistEditor';
 
 interface Destination {
   id: string;
@@ -353,6 +354,13 @@ export default function ItineraryEditorPage() {
           <Button size="sm" variant="outline" onClick={saveItinerary} className="gap-2">
             <Save className="h-3.5 w-3.5" /> Salvar
           </Button>
+          <Button size="sm" variant="outline" onClick={() => {
+            const url = `${window.location.origin}/roteiro/${itinerary.token}`;
+            navigator.clipboard.writeText(url);
+            toast.success('Link copiado!');
+          }} className="gap-2">
+            <ExternalLink className="h-3.5 w-3.5" /> Link
+          </Button>
         </div>
       </div>
 
@@ -572,10 +580,11 @@ export default function ItineraryEditorPage() {
 
                 {/* Checklist section */}
                 {selectedSection === 'checklist' && (
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground">Checklist de Viagem</h3>
-                    <p className="text-xs text-muted-foreground">Em breve: checklist personalizável</p>
-                  </div>
+                  <ChecklistEditor
+                    checklist={checklist}
+                    setChecklist={setChecklist}
+                    itineraryId={id!}
+                  />
                 )}
 
                 {/* Thanks section */}
@@ -618,6 +627,7 @@ export default function ItineraryEditorPage() {
                   itinerary={itinerary}
                   destinations={destinations}
                   days={days}
+                  checklist={checklist}
                 />
               </div>
             </div>
