@@ -1734,7 +1734,7 @@ export default function NewSalePage() {
               </div>
               <div>
                 <Label>Início da Viagem</Label>
-                <Input type="date" value={tripStartDate} onChange={e => setTripStartDate(e.target.value)} />
+                <Input type="date" value={tripStartDate} onChange={e => { setTripStartDate(e.target.value); if (!tripEndDate || e.target.value > tripEndDate) setTripEndDate(e.target.value); }} />
               </div>
               <div>
                 <Label>Final da Viagem</Label>
