@@ -969,7 +969,7 @@ export default function ItineraryEditorPage() {
           onClose={() => setAttrImageModal(null)}
           onSelect={(img: StockImage) => {
             if (attrImageModal) {
-              updateAttraction(attrImageModal.dayIdx, attrImageModal.attrIdx, 'image_url', img.url_full || img.url_download);
+              updateAndSaveAttraction(attrImageModal.dayIdx, attrImageModal.attrIdx, { image_url: img.url_full || img.url_download, image_position: null });
               setAttrImageModal(null);
               toast.success('Imagem selecionada!');
             }
