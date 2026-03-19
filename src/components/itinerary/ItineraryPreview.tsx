@@ -166,7 +166,7 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
       {days.map(day => {
         const pages = paginateAttractions(day.attractions);
         return pages.map((pageAttractions, pageIdx) => (
-          <div key={`${day.id}-page-${pageIdx}`} className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div key={`${day.id}-page-${pageIdx}`} id={pageIdx === 0 ? `section-day-${day.id}` : undefined} className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {pageIdx === 0 && (
               <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-8 py-6">
                 <p className="text-amber-400 text-xs tracking-[0.3em] uppercase font-semibold mb-1">
