@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, MapPin, Sparkles,
-  ImageIcon, GripVertical, Save, Eye, FileDown, ExternalLink, Copy, Search, Loader2,
+  ImageIcon, GripVertical, Save, Eye, FileDown, ExternalLink, Copy, Search, Loader2, Move,
 } from 'lucide-react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import ItineraryPreview from '@/components/itinerary/ItineraryPreview';
@@ -18,6 +18,7 @@ import ChecklistEditor from '@/components/itinerary/ChecklistEditor';
 import ImageSearchModal, { type StockImage } from '@/components/ImageSearchModal';
 import { generateItineraryPdf } from '@/lib/generateItineraryPdf';
 import { getStaticMapUrl } from '@/components/itinerary/ItineraryMapSection';
+import ImagePositionEditor, { type ImagePositionConfig, getImageStyle } from '@/components/ImagePositionEditor';
 import {
   DndContext,
   closestCenter,
