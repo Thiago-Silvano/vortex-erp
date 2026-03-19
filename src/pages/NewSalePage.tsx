@@ -1283,7 +1283,9 @@ export default function NewSalePage() {
     }
 
     toast.success(editSaleId && saleStatus === 'active' ? 'Venda atualizada! Financeiro regenerado.' : 'Venda criada com sucesso! Complete agora os dados da reserva, pagamento e operação.');
-    navigate('/sales');
+    if (!editSaleId) setEditSaleId(saleId);
+    setSaleStatus('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -1734,11 +1736,11 @@ export default function NewSalePage() {
               </div>
               <div>
                 <Label>Início da Viagem</Label>
-                <Input type="date" value={tripStartDate} onChange={e => setTripStartDate(e.target.value)} />
+                <Input type="date" value={tripStartDate} onChange={e => { setTripStartDate(e.target.value); if (!tripEndDate || e.target.value > tripEndDate) setTripEndDate(e.target.value); }} />
               </div>
               <div>
                 <Label>Final da Viagem</Label>
-                <Input type="date" value={tripEndDate} onChange={e => setTripEndDate(e.target.value)} />
+                <Input type="date" value={tripEndDate} min={tripStartDate || undefined} onChange={e => setTripEndDate(e.target.value)} />
               </div>
               <div>
                 <Label>Nº de Noites</Label>
@@ -2047,7 +2049,7 @@ export default function NewSalePage() {
                           </TableCell>
                         )}
                         <TableCell className="px-1">
-                          <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
+                          <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); if (!item.description || item.description.trim() === '') updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                             <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="manual">Selecione um serviço</SelectItem>
@@ -2163,7 +2165,7 @@ export default function NewSalePage() {
                         <ArrowDown className="h-3 w-3" />
                       </Button>
                     </div>
-                    <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
+                    <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); if (!item.description || item.description.trim() === '') updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                       <SelectTrigger className="flex-1"><SelectValue placeholder="Serviço..." /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="manual">Selecione</SelectItem>

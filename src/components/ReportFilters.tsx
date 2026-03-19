@@ -49,11 +49,11 @@ export default function ReportFilters({ onChange, children }: Props) {
         <>
           <div>
             <Label className="text-xs text-muted-foreground">De</Label>
-            <Input type="date" className="w-40" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+            <Input type="date" className="w-40" value={customStart} onChange={e => { setCustomStart(e.target.value); if (!customEnd || e.target.value > customEnd) setCustomEnd(e.target.value); }} />
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Até</Label>
-            <Input type="date" className="w-40" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+            <Input type="date" className="w-40" value={customEnd} min={customStart || undefined} onChange={e => setCustomEnd(e.target.value)} />
           </div>
           <Button size="sm" onClick={() => onChange({ start: customStart, end: customEnd })}>Aplicar</Button>
         </>
