@@ -236,7 +236,7 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
 
       {/* ===== CHECKLIST PAGE ===== */}
       {checklist.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+        <div id="section-checklist" className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
           <p className="text-xs tracking-[0.3em] uppercase text-amber-600 font-semibold mb-2">Preparação</p>
           <h2 className="text-2xl font-bold text-gray-900 mb-8">Checklist de Viagem</h2>
           {(() => {
