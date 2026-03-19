@@ -47,6 +47,10 @@ interface Itinerary {
   thank_you_font_style?: string;
   thank_you_font_effect?: string;
   thank_you_image_size?: number;
+  thank_you_title_font_color?: string;
+  thank_you_title_font_size?: number;
+  thank_you_title_font_style?: string;
+  thank_you_title_font_effect?: string;
 }
 
 interface ChecklistItem {
@@ -295,6 +299,22 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
         const title = itinerary.thank_you_title || 'Obrigado';
         const imgPos = itinerary.thank_you_image_position as ImagePositionConfig | null;
 
+        const titleColor = itinerary.thank_you_title_font_color || '#d97706';
+        const titleSize = itinerary.thank_you_title_font_size || 12;
+        const titleFontStyle = itinerary.thank_you_title_font_style || 'bold';
+        const titleEffect = itinerary.thank_you_title_font_effect || 'spaced';
+
+        const titleStyle: React.CSSProperties = {
+          color: titleColor,
+          fontSize: `${titleSize}px`,
+          fontStyle: titleFontStyle === 'italic' || titleFontStyle === 'bold-italic' ? 'italic' : 'normal',
+          fontWeight: titleFontStyle === 'bold' || titleFontStyle === 'bold-italic' ? 'bold' : 'normal',
+          textShadow: titleEffect === 'shadow' ? '2px 2px 4px rgba(0,0,0,0.3)' : titleEffect === 'glow' ? '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.4)' : 'none',
+          letterSpacing: titleEffect === 'spaced' ? '0.3em' : 'normal',
+          textTransform: 'uppercase' as const,
+          textAlign,
+        };
+
         const textStyle: React.CSSProperties = {
           color: fontColor,
           fontSize: `${fontSize}px`,
@@ -310,7 +330,7 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
         return (
           <div id="section-thankyou" className="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div className={`flex flex-col ${alignItems} py-12 px-8`}>
-              <p className="text-xs tracking-[0.3em] uppercase text-amber-600 font-semibold mb-4">{title}</p>
+              <p className="mb-4" style={titleStyle}>{title}</p>
               <p className={`leading-relaxed max-w-lg mb-8 ${textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'}`} style={textStyle}>
                 {itinerary.thank_you_text || 'Obrigado por escolher viajar conosco!'}
               </p>
