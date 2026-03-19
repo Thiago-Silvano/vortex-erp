@@ -940,6 +940,18 @@ export default function ItineraryEditorPage() {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Página de Agradecimento</h3>
                     <div className="space-y-3">
+                      {/* Title */}
+                      <div>
+                        <Label className="text-xs">Título</Label>
+                        <Input
+                          value={itinerary.thank_you_title || 'Obrigado'}
+                          onChange={e => updateItinerary('thank_you_title', e.target.value)}
+                          onBlur={saveItinerary}
+                          placeholder="Título do agradecimento"
+                        />
+                      </div>
+
+                      {/* Text */}
                       <div>
                         <Label className="text-xs">Texto de Agradecimento</Label>
                         <Textarea
@@ -986,7 +998,7 @@ export default function ItineraryEditorPage() {
                             />
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                           <div>
                             <Label className="text-xs">Estilo</Label>
                             <Select
@@ -1017,18 +1029,41 @@ export default function ItineraryEditorPage() {
                               </SelectContent>
                             </Select>
                           </div>
+                          <div>
+                            <Label className="text-xs">Alinhamento</Label>
+                            <Select
+                              value={itinerary.thank_you_text_align || 'center'}
+                              onValueChange={v => { updateItinerary('thank_you_text_align', v); setTimeout(saveItinerary, 100); }}
+                            >
+                              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="left">Esquerda</SelectItem>
+                                <SelectItem value="center">Centro</SelectItem>
+                                <SelectItem value="right">Direita</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </div>
 
+                      {/* Image */}
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <Label className="text-xs">Imagem Institucional</Label>
-                          <label>
-                            <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" asChild>
-                              <span><Upload className="h-3 w-3" /> Upload</span>
-                            </Button>
-                            <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadThankYouImage(f); e.target.value = ''; } }} />
-                          </label>
+                          <div className="flex items-center gap-1">
+                            {itinerary.thank_you_image_url && (
+                              <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary"
+                                onClick={() => setThankYouImageEditorOpen(true)}>
+                                <Move className="h-3 w-3" /> Posição
+                              </Button>
+                            )}
+                            <label>
+                              <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" asChild>
+                                <span><Upload className="h-3 w-3" /> Upload</span>
+                              </Button>
+                              <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadThankYouImage(f); e.target.value = ''; } }} />
+                            </label>
+                          </div>
                         </div>
                         <Input
                           value={itinerary.thank_you_image_url}
@@ -1055,6 +1090,20 @@ export default function ItineraryEditorPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Image Position Editor for thank you */}
+                    {itinerary.thank_you_image_url && (
+                      <ImagePositionEditor
+                        open={thankYouImageEditorOpen}
+                        onOpenChange={setThankYouImageEditorOpen}
+                        imageUrl={itinerary.thank_you_image_url}
+                        initialConfig={itinerary.thank_you_image_position}
+                        onSave={(config) => {
+                          updateItinerary('thank_you_image_position', config as any);
+                          setTimeout(saveItinerary, 100);
+                        }}
+                      />
+                    )}
                   </div>
                 )}
               </div>
