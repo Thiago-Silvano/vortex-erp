@@ -9,14 +9,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { city, totalDays, freeDays, aiTips } = await req.json();
-
-    if (!city || !totalDays) {
-      return new Response(JSON.stringify({ error: "city and totalDays are required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const body = await req.json();
+    const { type } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -26,11 +20,39 @@ serve(async (req) => {
       });
     }
 
-    const itineraryDays = Math.max(1, totalDays - (freeDays || 0));
+    let prompt = "";
+    let systemPrompt = "Você é um especialista em turismo e viagens. Crie roteiros detalhados e práticos para viajantes.";
 
-    const tipsSection = aiTips ? `\n\nDicas e particularidades do viajante (IMPORTANTE - adapte o roteiro conforme estas instruções):\n${aiTips}` : '';
+    if (type === "attraction_description") {
+      const { attractionName, location } = body;
+      if (!attractionName) {
+        return new Response(JSON.stringify({ error: "attractionName is required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      systemPrompt = "Você é um redator turístico premium. Escreva textos elegantes, inspiradores e informativos sobre atrações turísticas. Seja conciso mas envolvente.";
+      prompt = `Escreva uma descrição turística curta e elegante (máximo 3 frases, cerca de 50-70 palavras) sobre "${attractionName}"${location ? ` em ${location}` : ''}.
 
-    const prompt = `Crie um roteiro turístico detalhado para ${city} com ${itineraryDays} dia(s) de atividades.
+A descrição deve:
+- Ser fluida e inspiradora
+- Destacar o que torna o lugar especial
+- Usar linguagem comercial e sofisticada
+- Ser adequada para um roteiro premium de viagem
+- NÃO usar emojis
+- Escrever em português do Brasil
+
+Retorne apenas o texto da descrição, sem título ou formatação.`;
+    } else {
+      // Original itinerary generation
+      const { city, totalDays, freeDays, aiTips } = body;
+      if (!city || !totalDays) {
+        return new Response(JSON.stringify({ error: "city and totalDays are required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const itineraryDays = Math.max(1, totalDays - (freeDays || 0));
+      const tipsSection = aiTips ? `\n\nDicas e particularidades do viajante (IMPORTANTE - adapte o roteiro conforme estas instruções):\n${aiTips}` : '';
+      prompt = `Crie um roteiro turístico detalhado para ${city} com ${itineraryDays} dia(s) de atividades.
 ${freeDays > 0 ? `O viajante terá ${freeDays} dia(s) livre(s) além desses ${itineraryDays} dias de roteiro.` : ''}${tipsSection}
 
 Formato do roteiro:
@@ -41,6 +63,7 @@ Formato do roteiro:
 - Escreva em português do Brasil
 - Não use markdown headers (#), apenas texto simples com quebras de linha
 - Formato: "Dia X - Título do dia" seguido das atividades`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -51,7 +74,7 @@ Formato do roteiro:
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "Você é um especialista em turismo e viagens. Crie roteiros detalhados e práticos para viajantes." },
+          { role: "system", content: systemPrompt },
           { role: "user", content: prompt },
         ],
       }),
@@ -70,15 +93,21 @@ Formato do roteiro:
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Erro ao gerar roteiro" }), {
+      return new Response(JSON.stringify({ error: "Erro ao gerar conteúdo" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await response.json();
-    const itinerary = data.choices?.[0]?.message?.content || "";
+    const content = data.choices?.[0]?.message?.content || "";
 
-    return new Response(JSON.stringify({ success: true, itinerary }), {
+    if (type === "attraction_description") {
+      return new Response(JSON.stringify({ success: true, description: content }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ success: true, itinerary: content }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
