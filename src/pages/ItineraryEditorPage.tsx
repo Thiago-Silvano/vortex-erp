@@ -736,10 +736,18 @@ export default function ItineraryEditorPage() {
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <Label className="text-xs">Imagem de Capa (URL)</Label>
-                          <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={searchCoverImage} disabled={searchingCoverImage}>
-                            {searchingCoverImage ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />} Buscar
-                          </Button>
+                          <Label className="text-xs">Imagem de Capa</Label>
+                          <div className="flex items-center gap-1">
+                            <label className="cursor-pointer">
+                              <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" asChild>
+                                <span><Upload className="h-3 w-3" /> Upload</span>
+                              </Button>
+                              <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadCoverImage(f); e.target.value = ''; } }} />
+                            </label>
+                            <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={searchCoverImage} disabled={searchingCoverImage}>
+                              {searchingCoverImage ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Buscar
+                            </Button>
+                          </div>
                         </div>
                         <Input value={itinerary.cover_image_url} onChange={e => updateItinerary('cover_image_url', e.target.value)} onBlur={saveItinerary} placeholder="URL da imagem" />
                         {itinerary.cover_image_url && (
