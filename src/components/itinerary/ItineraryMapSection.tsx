@@ -20,7 +20,13 @@ interface Props {
 }
 
 function buildAttractionLocation(a: AttractionMarker): string {
-  return [a.name, a.location, a.city].filter(Boolean).join(', ');
+  // Use name + city for better geocoding (location field like "Disney" is too vague)
+  const city = (a.city || '').trim();
+  const name = (a.name || '').trim();
+  if (city && !name.toLowerCase().includes(city.toLowerCase())) {
+    return `${name}, ${city}`;
+  }
+  return name;
 }
 
 function buildStaticUrl(destNames: string[], attrLocs: string[], apiKey: string, size = '800x500'): string {
