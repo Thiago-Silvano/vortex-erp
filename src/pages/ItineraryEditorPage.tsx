@@ -156,6 +156,7 @@ export default function ItineraryEditorPage() {
   const [pexelsKey, setPexelsKey] = useState('');
   const [coverImageModalOpen, setCoverImageModalOpen] = useState(false);
   const [attrImageModal, setAttrImageModal] = useState<{ dayIdx: number; attrIdx: number } | null>(null);
+  const [destImageModal, setDestImageModal] = useState<number | null>(null);
   const [searchingCoverImage, setSearchingCoverImage] = useState(false);
   const [positionEditor, setPositionEditor] = useState<{ dayIdx: number; attrIdx: number } | null>(null);
 
@@ -268,6 +269,56 @@ export default function ItineraryEditorPage() {
   const removeDestination = async (destId: string) => {
     await supabase.from('itinerary_destinations').delete().eq('id', destId);
     setDestinations(destinations.filter(d => d.id !== destId));
+  };
+
+  const uploadDestinationImage = async (idx: number, file: File) => {
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { toast.error('Arquivo muito grande (máx 5MB)'); return; }
+    if (!file.type.startsWith('image/')) { toast.error('Selecione um arquivo de imagem'); return; }
+    const ext = file.name.split('.').pop();
+    const path = `itinerary-destinations/${id}/${Date.now()}.${ext}`;
+    toast.info('Enviando imagem...');
+    const { error } = await supabase.storage.from('quote-images').upload(path, file);
+    if (error) { toast.error('Erro ao enviar imagem'); return; }
+    const { data: urlData } = supabase.storage.from('quote-images').getPublicUrl(path);
+    updateDestination(idx, 'image_url', urlData.publicUrl);
+    const dest = { ...destinations[idx], image_url: urlData.publicUrl };
+    await saveDestination(dest);
+    toast.success('Imagem enviada!');
+  };
+
+  const refreshDestinationImage = async (idx: number) => {
+    const dest = destinations[idx];
+    if (!dest.name) { toast.error('Preencha o nome do destino primeiro'); return; }
+    toast.info('Buscando imagem...');
+    try {
+      if (unsplashKey || pexelsKey) {
+        setDestImageModal(idx);
+        return;
+      }
+      if (googleMapsApiKey) {
+        const { data, error } = await supabase.functions.invoke('google-places', {
+          body: { action: 'search_photos', query: dest.name, apiKey: googleMapsApiKey },
+        });
+        if (error) throw error;
+        const photos = (data?.photos || []) as string[];
+        const otherPhotos = photos.filter((p: string) => p !== dest.image_url);
+        const chosen = otherPhotos.length > 0
+          ? otherPhotos[Math.floor(Math.random() * otherPhotos.length)]
+          : photos.length > 0 ? photos[Math.floor(Math.random() * photos.length)] : null;
+        if (chosen) {
+          updateDestination(idx, 'image_url', chosen);
+          await saveDestination({ ...dest, image_url: chosen });
+          toast.success('Imagem atualizada!');
+        } else {
+          toast.info('Nenhuma imagem encontrada');
+        }
+      } else {
+        toast.error('Configure API Keys nas configurações da agência');
+      }
+    } catch {
+      toast.error('Erro ao buscar imagem');
+    }
   };
 
   // Days
@@ -723,6 +774,35 @@ export default function ItineraryEditorPage() {
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
+                        {/* Destination image */}
+                        {dest.image_url ? (
+                          <div className="relative group">
+                            <img src={dest.image_url} alt={dest.name} className="w-full h-24 object-cover rounded-md" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center gap-1">
+                              <label className="cursor-pointer">
+                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-white" asChild>
+                                  <span><Upload className="h-3 w-3" /></span>
+                                </Button>
+                                <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadDestinationImage(idx, f); e.target.value = ''; } }} />
+                              </label>
+                              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-white" onClick={() => refreshDestinationImage(idx)} title="Buscar outra imagem">
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <label className="cursor-pointer flex-1">
+                              <Button size="sm" variant="outline" className="w-full h-7 text-xs gap-1" asChild>
+                                <span><Upload className="h-3 w-3" /> Upload</span>
+                              </Button>
+                              <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadDestinationImage(idx, f); e.target.value = ''; } }} />
+                            </label>
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => refreshDestinationImage(idx)}>
+                              <Search className="h-3 w-3" /> Buscar
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                     {destinations.length === 0 && (
@@ -865,6 +945,26 @@ export default function ItineraryEditorPage() {
             }
           }}
           initialQuery={attrImageModal ? `${days[attrImageModal.dayIdx]?.attractions[attrImageModal.attrIdx]?.name || ''} ${days[attrImageModal.dayIdx]?.attractions[attrImageModal.attrIdx]?.city || ''}`.trim() : ''}
+          unsplashKey={unsplashKey}
+          pexelsKey={pexelsKey}
+        />
+      )}
+
+      {/* Destination image search modal */}
+      {destImageModal !== null && (
+        <ImageSearchModal
+          open={destImageModal !== null}
+          onClose={() => setDestImageModal(null)}
+          onSelect={(img: StockImage) => {
+            if (destImageModal !== null) {
+              const url = img.url_full || img.url_download;
+              updateDestination(destImageModal, 'image_url', url);
+              saveDestination({ ...destinations[destImageModal], image_url: url });
+              setDestImageModal(null);
+              toast.success('Imagem selecionada!');
+            }
+          }}
+          initialQuery={destImageModal !== null ? destinations[destImageModal]?.name || '' : ''}
           unsplashKey={unsplashKey}
           pexelsKey={pexelsKey}
         />
