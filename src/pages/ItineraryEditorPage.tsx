@@ -499,7 +499,7 @@ export default function ItineraryEditorPage() {
         if (error) throw error;
         const photos = data?.photos || [];
         if (photos.length > 0) {
-          updateAttraction(dayIdx, attrIdx, 'image_url', photos[0]);
+          updateAndSaveAttraction(dayIdx, attrIdx, { image_url: photos[0], image_position: null });
           toast.success('Imagem encontrada!');
         } else {
           toast.info('Nenhuma imagem encontrada');
