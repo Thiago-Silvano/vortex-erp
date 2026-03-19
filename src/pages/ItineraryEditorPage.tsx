@@ -579,10 +579,11 @@ export default function ItineraryEditorPage() {
 
                 {/* Checklist section */}
                 {selectedSection === 'checklist' && (
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground">Checklist de Viagem</h3>
-                    <p className="text-xs text-muted-foreground">Em breve: checklist personalizável</p>
-                  </div>
+                  <ChecklistEditor
+                    checklist={checklist}
+                    setChecklist={setChecklist}
+                    itineraryId={id!}
+                  />
                 )}
 
                 {/* Thanks section */}
