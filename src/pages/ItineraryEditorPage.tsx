@@ -485,7 +485,7 @@ export default function ItineraryEditorPage() {
       if (error) throw error;
       const text = data?.description || data?.text || '';
       if (text) {
-        updateAttraction(dayIdx, attrIdx, 'description', text);
+        updateAndSaveAttraction(dayIdx, attrIdx, { description: text });
         toast.success('Descrição gerada!');
       }
     } catch {
