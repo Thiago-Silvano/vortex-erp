@@ -2165,7 +2165,7 @@ export default function NewSalePage() {
                         <ArrowDown className="h-3 w-3" />
                       </Button>
                     </div>
-                    <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
+                    <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); if (!item.description || item.description.trim() === '') updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
                       <SelectTrigger className="flex-1"><SelectValue placeholder="Serviço..." /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="manual">Selecione</SelectItem>
