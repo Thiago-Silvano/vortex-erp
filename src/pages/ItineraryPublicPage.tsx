@@ -86,6 +86,7 @@ export default function ItineraryPublicPage() {
           itinerary={itinerary}
           destinations={destinations}
           days={days}
+          checklist={checklist}
         />
 
         {/* Footer branding */}
