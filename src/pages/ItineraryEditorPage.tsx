@@ -160,6 +160,7 @@ export default function ItineraryEditorPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+  const [thankYouImageEditorOpen, setThankYouImageEditorOpen] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string>('cover');
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
