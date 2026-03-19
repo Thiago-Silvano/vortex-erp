@@ -1,5 +1,6 @@
 import React from 'react';
 import ItineraryMapSection from './ItineraryMapSection';
+import { getImageStyle, type ImagePositionConfig } from '@/components/ImagePositionEditor';
 
 interface Attraction {
   id: string;
@@ -8,6 +9,7 @@ interface Attraction {
   city: string;
   description: string;
   image_url: string;
+  image_position?: ImagePositionConfig | null;
   time: string;
   duration: string;
   category: string;
