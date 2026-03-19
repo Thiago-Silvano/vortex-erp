@@ -555,8 +555,7 @@ export default function ItineraryEditorPage() {
     const { error } = await supabase.storage.from('quote-images').upload(path, file);
     if (error) { toast.error('Erro ao enviar imagem'); return; }
     const { data: urlData } = supabase.storage.from('quote-images').getPublicUrl(path);
-    updateAttraction(dayIdx, attrIdx, 'image_url', urlData.publicUrl);
-    updateAttraction(dayIdx, attrIdx, 'image_position', null);
+    updateAndSaveAttraction(dayIdx, attrIdx, { image_url: urlData.publicUrl, image_position: null });
     toast.success('Imagem enviada!');
   };
 
