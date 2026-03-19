@@ -10,11 +10,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import {
   ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, MapPin, Sparkles,
-  ImageIcon, GripVertical, Save, Eye, FileDown, ExternalLink, Copy,
+  ImageIcon, GripVertical, Save, Eye, FileDown, ExternalLink, Copy, Search, Loader2,
 } from 'lucide-react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import ItineraryPreview from '@/components/itinerary/ItineraryPreview';
 import ChecklistEditor from '@/components/itinerary/ChecklistEditor';
+import ImageSearchModal, { type StockImage } from '@/components/ImageSearchModal';
+import { generateItineraryPdf } from '@/lib/generateItineraryPdf';
+import { getStaticMapUrl } from '@/components/itinerary/ItineraryMapSection';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Destination {
   id: string;
@@ -81,6 +101,40 @@ const CATEGORIES = [
   { value: 'recommendation', label: 'Recomendação' },
 ];
 
+// ===== Sortable Day Item =====
+function SortableDayItem({ day, dayIdx, children }: { day: Day; dayIdx: number; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: day.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {React.Children.map(children, child =>
+        React.isValidElement(child) ? React.cloneElement(child as any, { dragListeners: listeners, dragAttributes: attributes }) : child
+      )}
+    </div>
+  );
+}
+
+// ===== Sortable Attraction Item =====
+function SortableAttractionItem({ attr, children }: { attr: Attraction; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: attr.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {React.Children.map(children, child =>
+        React.isValidElement(child) ? React.cloneElement(child as any, { dragListeners: listeners, dragAttributes: attributes }) : child
+      )}
+    </div>
+  );
+}
+
 export default function ItineraryEditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -93,12 +147,36 @@ export default function ItineraryEditorPage() {
   const [saving, setSaving] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const [selectedSection, setSelectedSection] = useState<string>('cover');
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
+  const [unsplashKey, setUnsplashKey] = useState('');
+  const [pexelsKey, setPexelsKey] = useState('');
+  const [coverImageModalOpen, setCoverImageModalOpen] = useState(false);
+  const [attrImageModal, setAttrImageModal] = useState<{ dayIdx: number; attrIdx: number } | null>(null);
+  const [searchingCoverImage, setSearchingCoverImage] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   // Load data
   useEffect(() => {
     if (!id) return;
     loadAll();
   }, [id]);
+
+  // Load API keys
+  useEffect(() => {
+    if (!activeCompany) return;
+    supabase.from('agency_settings').select('google_maps_api_key, unsplash_api_key, pexels_api_key').eq('empresa_id', activeCompany).single().then(({ data }) => {
+      if (data) {
+        setGoogleMapsApiKey((data as any).google_maps_api_key || '');
+        setUnsplashKey((data as any).unsplash_api_key || '');
+        setPexelsKey((data as any).pexels_api_key || '');
+      }
+    });
+  }, [activeCompany]);
 
   const loadAll = async () => {
     if (!id) return;
@@ -115,7 +193,6 @@ export default function ItineraryEditorPage() {
     if (destRes.data) setDestinations(destRes.data as any[]);
     if (checkRes.data) setChecklist(checkRes.data as any[]);
 
-    // Load attractions for each day
     if (daysRes.data) {
       const dayIds = (daysRes.data as any[]).map(d => d.id);
       let allAttractions: any[] = [];
@@ -138,7 +215,6 @@ export default function ItineraryEditorPage() {
     setLoading(false);
   };
 
-  // Auto-save
   const saveItinerary = useCallback(async () => {
     if (!itinerary || !id) return;
     setSaving(true);
@@ -228,6 +304,44 @@ export default function ItineraryEditorPage() {
     setDays(days.filter(d => d.id !== dayId));
   };
 
+  const duplicateDay = async (dayIdx: number) => {
+    if (!id) return;
+    const srcDay = days[dayIdx];
+    const dayNum = days.length + 1;
+    const { data: newDayData } = await supabase.from('itinerary_days').insert({
+      itinerary_id: id,
+      day_number: dayNum,
+      title: `${srcDay.title} (cópia)`,
+      subtitle: srcDay.subtitle,
+      description: srcDay.description,
+      notes: srcDay.notes,
+      sort_order: days.length,
+    } as any).select().single();
+    if (!newDayData) return;
+
+    const newAttrs: any[] = [];
+    for (const attr of srcDay.attractions) {
+      const { data: na } = await supabase.from('itinerary_attractions').insert({
+        day_id: (newDayData as any).id,
+        name: attr.name,
+        location: attr.location,
+        address: attr.address,
+        city: attr.city,
+        description: attr.description,
+        image_url: attr.image_url,
+        time: attr.time,
+        duration: attr.duration,
+        observation: attr.observation,
+        category: attr.category,
+        sort_order: attr.sort_order,
+      } as any).select().single();
+      if (na) newAttrs.push(na);
+    }
+
+    setDays([...days, { ...(newDayData as any), attractions: newAttrs }]);
+    toast.success('Dia duplicado!');
+  };
+
   // Attractions
   const addAttraction = async (dayId: string, dayIdx: number) => {
     const { data } = await supabase.from('itinerary_attractions').insert({
@@ -298,21 +412,56 @@ export default function ItineraryEditorPage() {
     const attr = days[dayIdx].attractions[attrIdx];
     if (!attr.name) { toast.error('Preencha o nome da atração primeiro'); return; }
 
-    toast.info('Buscando imagem...');
-    try {
-      const { data, error } = await supabase.functions.invoke('google-places', {
-        body: { query: `${attr.name} ${attr.location || attr.city}`.trim(), type: 'photo' },
-      });
-      if (error) throw error;
-      const url = data?.photoUrl || data?.photo_url || '';
-      if (url) {
-        updateAttraction(dayIdx, attrIdx, 'image_url', url);
-        toast.success('Imagem encontrada!');
-      } else {
-        toast.info('Nenhuma imagem encontrada');
+    if (unsplashKey || pexelsKey) {
+      setAttrImageModal({ dayIdx, attrIdx });
+    } else {
+      // Fallback to google-places
+      toast.info('Buscando imagem...');
+      try {
+        const { data, error } = await supabase.functions.invoke('google-places', {
+          body: { query: `${attr.name} ${attr.location || attr.city}`.trim(), type: 'photo' },
+        });
+        if (error) throw error;
+        const url = data?.photoUrl || data?.photo_url || '';
+        if (url) {
+          updateAttraction(dayIdx, attrIdx, 'image_url', url);
+          toast.success('Imagem encontrada!');
+        } else {
+          toast.info('Nenhuma imagem encontrada');
+        }
+      } catch {
+        toast.error('Erro ao buscar imagem');
       }
-    } catch {
-      toast.error('Erro ao buscar imagem');
+    }
+  };
+
+  const searchCoverImage = async () => {
+    const query = destinations.map(d => d.name).filter(Boolean).join(' ') || itinerary?.title || '';
+    if (!query) { toast.error('Adicione destinos ou título primeiro'); return; }
+
+    if (unsplashKey || pexelsKey) {
+      setCoverImageModalOpen(true);
+    } else if (googleMapsApiKey) {
+      setSearchingCoverImage(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('google-places', {
+          body: { query, type: 'photo' },
+        });
+        if (error) throw error;
+        const url = data?.photoUrl || data?.photo_url || '';
+        if (url && itinerary) {
+          setItinerary({ ...itinerary, cover_image_url: url });
+          toast.success('Imagem de capa encontrada!');
+        } else {
+          toast.info('Nenhuma imagem encontrada');
+        }
+      } catch {
+        toast.error('Erro ao buscar imagem');
+      } finally {
+        setSearchingCoverImage(false);
+      }
+    } else {
+      toast.error('Configure API Keys nas configurações da agência');
     }
   };
 
@@ -322,6 +471,58 @@ export default function ItineraryEditorPage() {
       next.has(dayId) ? next.delete(dayId) : next.add(dayId);
       return next;
     });
+  };
+
+  // Drag & drop handlers
+  const handleDayDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = days.findIndex(d => d.id === active.id);
+    const newIndex = days.findIndex(d => d.id === over.id);
+    const reordered = arrayMove(days, oldIndex, newIndex);
+    setDays(reordered);
+
+    // Save sort orders
+    for (let i = 0; i < reordered.length; i++) {
+      await supabase.from('itinerary_days').update({ sort_order: i } as any).eq('id', reordered[i].id);
+    }
+  };
+
+  const handleAttractionDragEnd = async (event: DragEndEvent, dayIdx: number) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const attrs = days[dayIdx].attractions;
+    const oldIndex = attrs.findIndex(a => a.id === active.id);
+    const newIndex = attrs.findIndex(a => a.id === over.id);
+    const reordered = arrayMove(attrs, oldIndex, newIndex);
+
+    const updated = [...days];
+    updated[dayIdx].attractions = reordered;
+    setDays(updated);
+
+    for (let i = 0; i < reordered.length; i++) {
+      await supabase.from('itinerary_attractions').update({ sort_order: i } as any).eq('id', reordered[i].id);
+    }
+  };
+
+  // PDF Export
+  const exportPdf = async () => {
+    if (!itinerary) return;
+    setGeneratingPdf(true);
+    toast.info('Gerando PDF...');
+    try {
+      const mapUrl = googleMapsApiKey ? getStaticMapUrl(destinations, googleMapsApiKey) || undefined : undefined;
+      const pdf = await generateItineraryPdf(itinerary, destinations, days, checklist, mapUrl);
+      pdf.save(`${itinerary.title || 'roteiro'}.pdf`);
+      toast.success('PDF gerado com sucesso!');
+    } catch (e) {
+      console.error('PDF error:', e);
+      toast.error('Erro ao gerar PDF');
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
 
   if (loading) {
@@ -354,6 +555,9 @@ export default function ItineraryEditorPage() {
           <Button size="sm" variant="outline" onClick={saveItinerary} className="gap-2">
             <Save className="h-3.5 w-3.5" /> Salvar
           </Button>
+          <Button size="sm" variant="outline" onClick={exportPdf} disabled={generatingPdf} className="gap-2">
+            {generatingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />} PDF
+          </Button>
           <Button size="sm" variant="outline" onClick={() => {
             const url = `${window.location.origin}/roteiro/${itinerary.token}`;
             navigator.clipboard.writeText(url);
@@ -370,7 +574,6 @@ export default function ItineraryEditorPage() {
           {/* Editor Panel */}
           <ResizablePanel defaultSize={40} minSize={30}>
             <div className="h-full overflow-y-auto">
-              {/* Navigation sidebar */}
               <div className="p-4 space-y-4">
                 {/* Section selector */}
                 <div className="space-y-1">
@@ -413,8 +616,16 @@ export default function ItineraryEditorPage() {
                         <Input value={itinerary.travel_date} onChange={e => updateItinerary('travel_date', e.target.value)} onBlur={saveItinerary} placeholder="Ex: 15 a 30 de Julho 2025" />
                       </div>
                       <div>
-                        <Label className="text-xs">Imagem de Capa (URL)</Label>
+                        <div className="flex items-center justify-between mb-1">
+                          <Label className="text-xs">Imagem de Capa (URL)</Label>
+                          <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={searchCoverImage} disabled={searchingCoverImage}>
+                            {searchingCoverImage ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />} Buscar
+                          </Button>
+                        </div>
                         <Input value={itinerary.cover_image_url} onChange={e => updateItinerary('cover_image_url', e.target.value)} onBlur={saveItinerary} placeholder="URL da imagem" />
+                        {itinerary.cover_image_url && (
+                          <img src={itinerary.cover_image_url} alt="Cover" className="mt-2 h-24 w-full object-cover rounded-lg" />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -461,117 +672,32 @@ export default function ItineraryEditorPage() {
                         <Plus className="h-3.5 w-3.5" /> Dia
                       </Button>
                     </div>
-                    {days.map((day, dayIdx) => (
-                      <div key={day.id} className="border rounded-lg overflow-hidden bg-card">
-                        <button
-                          className="w-full flex items-center gap-2 p-3 hover:bg-muted/50 transition-colors"
-                          onClick={() => toggleDay(day.id)}
-                        >
-                          {expandedDays.has(day.id) ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                          <span className="text-sm font-medium">{day.title || `Dia ${day.day_number}`}</span>
-                          <span className="text-xs text-muted-foreground ml-auto">{day.attractions.length} atração(ões)</span>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={e => { e.stopPropagation(); removeDay(day.id); }}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </button>
-
-                        {expandedDays.has(day.id) && (
-                          <div className="px-3 pb-3 space-y-3 border-t pt-3">
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <Label className="text-xs">Título</Label>
-                                <Input value={day.title} onChange={e => updateDay(dayIdx, 'title', e.target.value)} onBlur={() => saveDay(day)} className="h-8" />
-                              </div>
-                              <div>
-                                <Label className="text-xs">Subtítulo</Label>
-                                <Input value={day.subtitle} onChange={e => updateDay(dayIdx, 'subtitle', e.target.value)} onBlur={() => saveDay(day)} className="h-8" />
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="text-xs">Descrição</Label>
-                              <Textarea value={day.description} onChange={e => updateDay(dayIdx, 'description', e.target.value)} onBlur={() => saveDay(day)} rows={2} className="text-sm" />
-                            </div>
-
-                            {/* Attractions */}
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-xs font-semibold">Atrações</Label>
-                                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => addAttraction(day.id, dayIdx)}>
-                                  <Plus className="h-3 w-3" /> Atração
-                                </Button>
-                              </div>
-                              {day.attractions.map((attr, attrIdx) => (
-                                <div key={attr.id} className="p-3 border rounded-md space-y-2 bg-background">
-                                  <div className="flex items-center gap-2">
-                                    <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-                                    <Input
-                                      value={attr.name}
-                                      onChange={e => updateAttraction(dayIdx, attrIdx, 'name', e.target.value)}
-                                      onBlur={() => saveAttraction(attr)}
-                                      placeholder="Nome da atração"
-                                      className="h-8 font-medium"
-                                    />
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-destructive" onClick={() => removeAttraction(dayIdx, attr.id)}>
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                      <Label className="text-[10px]">Local</Label>
-                                      <Input value={attr.location} onChange={e => updateAttraction(dayIdx, attrIdx, 'location', e.target.value)} onBlur={() => saveAttraction(attr)} className="h-7 text-xs" />
-                                    </div>
-                                    <div>
-                                      <Label className="text-[10px]">Cidade</Label>
-                                      <Input value={attr.city} onChange={e => updateAttraction(dayIdx, attrIdx, 'city', e.target.value)} onBlur={() => saveAttraction(attr)} className="h-7 text-xs" />
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <Label className="text-[10px]">Categoria</Label>
-                                    <Select value={attr.category} onValueChange={v => { updateAttraction(dayIdx, attrIdx, 'category', v); saveAttraction({ ...attr, category: v }); }}>
-                                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                                      <SelectContent>
-                                        {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                      <Label className="text-[10px]">Descrição</Label>
-                                      <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={() => generateDescription(dayIdx, attrIdx)}>
-                                        <Sparkles className="h-3 w-3" /> IA
-                                      </Button>
-                                    </div>
-                                    <Textarea value={attr.description} onChange={e => updateAttraction(dayIdx, attrIdx, 'description', e.target.value)} onBlur={() => saveAttraction(attr)} rows={3} className="text-xs" />
-                                  </div>
-                                  <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                      <Label className="text-[10px]">Imagem</Label>
-                                      <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={() => searchImage(dayIdx, attrIdx)}>
-                                        <ImageIcon className="h-3 w-3" /> Buscar
-                                      </Button>
-                                    </div>
-                                    <Input value={attr.image_url} onChange={e => updateAttraction(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={() => saveAttraction(attr)} placeholder="URL da imagem" className="h-7 text-xs" />
-                                    {attr.image_url && (
-                                      <img src={attr.image_url} alt={attr.name} className="mt-2 h-20 w-full object-cover rounded" />
-                                    )}
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                      <Label className="text-[10px]">Horário</Label>
-                                      <Input value={attr.time} onChange={e => updateAttraction(dayIdx, attrIdx, 'time', e.target.value)} onBlur={() => saveAttraction(attr)} className="h-7 text-xs" placeholder="Ex: 09:00" />
-                                    </div>
-                                    <div>
-                                      <Label className="text-[10px]">Duração</Label>
-                                      <Input value={attr.duration} onChange={e => updateAttraction(dayIdx, attrIdx, 'duration', e.target.value)} onBlur={() => saveAttraction(attr)} className="h-7 text-xs" placeholder="Ex: 2h" />
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDayDragEnd}>
+                      <SortableContext items={days.map(d => d.id)} strategy={verticalListSortingStrategy}>
+                        {days.map((day, dayIdx) => (
+                          <SortableDayItem key={day.id} day={day} dayIdx={dayIdx}>
+                            <DayEditorBlock
+                              day={day}
+                              dayIdx={dayIdx}
+                              expanded={expandedDays.has(day.id)}
+                              onToggle={() => toggleDay(day.id)}
+                              onRemove={() => removeDay(day.id)}
+                              onDuplicate={() => duplicateDay(dayIdx)}
+                              onUpdateDay={updateDay}
+                              onSaveDay={saveDay}
+                              onAddAttraction={addAttraction}
+                              onUpdateAttraction={updateAttraction}
+                              onSaveAttraction={saveAttraction}
+                              onRemoveAttraction={removeAttraction}
+                              onGenerateDescription={generateDescription}
+                              onSearchImage={searchImage}
+                              sensors={sensors}
+                              onAttractionDragEnd={(e) => handleAttractionDragEnd(e, dayIdx)}
+                            />
+                          </SortableDayItem>
+                        ))}
+                      </SortableContext>
+                    </DndContext>
                     {days.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-4">Adicione dias ao roteiro</p>
                     )}
@@ -628,11 +754,199 @@ export default function ItineraryEditorPage() {
                   destinations={destinations}
                   days={days}
                   checklist={checklist}
+                  googleMapsApiKey={googleMapsApiKey}
+                  interactive={true}
                 />
               </div>
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
+      </div>
+
+      {/* Cover image search modal */}
+      {coverImageModalOpen && (
+        <ImageSearchModal
+          open={coverImageModalOpen}
+          onClose={() => setCoverImageModalOpen(false)}
+          onSelect={(img: StockImage) => {
+            if (itinerary) {
+              setItinerary({ ...itinerary, cover_image_url: img.url_full || img.url_download });
+              setCoverImageModalOpen(false);
+              toast.success('Imagem de capa selecionada!');
+            }
+          }}
+          initialQuery={destinations.map(d => d.name).filter(Boolean).join(' ') || itinerary?.title || ''}
+          unsplashKey={unsplashKey}
+          pexelsKey={pexelsKey}
+        />
+      )}
+
+      {/* Attraction image search modal */}
+      {attrImageModal && (
+        <ImageSearchModal
+          open={!!attrImageModal}
+          onClose={() => setAttrImageModal(null)}
+          onSelect={(img: StockImage) => {
+            if (attrImageModal) {
+              updateAttraction(attrImageModal.dayIdx, attrImageModal.attrIdx, 'image_url', img.url_full || img.url_download);
+              setAttrImageModal(null);
+              toast.success('Imagem selecionada!');
+            }
+          }}
+          initialQuery={attrImageModal ? `${days[attrImageModal.dayIdx]?.attractions[attrImageModal.attrIdx]?.name || ''} ${days[attrImageModal.dayIdx]?.attractions[attrImageModal.attrIdx]?.city || ''}`.trim() : ''}
+          unsplashKey={unsplashKey}
+          pexelsKey={pexelsKey}
+        />
+      )}
+    </div>
+  );
+}
+
+// ===== Day Editor Block (extracted for sortable) =====
+function DayEditorBlock({
+  day, dayIdx, expanded, onToggle, onRemove, onDuplicate,
+  onUpdateDay, onSaveDay, onAddAttraction, onUpdateAttraction,
+  onSaveAttraction, onRemoveAttraction, onGenerateDescription, onSearchImage,
+  sensors, onAttractionDragEnd,
+  dragListeners, dragAttributes,
+}: any) {
+  return (
+    <div className="border rounded-lg overflow-hidden bg-card">
+      <button
+        className="w-full flex items-center gap-2 p-3 hover:bg-muted/50 transition-colors"
+        onClick={onToggle}
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground/50 cursor-grab shrink-0" {...(dragListeners || {})} {...(dragAttributes || {})} onClick={(e: any) => e.stopPropagation()} />
+        {expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+        <span className="text-sm font-medium">{day.title || `Dia ${day.day_number}`}</span>
+        <span className="text-xs text-muted-foreground ml-auto mr-2">{day.attractions.length} atração(ões)</span>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={(e: any) => { e.stopPropagation(); onDuplicate(); }} title="Duplicar dia">
+          <Copy className="h-3 w-3" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e: any) => { e.stopPropagation(); onRemove(); }}>
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </button>
+
+      {expanded && (
+        <div className="px-3 pb-3 space-y-3 border-t pt-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Título</Label>
+              <Input value={day.title} onChange={(e: any) => onUpdateDay(dayIdx, 'title', e.target.value)} onBlur={() => onSaveDay(day)} className="h-8" />
+            </div>
+            <div>
+              <Label className="text-xs">Subtítulo</Label>
+              <Input value={day.subtitle} onChange={(e: any) => onUpdateDay(dayIdx, 'subtitle', e.target.value)} onBlur={() => onSaveDay(day)} className="h-8" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Descrição</Label>
+            <Textarea value={day.description} onChange={(e: any) => onUpdateDay(dayIdx, 'description', e.target.value)} onBlur={() => onSaveDay(day)} rows={2} className="text-sm" />
+          </div>
+
+          {/* Attractions with drag & drop */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">Atrações</Label>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => onAddAttraction(day.id, dayIdx)}>
+                <Plus className="h-3 w-3" /> Atração
+              </Button>
+            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onAttractionDragEnd}>
+              <SortableContext items={day.attractions.map((a: any) => a.id)} strategy={verticalListSortingStrategy}>
+                {day.attractions.map((attr: any, attrIdx: number) => (
+                  <SortableAttractionItem key={attr.id} attr={attr}>
+                    <AttractionEditorBlock
+                      attr={attr}
+                      dayIdx={dayIdx}
+                      attrIdx={attrIdx}
+                      onUpdate={onUpdateAttraction}
+                      onSave={onSaveAttraction}
+                      onRemove={onRemoveAttraction}
+                      onGenerateDescription={onGenerateDescription}
+                      onSearchImage={onSearchImage}
+                    />
+                  </SortableAttractionItem>
+                ))}
+              </SortableContext>
+            </DndContext>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== Attraction Editor Block =====
+function AttractionEditorBlock({
+  attr, dayIdx, attrIdx, onUpdate, onSave, onRemove, onGenerateDescription, onSearchImage,
+  dragListeners, dragAttributes,
+}: any) {
+  return (
+    <div className="p-3 border rounded-md space-y-2 bg-background">
+      <div className="flex items-center gap-2">
+        <GripVertical className="h-4 w-4 text-muted-foreground/50 cursor-grab shrink-0" {...(dragListeners || {})} {...(dragAttributes || {})} />
+        <Input
+          value={attr.name}
+          onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'name', e.target.value)}
+          onBlur={() => onSave(attr)}
+          placeholder="Nome da atração"
+          className="h-8 font-medium"
+        />
+        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-destructive" onClick={() => onRemove(dayIdx, attr.id)}>
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-[10px]">Local</Label>
+          <Input value={attr.location} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'location', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" />
+        </div>
+        <div>
+          <Label className="text-[10px]">Cidade</Label>
+          <Input value={attr.city} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'city', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" />
+        </div>
+      </div>
+      <div>
+        <Label className="text-[10px]">Categoria</Label>
+        <Select value={attr.category} onValueChange={(v: any) => { onUpdate(dayIdx, attrIdx, 'category', v); onSave({ ...attr, category: v }); }}>
+          <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <Label className="text-[10px]">Descrição</Label>
+          <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={() => onGenerateDescription(dayIdx, attrIdx)}>
+            <Sparkles className="h-3 w-3" /> IA
+          </Button>
+        </div>
+        <Textarea value={attr.description} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'description', e.target.value)} onBlur={() => onSave(attr)} rows={3} className="text-xs" />
+      </div>
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <Label className="text-[10px]">Imagem</Label>
+          <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-primary" onClick={() => onSearchImage(dayIdx, attrIdx)}>
+            <ImageIcon className="h-3 w-3" /> Buscar
+          </Button>
+        </div>
+        <Input value={attr.image_url} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'image_url', e.target.value)} onBlur={() => onSave(attr)} placeholder="URL da imagem" className="h-7 text-xs" />
+        {attr.image_url && (
+          <img src={attr.image_url} alt={attr.name} className="mt-2 h-20 w-full object-cover rounded" />
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-[10px]">Horário</Label>
+          <Input value={attr.time} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'time', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" placeholder="Ex: 09:00" />
+        </div>
+        <div>
+          <Label className="text-[10px]">Duração</Label>
+          <Input value={attr.duration} onChange={(e: any) => onUpdate(dayIdx, attrIdx, 'duration', e.target.value)} onBlur={() => onSave(attr)} className="h-7 text-xs" placeholder="Ex: 2h" />
+        </div>
       </div>
     </div>
   );

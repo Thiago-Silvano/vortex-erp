@@ -1,4 +1,5 @@
 import React from 'react';
+import ItineraryMapSection from './ItineraryMapSection';
 
 interface Attraction {
   id: string;
@@ -49,6 +50,8 @@ interface Props {
   destinations: Destination[];
   days: Day[];
   checklist?: ChecklistItem[];
+  googleMapsApiKey?: string;
+  interactive?: boolean;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -60,7 +63,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   recommendation: 'Recomendação',
 };
 
-// Paginate attractions: max 3 per page
 function paginateAttractions(attractions: Attraction[]): Attraction[][] {
   const pages: Attraction[][] = [];
   for (let i = 0; i < attractions.length; i += 3) {
@@ -69,7 +71,7 @@ function paginateAttractions(attractions: Attraction[]): Attraction[][] {
   return pages.length > 0 ? pages : [[]];
 }
 
-export default function ItineraryPreview({ itinerary, destinations, days, checklist = [] }: Props) {
+export default function ItineraryPreview({ itinerary, destinations, days, checklist = [], googleMapsApiKey, interactive = true }: Props) {
   const destinationNames = destinations.map(d => d.name).filter(Boolean);
 
   return (
@@ -119,16 +121,18 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
               <span className="text-gray-400 text-sm">{destinationNames.join(', ')}</span>
             </div>
           )}
-          {days.map((day, idx) => (
+          {days.map((day) => (
             <div key={day.id} className="flex items-center justify-between py-3 border-b border-gray-100">
               <span className="text-gray-700 font-medium">{day.title || `Dia ${day.day_number}`}</span>
               <span className="text-gray-400 text-sm">{day.attractions.length} atração(ões)</span>
             </div>
           ))}
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <span className="text-gray-700 font-medium">Checklist de Viagem</span>
-            <span className="text-gray-400 text-sm">✓</span>
-          </div>
+          {checklist.length > 0 && (
+            <div className="flex items-center justify-between py-3 border-b border-gray-100">
+              <span className="text-gray-700 font-medium">Checklist de Viagem</span>
+              <span className="text-gray-400 text-sm">✓</span>
+            </div>
+          )}
           <div className="flex items-center justify-between py-3 border-b border-gray-100">
             <span className="text-gray-700 font-medium">Mapa da Viagem</span>
             <span className="text-gray-400 text-sm">🗺</span>
@@ -145,7 +149,6 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
         const pages = paginateAttractions(day.attractions);
         return pages.map((pageAttractions, pageIdx) => (
           <div key={`${day.id}-page-${pageIdx}`} className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            {/* Day header (only on first page) */}
             {pageIdx === 0 && (
               <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-8 py-6">
                 <p className="text-amber-400 text-xs tracking-[0.3em] uppercase font-semibold mb-1">
@@ -156,7 +159,6 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
               </div>
             )}
 
-            {/* Attractions */}
             <div className="p-6 md:p-8 space-y-8">
               {pageAttractions.length === 0 && pageIdx === 0 && (
                 <p className="text-gray-400 text-center py-12 text-sm italic">Adicione atrações a este dia</p>
@@ -167,22 +169,15 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
 
                 return (
                   <div key={attr.id} className={`flex flex-col md:flex-row gap-6 items-stretch ${!isEven ? 'md:flex-row-reverse' : ''}`}>
-                    {/* Image */}
                     <div className="md:w-1/2 shrink-0">
                       {attr.image_url ? (
-                        <img
-                          src={attr.image_url}
-                          alt={attr.name}
-                          className="w-full h-48 md:h-56 object-cover rounded-xl"
-                        />
+                        <img src={attr.image_url} alt={attr.name} className="w-full h-48 md:h-56 object-cover rounded-xl" />
                       ) : (
                         <div className="w-full h-48 md:h-56 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
                           <span className="text-gray-300 text-4xl">📷</span>
                         </div>
                       )}
                     </div>
-
-                    {/* Text */}
                     <div className="md:w-1/2 flex flex-col justify-center">
                       {attr.category && (
                         <span className="text-[10px] tracking-[0.2em] uppercase text-amber-600 font-semibold mb-1">
@@ -210,7 +205,6 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
               })}
             </div>
 
-            {/* Page indicator */}
             {pages.length > 1 && (
               <div className="px-8 pb-4">
                 <p className="text-xs text-gray-300 text-right">
@@ -249,6 +243,13 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
           })()}
         </div>
       )}
+
+      {/* ===== MAP PAGE ===== */}
+      <ItineraryMapSection
+        destinations={destinations}
+        googleMapsApiKey={googleMapsApiKey}
+        interactive={interactive}
+      />
 
       {/* ===== THANK YOU PAGE ===== */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
