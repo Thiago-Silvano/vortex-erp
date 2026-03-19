@@ -774,6 +774,35 @@ export default function ItineraryEditorPage() {
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
+                        {/* Destination image */}
+                        {dest.image_url ? (
+                          <div className="relative group">
+                            <img src={dest.image_url} alt={dest.name} className="w-full h-24 object-cover rounded-md" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center gap-1">
+                              <label className="cursor-pointer">
+                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-white" asChild>
+                                  <span><Upload className="h-3 w-3" /></span>
+                                </Button>
+                                <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadDestinationImage(idx, f); e.target.value = ''; } }} />
+                              </label>
+                              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-white" onClick={() => refreshDestinationImage(idx)} title="Buscar outra imagem">
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <label className="cursor-pointer flex-1">
+                              <Button size="sm" variant="outline" className="w-full h-7 text-xs gap-1" asChild>
+                                <span><Upload className="h-3 w-3" /> Upload</span>
+                              </Button>
+                              <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { uploadDestinationImage(idx, f); e.target.value = ''; } }} />
+                            </label>
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => refreshDestinationImage(idx)}>
+                              <Search className="h-3 w-3" /> Buscar
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                     {destinations.length === 0 && (
