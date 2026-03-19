@@ -270,9 +270,10 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
         googleMapsApiKey={googleMapsApiKey}
         interactive={interactive}
       />
+      </div>
 
       {/* ===== THANK YOU PAGE ===== */}
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div id="section-thankyou" className="bg-white rounded-2xl shadow-lg overflow-hidden">
         <div className="relative" style={{ aspectRatio: '16/8' }}>
           {itinerary.thank_you_image_url ? (
             <img src={itinerary.thank_you_image_url} alt="Thank you" className="absolute inset-0 w-full h-full object-cover" />
