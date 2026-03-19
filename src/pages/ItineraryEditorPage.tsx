@@ -1119,6 +1119,7 @@ export default function ItineraryEditorPage() {
                                 <SelectItem value="left">Esquerda</SelectItem>
                                 <SelectItem value="center">Centro</SelectItem>
                                 <SelectItem value="right">Direita</SelectItem>
+                                <SelectItem value="justify">Justificado</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
