@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ExternalLink } from 'lucide-react';
 
 interface Destination {
   id: string;
@@ -18,64 +19,54 @@ interface Props {
   interactive?: boolean;
 }
 
+function buildAttractionLocation(a: AttractionMarker): string {
+  return [a.name, a.location, a.city].filter(Boolean).join(', ');
+}
+
+function buildStaticUrl(destNames: string[], attrLocs: string[], apiKey: string, size = '800x500'): string {
+  const allMarkers: string[] = [];
+  destNames.forEach((d, i) => {
+    allMarkers.push(`markers=color:blue%7Clabel:${i + 1}%7C${encodeURIComponent(d)}`);
+  });
+  attrLocs.forEach((loc) => {
+    allMarkers.push(`markers=color:red%7Csize:small%7C${encodeURIComponent(loc)}`);
+  });
+  const markersStr = allMarkers.join('&');
+  const pathPlaces = destNames.length >= 2
+    ? `&path=color:0x0000ff80|weight:3|${destNames.map(d => encodeURIComponent(d)).join('|')}`
+    : '';
+  return `https://maps.googleapis.com/maps/api/staticmap?size=${size}&scale=2&maptype=roadmap&${markersStr}${pathPlaces}&key=${apiKey}`;
+}
+
+function buildGoogleMapsLink(destNames: string[], attrLocs: string[]): string {
+  if (destNames.length >= 2) {
+    const origin = encodeURIComponent(destNames[0]);
+    const dest = encodeURIComponent(destNames[destNames.length - 1]);
+    const waypoints = destNames.slice(1, -1).map(d => encodeURIComponent(d)).join('|');
+    let url = `https://www.google.com/maps/dir/${destNames.map(d => encodeURIComponent(d)).join('/')}`;
+    return url;
+  }
+  const all = [...destNames, ...attrLocs];
+  if (all.length === 1) {
+    return `https://www.google.com/maps/search/${encodeURIComponent(all[0])}`;
+  }
+  return `https://www.google.com/maps/search/${encodeURIComponent(all.join(', '))}`;
+}
+
 export default function ItineraryMapSection({ destinations, attractions = [], googleMapsApiKey, interactive = true }: Props) {
   const destNames = destinations.map(d => d.name).filter(Boolean);
-
-  // Build attraction location strings for markers
   const attractionLocations = useMemo(() => {
-    return attractions
-      .map(a => {
-        const parts = [a.name, a.location, a.city].filter(Boolean);
-        return parts.join(', ');
-      })
-      .filter(Boolean);
+    return attractions.map(a => buildAttractionLocation(a)).filter(Boolean);
   }, [attractions]);
 
-  const mapUrl = useMemo(() => {
+  const staticMapUrl = useMemo(() => {
     if (!googleMapsApiKey || (destNames.length === 0 && attractionLocations.length === 0)) return null;
-
-    if (interactive) {
-      // Embed API - interactive map
-      if (destNames.length === 1 && attractionLocations.length === 0) {
-        const q = encodeURIComponent(destNames[0]);
-        return `https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${q}&zoom=10`;
-      }
-      // Multiple destinations: use directions
-      if (destNames.length >= 2) {
-        const origin = encodeURIComponent(destNames[0]);
-        const destination = encodeURIComponent(destNames[destNames.length - 1]);
-        const waypoints = destNames.slice(1, -1).map(d => encodeURIComponent(d)).join('|');
-        let url = `https://www.google.com/maps/embed/v1/directions?key=${googleMapsApiKey}&origin=${origin}&destination=${destination}&mode=driving`;
-        if (waypoints) url += `&waypoints=${waypoints}`;
-        return url;
-      }
-      // Only attractions, no destinations with route
-      if (destNames.length <= 1) {
-        const q = encodeURIComponent(destNames[0] || attractionLocations[0] || '');
-        return `https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${q}&zoom=10`;
-      }
-      return null;
-    } else {
-      // Static Map API - for PDF - includes both destinations and attractions
-      const allMarkers: string[] = [];
-
-      // Destination markers (blue)
-      destNames.forEach((d, i) => {
-        allMarkers.push(`markers=color:blue%7Clabel:${i + 1}%7C${encodeURIComponent(d)}`);
-      });
-
-      // Attraction markers (red)
-      attractionLocations.forEach((loc) => {
-        allMarkers.push(`markers=color:red%7Csize:small%7C${encodeURIComponent(loc)}`);
-      });
-
-      const markersStr = allMarkers.join('&');
-      const pathPlaces = destNames.length >= 2
-        ? `&path=color:0x0000ff80|weight:3|${destNames.map(d => encodeURIComponent(d)).join('|')}`
-        : '';
-      return `https://maps.googleapis.com/maps/api/staticmap?size=800x500&maptype=roadmap&${markersStr}${pathPlaces}&key=${googleMapsApiKey}`;
-    }
+    return buildStaticUrl(destNames, attractionLocations, googleMapsApiKey, interactive ? '900x500' : '800x500');
   }, [destNames, attractionLocations, googleMapsApiKey, interactive]);
+
+  const googleMapsLink = useMemo(() => {
+    return buildGoogleMapsLink(destNames, attractionLocations);
+  }, [destNames, attractionLocations]);
 
   if (!googleMapsApiKey || (destNames.length === 0 && attractionLocations.length === 0)) {
     return (
@@ -89,53 +80,57 @@ export default function ItineraryMapSection({ destinations, attractions = [], go
     );
   }
 
-  if (interactive && mapUrl) {
-    return (
-      <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
-        <p className="text-xs tracking-[0.3em] uppercase text-amber-600 font-semibold mb-2">Rota</p>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Mapa da Viagem</h2>
-        <div className="rounded-xl overflow-hidden shadow-md">
-          <iframe
-            src={mapUrl}
-            width="100%"
-            height="450"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {destNames.map((name, i) => (
-            <span key={`dest-${i}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-full text-xs text-gray-600">
-              <span className="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
-              {name}
-            </span>
-          ))}
-          {attractions.filter(a => a.name).map((attr, i) => (
-            <span key={`attr-${i}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 rounded-full text-xs text-gray-600">
-              <span className="w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[9px]">📍</span>
-              {attr.name}
-            </span>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Static image fallback
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
       <p className="text-xs tracking-[0.3em] uppercase text-amber-600 font-semibold mb-2">Rota</p>
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Mapa da Viagem</h2>
-      {mapUrl && (
-        <img src={mapUrl} alt="Mapa da viagem" className="w-full rounded-xl shadow-md" />
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Mapa da Viagem</h2>
+        {interactive && (
+          <a
+            href={googleMapsLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            Abrir no Google Maps <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        )}
+      </div>
+      {staticMapUrl && (
+        <div className="rounded-xl overflow-hidden shadow-md">
+          {interactive ? (
+            <a href={googleMapsLink} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
+              <img src={staticMapUrl} alt="Mapa da viagem" className="w-full" />
+            </a>
+          ) : (
+            <img src={staticMapUrl} alt="Mapa da viagem" className="w-full" />
+          )}
+        </div>
       )}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {destNames.map((name, i) => (
+          <span key={`dest-${i}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-full text-xs text-gray-600">
+            <span className="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
+            {name}
+          </span>
+        ))}
+        {attractions.filter(a => a.name).map((attr, i) => (
+          <span key={`attr-${i}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 rounded-full text-xs text-gray-600">
+            <span className="w-2 h-2 bg-red-500 rounded-full" />
+            {attr.name}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
 
 export function getStaticMapUrl(destinations: { name: string }[], attractions: { name: string; location?: string; city?: string }[], googleMapsApiKey: string): string | null {
+  const destNames = destinations.map(d => d.name).filter(Boolean);
+  const attrLocs = attractions.map(a => buildAttractionLocation(a)).filter(Boolean);
+  if (!googleMapsApiKey || (destNames.length === 0 && attrLocs.length === 0)) return null;
+  return buildStaticUrl(destNames, attrLocs, googleMapsApiKey);
+}
   const destNames = destinations.map(d => d.name).filter(Boolean);
   const attrLocs = attractions.map(a => [a.name, a.location, a.city].filter(Boolean).join(', ')).filter(Boolean);
   if (!googleMapsApiKey || (destNames.length === 0 && attrLocs.length === 0)) return null;
