@@ -119,7 +119,11 @@ export default function ItineraryPreview({ itinerary, destinations, days, checkl
         <div className="space-y-4">
           {destinations.length > 0 && (
             <button
-              onClick={() => document.getElementById('section-destinations')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              onClick={() => {
+                const firstDayId = days[0]?.id;
+                const el = firstDayId ? document.getElementById(`section-day-${firstDayId}`) : null;
+                el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
               className="flex items-center justify-between py-3 border-b border-gray-100 w-full text-left hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors cursor-pointer"
             >
               <span className="text-gray-700 font-medium">Destinos</span>
