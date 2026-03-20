@@ -734,21 +734,67 @@ export default function PromoMakerPage() {
     </div>
   );
 
+  const renderStickerProps = (sel: StickerElement) => (
+    <div className="p-3 space-y-3">
+      <div>
+        <Label className="text-xs">Figurinha</Label>
+        <p className="text-sm font-medium mt-1">{STICKER_DEFS.find(s => s.id === sel.sticker)?.name}</p>
+      </div>
+      <div>
+        <Label className="text-xs">Cor</Label>
+        <div className="flex items-center gap-2 mt-1">
+          <input type="color" value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+          <Input value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="h-8 text-xs flex-1" />
+        </div>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {['#ffffff', '#000000', '#d4af37', '#00b4d8', '#e63946', '#25d366', '#ff6b35', '#7209b7'].map(c => (
+            <div key={c} className="w-6 h-6 rounded cursor-pointer border border-border hover:scale-110 transition-transform"
+              style={{ background: c }} onClick={() => updateEl(sel.id, { color: c })} />
+          ))}
+        </div>
+      </div>
+      <div>
+        <Label className="text-xs flex justify-between">Tamanho <span className="text-muted-foreground">{sel.size}%</span></Label>
+        <Slider value={[sel.size]} onValueChange={([v]) => updateEl(sel.id, { size: v })} min={3} max={40} step={1} />
+      </div>
+      <div>
+        <Label className="text-xs flex justify-between">Opacidade <span className="text-muted-foreground">{Math.round(sel.opacity * 100)}%</span></Label>
+        <Slider value={[sel.opacity]} onValueChange={([v]) => updateEl(sel.id, { opacity: v })} min={0} max={1} step={0.05} />
+      </div>
+      <div>
+        <Label className="text-xs flex justify-between">Rotação <span className="text-muted-foreground">{sel.rotation}°</span></Label>
+        <Slider value={[sel.rotation]} onValueChange={([v]) => updateEl(sel.id, { rotation: v })} min={0} max={360} step={1} />
+      </div>
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        <div>
+          <Label className="text-xs">Posição X</Label>
+          <Slider value={[sel.x]} onValueChange={([v]) => updateEl(sel.id, { x: v })} min={0} max={100} step={0.5} />
+        </div>
+        <div>
+          <Label className="text-xs">Posição Y</Label>
+          <Slider value={[sel.y]} onValueChange={([v]) => updateEl(sel.id, { y: v })} min={0} max={100} step={0.5} />
+        </div>
+      </div>
+    </div>
+  );
+
   const renderShapeProps = (sel: ShapeElement) => (
     <div className="p-3 space-y-3">
       <div>
         <Label className="text-xs">Tipo de forma</Label>
-        <div className="flex gap-1 mt-1">
+        <div className="flex gap-1 mt-1 flex-wrap">
           {([
-            { v: 'rectangle' as const, Icon: RectangleVertical, label: 'Retângulo' },
-            { v: 'square' as const, Icon: Square, label: 'Quadrado' },
-            { v: 'circle' as const, Icon: Circle, label: 'Círculo' },
+            { v: 'rectangle' as const, Icon: RectangleVertical, label: 'Ret.' },
+            { v: 'square' as const, Icon: Square, label: 'Quad.' },
+            { v: 'circle' as const, Icon: Circle, label: 'Circ.' },
+            { v: 'line' as const, Icon: Minus, label: 'Linha' },
           ]).map(({ v, Icon, label }) => (
             <Button key={v} size="sm" variant={sel.shape === v ? 'default' : 'outline'} className="h-8 gap-1 text-xs flex-1"
               onClick={() => updateEl(sel.id, {
                 shape: v,
-                borderRadius: v === 'circle' ? 50 : sel.borderRadius,
-                height: v === 'square' ? sel.width : v === 'circle' ? sel.width : sel.height,
+                borderRadius: v === 'circle' ? 50 : v === 'line' ? 0 : sel.borderRadius,
+                height: v === 'square' ? sel.width : v === 'circle' ? sel.width : v === 'line' ? 0.5 : sel.height,
+                width: v === 'line' ? 40 : sel.width,
               })}>
               <Icon className="h-3 w-3" /> {label}
             </Button>
@@ -757,7 +803,7 @@ export default function PromoMakerPage() {
       </div>
 
       <div>
-        <Label className="text-xs">Cor de preenchimento</Label>
+        <Label className="text-xs">Cor {sel.shape === 'line' ? 'da linha' : 'de preenchimento'}</Label>
         <div className="flex items-center gap-2 mt-1">
           <input type="color" value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
           <Input value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="h-8 text-xs flex-1" />
@@ -766,20 +812,23 @@ export default function PromoMakerPage() {
 
       <Separator />
 
-      <div>
-        <Label className="text-xs">Cor da borda</Label>
-        <div className="flex items-center gap-2 mt-1">
-          <input type="color" value={sel.borderColor === 'transparent' ? '#000000' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
-          <Input value={sel.borderColor === 'transparent' ? '' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value || 'transparent' })} className="h-8 text-xs flex-1" placeholder="Nenhuma" />
-        </div>
-      </div>
+      {sel.shape !== 'line' && (
+        <>
+          <div>
+            <Label className="text-xs">Cor da borda</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <input type="color" value={sel.borderColor === 'transparent' ? '#000000' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+              <Input value={sel.borderColor === 'transparent' ? '' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value || 'transparent' })} className="h-8 text-xs flex-1" placeholder="Nenhuma" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs flex justify-between">Espessura da borda <span className="text-muted-foreground">{sel.borderWidth}px</span></Label>
+            <Slider value={[sel.borderWidth]} onValueChange={([v]) => updateEl(sel.id, { borderWidth: v })} min={0} max={20} step={1} />
+          </div>
+        </>
+      )}
 
-      <div>
-        <Label className="text-xs flex justify-between">Espessura da borda <span className="text-muted-foreground">{sel.borderWidth}px</span></Label>
-        <Slider value={[sel.borderWidth]} onValueChange={([v]) => updateEl(sel.id, { borderWidth: v })} min={0} max={20} step={1} />
-      </div>
-
-      {sel.shape !== 'circle' && (
+      {sel.shape !== 'circle' && sel.shape !== 'line' && (
         <div>
           <Label className="text-xs flex justify-between">Arredondamento <span className="text-muted-foreground">{sel.borderRadius}px</span></Label>
           <Slider value={[sel.borderRadius]} onValueChange={([v]) => updateEl(sel.id, { borderRadius: v })} min={0} max={200} step={1} />
@@ -787,18 +836,35 @@ export default function PromoMakerPage() {
       )}
 
       <div>
-        <Label className="text-xs">Degradê de opacidade</Label>
-        <Select value={sel.gradientFade} onValueChange={(v: GradientFade) => updateEl(sel.id, { gradientFade: v })}>
+        <Label className="text-xs">Sombra</Label>
+        <Select value={sel.shadow || 'none'} onValueChange={v => updateEl(sel.id, { shadow: v })}>
           <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">Nenhum</SelectItem>
-            <SelectItem value="left-right">Esquerda → Direita</SelectItem>
-            <SelectItem value="right-left">Direita → Esquerda</SelectItem>
-            <SelectItem value="top-bottom">Cima → Baixo</SelectItem>
-            <SelectItem value="bottom-top">Baixo → Cima</SelectItem>
+            <SelectItem value="none">Nenhuma</SelectItem>
+            <SelectItem value="0 2px 4px rgba(0,0,0,0.3)">Suave</SelectItem>
+            <SelectItem value="0 4px 8px rgba(0,0,0,0.4)">Média</SelectItem>
+            <SelectItem value="0 6px 16px rgba(0,0,0,0.6)">Forte</SelectItem>
+            <SelectItem value="0 0 15px rgba(255,255,255,0.5)">Brilho Branco</SelectItem>
+            <SelectItem value="0 0 15px rgba(212,175,55,0.5)">Brilho Dourado</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {sel.shape !== 'line' && (
+        <div>
+          <Label className="text-xs">Degradê de opacidade</Label>
+          <Select value={sel.gradientFade} onValueChange={(v: GradientFade) => updateEl(sel.id, { gradientFade: v })}>
+            <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Nenhum</SelectItem>
+              <SelectItem value="left-right">Esquerda → Direita</SelectItem>
+              <SelectItem value="right-left">Direita → Esquerda</SelectItem>
+              <SelectItem value="top-bottom">Cima → Baixo</SelectItem>
+              <SelectItem value="bottom-top">Baixo → Cima</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <Separator />
 
@@ -817,9 +883,19 @@ export default function PromoMakerPage() {
             <Slider value={[sel.height]} onValueChange={([v]) => updateEl(sel.id, { height: v })} min={2} max={100} step={1} />
           </div>
         )}
+        {sel.shape === 'line' && (
+          <div>
+            <Label className="text-xs flex justify-between">Espessura <span className="text-muted-foreground">{sel.height}%</span></Label>
+            <Slider value={[sel.height]} onValueChange={([v]) => updateEl(sel.id, { height: v })} min={0.1} max={5} step={0.1} />
+          </div>
+        )}
         <div>
           <Label className="text-xs flex justify-between">Opacidade <span className="text-muted-foreground">{Math.round(sel.opacity * 100)}%</span></Label>
           <Slider value={[sel.opacity]} onValueChange={([v]) => updateEl(sel.id, { opacity: v })} min={0} max={1} step={0.05} />
+        </div>
+        <div>
+          <Label className="text-xs flex justify-between">Rotação <span className="text-muted-foreground">{sel.rotation || 0}°</span></Label>
+          <Slider value={[sel.rotation || 0]} onValueChange={([v]) => updateEl(sel.id, { rotation: v })} min={0} max={360} step={1} />
         </div>
       </div>
 
