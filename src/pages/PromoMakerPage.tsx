@@ -335,7 +335,8 @@ export default function PromoMakerPage() {
       onMouseLeave={handleCanvasMouseUp}
       onClick={() => setSelectedId(null)}
     >
-      {image.url && (
+      {/* Full background image (only when NOT in shape mode) */}
+      {image.url && !imageInShape && (
         <>
           <img
             src={image.url} alt="" className="absolute inset-0 w-full h-full pointer-events-none" draggable={false}
@@ -350,17 +351,18 @@ export default function PromoMakerPage() {
         </>
       )}
 
-      {/* Shapes first (behind) */}
+      {/* Shapes (behind text) */}
       {elements.filter(el => el.type === 'shape').map(el => {
+        const isImageTarget = imageInShape && imageShapeId === el.id && image.url;
         return (
           <div
             key={el.id}
-            className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            className={`absolute cursor-move overflow-hidden ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
               transform: 'translate(-50%, -50%)',
               width: `${el.width}%`, height: `${el.height}%`,
-              backgroundColor: el.color,
+              backgroundColor: isImageTarget ? undefined : el.color,
               borderRadius: el.shape === 'circle' ? '50%' : `${el.borderRadius}px`,
               border: el.borderWidth > 0 ? `${el.borderWidth}px solid ${el.borderColor}` : undefined,
               opacity: el.opacity,
@@ -369,7 +371,22 @@ export default function PromoMakerPage() {
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
             onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
-          />
+          >
+            {isImageTarget && (
+              <>
+                <img
+                  src={image.url} alt="" className="absolute inset-0 w-full h-full pointer-events-none" draggable={false}
+                  style={{
+                    objectFit: 'cover',
+                    objectPosition: `${50 + image.offsetX}% ${50 + image.offsetY}%`,
+                    transform: `scale(${image.zoom})`,
+                    filter: `brightness(${image.brightness}) contrast(${image.contrast}) saturate(${image.saturate}) blur(${image.blur}px)`,
+                  }}
+                />
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: image.overlayColor, opacity: image.overlayOpacity }} />
+              </>
+            )}
+          </div>
         );
       })}
       {/* Texts on top */}
