@@ -171,9 +171,8 @@ const STICKER_DEFS = [
   },
 ];
 
-const SAVED_TEMPLATES_KEY = 'promo-maker-saved-templates';
-
 interface SavedTemplate {
+  id?: string;
   name: string;
   bg: string;
   bgGradient: string;
@@ -182,13 +181,6 @@ interface SavedTemplate {
   imageConfig: ImageConfig;
   imageInShape: boolean;
   imageShapeId: string;
-}
-
-function loadSavedTemplates(): SavedTemplate[] {
-  try {
-    const raw = localStorage.getItem(SAVED_TEMPLATES_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
 }
 
 export default function PromoMakerPage() {
