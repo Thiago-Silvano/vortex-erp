@@ -988,13 +988,17 @@ export default function PromoMakerPage() {
                       >
                         {el.type === 'text' ? (
                           <Type className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        ) : el.type === 'sticker' ? (
+                          <Sticker className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        ) : el.shape === 'line' ? (
+                          <Minus className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                         ) : el.shape === 'circle' ? (
                           <Circle className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                         ) : (
                           <Square className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                         )}
                         <span className="truncate flex-1 text-foreground">
-                          {el.type === 'text' ? el.content.slice(0, 16) : el.shape === 'rectangle' ? 'Retângulo' : el.shape === 'square' ? 'Quadrado' : 'Círculo'}
+                          {el.type === 'text' ? el.content.slice(0, 16) : el.type === 'sticker' ? (STICKER_DEFS.find(s => s.id === el.sticker)?.name || 'Figurinha') : el.shape === 'rectangle' ? 'Retângulo' : el.shape === 'square' ? 'Quadrado' : el.shape === 'line' ? 'Linha' : 'Círculo'}
                         </span>
                         <div className="flex gap-0.5">
                           <button onClick={(e) => { e.stopPropagation(); updateEl(el.id, { locked: !el.locked }); }} className="p-0.5 hover:bg-muted rounded">
