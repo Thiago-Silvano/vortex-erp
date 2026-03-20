@@ -548,7 +548,7 @@ export default function PromoMakerPage() {
       {elements.filter(el => el.type === 'text').map(el => (
           <div
             key={el.id}
-            className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            className={`absolute cursor-move ${selectedId === el.id || selectedIds.includes(el.id) ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
               transform: 'translate(-50%, -50%)',
