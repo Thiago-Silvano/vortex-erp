@@ -448,7 +448,7 @@ export default function PromoMakerPage() {
       onMouseMove={handleCanvasMouseMove}
       onMouseUp={handleCanvasMouseUp}
       onMouseLeave={handleCanvasMouseUp}
-      onClick={() => setSelectedId(null)}
+      onClick={() => { setSelectedId(null); setSelectedIds([]); }}
     >
       {/* Full background image (only when NOT in shape mode) */}
       {image.url && !imageInShape && (
