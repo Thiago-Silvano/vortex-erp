@@ -876,7 +876,7 @@ export default function PromoMakerPage() {
                         <Separator />
                         <Label className="text-xs text-muted-foreground">Meus templates salvos</Label>
                         {savedTemplates.map((tpl, i) => (
-                          <Card key={`saved-${i}`} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all relative group">
+                          <Card key={`saved-${i}`} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all relative group/tpl">
                             <div onClick={() => applySavedTemplate(tpl)}>
                               <div className="h-16 rounded mb-2" style={{ background: tpl.bgGradient || tpl.bg }} />
                               <p className="text-xs font-medium text-foreground">{tpl.name}</p>
@@ -884,7 +884,7 @@ export default function PromoMakerPage() {
                             </div>
                             <button
                               onClick={(e) => { e.stopPropagation(); deleteSavedTemplate(i); }}
-                              className="absolute top-1 right-1 p-1 rounded bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-1 right-1 p-1 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80 opacity-0 group-hover/tpl:opacity-100 transition-opacity z-10"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
