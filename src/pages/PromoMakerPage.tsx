@@ -399,14 +399,31 @@ export default function PromoMakerPage() {
     toast.success(`Template "${tpl.name}" aplicado!`);
   };
 
+  const uploadBlobImage = async (blobUrl: string): Promise<string> => {
+    const res = await fetch(blobUrl);
+    const blob = await res.blob();
+    const ext = blob.type.split('/')[1] || 'png';
+    const fileName = `promo-templates/${activeCompany?.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('quote-images').upload(fileName, blob, { contentType: blob.type });
+    if (error) throw error;
+    const { data: publicData } = supabase.storage.from('quote-images').getPublicUrl(fileName);
+    return publicData.publicUrl;
+  };
+
   const saveCurrentAsTemplate = async () => {
     const name = saveTemplateName.trim();
     if (!name) { toast.error('Digite um nome para o template'); return; }
     if (!activeCompany?.id) { toast.error('Selecione uma empresa'); return; }
-    const cleanImage: ImageConfig = {
-      ...image,
-      url: image.url?.startsWith('blob:') ? '' : image.url,
-    };
+    let imageUrl = image.url || '';
+    if (imageUrl.startsWith('blob:')) {
+      try {
+        imageUrl = await uploadBlobImage(imageUrl);
+      } catch {
+        toast.error('Erro ao salvar imagem do template');
+        return;
+      }
+    }
+    const cleanImage: ImageConfig = { ...image, url: imageUrl };
     const templateData = {
       bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
       imageInShape, imageShapeId,
