@@ -773,7 +773,7 @@ export default function PromoMakerPage() {
                   : el.gradientFade === 'top-bottom' ? 'to bottom' : 'to top';
                 const grad = `linear-gradient(${dir}, rgba(0,0,0,1), rgba(0,0,0,${endAlpha}))`;
                 return { WebkitMaskImage: grad, maskImage: grad };
-              } : {}),
+              })() : {}),
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
             onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
