@@ -8,14 +8,13 @@ import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { toPng } from 'html-to-image';
 import {
-  Download, Image as ImageIcon, Type, Palette, RotateCcw, Eye,
-  AlignLeft, AlignCenter, AlignRight, Bold, Italic, Layers, Smartphone,
-  Square, RectangleVertical, Plus, Trash2, Move, ZoomIn, ZoomOut, Sun,
-  GripVertical, ChevronUp, ChevronDown, Copy, Lock, Unlock,
+  Download, Image as ImageIcon, Type, Palette, Eye,
+  AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline,
+  Square, RectangleVertical, Plus, Trash2, Circle,
+  ChevronUp, ChevronDown, Copy, Lock, Unlock,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -29,6 +28,8 @@ interface TextElement {
   fontSize: number;
   fontFamily: string;
   fontWeight: string;
+  fontStyle: 'normal' | 'italic';
+  textDecoration: 'none' | 'underline';
   color: string;
   textAlign: 'left' | 'center' | 'right';
   letterSpacing: number;
@@ -41,6 +42,24 @@ interface TextElement {
   locked: boolean;
   width: number;
 }
+
+interface ShapeElement {
+  id: string;
+  type: 'shape';
+  shape: 'rectangle' | 'circle' | 'square';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  borderColor: string;
+  borderWidth: number;
+  borderRadius: number;
+  opacity: number;
+  locked: boolean;
+}
+
+type CanvasElement = TextElement | ShapeElement;
 
 interface ImageConfig {
   url: string;
@@ -68,45 +87,42 @@ const GOOGLE_FONTS = [
   'Anton', 'Josefin Sans', 'Quicksand',
 ];
 
+const defaultTextProps = {
+  fontStyle: 'normal' as const,
+  textDecoration: 'none' as const,
+};
+
 const TEMPLATES = [
   {
     name: 'Oferta Viagem',
     bg: '#0d1b2a',
     elements: [
-      { id: '1', type: 'text' as const, content: 'PROMOÇÃO', x: 50, y: 8, fontSize: 48, fontFamily: 'Bebas Neue', fontWeight: '400', color: '#d4af37', textAlign: 'center' as const, letterSpacing: 8, lineHeight: 1.1, textTransform: 'uppercase' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '2', type: 'text' as const, content: 'Cancún', x: 50, y: 22, fontSize: 72, fontFamily: 'Playfair Display', fontWeight: '700', color: '#ffffff', textAlign: 'center' as const, letterSpacing: 2, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 2px 8px rgba(0,0,0,0.5)', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '3', type: 'text' as const, content: '7 noites com aéreo', x: 50, y: 35, fontSize: 24, fontFamily: 'Inter', fontWeight: '300', color: '#e0e0e0', textAlign: 'center' as const, letterSpacing: 1, lineHeight: 1.4, textTransform: 'none' as const, opacity: 0.9, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '4', type: 'text' as const, content: 'a partir de', x: 50, y: 55, fontSize: 18, fontFamily: 'Inter', fontWeight: '400', color: '#aaa', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '5', type: 'text' as const, content: 'R$ 4.990', x: 50, y: 65, fontSize: 64, fontFamily: 'Montserrat', fontWeight: '800', color: '#d4af37', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 2px 12px rgba(212,175,55,0.3)', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '6', type: 'text' as const, content: 'ou 10x de R$ 549', x: 50, y: 78, fontSize: 20, fontFamily: 'Inter', fontWeight: '400', color: '#ccc', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' as const, opacity: 0.8, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '7', type: 'text' as const, content: 'Vortex Viagens', x: 50, y: 90, fontSize: 16, fontFamily: 'Inter', fontWeight: '600', color: '#d4af37', textAlign: 'center' as const, letterSpacing: 2, lineHeight: 1, textTransform: 'uppercase' as const, opacity: 0.7, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-    ],
+      { id: '1', type: 'text' as const, content: 'PROMOÇÃO', x: 50, y: 8, fontSize: 48, fontFamily: 'Bebas Neue', fontWeight: '400', ...defaultTextProps, color: '#d4af37', textAlign: 'center' as const, letterSpacing: 8, lineHeight: 1.1, textTransform: 'uppercase' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+      { id: '2', type: 'text' as const, content: 'Cancún', x: 50, y: 22, fontSize: 72, fontFamily: 'Playfair Display', fontWeight: '700', ...defaultTextProps, color: '#ffffff', textAlign: 'center' as const, letterSpacing: 2, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 2px 8px rgba(0,0,0,0.5)', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+      { id: '3', type: 'text' as const, content: '7 noites com aéreo', x: 50, y: 35, fontSize: 24, fontFamily: 'Inter', fontWeight: '300', ...defaultTextProps, color: '#e0e0e0', textAlign: 'center' as const, letterSpacing: 1, lineHeight: 1.4, textTransform: 'none' as const, opacity: 0.9, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+      { id: '4', type: 'text' as const, content: 'a partir de', x: 50, y: 55, fontSize: 18, fontFamily: 'Inter', fontWeight: '400', ...defaultTextProps, color: '#aaa', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+      { id: '5', type: 'text' as const, content: 'R$ 4.990', x: 50, y: 65, fontSize: 64, fontFamily: 'Montserrat', fontWeight: '800', ...defaultTextProps, color: '#d4af37', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 2px 12px rgba(212,175,55,0.3)', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+      { id: '6', type: 'text' as const, content: 'ou 10x de R$ 549', x: 50, y: 78, fontSize: 20, fontFamily: 'Inter', fontWeight: '400', ...defaultTextProps, color: '#ccc', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' as const, opacity: 0.8, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+      { id: '7', type: 'text' as const, content: 'Vortex Viagens', x: 50, y: 90, fontSize: 16, fontFamily: 'Inter', fontWeight: '600', ...defaultTextProps, color: '#d4af37', textAlign: 'center' as const, letterSpacing: 2, lineHeight: 1, textTransform: 'uppercase' as const, opacity: 0.7, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+    ] as CanvasElement[],
   },
   {
     name: 'Pacote Resort',
     bg: '#1a1a2e',
     elements: [
-      { id: '1', type: 'text' as const, content: '🏖️ ALL INCLUSIVE', x: 50, y: 10, fontSize: 36, fontFamily: 'Oswald', fontWeight: '600', color: '#00b4d8', textAlign: 'center' as const, letterSpacing: 4, lineHeight: 1.2, textTransform: 'uppercase' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '2', type: 'text' as const, content: 'Punta Cana', x: 50, y: 25, fontSize: 64, fontFamily: 'Abril Fatface', fontWeight: '400', color: '#ffffff', textAlign: 'center' as const, letterSpacing: 1, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 4px 16px rgba(0,0,0,0.4)', stroke: '', strokeWidth: 0, locked: false, width: 85 },
-      { id: '3', type: 'text' as const, content: 'Hotel 5★ + Aéreo + Traslado', x: 50, y: 40, fontSize: 22, fontFamily: 'Quicksand', fontWeight: '500', color: '#e0e0e0', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' as const, opacity: 0.85, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 85 },
-      { id: '4', type: 'text' as const, content: 'R$ 6.490', x: 50, y: 60, fontSize: 72, fontFamily: 'Montserrat', fontWeight: '900', color: '#00b4d8', textAlign: 'center' as const, letterSpacing: -2, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 0 30px rgba(0,180,216,0.3)', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '5', type: 'text' as const, content: 'por pessoa', x: 50, y: 74, fontSize: 18, fontFamily: 'Inter', fontWeight: '400', color: '#999', textAlign: 'center' as const, letterSpacing: 2, lineHeight: 1, textTransform: 'uppercase' as const, opacity: 0.7, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '6', type: 'text' as const, content: '📲 Fale conosco', x: 50, y: 88, fontSize: 20, fontFamily: 'Inter', fontWeight: '600', color: '#25d366', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-    ],
+      { id: '1', type: 'text' as const, content: '🏖️ ALL INCLUSIVE', x: 50, y: 10, fontSize: 36, fontFamily: 'Oswald', fontWeight: '600', ...defaultTextProps, color: '#00b4d8', textAlign: 'center' as const, letterSpacing: 4, lineHeight: 1.2, textTransform: 'uppercase' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+      { id: '2', type: 'text' as const, content: 'Punta Cana', x: 50, y: 25, fontSize: 64, fontFamily: 'Abril Fatface', fontWeight: '400', ...defaultTextProps, color: '#ffffff', textAlign: 'center' as const, letterSpacing: 1, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 4px 16px rgba(0,0,0,0.4)', stroke: '', strokeWidth: 0, locked: false, width: 85 },
+      { id: '3', type: 'text' as const, content: 'Hotel 5★ + Aéreo + Traslado', x: 50, y: 40, fontSize: 22, fontFamily: 'Quicksand', fontWeight: '500', ...defaultTextProps, color: '#e0e0e0', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' as const, opacity: 0.85, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 85 },
+      { id: '4', type: 'text' as const, content: 'R$ 6.490', x: 50, y: 60, fontSize: 72, fontFamily: 'Montserrat', fontWeight: '900', ...defaultTextProps, color: '#00b4d8', textAlign: 'center' as const, letterSpacing: -2, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 0 30px rgba(0,180,216,0.3)', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+      { id: '5', type: 'text' as const, content: 'por pessoa', x: 50, y: 74, fontSize: 18, fontFamily: 'Inter', fontWeight: '400', ...defaultTextProps, color: '#999', textAlign: 'center' as const, letterSpacing: 2, lineHeight: 1, textTransform: 'uppercase' as const, opacity: 0.7, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+      { id: '6', type: 'text' as const, content: '📲 Fale conosco', x: 50, y: 88, fontSize: 20, fontFamily: 'Inter', fontWeight: '600', ...defaultTextProps, color: '#25d366', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+    ] as CanvasElement[],
   },
 ];
 
 const defaultImage: ImageConfig = {
-  url: '',
-  zoom: 1,
-  brightness: 1,
-  contrast: 1,
-  saturate: 1,
-  blur: 0,
-  offsetX: 0,
-  offsetY: 0,
-  overlayColor: '#000000',
-  overlayOpacity: 0.4,
+  url: '', zoom: 1, brightness: 1, contrast: 1, saturate: 1, blur: 0,
+  offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0.4,
 };
 
 let idCounter = 100;
@@ -116,7 +132,7 @@ export default function PromoMakerPage() {
   const [format, setFormat] = useState<FormatKey>('1:1');
   const [bgColor, setBgColor] = useState('#0d1b2a');
   const [bgGradient, setBgGradient] = useState('');
-  const [elements, setElements] = useState<TextElement[]>(TEMPLATES[0].elements);
+  const [elements, setElements] = useState<CanvasElement[]>(TEMPLATES[0].elements);
   const [image, setImage] = useState<ImageConfig>(defaultImage);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [preview, setPreview] = useState<'feed' | 'stories' | 'whatsapp' | null>(null);
@@ -125,10 +141,9 @@ export default function PromoMakerPage() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Load Google Fonts
   useEffect(() => {
     const link = document.createElement('link');
-    link.href = `https://fonts.googleapis.com/css2?${GOOGLE_FONTS.map(f => `family=${f.replace(/ /g, '+')}:wght@300;400;500;600;700;800;900`).join('&')}&display=swap`;
+    link.href = `https://fonts.googleapis.com/css2?${GOOGLE_FONTS.map(f => `family=${f.replace(/ /g, '+')}:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900`).join('&')}&display=swap`;
     link.rel = 'stylesheet';
     document.head.appendChild(link);
     return () => { document.head.removeChild(link); };
@@ -138,17 +153,32 @@ export default function PromoMakerPage() {
   const canvasSize = FORMAT_SIZES[format];
   const scale = format === '9:16' ? Math.min(380 / canvasSize.w, 650 / canvasSize.h) : 380 / canvasSize.w;
 
-  const updateEl = (id: string, patch: Partial<TextElement>) => {
-    setElements(prev => prev.map(e => e.id === id ? { ...e, ...patch } : e));
+  const updateEl = (id: string, patch: Partial<TextElement> | Partial<ShapeElement>) => {
+    setElements(prev => prev.map(e => e.id === id ? { ...e, ...patch } as CanvasElement : e));
   };
 
   const addTextElement = () => {
     const newEl: TextElement = {
       id: genId(), type: 'text', content: 'Novo texto', x: 50, y: 50,
-      fontSize: 28, fontFamily: 'Inter', fontWeight: '600', color: '#ffffff',
+      fontSize: 28, fontFamily: 'Inter', fontWeight: '600', fontStyle: 'normal',
+      textDecoration: 'none', color: '#ffffff',
       textAlign: 'center', letterSpacing: 0, lineHeight: 1.3,
       textTransform: 'none', opacity: 1, textShadow: 'none',
       stroke: '', strokeWidth: 0, locked: false, width: 80,
+    };
+    setElements(prev => [...prev, newEl]);
+    setSelectedId(newEl.id);
+  };
+
+  const addShapeElement = (shape: 'rectangle' | 'circle' | 'square') => {
+    const newEl: ShapeElement = {
+      id: genId(), type: 'shape', shape,
+      x: 50, y: 50,
+      width: shape === 'circle' ? 20 : shape === 'square' ? 20 : 40,
+      height: shape === 'circle' ? 20 : shape === 'square' ? 20 : 25,
+      color: '#d4af37', borderColor: 'transparent', borderWidth: 0,
+      borderRadius: shape === 'circle' ? 50 : 0,
+      opacity: 0.8, locked: false,
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
@@ -193,7 +223,6 @@ export default function PromoMakerPage() {
     reader.readAsDataURL(file);
   };
 
-  // Drag handling
   const handleCanvasMouseDown = (e: React.MouseEvent, elId: string) => {
     const el = elements.find(x => x.id === elId);
     if (!el || el.locked) return;
@@ -215,14 +244,11 @@ export default function PromoMakerPage() {
 
   const handleCanvasMouseUp = useCallback(() => setDragInfo(null), []);
 
-  // Export
   const handleExport = async () => {
     if (!canvasRef.current) return;
     try {
       const dataUrl = await toPng(canvasRef.current, {
-        width: canvasSize.w,
-        height: canvasSize.h,
-        pixelRatio: 1,
+        width: canvasSize.w, height: canvasSize.h, pixelRatio: 1,
         style: { transform: 'none', width: `${canvasSize.w}px`, height: `${canvasSize.h}px` },
       });
       const link = document.createElement('a');
@@ -240,10 +266,8 @@ export default function PromoMakerPage() {
       ref={canvasRef}
       className="relative overflow-hidden select-none"
       style={{
-        width: canvasSize.w,
-        height: canvasSize.h,
-        transform: `scale(${scale})`,
-        transformOrigin: 'top left',
+        width: canvasSize.w, height: canvasSize.h,
+        transform: `scale(${scale})`, transformOrigin: 'top left',
         background: bgGradient || bgColor,
       }}
       onMouseMove={handleCanvasMouseMove}
@@ -251,14 +275,10 @@ export default function PromoMakerPage() {
       onMouseLeave={handleCanvasMouseUp}
       onClick={() => setSelectedId(null)}
     >
-      {/* Background image */}
       {image.url && (
         <>
           <img
-            src={image.url}
-            alt=""
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            draggable={false}
+            src={image.url} alt="" className="absolute inset-0 w-full h-full pointer-events-none" draggable={false}
             style={{
               objectFit: 'cover',
               objectPosition: `${50 + image.offsetX}% ${50 + image.offsetY}%`,
@@ -266,79 +286,327 @@ export default function PromoMakerPage() {
               filter: `brightness(${image.brightness}) contrast(${image.contrast}) saturate(${image.saturate}) blur(${image.blur}px)`,
             }}
           />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ backgroundColor: image.overlayColor, opacity: image.overlayOpacity }}
-          />
+          <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: image.overlayColor, opacity: image.overlayOpacity }} />
         </>
       )}
 
-      {/* Text elements */}
-      {elements.map(el => (
-        <div
-          key={el.id}
-          className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
-          style={{
-            left: `${el.x}%`,
-            top: `${el.y}%`,
-            transform: 'translate(-50%, -50%)',
-            width: `${el.width}%`,
-            fontFamily: `'${el.fontFamily}', sans-serif`,
-            fontSize: `${el.fontSize}px`,
-            fontWeight: el.fontWeight,
-            color: el.color,
-            textAlign: el.textAlign,
-            letterSpacing: `${el.letterSpacing}px`,
-            lineHeight: el.lineHeight,
-            textTransform: el.textTransform,
-            opacity: el.opacity,
-            textShadow: el.textShadow !== 'none' ? el.textShadow : undefined,
-            WebkitTextStroke: el.stroke && el.strokeWidth ? `${el.strokeWidth}px ${el.stroke}` : undefined,
-            pointerEvents: el.locked ? 'none' : 'auto',
-            userSelect: 'none',
-          }}
-          onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
-          onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
-        >
-          {el.content}
-        </div>
-      ))}
+      {elements.map(el => {
+        if (el.type === 'shape') {
+          return (
+            <div
+              key={el.id}
+              className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+              style={{
+                left: `${el.x}%`, top: `${el.y}%`,
+                transform: 'translate(-50%, -50%)',
+                width: `${el.width}%`, height: `${el.height}%`,
+                backgroundColor: el.color,
+                borderRadius: el.shape === 'circle' ? '50%' : `${el.borderRadius}px`,
+                border: el.borderWidth > 0 ? `${el.borderWidth}px solid ${el.borderColor}` : undefined,
+                opacity: el.opacity,
+                pointerEvents: el.locked ? 'none' : 'auto',
+                userSelect: 'none',
+              }}
+              onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
+              onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+            />
+          );
+        }
+        return (
+          <div
+            key={el.id}
+            className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            style={{
+              left: `${el.x}%`, top: `${el.y}%`,
+              transform: 'translate(-50%, -50%)',
+              width: `${el.width}%`,
+              fontFamily: `'${el.fontFamily}', sans-serif`,
+              fontSize: `${el.fontSize}px`,
+              fontWeight: el.fontWeight,
+              fontStyle: el.fontStyle,
+              textDecoration: el.textDecoration !== 'none' ? el.textDecoration : undefined,
+              color: el.color,
+              textAlign: el.textAlign,
+              letterSpacing: `${el.letterSpacing}px`,
+              lineHeight: el.lineHeight,
+              textTransform: el.textTransform,
+              opacity: el.opacity,
+              textShadow: el.textShadow !== 'none' ? el.textShadow : undefined,
+              WebkitTextStroke: el.stroke && el.strokeWidth ? `${el.strokeWidth}px ${el.stroke}` : undefined,
+              pointerEvents: el.locked ? 'none' : 'auto',
+              userSelect: 'none',
+            }}
+            onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
+            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+          >
+            {el.content}
+          </div>
+        );
+      })}
 
-      {/* Logo */}
       <img
-        src="/images/vortex-logo-white.png"
-        alt="Vortex"
+        src="/images/vortex-logo-white.png" alt="Vortex"
         className="absolute pointer-events-none"
-        style={{
-          bottom: '3%', right: '3%', height: '8%', opacity: 0.6,
-        }}
+        style={{ bottom: '3%', right: '3%', height: '8%', opacity: 0.6 }}
         draggable={false}
       />
+    </div>
+  );
+
+  const renderTextProps = (sel: TextElement) => (
+    <div className="p-3 space-y-3">
+      <div>
+        <Label className="text-xs">Texto</Label>
+        <textarea
+          value={sel.content}
+          onChange={e => updateEl(sel.id, { content: e.target.value })}
+          className="w-full mt-1 rounded-md border border-input bg-background px-2 py-1.5 text-sm min-h-[60px] resize-none"
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Formatação</Label>
+        <div className="flex gap-1 mt-1">
+          <Button size="sm" variant={Number(sel.fontWeight) >= 700 ? 'default' : 'outline'} className="h-8 w-8 p-0"
+            onClick={() => updateEl(sel.id, { fontWeight: Number(sel.fontWeight) >= 700 ? '400' : '700' })}>
+            <Bold className="h-3.5 w-3.5" />
+          </Button>
+          <Button size="sm" variant={sel.fontStyle === 'italic' ? 'default' : 'outline'} className="h-8 w-8 p-0"
+            onClick={() => updateEl(sel.id, { fontStyle: sel.fontStyle === 'italic' ? 'normal' : 'italic' })}>
+            <Italic className="h-3.5 w-3.5" />
+          </Button>
+          <Button size="sm" variant={sel.textDecoration === 'underline' ? 'default' : 'outline'} className="h-8 w-8 p-0"
+            onClick={() => updateEl(sel.id, { textDecoration: sel.textDecoration === 'underline' ? 'none' : 'underline' })}>
+            <Underline className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs">Fonte</Label>
+          <Select value={sel.fontFamily} onValueChange={v => updateEl(sel.id, { fontFamily: v })}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {GOOGLE_FONTS.map(f => (
+                <SelectItem key={f} value={f} style={{ fontFamily: `'${f}'` }}>{f}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Tamanho</Label>
+          <Input type="number" value={sel.fontSize} onChange={e => updateEl(sel.id, { fontSize: Number(e.target.value) })} className="h-8 text-xs" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs">Peso</Label>
+          <Select value={sel.fontWeight} onValueChange={v => updateEl(sel.id, { fontWeight: v })}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {['300', '400', '500', '600', '700', '800', '900'].map(w => (
+                <SelectItem key={w} value={w}>{w}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Cor</Label>
+          <div className="flex items-center gap-1 mt-1">
+            <input type="color" value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+            <Input value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="h-8 text-xs flex-1" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Alinhamento</Label>
+        <div className="flex gap-1 mt-1">
+          {([{ v: 'left' as const, Icon: AlignLeft }, { v: 'center' as const, Icon: AlignCenter }, { v: 'right' as const, Icon: AlignRight }]).map(({ v, Icon }) => (
+            <Button key={v} size="sm" variant={sel.textAlign === v ? 'default' : 'outline'} className="h-8 w-8 p-0" onClick={() => updateEl(sel.id, { textAlign: v })}>
+              <Icon className="h-3.5 w-3.5" />
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Transformação</Label>
+        <div className="flex gap-1 mt-1">
+          {[{ v: 'none' as const, label: 'Aa' }, { v: 'uppercase' as const, label: 'AA' }, { v: 'lowercase' as const, label: 'aa' }].map(({ v, label }) => (
+            <Button key={v} size="sm" variant={sel.textTransform === v ? 'default' : 'outline'} className="h-8 px-2 text-xs" onClick={() => updateEl(sel.id, { textTransform: v })}>
+              {label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div>
+          <Label className="text-xs flex justify-between">Espaçamento letras <span className="text-muted-foreground">{sel.letterSpacing}px</span></Label>
+          <Slider value={[sel.letterSpacing]} onValueChange={([v]) => updateEl(sel.id, { letterSpacing: v })} min={-5} max={20} step={0.5} />
+        </div>
+        <div>
+          <Label className="text-xs flex justify-between">Entrelinha <span className="text-muted-foreground">{sel.lineHeight}</span></Label>
+          <Slider value={[sel.lineHeight]} onValueChange={([v]) => updateEl(sel.id, { lineHeight: v })} min={0.8} max={2.5} step={0.05} />
+        </div>
+        <div>
+          <Label className="text-xs flex justify-between">Opacidade <span className="text-muted-foreground">{Math.round(sel.opacity * 100)}%</span></Label>
+          <Slider value={[sel.opacity]} onValueChange={([v]) => updateEl(sel.id, { opacity: v })} min={0} max={1} step={0.05} />
+        </div>
+        <div>
+          <Label className="text-xs flex justify-between">Largura <span className="text-muted-foreground">{sel.width}%</span></Label>
+          <Slider value={[sel.width]} onValueChange={([v]) => updateEl(sel.id, { width: v })} min={10} max={100} step={1} />
+        </div>
+      </div>
+
+      <Separator />
+
+      <div>
+        <Label className="text-xs">Sombra</Label>
+        <Select value={sel.textShadow} onValueChange={v => updateEl(sel.id, { textShadow: v })}>
+          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Nenhuma</SelectItem>
+            <SelectItem value="0 2px 4px rgba(0,0,0,0.5)">Suave</SelectItem>
+            <SelectItem value="0 2px 8px rgba(0,0,0,0.5)">Média</SelectItem>
+            <SelectItem value="0 4px 16px rgba(0,0,0,0.8)">Forte</SelectItem>
+            <SelectItem value="0 0 20px rgba(212,175,55,0.4)">Brilho Dourado</SelectItem>
+            <SelectItem value="0 0 30px rgba(0,180,216,0.4)">Brilho Azul</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs">Contorno cor</Label>
+          <div className="flex items-center gap-1 mt-1">
+            <input type="color" value={sel.stroke || '#000000'} onChange={e => updateEl(sel.id, { stroke: e.target.value })} className="w-6 h-6 rounded cursor-pointer border-0" />
+            <Input value={sel.stroke} onChange={e => updateEl(sel.id, { stroke: e.target.value })} className="h-7 text-xs flex-1" placeholder="Nenhum" />
+          </div>
+        </div>
+        <div>
+          <Label className="text-xs">Espessura</Label>
+          <Slider value={[sel.strokeWidth]} onValueChange={([v]) => updateEl(sel.id, { strokeWidth: v })} min={0} max={5} step={0.5} className="mt-2" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        <div>
+          <Label className="text-xs">Posição X</Label>
+          <Slider value={[sel.x]} onValueChange={([v]) => updateEl(sel.id, { x: v })} min={0} max={100} step={0.5} />
+        </div>
+        <div>
+          <Label className="text-xs">Posição Y</Label>
+          <Slider value={[sel.y]} onValueChange={([v]) => updateEl(sel.id, { y: v })} min={0} max={100} step={0.5} />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderShapeProps = (sel: ShapeElement) => (
+    <div className="p-3 space-y-3">
+      <div>
+        <Label className="text-xs">Tipo de forma</Label>
+        <div className="flex gap-1 mt-1">
+          {([
+            { v: 'rectangle' as const, Icon: RectangleVertical, label: 'Retângulo' },
+            { v: 'square' as const, Icon: Square, label: 'Quadrado' },
+            { v: 'circle' as const, Icon: Circle, label: 'Círculo' },
+          ]).map(({ v, Icon, label }) => (
+            <Button key={v} size="sm" variant={sel.shape === v ? 'default' : 'outline'} className="h-8 gap-1 text-xs flex-1"
+              onClick={() => updateEl(sel.id, {
+                shape: v,
+                borderRadius: v === 'circle' ? 50 : sel.borderRadius,
+                height: v === 'square' ? sel.width : v === 'circle' ? sel.width : sel.height,
+              })}>
+              <Icon className="h-3 w-3" /> {label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Cor de preenchimento</Label>
+        <div className="flex items-center gap-2 mt-1">
+          <input type="color" value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+          <Input value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="h-8 text-xs flex-1" />
+        </div>
+      </div>
+
+      <Separator />
+
+      <div>
+        <Label className="text-xs">Cor da borda</Label>
+        <div className="flex items-center gap-2 mt-1">
+          <input type="color" value={sel.borderColor === 'transparent' ? '#000000' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+          <Input value={sel.borderColor === 'transparent' ? '' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value || 'transparent' })} className="h-8 text-xs flex-1" placeholder="Nenhuma" />
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs flex justify-between">Espessura da borda <span className="text-muted-foreground">{sel.borderWidth}px</span></Label>
+        <Slider value={[sel.borderWidth]} onValueChange={([v]) => updateEl(sel.id, { borderWidth: v })} min={0} max={20} step={1} />
+      </div>
+
+      {sel.shape !== 'circle' && (
+        <div>
+          <Label className="text-xs flex justify-between">Arredondamento <span className="text-muted-foreground">{sel.borderRadius}px</span></Label>
+          <Slider value={[sel.borderRadius]} onValueChange={([v]) => updateEl(sel.id, { borderRadius: v })} min={0} max={200} step={1} />
+        </div>
+      )}
+
+      <Separator />
+
+      <div className="space-y-2">
+        <div>
+          <Label className="text-xs flex justify-between">Largura <span className="text-muted-foreground">{sel.width}%</span></Label>
+          <Slider value={[sel.width]} onValueChange={([v]) => {
+            const patch: Partial<ShapeElement> = { width: v };
+            if (sel.shape === 'square' || sel.shape === 'circle') patch.height = v;
+            updateEl(sel.id, patch);
+          }} min={2} max={100} step={1} />
+        </div>
+        {sel.shape === 'rectangle' && (
+          <div>
+            <Label className="text-xs flex justify-between">Altura <span className="text-muted-foreground">{sel.height}%</span></Label>
+            <Slider value={[sel.height]} onValueChange={([v]) => updateEl(sel.id, { height: v })} min={2} max={100} step={1} />
+          </div>
+        )}
+        <div>
+          <Label className="text-xs flex justify-between">Opacidade <span className="text-muted-foreground">{Math.round(sel.opacity * 100)}%</span></Label>
+          <Slider value={[sel.opacity]} onValueChange={([v]) => updateEl(sel.id, { opacity: v })} min={0} max={1} step={0.05} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        <div>
+          <Label className="text-xs">Posição X</Label>
+          <Slider value={[sel.x]} onValueChange={([v]) => updateEl(sel.id, { x: v })} min={0} max={100} step={0.5} />
+        </div>
+        <div>
+          <Label className="text-xs">Posição Y</Label>
+          <Slider value={[sel.y]} onValueChange={([v]) => updateEl(sel.id, { y: v })} min={0} max={100} step={0.5} />
+        </div>
+      </div>
     </div>
   );
 
   return (
     <AppLayout>
       <div className="flex flex-col h-[calc(100vh-64px)]">
-        {/* Top toolbar */}
         <div className="flex items-center justify-between px-4 py-2 border-b bg-card gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <Palette className="h-5 w-5 text-primary" />
-              Promo Maker
+              <Palette className="h-5 w-5 text-primary" /> Promo Maker
             </h1>
             <Separator orientation="vertical" className="h-6" />
             <div className="flex gap-1">
               {(['1:1', '9:16'] as FormatKey[]).map(f => (
-                <Button
-                  key={f}
-                  variant={format === f ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFormat(f)}
-                  className="gap-1"
-                >
-                  {f === '1:1' ? <Square className="h-3.5 w-3.5" /> : <RectangleVertical className="h-3.5 w-3.5" />}
-                  {f}
+                <Button key={f} variant={format === f ? 'default' : 'outline'} size="sm" onClick={() => setFormat(f)} className="gap-1">
+                  {f === '1:1' ? <Square className="h-3.5 w-3.5" /> : <RectangleVertical className="h-3.5 w-3.5" />} {f}
                 </Button>
               ))}
             </div>
@@ -354,7 +622,7 @@ export default function PromoMakerPage() {
         </div>
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Left panel — layers & templates */}
+          {/* Left panel */}
           <div className="w-56 border-r bg-card flex flex-col overflow-hidden">
             <Tabs defaultValue="layers" className="flex flex-col h-full">
               <TabsList className="w-full rounded-none">
@@ -365,9 +633,20 @@ export default function PromoMakerPage() {
               <TabsContent value="layers" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
                   <div className="p-2 space-y-1">
-                    <Button variant="outline" size="sm" className="w-full gap-1 mb-2" onClick={addTextElement}>
-                      <Plus className="h-3.5 w-3.5" /> Adicionar Texto
+                    <Button variant="outline" size="sm" className="w-full gap-1 mb-1" onClick={addTextElement}>
+                      <Plus className="h-3.5 w-3.5" /> Texto
                     </Button>
+                    <div className="flex gap-1 mb-2">
+                      <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => addShapeElement('rectangle')}>
+                        <RectangleVertical className="h-3 w-3" /> Ret.
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => addShapeElement('square')}>
+                        <Square className="h-3 w-3" /> Quad.
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => addShapeElement('circle')}>
+                        <Circle className="h-3 w-3" /> Circ.
+                      </Button>
+                    </div>
                     {[...elements].reverse().map(el => (
                       <div
                         key={el.id}
@@ -376,8 +655,16 @@ export default function PromoMakerPage() {
                         }`}
                         onClick={() => setSelectedId(el.id)}
                       >
-                        <Type className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                        <span className="truncate flex-1 text-foreground">{el.content.slice(0, 18)}</span>
+                        {el.type === 'text' ? (
+                          <Type className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        ) : el.shape === 'circle' ? (
+                          <Circle className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        ) : (
+                          <Square className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <span className="truncate flex-1 text-foreground">
+                          {el.type === 'text' ? el.content.slice(0, 16) : el.shape === 'rectangle' ? 'Retângulo' : el.shape === 'square' ? 'Quadrado' : 'Círculo'}
+                        </span>
                         <div className="flex gap-0.5">
                           <button onClick={(e) => { e.stopPropagation(); updateEl(el.id, { locked: !el.locked }); }} className="p-0.5 hover:bg-muted rounded">
                             {el.locked ? <Lock className="h-3 w-3 text-muted-foreground" /> : <Unlock className="h-3 w-3 text-muted-foreground" />}
@@ -405,11 +692,7 @@ export default function PromoMakerPage() {
                 <ScrollArea className="h-full">
                   <div className="p-2 space-y-2">
                     {TEMPLATES.map((tpl, i) => (
-                      <Card
-                        key={i}
-                        className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all"
-                        onClick={() => applyTemplate(tpl)}
-                      >
+                      <Card key={i} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all" onClick={() => applyTemplate(tpl)}>
                         <div className="h-16 rounded mb-2" style={{ background: tpl.bg }} />
                         <p className="text-xs font-medium text-foreground">{tpl.name}</p>
                       </Card>
@@ -451,19 +734,13 @@ export default function PromoMakerPage() {
                 </div>
               </div>
             ) : (
-              <div
-                style={{
-                  width: canvasSize.w * scale,
-                  height: canvasSize.h * scale,
-                }}
-                className="shadow-2xl rounded-lg overflow-hidden"
-              >
+              <div style={{ width: canvasSize.w * scale, height: canvasSize.h * scale }} className="shadow-2xl rounded-lg overflow-hidden">
                 {renderCanvas()}
               </div>
             )}
           </div>
 
-          {/* Right panel — properties */}
+          {/* Right panel */}
           <div className="w-72 border-l bg-card overflow-hidden flex flex-col">
             <Tabs defaultValue="element" className="flex flex-col h-full">
               <TabsList className="w-full rounded-none">
@@ -472,179 +749,10 @@ export default function PromoMakerPage() {
                 <TabsTrigger value="image" className="text-xs flex-1">Imagem</TabsTrigger>
               </TabsList>
 
-              {/* Element tab */}
               <TabsContent value="element" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
                   {selected ? (
-                    <div className="p-3 space-y-3">
-                      <div>
-                        <Label className="text-xs">Texto</Label>
-                        <textarea
-                          value={selected.content}
-                          onChange={e => updateEl(selected.id, { content: e.target.value })}
-                          className="w-full mt-1 rounded-md border border-input bg-background px-2 py-1.5 text-sm min-h-[60px] resize-none"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs">Fonte</Label>
-                          <Select value={selected.fontFamily} onValueChange={v => updateEl(selected.id, { fontFamily: v })}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {GOOGLE_FONTS.map(f => (
-                                <SelectItem key={f} value={f} style={{ fontFamily: `'${f}'` }}>{f}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Tamanho</Label>
-                          <Input
-                            type="number"
-                            value={selected.fontSize}
-                            onChange={e => updateEl(selected.id, { fontSize: Number(e.target.value) })}
-                            className="h-8 text-xs"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs">Peso</Label>
-                          <Select value={selected.fontWeight} onValueChange={v => updateEl(selected.id, { fontWeight: v })}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {['300', '400', '500', '600', '700', '800', '900'].map(w => (
-                                <SelectItem key={w} value={w}>{w}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Cor</Label>
-                          <div className="flex items-center gap-1 mt-1">
-                            <input
-                              type="color"
-                              value={selected.color}
-                              onChange={e => updateEl(selected.id, { color: e.target.value })}
-                              className="w-8 h-8 rounded cursor-pointer border-0"
-                            />
-                            <Input
-                              value={selected.color}
-                              onChange={e => updateEl(selected.id, { color: e.target.value })}
-                              className="h-8 text-xs flex-1"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-xs">Alinhamento</Label>
-                        <div className="flex gap-1 mt-1">
-                          {[
-                            { v: 'left', Icon: AlignLeft },
-                            { v: 'center', Icon: AlignCenter },
-                            { v: 'right', Icon: AlignRight },
-                          ].map(({ v, Icon }) => (
-                            <Button
-                              key={v}
-                              size="sm"
-                              variant={selected.textAlign === v ? 'default' : 'outline'}
-                              className="h-8 w-8 p-0"
-                              onClick={() => updateEl(selected.id, { textAlign: v as any })}
-                            >
-                              <Icon className="h-3.5 w-3.5" />
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label className="text-xs">Transformação</Label>
-                        <div className="flex gap-1 mt-1">
-                          {[
-                            { v: 'none', label: 'Aa' },
-                            { v: 'uppercase', label: 'AA' },
-                            { v: 'lowercase', label: 'aa' },
-                          ].map(({ v, label }) => (
-                            <Button
-                              key={v}
-                              size="sm"
-                              variant={selected.textTransform === v ? 'default' : 'outline'}
-                              className="h-8 px-2 text-xs"
-                              onClick={() => updateEl(selected.id, { textTransform: v as any })}
-                            >
-                              {label}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div>
-                          <Label className="text-xs flex justify-between">Espaçamento letras <span className="text-muted-foreground">{selected.letterSpacing}px</span></Label>
-                          <Slider value={[selected.letterSpacing]} onValueChange={([v]) => updateEl(selected.id, { letterSpacing: v })} min={-5} max={20} step={0.5} />
-                        </div>
-                        <div>
-                          <Label className="text-xs flex justify-between">Entrelinha <span className="text-muted-foreground">{selected.lineHeight}</span></Label>
-                          <Slider value={[selected.lineHeight]} onValueChange={([v]) => updateEl(selected.id, { lineHeight: v })} min={0.8} max={2.5} step={0.05} />
-                        </div>
-                        <div>
-                          <Label className="text-xs flex justify-between">Opacidade <span className="text-muted-foreground">{Math.round(selected.opacity * 100)}%</span></Label>
-                          <Slider value={[selected.opacity]} onValueChange={([v]) => updateEl(selected.id, { opacity: v })} min={0} max={1} step={0.05} />
-                        </div>
-                        <div>
-                          <Label className="text-xs flex justify-between">Largura <span className="text-muted-foreground">{selected.width}%</span></Label>
-                          <Slider value={[selected.width]} onValueChange={([v]) => updateEl(selected.id, { width: v })} min={10} max={100} step={1} />
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div>
-                        <Label className="text-xs">Sombra</Label>
-                        <Select
-                          value={selected.textShadow}
-                          onValueChange={v => updateEl(selected.id, { textShadow: v })}
-                        >
-                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
-                            <SelectItem value="0 2px 4px rgba(0,0,0,0.5)">Suave</SelectItem>
-                            <SelectItem value="0 2px 8px rgba(0,0,0,0.5)">Média</SelectItem>
-                            <SelectItem value="0 4px 16px rgba(0,0,0,0.8)">Forte</SelectItem>
-                            <SelectItem value="0 0 20px rgba(212,175,55,0.4)">Brilho Dourado</SelectItem>
-                            <SelectItem value="0 0 30px rgba(0,180,216,0.4)">Brilho Azul</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs">Contorno cor</Label>
-                          <div className="flex items-center gap-1 mt-1">
-                            <input type="color" value={selected.stroke || '#000000'} onChange={e => updateEl(selected.id, { stroke: e.target.value })} className="w-6 h-6 rounded cursor-pointer border-0" />
-                            <Input value={selected.stroke} onChange={e => updateEl(selected.id, { stroke: e.target.value })} className="h-7 text-xs flex-1" placeholder="Nenhum" />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Espessura</Label>
-                          <Slider value={[selected.strokeWidth]} onValueChange={([v]) => updateEl(selected.id, { strokeWidth: v })} min={0} max={5} step={0.5} className="mt-2" />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 pt-2">
-                        <div>
-                          <Label className="text-xs">Posição X</Label>
-                          <Slider value={[selected.x]} onValueChange={([v]) => updateEl(selected.id, { x: v })} min={0} max={100} step={0.5} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Posição Y</Label>
-                          <Slider value={[selected.y]} onValueChange={([v]) => updateEl(selected.id, { y: v })} min={0} max={100} step={0.5} />
-                        </div>
-                      </div>
-                    </div>
+                    selected.type === 'text' ? renderTextProps(selected) : renderShapeProps(selected)
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm p-4">
                       <Type className="h-8 w-8 mb-2 opacity-40" />
@@ -654,7 +762,6 @@ export default function PromoMakerPage() {
                 </ScrollArea>
               </TabsContent>
 
-              {/* Background tab */}
               <TabsContent value="bg" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
                   <div className="p-3 space-y-3">
@@ -665,7 +772,6 @@ export default function PromoMakerPage() {
                         <Input value={bgColor} onChange={e => { setBgColor(e.target.value); setBgGradient(''); }} className="h-8 text-xs" />
                       </div>
                     </div>
-
                     <div>
                       <Label className="text-xs">Gradiente</Label>
                       <div className="grid grid-cols-2 gap-1 mt-1">
@@ -678,28 +784,18 @@ export default function PromoMakerPage() {
                           'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
                           'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
                         ].map((g, i) => (
-                          <div
-                            key={i}
-                            className={`h-8 rounded cursor-pointer border-2 transition-all ${bgGradient === g ? 'border-primary scale-105' : 'border-transparent'}`}
-                            style={{ background: g || bgColor }}
-                            onClick={() => setBgGradient(g)}
-                          />
+                          <div key={i} className={`h-8 rounded cursor-pointer border-2 transition-all ${bgGradient === g ? 'border-primary scale-105' : 'border-transparent'}`}
+                            style={{ background: g || bgColor }} onClick={() => setBgGradient(g)} />
                         ))}
                       </div>
                     </div>
-
                     <Separator />
-
                     <div>
                       <Label className="text-xs mb-1 block">Cores Rápidas</Label>
                       <div className="flex flex-wrap gap-1">
                         {['#0d1b2a', '#1a1a2e', '#16213e', '#1a1a1a', '#ffffff', '#0f3460', '#533483', '#2b2d42'].map(c => (
-                          <div
-                            key={c}
-                            className="w-7 h-7 rounded cursor-pointer border border-border hover:scale-110 transition-transform"
-                            style={{ background: c }}
-                            onClick={() => { setBgColor(c); setBgGradient(''); }}
-                          />
+                          <div key={c} className="w-7 h-7 rounded cursor-pointer border border-border hover:scale-110 transition-transform"
+                            style={{ background: c }} onClick={() => { setBgColor(c); setBgGradient(''); }} />
                         ))}
                       </div>
                     </div>
@@ -707,7 +803,6 @@ export default function PromoMakerPage() {
                 </ScrollArea>
               </TabsContent>
 
-              {/* Image tab */}
               <TabsContent value="image" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
                   <div className="p-3 space-y-3">
@@ -726,14 +821,9 @@ export default function PromoMakerPage() {
                       </div>
                       <div className="mt-1">
                         <Label className="text-xs">Ou cole a URL</Label>
-                        <Input
-                          placeholder="https://..."
-                          className="h-8 text-xs mt-1"
-                          onBlur={e => { if (e.target.value) setImage(prev => ({ ...prev, url: e.target.value })); }}
-                        />
+                        <Input placeholder="https://..." className="h-8 text-xs mt-1" onBlur={e => { if (e.target.value) setImage(prev => ({ ...prev, url: e.target.value })); }} />
                       </div>
                     </div>
-
                     {image.url && (
                       <>
                         <Separator />
@@ -759,9 +849,7 @@ export default function PromoMakerPage() {
                             <Slider value={[image.blur]} onValueChange={([v]) => setImage(p => ({ ...p, blur: v }))} min={0} max={10} step={0.5} />
                           </div>
                         </div>
-
                         <Separator />
-
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <Label className="text-xs">Pos. Horizontal</Label>
@@ -772,9 +860,7 @@ export default function PromoMakerPage() {
                             <Slider value={[image.offsetY]} onValueChange={([v]) => setImage(p => ({ ...p, offsetY: v }))} min={-50} max={50} step={1} />
                           </div>
                         </div>
-
                         <Separator />
-
                         <div>
                           <Label className="text-xs">Overlay</Label>
                           <div className="flex items-center gap-2 mt-1">
