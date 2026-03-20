@@ -535,7 +535,7 @@ export default function PromoMakerPage() {
               userSelect: 'none',
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
-            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+            onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
           >
             <svg viewBox={def.viewBox || '0 0 24 24'} fill={el.color} className="w-full h-full">
               <path d={def.svg} />
