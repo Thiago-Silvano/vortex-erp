@@ -536,8 +536,10 @@ export default function PromoMakerPage() {
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
             onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
           >
-            <svg viewBox={def.viewBox || '0 0 24 24'} fill={el.color} className="w-full h-full">
-              <path d={def.svg} />
+            <svg viewBox="-2 -2 28 28" className="w-full h-full">
+              <circle cx="12" cy="12" r="13.5" fill="none" stroke={el.color} strokeWidth="1.5" opacity="0.5" />
+              <circle cx="12" cy="12" r="11.5" fill={el.color} opacity="0.15" />
+              <path d={def.svg} fill={el.color} />
             </svg>
           </div>
         );
