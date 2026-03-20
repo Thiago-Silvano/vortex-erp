@@ -230,6 +230,7 @@ export default function AccountsPayablePage() {
           supplier_id: manualSupplierId, description: manualDescription, cost_center_id: manualCostCenter,
           amount: installmentRows[i].amount, due_date: installmentRows[i].due_date, installment_number: i + 1,
           total_installments: installmentRows.length, status: 'open', origin_type: 'manual',
+          ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
         });
       }
     } else {
@@ -237,13 +238,19 @@ export default function AccountsPayablePage() {
         supplier_id: manualSupplierId, description: manualDescription, cost_center_id: manualCostCenter,
         amount: manualAmount, due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'), installment_number: 1,
         total_installments: 1, status: 'open', origin_type: 'manual',
+        ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
       });
     }
-    await supabase.from('accounts_payable').insert(records);
+    const { error } = await supabase.from('accounts_payable').insert(records);
+    if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
     toast.success(`${records.length} parcela(s) criada(s)!`);
     setManualDialog(false);
     setManualSupplierId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
-    fetch_();
+    if (searchParams.get('from') === 'reconciliation') {
+      navigate('/financial/reconciliation');
+    } else {
+      fetch_();
+    }
   };
 
   const updateInstallmentRow = (index: number, field: keyof InstallmentRow, value: string | number) => {
