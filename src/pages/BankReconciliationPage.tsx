@@ -53,6 +53,7 @@ interface BankTx {
   reconciled_with_type: string | null;
   reconciled_with_id: string | null;
   reconciliation_note: string;
+  category: string;
   import_batch: string;
 }
 interface FinancialTitle {
