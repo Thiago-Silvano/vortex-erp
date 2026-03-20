@@ -16,6 +16,7 @@ import {
   Square, RectangleVertical, Plus, Trash2, Circle,
   ChevronUp, ChevronDown, Copy, Lock, Unlock, Save,
   Minus, Plane, Building2, Bus, Ticket, ShieldPlus, Sticker,
+  AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -198,6 +199,7 @@ export default function PromoMakerPage() {
   const [elements, setElements] = useState<CanvasElement[]>(TEMPLATES[0].elements);
   const [image, setImage] = useState<ImageConfig>(defaultImage);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [preview, setPreview] = useState<'feed' | 'stories' | 'whatsapp' | null>(null);
   const [dragInfo, setDragInfo] = useState<{ id: string; startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [imageInShape, setImageInShape] = useState(false);
@@ -342,6 +344,27 @@ export default function PromoMakerPage() {
 
   const shapeElements = elements.filter(el => el.type === 'shape') as ShapeElement[];
 
+  const getMultiSelectedElements = () => {
+    if (selectedIds.length >= 2) return elements.filter(e => selectedIds.includes(e.id));
+    return [];
+  };
+
+  const alignHorizontally = () => {
+    const els = getMultiSelectedElements();
+    if (els.length < 2) return;
+    const ref = els.reduce((a, b) => a.y < b.y ? a : b);
+    setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, y: ref.y } as CanvasElement : e));
+    toast.success('Elementos alinhados horizontalmente');
+  };
+
+  const alignVertically = () => {
+    const els = getMultiSelectedElements();
+    if (els.length < 2) return;
+    const ref = els.reduce((a, b) => a.x < b.x ? a : b);
+    setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, x: ref.x } as CanvasElement : e));
+    toast.success('Elementos alinhados verticalmente');
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -353,7 +376,23 @@ export default function PromoMakerPage() {
     const el = elements.find(x => x.id === elId);
     if (!el || el.locked) return;
     e.stopPropagation();
-    setSelectedId(elId);
+    if (e.ctrlKey || e.metaKey) {
+      // Multi-select toggle
+      setSelectedIds(prev => {
+        const current = prev.length > 0 ? prev : (selectedId ? [selectedId] : []);
+        if (current.includes(elId)) {
+          const next = current.filter(id => id !== elId);
+          setSelectedId(next.length === 1 ? next[0] : next.length === 0 ? null : selectedId);
+          return next;
+        }
+        const next = [...current.filter(id => id !== elId), elId];
+        setSelectedId(elId);
+        return next;
+      });
+    } else {
+      setSelectedId(elId);
+      setSelectedIds([]);
+    }
     setDragInfo({ id: elId, startX: e.clientX, startY: e.clientY, elX: el.x, elY: el.y });
   };
 
@@ -409,7 +448,7 @@ export default function PromoMakerPage() {
       onMouseMove={handleCanvasMouseMove}
       onMouseUp={handleCanvasMouseUp}
       onMouseLeave={handleCanvasMouseUp}
-      onClick={() => setSelectedId(null)}
+      onClick={() => { setSelectedId(null); setSelectedIds([]); }}
     >
       {/* Full background image (only when NOT in shape mode) */}
       {image.url && !imageInShape && (
@@ -434,7 +473,7 @@ export default function PromoMakerPage() {
         return (
           <div
             key={el.id}
-            className={`absolute cursor-move overflow-hidden ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            className={`absolute cursor-move overflow-hidden ${selectedId === el.id || selectedIds.includes(el.id) ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
               transform: `translate(-50%, -50%) rotate(${el.rotation || 0}deg)`,
@@ -459,7 +498,7 @@ export default function PromoMakerPage() {
               } : {}),
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
-            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+            onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
           >
             {isImageTarget && (
               <>
@@ -486,7 +525,7 @@ export default function PromoMakerPage() {
         return (
           <div
             key={el.id}
-            className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            className={`absolute cursor-move ${selectedId === el.id || selectedIds.includes(el.id) ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
               transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`,
@@ -496,7 +535,7 @@ export default function PromoMakerPage() {
               userSelect: 'none',
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
-            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+            onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
           >
             <svg viewBox={def.viewBox || '0 0 24 24'} fill={el.color} className="w-full h-full">
               <path d={def.svg} />
@@ -509,7 +548,7 @@ export default function PromoMakerPage() {
       {elements.filter(el => el.type === 'text').map(el => (
           <div
             key={el.id}
-            className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            className={`absolute cursor-move ${selectedId === el.id || selectedIds.includes(el.id) ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
               transform: 'translate(-50%, -50%)',
@@ -531,7 +570,7 @@ export default function PromoMakerPage() {
               userSelect: 'none',
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
-            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+            onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
           >
             {el.content}
           </div>
@@ -982,9 +1021,25 @@ export default function PromoMakerPage() {
                       <div
                         key={el.id}
                         className={`flex items-center gap-1 p-1.5 rounded text-xs cursor-pointer transition-colors ${
-                          selectedId === el.id ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted'
+                          selectedId === el.id || selectedIds.includes(el.id) ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted'
                         }`}
-                        onClick={() => setSelectedId(el.id)}
+                        onClick={(e) => {
+                          if (e.ctrlKey || e.metaKey) {
+                            setSelectedIds(prev => {
+                              const current = prev.length > 0 ? prev : (selectedId ? [selectedId] : []);
+                              if (current.includes(el.id)) {
+                                const next = current.filter(id => id !== el.id);
+                                setSelectedId(next.length >= 1 ? next[next.length - 1] : null);
+                                return next;
+                              }
+                              setSelectedId(el.id);
+                              return [...current.filter(id => id !== el.id), el.id];
+                            });
+                          } else {
+                            setSelectedId(el.id);
+                            setSelectedIds([]);
+                          }
+                        }}
                       >
                         {el.type === 'text' ? (
                           <Type className="h-3 w-3 text-muted-foreground flex-shrink-0" />
@@ -1127,12 +1182,30 @@ export default function PromoMakerPage() {
 
               <TabsContent value="element" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
-                  {selected ? (
+                  {selectedIds.length >= 2 ? (
+                    <div className="p-3 space-y-3">
+                      <div className="text-sm font-medium text-foreground">{selectedIds.length} elementos selecionados</div>
+                      <p className="text-xs text-muted-foreground">Segure Ctrl e clique para selecionar múltiplos elementos</p>
+                      <Separator />
+                      <Label className="text-xs font-semibold">Alinhamento</Label>
+                      <div className="space-y-2">
+                        <Button variant="outline" size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignHorizontally}>
+                          <AlignHorizontalDistributeCenter className="h-4 w-4" />
+                          Alinhar horizontalmente (mesmo Y do elemento mais acima)
+                        </Button>
+                        <Button variant="outline" size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignVertically}>
+                          <AlignVerticalDistributeCenter className="h-4 w-4" />
+                          Alinhar verticalmente (mesmo X do elemento mais à esquerda)
+                        </Button>
+                      </div>
+                    </div>
+                  ) : selected ? (
                     selected.type === 'text' ? renderTextProps(selected) : selected.type === 'sticker' ? renderStickerProps(selected) : renderShapeProps(selected)
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm p-4">
                       <Type className="h-8 w-8 mb-2 opacity-40" />
                       <p>Selecione um elemento no canvas ou nas camadas</p>
+                      <p className="text-xs mt-1 text-muted-foreground">Ctrl+clique para selecionar múltiplos</p>
                     </div>
                   )}
                 </ScrollArea>
