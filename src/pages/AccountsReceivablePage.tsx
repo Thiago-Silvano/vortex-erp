@@ -102,14 +102,14 @@ export default function AccountsReceivablePage() {
   const [manualDialog, setManualDialog] = useState(false);
   const [cameFromReconciliation, setCameFromReconciliation] = useState(false);
 
-  // Auto-open dialog from URL param
+  // Auto-open dialog from URL param only after company is ready
   useEffect(() => {
-    if (searchParams.get('new') === '1') {
+    if (searchParams.get('new') === '1' && activeCompany?.id) {
       setManualDialog(true);
       if (searchParams.get('from') === 'reconciliation') setCameFromReconciliation(true);
       setSearchParams({}, { replace: true });
     }
-  }, [searchParams]);
+  }, [searchParams, activeCompany?.id, setSearchParams]);
   const [manualClientId, setManualClientId] = useState('');
   const [manualDescription, setManualDescription] = useState('');
   const [manualCostCenter, setManualCostCenter] = useState('');
@@ -232,6 +232,7 @@ export default function AccountsReceivablePage() {
   const selectedClientName = clients.find(c => c.id === manualClientId)?.full_name || '';
 
   const handleManualSave = async () => {
+    if (!activeCompany?.id) { toast.error('Aguarde a empresa carregar antes de salvar'); return; }
     if (!manualClientId) { toast.error('Cliente é obrigatório'); return; }
     if (manualAmount <= 0) { toast.error('Valor deve ser maior que zero'); return; }
     const records = [];
