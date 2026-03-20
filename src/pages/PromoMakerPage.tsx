@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -171,9 +173,8 @@ const STICKER_DEFS = [
   },
 ];
 
-const SAVED_TEMPLATES_KEY = 'promo-maker-saved-templates';
-
 interface SavedTemplate {
+  id?: string;
   name: string;
   bg: string;
   bgGradient: string;
@@ -182,13 +183,6 @@ interface SavedTemplate {
   imageConfig: ImageConfig;
   imageInShape: boolean;
   imageShapeId: string;
-}
-
-function loadSavedTemplates(): SavedTemplate[] {
-  try {
-    const raw = localStorage.getItem(SAVED_TEMPLATES_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
 }
 
 export default function PromoMakerPage() {
@@ -211,8 +205,28 @@ export default function PromoMakerPage() {
   const [logoX, setLogoX] = useState(92);
   const [logoY, setLogoY] = useState(92);
   const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
-  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const [saveTemplateName, setSaveTemplateName] = useState('');
+  const { activeCompany } = useCompany();
+
+  // Load saved templates from database
+  useEffect(() => {
+    if (!activeCompany?.id) return;
+    supabase
+      .from('promo_templates')
+      .select('*')
+      .eq('empresa_id', activeCompany.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setSavedTemplates(data.map((row: any) => ({
+            id: row.id,
+            name: row.name,
+            ...(row.template_data as any),
+          })));
+        }
+      });
+  }, [activeCompany?.id]);
   const [alignMode, setAlignMode] = useState<'none' | 'horizontal' | 'vertical'>('none');
   const [alignSpacing, setAlignSpacing] = useState(5);
 
@@ -322,35 +336,40 @@ export default function PromoMakerPage() {
     toast.success(`Template "${tpl.name}" aplicado!`);
   };
 
-  const saveCurrentAsTemplate = () => {
+  const saveCurrentAsTemplate = async () => {
     const name = saveTemplateName.trim();
     if (!name) { toast.error('Digite um nome para o template'); return; }
-    // Strip blob URLs from image config to avoid localStorage quota issues
+    if (!activeCompany?.id) { toast.error('Selecione uma empresa'); return; }
     const cleanImage: ImageConfig = {
       ...image,
       url: image.url?.startsWith('blob:') ? '' : image.url,
     };
-    const tpl: SavedTemplate = {
-      name, bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
+    const templateData = {
+      bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
       imageInShape, imageShapeId,
     };
-    const updated = [...savedTemplates, tpl];
-    try {
-      const json = JSON.stringify(updated);
-      localStorage.setItem(SAVED_TEMPLATES_KEY, json);
-      setSavedTemplates(updated);
-      setSaveTemplateName('');
-      toast.success(`Template "${name}" salvo!`);
-    } catch (e) {
-      console.error('Erro ao salvar template:', e);
-      toast.error('Template muito grande para salvar. Tente remover imagens grandes.');
+    const { data: row, error } = await supabase
+      .from('promo_templates')
+      .insert({ empresa_id: activeCompany.id, name, template_data: templateData as any })
+      .select()
+      .single();
+    if (error) {
+      console.error('Erro ao salvar template:', error);
+      toast.error('Erro ao salvar template.');
+      return;
     }
+    const tpl: SavedTemplate = { id: row.id, name, ...templateData };
+    setSavedTemplates(prev => [tpl, ...prev]);
+    setSaveTemplateName('');
+    toast.success(`Template "${name}" salvo!`);
   };
 
-  const deleteSavedTemplate = (idx: number) => {
-    const updated = savedTemplates.filter((_, i) => i !== idx);
-    setSavedTemplates(updated);
-    localStorage.setItem(SAVED_TEMPLATES_KEY, JSON.stringify(updated));
+  const deleteSavedTemplate = async (idx: number) => {
+    const tpl = savedTemplates[idx];
+    if (tpl.id) {
+      await supabase.from('promo_templates').delete().eq('id', tpl.id);
+    }
+    setSavedTemplates(prev => prev.filter((_, i) => i !== idx));
     toast.success('Template removido');
   };
 
