@@ -149,6 +149,15 @@ const defaultImage: ImageConfig = {
   offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0.4,
 };
 
+const DEFAULT_LOGO_SETTINGS = {
+  logoSize: 8,
+  logoOpacity: 0.6,
+  logoColor: '',
+  showLogo: true,
+  logoX: 92,
+  logoY: 92,
+};
+
 const QUOTE_IMAGES_PUBLIC_PATH = '/storage/v1/object/public/quote-images/';
 
 const genId = () => `el_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -198,6 +207,12 @@ interface SavedTemplate {
   imageConfig: ImageConfig;
   imageInShape: boolean;
   imageShapeId: string;
+  logoSize: number;
+  logoOpacity: number;
+  logoColor: string;
+  showLogo: boolean;
+  logoX: number;
+  logoY: number;
 }
 
 export default function PromoMakerPage() {
@@ -213,12 +228,12 @@ export default function PromoMakerPage() {
   const [imageInShape, setImageInShape] = useState(false);
   const [imageShapeId, setImageShapeId] = useState('');
   const [rightTab, setRightTab] = useState('element');
-  const [logoSize, setLogoSize] = useState(8);
-  const [logoOpacity, setLogoOpacity] = useState(0.6);
-  const [logoColor, setLogoColor] = useState('');
-  const [showLogo, setShowLogo] = useState(true);
-  const [logoX, setLogoX] = useState(92);
-  const [logoY, setLogoY] = useState(92);
+  const [logoSize, setLogoSize] = useState(DEFAULT_LOGO_SETTINGS.logoSize);
+  const [logoOpacity, setLogoOpacity] = useState(DEFAULT_LOGO_SETTINGS.logoOpacity);
+  const [logoColor, setLogoColor] = useState(DEFAULT_LOGO_SETTINGS.logoColor);
+  const [showLogo, setShowLogo] = useState(DEFAULT_LOGO_SETTINGS.showLogo);
+  const [logoX, setLogoX] = useState(DEFAULT_LOGO_SETTINGS.logoX);
+  const [logoY, setLogoY] = useState(DEFAULT_LOGO_SETTINGS.logoY);
   const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const [saveTemplateName, setSaveTemplateName] = useState('');
@@ -235,6 +250,7 @@ export default function PromoMakerPage() {
       .then(({ data }) => {
         if (data) {
           setSavedTemplates(data.map((row: any) => ({
+            ...DEFAULT_LOGO_SETTINGS,
             id: row.id,
             name: row.name,
             ...(row.template_data as any),
@@ -391,14 +407,28 @@ export default function PromoMakerPage() {
   };
 
   const applySavedTemplate = (tpl: SavedTemplate) => {
+    const elementIds = new Map<string, string>();
+    const remappedElements = tpl.elements.map((el) => {
+      const newId = genId();
+      elementIds.set(el.id, newId);
+      return { ...el, id: newId };
+    });
+
     setBgColor(tpl.bg);
     setBgGradient(tpl.bgGradient || '');
     setFormat(tpl.format || '1:1');
-    setElements(tpl.elements.map(e => ({ ...e, id: genId() })));
+    setElements(remappedElements);
     setImage({ ...defaultImage, ...(tpl.imageConfig || {}) });
     setImageInShape(tpl.imageInShape || false);
-    setImageShapeId(tpl.imageShapeId || '');
+    setImageShapeId(tpl.imageShapeId ? (elementIds.get(tpl.imageShapeId) || '') : '');
+    setLogoSize(tpl.logoSize ?? DEFAULT_LOGO_SETTINGS.logoSize);
+    setLogoOpacity(tpl.logoOpacity ?? DEFAULT_LOGO_SETTINGS.logoOpacity);
+    setLogoColor(tpl.logoColor ?? DEFAULT_LOGO_SETTINGS.logoColor);
+    setShowLogo(tpl.showLogo ?? DEFAULT_LOGO_SETTINGS.showLogo);
+    setLogoX(tpl.logoX ?? DEFAULT_LOGO_SETTINGS.logoX);
+    setLogoY(tpl.logoY ?? DEFAULT_LOGO_SETTINGS.logoY);
     setSelectedId(null);
+    setSelectedIds([]);
     toast.success(`Template "${tpl.name}" aplicado!`);
   };
 
@@ -452,6 +482,22 @@ export default function PromoMakerPage() {
     return sourceUrl;
   };
 
+  const buildTemplateData = (imageUrl: string) => ({
+    bg: bgColor,
+    bgGradient,
+    format,
+    elements,
+    imageConfig: { ...image, url: imageUrl },
+    imageInShape,
+    imageShapeId,
+    logoSize,
+    logoOpacity,
+    logoColor,
+    showLogo,
+    logoX,
+    logoY,
+  });
+
   const saveCurrentAsTemplate = async () => {
     const name = saveTemplateName.trim();
     if (!name) { toast.error('Digite um nome para o template'); return; }
@@ -463,11 +509,7 @@ export default function PromoMakerPage() {
       toast.error('Erro ao salvar imagem do template');
       return;
     }
-    const cleanImage: ImageConfig = { ...image, url: imageUrl };
-    const templateData = {
-      bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
-      imageInShape, imageShapeId,
-    };
+    const templateData = buildTemplateData(imageUrl);
     const { data: row, error } = await supabase
       .from('promo_templates')
       .insert({ empresa_id: activeCompany.id, name, template_data: templateData as any })
@@ -503,11 +545,7 @@ export default function PromoMakerPage() {
       toast.error('Erro ao salvar imagem do template');
       return;
     }
-    const cleanImage: ImageConfig = { ...image, url: imageUrl };
-    const templateData = {
-      bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
-      imageInShape, imageShapeId,
-    };
+    const templateData = buildTemplateData(imageUrl);
     const { error } = await supabase
       .from('promo_templates')
       .update({ template_data: templateData as any })
