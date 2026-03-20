@@ -570,11 +570,24 @@ export default function PromoMakerPage() {
   const alignHorizontally = () => {
     const els = getMultiSelectedElements();
     if (els.length < 2) return;
-    // Align all to same Y (topmost), keep each element's X
     const ref = els.reduce((a, b) => a.y < b.y ? a : b);
-    setElements(prev => prev.map(e =>
-      selectedIds.includes(e.id) ? { ...e, y: ref.y } as CanvasElement : e
-    ));
+    // Check if all elements share the same X (e.g. after vertical align)
+    const allSameX = els.every(e => Math.abs(e.x - els[0].x) < 2);
+    if (allSameX) {
+      // Distribute left-to-right with spacing, align Y
+      const sorted = [...els].sort((a, b) => a.y - b.y);
+      const startX = sorted[0].x;
+      setElements(prev => prev.map(e => {
+        if (!selectedIds.includes(e.id)) return e;
+        const idx = sorted.findIndex(s => s.id === e.id);
+        return { ...e, y: ref.y, x: startX + idx * alignSpacing } as CanvasElement;
+      }));
+    } else {
+      // Normal: align Y, keep X
+      setElements(prev => prev.map(e =>
+        selectedIds.includes(e.id) ? { ...e, y: ref.y } as CanvasElement : e
+      ));
+    }
     setAlignMode('horizontal');
     toast.success('Elementos alinhados horizontalmente (mesmo Y).');
   };
