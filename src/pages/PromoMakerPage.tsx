@@ -1212,29 +1212,6 @@ export default function PromoMakerPage() {
                       </div>
                     </div>
 
-  const overwriteSavedTemplate = async (idx: number) => {
-    const tpl = savedTemplates[idx];
-    if (!tpl.id) return;
-    const cleanImage: ImageConfig = {
-      ...image,
-      url: image.url?.startsWith('blob:') ? '' : image.url,
-    };
-    const templateData = {
-      bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
-      imageInShape, imageShapeId,
-    };
-    const { error } = await supabase
-      .from('promo_templates')
-      .update({ template_data: templateData as any })
-      .eq('id', tpl.id);
-    if (error) {
-      toast.error('Erro ao atualizar template.');
-      return;
-    }
-    setSavedTemplates(prev => prev.map((t, i) => i === idx ? { ...t, ...templateData } : t));
-    toast.success(`Template "${tpl.name}" atualizado!`);
-  };
-
 
                     {savedTemplates.length > 0 && (
                       <>
@@ -1247,22 +1224,12 @@ export default function PromoMakerPage() {
                               <p className="text-xs font-medium text-foreground">{tpl.name}</p>
                               <p className="text-[10px] text-muted-foreground">{tpl.format} • {tpl.elements.length} elementos</p>
                             </div>
-                            <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover/tpl:opacity-100 transition-opacity z-10">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); overwriteSavedTemplate(i); }}
-                                className="p-1 rounded bg-primary text-primary-foreground hover:bg-primary/80"
-                                title="Salvar alterações neste template"
-                              >
-                                <Save className="h-3 w-3" />
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); deleteSavedTemplate(i); }}
-                                className="p-1 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80"
-                                title="Excluir template"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteSavedTemplate(i); }}
+                              className="absolute top-1 right-1 p-1 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80 opacity-0 group-hover/tpl:opacity-100 transition-opacity z-10"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
                           </Card>
                         ))}
                       </>
