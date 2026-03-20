@@ -163,6 +163,10 @@ export default function PromoMakerPage() {
   const [imageInShape, setImageInShape] = useState(false);
   const [imageShapeId, setImageShapeId] = useState('');
   const [rightTab, setRightTab] = useState('element');
+  const [logoSize, setLogoSize] = useState(8);
+  const [logoOpacity, setLogoOpacity] = useState(0.6);
+  const [logoColor, setLogoColor] = useState('');
+  const [showLogo, setShowLogo] = useState(true);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
   const [saveTemplateName, setSaveTemplateName] = useState('');
 
@@ -436,12 +440,38 @@ export default function PromoMakerPage() {
         ))}
       
 
-      <img
-        src="/images/vortex-logo-white.png" alt="Vortex"
-        className="absolute pointer-events-none"
-        style={{ bottom: '3%', right: '3%', height: '8%', opacity: 0.6 }}
-        draggable={false}
-      />
+      {showLogo && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            bottom: '3%', right: '3%', height: `${logoSize}%`, opacity: logoOpacity,
+          }}
+        >
+          <img
+            src="/images/vortex-logo-white.png" alt="Vortex"
+            className="h-full w-auto"
+            style={{
+              ...(logoColor ? {
+                filter: 'brightness(0) invert(1)',
+                WebkitFilter: 'brightness(0) invert(1)',
+              } : {}),
+            }}
+            draggable={false}
+          />
+          {logoColor && (
+            <div className="absolute inset-0" style={{
+              backgroundColor: logoColor,
+              mixBlendMode: 'multiply',
+              maskImage: 'url(/images/vortex-logo-white.png)',
+              WebkitMaskImage: 'url(/images/vortex-logo-white.png)',
+              maskSize: 'contain',
+              WebkitMaskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              WebkitMaskRepeat: 'no-repeat',
+            }} />
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -944,6 +974,48 @@ export default function PromoMakerPage() {
                           <div key={c} className="w-7 h-7 rounded cursor-pointer border border-border hover:scale-110 transition-transform"
                             style={{ background: c }} onClick={() => { setBgColor(c); setBgGradient(''); }} />
                         ))}
+                      </div>
+                    </div>
+                    <Separator />
+                    <div>
+                      <Label className="text-xs font-semibold mb-1 block">Logo</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Checkbox checked={showLogo} onCheckedChange={(v) => setShowLogo(!!v)} id="show-logo" />
+                          <Label htmlFor="show-logo" className="text-xs cursor-pointer">Exibir logo</Label>
+                        </div>
+                        {showLogo && (
+                          <>
+                            <div>
+                              <Label className="text-xs">Tamanho ({logoSize}%)</Label>
+                              <Slider min={3} max={25} step={1} value={[logoSize]} onValueChange={([v]) => setLogoSize(v)} className="mt-1" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Opacidade ({Math.round(logoOpacity * 100)}%)</Label>
+                              <Slider min={0.1} max={1} step={0.05} value={[logoOpacity]} onValueChange={([v]) => setLogoOpacity(v)} className="mt-1" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Cor da logo</Label>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Select value={logoColor || 'original'} onValueChange={v => setLogoColor(v === 'original' ? '' : v)}>
+                                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="original">Original (branca)</SelectItem>
+                                    <SelectItem value="#000000">Preto</SelectItem>
+                                    <SelectItem value="#d4af37">Dourado</SelectItem>
+                                    <SelectItem value="#ffffff">Branco</SelectItem>
+                                    <SelectItem value="#00b4d8">Azul</SelectItem>
+                                    <SelectItem value="#e63946">Vermelho</SelectItem>
+                                    <SelectItem value="custom">Personalizada</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                {logoColor === 'custom' && (
+                                  <input type="color" value="#d4af37" onChange={e => setLogoColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer border-0" />
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
