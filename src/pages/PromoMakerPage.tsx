@@ -162,6 +162,7 @@ export default function PromoMakerPage() {
   const [dragInfo, setDragInfo] = useState<{ id: string; startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [imageInShape, setImageInShape] = useState(false);
   const [imageShapeId, setImageShapeId] = useState('');
+  const [rightTab, setRightTab] = useState('element');
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
   const [saveTemplateName, setSaveTemplateName] = useState('');
 
