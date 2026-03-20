@@ -213,6 +213,8 @@ export default function PromoMakerPage() {
   const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
   const [saveTemplateName, setSaveTemplateName] = useState('');
+  const [alignMode, setAlignMode] = useState<'none' | 'horizontal' | 'vertical'>('none');
+  const [alignSpacing, setAlignSpacing] = useState(5);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
