@@ -649,6 +649,20 @@ export default function PromoMakerPage() {
         </div>
       )}
 
+      <div>
+        <Label className="text-xs">Degradê de opacidade</Label>
+        <Select value={sel.gradientFade} onValueChange={(v: GradientFade) => updateEl(sel.id, { gradientFade: v })}>
+          <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Nenhum</SelectItem>
+            <SelectItem value="left-right">Esquerda → Direita</SelectItem>
+            <SelectItem value="right-left">Direita → Esquerda</SelectItem>
+            <SelectItem value="top-bottom">Cima → Baixo</SelectItem>
+            <SelectItem value="bottom-top">Baixo → Cima</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <Separator />
 
       <div className="space-y-2">
