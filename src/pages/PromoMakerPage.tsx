@@ -849,7 +849,8 @@ export default function PromoMakerPage() {
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
               transform: 'translate(-50%, -50%)',
-              width: `${el.width}%`,
+              width: 'max-content',
+              whiteSpace: 'nowrap',
               fontFamily: `'${el.fontFamily}', sans-serif`,
               fontSize: `${el.fontSize}px`,
               fontWeight: el.fontWeight,
