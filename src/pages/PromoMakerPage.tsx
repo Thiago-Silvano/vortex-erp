@@ -147,6 +147,30 @@ const defaultImage: ImageConfig = {
 
 const genId = () => `el_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+const STICKER_DEFS = [
+  {
+    id: 'airplane', name: 'Avião', Icon: Plane,
+    svg: 'M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z',
+  },
+  {
+    id: 'hotel', name: 'Hotel', Icon: Building2,
+    svg: 'M19 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V4a2 2 0 00-2-2zM7 7h2v2H7V7zm0 4h2v2H7v-2zm0 4h2v2H7v-2zm4-8h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm4-8h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z',
+  },
+  {
+    id: 'transfer', name: 'Transfer', Icon: Bus,
+    svg: 'M17 5H3a2 2 0 00-2 2v9h2a3 3 0 006 0h2a3 3 0 006 0h2V9.65L17 5zM6.5 17.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm7 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM17 9.65V7h1.3l1.7 2.65H17z',
+    viewBox: '0 0 21 20',
+  },
+  {
+    id: 'ticket', name: 'Ingressos', Icon: Ticket,
+    svg: 'M22 10V6a2 2 0 00-2-2H4a2 2 0 00-2 2v4a2 2 0 010 4v4a2 2 0 002 2h16a2 2 0 002-2v-4a2 2 0 010-4zm-2-1.46a4 4 0 000 6.92V18H4v-2.54a4 4 0 000-6.92V6h16v2.54zM11 15h2v2h-2v-2zm0-4h2v2h-2v-2zm0-4h2v2h-2V7z',
+  },
+  {
+    id: 'health', name: 'Seguro Saúde', Icon: ShieldPlus,
+    svg: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z',
+  },
+];
+
 const SAVED_TEMPLATES_KEY = 'promo-maker-saved-templates';
 
 interface SavedTemplate {
