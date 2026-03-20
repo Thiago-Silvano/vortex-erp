@@ -41,6 +41,7 @@ type PeriodFilter = 'day' | 'month' | 'year';
 export default function AccountsPayablePage() {
   const { activeCompany } = useCompany();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Payable[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);

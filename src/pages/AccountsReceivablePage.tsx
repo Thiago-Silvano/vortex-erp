@@ -41,6 +41,7 @@ type PeriodFilter = 'day' | 'month' | 'year';
 export default function AccountsReceivablePage() {
   const { activeCompany } = useCompany();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Receivable[]>([]);
   const [clients, setClients] = useState<ClientOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
