@@ -115,34 +115,7 @@ const defaultTextProps = {
   textDecoration: 'none' as const,
 };
 
-const TEMPLATES = [
-  {
-    name: 'Oferta Viagem',
-    bg: '#0d1b2a',
-    elements: [
-      { id: '1', type: 'text' as const, content: 'PROMOÇÃO', x: 50, y: 8, fontSize: 48, fontFamily: 'Bebas Neue', fontWeight: '400', ...defaultTextProps, color: '#d4af37', textAlign: 'center' as const, letterSpacing: 8, lineHeight: 1.1, textTransform: 'uppercase' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '2', type: 'text' as const, content: 'Cancún', x: 50, y: 22, fontSize: 72, fontFamily: 'Playfair Display', fontWeight: '700', ...defaultTextProps, color: '#ffffff', textAlign: 'center' as const, letterSpacing: 2, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 2px 8px rgba(0,0,0,0.5)', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '3', type: 'text' as const, content: '7 noites com aéreo', x: 50, y: 35, fontSize: 24, fontFamily: 'Inter', fontWeight: '300', ...defaultTextProps, color: '#e0e0e0', textAlign: 'center' as const, letterSpacing: 1, lineHeight: 1.4, textTransform: 'none' as const, opacity: 0.9, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '4', type: 'text' as const, content: 'a partir de', x: 50, y: 55, fontSize: 18, fontFamily: 'Inter', fontWeight: '400', ...defaultTextProps, color: '#aaa', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '5', type: 'text' as const, content: 'R$ 4.990', x: 50, y: 65, fontSize: 64, fontFamily: 'Montserrat', fontWeight: '800', ...defaultTextProps, color: '#d4af37', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 2px 12px rgba(212,175,55,0.3)', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '6', type: 'text' as const, content: 'ou 10x de R$ 549', x: 50, y: 78, fontSize: 20, fontFamily: 'Inter', fontWeight: '400', ...defaultTextProps, color: '#ccc', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' as const, opacity: 0.8, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '7', type: 'text' as const, content: 'Vortex Viagens', x: 50, y: 90, fontSize: 16, fontFamily: 'Inter', fontWeight: '600', ...defaultTextProps, color: '#d4af37', textAlign: 'center' as const, letterSpacing: 2, lineHeight: 1, textTransform: 'uppercase' as const, opacity: 0.7, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-    ] as CanvasElement[],
-  },
-  {
-    name: 'Pacote Resort',
-    bg: '#1a1a2e',
-    elements: [
-      { id: '1', type: 'text' as const, content: '🏖️ ALL INCLUSIVE', x: 50, y: 10, fontSize: 36, fontFamily: 'Oswald', fontWeight: '600', ...defaultTextProps, color: '#00b4d8', textAlign: 'center' as const, letterSpacing: 4, lineHeight: 1.2, textTransform: 'uppercase' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '2', type: 'text' as const, content: 'Punta Cana', x: 50, y: 25, fontSize: 64, fontFamily: 'Abril Fatface', fontWeight: '400', ...defaultTextProps, color: '#ffffff', textAlign: 'center' as const, letterSpacing: 1, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 4px 16px rgba(0,0,0,0.4)', stroke: '', strokeWidth: 0, locked: false, width: 85 },
-      { id: '3', type: 'text' as const, content: 'Hotel 5★ + Aéreo + Traslado', x: 50, y: 40, fontSize: 22, fontFamily: 'Quicksand', fontWeight: '500', ...defaultTextProps, color: '#e0e0e0', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1.4, textTransform: 'none' as const, opacity: 0.85, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 85 },
-      { id: '4', type: 'text' as const, content: 'R$ 6.490', x: 50, y: 60, fontSize: 72, fontFamily: 'Montserrat', fontWeight: '900', ...defaultTextProps, color: '#00b4d8', textAlign: 'center' as const, letterSpacing: -2, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: '0 0 30px rgba(0,180,216,0.3)', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '5', type: 'text' as const, content: 'por pessoa', x: 50, y: 74, fontSize: 18, fontFamily: 'Inter', fontWeight: '400', ...defaultTextProps, color: '#999', textAlign: 'center' as const, letterSpacing: 2, lineHeight: 1, textTransform: 'uppercase' as const, opacity: 0.7, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-      { id: '6', type: 'text' as const, content: '📲 Fale conosco', x: 50, y: 88, fontSize: 20, fontFamily: 'Inter', fontWeight: '600', ...defaultTextProps, color: '#25d366', textAlign: 'center' as const, letterSpacing: 0, lineHeight: 1, textTransform: 'none' as const, opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
-    ] as CanvasElement[],
-  },
-];
-
+const TEMPLATES: { name: string; bg: string; elements: CanvasElement[] }[] = [];
 const defaultImage: ImageConfig = {
   url: '', zoom: 1, brightness: 1, contrast: 1, saturate: 1, blur: 0,
   offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0.4,
@@ -189,7 +162,7 @@ export default function PromoMakerPage() {
   const [format, setFormat] = useState<FormatKey>('1:1');
   const [bgColor, setBgColor] = useState('#0d1b2a');
   const [bgGradient, setBgGradient] = useState('');
-  const [elements, setElements] = useState<CanvasElement[]>(TEMPLATES[0].elements);
+  const [elements, setElements] = useState<CanvasElement[]>([]);
   const [image, setImage] = useState<ImageConfig>(defaultImage);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -1217,20 +1190,11 @@ export default function PromoMakerPage() {
                       </div>
                     </div>
 
-                    <Separator />
-                    <Label className="text-xs text-muted-foreground">Templates padrão</Label>
-
-                    {TEMPLATES.map((tpl, i) => (
-                      <Card key={i} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all" onClick={() => applyTemplate(tpl)}>
-                        <div className="h-16 rounded mb-2" style={{ background: tpl.bg }} />
-                        <p className="text-xs font-medium text-foreground">{tpl.name}</p>
-                      </Card>
-                    ))}
 
                     {savedTemplates.length > 0 && (
                       <>
                         <Separator />
-                        <Label className="text-xs text-muted-foreground">Meus templates salvos</Label>
+                        <Label className="text-xs text-muted-foreground">Templates salvos</Label>
                         {savedTemplates.map((tpl, i) => (
                           <Card key={`saved-${i}`} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all relative group/tpl">
                             <div onClick={() => applySavedTemplate(tpl)}>
