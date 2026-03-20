@@ -344,6 +344,27 @@ export default function PromoMakerPage() {
 
   const shapeElements = elements.filter(el => el.type === 'shape') as ShapeElement[];
 
+  const getMultiSelectedElements = () => {
+    if (selectedIds.length >= 2) return elements.filter(e => selectedIds.includes(e.id));
+    return [];
+  };
+
+  const alignHorizontally = () => {
+    const els = getMultiSelectedElements();
+    if (els.length < 2) return;
+    const ref = els.reduce((a, b) => a.y < b.y ? a : b);
+    setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, y: ref.y } as CanvasElement : e));
+    toast.success('Elementos alinhados horizontalmente');
+  };
+
+  const alignVertically = () => {
+    const els = getMultiSelectedElements();
+    if (els.length < 2) return;
+    const ref = els.reduce((a, b) => a.x < b.x ? a : b);
+    setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, x: ref.x } as CanvasElement : e));
+    toast.success('Elementos alinhados verticalmente');
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
