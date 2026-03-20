@@ -355,7 +355,23 @@ export default function PromoMakerPage() {
     const el = elements.find(x => x.id === elId);
     if (!el || el.locked) return;
     e.stopPropagation();
-    setSelectedId(elId);
+    if (e.ctrlKey || e.metaKey) {
+      // Multi-select toggle
+      setSelectedIds(prev => {
+        const current = prev.length > 0 ? prev : (selectedId ? [selectedId] : []);
+        if (current.includes(elId)) {
+          const next = current.filter(id => id !== elId);
+          setSelectedId(next.length === 1 ? next[0] : next.length === 0 ? null : selectedId);
+          return next;
+        }
+        const next = [...current.filter(id => id !== elId), elId];
+        setSelectedId(elId);
+        return next;
+      });
+    } else {
+      setSelectedId(elId);
+      setSelectedIds([]);
+    }
     setDragInfo({ id: elId, startX: e.clientX, startY: e.clientY, elX: el.x, elY: el.y });
   };
 
