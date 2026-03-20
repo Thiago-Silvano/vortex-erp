@@ -1247,12 +1247,22 @@ export default function PromoMakerPage() {
                               <p className="text-xs font-medium text-foreground">{tpl.name}</p>
                               <p className="text-[10px] text-muted-foreground">{tpl.format} • {tpl.elements.length} elementos</p>
                             </div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); deleteSavedTemplate(i); }}
-                              className="absolute top-1 right-1 p-1 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80 opacity-0 group-hover/tpl:opacity-100 transition-opacity z-10"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
+                            <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover/tpl:opacity-100 transition-opacity z-10">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); overwriteSavedTemplate(i); }}
+                                className="p-1 rounded bg-primary text-primary-foreground hover:bg-primary/80"
+                                title="Salvar alterações neste template"
+                              >
+                                <Save className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); deleteSavedTemplate(i); }}
+                                className="p-1 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80"
+                                title="Excluir template"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
                           </Card>
                         ))}
                       </>
