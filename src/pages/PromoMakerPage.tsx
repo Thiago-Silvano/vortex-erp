@@ -1148,6 +1148,14 @@ export default function PromoMakerPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex gap-1 mr-2">
+              <Button variant="outline" size="sm" onClick={undo} disabled={!canUndo} title="Desfazer (Ctrl+Z)" className="gap-1 h-8 w-8 p-0">
+                <Undo2 className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={redo} disabled={!canRedo} title="Refazer (Ctrl+Y)" className="gap-1 h-8 w-8 p-0">
+                <Redo2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             <Button variant="outline" size="sm" onClick={() => setPreview(preview ? null : 'feed')} className="gap-1">
               <Eye className="h-3.5 w-3.5" /> Preview
             </Button>
