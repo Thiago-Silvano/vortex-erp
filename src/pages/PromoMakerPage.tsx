@@ -209,23 +209,49 @@ export default function PromoMakerPage() {
   const [saveTemplateName, setSaveTemplateName] = useState('');
   const { activeCompany } = useCompany();
 
-  // Load saved templates from database
+  // Load saved templates from database + migrate localStorage templates
   useEffect(() => {
     if (!activeCompany?.id) return;
-    supabase
-      .from('promo_templates')
-      .select('*')
-      .eq('empresa_id', activeCompany.id)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        if (data) {
-          setSavedTemplates(data.map((row: any) => ({
-            id: row.id,
-            name: row.name,
-            ...(row.template_data as any),
-          })));
+    const empresaId = activeCompany.id;
+
+    (async () => {
+      // Migrate localStorage templates to DB if any exist
+      const LOCAL_KEY = 'promo-maker-saved-templates';
+      try {
+        const raw = localStorage.getItem(LOCAL_KEY);
+        if (raw) {
+          const localTemplates = JSON.parse(raw) as any[];
+          if (localTemplates.length > 0) {
+            const rows = localTemplates.map((t: any) => ({
+              empresa_id: empresaId,
+              name: t.name || 'Sem nome',
+              template_data: {
+                bg: t.bg, bgGradient: t.bgGradient, format: t.format,
+                elements: t.elements, imageConfig: t.imageConfig,
+                imageInShape: t.imageInShape, imageShapeId: t.imageShapeId,
+              },
+            }));
+            await supabase.from('promo_templates').insert(rows as any);
+            localStorage.removeItem(LOCAL_KEY);
+          }
         }
-      });
+      } catch { /* ignore migration errors */ }
+
+      // Load all from DB
+      const { data } = await supabase
+        .from('promo_templates')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setSavedTemplates(data.map((row: any) => ({
+          id: row.id,
+          name: row.name,
+          ...(row.template_data as any),
+        })));
+      }
+    })();
   }, [activeCompany?.id]);
   const [alignMode, setAlignMode] = useState<'none' | 'horizontal' | 'vertical'>('none');
   const [alignSpacing, setAlignSpacing] = useState(5);
