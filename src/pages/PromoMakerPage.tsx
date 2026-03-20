@@ -498,7 +498,7 @@ export default function PromoMakerPage() {
               } : {}),
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
-            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+            onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
           >
             {isImageTarget && (
               <>
