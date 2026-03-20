@@ -537,7 +537,10 @@ export default function BankReconciliationPage() {
   };
 
   const filteredTx = transactions.filter((t) => {
-    if (filterStatus !== "all" && t.reconciliation_status !== filterStatus) return false;
+    // Hide ignored from main list (they have their own view)
+    if (!showIgnoredView && t.reconciliation_status === "ignored") return false;
+    if (showIgnoredView && t.reconciliation_status !== "ignored") return false;
+    if (!showIgnoredView && filterStatus !== "all" && t.reconciliation_status !== filterStatus) return false;
     if (filterType === "credit" && Number(t.amount) < 0) return false;
     if (filterType === "debit" && Number(t.amount) > 0) return false;
     if (searchTx && !t.description.toLowerCase().includes(searchTx.toLowerCase())) return false;
