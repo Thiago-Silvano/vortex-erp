@@ -199,6 +199,7 @@ export default function PromoMakerPage() {
   const [elements, setElements] = useState<CanvasElement[]>(TEMPLATES[0].elements);
   const [image, setImage] = useState<ImageConfig>(defaultImage);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [preview, setPreview] = useState<'feed' | 'stories' | 'whatsapp' | null>(null);
   const [dragInfo, setDragInfo] = useState<{ id: string; startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [imageInShape, setImageInShape] = useState(false);
