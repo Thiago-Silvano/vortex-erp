@@ -1010,7 +1010,7 @@ export default function PromoMakerPage() {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Left panel */}
-          <div className="w-72 border-r bg-card flex flex-col overflow-hidden">
+          <div className="w-80 border-r bg-card flex flex-col overflow-hidden">
             <Tabs defaultValue="layers" className="flex flex-col h-full">
               <TabsList className="w-full rounded-none">
                 <TabsTrigger value="layers" className="text-xs flex-1">Camadas</TabsTrigger>
