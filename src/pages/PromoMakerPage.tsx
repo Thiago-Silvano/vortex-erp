@@ -769,12 +769,53 @@ export default function PromoMakerPage() {
               <TabsContent value="templates" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
                   <div className="p-2 space-y-2">
+                    {/* Save current */}
+                    <div className="p-2 border border-dashed border-border rounded-md space-y-1.5">
+                      <Label className="text-xs font-semibold">Salvar como template</Label>
+                      <div className="flex gap-1">
+                        <Input
+                          value={saveTemplateName}
+                          onChange={e => setSaveTemplateName(e.target.value)}
+                          placeholder="Nome do template"
+                          className="h-8 text-xs flex-1"
+                        />
+                        <Button size="sm" className="h-8 gap-1 text-xs" onClick={saveCurrentAsTemplate}>
+                          <Save className="h-3 w-3" /> Salvar
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+                    <Label className="text-xs text-muted-foreground">Templates padrão</Label>
+
                     {TEMPLATES.map((tpl, i) => (
                       <Card key={i} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all" onClick={() => applyTemplate(tpl)}>
                         <div className="h-16 rounded mb-2" style={{ background: tpl.bg }} />
                         <p className="text-xs font-medium text-foreground">{tpl.name}</p>
                       </Card>
                     ))}
+
+                    {savedTemplates.length > 0 && (
+                      <>
+                        <Separator />
+                        <Label className="text-xs text-muted-foreground">Meus templates salvos</Label>
+                        {savedTemplates.map((tpl, i) => (
+                          <Card key={`saved-${i}`} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all relative group">
+                            <div onClick={() => applySavedTemplate(tpl)}>
+                              <div className="h-16 rounded mb-2" style={{ background: tpl.bgGradient || tpl.bg }} />
+                              <p className="text-xs font-medium text-foreground">{tpl.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{tpl.format} • {tpl.elements.length} elementos</p>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteSavedTemplate(i); }}
+                              className="absolute top-1 right-1 p-1 rounded bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </Card>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </ScrollArea>
               </TabsContent>
