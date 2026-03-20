@@ -570,7 +570,7 @@ export default function PromoMakerPage() {
               userSelect: 'none',
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
-            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+            onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
           >
             {el.content}
           </div>
