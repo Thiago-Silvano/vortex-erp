@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -39,6 +40,7 @@ type PeriodFilter = 'day' | 'month' | 'year';
 
 export default function AccountsPayablePage() {
   const { activeCompany } = useCompany();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<Payable[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
@@ -94,6 +96,14 @@ export default function AccountsPayablePage() {
   };
 
   const [manualDialog, setManualDialog] = useState(false);
+
+  // Auto-open dialog from URL param
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setManualDialog(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
   const [manualSupplierId, setManualSupplierId] = useState('');
   const [manualDescription, setManualDescription] = useState('');
   const [manualCostCenter, setManualCostCenter] = useState('');

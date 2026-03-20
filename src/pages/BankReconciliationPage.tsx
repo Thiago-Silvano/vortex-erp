@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,7 @@ const statusLabels: Record<string, string> = {
 
 export default function BankReconciliationPage() {
   const { activeCompany } = useCompany();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState("");
@@ -96,59 +98,6 @@ export default function BankReconciliationPage() {
   const [manualType, setManualType] = useState("");
   const [selectedTitleIds, setSelectedTitleIds] = useState<Set<string>>(new Set());
 
-  // Quick-create title states
-  const [quickCreateType, setQuickCreateType] = useState<'payable' | 'receivable' | null>(null);
-  const [qcDescription, setQcDescription] = useState('');
-  const [qcAmount, setQcAmount] = useState('');
-  const [qcDueDate, setQcDueDate] = useState('');
-  const [qcClientName, setQcClientName] = useState('');
-  const [qcSaving, setQcSaving] = useState(false);
-
-  const openQuickCreate = (type: 'payable' | 'receivable') => {
-    setQuickCreateType(type);
-    setQcDescription('');
-    setQcAmount('');
-    setQcDueDate('');
-    setQcClientName('');
-  };
-
-  const handleQuickCreate = async () => {
-    if (!activeCompany || !qcDescription || !qcAmount) {
-      toast.error('Preencha descrição e valor');
-      return;
-    }
-    setQcSaving(true);
-    const acct = accounts.find((a) => a.id === selectedAccount);
-    const empresaId = (acct as any)?.empresa_id || activeCompany.id;
-
-    if (quickCreateType === 'payable') {
-      const { error } = await supabase.from('accounts_payable').insert({
-        empresa_id: empresaId,
-        description: qcDescription,
-        amount: parseFloat(qcAmount),
-        due_date: qcDueDate || null,
-        status: 'open',
-        origin_type: 'manual',
-      });
-      if (error) { toast.error('Erro ao criar'); setQcSaving(false); return; }
-      toast.success('Conta a pagar criada!');
-    } else {
-      const { error } = await supabase.from('receivables').insert({
-        empresa_id: empresaId,
-        description: qcDescription,
-        amount: parseFloat(qcAmount),
-        due_date: qcDueDate || null,
-        client_name: qcClientName || '',
-        status: 'pending',
-        origin_type: 'manual',
-      });
-      if (error) { toast.error('Erro ao criar'); setQcSaving(false); return; }
-      toast.success('Conta a receber criada!');
-    }
-    setQcSaving(false);
-    setQuickCreateType(null);
-    loadTransactions();
-  };
 
   // Stats
   const totalImported = transactions.length;
@@ -830,10 +779,10 @@ export default function BankReconciliationPage() {
                   )}
                 </CardTitle>
                 <div className="flex gap-1 mt-1">
-                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => openQuickCreate('payable')}>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => navigate('/financial/payable?new=1')}>
                     <Plus className="h-3 w-3" /> Pagar
                   </Button>
-                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => openQuickCreate('receivable')}>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => navigate('/financial/receivable?new=1')}>
                     <Plus className="h-3 w-3" /> Receber
                   </Button>
                 </div>
@@ -971,42 +920,6 @@ export default function BankReconciliationPage() {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-      {/* Quick-create title modal */}
-      <Dialog open={!!quickCreateType} onOpenChange={(open) => !open && setQuickCreateType(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{quickCreateType === 'payable' ? 'Nova Conta a Pagar' : 'Nova Conta a Receber'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs">Descrição *</Label>
-              <Input value={qcDescription} onChange={e => setQcDescription(e.target.value)} placeholder="Ex: Pagamento fornecedor" className="h-9" />
-            </div>
-            {quickCreateType === 'receivable' && (
-              <div>
-                <Label className="text-xs">Cliente</Label>
-                <Input value={qcClientName} onChange={e => setQcClientName(e.target.value)} placeholder="Nome do cliente" className="h-9" />
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Valor *</Label>
-                <Input type="number" step="0.01" min="0" value={qcAmount} onChange={e => setQcAmount(e.target.value)} placeholder="0,00" className="h-9" />
-              </div>
-              <div>
-                <Label className="text-xs">Vencimento</Label>
-                <Input type="date" value={qcDueDate} onChange={e => setQcDueDate(e.target.value)} className="h-9" />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setQuickCreateType(null)}>Cancelar</Button>
-            <Button size="sm" onClick={handleQuickCreate} disabled={qcSaving}>
-              {qcSaving ? 'Salvando...' : 'Criar'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AppLayout>
