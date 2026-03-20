@@ -162,7 +162,7 @@ export default function PromoMakerPage() {
   const [format, setFormat] = useState<FormatKey>('1:1');
   const [bgColor, setBgColor] = useState('#0d1b2a');
   const [bgGradient, setBgGradient] = useState('');
-  const [elements, setElements] = useState<CanvasElement[]>(TEMPLATES[0].elements);
+  const [elements, setElements] = useState<CanvasElement[]>([]);
   const [image, setImage] = useState<ImageConfig>(defaultImage);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
