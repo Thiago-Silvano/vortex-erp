@@ -32,6 +32,9 @@ import {
   Plus,
   Eye,
   ArrowLeft,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 
 interface BankAccount {
@@ -69,6 +72,12 @@ interface FinancialTitle {
   is_reconciled?: boolean;
 }
 
+type SortDir = 'asc' | 'desc';
+interface SortState<K extends string> { key: K; dir: SortDir; }
+
+type TxSortKey = 'date' | 'description' | 'amount' | 'status';
+type TitleSortKey = 'type' | 'description' | 'due_date' | 'amount' | 'reconciliation';
+
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200",
   reconciled: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -95,6 +104,8 @@ export default function BankReconciliationPage() {
   const [filterType, setFilterType] = useState("all");
   const [searchTx, setSearchTx] = useState("");
   const [searchTitle, setSearchTitle] = useState("");
+  const [txSort, setTxSort] = useState<SortState<TxSortKey>>({ key: 'date', dir: 'asc' });
+  const [titleSort, setTitleSort] = useState<SortState<TitleSortKey>>({ key: 'due_date', dir: 'asc' });
   const [showManualModal, setShowManualModal] = useState(false);
   const [selectedTx, setSelectedTx] = useState<BankTx | null>(null);
   const [manualNote, setManualNote] = useState("");
@@ -539,19 +550,40 @@ export default function BankReconciliationPage() {
     loadTransactions();
   };
 
+  const toggleSort = <K extends string>(current: SortState<K>, key: K): SortState<K> => {
+    if (current.key === key) return { key, dir: current.dir === 'asc' ? 'desc' : 'asc' };
+    return { key, dir: 'asc' };
+  };
+
+  const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
+    if (!active) return <ArrowUpDown className="h-3 w-3 ml-0.5 opacity-40" />;
+    return dir === 'asc' ? <ChevronUp className="h-3 w-3 ml-0.5" /> : <ChevronDown className="h-3 w-3 ml-0.5" />;
+  };
+
   const filteredTx = transactions.filter((t) => {
     // Hide ignored from main list (they have their own view)
     if (!showIgnoredView && t.reconciliation_status === "ignored") return false;
     if (showIgnoredView && t.reconciliation_status !== "ignored") return false;
-    if (!showIgnoredView && filterStatus !== "all" && t.reconciliation_status !== filterStatus) return false;
+    // Show only pending in main view (unless viewing ignored)
+    if (!showIgnoredView && t.reconciliation_status !== "pending") return false;
     if (filterType === "credit" && Number(t.amount) < 0) return false;
     if (filterType === "debit" && Number(t.amount) > 0) return false;
     if (searchTx && !t.description.toLowerCase().includes(searchTx.toLowerCase())) return false;
     return true;
-  }).sort((a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime());
+  }).sort((a, b) => {
+    const dir = txSort.dir === 'asc' ? 1 : -1;
+    switch (txSort.key) {
+      case 'date': return dir * (new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime());
+      case 'description': return dir * a.description.localeCompare(b.description, 'pt-BR');
+      case 'amount': return dir * (Number(a.amount) - Number(b.amount));
+      case 'status': return dir * (a.reconciliation_status || '').localeCompare(b.reconciliation_status || '');
+      default: return 0;
+    }
+  });
 
   const filteredTitles = titles.filter((t) => {
     if (t.is_reconciled) return false;
+    if (t.status === 'paid') return false;
     if (
       searchTitle &&
       !t.description.toLowerCase().includes(searchTitle.toLowerCase()) &&
@@ -559,7 +591,17 @@ export default function BankReconciliationPage() {
     )
       return false;
     return true;
-  }).sort((a, b) => new Date(a.due_date || "").getTime() - new Date(b.due_date || "").getTime());
+  }).sort((a, b) => {
+    const dir = titleSort.dir === 'asc' ? 1 : -1;
+    switch (titleSort.key) {
+      case 'due_date': return dir * (new Date(a.due_date || '').getTime() - new Date(b.due_date || '').getTime());
+      case 'description': return dir * (a.description || '').localeCompare(b.description || '', 'pt-BR');
+      case 'amount': return dir * (Number(a.amount) - Number(b.amount));
+      case 'type': return dir * (a.type === 'payable' ? -1 : 1) - (b.type === 'payable' ? -1 : 1);
+      case 'reconciliation': return dir * ((a.is_reconciled ? 1 : 0) - (b.is_reconciled ? 1 : 0));
+      default: return 0;
+    }
+  });
 
   const fmt = (v: number) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -782,10 +824,18 @@ export default function BankReconciliationPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-xs">Data</TableHead>
-                      <TableHead className="text-xs">Descrição</TableHead>
-                      <TableHead className="text-xs text-right">Valor</TableHead>
-                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs cursor-pointer select-none hover:text-foreground" onClick={() => setTxSort(s => toggleSort(s, 'date'))}>
+                        <span className="inline-flex items-center">Data <SortIcon active={txSort.key === 'date'} dir={txSort.dir} /></span>
+                      </TableHead>
+                      <TableHead className="text-xs cursor-pointer select-none hover:text-foreground" onClick={() => setTxSort(s => toggleSort(s, 'description'))}>
+                        <span className="inline-flex items-center">Descrição <SortIcon active={txSort.key === 'description'} dir={txSort.dir} /></span>
+                      </TableHead>
+                      <TableHead className="text-xs text-right cursor-pointer select-none hover:text-foreground" onClick={() => setTxSort(s => toggleSort(s, 'amount'))}>
+                        <span className="inline-flex items-center justify-end">Valor <SortIcon active={txSort.key === 'amount'} dir={txSort.dir} /></span>
+                      </TableHead>
+                      <TableHead className="text-xs cursor-pointer select-none hover:text-foreground" onClick={() => setTxSort(s => toggleSort(s, 'status'))}>
+                        <span className="inline-flex items-center">Status <SortIcon active={txSort.key === 'status'} dir={txSort.dir} /></span>
+                      </TableHead>
                       <TableHead className="text-xs"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -943,11 +993,21 @@ export default function BankReconciliationPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-xs w-8"></TableHead>
-                      <TableHead className="text-xs">Tipo</TableHead>
-                      <TableHead className="text-xs">Descrição</TableHead>
-                      <TableHead className="text-xs">Vencimento</TableHead>
-                      <TableHead className="text-xs text-right">Valor</TableHead>
-                      <TableHead className="text-xs">Conciliação</TableHead>
+                      <TableHead className="text-xs cursor-pointer select-none hover:text-foreground" onClick={() => setTitleSort(s => toggleSort(s, 'type'))}>
+                        <span className="inline-flex items-center">Tipo <SortIcon active={titleSort.key === 'type'} dir={titleSort.dir} /></span>
+                      </TableHead>
+                      <TableHead className="text-xs cursor-pointer select-none hover:text-foreground" onClick={() => setTitleSort(s => toggleSort(s, 'description'))}>
+                        <span className="inline-flex items-center">Descrição <SortIcon active={titleSort.key === 'description'} dir={titleSort.dir} /></span>
+                      </TableHead>
+                      <TableHead className="text-xs cursor-pointer select-none hover:text-foreground" onClick={() => setTitleSort(s => toggleSort(s, 'due_date'))}>
+                        <span className="inline-flex items-center">Vencimento <SortIcon active={titleSort.key === 'due_date'} dir={titleSort.dir} /></span>
+                      </TableHead>
+                      <TableHead className="text-xs text-right cursor-pointer select-none hover:text-foreground" onClick={() => setTitleSort(s => toggleSort(s, 'amount'))}>
+                        <span className="inline-flex items-center justify-end">Valor <SortIcon active={titleSort.key === 'amount'} dir={titleSort.dir} /></span>
+                      </TableHead>
+                      <TableHead className="text-xs cursor-pointer select-none hover:text-foreground" onClick={() => setTitleSort(s => toggleSort(s, 'reconciliation'))}>
+                        <span className="inline-flex items-center">Conciliação <SortIcon active={titleSort.key === 'reconciliation'} dir={titleSort.dir} /></span>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
