@@ -913,10 +913,10 @@ export default function BankReconciliationPage() {
                   )}
                 </CardTitle>
                 <div className="flex gap-1 mt-1">
-                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => navigate("/financial/payable?new=1")}>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => navigate("/financial/payable?new=1&from=reconciliation")}>
                     <Plus className="h-3 w-3" /> Pagar
                   </Button>
-                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => navigate("/financial/receivable?new=1")}>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => navigate("/financial/receivable?new=1&from=reconciliation")}>
                     <Plus className="h-3 w-3" /> Receber
                   </Button>
                 </div>

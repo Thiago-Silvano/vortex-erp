@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -41,6 +41,7 @@ type PeriodFilter = 'day' | 'month' | 'year';
 export default function AccountsReceivablePage() {
   const { activeCompany } = useCompany();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Receivable[]>([]);
   const [clients, setClients] = useState<ClientOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
@@ -99,11 +100,13 @@ export default function AccountsReceivablePage() {
   };
 
   const [manualDialog, setManualDialog] = useState(false);
+  const [cameFromReconciliation, setCameFromReconciliation] = useState(false);
 
   // Auto-open dialog from URL param
   useEffect(() => {
     if (searchParams.get('new') === '1') {
       setManualDialog(true);
+      if (searchParams.get('from') === 'reconciliation') setCameFromReconciliation(true);
       setSearchParams({}, { replace: true });
     }
   }, [searchParams]);
@@ -237,19 +240,26 @@ export default function AccountsReceivablePage() {
         records.push({
           client_name: selectedClientName, description: manualDescription, cost_center_id: manualCostCenter || null,
           amount: installmentRows[i].amount, due_date: installmentRows[i].due_date, installment_number: i + 1, status: 'pending', origin_type: 'manual',
+          ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
         });
       }
     } else {
       records.push({
         client_name: selectedClientName, description: manualDescription, cost_center_id: manualCostCenter || null,
         amount: manualAmount, due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'), installment_number: 1, status: 'pending', origin_type: 'manual',
+        ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
       });
     }
-    await supabase.from('receivables').insert(records as any);
+    const { error } = await supabase.from('receivables').insert(records as any);
+    if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
     toast.success(`${records.length} parcela(s) criada(s)!`);
     setManualDialog(false);
     setManualClientId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
-    fetch_();
+    if (cameFromReconciliation) {
+      navigate('/financial/reconciliation');
+    } else {
+      fetch_();
+    }
   };
 
   const updateInstallmentRow = (index: number, field: keyof InstallmentRow, value: string | number) => {
