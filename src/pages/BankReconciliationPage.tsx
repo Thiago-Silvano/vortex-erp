@@ -546,7 +546,7 @@ export default function BankReconciliationPage() {
     if (filterType === "debit" && Number(t.amount) > 0) return false;
     if (searchTx && !t.description.toLowerCase().includes(searchTx.toLowerCase())) return false;
     return true;
-  });
+  }).sort((a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime());
 
   const filteredTitles = titles.filter((t) => {
     if (
