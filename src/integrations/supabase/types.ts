@@ -1587,6 +1587,41 @@ export type Database = {
           },
         ]
       }
+      promo_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          empresa_id: string | null
+          id: string
+          name: string
+          template_data: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          id?: string
+          name?: string
+          template_data?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          id?: string
+          name?: string
+          template_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_templates_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_audit_log: {
         Row: {
           action: string
