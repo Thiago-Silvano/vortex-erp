@@ -94,9 +94,10 @@ const statusLabels: Record<string, string> = {
 export default function BankReconciliationPage() {
   const { activeCompany } = useCompany();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState("");
+  const [selectedAccount, setSelectedAccount] = useState(searchParams.get("account") || "");
   const [transactions, setTransactions] = useState<BankTx[]>([]);
   const [titles, setTitles] = useState<FinancialTitle[]>([]);
   const [loading, setLoading] = useState(false);
