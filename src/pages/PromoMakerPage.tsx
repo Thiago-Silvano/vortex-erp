@@ -211,6 +211,7 @@ export default function PromoMakerPage() {
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
+    setRightTab('element');
   };
 
   const deleteElement = (id: string) => {
