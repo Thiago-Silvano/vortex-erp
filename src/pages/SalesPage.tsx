@@ -198,10 +198,12 @@ export default function SalesPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">Vendas & Cotações</h1>
             {(() => {
-              const pendingCount = sales.filter(s => s.status === 'draft' && s.sale_workflow_status !== 'emitido' && s.sale_workflow_status !== 'perdido').length;
+              const pending = sales.filter(s => s.status === 'draft' && s.sale_workflow_status !== 'emitido' && s.sale_workflow_status !== 'perdido');
+              const pendingCount = pending.length;
+              const pendingTotal = pending.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
               return pendingCount > 0 ? (
                 <Badge variant="secondary" className="text-sm font-semibold bg-yellow-100 text-yellow-800 border-yellow-300">
-                  {pendingCount} cotação{pendingCount !== 1 ? 'ões' : ''} em andamento
+                  {pendingCount} cotação{pendingCount !== 1 ? 'ões' : ''} em andamento — {fmt(pendingTotal)}
                 </Badge>
               ) : null;
             })()}
