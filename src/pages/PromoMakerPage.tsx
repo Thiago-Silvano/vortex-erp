@@ -456,10 +456,16 @@ export default function PromoMakerPage() {
   const overwriteSavedTemplate = async (idx: number) => {
     const tpl = savedTemplates[idx];
     if (!tpl.id) return;
-    const cleanImage: ImageConfig = {
-      ...image,
-      url: image.url?.startsWith('blob:') ? '' : image.url,
-    };
+    let imageUrl = image.url || '';
+    if (imageUrl.startsWith('blob:')) {
+      try {
+        imageUrl = await uploadBlobImage(imageUrl);
+      } catch {
+        toast.error('Erro ao salvar imagem do template');
+        return;
+      }
+    }
+    const cleanImage: ImageConfig = { ...image, url: imageUrl };
     const templateData = {
       bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
       imageInShape, imageShapeId,
