@@ -441,16 +441,36 @@ export default function PromoMakerPage() {
       
 
       {showLogo && (
-        <img
-          src="/images/vortex-logo-white.png" alt="Vortex"
+        <div
           className="absolute pointer-events-none"
           style={{
             bottom: '3%', right: '3%', height: `${logoSize}%`, opacity: logoOpacity,
-            filter: logoColor ? `brightness(0) saturate(100%) drop-shadow(0 0 0 ${logoColor})` : undefined,
-            ...(logoColor ? { filter: `brightness(0) drop-shadow(0 0 0 ${logoColor}) drop-shadow(0 0 0 ${logoColor}) drop-shadow(0 0 0 ${logoColor})` } : {}),
           }}
-          draggable={false}
-        />
+        >
+          <img
+            src="/images/vortex-logo-white.png" alt="Vortex"
+            className="h-full w-auto"
+            style={{
+              ...(logoColor ? {
+                filter: 'brightness(0) invert(1)',
+                WebkitFilter: 'brightness(0) invert(1)',
+              } : {}),
+            }}
+            draggable={false}
+          />
+          {logoColor && (
+            <div className="absolute inset-0" style={{
+              backgroundColor: logoColor,
+              mixBlendMode: 'multiply',
+              maskImage: 'url(/images/vortex-logo-white.png)',
+              WebkitMaskImage: 'url(/images/vortex-logo-white.png)',
+              maskSize: 'contain',
+              WebkitMaskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              WebkitMaskRepeat: 'no-repeat',
+            }} />
+          )}
+        </div>
       )}
     </div>
   );
