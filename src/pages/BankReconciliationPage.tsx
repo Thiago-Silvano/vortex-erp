@@ -643,9 +643,9 @@ export default function BankReconciliationPage() {
               <p className="text-xs text-muted-foreground">Pendentes</p>
               <p className="text-lg font-bold text-amber-600">{totalPending}</p>
             </Card>
-            <Card className="p-3">
-              <p className="text-xs text-muted-foreground">Ignorados</p>
-              <p className="text-lg font-bold text-gray-500">{totalIgnored}</p>
+            <Card className="p-3 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-shadow" onClick={() => setShowIgnoredView(!showIgnoredView)}>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">Ignorados <Eye className="h-3 w-3" /></p>
+              <p className="text-lg font-bold text-muted-foreground">{totalIgnored}</p>
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">Total Entradas</p>
