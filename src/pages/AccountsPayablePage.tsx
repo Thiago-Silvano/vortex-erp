@@ -249,7 +249,7 @@ export default function AccountsPayablePage() {
     toast.success(`${records.length} parcela(s) criada(s)!`);
     setManualDialog(false);
     setManualSupplierId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
-    if (searchParams.get('from') === 'reconciliation') {
+    if (cameFromReconciliation) {
       navigate('/financial/reconciliation');
     } else {
       fetch_();
