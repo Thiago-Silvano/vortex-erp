@@ -371,6 +371,16 @@ export default function PromoMakerPage() {
               opacity: el.opacity,
               pointerEvents: el.locked ? 'none' : 'auto',
               userSelect: 'none',
+              ...(el.gradientFade !== 'none' ? {
+                WebkitMaskImage: el.gradientFade === 'left-right' ? 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : el.gradientFade === 'right-left' ? 'linear-gradient(to left, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : el.gradientFade === 'top-bottom' ? 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : 'linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))',
+                maskImage: el.gradientFade === 'left-right' ? 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : el.gradientFade === 'right-left' ? 'linear-gradient(to left, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : el.gradientFade === 'top-bottom' ? 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : 'linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))',
+              } : {}),
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
             onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
