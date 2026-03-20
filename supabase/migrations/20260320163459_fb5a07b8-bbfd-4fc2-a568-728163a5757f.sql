@@ -1,0 +1,1 @@
+CREATE POLICY "promo_templates_update" ON public.promo_templates FOR UPDATE USING (true);
