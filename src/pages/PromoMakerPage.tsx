@@ -450,9 +450,15 @@ export default function PromoMakerPage() {
   const handleExport = async () => {
     if (!canvasRef.current) return;
     try {
+      // Ensure all Google Fonts are fully loaded before capturing
+      await document.fonts.ready;
+      // Small delay to ensure rendering is complete after fonts load
+      await new Promise(resolve => setTimeout(resolve, 200));
       const dataUrl = await toPng(canvasRef.current, {
-        width: canvasSize.w, height: canvasSize.h, pixelRatio: 1,
+        width: canvasSize.w, height: canvasSize.h, pixelRatio: 2,
         style: { transform: 'none', width: `${canvasSize.w}px`, height: `${canvasSize.h}px` },
+        fontEmbedCSS: '',
+        includeQueryParams: true,
       });
       const link = document.createElement('a');
       link.download = `promo-vortex-${format.replace(':', 'x')}-${Date.now()}.png`;
