@@ -342,8 +342,8 @@ export default function PromoMakerPage() {
           >
             {el.content}
           </div>
-        );
-      })}
+        ))}
+      
 
       <img
         src="/images/vortex-logo-white.png" alt="Vortex"
