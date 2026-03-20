@@ -556,7 +556,7 @@ export default function BankReconciliationPage() {
     )
       return false;
     return true;
-  });
+  }).sort((a, b) => new Date(a.due_date || "").getTime() - new Date(b.due_date || "").getTime());
 
   const fmt = (v: number) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
