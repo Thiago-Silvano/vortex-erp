@@ -290,7 +290,30 @@ export default function PromoMakerPage() {
         </>
       )}
 
-      {elements.map(el => {
+      {/* Shapes first (behind) */}
+      {elements.filter(el => el.type === 'shape').map(el => {
+        return (
+          <div
+            key={el.id}
+            className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            style={{
+              left: `${el.x}%`, top: `${el.y}%`,
+              transform: 'translate(-50%, -50%)',
+              width: `${el.width}%`, height: `${el.height}%`,
+              backgroundColor: el.color,
+              borderRadius: el.shape === 'circle' ? '50%' : `${el.borderRadius}px`,
+              border: el.borderWidth > 0 ? `${el.borderWidth}px solid ${el.borderColor}` : undefined,
+              opacity: el.opacity,
+              pointerEvents: el.locked ? 'none' : 'auto',
+              userSelect: 'none',
+            }}
+            onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
+            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+          />
+        );
+      })}
+      {/* Texts on top */}
+      {elements.filter(el => el.type === 'text').map(el => {
         if (el.type === 'shape') {
           return (
             <div
