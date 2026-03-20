@@ -206,7 +206,7 @@ export default function PromoMakerPage() {
       height: shape === 'circle' ? 20 : shape === 'square' ? 20 : 25,
       color: '#d4af37', borderColor: 'transparent', borderWidth: 0,
       borderRadius: shape === 'circle' ? 50 : 0,
-      opacity: 0.8, locked: false,
+      opacity: 0.8, locked: false, gradientFade: 'none' as GradientFade,
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
