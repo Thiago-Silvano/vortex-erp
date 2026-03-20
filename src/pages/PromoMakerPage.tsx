@@ -15,6 +15,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline,
   Square, RectangleVertical, Plus, Trash2, Circle,
   ChevronUp, ChevronDown, Copy, Lock, Unlock, Save,
+  Minus, Plane, Building2, Bus, Ticket, ShieldPlus, Sticker,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
