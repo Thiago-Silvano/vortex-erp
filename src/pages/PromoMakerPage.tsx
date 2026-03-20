@@ -167,6 +167,9 @@ export default function PromoMakerPage() {
   const [logoOpacity, setLogoOpacity] = useState(0.6);
   const [logoColor, setLogoColor] = useState('');
   const [showLogo, setShowLogo] = useState(true);
+  const [logoX, setLogoX] = useState(92);
+  const [logoY, setLogoY] = useState(92);
+  const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
   const [saveTemplateName, setSaveTemplateName] = useState('');
 
