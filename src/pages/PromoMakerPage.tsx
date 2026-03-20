@@ -1577,7 +1577,6 @@ export default function PromoMakerPage() {
                         </>
                       )}
                     </div>
-                    </div>
                   ) : selected ? (
                     selected.type === 'text' ? renderTextProps(selected) : selected.type === 'sticker' ? renderStickerProps(selected) : renderShapeProps(selected)
                   ) : (
