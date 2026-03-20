@@ -939,7 +939,7 @@ export default function PromoMakerPage() {
           </div>
 
           {/* Right panel */}
-          <div className="w-72 border-l bg-card overflow-hidden flex flex-col">
+          <div className="w-96 border-l bg-card overflow-hidden flex flex-col">
             <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
               <TabsList className="w-full rounded-none">
                 <TabsTrigger value="element" className="text-xs flex-1">Elemento</TabsTrigger>
