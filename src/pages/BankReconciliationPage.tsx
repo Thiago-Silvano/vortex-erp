@@ -658,7 +658,82 @@ export default function BankReconciliationPage() {
           </div>
         )}
 
-        {selectedAccount && (
+        {selectedAccount && showIgnoredView && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  Lançamentos Ignorados ({totalIgnored})
+                </CardTitle>
+                <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={() => setShowIgnoredView(false)}>
+                  <ArrowLeft className="h-3 w-3" /> Voltar
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 max-h-[600px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Data</TableHead>
+                    <TableHead className="text-xs">Descrição</TableHead>
+                    <TableHead className="text-xs">Categoria</TableHead>
+                    <TableHead className="text-xs text-right">Valor</TableHead>
+                    <TableHead className="text-xs text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTx.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
+                        Nenhum lançamento ignorado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTx.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {tx.transaction_date ? new Date(tx.transaction_date + "T12:00:00").toLocaleDateString("pt-BR") : ""}
+                        </TableCell>
+                        <TableCell className="text-xs max-w-[250px] truncate" title={tx.description}>
+                          {tx.description}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[10px]">{tx.reconciliation_note || tx.category || "—"}</Badge>
+                        </TableCell>
+                        <TableCell className={`text-xs text-right font-medium ${Number(tx.amount) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {fmt(Number(tx.amount))}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-[10px] gap-1"
+                              onClick={() => undoReconcile(tx)}
+                            >
+                              <Unlink className="h-3 w-3" /> Desfazer
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-[10px] gap-1"
+                              onClick={() => { setSelectedTx(tx); setShowManualModal(true); }}
+                            >
+                              <FileText className="h-3 w-3" /> Reclassificar
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedAccount && !showIgnoredView && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Left: Bank transactions */}
             <Card>
