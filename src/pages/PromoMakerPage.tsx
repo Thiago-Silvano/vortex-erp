@@ -172,6 +172,14 @@ const STICKER_DEFS = [
     id: 'health', name: 'Seguro Saúde', Icon: ShieldPlus,
     svg: 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm4 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2z',
   },
+  {
+    id: 'camera', name: 'Câmera', Icon: Camera,
+    svg: 'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2v11zM12 17a5 5 0 100-10 5 5 0 000 10zm0-2a3 3 0 110-6 3 3 0 010 6z',
+  },
+  {
+    id: 'guide', name: 'Guia Turístico', Icon: Compass,
+    svg: 'M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-13l6 3-3 6-6-3 3-6zm1 4a1 1 0 100 2 1 1 0 000-2z',
+  },
 ];
 
 interface SavedTemplate {
