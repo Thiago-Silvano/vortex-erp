@@ -1190,20 +1190,11 @@ export default function PromoMakerPage() {
                       </div>
                     </div>
 
-                    <Separator />
-                    <Label className="text-xs text-muted-foreground">Templates padrão</Label>
-
-                    {TEMPLATES.map((tpl, i) => (
-                      <Card key={i} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all" onClick={() => applyTemplate(tpl)}>
-                        <div className="h-16 rounded mb-2" style={{ background: tpl.bg }} />
-                        <p className="text-xs font-medium text-foreground">{tpl.name}</p>
-                      </Card>
-                    ))}
 
                     {savedTemplates.length > 0 && (
                       <>
                         <Separator />
-                        <Label className="text-xs text-muted-foreground">Meus templates salvos</Label>
+                        <Label className="text-xs text-muted-foreground">Templates salvos</Label>
                         {savedTemplates.map((tpl, i) => (
                           <Card key={`saved-${i}`} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all relative group/tpl">
                             <div onClick={() => applySavedTemplate(tpl)}>
