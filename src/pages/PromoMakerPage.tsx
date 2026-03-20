@@ -440,12 +440,18 @@ export default function PromoMakerPage() {
         ))}
       
 
-      <img
-        src="/images/vortex-logo-white.png" alt="Vortex"
-        className="absolute pointer-events-none"
-        style={{ bottom: '3%', right: '3%', height: '8%', opacity: 0.6 }}
-        draggable={false}
-      />
+      {showLogo && (
+        <img
+          src="/images/vortex-logo-white.png" alt="Vortex"
+          className="absolute pointer-events-none"
+          style={{
+            bottom: '3%', right: '3%', height: `${logoSize}%`, opacity: logoOpacity,
+            filter: logoColor ? `brightness(0) saturate(100%) drop-shadow(0 0 0 ${logoColor})` : undefined,
+            ...(logoColor ? { filter: `brightness(0) drop-shadow(0 0 0 ${logoColor}) drop-shadow(0 0 0 ${logoColor}) drop-shadow(0 0 0 ${logoColor})` } : {}),
+          }}
+          draggable={false}
+        />
+      )}
     </div>
   );
 
