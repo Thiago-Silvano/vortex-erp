@@ -29,6 +29,8 @@ import {
   Banknote,
   Search,
   Plus,
+  Eye,
+  ArrowLeft,
 } from "lucide-react";
 
 interface BankAccount {
