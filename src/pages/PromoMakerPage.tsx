@@ -1212,6 +1212,29 @@ export default function PromoMakerPage() {
                       </div>
                     </div>
 
+  const overwriteSavedTemplate = async (idx: number) => {
+    const tpl = savedTemplates[idx];
+    if (!tpl.id) return;
+    const cleanImage: ImageConfig = {
+      ...image,
+      url: image.url?.startsWith('blob:') ? '' : image.url,
+    };
+    const templateData = {
+      bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
+      imageInShape, imageShapeId,
+    };
+    const { error } = await supabase
+      .from('promo_templates')
+      .update({ template_data: templateData as any })
+      .eq('id', tpl.id);
+    if (error) {
+      toast.error('Erro ao atualizar template.');
+      return;
+    }
+    setSavedTemplates(prev => prev.map((t, i) => i === idx ? { ...t, ...templateData } : t));
+    toast.success(`Template "${tpl.name}" atualizado!`);
+  };
+
 
                     {savedTemplates.length > 0 && (
                       <>
