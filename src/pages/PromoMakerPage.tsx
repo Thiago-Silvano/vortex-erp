@@ -228,7 +228,7 @@ export default function PromoMakerPage() {
   const canvasSize = FORMAT_SIZES[format];
   const scale = format === '9:16' ? Math.min(380 / canvasSize.w, 650 / canvasSize.h) : 380 / canvasSize.w;
 
-  const updateEl = (id: string, patch: Partial<TextElement> | Partial<ShapeElement>) => {
+  const updateEl = (id: string, patch: Partial<TextElement> | Partial<ShapeElement> | Partial<StickerElement>) => {
     setElements(prev => prev.map(e => e.id === id ? { ...e, ...patch } as CanvasElement : e));
   };
 
