@@ -251,7 +251,8 @@ export default function AccountsPayablePage() {
     setManualDialog(false);
     setManualSupplierId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
     if (cameFromReconciliation) {
-      navigate('/financial/reconciliation');
+      const accountId = new URLSearchParams(window.location.search).get('account') || '';
+      navigate(`/financial/reconciliation${accountId ? `?account=${accountId}` : ''}`);
     } else {
       fetch_();
     }
