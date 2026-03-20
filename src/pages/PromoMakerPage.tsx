@@ -1128,7 +1128,7 @@ export default function PromoMakerPage() {
               <TabsContent value="element" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
                   {selected ? (
-                    selected.type === 'text' ? renderTextProps(selected) : renderShapeProps(selected)
+                    selected.type === 'text' ? renderTextProps(selected) : selected.type === 'sticker' ? renderStickerProps(selected) : renderShapeProps(selected)
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm p-4">
                       <Type className="h-8 w-8 mb-2 opacity-40" />
