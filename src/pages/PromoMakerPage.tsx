@@ -66,6 +66,7 @@ interface ShapeElement {
   opacity: number;
   locked: boolean;
   gradientFade: GradientFade;
+  gradientFadeIntensity: number; // 0 to 1, default 1
   rotation: number;
   shadow: string;
 }
@@ -356,6 +357,7 @@ export default function PromoMakerPage() {
       borderRadius: shape === 'circle' ? 50 : 0,
       opacity: shape === 'line' ? 1 : 0.8, locked: false,
       gradientFade: 'none' as GradientFade,
+      gradientFadeIntensity: 1,
       rotation: 0,
       shadow: 'none',
     };
@@ -763,16 +765,15 @@ export default function PromoMakerPage() {
               boxShadow: el.shadow && el.shadow !== 'none' ? el.shadow : undefined,
               pointerEvents: el.locked ? 'none' : 'auto',
               userSelect: 'none',
-              ...(el.gradientFade !== 'none' ? {
-                WebkitMaskImage: el.gradientFade === 'left-right' ? 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : el.gradientFade === 'right-left' ? 'linear-gradient(to left, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : el.gradientFade === 'top-bottom' ? 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : 'linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))',
-                maskImage: el.gradientFade === 'left-right' ? 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : el.gradientFade === 'right-left' ? 'linear-gradient(to left, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : el.gradientFade === 'top-bottom' ? 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : 'linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))',
-              } : {}),
+              ...(el.gradientFade !== 'none' ? (() => {
+                const intensity = el.gradientFadeIntensity ?? 1;
+                const endAlpha = 1 - intensity; // 1 = fully transparent end, 0 = no fade
+                const dir = el.gradientFade === 'left-right' ? 'to right'
+                  : el.gradientFade === 'right-left' ? 'to left'
+                  : el.gradientFade === 'top-bottom' ? 'to bottom' : 'to top';
+                const grad = `linear-gradient(${dir}, rgba(0,0,0,1), rgba(0,0,0,${endAlpha}))`;
+                return { WebkitMaskImage: grad, maskImage: grad };
+              })() : {}),
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
             onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
@@ -1181,6 +1182,12 @@ export default function PromoMakerPage() {
               <SelectItem value="bottom-top">Baixo → Cima</SelectItem>
             </SelectContent>
           </Select>
+          {sel.gradientFade !== 'none' && (
+            <div className="mt-2">
+              <Label className="text-xs flex justify-between">Intensidade <span className="text-muted-foreground">{Math.round((sel.gradientFadeIntensity ?? 1) * 100)}%</span></Label>
+              <Slider value={[sel.gradientFadeIntensity ?? 1]} onValueChange={([v]) => updateEl(sel.id, { gradientFadeIntensity: v })} min={0.1} max={1} step={0.05} />
+            </div>
+          )}
         </div>
       )}
 
