@@ -213,6 +213,8 @@ export default function PromoMakerPage() {
   const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
   const [saveTemplateName, setSaveTemplateName] = useState('');
+  const [alignMode, setAlignMode] = useState<'none' | 'horizontal' | 'vertical'>('none');
+  const [alignSpacing, setAlignSpacing] = useState(5);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -353,7 +355,8 @@ export default function PromoMakerPage() {
     if (els.length < 2) return;
     const ref = els.reduce((a, b) => a.y < b.y ? a : b);
     setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, y: ref.y } as CanvasElement : e));
-    toast.success('Elementos alinhados horizontalmente');
+    setAlignMode('horizontal');
+    toast.success('Elementos alinhados horizontalmente. Ajuste o espaçamento abaixo.');
   };
 
   const alignVertically = () => {
@@ -361,7 +364,33 @@ export default function PromoMakerPage() {
     if (els.length < 2) return;
     const ref = els.reduce((a, b) => a.x < b.x ? a : b);
     setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, x: ref.x } as CanvasElement : e));
-    toast.success('Elementos alinhados verticalmente');
+    setAlignMode('vertical');
+    toast.success('Elementos alinhados verticalmente. Ajuste o espaçamento abaixo.');
+  };
+
+  const applySpacing = (spacing: number) => {
+    setAlignSpacing(spacing);
+    const els = getMultiSelectedElements();
+    if (els.length < 2) return;
+    if (alignMode === 'horizontal') {
+      // Sort by X (left to right), distribute with spacing
+      const sorted = [...els].sort((a, b) => a.x - b.x);
+      const startX = sorted[0].x;
+      setElements(prev => prev.map(e => {
+        const idx = sorted.findIndex(s => s.id === e.id);
+        if (idx < 0) return e;
+        return { ...e, x: startX + idx * spacing } as CanvasElement;
+      }));
+    } else if (alignMode === 'vertical') {
+      // Sort by Y (top to bottom), distribute with spacing
+      const sorted = [...els].sort((a, b) => a.y - b.y);
+      const startY = sorted[0].y;
+      setElements(prev => prev.map(e => {
+        const idx = sorted.findIndex(s => s.id === e.id);
+        if (idx < 0) return e;
+        return { ...e, y: startY + idx * spacing } as CanvasElement;
+      }));
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1190,15 +1219,36 @@ export default function PromoMakerPage() {
                       <Separator />
                       <Label className="text-xs font-semibold">Alinhamento</Label>
                       <div className="space-y-2">
-                        <Button variant="outline" size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignHorizontally}>
+                        <Button variant={alignMode === 'horizontal' ? 'default' : 'outline'} size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignHorizontally}>
                           <AlignHorizontalDistributeCenter className="h-4 w-4" />
-                          Alinhar horizontalmente (mesmo Y do elemento mais acima)
+                          Alinhar horizontalmente (mesmo Y)
                         </Button>
-                        <Button variant="outline" size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignVertically}>
+                        <Button variant={alignMode === 'vertical' ? 'default' : 'outline'} size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignVertically}>
                           <AlignVerticalDistributeCenter className="h-4 w-4" />
-                          Alinhar verticalmente (mesmo X do elemento mais à esquerda)
+                          Alinhar verticalmente (mesmo X)
                         </Button>
                       </div>
+                      {alignMode !== 'none' && (
+                        <>
+                          <Separator />
+                          <div>
+                            <Label className="text-xs font-semibold flex justify-between">
+                              Espaçamento entre elementos
+                              <span className="text-muted-foreground">{alignSpacing}%</span>
+                            </Label>
+                            <p className="text-[10px] text-muted-foreground mb-2">
+                              {alignMode === 'horizontal' ? 'Distância horizontal entre cada elemento' : 'Distância vertical entre cada elemento'}
+                            </p>
+                            <Slider
+                              value={[alignSpacing]}
+                              onValueChange={([v]) => applySpacing(v)}
+                              min={0}
+                              max={30}
+                              step={0.5}
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   ) : selected ? (
                     selected.type === 'text' ? renderTextProps(selected) : selected.type === 'sticker' ? renderStickerProps(selected) : renderShapeProps(selected)
