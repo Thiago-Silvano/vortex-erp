@@ -945,6 +945,40 @@ export default function PromoMakerPage() {
                     </div>
                     {image.url && (
                       <>
+                        {/* Image in shape checkbox */}
+                        <div className="space-y-2 pt-1">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="img-in-shape"
+                              checked={imageInShape}
+                              onCheckedChange={(checked) => {
+                                setImageInShape(!!checked);
+                                if (!checked) setImageShapeId('');
+                              }}
+                            />
+                            <Label htmlFor="img-in-shape" className="text-xs cursor-pointer">
+                              Imagem dentro de uma forma?
+                            </Label>
+                          </div>
+                          {imageInShape && (
+                            <Select value={imageShapeId} onValueChange={setImageShapeId}>
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Selecione a forma..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {shapeElements.length === 0 ? (
+                                  <SelectItem value="__none" disabled>Nenhuma forma criada</SelectItem>
+                                ) : (
+                                  shapeElements.map(s => (
+                                    <SelectItem key={s.id} value={s.id}>
+                                      {s.shape === 'rectangle' ? 'Retângulo' : s.shape === 'square' ? 'Quadrado' : 'Círculo'} ({s.id})
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
                         <Separator />
                         <div className="space-y-2">
                           <div>
