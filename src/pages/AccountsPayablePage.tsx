@@ -96,6 +96,14 @@ export default function AccountsPayablePage() {
   };
 
   const [manualDialog, setManualDialog] = useState(false);
+
+  // Auto-open dialog from URL param
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setManualDialog(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
   const [manualSupplierId, setManualSupplierId] = useState('');
   const [manualDescription, setManualDescription] = useState('');
   const [manualCostCenter, setManualCostCenter] = useState('');
