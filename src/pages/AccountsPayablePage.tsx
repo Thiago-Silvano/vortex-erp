@@ -97,11 +97,13 @@ export default function AccountsPayablePage() {
   };
 
   const [manualDialog, setManualDialog] = useState(false);
+  const [cameFromReconciliation, setCameFromReconciliation] = useState(false);
 
   // Auto-open dialog from URL param
   useEffect(() => {
     if (searchParams.get('new') === '1') {
       setManualDialog(true);
+      if (searchParams.get('from') === 'reconciliation') setCameFromReconciliation(true);
       setSearchParams({}, { replace: true });
     }
   }, [searchParams]);
