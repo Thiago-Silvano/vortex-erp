@@ -303,17 +303,25 @@ export default function PromoMakerPage() {
   };
 
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragInfo || !canvasRef.current) return;
+    if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
+    if (logoDrag) {
+      const dx = ((e.clientX - logoDrag.startX) / rect.width) * 100;
+      const dy = ((e.clientY - logoDrag.startY) / rect.height) * 100;
+      setLogoX(Math.max(0, Math.min(100, logoDrag.elX + dx)));
+      setLogoY(Math.max(0, Math.min(100, logoDrag.elY + dy)));
+      return;
+    }
+    if (!dragInfo) return;
     const dx = ((e.clientX - dragInfo.startX) / rect.width) * 100;
     const dy = ((e.clientY - dragInfo.startY) / rect.height) * 100;
     updateEl(dragInfo.id, {
       x: Math.max(0, Math.min(100, dragInfo.elX + dx)),
       y: Math.max(0, Math.min(100, dragInfo.elY + dy)),
     });
-  }, [dragInfo]);
+  }, [dragInfo, logoDrag]);
 
-  const handleCanvasMouseUp = useCallback(() => setDragInfo(null), []);
+  const handleCanvasMouseUp = useCallback(() => { setDragInfo(null); setLogoDrag(null); }, []);
 
   const handleExport = async () => {
     if (!canvasRef.current) return;
