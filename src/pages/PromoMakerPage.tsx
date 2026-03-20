@@ -155,12 +155,11 @@ const STICKER_DEFS = [
   },
   {
     id: 'hotel', name: 'Hotel', Icon: Building2,
-    svg: 'M19 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V4a2 2 0 00-2-2zM7 7h2v2H7V7zm0 4h2v2H7v-2zm0 4h2v2H7v-2zm4-8h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm4-8h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z',
+    svg: 'M20 2H4a2 2 0 00-2 2v18h20V4a2 2 0 00-2-2zM6 6h3v3H6V6zm0 5h3v3H6v-3zm5-5h3v3h-3V6zm0 5h3v3h-3v-3zm-1 11H8v-4h2v4zm4 0h-2v-4h2v4zm4-11h3v3h-3v-3zm0-5h3v3h-3V6z',
   },
   {
     id: 'transfer', name: 'Transfer', Icon: Bus,
-    svg: 'M17 5H3a2 2 0 00-2 2v9h2a3 3 0 006 0h2a3 3 0 006 0h2V9.65L17 5zM6.5 17.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm7 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM17 9.65V7h1.3l1.7 2.65H17z',
-    viewBox: '0 0 21 20',
+    svg: 'M4 16c0 .88.39 1.67 1 2.22V20a1 1 0 001 1h1a1 1 0 001-1v-1h8v1a1 1 0 001 1h1a1 1 0 001-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4S4 2.5 4 6v10zm3.5 1a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm9 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM18 10H6V6h12v4z',
   },
   {
     id: 'ticket', name: 'Ingressos', Icon: Ticket,
@@ -168,7 +167,7 @@ const STICKER_DEFS = [
   },
   {
     id: 'health', name: 'Seguro Saúde', Icon: ShieldPlus,
-    svg: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z',
+    svg: 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm4 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2z',
   },
 ];
 
