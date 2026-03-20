@@ -325,15 +325,26 @@ export default function PromoMakerPage() {
   const saveCurrentAsTemplate = () => {
     const name = saveTemplateName.trim();
     if (!name) { toast.error('Digite um nome para o template'); return; }
+    // Strip blob URLs from image config to avoid localStorage quota issues
+    const cleanImage: ImageConfig = {
+      ...image,
+      url: image.url?.startsWith('blob:') ? '' : image.url,
+    };
     const tpl: SavedTemplate = {
-      name, bg: bgColor, bgGradient, format, elements, imageConfig: image,
+      name, bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
       imageInShape, imageShapeId,
     };
     const updated = [...savedTemplates, tpl];
-    setSavedTemplates(updated);
-    localStorage.setItem(SAVED_TEMPLATES_KEY, JSON.stringify(updated));
-    setSaveTemplateName('');
-    toast.success(`Template "${name}" salvo!`);
+    try {
+      const json = JSON.stringify(updated);
+      localStorage.setItem(SAVED_TEMPLATES_KEY, json);
+      setSavedTemplates(updated);
+      setSaveTemplateName('');
+      toast.success(`Template "${name}" salvo!`);
+    } catch (e) {
+      console.error('Erro ao salvar template:', e);
+      toast.error('Template muito grande para salvar. Tente remover imagens grandes.');
+    }
   };
 
   const deleteSavedTemplate = (idx: number) => {
