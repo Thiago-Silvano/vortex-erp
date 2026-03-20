@@ -752,7 +752,6 @@ export default function BankReconciliationPage() {
                       <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="pending">Pendentes</SelectItem>
                       <SelectItem value="reconciled">Conciliados</SelectItem>
-                      <SelectItem value="ignored">Ignorados</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={filterType} onValueChange={setFilterType}>
