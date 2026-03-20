@@ -149,6 +149,8 @@ const defaultImage: ImageConfig = {
   offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0.4,
 };
 
+const QUOTE_IMAGES_PUBLIC_PATH = '/storage/v1/object/public/quote-images/';
+
 const genId = () => `el_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 const STICKER_DEFS = [
@@ -236,6 +238,7 @@ export default function PromoMakerPage() {
             id: row.id,
             name: row.name,
             ...(row.template_data as any),
+            imageConfig: { ...defaultImage, ...((row.template_data as any)?.imageConfig || {}) },
           })));
         }
       });
@@ -392,22 +395,61 @@ export default function PromoMakerPage() {
     setBgGradient(tpl.bgGradient || '');
     setFormat(tpl.format || '1:1');
     setElements(tpl.elements.map(e => ({ ...e, id: genId() })));
-    setImage(tpl.imageConfig || defaultImage);
+    setImage({ ...defaultImage, ...(tpl.imageConfig || {}) });
     setImageInShape(tpl.imageInShape || false);
     setImageShapeId(tpl.imageShapeId || '');
     setSelectedId(null);
     toast.success(`Template "${tpl.name}" aplicado!`);
   };
 
-  const uploadBlobImage = async (blobUrl: string): Promise<string> => {
-    const res = await fetch(blobUrl);
-    const blob = await res.blob();
-    const ext = blob.type.split('/')[1] || 'png';
-    const fileName = `promo-templates/${activeCompany?.id}/${Date.now()}.${ext}`;
+  const uploadImageBlob = async (blob: Blob, sourceUrl?: string): Promise<string> => {
+    const contentType = blob.type || 'image/png';
+    let ext = contentType.split('/')[1]?.split('+')[0] || 'png';
+
+    if ((ext === 'octet-stream' || !ext) && sourceUrl?.startsWith('http')) {
+      try {
+        const pathname = new URL(sourceUrl).pathname;
+        const match = pathname.match(/\.([a-zA-Z0-9]+)$/);
+        if (match?.[1]) ext = match[1].toLowerCase();
+      } catch {
+        // ignore URL parsing failures and fallback to png
+      }
+    }
+
+    const fileName = `promo-templates/${activeCompany?.id}/${crypto.randomUUID()}.${ext || 'png'}`;
     const { error } = await supabase.storage.from('quote-images').upload(fileName, blob, { contentType: blob.type });
     if (error) throw error;
     const { data: publicData } = supabase.storage.from('quote-images').getPublicUrl(fileName);
     return publicData.publicUrl;
+  };
+
+  const persistTemplateImage = async (sourceUrl: string): Promise<string> => {
+    if (!sourceUrl) return '';
+    if (!activeCompany?.id) throw new Error('Empresa não selecionada');
+    if (sourceUrl.includes(QUOTE_IMAGES_PUBLIC_PATH)) return sourceUrl;
+
+    if (sourceUrl.startsWith('blob:') || sourceUrl.startsWith('data:')) {
+      const response = await fetch(sourceUrl);
+      return uploadImageBlob(await response.blob(), sourceUrl);
+    }
+
+    if (/^https?:\/\//i.test(sourceUrl)) {
+      try {
+        const response = await fetch(sourceUrl);
+        if (!response.ok) throw new Error(`Falha ao baixar imagem externa: ${response.status}`);
+        return uploadImageBlob(await response.blob(), sourceUrl);
+      } catch {
+        const { data, error } = await supabase.functions.invoke('proxy-image', {
+          body: { url: sourceUrl },
+        });
+
+        if (error || !data?.dataUrl) throw error || new Error('Falha ao proxyar imagem externa');
+        const proxiedResponse = await fetch(data.dataUrl);
+        return uploadImageBlob(await proxiedResponse.blob(), sourceUrl);
+      }
+    }
+
+    return sourceUrl;
   };
 
   const saveCurrentAsTemplate = async () => {
@@ -415,13 +457,11 @@ export default function PromoMakerPage() {
     if (!name) { toast.error('Digite um nome para o template'); return; }
     if (!activeCompany?.id) { toast.error('Selecione uma empresa'); return; }
     let imageUrl = image.url || '';
-    if (imageUrl.startsWith('blob:')) {
-      try {
-        imageUrl = await uploadBlobImage(imageUrl);
-      } catch {
-        toast.error('Erro ao salvar imagem do template');
-        return;
-      }
+    try {
+      imageUrl = await persistTemplateImage(imageUrl);
+    } catch {
+      toast.error('Erro ao salvar imagem do template');
+      return;
     }
     const cleanImage: ImageConfig = { ...image, url: imageUrl };
     const templateData = {
@@ -457,13 +497,11 @@ export default function PromoMakerPage() {
     const tpl = savedTemplates[idx];
     if (!tpl.id) return;
     let imageUrl = image.url || '';
-    if (imageUrl.startsWith('blob:')) {
-      try {
-        imageUrl = await uploadBlobImage(imageUrl);
-      } catch {
-        toast.error('Erro ao salvar imagem do template');
-        return;
-      }
+    try {
+      imageUrl = await persistTemplateImage(imageUrl);
+    } catch {
+      toast.error('Erro ao salvar imagem do template');
+      return;
     }
     const cleanImage: ImageConfig = { ...image, url: imageUrl };
     const templateData = {
