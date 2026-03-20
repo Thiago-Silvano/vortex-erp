@@ -281,9 +281,8 @@ export default function PromoMakerPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setImage(prev => ({ ...prev, url: reader.result as string }));
-    reader.readAsDataURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    setImage(prev => ({ ...prev, url: objectUrl }));
   };
 
   const handleCanvasMouseDown = (e: React.MouseEvent, elId: string) => {
