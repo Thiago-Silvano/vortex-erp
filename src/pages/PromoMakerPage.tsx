@@ -240,6 +240,41 @@ export default function PromoMakerPage() {
     setSelectedId(null);
   };
 
+  const applySavedTemplate = (tpl: SavedTemplate) => {
+    setBgColor(tpl.bg);
+    setBgGradient(tpl.bgGradient || '');
+    setFormat(tpl.format || '1:1');
+    setElements(tpl.elements.map(e => ({ ...e, id: genId() })));
+    setImage(tpl.imageConfig || defaultImage);
+    setImageInShape(tpl.imageInShape || false);
+    setImageShapeId(tpl.imageShapeId || '');
+    setSelectedId(null);
+    toast.success(`Template "${tpl.name}" aplicado!`);
+  };
+
+  const saveCurrentAsTemplate = () => {
+    const name = saveTemplateName.trim();
+    if (!name) { toast.error('Digite um nome para o template'); return; }
+    const tpl: SavedTemplate = {
+      name, bg: bgColor, bgGradient, format, elements, imageConfig: image,
+      imageInShape, imageShapeId,
+    };
+    const updated = [...savedTemplates, tpl];
+    setSavedTemplates(updated);
+    localStorage.setItem(SAVED_TEMPLATES_KEY, JSON.stringify(updated));
+    setSaveTemplateName('');
+    toast.success(`Template "${name}" salvo!`);
+  };
+
+  const deleteSavedTemplate = (idx: number) => {
+    const updated = savedTemplates.filter((_, i) => i !== idx);
+    setSavedTemplates(updated);
+    localStorage.setItem(SAVED_TEMPLATES_KEY, JSON.stringify(updated));
+    toast.success('Template removido');
+  };
+
+  const shapeElements = elements.filter(el => el.type === 'shape') as ShapeElement[];
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
