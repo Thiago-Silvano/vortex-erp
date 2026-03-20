@@ -302,22 +302,24 @@ export default function PromoMakerPage() {
     setDragInfo({ id: elId, startX: e.clientX, startY: e.clientY, elX: el.x, elY: el.y });
   };
 
+  const clamp = (v: number) => Math.max(2, Math.min(98, v));
+
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     if (logoDrag) {
       const dx = ((e.clientX - logoDrag.startX) / rect.width) * 100;
       const dy = ((e.clientY - logoDrag.startY) / rect.height) * 100;
-      setLogoX(Math.max(0, Math.min(100, logoDrag.elX + dx)));
-      setLogoY(Math.max(0, Math.min(100, logoDrag.elY + dy)));
+      setLogoX(clamp(logoDrag.elX + dx));
+      setLogoY(clamp(logoDrag.elY + dy));
       return;
     }
     if (!dragInfo) return;
     const dx = ((e.clientX - dragInfo.startX) / rect.width) * 100;
     const dy = ((e.clientY - dragInfo.startY) / rect.height) * 100;
     updateEl(dragInfo.id, {
-      x: Math.max(0, Math.min(100, dragInfo.elX + dx)),
-      y: Math.max(0, Math.min(100, dragInfo.elY + dy)),
+      x: clamp(dragInfo.elX + dx),
+      y: clamp(dragInfo.elY + dy),
     });
   }, [dragInfo, logoDrag]);
 
@@ -876,7 +878,7 @@ export default function PromoMakerPage() {
                         <Separator />
                         <Label className="text-xs text-muted-foreground">Meus templates salvos</Label>
                         {savedTemplates.map((tpl, i) => (
-                          <Card key={`saved-${i}`} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all relative group">
+                          <Card key={`saved-${i}`} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all relative group/tpl">
                             <div onClick={() => applySavedTemplate(tpl)}>
                               <div className="h-16 rounded mb-2" style={{ background: tpl.bgGradient || tpl.bg }} />
                               <p className="text-xs font-medium text-foreground">{tpl.name}</p>
@@ -884,7 +886,7 @@ export default function PromoMakerPage() {
                             </div>
                             <button
                               onClick={(e) => { e.stopPropagation(); deleteSavedTemplate(i); }}
-                              className="absolute top-1 right-1 p-1 rounded bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-1 right-1 p-1 rounded bg-destructive text-destructive-foreground hover:bg-destructive/80 opacity-0 group-hover/tpl:opacity-100 transition-opacity z-10"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
