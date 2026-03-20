@@ -570,33 +570,25 @@ export default function PromoMakerPage() {
   const alignHorizontally = () => {
     const els = getMultiSelectedElements();
     if (els.length < 2) return;
-    // Align all to same Y (topmost), then distribute along X preserving order and spacing
+    // Align all to same Y (topmost), keep each element's X
     const ref = els.reduce((a, b) => a.y < b.y ? a : b);
-    const sorted = [...els].sort((a, b) => a.x - b.x);
-    const startX = sorted[0].x;
-    setElements(prev => prev.map(e => {
-      const idx = sorted.findIndex(s => s.id === e.id);
-      if (idx < 0) return e;
-      return { ...e, y: ref.y, x: startX + idx * alignSpacing } as CanvasElement;
-    }));
+    setElements(prev => prev.map(e =>
+      selectedIds.includes(e.id) ? { ...e, y: ref.y } as CanvasElement : e
+    ));
     setAlignMode('horizontal');
-    toast.success('Elementos alinhados horizontalmente com espaçamento.');
+    toast.success('Elementos alinhados horizontalmente (mesmo Y).');
   };
 
   const alignVertically = () => {
     const els = getMultiSelectedElements();
     if (els.length < 2) return;
-    // Align all to same X (leftmost), then distribute along Y preserving order and spacing
+    // Align all to same X (leftmost), keep each element's Y
     const ref = els.reduce((a, b) => a.x < b.x ? a : b);
-    const sorted = [...els].sort((a, b) => a.y - b.y);
-    const startY = sorted[0].y;
-    setElements(prev => prev.map(e => {
-      const idx = sorted.findIndex(s => s.id === e.id);
-      if (idx < 0) return e;
-      return { ...e, x: ref.x, y: startY + idx * alignSpacing } as CanvasElement;
-    }));
+    setElements(prev => prev.map(e =>
+      selectedIds.includes(e.id) ? { ...e, x: ref.x } as CanvasElement : e
+    ));
     setAlignMode('vertical');
-    toast.success('Elementos alinhados verticalmente com espaçamento.');
+    toast.success('Elementos alinhados verticalmente (mesmo X).');
   };
 
   const applySpacing = (spacing: number) => {
