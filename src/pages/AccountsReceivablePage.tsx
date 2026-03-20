@@ -255,7 +255,7 @@ export default function AccountsReceivablePage() {
     toast.success(`${records.length} parcela(s) criada(s)!`);
     setManualDialog(false);
     setManualClientId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
-    if (searchParams.get('from') === 'reconciliation') {
+    if (cameFromReconciliation) {
       navigate('/financial/reconciliation');
     } else {
       fetch_();
