@@ -973,6 +973,42 @@ export default function BankReconciliationPage() {
           )}
         </DialogContent>
       </Dialog>
+      {/* Quick-create title modal */}
+      <Dialog open={!!quickCreateType} onOpenChange={(open) => !open && setQuickCreateType(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{quickCreateType === 'payable' ? 'Nova Conta a Pagar' : 'Nova Conta a Receber'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Descrição *</Label>
+              <Input value={qcDescription} onChange={e => setQcDescription(e.target.value)} placeholder="Ex: Pagamento fornecedor" className="h-9" />
+            </div>
+            {quickCreateType === 'receivable' && (
+              <div>
+                <Label className="text-xs">Cliente</Label>
+                <Input value={qcClientName} onChange={e => setQcClientName(e.target.value)} placeholder="Nome do cliente" className="h-9" />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Valor *</Label>
+                <Input type="number" step="0.01" min="0" value={qcAmount} onChange={e => setQcAmount(e.target.value)} placeholder="0,00" className="h-9" />
+              </div>
+              <div>
+                <Label className="text-xs">Vencimento</Label>
+                <Input type="date" value={qcDueDate} onChange={e => setQcDueDate(e.target.value)} className="h-9" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setQuickCreateType(null)}>Cancelar</Button>
+            <Button size="sm" onClick={handleQuickCreate} disabled={qcSaving}>
+              {qcSaving ? 'Salvando...' : 'Criar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
