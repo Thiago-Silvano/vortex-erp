@@ -19,6 +19,7 @@ import {
   ChevronUp, ChevronDown, Copy, Lock, Unlock, Save,
   Minus, Plane, Building2, Bus, Ticket, ShieldPlus, Sticker,
   AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter,
+  Camera, Undo2, Redo2, Compass,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
