@@ -460,6 +460,7 @@ export default function PromoMakerPage() {
             left: `${logoX}%`, top: `${logoY}%`,
             transform: 'translate(-50%, -50%)',
             height: `${logoSize}%`, opacity: logoOpacity,
+            zIndex: 9999,
           }}
           onMouseDown={(e) => {
             e.stopPropagation();
