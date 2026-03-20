@@ -19,6 +19,7 @@ import {
   ChevronUp, ChevronDown, Copy, Lock, Unlock, Save,
   Minus, Plane, Building2, Bus, Ticket, ShieldPlus, Sticker,
   AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter,
+  Camera, Undo2, Redo2, Compass,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -171,6 +172,14 @@ const STICKER_DEFS = [
     id: 'health', name: 'Seguro Saúde', Icon: ShieldPlus,
     svg: 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm4 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2z',
   },
+  {
+    id: 'camera', name: 'Câmera', Icon: Camera,
+    svg: 'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2v11zM12 17a5 5 0 100-10 5 5 0 000 10zm0-2a3 3 0 110-6 3 3 0 010 6z',
+  },
+  {
+    id: 'guide', name: 'Guia Turístico', Icon: Compass,
+    svg: 'M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-13l6 3-3 6-6-3 3-6zm1 4a1 1 0 100 2 1 1 0 000-2z',
+  },
 ];
 
 interface SavedTemplate {
@@ -229,6 +238,59 @@ export default function PromoMakerPage() {
   }, [activeCompany?.id]);
   const [alignMode, setAlignMode] = useState<'none' | 'horizontal' | 'vertical'>('none');
   const [alignSpacing, setAlignSpacing] = useState(5);
+
+  // Undo/Redo
+  const [history, setHistory] = useState<CanvasElement[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const isUndoRedoRef = useRef(false);
+
+  // Push to history whenever elements change (but not from undo/redo)
+  useEffect(() => {
+    if (isUndoRedoRef.current) {
+      isUndoRedoRef.current = false;
+      return;
+    }
+    setHistory(prev => {
+      const trimmed = prev.slice(0, historyIndex + 1);
+      const newHistory = [...trimmed, JSON.parse(JSON.stringify(elements))];
+      // Keep max 50 states
+      if (newHistory.length > 50) newHistory.shift();
+      return newHistory;
+    });
+    setHistoryIndex(prev => {
+      const trimmed = prev + 1;
+      return Math.min(trimmed, 49);
+    });
+  }, [elements]);
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  const undo = () => {
+    if (!canUndo) return;
+    isUndoRedoRef.current = true;
+    const newIndex = historyIndex - 1;
+    setHistoryIndex(newIndex);
+    setElements(JSON.parse(JSON.stringify(history[newIndex])));
+  };
+
+  const redo = () => {
+    if (!canRedo) return;
+    isUndoRedoRef.current = true;
+    const newIndex = historyIndex + 1;
+    setHistoryIndex(newIndex);
+    setElements(JSON.parse(JSON.stringify(history[newIndex])));
+  };
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [canUndo, canRedo, historyIndex, history]);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -1086,6 +1148,14 @@ export default function PromoMakerPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex gap-1 mr-2">
+              <Button variant="outline" size="sm" onClick={undo} disabled={!canUndo} title="Desfazer (Ctrl+Z)" className="gap-1 h-8 w-8 p-0">
+                <Undo2 className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={redo} disabled={!canRedo} title="Refazer (Ctrl+Y)" className="gap-1 h-8 w-8 p-0">
+                <Redo2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             <Button variant="outline" size="sm" onClick={() => setPreview(preview ? null : 'feed')} className="gap-1">
               <Eye className="h-3.5 w-3.5" /> Preview
             </Button>
