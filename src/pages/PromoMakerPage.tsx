@@ -336,35 +336,40 @@ export default function PromoMakerPage() {
     toast.success(`Template "${tpl.name}" aplicado!`);
   };
 
-  const saveCurrentAsTemplate = () => {
+  const saveCurrentAsTemplate = async () => {
     const name = saveTemplateName.trim();
     if (!name) { toast.error('Digite um nome para o template'); return; }
-    // Strip blob URLs from image config to avoid localStorage quota issues
+    if (!activeCompany?.id) { toast.error('Selecione uma empresa'); return; }
     const cleanImage: ImageConfig = {
       ...image,
       url: image.url?.startsWith('blob:') ? '' : image.url,
     };
-    const tpl: SavedTemplate = {
-      name, bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
+    const templateData = {
+      bg: bgColor, bgGradient, format, elements, imageConfig: cleanImage,
       imageInShape, imageShapeId,
     };
-    const updated = [...savedTemplates, tpl];
-    try {
-      const json = JSON.stringify(updated);
-      localStorage.setItem(SAVED_TEMPLATES_KEY, json);
-      setSavedTemplates(updated);
-      setSaveTemplateName('');
-      toast.success(`Template "${name}" salvo!`);
-    } catch (e) {
-      console.error('Erro ao salvar template:', e);
-      toast.error('Template muito grande para salvar. Tente remover imagens grandes.');
+    const { data: row, error } = await supabase
+      .from('promo_templates')
+      .insert({ empresa_id: activeCompany.id, name, template_data: templateData as any })
+      .select()
+      .single();
+    if (error) {
+      console.error('Erro ao salvar template:', error);
+      toast.error('Erro ao salvar template.');
+      return;
     }
+    const tpl: SavedTemplate = { id: row.id, name, ...templateData };
+    setSavedTemplates(prev => [tpl, ...prev]);
+    setSaveTemplateName('');
+    toast.success(`Template "${name}" salvo!`);
   };
 
-  const deleteSavedTemplate = (idx: number) => {
-    const updated = savedTemplates.filter((_, i) => i !== idx);
-    setSavedTemplates(updated);
-    localStorage.setItem(SAVED_TEMPLATES_KEY, JSON.stringify(updated));
+  const deleteSavedTemplate = async (idx: number) => {
+    const tpl = savedTemplates[idx];
+    if (tpl.id) {
+      await supabase.from('promo_templates').delete().eq('id', tpl.id);
+    }
+    setSavedTemplates(prev => prev.filter((_, i) => i !== idx));
     toast.success('Template removido');
   };
 
