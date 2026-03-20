@@ -246,15 +246,30 @@ export default function PromoMakerPage() {
     setRightTab('element');
   };
 
-  const addShapeElement = (shape: 'rectangle' | 'circle' | 'square') => {
+  const addShapeElement = (shape: 'rectangle' | 'circle' | 'square' | 'line') => {
     const newEl: ShapeElement = {
       id: genId(), type: 'shape', shape,
       x: 50, y: 50,
-      width: shape === 'circle' ? 20 : shape === 'square' ? 20 : 40,
-      height: shape === 'circle' ? 20 : shape === 'square' ? 20 : 25,
-      color: '#d4af37', borderColor: 'transparent', borderWidth: 0,
+      width: shape === 'line' ? 40 : shape === 'circle' ? 20 : shape === 'square' ? 20 : 40,
+      height: shape === 'line' ? 0.5 : shape === 'circle' ? 20 : shape === 'square' ? 20 : 25,
+      color: shape === 'line' ? '#ffffff' : '#d4af37',
+      borderColor: 'transparent', borderWidth: 0,
       borderRadius: shape === 'circle' ? 50 : 0,
-      opacity: 0.8, locked: false, gradientFade: 'none' as GradientFade,
+      opacity: shape === 'line' ? 1 : 0.8, locked: false,
+      gradientFade: 'none' as GradientFade,
+      rotation: 0,
+      shadow: 'none',
+    };
+    setElements(prev => [...prev, newEl]);
+    setSelectedId(newEl.id);
+    setRightTab('element');
+  };
+
+  const addStickerElement = (stickerId: string) => {
+    const newEl: StickerElement = {
+      id: genId(), type: 'sticker', sticker: stickerId,
+      x: 50, y: 50, size: 10, color: '#ffffff',
+      opacity: 1, rotation: 0, locked: false,
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
