@@ -765,15 +765,14 @@ export default function PromoMakerPage() {
               boxShadow: el.shadow && el.shadow !== 'none' ? el.shadow : undefined,
               pointerEvents: el.locked ? 'none' : 'auto',
               userSelect: 'none',
-              ...(el.gradientFade !== 'none' ? {
-                WebkitMaskImage: el.gradientFade === 'left-right' ? 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : el.gradientFade === 'right-left' ? 'linear-gradient(to left, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : el.gradientFade === 'top-bottom' ? 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : 'linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))',
-                maskImage: el.gradientFade === 'left-right' ? 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : el.gradientFade === 'right-left' ? 'linear-gradient(to left, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : el.gradientFade === 'top-bottom' ? 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))'
-                  : 'linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))',
+              ...(el.gradientFade !== 'none' ? (() => {
+                const intensity = el.gradientFadeIntensity ?? 1;
+                const endAlpha = 1 - intensity; // 1 = fully transparent end, 0 = no fade
+                const dir = el.gradientFade === 'left-right' ? 'to right'
+                  : el.gradientFade === 'right-left' ? 'to left'
+                  : el.gradientFade === 'top-bottom' ? 'to bottom' : 'to top';
+                const grad = `linear-gradient(${dir}, rgba(0,0,0,1), rgba(0,0,0,${endAlpha}))`;
+                return { WebkitMaskImage: grad, maskImage: grad };
               } : {}),
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
