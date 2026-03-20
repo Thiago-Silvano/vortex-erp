@@ -196,6 +196,7 @@ export default function PromoMakerPage() {
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
+    setRightTab('element');
   };
 
   const addShapeElement = (shape: 'rectangle' | 'circle' | 'square') => {
