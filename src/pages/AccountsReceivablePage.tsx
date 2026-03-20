@@ -99,6 +99,14 @@ export default function AccountsReceivablePage() {
   };
 
   const [manualDialog, setManualDialog] = useState(false);
+
+  // Auto-open dialog from URL param
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setManualDialog(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
   const [manualClientId, setManualClientId] = useState('');
   const [manualDescription, setManualDescription] = useState('');
   const [manualCostCenter, setManualCostCenter] = useState('');
