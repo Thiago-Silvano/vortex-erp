@@ -1550,7 +1550,38 @@ export default function PromoMakerPage() {
                       </div>
                       <Separator />
 
-                      <Label className="text-xs font-semibold">Alinhamento</Label>
+                      <Label className="text-xs font-semibold">Alinhamento de posição</Label>
+                      <div className="flex gap-1 mb-2">
+                        <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => {
+                          const els = getMultiSelectedElements();
+                          if (els.length < 2) return;
+                          const minX = Math.min(...els.map(e => e.x));
+                          setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, x: minX } as CanvasElement : e));
+                          toast.success('Alinhados à esquerda.');
+                        }}>
+                          <AlignLeft className="h-3.5 w-3.5" /> Esq
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => {
+                          const els = getMultiSelectedElements();
+                          if (els.length < 2) return;
+                          const minX = Math.min(...els.map(e => e.x));
+                          const maxX = Math.max(...els.map(e => e.x));
+                          const centerX = (minX + maxX) / 2;
+                          setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, x: centerX } as CanvasElement : e));
+                          toast.success('Alinhados ao centro.');
+                        }}>
+                          <AlignCenter className="h-3.5 w-3.5" /> Centro
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => {
+                          const els = getMultiSelectedElements();
+                          if (els.length < 2) return;
+                          const maxX = Math.max(...els.map(e => e.x));
+                          setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, x: maxX } as CanvasElement : e));
+                          toast.success('Alinhados à direita.');
+                        }}>
+                          <AlignRight className="h-3.5 w-3.5" /> Dir
+                        </Button>
+                      </div>
                       <div className="space-y-2">
                         <Button variant={alignMode === 'horizontal' ? 'default' : 'outline'} size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignHorizontally}>
                           <AlignHorizontalDistributeCenter className="h-4 w-4" />
