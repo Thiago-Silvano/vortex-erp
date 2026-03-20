@@ -66,6 +66,7 @@ interface ShapeElement {
   opacity: number;
   locked: boolean;
   gradientFade: GradientFade;
+  gradientFadeIntensity: number; // 0 to 1, default 1
   rotation: number;
   shadow: string;
 }
