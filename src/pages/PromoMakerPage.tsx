@@ -14,8 +14,9 @@ import {
   Download, Image as ImageIcon, Type, Palette, Eye,
   AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline,
   Square, RectangleVertical, Plus, Trash2, Circle,
-  ChevronUp, ChevronDown, Copy, Lock, Unlock,
+  ChevronUp, ChevronDown, Copy, Lock, Unlock, Save,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // ─── Types ───
@@ -128,6 +129,26 @@ const defaultImage: ImageConfig = {
 let idCounter = 100;
 const genId = () => String(++idCounter);
 
+const SAVED_TEMPLATES_KEY = 'promo-maker-saved-templates';
+
+interface SavedTemplate {
+  name: string;
+  bg: string;
+  bgGradient: string;
+  format: FormatKey;
+  elements: CanvasElement[];
+  imageConfig: ImageConfig;
+  imageInShape: boolean;
+  imageShapeId: string;
+}
+
+function loadSavedTemplates(): SavedTemplate[] {
+  try {
+    const raw = localStorage.getItem(SAVED_TEMPLATES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
 export default function PromoMakerPage() {
   const [format, setFormat] = useState<FormatKey>('1:1');
   const [bgColor, setBgColor] = useState('#0d1b2a');
@@ -137,6 +158,10 @@ export default function PromoMakerPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [preview, setPreview] = useState<'feed' | 'stories' | 'whatsapp' | null>(null);
   const [dragInfo, setDragInfo] = useState<{ id: string; startX: number; startY: number; elX: number; elY: number } | null>(null);
+  const [imageInShape, setImageInShape] = useState(false);
+  const [imageShapeId, setImageShapeId] = useState('');
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
+  const [saveTemplateName, setSaveTemplateName] = useState('');
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -215,6 +240,41 @@ export default function PromoMakerPage() {
     setSelectedId(null);
   };
 
+  const applySavedTemplate = (tpl: SavedTemplate) => {
+    setBgColor(tpl.bg);
+    setBgGradient(tpl.bgGradient || '');
+    setFormat(tpl.format || '1:1');
+    setElements(tpl.elements.map(e => ({ ...e, id: genId() })));
+    setImage(tpl.imageConfig || defaultImage);
+    setImageInShape(tpl.imageInShape || false);
+    setImageShapeId(tpl.imageShapeId || '');
+    setSelectedId(null);
+    toast.success(`Template "${tpl.name}" aplicado!`);
+  };
+
+  const saveCurrentAsTemplate = () => {
+    const name = saveTemplateName.trim();
+    if (!name) { toast.error('Digite um nome para o template'); return; }
+    const tpl: SavedTemplate = {
+      name, bg: bgColor, bgGradient, format, elements, imageConfig: image,
+      imageInShape, imageShapeId,
+    };
+    const updated = [...savedTemplates, tpl];
+    setSavedTemplates(updated);
+    localStorage.setItem(SAVED_TEMPLATES_KEY, JSON.stringify(updated));
+    setSaveTemplateName('');
+    toast.success(`Template "${name}" salvo!`);
+  };
+
+  const deleteSavedTemplate = (idx: number) => {
+    const updated = savedTemplates.filter((_, i) => i !== idx);
+    setSavedTemplates(updated);
+    localStorage.setItem(SAVED_TEMPLATES_KEY, JSON.stringify(updated));
+    toast.success('Template removido');
+  };
+
+  const shapeElements = elements.filter(el => el.type === 'shape') as ShapeElement[];
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -275,7 +335,8 @@ export default function PromoMakerPage() {
       onMouseLeave={handleCanvasMouseUp}
       onClick={() => setSelectedId(null)}
     >
-      {image.url && (
+      {/* Full background image (only when NOT in shape mode) */}
+      {image.url && !imageInShape && (
         <>
           <img
             src={image.url} alt="" className="absolute inset-0 w-full h-full pointer-events-none" draggable={false}
@@ -290,17 +351,18 @@ export default function PromoMakerPage() {
         </>
       )}
 
-      {/* Shapes first (behind) */}
+      {/* Shapes (behind text) */}
       {elements.filter(el => el.type === 'shape').map(el => {
+        const isImageTarget = imageInShape && imageShapeId === el.id && image.url;
         return (
           <div
             key={el.id}
-            className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            className={`absolute cursor-move overflow-hidden ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
               transform: 'translate(-50%, -50%)',
               width: `${el.width}%`, height: `${el.height}%`,
-              backgroundColor: el.color,
+              backgroundColor: isImageTarget ? undefined : el.color,
               borderRadius: el.shape === 'circle' ? '50%' : `${el.borderRadius}px`,
               border: el.borderWidth > 0 ? `${el.borderWidth}px solid ${el.borderColor}` : undefined,
               opacity: el.opacity,
@@ -309,7 +371,22 @@ export default function PromoMakerPage() {
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
             onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
-          />
+          >
+            {isImageTarget && (
+              <>
+                <img
+                  src={image.url} alt="" className="absolute inset-0 w-full h-full pointer-events-none" draggable={false}
+                  style={{
+                    objectFit: 'cover',
+                    objectPosition: `${50 + image.offsetX}% ${50 + image.offsetY}%`,
+                    transform: `scale(${image.zoom})`,
+                    filter: `brightness(${image.brightness}) contrast(${image.contrast}) saturate(${image.saturate}) blur(${image.blur}px)`,
+                  }}
+                />
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: image.overlayColor, opacity: image.overlayOpacity }} />
+              </>
+            )}
+          </div>
         );
       })}
       {/* Texts on top */}
@@ -692,12 +769,53 @@ export default function PromoMakerPage() {
               <TabsContent value="templates" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
                   <div className="p-2 space-y-2">
+                    {/* Save current */}
+                    <div className="p-2 border border-dashed border-border rounded-md space-y-1.5">
+                      <Label className="text-xs font-semibold">Salvar como template</Label>
+                      <div className="flex gap-1">
+                        <Input
+                          value={saveTemplateName}
+                          onChange={e => setSaveTemplateName(e.target.value)}
+                          placeholder="Nome do template"
+                          className="h-8 text-xs flex-1"
+                        />
+                        <Button size="sm" className="h-8 gap-1 text-xs" onClick={saveCurrentAsTemplate}>
+                          <Save className="h-3 w-3" /> Salvar
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+                    <Label className="text-xs text-muted-foreground">Templates padrão</Label>
+
                     {TEMPLATES.map((tpl, i) => (
                       <Card key={i} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all" onClick={() => applyTemplate(tpl)}>
                         <div className="h-16 rounded mb-2" style={{ background: tpl.bg }} />
                         <p className="text-xs font-medium text-foreground">{tpl.name}</p>
                       </Card>
                     ))}
+
+                    {savedTemplates.length > 0 && (
+                      <>
+                        <Separator />
+                        <Label className="text-xs text-muted-foreground">Meus templates salvos</Label>
+                        {savedTemplates.map((tpl, i) => (
+                          <Card key={`saved-${i}`} className="p-3 cursor-pointer hover:ring-2 ring-primary/50 transition-all relative group">
+                            <div onClick={() => applySavedTemplate(tpl)}>
+                              <div className="h-16 rounded mb-2" style={{ background: tpl.bgGradient || tpl.bg }} />
+                              <p className="text-xs font-medium text-foreground">{tpl.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{tpl.format} • {tpl.elements.length} elementos</p>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteSavedTemplate(i); }}
+                              className="absolute top-1 right-1 p-1 rounded bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </Card>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </ScrollArea>
               </TabsContent>
@@ -827,6 +945,40 @@ export default function PromoMakerPage() {
                     </div>
                     {image.url && (
                       <>
+                        {/* Image in shape checkbox */}
+                        <div className="space-y-2 pt-1">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="img-in-shape"
+                              checked={imageInShape}
+                              onCheckedChange={(checked) => {
+                                setImageInShape(!!checked);
+                                if (!checked) setImageShapeId('');
+                              }}
+                            />
+                            <Label htmlFor="img-in-shape" className="text-xs cursor-pointer">
+                              Imagem dentro de uma forma?
+                            </Label>
+                          </div>
+                          {imageInShape && (
+                            <Select value={imageShapeId} onValueChange={setImageShapeId}>
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Selecione a forma..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {shapeElements.length === 0 ? (
+                                  <SelectItem value="__none" disabled>Nenhuma forma criada</SelectItem>
+                                ) : (
+                                  shapeElements.map(s => (
+                                    <SelectItem key={s.id} value={s.id}>
+                                      {s.shape === 'rectangle' ? 'Retângulo' : s.shape === 'square' ? 'Quadrado' : 'Círculo'} ({s.id})
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
                         <Separator />
                         <div className="space-y-2">
                           <div>
