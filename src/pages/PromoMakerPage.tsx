@@ -302,22 +302,24 @@ export default function PromoMakerPage() {
     setDragInfo({ id: elId, startX: e.clientX, startY: e.clientY, elX: el.x, elY: el.y });
   };
 
+  const clamp = (v: number) => Math.max(2, Math.min(98, v));
+
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     if (logoDrag) {
       const dx = ((e.clientX - logoDrag.startX) / rect.width) * 100;
       const dy = ((e.clientY - logoDrag.startY) / rect.height) * 100;
-      setLogoX(Math.max(0, Math.min(100, logoDrag.elX + dx)));
-      setLogoY(Math.max(0, Math.min(100, logoDrag.elY + dy)));
+      setLogoX(clamp(logoDrag.elX + dx));
+      setLogoY(clamp(logoDrag.elY + dy));
       return;
     }
     if (!dragInfo) return;
     const dx = ((e.clientX - dragInfo.startX) / rect.width) * 100;
     const dy = ((e.clientY - dragInfo.startY) / rect.height) * 100;
     updateEl(dragInfo.id, {
-      x: Math.max(0, Math.min(100, dragInfo.elX + dx)),
-      y: Math.max(0, Math.min(100, dragInfo.elY + dy)),
+      x: clamp(dragInfo.elX + dx),
+      y: clamp(dragInfo.elY + dy),
     });
   }, [dragInfo, logoDrag]);
 
