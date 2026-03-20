@@ -129,8 +129,7 @@ const defaultImage: ImageConfig = {
   offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0.4,
 };
 
-let idCounter = 100;
-const genId = () => String(++idCounter);
+const genId = () => `el_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 const SAVED_TEMPLATES_KEY = 'promo-maker-saved-templates';
 
@@ -163,6 +162,7 @@ export default function PromoMakerPage() {
   const [dragInfo, setDragInfo] = useState<{ id: string; startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [imageInShape, setImageInShape] = useState(false);
   const [imageShapeId, setImageShapeId] = useState('');
+  const [rightTab, setRightTab] = useState('element');
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
   const [saveTemplateName, setSaveTemplateName] = useState('');
 
@@ -196,6 +196,7 @@ export default function PromoMakerPage() {
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
+    setRightTab('element');
   };
 
   const addShapeElement = (shape: 'rectangle' | 'circle' | 'square') => {
@@ -210,6 +211,7 @@ export default function PromoMakerPage() {
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
+    setRightTab('element');
   };
 
   const deleteElement = (id: string) => {
@@ -887,7 +889,7 @@ export default function PromoMakerPage() {
 
           {/* Right panel */}
           <div className="w-72 border-l bg-card overflow-hidden flex flex-col">
-            <Tabs defaultValue="element" className="flex flex-col h-full">
+            <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
               <TabsList className="w-full rounded-none">
                 <TabsTrigger value="element" className="text-xs flex-1">Elemento</TabsTrigger>
                 <TabsTrigger value="bg" className="text-xs flex-1">Fundo</TabsTrigger>
