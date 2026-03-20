@@ -1499,10 +1499,51 @@ export default function PromoMakerPage() {
               <TabsContent value="element" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
                   {selectedIds.length >= 2 ? (
-                    <div className="p-3 space-y-3">
+                     <div className="p-3 space-y-3">
                       <div className="text-sm font-medium text-foreground">{selectedIds.length} elementos selecionados</div>
                       <p className="text-xs text-muted-foreground">Segure Ctrl e clique para selecionar múltiplos elementos</p>
                       <Separator />
+
+                      {/* Group position X/Y */}
+                      <Label className="text-xs font-semibold">Posição do grupo</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-[10px] text-muted-foreground">X</Label>
+                          <Input
+                            type="number"
+                            className="h-7 text-xs"
+                            value={Math.round(Math.min(...getMultiSelectedElements().map(e => e.x)))}
+                            onChange={(e) => {
+                              const els = getMultiSelectedElements();
+                              if (els.length < 2) return;
+                              const minX = Math.min(...els.map(el => el.x));
+                              const delta = Number(e.target.value) - minX;
+                              setElements(prev => prev.map(el =>
+                                selectedIds.includes(el.id) ? { ...el, x: el.x + delta } as CanvasElement : el
+                              ));
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-muted-foreground">Y</Label>
+                          <Input
+                            type="number"
+                            className="h-7 text-xs"
+                            value={Math.round(Math.min(...getMultiSelectedElements().map(e => e.y)))}
+                            onChange={(e) => {
+                              const els = getMultiSelectedElements();
+                              if (els.length < 2) return;
+                              const minY = Math.min(...els.map(el => el.y));
+                              const delta = Number(e.target.value) - minY;
+                              setElements(prev => prev.map(el =>
+                                selectedIds.includes(el.id) ? { ...el, y: el.y + delta } as CanvasElement : el
+                              ));
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <Separator />
+
                       <Label className="text-xs font-semibold">Alinhamento</Label>
                       <div className="space-y-2">
                         <Button variant={alignMode === 'horizontal' ? 'default' : 'outline'} size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignHorizontally}>
