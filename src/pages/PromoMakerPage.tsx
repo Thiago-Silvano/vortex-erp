@@ -205,8 +205,28 @@ export default function PromoMakerPage() {
   const [logoX, setLogoX] = useState(92);
   const [logoY, setLogoY] = useState(92);
   const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
-  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const [saveTemplateName, setSaveTemplateName] = useState('');
+  const { activeCompany } = useCompany();
+
+  // Load saved templates from database
+  useEffect(() => {
+    if (!activeCompany?.id) return;
+    supabase
+      .from('promo_templates')
+      .select('*')
+      .eq('empresa_id', activeCompany.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setSavedTemplates(data.map((row: any) => ({
+            id: row.id,
+            name: row.name,
+            ...(row.template_data as any),
+          })));
+        }
+      });
+  }, [activeCompany?.id]);
   const [alignMode, setAlignMode] = useState<'none' | 'horizontal' | 'vertical'>('none');
   const [alignSpacing, setAlignSpacing] = useState(5);
 
