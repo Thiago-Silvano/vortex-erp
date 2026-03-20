@@ -430,18 +430,21 @@ export default function PromoMakerPage() {
       {/* Shapes (behind text) */}
       {elements.filter(el => el.type === 'shape').map(el => {
         const isImageTarget = imageInShape && imageShapeId === el.id && image.url;
+        const isLine = el.shape === 'line';
         return (
           <div
             key={el.id}
             className={`absolute cursor-move overflow-hidden ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
-              transform: 'translate(-50%, -50%)',
-              width: `${el.width}%`, height: `${el.height}%`,
+              transform: `translate(-50%, -50%) rotate(${el.rotation || 0}deg)`,
+              width: `${el.width}%`,
+              height: isLine ? `${Math.max(el.height, 0.3)}%` : `${el.height}%`,
               backgroundColor: isImageTarget ? undefined : el.color,
-              borderRadius: el.shape === 'circle' ? '50%' : `${el.borderRadius}px`,
+              borderRadius: el.shape === 'circle' ? '50%' : isLine ? '0' : `${el.borderRadius}px`,
               border: el.borderWidth > 0 ? `${el.borderWidth}px solid ${el.borderColor}` : undefined,
               opacity: el.opacity,
+              boxShadow: el.shadow && el.shadow !== 'none' ? el.shadow : undefined,
               pointerEvents: el.locked ? 'none' : 'auto',
               userSelect: 'none',
               ...(el.gradientFade !== 'none' ? {
@@ -475,6 +478,33 @@ export default function PromoMakerPage() {
           </div>
         );
       })}
+
+      {/* Stickers */}
+      {elements.filter(el => el.type === 'sticker').map(el => {
+        const def = STICKER_DEFS.find(s => s.id === el.sticker);
+        if (!def) return null;
+        return (
+          <div
+            key={el.id}
+            className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            style={{
+              left: `${el.x}%`, top: `${el.y}%`,
+              transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`,
+              width: `${el.size}%`, height: `${el.size}%`,
+              opacity: el.opacity,
+              pointerEvents: el.locked ? 'none' : 'auto',
+              userSelect: 'none',
+            }}
+            onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
+            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+          >
+            <svg viewBox={def.viewBox || '0 0 24 24'} fill={el.color} className="w-full h-full">
+              <path d={def.svg} />
+            </svg>
+          </div>
+        );
+      })}
+
       {/* Texts on top */}
       {elements.filter(el => el.type === 'text').map(el => (
           <div
