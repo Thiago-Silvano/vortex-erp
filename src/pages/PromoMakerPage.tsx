@@ -239,10 +239,11 @@ export default function PromoMakerPage() {
   const [alignMode, setAlignMode] = useState<'none' | 'horizontal' | 'vertical'>('none');
   const [alignSpacing, setAlignSpacing] = useState(5);
 
-  // Undo/Redo
-  const [history, setHistory] = useState<CanvasElement[][]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  // Undo/Redo – Word-like behaviour using refs to avoid stale closures
+  const historyRef = useRef<CanvasElement[][]>([]);
+  const historyIndexRef = useRef(-1);
   const isUndoRedoRef = useRef(false);
+  const [, forceRender] = useState(0);
 
   // Push to history whenever elements change (but not from undo/redo)
   useEffect(() => {
@@ -250,39 +251,35 @@ export default function PromoMakerPage() {
       isUndoRedoRef.current = false;
       return;
     }
-    setHistory(prev => {
-      const trimmed = prev.slice(0, historyIndex + 1);
-      const newHistory = [...trimmed, JSON.parse(JSON.stringify(elements))];
-      // Keep max 50 states
-      if (newHistory.length > 50) newHistory.shift();
-      return newHistory;
-    });
-    setHistoryIndex(prev => {
-      const trimmed = prev + 1;
-      return Math.min(trimmed, 49);
-    });
+    const snapshot = JSON.parse(JSON.stringify(elements));
+    const trimmed = historyRef.current.slice(0, historyIndexRef.current + 1);
+    trimmed.push(snapshot);
+    if (trimmed.length > 50) trimmed.shift();
+    historyRef.current = trimmed;
+    historyIndexRef.current = trimmed.length - 1;
+    forceRender(n => n + 1);
   }, [elements]);
 
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < history.length - 1;
+  const canUndo = historyIndexRef.current > 0;
+  const canRedo = historyIndexRef.current < historyRef.current.length - 1;
 
-  const undo = () => {
-    if (!canUndo) return;
+  const undo = useCallback(() => {
+    if (historyIndexRef.current <= 0) return;
     isUndoRedoRef.current = true;
-    const newIndex = historyIndex - 1;
-    setHistoryIndex(newIndex);
-    setElements(JSON.parse(JSON.stringify(history[newIndex])));
-  };
+    historyIndexRef.current -= 1;
+    setElements(JSON.parse(JSON.stringify(historyRef.current[historyIndexRef.current])));
+    forceRender(n => n + 1);
+  }, []);
 
-  const redo = () => {
-    if (!canRedo) return;
+  const redo = useCallback(() => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
     isUndoRedoRef.current = true;
-    const newIndex = historyIndex + 1;
-    setHistoryIndex(newIndex);
-    setElements(JSON.parse(JSON.stringify(history[newIndex])));
-  };
+    historyIndexRef.current += 1;
+    setElements(JSON.parse(JSON.stringify(historyRef.current[historyIndexRef.current])));
+    forceRender(n => n + 1);
+  }, []);
 
-  // Keyboard shortcuts for undo/redo
+  // Keyboard shortcuts – stable refs, no stale closures
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
@@ -290,7 +287,7 @@ export default function PromoMakerPage() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [canUndo, canRedo, historyIndex, history]);
+  }, [undo, redo]);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
