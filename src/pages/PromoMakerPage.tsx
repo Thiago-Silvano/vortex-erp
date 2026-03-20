@@ -15,6 +15,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline,
   Square, RectangleVertical, Plus, Trash2, Circle,
   ChevronUp, ChevronDown, Copy, Lock, Unlock, Save,
+  Minus, Plane, Building2, Bus, Ticket, ShieldPlus, Sticker,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -49,7 +50,7 @@ type GradientFade = 'none' | 'left-right' | 'right-left' | 'top-bottom' | 'botto
 interface ShapeElement {
   id: string;
   type: 'shape';
-  shape: 'rectangle' | 'circle' | 'square';
+  shape: 'rectangle' | 'circle' | 'square' | 'line';
   x: number;
   y: number;
   width: number;
@@ -61,9 +62,24 @@ interface ShapeElement {
   opacity: number;
   locked: boolean;
   gradientFade: GradientFade;
+  rotation: number;
+  shadow: string;
 }
 
-type CanvasElement = TextElement | ShapeElement;
+interface StickerElement {
+  id: string;
+  type: 'sticker';
+  sticker: string;
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+  opacity: number;
+  rotation: number;
+  locked: boolean;
+}
+
+type CanvasElement = TextElement | ShapeElement | StickerElement;
 
 interface ImageConfig {
   url: string;
@@ -131,6 +147,30 @@ const defaultImage: ImageConfig = {
 
 const genId = () => `el_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+const STICKER_DEFS = [
+  {
+    id: 'airplane', name: 'Avião', Icon: Plane,
+    svg: 'M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z',
+  },
+  {
+    id: 'hotel', name: 'Hotel', Icon: Building2,
+    svg: 'M19 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V4a2 2 0 00-2-2zM7 7h2v2H7V7zm0 4h2v2H7v-2zm0 4h2v2H7v-2zm4-8h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm4-8h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z',
+  },
+  {
+    id: 'transfer', name: 'Transfer', Icon: Bus,
+    svg: 'M17 5H3a2 2 0 00-2 2v9h2a3 3 0 006 0h2a3 3 0 006 0h2V9.65L17 5zM6.5 17.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm7 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM17 9.65V7h1.3l1.7 2.65H17z',
+    viewBox: '0 0 21 20',
+  },
+  {
+    id: 'ticket', name: 'Ingressos', Icon: Ticket,
+    svg: 'M22 10V6a2 2 0 00-2-2H4a2 2 0 00-2 2v4a2 2 0 010 4v4a2 2 0 002 2h16a2 2 0 002-2v-4a2 2 0 010-4zm-2-1.46a4 4 0 000 6.92V18H4v-2.54a4 4 0 000-6.92V6h16v2.54zM11 15h2v2h-2v-2zm0-4h2v2h-2v-2zm0-4h2v2h-2V7z',
+  },
+  {
+    id: 'health', name: 'Seguro Saúde', Icon: ShieldPlus,
+    svg: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z',
+  },
+];
+
 const SAVED_TEMPLATES_KEY = 'promo-maker-saved-templates';
 
 interface SavedTemplate {
@@ -188,7 +228,7 @@ export default function PromoMakerPage() {
   const canvasSize = FORMAT_SIZES[format];
   const scale = format === '9:16' ? Math.min(380 / canvasSize.w, 650 / canvasSize.h) : 380 / canvasSize.w;
 
-  const updateEl = (id: string, patch: Partial<TextElement> | Partial<ShapeElement>) => {
+  const updateEl = (id: string, patch: Partial<TextElement> | Partial<ShapeElement> | Partial<StickerElement>) => {
     setElements(prev => prev.map(e => e.id === id ? { ...e, ...patch } as CanvasElement : e));
   };
 
@@ -206,15 +246,30 @@ export default function PromoMakerPage() {
     setRightTab('element');
   };
 
-  const addShapeElement = (shape: 'rectangle' | 'circle' | 'square') => {
+  const addShapeElement = (shape: 'rectangle' | 'circle' | 'square' | 'line') => {
     const newEl: ShapeElement = {
       id: genId(), type: 'shape', shape,
       x: 50, y: 50,
-      width: shape === 'circle' ? 20 : shape === 'square' ? 20 : 40,
-      height: shape === 'circle' ? 20 : shape === 'square' ? 20 : 25,
-      color: '#d4af37', borderColor: 'transparent', borderWidth: 0,
+      width: shape === 'line' ? 40 : shape === 'circle' ? 20 : shape === 'square' ? 20 : 40,
+      height: shape === 'line' ? 0.5 : shape === 'circle' ? 20 : shape === 'square' ? 20 : 25,
+      color: shape === 'line' ? '#ffffff' : '#d4af37',
+      borderColor: 'transparent', borderWidth: 0,
       borderRadius: shape === 'circle' ? 50 : 0,
-      opacity: 0.8, locked: false, gradientFade: 'none' as GradientFade,
+      opacity: shape === 'line' ? 1 : 0.8, locked: false,
+      gradientFade: 'none' as GradientFade,
+      rotation: 0,
+      shadow: 'none',
+    };
+    setElements(prev => [...prev, newEl]);
+    setSelectedId(newEl.id);
+    setRightTab('element');
+  };
+
+  const addStickerElement = (stickerId: string) => {
+    const newEl: StickerElement = {
+      id: genId(), type: 'sticker', sticker: stickerId,
+      x: 50, y: 50, size: 10, color: '#ffffff',
+      opacity: 1, rotation: 0, locked: false,
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
@@ -375,18 +430,21 @@ export default function PromoMakerPage() {
       {/* Shapes (behind text) */}
       {elements.filter(el => el.type === 'shape').map(el => {
         const isImageTarget = imageInShape && imageShapeId === el.id && image.url;
+        const isLine = el.shape === 'line';
         return (
           <div
             key={el.id}
             className={`absolute cursor-move overflow-hidden ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
-              transform: 'translate(-50%, -50%)',
-              width: `${el.width}%`, height: `${el.height}%`,
+              transform: `translate(-50%, -50%) rotate(${el.rotation || 0}deg)`,
+              width: `${el.width}%`,
+              height: isLine ? `${Math.max(el.height, 0.3)}%` : `${el.height}%`,
               backgroundColor: isImageTarget ? undefined : el.color,
-              borderRadius: el.shape === 'circle' ? '50%' : `${el.borderRadius}px`,
+              borderRadius: el.shape === 'circle' ? '50%' : isLine ? '0' : `${el.borderRadius}px`,
               border: el.borderWidth > 0 ? `${el.borderWidth}px solid ${el.borderColor}` : undefined,
               opacity: el.opacity,
+              boxShadow: el.shadow && el.shadow !== 'none' ? el.shadow : undefined,
               pointerEvents: el.locked ? 'none' : 'auto',
               userSelect: 'none',
               ...(el.gradientFade !== 'none' ? {
@@ -420,6 +478,33 @@ export default function PromoMakerPage() {
           </div>
         );
       })}
+
+      {/* Stickers */}
+      {elements.filter(el => el.type === 'sticker').map(el => {
+        const def = STICKER_DEFS.find(s => s.id === el.sticker);
+        if (!def) return null;
+        return (
+          <div
+            key={el.id}
+            className={`absolute cursor-move ${selectedId === el.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
+            style={{
+              left: `${el.x}%`, top: `${el.y}%`,
+              transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`,
+              width: `${el.size}%`, height: `${el.size}%`,
+              opacity: el.opacity,
+              pointerEvents: el.locked ? 'none' : 'auto',
+              userSelect: 'none',
+            }}
+            onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
+            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+          >
+            <svg viewBox={def.viewBox || '0 0 24 24'} fill={el.color} className="w-full h-full">
+              <path d={def.svg} />
+            </svg>
+          </div>
+        );
+      })}
+
       {/* Texts on top */}
       {elements.filter(el => el.type === 'text').map(el => (
           <div
@@ -649,21 +734,67 @@ export default function PromoMakerPage() {
     </div>
   );
 
+  const renderStickerProps = (sel: StickerElement) => (
+    <div className="p-3 space-y-3">
+      <div>
+        <Label className="text-xs">Figurinha</Label>
+        <p className="text-sm font-medium mt-1">{STICKER_DEFS.find(s => s.id === sel.sticker)?.name}</p>
+      </div>
+      <div>
+        <Label className="text-xs">Cor</Label>
+        <div className="flex items-center gap-2 mt-1">
+          <input type="color" value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+          <Input value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="h-8 text-xs flex-1" />
+        </div>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {['#ffffff', '#000000', '#d4af37', '#00b4d8', '#e63946', '#25d366', '#ff6b35', '#7209b7'].map(c => (
+            <div key={c} className="w-6 h-6 rounded cursor-pointer border border-border hover:scale-110 transition-transform"
+              style={{ background: c }} onClick={() => updateEl(sel.id, { color: c })} />
+          ))}
+        </div>
+      </div>
+      <div>
+        <Label className="text-xs flex justify-between">Tamanho <span className="text-muted-foreground">{sel.size}%</span></Label>
+        <Slider value={[sel.size]} onValueChange={([v]) => updateEl(sel.id, { size: v })} min={3} max={40} step={1} />
+      </div>
+      <div>
+        <Label className="text-xs flex justify-between">Opacidade <span className="text-muted-foreground">{Math.round(sel.opacity * 100)}%</span></Label>
+        <Slider value={[sel.opacity]} onValueChange={([v]) => updateEl(sel.id, { opacity: v })} min={0} max={1} step={0.05} />
+      </div>
+      <div>
+        <Label className="text-xs flex justify-between">Rotação <span className="text-muted-foreground">{sel.rotation}°</span></Label>
+        <Slider value={[sel.rotation]} onValueChange={([v]) => updateEl(sel.id, { rotation: v })} min={0} max={360} step={1} />
+      </div>
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        <div>
+          <Label className="text-xs">Posição X</Label>
+          <Slider value={[sel.x]} onValueChange={([v]) => updateEl(sel.id, { x: v })} min={0} max={100} step={0.5} />
+        </div>
+        <div>
+          <Label className="text-xs">Posição Y</Label>
+          <Slider value={[sel.y]} onValueChange={([v]) => updateEl(sel.id, { y: v })} min={0} max={100} step={0.5} />
+        </div>
+      </div>
+    </div>
+  );
+
   const renderShapeProps = (sel: ShapeElement) => (
     <div className="p-3 space-y-3">
       <div>
         <Label className="text-xs">Tipo de forma</Label>
-        <div className="flex gap-1 mt-1">
+        <div className="flex gap-1 mt-1 flex-wrap">
           {([
-            { v: 'rectangle' as const, Icon: RectangleVertical, label: 'Retângulo' },
-            { v: 'square' as const, Icon: Square, label: 'Quadrado' },
-            { v: 'circle' as const, Icon: Circle, label: 'Círculo' },
+            { v: 'rectangle' as const, Icon: RectangleVertical, label: 'Ret.' },
+            { v: 'square' as const, Icon: Square, label: 'Quad.' },
+            { v: 'circle' as const, Icon: Circle, label: 'Circ.' },
+            { v: 'line' as const, Icon: Minus, label: 'Linha' },
           ]).map(({ v, Icon, label }) => (
             <Button key={v} size="sm" variant={sel.shape === v ? 'default' : 'outline'} className="h-8 gap-1 text-xs flex-1"
               onClick={() => updateEl(sel.id, {
                 shape: v,
-                borderRadius: v === 'circle' ? 50 : sel.borderRadius,
-                height: v === 'square' ? sel.width : v === 'circle' ? sel.width : sel.height,
+                borderRadius: v === 'circle' ? 50 : v === 'line' ? 0 : sel.borderRadius,
+                height: v === 'square' ? sel.width : v === 'circle' ? sel.width : v === 'line' ? 0.5 : sel.height,
+                width: v === 'line' ? 40 : sel.width,
               })}>
               <Icon className="h-3 w-3" /> {label}
             </Button>
@@ -672,7 +803,7 @@ export default function PromoMakerPage() {
       </div>
 
       <div>
-        <Label className="text-xs">Cor de preenchimento</Label>
+        <Label className="text-xs">Cor {sel.shape === 'line' ? 'da linha' : 'de preenchimento'}</Label>
         <div className="flex items-center gap-2 mt-1">
           <input type="color" value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
           <Input value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="h-8 text-xs flex-1" />
@@ -681,20 +812,23 @@ export default function PromoMakerPage() {
 
       <Separator />
 
-      <div>
-        <Label className="text-xs">Cor da borda</Label>
-        <div className="flex items-center gap-2 mt-1">
-          <input type="color" value={sel.borderColor === 'transparent' ? '#000000' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
-          <Input value={sel.borderColor === 'transparent' ? '' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value || 'transparent' })} className="h-8 text-xs flex-1" placeholder="Nenhuma" />
-        </div>
-      </div>
+      {sel.shape !== 'line' && (
+        <>
+          <div>
+            <Label className="text-xs">Cor da borda</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <input type="color" value={sel.borderColor === 'transparent' ? '#000000' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+              <Input value={sel.borderColor === 'transparent' ? '' : sel.borderColor} onChange={e => updateEl(sel.id, { borderColor: e.target.value || 'transparent' })} className="h-8 text-xs flex-1" placeholder="Nenhuma" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs flex justify-between">Espessura da borda <span className="text-muted-foreground">{sel.borderWidth}px</span></Label>
+            <Slider value={[sel.borderWidth]} onValueChange={([v]) => updateEl(sel.id, { borderWidth: v })} min={0} max={20} step={1} />
+          </div>
+        </>
+      )}
 
-      <div>
-        <Label className="text-xs flex justify-between">Espessura da borda <span className="text-muted-foreground">{sel.borderWidth}px</span></Label>
-        <Slider value={[sel.borderWidth]} onValueChange={([v]) => updateEl(sel.id, { borderWidth: v })} min={0} max={20} step={1} />
-      </div>
-
-      {sel.shape !== 'circle' && (
+      {sel.shape !== 'circle' && sel.shape !== 'line' && (
         <div>
           <Label className="text-xs flex justify-between">Arredondamento <span className="text-muted-foreground">{sel.borderRadius}px</span></Label>
           <Slider value={[sel.borderRadius]} onValueChange={([v]) => updateEl(sel.id, { borderRadius: v })} min={0} max={200} step={1} />
@@ -702,18 +836,35 @@ export default function PromoMakerPage() {
       )}
 
       <div>
-        <Label className="text-xs">Degradê de opacidade</Label>
-        <Select value={sel.gradientFade} onValueChange={(v: GradientFade) => updateEl(sel.id, { gradientFade: v })}>
+        <Label className="text-xs">Sombra</Label>
+        <Select value={sel.shadow || 'none'} onValueChange={v => updateEl(sel.id, { shadow: v })}>
           <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">Nenhum</SelectItem>
-            <SelectItem value="left-right">Esquerda → Direita</SelectItem>
-            <SelectItem value="right-left">Direita → Esquerda</SelectItem>
-            <SelectItem value="top-bottom">Cima → Baixo</SelectItem>
-            <SelectItem value="bottom-top">Baixo → Cima</SelectItem>
+            <SelectItem value="none">Nenhuma</SelectItem>
+            <SelectItem value="0 2px 4px rgba(0,0,0,0.3)">Suave</SelectItem>
+            <SelectItem value="0 4px 8px rgba(0,0,0,0.4)">Média</SelectItem>
+            <SelectItem value="0 6px 16px rgba(0,0,0,0.6)">Forte</SelectItem>
+            <SelectItem value="0 0 15px rgba(255,255,255,0.5)">Brilho Branco</SelectItem>
+            <SelectItem value="0 0 15px rgba(212,175,55,0.5)">Brilho Dourado</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {sel.shape !== 'line' && (
+        <div>
+          <Label className="text-xs">Degradê de opacidade</Label>
+          <Select value={sel.gradientFade} onValueChange={(v: GradientFade) => updateEl(sel.id, { gradientFade: v })}>
+            <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Nenhum</SelectItem>
+              <SelectItem value="left-right">Esquerda → Direita</SelectItem>
+              <SelectItem value="right-left">Direita → Esquerda</SelectItem>
+              <SelectItem value="top-bottom">Cima → Baixo</SelectItem>
+              <SelectItem value="bottom-top">Baixo → Cima</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <Separator />
 
@@ -732,9 +883,19 @@ export default function PromoMakerPage() {
             <Slider value={[sel.height]} onValueChange={([v]) => updateEl(sel.id, { height: v })} min={2} max={100} step={1} />
           </div>
         )}
+        {sel.shape === 'line' && (
+          <div>
+            <Label className="text-xs flex justify-between">Espessura <span className="text-muted-foreground">{sel.height}%</span></Label>
+            <Slider value={[sel.height]} onValueChange={([v]) => updateEl(sel.id, { height: v })} min={0.1} max={5} step={0.1} />
+          </div>
+        )}
         <div>
           <Label className="text-xs flex justify-between">Opacidade <span className="text-muted-foreground">{Math.round(sel.opacity * 100)}%</span></Label>
           <Slider value={[sel.opacity]} onValueChange={([v]) => updateEl(sel.id, { opacity: v })} min={0} max={1} step={0.05} />
+        </div>
+        <div>
+          <Label className="text-xs flex justify-between">Rotação <span className="text-muted-foreground">{sel.rotation || 0}°</span></Label>
+          <Slider value={[sel.rotation || 0]} onValueChange={([v]) => updateEl(sel.id, { rotation: v })} min={0} max={360} step={1} />
         </div>
       </div>
 
@@ -793,7 +954,7 @@ export default function PromoMakerPage() {
                     <Button variant="outline" size="sm" className="w-full gap-1 mb-1" onClick={addTextElement}>
                       <Plus className="h-3.5 w-3.5" /> Texto
                     </Button>
-                    <div className="flex gap-1 mb-2">
+                    <div className="flex gap-1 mb-1">
                       <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => addShapeElement('rectangle')}>
                         <RectangleVertical className="h-3 w-3" /> Ret.
                       </Button>
@@ -803,6 +964,19 @@ export default function PromoMakerPage() {
                       <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => addShapeElement('circle')}>
                         <Circle className="h-3 w-3" /> Circ.
                       </Button>
+                      <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => addShapeElement('line')}>
+                        <Minus className="h-3 w-3" /> Linha
+                      </Button>
+                    </div>
+                    <div className="mb-2">
+                      <Label className="text-[10px] text-muted-foreground mb-1 block">Figurinhas</Label>
+                      <div className="flex gap-1 flex-wrap">
+                        {STICKER_DEFS.map(s => (
+                          <Button key={s.id} variant="outline" size="sm" className="gap-1 text-xs h-8" onClick={() => addStickerElement(s.id)} title={s.name}>
+                            <s.Icon className="h-3.5 w-3.5" />
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                     {[...elements].reverse().map(el => (
                       <div
@@ -814,13 +988,17 @@ export default function PromoMakerPage() {
                       >
                         {el.type === 'text' ? (
                           <Type className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        ) : el.type === 'sticker' ? (
+                          <Sticker className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        ) : el.shape === 'line' ? (
+                          <Minus className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                         ) : el.shape === 'circle' ? (
                           <Circle className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                         ) : (
                           <Square className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                         )}
                         <span className="truncate flex-1 text-foreground">
-                          {el.type === 'text' ? el.content.slice(0, 16) : el.shape === 'rectangle' ? 'Retângulo' : el.shape === 'square' ? 'Quadrado' : 'Círculo'}
+                          {el.type === 'text' ? el.content.slice(0, 16) : el.type === 'sticker' ? (STICKER_DEFS.find(s => s.id === el.sticker)?.name || 'Figurinha') : el.shape === 'rectangle' ? 'Retângulo' : el.shape === 'square' ? 'Quadrado' : el.shape === 'line' ? 'Linha' : 'Círculo'}
                         </span>
                         <div className="flex gap-0.5">
                           <button onClick={(e) => { e.stopPropagation(); updateEl(el.id, { locked: !el.locked }); }} className="p-0.5 hover:bg-muted rounded">
@@ -950,7 +1128,7 @@ export default function PromoMakerPage() {
               <TabsContent value="element" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
                   {selected ? (
-                    selected.type === 'text' ? renderTextProps(selected) : renderShapeProps(selected)
+                    selected.type === 'text' ? renderTextProps(selected) : selected.type === 'sticker' ? renderStickerProps(selected) : renderShapeProps(selected)
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm p-4">
                       <Type className="h-8 w-8 mb-2 opacity-40" />
