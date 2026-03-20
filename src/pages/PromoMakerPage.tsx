@@ -453,9 +453,16 @@ export default function PromoMakerPage() {
 
       {showLogo && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute cursor-move"
           style={{
-            bottom: '3%', right: '3%', height: `${logoSize}%`, opacity: logoOpacity,
+            left: `${logoX}%`, top: `${logoY}%`,
+            transform: 'translate(-50%, -50%)',
+            height: `${logoSize}%`, opacity: logoOpacity,
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            setSelectedId(null);
+            setLogoDrag({ startX: e.clientX, startY: e.clientY, elX: logoX, elY: logoY });
           }}
         >
           <img
