@@ -167,6 +167,9 @@ export default function PromoMakerPage() {
   const [logoOpacity, setLogoOpacity] = useState(0.6);
   const [logoColor, setLogoColor] = useState('');
   const [showLogo, setShowLogo] = useState(true);
+  const [logoX, setLogoX] = useState(92);
+  const [logoY, setLogoY] = useState(92);
+  const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
   const [saveTemplateName, setSaveTemplateName] = useState('');
 
@@ -300,17 +303,25 @@ export default function PromoMakerPage() {
   };
 
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragInfo || !canvasRef.current) return;
+    if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
+    if (logoDrag) {
+      const dx = ((e.clientX - logoDrag.startX) / rect.width) * 100;
+      const dy = ((e.clientY - logoDrag.startY) / rect.height) * 100;
+      setLogoX(Math.max(0, Math.min(100, logoDrag.elX + dx)));
+      setLogoY(Math.max(0, Math.min(100, logoDrag.elY + dy)));
+      return;
+    }
+    if (!dragInfo) return;
     const dx = ((e.clientX - dragInfo.startX) / rect.width) * 100;
     const dy = ((e.clientY - dragInfo.startY) / rect.height) * 100;
     updateEl(dragInfo.id, {
       x: Math.max(0, Math.min(100, dragInfo.elX + dx)),
       y: Math.max(0, Math.min(100, dragInfo.elY + dy)),
     });
-  }, [dragInfo]);
+  }, [dragInfo, logoDrag]);
 
-  const handleCanvasMouseUp = useCallback(() => setDragInfo(null), []);
+  const handleCanvasMouseUp = useCallback(() => { setDragInfo(null); setLogoDrag(null); }, []);
 
   const handleExport = async () => {
     if (!canvasRef.current) return;
@@ -442,9 +453,16 @@ export default function PromoMakerPage() {
 
       {showLogo && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute cursor-move"
           style={{
-            bottom: '3%', right: '3%', height: `${logoSize}%`, opacity: logoOpacity,
+            left: `${logoX}%`, top: `${logoY}%`,
+            transform: 'translate(-50%, -50%)',
+            height: `${logoSize}%`, opacity: logoOpacity,
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            setSelectedId(null);
+            setLogoDrag({ startX: e.clientX, startY: e.clientY, elX: logoX, elY: logoY });
           }}
         >
           <img
