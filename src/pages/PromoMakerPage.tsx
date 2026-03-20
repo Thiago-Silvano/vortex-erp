@@ -452,13 +452,41 @@ export default function PromoMakerPage() {
     try {
       // Ensure all Google Fonts are fully loaded before capturing
       await document.fonts.ready;
-      // Small delay to ensure rendering is complete after fonts load
-      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Build font CSS for embedding into the exported image
+      const usedFonts = new Set(
+        elements.filter(el => el.type === 'text').map(el => (el as TextElement).fontFamily)
+      );
+      const fontCssPromises = Array.from(usedFonts).map(async (font) => {
+        try {
+          const url = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap`;
+          const res = await fetch(url);
+          const css = await res.text();
+          // Fetch each font file and convert to base64 data URI
+          const fontUrls = css.match(/url\((https:\/\/[^)]+)\)/g) || [];
+          let inlinedCss = css;
+          for (const match of fontUrls) {
+            const fontUrl = match.slice(4, -1);
+            try {
+              const fontRes = await fetch(fontUrl);
+              const blob = await fontRes.blob();
+              const dataUrl = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+              });
+              inlinedCss = inlinedCss.replace(fontUrl, dataUrl);
+            } catch { /* skip individual font file */ }
+          }
+          return inlinedCss;
+        } catch { return ''; }
+      });
+      const fontCss = (await Promise.all(fontCssPromises)).join('\n');
+
       const dataUrl = await toPng(canvasRef.current, {
         width: canvasSize.w, height: canvasSize.h, pixelRatio: 2,
         style: { transform: 'none', width: `${canvasSize.w}px`, height: `${canvasSize.h}px` },
-        fontEmbedCSS: '',
-        includeQueryParams: true,
+        fontEmbedCSS: fontCss,
       });
       const link = document.createElement('a');
       link.download = `promo-vortex-${format.replace(':', 'x')}-${Date.now()}.png`;
