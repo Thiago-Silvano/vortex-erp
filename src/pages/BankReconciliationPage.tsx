@@ -551,6 +551,7 @@ export default function BankReconciliationPage() {
   }).sort((a, b) => new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime());
 
   const filteredTitles = titles.filter((t) => {
+    if (t.is_reconciled) return false;
     if (
       searchTitle &&
       !t.description.toLowerCase().includes(searchTitle.toLowerCase()) &&
