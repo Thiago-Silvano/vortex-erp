@@ -954,7 +954,7 @@ export default function PromoMakerPage() {
                     <Button variant="outline" size="sm" className="w-full gap-1 mb-1" onClick={addTextElement}>
                       <Plus className="h-3.5 w-3.5" /> Texto
                     </Button>
-                    <div className="flex gap-1 mb-2">
+                    <div className="flex gap-1 mb-1">
                       <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => addShapeElement('rectangle')}>
                         <RectangleVertical className="h-3 w-3" /> Ret.
                       </Button>
@@ -964,6 +964,19 @@ export default function PromoMakerPage() {
                       <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => addShapeElement('circle')}>
                         <Circle className="h-3 w-3" /> Circ.
                       </Button>
+                      <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => addShapeElement('line')}>
+                        <Minus className="h-3 w-3" /> Linha
+                      </Button>
+                    </div>
+                    <div className="mb-2">
+                      <Label className="text-[10px] text-muted-foreground mb-1 block">Figurinhas</Label>
+                      <div className="flex gap-1 flex-wrap">
+                        {STICKER_DEFS.map(s => (
+                          <Button key={s.id} variant="outline" size="sm" className="gap-1 text-xs h-8" onClick={() => addStickerElement(s.id)} title={s.name}>
+                            <s.Icon className="h-3.5 w-3.5" />
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                     {[...elements].reverse().map(el => (
                       <div
