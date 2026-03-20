@@ -1021,9 +1021,25 @@ export default function PromoMakerPage() {
                       <div
                         key={el.id}
                         className={`flex items-center gap-1 p-1.5 rounded text-xs cursor-pointer transition-colors ${
-                          selectedId === el.id ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted'
+                          selectedId === el.id || selectedIds.includes(el.id) ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted'
                         }`}
-                        onClick={() => setSelectedId(el.id)}
+                        onClick={(e) => {
+                          if (e.ctrlKey || e.metaKey) {
+                            setSelectedIds(prev => {
+                              const current = prev.length > 0 ? prev : (selectedId ? [selectedId] : []);
+                              if (current.includes(el.id)) {
+                                const next = current.filter(id => id !== el.id);
+                                setSelectedId(next.length >= 1 ? next[next.length - 1] : null);
+                                return next;
+                              }
+                              setSelectedId(el.id);
+                              return [...current.filter(id => id !== el.id), el.id];
+                            });
+                          } else {
+                            setSelectedId(el.id);
+                            setSelectedIds([]);
+                          }
+                        }}
                       >
                         {el.type === 'text' ? (
                           <Type className="h-3 w-3 text-muted-foreground flex-shrink-0" />
