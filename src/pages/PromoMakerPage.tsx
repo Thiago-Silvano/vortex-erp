@@ -357,6 +357,7 @@ export default function PromoMakerPage() {
       borderRadius: shape === 'circle' ? 50 : 0,
       opacity: shape === 'line' ? 1 : 0.8, locked: false,
       gradientFade: 'none' as GradientFade,
+      gradientFadeIntensity: 1,
       rotation: 0,
       shadow: 'none',
     };
