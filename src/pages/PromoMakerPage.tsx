@@ -163,6 +163,10 @@ export default function PromoMakerPage() {
   const [imageInShape, setImageInShape] = useState(false);
   const [imageShapeId, setImageShapeId] = useState('');
   const [rightTab, setRightTab] = useState('element');
+  const [logoSize, setLogoSize] = useState(8);
+  const [logoOpacity, setLogoOpacity] = useState(0.6);
+  const [logoColor, setLogoColor] = useState('');
+  const [showLogo, setShowLogo] = useState(true);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
   const [saveTemplateName, setSaveTemplateName] = useState('');
 
