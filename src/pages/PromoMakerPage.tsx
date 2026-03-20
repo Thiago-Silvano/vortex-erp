@@ -50,7 +50,7 @@ type GradientFade = 'none' | 'left-right' | 'right-left' | 'top-bottom' | 'botto
 interface ShapeElement {
   id: string;
   type: 'shape';
-  shape: 'rectangle' | 'circle' | 'square';
+  shape: 'rectangle' | 'circle' | 'square' | 'line';
   x: number;
   y: number;
   width: number;
@@ -62,9 +62,24 @@ interface ShapeElement {
   opacity: number;
   locked: boolean;
   gradientFade: GradientFade;
+  rotation: number;
+  shadow: string;
 }
 
-type CanvasElement = TextElement | ShapeElement;
+interface StickerElement {
+  id: string;
+  type: 'sticker';
+  sticker: string;
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+  opacity: number;
+  rotation: number;
+  locked: boolean;
+}
+
+type CanvasElement = TextElement | ShapeElement | StickerElement;
 
 interface ImageConfig {
   url: string;
