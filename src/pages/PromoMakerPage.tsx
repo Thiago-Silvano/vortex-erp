@@ -44,6 +44,8 @@ interface TextElement {
   width: number;
 }
 
+type GradientFade = 'none' | 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top';
+
 interface ShapeElement {
   id: string;
   type: 'shape';
@@ -58,6 +60,7 @@ interface ShapeElement {
   borderRadius: number;
   opacity: number;
   locked: boolean;
+  gradientFade: GradientFade;
 }
 
 type CanvasElement = TextElement | ShapeElement;
@@ -203,7 +206,7 @@ export default function PromoMakerPage() {
       height: shape === 'circle' ? 20 : shape === 'square' ? 20 : 25,
       color: '#d4af37', borderColor: 'transparent', borderWidth: 0,
       borderRadius: shape === 'circle' ? 50 : 0,
-      opacity: 0.8, locked: false,
+      opacity: 0.8, locked: false, gradientFade: 'none' as GradientFade,
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
@@ -368,6 +371,16 @@ export default function PromoMakerPage() {
               opacity: el.opacity,
               pointerEvents: el.locked ? 'none' : 'auto',
               userSelect: 'none',
+              ...(el.gradientFade !== 'none' ? {
+                WebkitMaskImage: el.gradientFade === 'left-right' ? 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : el.gradientFade === 'right-left' ? 'linear-gradient(to left, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : el.gradientFade === 'top-bottom' ? 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : 'linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))',
+                maskImage: el.gradientFade === 'left-right' ? 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : el.gradientFade === 'right-left' ? 'linear-gradient(to left, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : el.gradientFade === 'top-bottom' ? 'linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0))'
+                  : 'linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))',
+              } : {}),
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
             onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
@@ -635,6 +648,20 @@ export default function PromoMakerPage() {
           <Slider value={[sel.borderRadius]} onValueChange={([v]) => updateEl(sel.id, { borderRadius: v })} min={0} max={200} step={1} />
         </div>
       )}
+
+      <div>
+        <Label className="text-xs">Degradê de opacidade</Label>
+        <Select value={sel.gradientFade} onValueChange={(v: GradientFade) => updateEl(sel.id, { gradientFade: v })}>
+          <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Nenhum</SelectItem>
+            <SelectItem value="left-right">Esquerda → Direita</SelectItem>
+            <SelectItem value="right-left">Direita → Esquerda</SelectItem>
+            <SelectItem value="top-bottom">Cima → Baixo</SelectItem>
+            <SelectItem value="bottom-top">Baixo → Cima</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <Separator />
 
