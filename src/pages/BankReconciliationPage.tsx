@@ -28,6 +28,7 @@ import {
   ArrowUpCircle,
   Banknote,
   Search,
+  Plus,
 } from "lucide-react";
 
 interface BankAccount {
