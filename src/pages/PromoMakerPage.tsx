@@ -355,7 +355,8 @@ export default function PromoMakerPage() {
     if (els.length < 2) return;
     const ref = els.reduce((a, b) => a.y < b.y ? a : b);
     setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, y: ref.y } as CanvasElement : e));
-    toast.success('Elementos alinhados horizontalmente');
+    setAlignMode('horizontal');
+    toast.success('Elementos alinhados horizontalmente. Ajuste o espaçamento abaixo.');
   };
 
   const alignVertically = () => {
@@ -363,7 +364,33 @@ export default function PromoMakerPage() {
     if (els.length < 2) return;
     const ref = els.reduce((a, b) => a.x < b.x ? a : b);
     setElements(prev => prev.map(e => selectedIds.includes(e.id) ? { ...e, x: ref.x } as CanvasElement : e));
-    toast.success('Elementos alinhados verticalmente');
+    setAlignMode('vertical');
+    toast.success('Elementos alinhados verticalmente. Ajuste o espaçamento abaixo.');
+  };
+
+  const applySpacing = (spacing: number) => {
+    setAlignSpacing(spacing);
+    const els = getMultiSelectedElements();
+    if (els.length < 2) return;
+    if (alignMode === 'horizontal') {
+      // Sort by X (left to right), distribute with spacing
+      const sorted = [...els].sort((a, b) => a.x - b.x);
+      const startX = sorted[0].x;
+      setElements(prev => prev.map(e => {
+        const idx = sorted.findIndex(s => s.id === e.id);
+        if (idx < 0) return e;
+        return { ...e, x: startX + idx * spacing } as CanvasElement;
+      }));
+    } else if (alignMode === 'vertical') {
+      // Sort by Y (top to bottom), distribute with spacing
+      const sorted = [...els].sort((a, b) => a.y - b.y);
+      const startY = sorted[0].y;
+      setElements(prev => prev.map(e => {
+        const idx = sorted.findIndex(s => s.id === e.id);
+        if (idx < 0) return e;
+        return { ...e, y: startY + idx * spacing } as CanvasElement;
+      }));
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
