@@ -129,6 +129,26 @@ const defaultImage: ImageConfig = {
 let idCounter = 100;
 const genId = () => String(++idCounter);
 
+const SAVED_TEMPLATES_KEY = 'promo-maker-saved-templates';
+
+interface SavedTemplate {
+  name: string;
+  bg: string;
+  bgGradient: string;
+  format: FormatKey;
+  elements: CanvasElement[];
+  imageConfig: ImageConfig;
+  imageInShape: boolean;
+  imageShapeId: string;
+}
+
+function loadSavedTemplates(): SavedTemplate[] {
+  try {
+    const raw = localStorage.getItem(SAVED_TEMPLATES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
 export default function PromoMakerPage() {
   const [format, setFormat] = useState<FormatKey>('1:1');
   const [bgColor, setBgColor] = useState('#0d1b2a');
@@ -138,6 +158,10 @@ export default function PromoMakerPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [preview, setPreview] = useState<'feed' | 'stories' | 'whatsapp' | null>(null);
   const [dragInfo, setDragInfo] = useState<{ id: string; startX: number; startY: number; elX: number; elY: number } | null>(null);
+  const [imageInShape, setImageInShape] = useState(false);
+  const [imageShapeId, setImageShapeId] = useState('');
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(loadSavedTemplates);
+  const [saveTemplateName, setSaveTemplateName] = useState('');
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
