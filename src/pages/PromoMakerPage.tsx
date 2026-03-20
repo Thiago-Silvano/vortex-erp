@@ -1182,12 +1182,30 @@ export default function PromoMakerPage() {
 
               <TabsContent value="element" className="flex-1 overflow-hidden m-0">
                 <ScrollArea className="h-full">
-                  {selected ? (
+                  {selectedIds.length >= 2 ? (
+                    <div className="p-3 space-y-3">
+                      <div className="text-sm font-medium text-foreground">{selectedIds.length} elementos selecionados</div>
+                      <p className="text-xs text-muted-foreground">Segure Ctrl e clique para selecionar múltiplos elementos</p>
+                      <Separator />
+                      <Label className="text-xs font-semibold">Alinhamento</Label>
+                      <div className="space-y-2">
+                        <Button variant="outline" size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignHorizontally}>
+                          <AlignHorizontalDistributeCenter className="h-4 w-4" />
+                          Alinhar horizontalmente (mesmo Y do elemento mais acima)
+                        </Button>
+                        <Button variant="outline" size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignVertically}>
+                          <AlignVerticalDistributeCenter className="h-4 w-4" />
+                          Alinhar verticalmente (mesmo X do elemento mais à esquerda)
+                        </Button>
+                      </div>
+                    </div>
+                  ) : selected ? (
                     selected.type === 'text' ? renderTextProps(selected) : selected.type === 'sticker' ? renderStickerProps(selected) : renderShapeProps(selected)
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm p-4">
                       <Type className="h-8 w-8 mb-2 opacity-40" />
                       <p>Selecione um elemento no canvas ou nas camadas</p>
+                      <p className="text-xs mt-1 text-muted-foreground">Ctrl+clique para selecionar múltiplos</p>
                     </div>
                   )}
                 </ScrollArea>
