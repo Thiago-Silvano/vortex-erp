@@ -129,8 +129,7 @@ const defaultImage: ImageConfig = {
   offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0.4,
 };
 
-let idCounter = 100;
-const genId = () => String(++idCounter);
+const genId = () => `el_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 const SAVED_TEMPLATES_KEY = 'promo-maker-saved-templates';
 
