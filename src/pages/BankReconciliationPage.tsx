@@ -829,6 +829,14 @@ export default function BankReconciliationPage() {
                     </Badge>
                   )}
                 </CardTitle>
+                <div className="flex gap-1 mt-1">
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => openQuickCreate('payable')}>
+                    <Plus className="h-3 w-3" /> Pagar
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => openQuickCreate('receivable')}>
+                    <Plus className="h-3 w-3" /> Receber
+                  </Button>
+                </div>
                 <div className="flex items-center gap-2 mt-2">
                   <div className="relative flex-1">
                     <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
