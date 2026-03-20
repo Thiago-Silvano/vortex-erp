@@ -14,8 +14,9 @@ import {
   Download, Image as ImageIcon, Type, Palette, Eye,
   AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline,
   Square, RectangleVertical, Plus, Trash2, Circle,
-  ChevronUp, ChevronDown, Copy, Lock, Unlock,
+  ChevronUp, ChevronDown, Copy, Lock, Unlock, Save,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // ─── Types ───
