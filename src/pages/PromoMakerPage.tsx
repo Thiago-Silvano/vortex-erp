@@ -1219,15 +1219,36 @@ export default function PromoMakerPage() {
                       <Separator />
                       <Label className="text-xs font-semibold">Alinhamento</Label>
                       <div className="space-y-2">
-                        <Button variant="outline" size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignHorizontally}>
+                        <Button variant={alignMode === 'horizontal' ? 'default' : 'outline'} size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignHorizontally}>
                           <AlignHorizontalDistributeCenter className="h-4 w-4" />
-                          Alinhar horizontalmente (mesmo Y do elemento mais acima)
+                          Alinhar horizontalmente (mesmo Y)
                         </Button>
-                        <Button variant="outline" size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignVertically}>
+                        <Button variant={alignMode === 'vertical' ? 'default' : 'outline'} size="sm" className="w-full gap-2 justify-start text-xs" onClick={alignVertically}>
                           <AlignVerticalDistributeCenter className="h-4 w-4" />
-                          Alinhar verticalmente (mesmo X do elemento mais à esquerda)
+                          Alinhar verticalmente (mesmo X)
                         </Button>
                       </div>
+                      {alignMode !== 'none' && (
+                        <>
+                          <Separator />
+                          <div>
+                            <Label className="text-xs font-semibold flex justify-between">
+                              Espaçamento entre elementos
+                              <span className="text-muted-foreground">{alignSpacing}%</span>
+                            </Label>
+                            <p className="text-[10px] text-muted-foreground mb-2">
+                              {alignMode === 'horizontal' ? 'Distância horizontal entre cada elemento' : 'Distância vertical entre cada elemento'}
+                            </p>
+                            <Slider
+                              value={[alignSpacing]}
+                              onValueChange={([v]) => applySpacing(v)}
+                              min={0}
+                              max={30}
+                              step={0.5}
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   ) : selected ? (
                     selected.type === 'text' ? renderTextProps(selected) : selected.type === 'sticker' ? renderStickerProps(selected) : renderShapeProps(selected)
