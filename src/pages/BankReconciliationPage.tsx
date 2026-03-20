@@ -81,6 +81,7 @@ const statusLabels: Record<string, string> = {
 
 export default function BankReconciliationPage() {
   const { activeCompany } = useCompany();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState("");
