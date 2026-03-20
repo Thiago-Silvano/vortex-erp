@@ -44,6 +44,8 @@ interface TextElement {
   width: number;
 }
 
+type GradientFade = 'none' | 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top';
+
 interface ShapeElement {
   id: string;
   type: 'shape';
@@ -58,6 +60,7 @@ interface ShapeElement {
   borderRadius: number;
   opacity: number;
   locked: boolean;
+  gradientFade: GradientFade;
 }
 
 type CanvasElement = TextElement | ShapeElement;
