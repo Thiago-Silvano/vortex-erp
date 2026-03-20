@@ -1182,6 +1182,12 @@ export default function PromoMakerPage() {
               <SelectItem value="bottom-top">Baixo → Cima</SelectItem>
             </SelectContent>
           </Select>
+          {sel.gradientFade !== 'none' && (
+            <div className="mt-2">
+              <Label className="text-xs flex justify-between">Intensidade <span className="text-muted-foreground">{Math.round((sel.gradientFadeIntensity ?? 1) * 100)}%</span></Label>
+              <Slider value={[sel.gradientFadeIntensity ?? 1]} onValueChange={([v]) => updateEl(sel.id, { gradientFadeIntensity: v })} min={0.1} max={1} step={0.05} />
+            </div>
+          )}
         </div>
       )}
 
