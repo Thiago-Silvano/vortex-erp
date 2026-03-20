@@ -232,6 +232,7 @@ export default function AccountsReceivablePage() {
   const selectedClientName = clients.find(c => c.id === manualClientId)?.full_name || '';
 
   const handleManualSave = async () => {
+    if (!activeCompany?.id) { toast.error('Aguarde a empresa carregar antes de salvar'); return; }
     if (!manualClientId) { toast.error('Cliente é obrigatório'); return; }
     if (manualAmount <= 0) { toast.error('Valor deve ser maior que zero'); return; }
     const records = [];

@@ -223,10 +223,10 @@ export default function AccountsPayablePage() {
   };
 
   const handleManualSave = async () => {
+    if (!activeCompany?.id) { toast.error('Aguarde a empresa carregar antes de salvar'); return; }
     if (!manualSupplierId) { toast.error('Fornecedor é obrigatório'); return; }
     if (!manualCostCenter) { toast.error('Centro de custo é obrigatório'); return; }
     if (manualAmount <= 0) { toast.error('Valor deve ser maior que zero'); return; }
-    const records = [];
     if (manualIsInstallment && installmentRows.length >= 2) {
       for (let i = 0; i < installmentRows.length; i++) {
         records.push({
