@@ -297,9 +297,10 @@ export default function BankReconciliationPage() {
         for (const acct of accts) {
           const { data: txData } = await supabase
             .from("bank_transactions")
-            .select("amount")
+            .select("amount, reconciliation_status")
             .eq("bank_account_id", acct.id)
-            .eq("empresa_id", activeCompany.id);
+            .eq("empresa_id", activeCompany.id)
+            .limit(10000);
           const txSum = (txData || []).reduce((sum: number, t: any) => sum + Number(t.amount), 0);
           balances[acct.id] = Number(acct.initial_balance) + txSum;
         }
