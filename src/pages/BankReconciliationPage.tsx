@@ -35,6 +35,7 @@ import {
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
+  Star,
 } from "lucide-react";
 
 interface BankAccount {
@@ -45,6 +46,10 @@ interface BankAccount {
   agency: string;
   color: string;
   empresa_id: string;
+  initial_balance: number;
+  bank_code: string;
+  is_default: boolean;
+  holder_name: string;
 }
 interface BankTx {
   id: string;
@@ -97,6 +102,7 @@ export default function BankReconciliationPage() {
   const [searchParams] = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [accountBalances, setAccountBalances] = useState<Record<string, number>>({});
   const [selectedAccount, setSelectedAccount] = useState(searchParams.get("account") || "");
   const [transactions, setTransactions] = useState<BankTx[]>([]);
   const [titles, setTitles] = useState<FinancialTitle[]>([]);
@@ -180,11 +186,26 @@ export default function BankReconciliationPage() {
     if (!activeCompany) return;
     supabase
       .from("bank_accounts")
-      .select("id, bank_name, account_number, account_digit, agency, color, empresa_id")
+      .select("id, bank_name, account_number, account_digit, agency, color, empresa_id, initial_balance, bank_code, is_default, holder_name")
       .eq("empresa_id", activeCompany.id)
       .eq("status", "active")
       .order("bank_name")
-      .then(({ data }) => setAccounts((data as any[]) || []));
+      .then(async ({ data }) => {
+        const accts = (data as any[]) || [];
+        setAccounts(accts);
+        // Calculate current balance for each account
+        const balances: Record<string, number> = {};
+        for (const acct of accts) {
+          const { data: txData } = await supabase
+            .from("bank_transactions")
+            .select("amount")
+            .eq("bank_account_id", acct.id)
+            .eq("empresa_id", activeCompany.id);
+          const txSum = (txData || []).reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+          balances[acct.id] = Number(acct.initial_balance) + txSum;
+        }
+        setAccountBalances(balances);
+      });
   }, [activeCompany]);
 
   const loadTransactions = useCallback(async () => {
@@ -674,6 +695,60 @@ export default function BankReconciliationPage() {
             )}
           </div>
         </div>
+
+        {/* Bank accounts balance overview */}
+        {accounts.length > 0 && (
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Banco</TableHead>
+                    <TableHead>Agência / Conta</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Titular</TableHead>
+                    <TableHead className="text-right">Saldo Atual</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {accounts.map((a) => {
+                    const balance = accountBalances[a.id] ?? Number(a.initial_balance);
+                    return (
+                      <TableRow
+                        key={a.id}
+                        className={`cursor-pointer transition-colors ${selectedAccount === a.id ? 'bg-accent' : 'hover:bg-muted/50'}`}
+                        onClick={() => setSelectedAccount(a.id)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: a.color }} />
+                            <div>
+                              <p className="font-medium text-sm">{a.bank_name}</p>
+                              {a.bank_code && <p className="text-xs text-muted-foreground">Cód: {a.bank_code}</p>}
+                            </div>
+                            {a.is_default && <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{a.agency} / {a.account_number}{a.account_digit ? `-${a.account_digit}` : ''}</TableCell>
+                        <TableCell className="text-sm">Corrente</TableCell>
+                        <TableCell className="text-sm">{a.holder_name}</TableCell>
+                        <TableCell className={`text-right text-sm font-semibold ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {fmt(balance)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={selectedAccount === a.id ? 'default' : 'secondary'}>
+                            {selectedAccount === a.id ? 'Selecionada' : 'Ativa'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Dashboard cards */}
         {selectedAccount && (
