@@ -114,6 +114,8 @@ export default function AccountsPayablePage() {
     fetch_();
   };
 
+  const [manualDialog, setManualDialog] = useState(false);
+
   const [cameFromReconciliation, setCameFromReconciliation] = useState(false);
 
   // Auto-open dialog from URL param only after company is ready
