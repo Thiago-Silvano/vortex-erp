@@ -72,6 +72,7 @@ export default function SuppliersPage() {
   );
 
   const handleCnpjSearch = async () => {
+    if (isPF) return;
     const digits = unmask(form.cnpj);
     if (digits.length !== 14) { toast.error('CNPJ deve ter 14 dígitos'); return; }
     setCnpjLoading(true);
