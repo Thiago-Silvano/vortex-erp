@@ -97,7 +97,23 @@ export default function AccountsPayablePage() {
     fetch_();
   };
 
-  const [manualDialog, setManualDialog] = useState(false);
+  const [confirmUndoId, setConfirmUndoId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleUndo = async (id: string) => {
+    await supabase.from('accounts_payable').update({ status: 'open', payment_date: null }).eq('id', id);
+    toast.success('Pagamento desfeito! Status retornado para "Em aberto".');
+    setConfirmUndoId(null);
+    fetch_();
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from('accounts_payable').delete().eq('id', id);
+    toast.success('Lançamento excluído!');
+    setConfirmDeleteId(null);
+    fetch_();
+  };
+
   const [cameFromReconciliation, setCameFromReconciliation] = useState(false);
 
   // Auto-open dialog from URL param only after company is ready
