@@ -106,7 +106,10 @@ export default function SuppliersPage() {
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Nome é obrigatório'); return; }
-    if (!unmask(form.cnpj)) { toast.error('CNPJ é obrigatório'); return; }
+    if (!unmask(form.cnpj)) { toast.error(isPF ? 'CPF é obrigatório' : 'CNPJ é obrigatório'); return; }
+    const docDigits = unmask(form.cnpj);
+    if (isPF && docDigits.length !== 11) { toast.error('CPF deve ter 11 dígitos'); return; }
+    if (!isPF && docDigits.length !== 14) { toast.error('CNPJ deve ter 14 dígitos'); return; }
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { toast.error('Email inválido'); return; }
 
     if (editingId) {
