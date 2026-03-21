@@ -76,6 +76,15 @@ interface FinancialTitle {
   client_name?: string;
   supplier_name?: string;
   is_reconciled?: boolean;
+  notes?: string;
+}
+
+interface PartialPaymentInfo {
+  tx: BankTx;
+  titles: FinancialTitle[];
+  bankAmount: number;
+  titleTotal: number;
+  remaining: number;
 }
 
 type SortDir = 'asc' | 'desc';
@@ -128,6 +137,9 @@ export default function BankReconciliationPage() {
   const [qcDueDate, setQcDueDate] = useState("");
   const [qcClientName, setQcClientName] = useState("");
   const [qcSaving, setQcSaving] = useState(false);
+
+  // Partial payment
+  const [partialPayment, setPartialPayment] = useState<PartialPaymentInfo | null>(null);
 
   const resetQuickCreate = () => {
     setQuickCreateType(null);
@@ -228,11 +240,11 @@ export default function BankReconciliationPage() {
     const [payRes, recRes] = await Promise.all([
       supabase
         .from("accounts_payable")
-        .select("id, description, amount, due_date, status, supplier_id, sale_id")
+        .select("id, description, amount, due_date, status, supplier_id, sale_id, notes")
         .eq("empresa_id", titlesEmpresaId),
       supabase
         .from("receivables")
-        .select("id, description, amount, due_date, status, client_name, sale_id")
+        .select("id, description, amount, due_date, status, client_name, sale_id, notes")
         .eq("empresa_id", titlesEmpresaId),
     ]);
     // Exclude titles linked to draft sales
@@ -272,7 +284,8 @@ export default function BankReconciliationPage() {
         due_date: p.due_date || "",
         status: p.status,
         supplier_name: "",
-        is_reconciled: reconciledIds.has(p.id),
+        is_reconciled: reconciledIds.has(p.id) && p.status !== 'partial',
+        notes: p.notes || "",
       }));
     const receivables: FinancialTitle[] = ((recRes.data as any[]) || [])
       .filter((r) => !r.sale_id || !draftIds.includes(r.sale_id))
@@ -284,7 +297,8 @@ export default function BankReconciliationPage() {
         due_date: r.due_date || "",
         status: r.status,
         client_name: r.client_name || "",
-        is_reconciled: reconciledIds.has(r.id),
+        is_reconciled: reconciledIds.has(r.id) && r.status !== 'partial',
+        notes: r.notes || "",
       }));
     setTitles([...payables, ...receivables]);
     setLoading(false);
@@ -539,18 +553,39 @@ export default function BankReconciliationPage() {
 
   // Manual reconcile (single)
   const manualReconcile = async (tx: BankTx, title: FinancialTitle) => {
-    await multiReconcile(tx, [title]);
+    await attemptReconcile(tx, [title]);
   };
 
-  // Multi-reconcile: reconcile one bank tx with multiple titles
-  const multiReconcile = async (tx: BankTx, selectedTitles: FinancialTitle[]) => {
+  // Check for partial payment before reconciling
+  const attemptReconcile = async (tx: BankTx, selectedTitles: FinancialTitle[]) => {
     if (selectedTitles.length === 0) return;
+    const bankAmount = Math.abs(Number(tx.amount));
+    const titleTotal = selectedTitles.reduce((s, t) => s + Number(t.amount), 0);
+
+    if (bankAmount < titleTotal - 0.01 && selectedTitles.length === 1) {
+      // Partial payment detected - show confirmation
+      setPartialPayment({
+        tx,
+        titles: selectedTitles,
+        bankAmount,
+        titleTotal,
+        remaining: titleTotal - bankAmount,
+      });
+      return;
+    }
+
+    await executeReconcile(tx, selectedTitles, false);
+  };
+
+  // Execute reconciliation (full or partial)
+  const executeReconcile = async (tx: BankTx, selectedTitles: FinancialTitle[], isPartial: boolean) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     const titleIds = selectedTitles.map(t => t.id).join(',');
     const titleTypes = [...new Set(selectedTitles.map(t => t.type === "payable" ? "pagar" : "receber"))].join(',');
+    const bankAmount = Math.abs(Number(tx.amount));
 
     await supabase
       .from("bank_transactions")
@@ -558,37 +593,71 @@ export default function BankReconciliationPage() {
         reconciliation_status: "reconciled",
         reconciled_with_type: titleTypes,
         reconciled_with_id: titleIds,
-        reconciliation_note: `Conciliação manual com ${selectedTitles.length} título(s)`,
+        reconciliation_note: isPartial
+          ? `Baixa parcial - Pago: ${fmt(bankAmount)}, Saldo restante: ${fmt(selectedTitles[0].amount - bankAmount)}`
+          : `Conciliação manual com ${selectedTitles.length} título(s)`,
       } as any)
       .eq("id", tx.id);
 
     for (const title of selectedTitles) {
-      if (title.type === "payable") {
-        await supabase
-          .from("accounts_payable")
-          .update({ status: "paid", payment_date: tx.transaction_date } as any)
-          .eq("id", title.id);
+      if (isPartial) {
+        const remaining = Number(title.amount) - bankAmount;
+        const partialNote = `Baixa parcial em ${new Date(tx.transaction_date + 'T12:00:00').toLocaleDateString('pt-BR')}: ${fmt(bankAmount)} pago. Saldo anterior: ${fmt(title.amount)}`;
+        if (title.type === "payable") {
+          await supabase
+            .from("accounts_payable")
+            .update({
+              status: "partial",
+              amount: remaining,
+              notes: partialNote + (title.notes ? `\n${title.notes}` : ''),
+            } as any)
+            .eq("id", title.id);
+        } else {
+          await supabase
+            .from("receivables")
+            .update({
+              status: "partial",
+              amount: remaining,
+              notes: partialNote + (title.notes ? `\n${title.notes}` : ''),
+            } as any)
+            .eq("id", title.id);
+        }
       } else {
-        await supabase
-          .from("receivables")
-          .update({ status: "paid", payment_date: tx.transaction_date } as any)
-          .eq("id", title.id);
+        if (title.type === "payable") {
+          await supabase
+            .from("accounts_payable")
+            .update({ status: "paid", payment_date: tx.transaction_date } as any)
+            .eq("id", title.id);
+        } else {
+          await supabase
+            .from("receivables")
+            .update({ status: "paid", payment_date: tx.transaction_date } as any)
+            .eq("id", title.id);
+        }
       }
     }
 
     await supabase.from("reconciliation_log").insert({
       empresa_id: activeCompany!.id,
       bank_transaction_id: tx.id,
-      action: "manual_reconcile",
+      action: isPartial ? "partial_reconcile" : "manual_reconcile",
       reconciled_with_type: titleTypes,
       reconciled_with_id: titleIds,
       user_email: user?.email || "",
-      details: `Conciliação manual com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')}`,
+      details: isPartial
+        ? `Baixa parcial: ${fmt(bankAmount)} de ${fmt(selectedTitles[0].amount)}`
+        : `Conciliação manual com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')}`,
     } as any);
 
     setSelectedTitleIds(new Set());
-    toast.success(`Lançamento conciliado com ${selectedTitles.length} título(s)`);
+    setPartialPayment(null);
+    toast.success(isPartial ? "Baixa parcial registrada com sucesso" : `Lançamento conciliado com ${selectedTitles.length} título(s)`);
     loadTransactions();
+  };
+
+  // Multi-reconcile: reconcile one bank tx with multiple titles
+  const multiReconcile = async (tx: BankTx, selectedTitles: FinancialTitle[]) => {
+    await attemptReconcile(tx, selectedTitles);
   };
 
   // Undo reconciliation (supports multi-id)
@@ -720,7 +789,7 @@ export default function BankReconciliationPage() {
 
   const filteredTitles = titles.filter((t) => {
     if (t.is_reconciled) return false;
-    if (t.status === 'paid') return false;
+    if (t.status === 'paid' || t.status === 'received') return false;
     if (
       searchTitle &&
       !t.description.toLowerCase().includes(searchTitle.toLowerCase()) &&
@@ -1231,20 +1300,29 @@ export default function BankReconciliationPage() {
                               {t.type === "payable" ? "Pagar" : "Receber"}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs max-w-[200px] truncate">
-                            {t.description}
+                          <TableCell className="text-xs max-w-[200px]">
+                            <span className="truncate block">{t.description}</span>
                             {t.client_name && <span className="block text-muted-foreground">{t.client_name}</span>}
+                            {t.status === 'partial' && (
+                              <span className="block text-[10px] text-blue-600 font-medium mt-0.5">⚠ Baixa parcial - Saldo restante</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-xs whitespace-nowrap">
                             {t.due_date ? new Date(t.due_date + "T12:00:00").toLocaleDateString("pt-BR") : ""}
                           </TableCell>
-                          <TableCell className="text-xs text-right font-medium">{fmt(t.amount)}</TableCell>
+                          <TableCell className="text-xs text-right font-medium">
+                            {fmt(t.amount)}
+                          </TableCell>
                           <TableCell>
                             <Badge
                               variant="outline"
-                              className={`text-[10px] ${t.is_reconciled ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-amber-100 text-amber-800 border-amber-200"}`}
+                              className={`text-[10px] ${
+                                t.is_reconciled ? "bg-emerald-100 text-emerald-800 border-emerald-200" :
+                                t.status === 'partial' ? "bg-blue-100 text-blue-800 border-blue-200" :
+                                "bg-amber-100 text-amber-800 border-amber-200"
+                              }`}
                             >
-                              {t.is_reconciled ? "Conciliado" : "Pendente"}
+                              {t.is_reconciled ? "Conciliado" : t.status === 'partial' ? "Baixa Parcial" : "Pendente"}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -1347,6 +1425,58 @@ export default function BankReconciliationPage() {
               {qcSaving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Partial Payment Confirmation Dialog */}
+      <Dialog open={!!partialPayment} onOpenChange={(open) => { if (!open) setPartialPayment(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              Baixa Parcial Detectada
+            </DialogTitle>
+          </DialogHeader>
+          {partialPayment && (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Valor do título:</span>
+                  <span className="font-semibold">{fmt(partialPayment.titleTotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Valor no extrato:</span>
+                  <span className="font-semibold">{fmt(partialPayment.bankAmount)}</span>
+                </div>
+                <div className="border-t pt-2 flex justify-between">
+                  <span className="text-muted-foreground font-medium">Saldo restante:</span>
+                  <span className="font-bold text-amber-600">{fmt(partialPayment.remaining)}</span>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                O valor do extrato bancário é menor que o título financeiro. Deseja registrar como <strong>baixa parcial</strong>?
+                O título permanecerá em aberto com o saldo restante de <strong>{fmt(partialPayment.remaining)}</strong>.
+              </p>
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs text-amber-700 dark:text-amber-400">
+                <p className="font-medium mb-1">O que acontece:</p>
+                <ul className="list-disc ml-4 space-y-0.5">
+                  <li>O lançamento bancário será marcado como conciliado</li>
+                  <li>O título será atualizado para o saldo restante ({fmt(partialPayment.remaining)})</li>
+                  <li>O status do título ficará como "Baixa Parcial"</li>
+                </ul>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setPartialPayment(null)}>Cancelar</Button>
+                <Button
+                  onClick={() => executeReconcile(partialPayment.tx, partialPayment.titles, true)}
+                  className="gap-2"
+                >
+                  <Check className="h-4 w-4" />
+                  Confirmar Baixa Parcial
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </AppLayout>

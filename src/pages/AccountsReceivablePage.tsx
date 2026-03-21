@@ -185,7 +185,7 @@ export default function AccountsReceivablePage() {
       if (r.status === 'received') { received += r.amount; return; }
       if (r.due_date && r.due_date < todayStr && r.status !== 'received') { overdue += r.amount; return; }
       if (r.due_date && r.due_date === todayStr && r.status !== 'received') { dueToday += r.amount; return; }
-      if (r.status === 'pending') { pending += r.amount; }
+      if (r.status === 'pending' || r.status === 'partial') { pending += r.amount; }
     });
     return { overdue, dueToday, pending, received };
   }, [periodItems]);
@@ -208,8 +208,8 @@ export default function AccountsReceivablePage() {
     });
   }, [periodItems, filterStatus, filterClient, filterCostCenter, sortKey, sortDir]);
 
-  const statusLabel: Record<string, string> = { pending: 'Em aberto', received: 'Pago', paid: 'Pago', overdue: 'Em atraso' };
-  const statusClasses = (s: string) => s === 'received' || s === 'paid' ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' : s === 'overdue' ? 'bg-red-500/15 text-red-700 border-red-500/30' : 'bg-yellow-500/15 text-yellow-700 border-yellow-500/30';
+  const statusLabel: Record<string, string> = { pending: 'Em aberto', received: 'Pago', paid: 'Pago', overdue: 'Em atraso', partial: 'Baixa Parcial' };
+  const statusClasses = (s: string) => s === 'received' || s === 'paid' ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' : s === 'overdue' ? 'bg-red-500/15 text-red-700 border-red-500/30' : s === 'partial' ? 'bg-blue-500/15 text-blue-700 border-blue-500/30' : 'bg-yellow-500/15 text-yellow-700 border-yellow-500/30';
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const openMark = (id: string) => {
@@ -363,7 +363,7 @@ export default function AccountsReceivablePage() {
                         <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openEdit(r); }} title="Editar">
                           <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                        {r.status === 'pending' && (
+                        {(r.status === 'pending' || r.status === 'partial') && (
                           <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como recebido">
                             <Check className="h-4 w-4 text-primary" />
                           </Button>
