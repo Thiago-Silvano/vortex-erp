@@ -53,6 +53,7 @@ export default function SuppliersPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [isPF, setIsPF] = useState(false);
 
   const fetchSuppliers = async () => {
     let query = supabase.from('suppliers').select('*').order('name');
