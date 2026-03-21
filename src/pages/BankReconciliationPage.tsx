@@ -73,6 +73,7 @@ interface FinancialTitle {
   amount: number;
   due_date: string;
   status: string;
+  payment_date?: string | null;
   client_name?: string;
   supplier_name?: string;
   is_reconciled?: boolean;
@@ -85,6 +86,11 @@ interface PartialPaymentInfo {
   bankAmount: number;
   titleTotal: number;
   remaining: number;
+}
+
+interface LinkedTitleRef {
+  id: string;
+  type: FinancialTitle["type"];
 }
 
 type SortDir = 'asc' | 'desc';
@@ -141,6 +147,85 @@ export default function BankReconciliationPage() {
 
   // Partial payment
   const [partialPayment, setPartialPayment] = useState<PartialPaymentInfo | null>(null);
+
+  const buildLinkedTitlesTag = (linkedTitles: LinkedTitleRef[]) => {
+    const links = linkedTitles.map((title) => `${title.type}:${title.id}`).join("|");
+    const ids = linkedTitles.map((title) => title.id).join(",");
+    return `[LINKS:${links}][IDs:${ids}]`;
+  };
+
+  const parseLinkedTitles = (
+    txLike: Pick<BankTx, "reconciled_with_id" | "reconciled_with_type" | "reconciliation_note">,
+  ): LinkedTitleRef[] => {
+    const deduped = new Map<string, LinkedTitleRef>();
+    const note = txLike.reconciliation_note || "";
+    const linksMatch = note.match(/\[LINKS:([^\]]+)\]/);
+
+    if (linksMatch) {
+      linksMatch[1]
+        .split("|")
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .forEach((entry) => {
+          const [rawType, id] = entry.split(":");
+          if (!id) return;
+          const type = rawType === "payable" || rawType === "pagar" ? "payable" : "receivable";
+          deduped.set(id, { id, type });
+        });
+    }
+
+    if (deduped.size > 0) {
+      return Array.from(deduped.values());
+    }
+
+    const ids = new Set<string>();
+    if (txLike.reconciled_with_id) {
+      txLike.reconciled_with_id
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .forEach((id) => ids.add(id));
+    }
+
+    const idsMatch = note.match(/\[IDs:([^\]]+)\]/);
+    if (idsMatch) {
+      idsMatch[1]
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .forEach((id) => ids.add(id));
+    }
+
+    const fallbackType =
+      txLike.reconciled_with_type === "pagar" || txLike.reconciled_with_type === "payable"
+        ? "payable"
+        : txLike.reconciled_with_type === "receber" || txLike.reconciled_with_type === "receivable"
+          ? "receivable"
+          : null;
+
+    if (!fallbackType) return [];
+
+    return Array.from(ids).map((id) => ({ id, type: fallbackType }));
+  };
+
+  const updateFinancialTitle = async (
+    titleType: FinancialTitle["type"],
+    titleId: string,
+    payload: Record<string, unknown>,
+  ) => {
+    const table = titleType === "payable" ? "accounts_payable" : "receivables";
+    return supabase.from(table as "accounts_payable" | "receivables").update(payload as any).eq("id", titleId);
+  };
+
+  const reopenLinkedTitles = async (linkedTitles: LinkedTitleRef[]) => {
+    for (const linkedTitle of linkedTitles) {
+      const payload =
+        linkedTitle.type === "payable"
+          ? { status: "open", payment_date: null }
+          : { status: "pending", payment_date: null };
+      await updateFinancialTitle(linkedTitle.type, linkedTitle.id, payload);
+    }
+  };
 
   const resetQuickCreate = () => {
     setQuickCreateType(null);
@@ -241,11 +326,11 @@ export default function BankReconciliationPage() {
     const [payRes, recRes] = await Promise.all([
       supabase
         .from("accounts_payable")
-        .select("id, description, amount, due_date, status, supplier_id, sale_id, notes")
+        .select("id, description, amount, due_date, status, supplier_id, sale_id, notes, payment_date")
         .eq("empresa_id", titlesEmpresaId),
       supabase
         .from("receivables")
-        .select("id, description, amount, due_date, status, client_name, sale_id, notes")
+        .select("id, description, amount, due_date, status, client_name, sale_id, notes, payment_date")
         .eq("empresa_id", titlesEmpresaId),
     ]);
     // Exclude titles linked to draft sales
@@ -263,16 +348,16 @@ export default function BankReconciliationPage() {
     // Get reconciled title IDs from bank transactions
     const { data: reconciledTxs } = await supabase
       .from("bank_transactions")
-      .select("reconciled_with_id")
+      .select("reconciled_with_id, reconciled_with_type, reconciliation_note")
       .eq("empresa_id", activeCompany.id)
       .eq("reconciliation_status", "reconciled")
       .not("reconciled_with_id", "is", null);
-    // Support comma-separated IDs in reconciled_with_id
+
     const reconciledIds = new Set<string>();
     (reconciledTxs || []).forEach((t) => {
-      if (t.reconciled_with_id) {
-        t.reconciled_with_id.split(',').map((s: string) => s.trim()).filter(Boolean).forEach((id: string) => reconciledIds.add(id));
-      }
+      parseLinkedTitles(t as Pick<BankTx, "reconciled_with_id" | "reconciled_with_type" | "reconciliation_note">).forEach(
+        (linkedTitle) => reconciledIds.add(linkedTitle.id),
+      );
     });
 
     const payables: FinancialTitle[] = ((payRes.data as any[]) || [])
@@ -284,6 +369,7 @@ export default function BankReconciliationPage() {
         amount: Number(p.amount) || 0,
         due_date: p.due_date || "",
         status: p.status,
+        payment_date: p.payment_date || null,
         supplier_name: "",
         is_reconciled: reconciledIds.has(p.id) && p.status !== 'partial',
         notes: p.notes || "",
@@ -297,6 +383,7 @@ export default function BankReconciliationPage() {
         amount: Number(r.amount) || 0,
         due_date: r.due_date || "",
         status: r.status,
+        payment_date: r.payment_date || null,
         client_name: r.client_name || "",
         is_reconciled: reconciledIds.has(r.id) && r.status !== 'partial',
         notes: r.notes || "",
@@ -459,16 +546,10 @@ export default function BankReconciliationPage() {
       for (const tx of targetTxs) {
         if (tx.reconciliation_status !== 'reconciled') continue;
         const fullTx = transactions.find(t => t.id === tx.id);
-        if (!fullTx?.reconciled_with_id || !fullTx?.reconciled_with_type) continue;
-        
-        const ids = fullTx.reconciled_with_id.split(',').map((s: string) => s.trim()).filter(Boolean);
-        for (const id of ids) {
-          if (['pagar', 'payable'].includes(fullTx.reconciled_with_type)) {
-            await supabase.from("accounts_payable").update({ status: 'open', payment_date: null } as any).eq("id", id);
-          } else if (['receber', 'receivable'].includes(fullTx.reconciled_with_type)) {
-            await supabase.from("receivables").update({ status: 'pending', payment_date: null } as any).eq("id", id);
-          }
-        }
+        if (!fullTx) continue;
+
+        const linkedTitles = parseLinkedTitles(fullTx);
+        await reopenLinkedTitles(linkedTitles);
       }
     }
 
@@ -584,79 +665,102 @@ export default function BankReconciliationPage() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const titleIds = selectedTitles.map(t => t.id);
-    const titleTypes = [...new Set(selectedTitles.map(t => t.type === "payable" ? "pagar" : "receber"))].join(',');
+    const linkedTitles = selectedTitles.map((title) => ({ id: title.id, type: title.type }));
+    const titleIds = linkedTitles.map((title) => title.id);
+    const titleTypeLabel =
+      linkedTitles.length === 1
+        ? linkedTitles[0].type === "payable"
+          ? "pagar"
+          : "receber"
+        : "multiple";
     const bankAmount = Math.abs(Number(tx.amount));
+    const linkedTitlesTag = buildLinkedTitlesTag(linkedTitles);
+    const originalTxState = {
+      reconciliation_status: tx.reconciliation_status,
+      reconciled_with_type: tx.reconciled_with_type,
+      reconciled_with_id: tx.reconciled_with_id,
+      reconciliation_note: tx.reconciliation_note,
+    };
+    const updatedTitles: FinancialTitle[] = [];
 
-    // reconciled_with_id is uuid column — store first title id; keep all ids in note
-    await supabase
-      .from("bank_transactions")
-      .update({
+    try {
+      const bankTxPayload = {
         reconciliation_status: "reconciled",
-        reconciled_with_type: titleTypes,
+        reconciled_with_type: titleTypeLabel,
         reconciled_with_id: titleIds[0],
         reconciliation_note: isPartial
-          ? `Baixa parcial - Pago: ${fmt(bankAmount)}, Saldo restante: ${fmt(selectedTitles[0].amount - bankAmount)}`
+          ? `Baixa parcial - Pago: ${fmt(bankAmount)}, Saldo restante: ${fmt(Math.max(Number(selectedTitles[0].amount) - bankAmount, 0))} ${linkedTitlesTag}`
           : selectedTitles.length > 1
-            ? `Conciliação com ${selectedTitles.length} título(s) [IDs:${titleIds.join(',')}]`
-            : `Conciliação manual`,
-      } as any)
-      .eq("id", tx.id);
+            ? `Conciliação com ${selectedTitles.length} título(s) ${linkedTitlesTag}`
+            : `Conciliação manual ${linkedTitlesTag}`,
+      };
 
-    for (const title of selectedTitles) {
-      if (isPartial) {
-        const remaining = Number(title.amount) - bankAmount;
-        const partialNote = `Baixa parcial em ${new Date(tx.transaction_date + 'T12:00:00').toLocaleDateString('pt-BR')}: ${fmt(bankAmount)} pago. Saldo anterior: ${fmt(title.amount)}`;
-        if (title.type === "payable") {
-          await supabase
-            .from("accounts_payable")
-            .update({
-              status: "partial",
-              amount: remaining,
-              notes: partialNote + (title.notes ? `\n${title.notes}` : ''),
-            } as any)
-            .eq("id", title.id);
-        } else {
-          await supabase
-            .from("receivables")
-            .update({
-              status: "partial",
-              amount: remaining,
-              notes: partialNote + (title.notes ? `\n${title.notes}` : ''),
-            } as any)
-            .eq("id", title.id);
-        }
-      } else {
-        if (title.type === "payable") {
-          await supabase
-            .from("accounts_payable")
-            .update({ status: "paid", payment_date: tx.transaction_date } as any)
-            .eq("id", title.id);
-        } else {
-          await supabase
-            .from("receivables")
-            .update({ status: "paid", payment_date: tx.transaction_date } as any)
-            .eq("id", title.id);
-        }
+      const { data: updatedTx, error: bankTxError } = await supabase
+        .from("bank_transactions")
+        .update(bankTxPayload as any)
+        .eq("id", tx.id)
+        .select("id")
+        .maybeSingle();
+
+      if (bankTxError || !updatedTx) {
+        throw new Error(bankTxError?.message || "Não foi possível atualizar o item do extrato bancário.");
       }
+
+      for (const title of selectedTitles) {
+        const payload = isPartial
+          ? {
+              status: "partial",
+              amount: Math.max(Number(title.amount) - bankAmount, 0),
+              notes: `Baixa parcial em ${new Date(tx.transaction_date + 'T12:00:00').toLocaleDateString('pt-BR')}: ${fmt(bankAmount)} pago. Saldo anterior: ${fmt(title.amount)}` +
+                (title.notes ? `\n${title.notes}` : ''),
+            }
+          : { status: "paid", payment_date: tx.transaction_date };
+
+        const { error: titleError } = await updateFinancialTitle(title.type, title.id, payload);
+        if (titleError) {
+          throw new Error(titleError.message || `Não foi possível baixar o título ${title.description}.`);
+        }
+
+        updatedTitles.push(title);
+      }
+
+      const { error: logError } = await supabase.from("reconciliation_log").insert({
+        empresa_id: activeCompany!.id,
+        bank_transaction_id: tx.id,
+        action: isPartial ? "partial_reconcile" : "manual_reconcile",
+        reconciled_with_type: titleTypeLabel,
+        reconciled_with_id: titleIds[0],
+        user_email: user?.email || "",
+        details: isPartial
+          ? `Baixa parcial: ${fmt(bankAmount)} de ${fmt(selectedTitles[0].amount)} ${linkedTitlesTag}`
+          : `Conciliação com ${selectedTitles.length} título(s): ${selectedTitles.map((title) => title.description).join(', ')} ${linkedTitlesTag}`,
+      } as any);
+
+      if (logError) {
+        console.error("Erro ao gravar log de conciliação:", logError);
+      }
+
+      setSelectedTitleIds(new Set());
+      setPartialPayment(null);
+      toast.success(isPartial ? "Baixa parcial registrada com sucesso" : `Lançamento conciliado com ${selectedTitles.length} título(s)`);
+      loadTransactions();
+    } catch (error) {
+      for (const title of updatedTitles) {
+        await updateFinancialTitle(title.type, title.id, {
+          status: title.status,
+          amount: title.amount,
+          payment_date: title.payment_date ?? null,
+          notes: title.notes ?? "",
+        });
+      }
+
+      await supabase
+        .from("bank_transactions")
+        .update(originalTxState as any)
+        .eq("id", tx.id);
+
+      toast.error(error instanceof Error ? error.message : "Não foi possível concluir a conciliação.");
     }
-
-    await supabase.from("reconciliation_log").insert({
-      empresa_id: activeCompany!.id,
-      bank_transaction_id: tx.id,
-      action: isPartial ? "partial_reconcile" : "manual_reconcile",
-      reconciled_with_type: titleTypes,
-      reconciled_with_id: titleIds[0],
-      user_email: user?.email || "",
-      details: isPartial
-        ? `Baixa parcial: ${fmt(bankAmount)} de ${fmt(selectedTitles[0].amount)}`
-        : `Conciliação com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')} [IDs:${titleIds.join(',')}]`,
-    } as any);
-
-    setSelectedTitleIds(new Set());
-    setPartialPayment(null);
-    toast.success(isPartial ? "Baixa parcial registrada com sucesso" : `Lançamento conciliado com ${selectedTitles.length} título(s)`);
-    loadTransactions();
   };
 
   // Multi-reconcile: reconcile one bank tx with multiple titles
@@ -670,33 +774,9 @@ export default function BankReconciliationPage() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (tx.reconciled_with_id) {
-      // Extract all IDs: the primary one from reconciled_with_id + extras from note [IDs:...]
-      const ids: string[] = [tx.reconciled_with_id];
-      const noteMatch = (tx.reconciliation_note || '').match(/\[IDs?:([^\]]+)\]/);
-      if (noteMatch) {
-        const extraIds = noteMatch[1].split(',').map(s => s.trim()).filter(Boolean);
-        for (const eid of extraIds) {
-          if (!ids.includes(eid)) ids.push(eid);
-        }
-      }
-      const types = (tx.reconciled_with_type || '').split(',').map(s => s.trim());
-      for (const rid of ids) {
-        const isPagar = types.includes('pagar');
-        const isReceber = types.includes('receber');
-        if (isPagar) {
-          await supabase
-            .from("accounts_payable")
-            .update({ status: "open", payment_date: null } as any)
-            .eq("id", rid);
-        }
-        if (isReceber) {
-          await supabase
-            .from("receivables")
-            .update({ status: "pending", payment_date: null } as any)
-            .eq("id", rid);
-        }
-      }
+    const linkedTitles = parseLinkedTitles(tx);
+    if (linkedTitles.length > 0) {
+      await reopenLinkedTitles(linkedTitles);
     }
 
     await supabase
@@ -729,22 +809,9 @@ export default function BankReconciliationPage() {
 
     // If reclassifying from reconciled/ignored, undo first
     if (tx.reconciliation_status !== "pending") {
-      if (tx.reconciled_with_id) {
-        const ids: string[] = [tx.reconciled_with_id];
-        const noteMatch = (tx.reconciliation_note || '').match(/\[IDs?:([^\]]+)\]/);
-        if (noteMatch) {
-          const extraIds = noteMatch[1].split(',').map(s => s.trim()).filter(Boolean);
-          for (const eid of extraIds) { if (!ids.includes(eid)) ids.push(eid); }
-        }
-        const types = (tx.reconciled_with_type || '').split(',').map(s => s.trim());
-        for (const rid of ids) {
-          if (types.includes('pagar')) {
-            await supabase.from("accounts_payable").update({ status: "open", payment_date: null } as any).eq("id", rid);
-          }
-          if (types.includes('receber')) {
-            await supabase.from("receivables").update({ status: "pending", payment_date: null } as any).eq("id", rid);
-          }
-        }
+      const linkedTitles = parseLinkedTitles(tx);
+      if (linkedTitles.length > 0) {
+        await reopenLinkedTitles(linkedTitles);
       }
     }
 
