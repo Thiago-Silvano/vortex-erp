@@ -1399,7 +1399,9 @@ export default function BankReconciliationPage() {
                             {t.due_date ? new Date(t.due_date + "T12:00:00").toLocaleDateString("pt-BR") : ""}
                           </TableCell>
                           <TableCell className="text-xs text-right font-medium">
-                            {fmt(t.amount)}
+                            <span className={selectedBankTx && t.type === 'payable' ? 'text-red-600' : selectedBankTx && t.type === 'receivable' ? 'text-emerald-600' : ''}>
+                              {selectedBankTx && t.type === 'payable' ? `-${fmt(t.amount)}` : fmt(t.amount)}
+                            </span>
                           </TableCell>
                           <TableCell>
                             <Badge
