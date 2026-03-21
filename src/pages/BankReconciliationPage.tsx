@@ -36,6 +36,7 @@ import {
   ChevronUp,
   ChevronDown,
   Star,
+  Trash2,
 } from "lucide-react";
 
 interface BankAccount {
@@ -358,6 +359,120 @@ export default function BankReconciliationPage() {
       `Importação concluída: ${imported} lançamentos importados${duplicates > 0 ? `, ${duplicates} duplicados ignorados` : ""}`,
     );
     if (fileRef.current) fileRef.current.value = "";
+    loadTransactions();
+  };
+
+  // Delete last OFX import
+  const deleteLastOFXImport = async () => {
+    if (!selectedAccount || !activeCompany) return;
+
+    // Find the latest import batch for this account
+    const { data: lastImport } = await supabase
+      .from("ofx_imports")
+      .select("id, file_name, import_date, total_transactions")
+      .eq("bank_account_id", selectedAccount)
+      .eq("empresa_id", activeCompany.id)
+      .order("import_date", { ascending: false })
+      .limit(1);
+
+    if (!lastImport || lastImport.length === 0) {
+      toast.error("Nenhuma importação OFX encontrada para esta conta");
+      return;
+    }
+
+    const imp = lastImport[0];
+    const confirmed = window.confirm(
+      `Deseja excluir a última importação OFX?\n\nArquivo: ${imp.file_name}\nData: ${new Date(imp.import_date).toLocaleString('pt-BR')}\nLançamentos: ${imp.total_transactions}\n\nEsta ação não pode ser desfeita.`
+    );
+    if (!confirmed) return;
+
+    // Find the import_batch string from bank_transactions that matches this import
+    // The batch format is: timestamp_filename
+    const { data: batchTxs } = await supabase
+      .from("bank_transactions")
+      .select("id, import_batch, reconciliation_status")
+      .eq("bank_account_id", selectedAccount)
+      .eq("empresa_id", activeCompany.id)
+      .eq("origin", "ofx")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    // Group by import_batch and find the latest one
+    const batches = new Map<string, typeof batchTxs>();
+    for (const tx of (batchTxs || [])) {
+      if (!tx.import_batch) continue;
+      if (!batches.has(tx.import_batch)) batches.set(tx.import_batch, []);
+      batches.get(tx.import_batch)!.push(tx);
+    }
+
+    // Find batch that contains the file_name from the import record
+    let targetBatch: string | null = null;
+    let targetTxs: any[] = [];
+    for (const [batch, txs] of batches.entries()) {
+      if (batch.includes(imp.file_name || '')) {
+        targetBatch = batch;
+        targetTxs = txs;
+        break;
+      }
+    }
+
+    if (!targetBatch && batches.size > 0) {
+      // Fallback: use the batch with the most recent transactions
+      const sortedBatches = [...batches.entries()].sort((a, b) => {
+        const aMax = Math.max(...a[1].map(t => new Date(t.import_batch?.split('_')[0] || '0').getTime() || 0));
+        const bMax = Math.max(...b[1].map(t => new Date(t.import_batch?.split('_')[0] || '0').getTime() || 0));
+        return bMax - aMax;
+      });
+      targetBatch = sortedBatches[0][0];
+      targetTxs = sortedBatches[0][1];
+    }
+
+    if (!targetBatch || targetTxs.length === 0) {
+      toast.error("Não foi possível identificar os lançamentos da última importação");
+      return;
+    }
+
+    // Check if any are reconciled
+    const reconciledCount = targetTxs.filter(t => t.reconciliation_status === 'reconciled').length;
+    if (reconciledCount > 0) {
+      const confirmReconciled = window.confirm(
+        `${reconciledCount} lançamento(s) desta importação já foram conciliados. Deseja excluir mesmo assim?\n\nOs títulos financeiros vinculados serão reabertos.`
+      );
+      if (!confirmReconciled) return;
+
+      // Reopen reconciled financial titles
+      for (const tx of targetTxs) {
+        if (tx.reconciliation_status !== 'reconciled') continue;
+        const fullTx = transactions.find(t => t.id === tx.id);
+        if (!fullTx?.reconciled_with_id || !fullTx?.reconciled_with_type) continue;
+        
+        const ids = fullTx.reconciled_with_id.split(',').map((s: string) => s.trim()).filter(Boolean);
+        for (const id of ids) {
+          if (['pagar', 'payable'].includes(fullTx.reconciled_with_type)) {
+            await supabase.from("accounts_payable").update({ status: 'open', payment_date: null } as any).eq("id", id);
+          } else if (['receber', 'receivable'].includes(fullTx.reconciled_with_type)) {
+            await supabase.from("receivables").update({ status: 'pending', payment_date: null } as any).eq("id", id);
+          }
+        }
+      }
+    }
+
+    // Delete the transactions
+    const txIds = targetTxs.map(t => t.id);
+    const { error: delError } = await supabase
+      .from("bank_transactions")
+      .delete()
+      .in("id", txIds);
+
+    if (delError) {
+      toast.error("Erro ao excluir lançamentos: " + delError.message);
+      return;
+    }
+
+    // Delete the import record
+    await supabase.from("ofx_imports").delete().eq("id", imp.id);
+
+    toast.success(`${txIds.length} lançamentos da importação "${imp.file_name}" excluídos com sucesso`);
     loadTransactions();
   };
 
@@ -690,6 +805,10 @@ export default function BankReconciliationPage() {
                 <Button size="sm" onClick={autoReconcile} className="gap-2">
                   <Link2 className="h-4 w-4" />
                   Conciliar Auto
+                </Button>
+                <Button variant="destructive" size="sm" onClick={deleteLastOFXImport} className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Desfazer Último OFX
                 </Button>
               </>
             )}
