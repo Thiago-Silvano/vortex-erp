@@ -185,11 +185,26 @@ export default function BankReconciliationPage() {
     if (!activeCompany) return;
     supabase
       .from("bank_accounts")
-      .select("id, bank_name, account_number, account_digit, agency, color, empresa_id")
+      .select("id, bank_name, account_number, account_digit, agency, color, empresa_id, initial_balance, bank_code, is_default, holder_name")
       .eq("empresa_id", activeCompany.id)
       .eq("status", "active")
       .order("bank_name")
-      .then(({ data }) => setAccounts((data as any[]) || []));
+      .then(async ({ data }) => {
+        const accts = (data as any[]) || [];
+        setAccounts(accts);
+        // Calculate current balance for each account
+        const balances: Record<string, number> = {};
+        for (const acct of accts) {
+          const { data: txData } = await supabase
+            .from("bank_transactions")
+            .select("amount")
+            .eq("bank_account_id", acct.id)
+            .eq("empresa_id", activeCompany.id);
+          const txSum = (txData || []).reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+          balances[acct.id] = Number(acct.initial_balance) + txSum;
+        }
+        setAccountBalances(balances);
+      });
   }, [activeCompany]);
 
   const loadTransactions = useCallback(async () => {
