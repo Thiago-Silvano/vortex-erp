@@ -76,6 +76,15 @@ interface FinancialTitle {
   client_name?: string;
   supplier_name?: string;
   is_reconciled?: boolean;
+  notes?: string;
+}
+
+interface PartialPaymentInfo {
+  tx: BankTx;
+  titles: FinancialTitle[];
+  bankAmount: number;
+  titleTotal: number;
+  remaining: number;
 }
 
 type SortDir = 'asc' | 'desc';
