@@ -12,7 +12,8 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { maskPhone, maskCnpj, unmask, validateEmail } from '@/lib/masks';
+import { Checkbox } from '@/components/ui/checkbox';
+import { maskPhone, maskCnpj, maskCpf, unmask, validateEmail } from '@/lib/masks';
 
 interface Supplier {
   id: string;
@@ -52,6 +53,7 @@ export default function SuppliersPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [isPF, setIsPF] = useState(false);
 
   const fetchSuppliers = async () => {
     let query = supabase.from('suppliers').select('*').order('name');
@@ -70,6 +72,7 @@ export default function SuppliersPage() {
   );
 
   const handleCnpjSearch = async () => {
+    if (isPF) return;
     const digits = unmask(form.cnpj);
     if (digits.length !== 14) { toast.error('CNPJ deve ter 14 dígitos'); return; }
     setCnpjLoading(true);
@@ -103,7 +106,10 @@ export default function SuppliersPage() {
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Nome é obrigatório'); return; }
-    if (!unmask(form.cnpj)) { toast.error('CNPJ é obrigatório'); return; }
+    if (!unmask(form.cnpj)) { toast.error(isPF ? 'CPF é obrigatório' : 'CNPJ é obrigatório'); return; }
+    const docDigits = unmask(form.cnpj);
+    if (isPF && docDigits.length !== 11) { toast.error('CPF deve ter 11 dígitos'); return; }
+    if (!isPF && docDigits.length !== 14) { toast.error('CNPJ deve ter 14 dígitos'); return; }
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { toast.error('Email inválido'); return; }
 
     if (editingId) {
@@ -125,6 +131,7 @@ export default function SuppliersPage() {
     setEditingId(s.id);
     const { id, ...rest } = s;
     setForm(rest);
+    setIsPF(unmask(rest.cnpj).length <= 11);
     setDialogOpen(true);
   };
 
@@ -139,6 +146,7 @@ export default function SuppliersPage() {
   const openNew = () => {
     setEditingId(null);
     setForm(emptySupplier());
+    setIsPF(false);
     setDialogOpen(true);
   };
 
@@ -163,7 +171,7 @@ export default function SuppliersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>CNPJ</TableHead>
+                  <TableHead>CPF/CNPJ</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Cidade</TableHead>
@@ -200,22 +208,28 @@ export default function SuppliersPage() {
             </DialogHeader>
             <div className="space-y-6">
               {/* CNPJ with lookup */}
+              <div className="flex items-center gap-2 mb-2">
+                <Checkbox id="isPF" checked={isPF} onCheckedChange={(v) => { setIsPF(v === true); setForm(p => ({ ...p, cnpj: '' })); }} />
+                <Label htmlFor="isPF" className="cursor-pointer text-sm">Fornecedor é PF?</Label>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>CNPJ *</Label>
+                  <Label>{isPF ? 'CPF *' : 'CNPJ *'}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={form.cnpj}
-                      onChange={e => setForm(p => ({ ...p, cnpj: maskCnpj(e.target.value) }))}
-                      placeholder="00.000.000/0000-00"
+                      onChange={e => setForm(p => ({ ...p, cnpj: isPF ? maskCpf(e.target.value) : maskCnpj(e.target.value) }))}
+                      placeholder={isPF ? '000.000.000-00' : '00.000.000/0000-00'}
                     />
-                    <Button variant="outline" size="icon" onClick={handleCnpjSearch} disabled={cnpjLoading}>
-                      <Search className="h-4 w-4" />
-                    </Button>
+                    {!isPF && (
+                      <Button variant="outline" size="icon" onClick={handleCnpjSearch} disabled={cnpjLoading}>
+                        <Search className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div>
-                  <Label>Razão Social</Label>
+                  <Label>{isPF ? 'Nome completo' : 'Razão Social'}</Label>
                   <Input value={form.razao_social} onChange={e => setForm(p => ({ ...p, razao_social: e.target.value }))} />
                 </div>
               </div>
