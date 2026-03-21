@@ -551,18 +551,39 @@ export default function BankReconciliationPage() {
 
   // Manual reconcile (single)
   const manualReconcile = async (tx: BankTx, title: FinancialTitle) => {
-    await multiReconcile(tx, [title]);
+    await attemptReconcile(tx, [title]);
   };
 
-  // Multi-reconcile: reconcile one bank tx with multiple titles
-  const multiReconcile = async (tx: BankTx, selectedTitles: FinancialTitle[]) => {
+  // Check for partial payment before reconciling
+  const attemptReconcile = async (tx: BankTx, selectedTitles: FinancialTitle[]) => {
     if (selectedTitles.length === 0) return;
+    const bankAmount = Math.abs(Number(tx.amount));
+    const titleTotal = selectedTitles.reduce((s, t) => s + Number(t.amount), 0);
+
+    if (bankAmount < titleTotal - 0.01 && selectedTitles.length === 1) {
+      // Partial payment detected - show confirmation
+      setPartialPayment({
+        tx,
+        titles: selectedTitles,
+        bankAmount,
+        titleTotal,
+        remaining: titleTotal - bankAmount,
+      });
+      return;
+    }
+
+    await executeReconcile(tx, selectedTitles, false);
+  };
+
+  // Execute reconciliation (full or partial)
+  const executeReconcile = async (tx: BankTx, selectedTitles: FinancialTitle[], isPartial: boolean) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     const titleIds = selectedTitles.map(t => t.id).join(',');
     const titleTypes = [...new Set(selectedTitles.map(t => t.type === "payable" ? "pagar" : "receber"))].join(',');
+    const bankAmount = Math.abs(Number(tx.amount));
 
     await supabase
       .from("bank_transactions")
@@ -570,37 +591,71 @@ export default function BankReconciliationPage() {
         reconciliation_status: "reconciled",
         reconciled_with_type: titleTypes,
         reconciled_with_id: titleIds,
-        reconciliation_note: `Conciliação manual com ${selectedTitles.length} título(s)`,
+        reconciliation_note: isPartial
+          ? `Baixa parcial - Pago: ${fmt(bankAmount)}, Saldo restante: ${fmt(selectedTitles[0].amount - bankAmount)}`
+          : `Conciliação manual com ${selectedTitles.length} título(s)`,
       } as any)
       .eq("id", tx.id);
 
     for (const title of selectedTitles) {
-      if (title.type === "payable") {
-        await supabase
-          .from("accounts_payable")
-          .update({ status: "paid", payment_date: tx.transaction_date } as any)
-          .eq("id", title.id);
+      if (isPartial) {
+        const remaining = Number(title.amount) - bankAmount;
+        const partialNote = `Baixa parcial em ${new Date(tx.transaction_date + 'T12:00:00').toLocaleDateString('pt-BR')}: ${fmt(bankAmount)} pago. Saldo anterior: ${fmt(title.amount)}`;
+        if (title.type === "payable") {
+          await supabase
+            .from("accounts_payable")
+            .update({
+              status: "partial",
+              amount: remaining,
+              notes: partialNote + (title.notes ? `\n${title.notes}` : ''),
+            } as any)
+            .eq("id", title.id);
+        } else {
+          await supabase
+            .from("receivables")
+            .update({
+              status: "partial",
+              amount: remaining,
+              notes: partialNote + (title.notes ? `\n${title.notes}` : ''),
+            } as any)
+            .eq("id", title.id);
+        }
       } else {
-        await supabase
-          .from("receivables")
-          .update({ status: "paid", payment_date: tx.transaction_date } as any)
-          .eq("id", title.id);
+        if (title.type === "payable") {
+          await supabase
+            .from("accounts_payable")
+            .update({ status: "paid", payment_date: tx.transaction_date } as any)
+            .eq("id", title.id);
+        } else {
+          await supabase
+            .from("receivables")
+            .update({ status: "paid", payment_date: tx.transaction_date } as any)
+            .eq("id", title.id);
+        }
       }
     }
 
     await supabase.from("reconciliation_log").insert({
       empresa_id: activeCompany!.id,
       bank_transaction_id: tx.id,
-      action: "manual_reconcile",
+      action: isPartial ? "partial_reconcile" : "manual_reconcile",
       reconciled_with_type: titleTypes,
       reconciled_with_id: titleIds,
       user_email: user?.email || "",
-      details: `Conciliação manual com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')}`,
+      details: isPartial
+        ? `Baixa parcial: ${fmt(bankAmount)} de ${fmt(selectedTitles[0].amount)}`
+        : `Conciliação manual com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')}`,
     } as any);
 
     setSelectedTitleIds(new Set());
-    toast.success(`Lançamento conciliado com ${selectedTitles.length} título(s)`);
+    setPartialPayment(null);
+    toast.success(isPartial ? "Baixa parcial registrada com sucesso" : `Lançamento conciliado com ${selectedTitles.length} título(s)`);
     loadTransactions();
+  };
+
+  // Multi-reconcile: reconcile one bank tx with multiple titles
+  const multiReconcile = async (tx: BankTx, selectedTitles: FinancialTitle[]) => {
+    await attemptReconcile(tx, selectedTitles);
   };
 
   // Undo reconciliation (supports multi-id)
