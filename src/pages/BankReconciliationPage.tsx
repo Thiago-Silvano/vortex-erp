@@ -284,7 +284,8 @@ export default function BankReconciliationPage() {
         due_date: p.due_date || "",
         status: p.status,
         supplier_name: "",
-        is_reconciled: reconciledIds.has(p.id),
+        is_reconciled: reconciledIds.has(p.id) && p.status !== 'partial',
+        notes: p.notes || "",
       }));
     const receivables: FinancialTitle[] = ((recRes.data as any[]) || [])
       .filter((r) => !r.sale_id || !draftIds.includes(r.sale_id))
@@ -296,7 +297,8 @@ export default function BankReconciliationPage() {
         due_date: r.due_date || "",
         status: r.status,
         client_name: r.client_name || "",
-        is_reconciled: reconciledIds.has(r.id),
+        is_reconciled: reconciledIds.has(r.id) && r.status !== 'partial',
+        notes: r.notes || "",
       }));
     setTitles([...payables, ...receivables]);
     setLoading(false);
