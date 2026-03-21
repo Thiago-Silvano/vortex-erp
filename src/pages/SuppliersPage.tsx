@@ -12,7 +12,8 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { maskPhone, maskCnpj, unmask, validateEmail } from '@/lib/masks';
+import { Checkbox } from '@/components/ui/checkbox';
+import { maskPhone, maskCnpj, maskCpf, unmask, validateEmail } from '@/lib/masks';
 
 interface Supplier {
   id: string;
