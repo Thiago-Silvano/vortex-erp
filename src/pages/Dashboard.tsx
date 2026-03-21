@@ -37,7 +37,12 @@ export default function Dashboard() {
   const loadStats = async () => {
     setLoading(true);
     try {
-      let query = supabase.from('sales').select('id, client_name, total_sale, total_supplier_cost, gross_profit, net_profit, status, passengers_count');
+      const now = new Date();
+      const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
+      const monthEnd = format(endOfMonth(now), 'yyyy-MM-dd');
+      let query = supabase.from('sales').select('id, client_name, total_sale, total_supplier_cost, gross_profit, net_profit, status, passengers_count, sale_date')
+        .gte('sale_date', monthStart)
+        .lte('sale_date', monthEnd);
       if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
       const { data: sales } = await query;
       if (!sales) { setLoading(false); return; }
