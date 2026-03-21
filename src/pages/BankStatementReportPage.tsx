@@ -17,6 +17,8 @@ interface Transaction {
   transaction_type: string; reconciliation_status: string; reconciliation_note: string;
   reference_number: string; origin: string; cost_center_id: string | null;
   client_name: string; category: string;
+  reconciled_with_type?: string | null; reconciled_with_id?: string | null;
+  resolved_cost_center_id?: string | null;
 }
 interface CostCenter { id: string; name: string; }
 
@@ -64,34 +66,41 @@ export default function BankStatementReportPage() {
 
     if (filterStatus !== 'all') query = query.eq('reconciliation_status', filterStatus);
     if (filterOrigin !== 'all') query = query.eq('origin', filterOrigin);
-    if (filterCostCenter !== 'all') query = query.eq('cost_center_id', filterCostCenter);
 
     const { data } = await query.limit(2000);
-    const txs = (data as any[]) || [];
+    const txs = ((data as any[]) || []) as Transaction[];
 
-    // Enrich transactions with cost_center_id from reconciled receivables/payables
-    const reconciledRecIds = txs.filter(t => !t.cost_center_id && t.reconciled_with_id && (t.reconciled_with_type === 'receivable' || t.reconciled_with_type === 'receber')).map(t => t.reconciled_with_id);
-    const reconciledPayIds = txs.filter(t => !t.cost_center_id && t.reconciled_with_id && (t.reconciled_with_type === 'payable' || t.reconciled_with_type === 'pagar')).map(t => t.reconciled_with_id);
+    const reconciledRecIds = [...new Set(txs
+      .filter(t => !t.cost_center_id && t.reconciled_with_id && ['receivable', 'receber'].includes(t.reconciled_with_type || ''))
+      .map(t => t.reconciled_with_id as string))];
+    const reconciledPayIds = [...new Set(txs
+      .filter(t => !t.cost_center_id && t.reconciled_with_id && ['payable', 'pagar'].includes(t.reconciled_with_type || ''))
+      .map(t => t.reconciled_with_id as string))];
 
     const ccMap = new Map<string, string | null>();
 
-    if (reconciledRecIds.length > 0) {
-      const { data: recs } = await supabase.from('receivables').select('id, cost_center_id').in('id', reconciledRecIds);
-      recs?.forEach(r => ccMap.set(r.id, r.cost_center_id));
-    }
-    if (reconciledPayIds.length > 0) {
-      const { data: pays } = await supabase.from('accounts_payable').select('id, cost_center_id').in('id', reconciledPayIds);
-      pays?.forEach(p => ccMap.set(p.id, p.cost_center_id));
-    }
+    const [{ data: recs }, { data: pays }] = await Promise.all([
+      reconciledRecIds.length > 0
+        ? supabase.from('receivables').select('id, cost_center_id').in('id', reconciledRecIds)
+        : Promise.resolve({ data: [] as any[] }),
+      reconciledPayIds.length > 0
+        ? supabase.from('accounts_payable').select('id, cost_center_id').in('id', reconciledPayIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
 
-    const enriched = txs.map(t => {
-      if (!t.cost_center_id && t.reconciled_with_id && ccMap.has(t.reconciled_with_id)) {
-        return { ...t, cost_center_id: ccMap.get(t.reconciled_with_id) };
-      }
-      return t;
-    });
+    recs?.forEach(r => ccMap.set(r.id, r.cost_center_id));
+    pays?.forEach(p => ccMap.set(p.id, p.cost_center_id));
 
-    setTransactions(enriched);
+    const enriched = txs.map(t => ({
+      ...t,
+      resolved_cost_center_id: t.cost_center_id ?? (t.reconciled_with_id ? (ccMap.get(t.reconciled_with_id) ?? null) : null),
+    }));
+
+    const filtered = filterCostCenter !== 'all'
+      ? enriched.filter(t => t.resolved_cost_center_id === filterCostCenter)
+      : enriched;
+
+    setTransactions(filtered);
     setLoading(false);
   }, [selectedAccount, activeCompany, dateFrom, dateTo, filterStatus, filterOrigin, filterCostCenter]);
 
@@ -117,15 +126,16 @@ export default function BankStatementReportPage() {
   });
 
   // Cost center summary
+  const getResolvedCostCenterId = (t: Transaction) => t.resolved_cost_center_id ?? t.cost_center_id ?? null;
+
   const costCenterSummary = costCenters.map(cc => {
-    const ccTxs = transactions.filter(t => t.cost_center_id === cc.id);
+    const ccTxs = transactions.filter(t => getResolvedCostCenterId(t) === cc.id);
     const credits = ccTxs.filter(t => Number(t.amount) > 0).reduce((s, t) => s + Number(t.amount), 0);
     const debits = ccTxs.filter(t => Number(t.amount) < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
     return { name: cc.name, credits, debits, net: credits - debits, count: ccTxs.length };
   }).filter(cc => cc.count > 0);
 
-  // Unclassified
-  const unclassified = transactions.filter(t => !t.cost_center_id);
+  const unclassified = transactions.filter(t => !getResolvedCostCenterId(t));
   if (unclassified.length > 0) {
     const credits = unclassified.filter(t => Number(t.amount) > 0).reduce((s, t) => s + Number(t.amount), 0);
     const debits = unclassified.filter(t => Number(t.amount) < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
