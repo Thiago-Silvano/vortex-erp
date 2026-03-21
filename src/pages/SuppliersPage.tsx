@@ -146,6 +146,7 @@ export default function SuppliersPage() {
   const openNew = () => {
     setEditingId(null);
     setForm(emptySupplier());
+    setIsPF(false);
     setDialogOpen(true);
   };
 
