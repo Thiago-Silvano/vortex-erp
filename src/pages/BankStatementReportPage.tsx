@@ -17,6 +17,8 @@ interface Transaction {
   transaction_type: string; reconciliation_status: string; reconciliation_note: string;
   reference_number: string; origin: string; cost_center_id: string | null;
   client_name: string; category: string;
+  reconciled_with_type?: string | null; reconciled_with_id?: string | null;
+  resolved_cost_center_id?: string | null;
 }
 interface CostCenter { id: string; name: string; }
 
