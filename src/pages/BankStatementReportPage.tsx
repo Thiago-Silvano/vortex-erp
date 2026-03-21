@@ -126,15 +126,16 @@ export default function BankStatementReportPage() {
   });
 
   // Cost center summary
+  const getResolvedCostCenterId = (t: Transaction) => t.resolved_cost_center_id ?? t.cost_center_id ?? null;
+
   const costCenterSummary = costCenters.map(cc => {
-    const ccTxs = transactions.filter(t => t.cost_center_id === cc.id);
+    const ccTxs = transactions.filter(t => getResolvedCostCenterId(t) === cc.id);
     const credits = ccTxs.filter(t => Number(t.amount) > 0).reduce((s, t) => s + Number(t.amount), 0);
     const debits = ccTxs.filter(t => Number(t.amount) < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
     return { name: cc.name, credits, debits, net: credits - debits, count: ccTxs.length };
   }).filter(cc => cc.count > 0);
 
-  // Unclassified
-  const unclassified = transactions.filter(t => !t.cost_center_id);
+  const unclassified = transactions.filter(t => !getResolvedCostCenterId(t));
   if (unclassified.length > 0) {
     const credits = unclassified.filter(t => Number(t.amount) > 0).reduce((s, t) => s + Number(t.amount), 0);
     const debits = unclassified.filter(t => Number(t.amount) < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
