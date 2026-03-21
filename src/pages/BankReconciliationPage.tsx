@@ -101,6 +101,7 @@ export default function BankReconciliationPage() {
   const [searchParams] = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [accountBalances, setAccountBalances] = useState<Record<string, number>>({});
   const [selectedAccount, setSelectedAccount] = useState(searchParams.get("account") || "");
   const [transactions, setTransactions] = useState<BankTx[]>([]);
   const [titles, setTitles] = useState<FinancialTitle[]>([]);
