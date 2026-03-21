@@ -386,6 +386,14 @@ export default function AccountsReceivablePage() {
                             <Check className="h-4 w-4 text-primary" />
                           </Button>
                         )}
+                        {(r.status === 'received' || r.status === 'paid') && (
+                          <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); setConfirmUndoId(r.id); }} title="Desfazer recebimento">
+                            <Undo2 className="h-4 w-4 text-yellow-600" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); setConfirmDeleteId(r.id); }} title="Excluir">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
