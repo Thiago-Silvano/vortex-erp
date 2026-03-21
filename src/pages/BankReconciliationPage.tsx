@@ -1260,13 +1260,56 @@ export default function BankReconciliationPage() {
               </CardContent>
             </Card>
 
+            {/* Balance bar when bank tx is selected */}
+            {selectedBankTx && (
+              <div className="lg:col-span-2">
+                <Card className={`border-2 ${isBalanced ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20' : 'border-primary bg-primary/5'}`}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground text-xs">Extrato:</span>
+                          <span className={`ml-1 font-bold ${bankTxAmount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {fmt(bankTxAmount)}
+                          </span>
+                        </div>
+                        <span className="text-muted-foreground">−</span>
+                        <div>
+                          <span className="text-muted-foreground text-xs">Títulos:</span>
+                          <span className="ml-1 font-bold">{fmt(selectedTitlesSignedTotal)}</span>
+                        </div>
+                        <span className="text-muted-foreground">=</span>
+                        <div>
+                          <span className="text-muted-foreground text-xs">Diferença:</span>
+                          <span className={`ml-1 font-bold ${isBalanced ? 'text-emerald-600' : 'text-amber-600'}`}>
+                            {fmt(balanceDifference)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isBalanced && (
+                          <Button size="sm" className="gap-2" onClick={reconcileBalanced}>
+                            <CheckCircle2 className="h-4 w-4" />
+                            Conciliar Tudo ({selectedTitleIds.size} título{selectedTitleIds.size > 1 ? 's' : ''})
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => { setSelectedBankTx(null); setSelectedTitleIds(new Set()); }}>
+                          <X className="h-3 w-3 mr-1" /> Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             {/* Right: Financial titles */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Títulos Financeiros
-                  {selectedTitleIds.size > 0 && (
+                  {selectedTitleIds.size > 0 && !selectedBankTx && (
                     <Badge variant="secondary" className="text-[10px] ml-2">
                       {selectedTitleIds.size} selecionado(s) = {fmt(selectedTitlesTotal)}
                     </Badge>
