@@ -1300,20 +1300,29 @@ export default function BankReconciliationPage() {
                               {t.type === "payable" ? "Pagar" : "Receber"}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs max-w-[200px] truncate">
-                            {t.description}
+                          <TableCell className="text-xs max-w-[200px]">
+                            <span className="truncate block">{t.description}</span>
                             {t.client_name && <span className="block text-muted-foreground">{t.client_name}</span>}
+                            {t.status === 'partial' && (
+                              <span className="block text-[10px] text-blue-600 font-medium mt-0.5">⚠ Baixa parcial - Saldo restante</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-xs whitespace-nowrap">
                             {t.due_date ? new Date(t.due_date + "T12:00:00").toLocaleDateString("pt-BR") : ""}
                           </TableCell>
-                          <TableCell className="text-xs text-right font-medium">{fmt(t.amount)}</TableCell>
+                          <TableCell className="text-xs text-right font-medium">
+                            {fmt(t.amount)}
+                          </TableCell>
                           <TableCell>
                             <Badge
                               variant="outline"
-                              className={`text-[10px] ${t.is_reconciled ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-amber-100 text-amber-800 border-amber-200"}`}
+                              className={`text-[10px] ${
+                                t.is_reconciled ? "bg-emerald-100 text-emerald-800 border-emerald-200" :
+                                t.status === 'partial' ? "bg-blue-100 text-blue-800 border-blue-200" :
+                                "bg-amber-100 text-amber-800 border-amber-200"
+                              }`}
                             >
-                              {t.is_reconciled ? "Conciliado" : "Pendente"}
+                              {t.is_reconciled ? "Conciliado" : t.status === 'partial' ? "Baixa Parcial" : "Pendente"}
                             </Badge>
                           </TableCell>
                         </TableRow>
