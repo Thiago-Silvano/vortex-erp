@@ -646,11 +646,11 @@ export default function BankReconciliationPage() {
       bank_transaction_id: tx.id,
       action: isPartial ? "partial_reconcile" : "manual_reconcile",
       reconciled_with_type: titleTypes,
-      reconciled_with_id: titleIds,
+      reconciled_with_id: titleIds[0],
       user_email: user?.email || "",
       details: isPartial
         ? `Baixa parcial: ${fmt(bankAmount)} de ${fmt(selectedTitles[0].amount)}`
-        : `Conciliação manual com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')}`,
+        : `Conciliação com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')} [IDs:${titleIds.join(',')}]`,
     } as any);
 
     setSelectedTitleIds(new Set());
