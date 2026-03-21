@@ -70,8 +70,8 @@ export default function BankStatementReportPage() {
     const txs = (data as any[]) || [];
 
     // Enrich transactions with cost_center_id from reconciled receivables/payables
-    const reconciledRecIds = txs.filter(t => !t.cost_center_id && t.reconciled_with_id && t.reconciled_with_type === 'receivable').map(t => t.reconciled_with_id);
-    const reconciledPayIds = txs.filter(t => !t.cost_center_id && t.reconciled_with_id && t.reconciled_with_type === 'payable').map(t => t.reconciled_with_id);
+    const reconciledRecIds = txs.filter(t => !t.cost_center_id && t.reconciled_with_id && (t.reconciled_with_type === 'receivable' || t.reconciled_with_type === 'receber')).map(t => t.reconciled_with_id);
+    const reconciledPayIds = txs.filter(t => !t.cost_center_id && t.reconciled_with_id && (t.reconciled_with_type === 'payable' || t.reconciled_with_type === 'pagar')).map(t => t.reconciled_with_id);
 
     const ccMap = new Map<string, string | null>();
 
