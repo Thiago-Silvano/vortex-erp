@@ -584,19 +584,22 @@ export default function BankReconciliationPage() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const titleIds = selectedTitles.map(t => t.id).join(',');
+    const titleIds = selectedTitles.map(t => t.id);
     const titleTypes = [...new Set(selectedTitles.map(t => t.type === "payable" ? "pagar" : "receber"))].join(',');
     const bankAmount = Math.abs(Number(tx.amount));
 
+    // reconciled_with_id is uuid column — store first title id; keep all ids in note
     await supabase
       .from("bank_transactions")
       .update({
         reconciliation_status: "reconciled",
         reconciled_with_type: titleTypes,
-        reconciled_with_id: titleIds,
+        reconciled_with_id: titleIds[0],
         reconciliation_note: isPartial
           ? `Baixa parcial - Pago: ${fmt(bankAmount)}, Saldo restante: ${fmt(selectedTitles[0].amount - bankAmount)}`
-          : `Conciliação manual com ${selectedTitles.length} título(s)`,
+          : selectedTitles.length > 1
+            ? `Conciliação com ${selectedTitles.length} título(s) [IDs:${titleIds.join(',')}]`
+            : `Conciliação manual`,
       } as any)
       .eq("id", tx.id);
 
@@ -643,11 +646,11 @@ export default function BankReconciliationPage() {
       bank_transaction_id: tx.id,
       action: isPartial ? "partial_reconcile" : "manual_reconcile",
       reconciled_with_type: titleTypes,
-      reconciled_with_id: titleIds,
+      reconciled_with_id: titleIds[0],
       user_email: user?.email || "",
       details: isPartial
         ? `Baixa parcial: ${fmt(bankAmount)} de ${fmt(selectedTitles[0].amount)}`
-        : `Conciliação manual com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')}`,
+        : `Conciliação com ${selectedTitles.length} título(s): ${selectedTitles.map(t => t.description).join(', ')} [IDs:${titleIds.join(',')}]`,
     } as any);
 
     setSelectedTitleIds(new Set());
@@ -668,10 +671,17 @@ export default function BankReconciliationPage() {
     } = await supabase.auth.getUser();
 
     if (tx.reconciled_with_id) {
-      const ids = tx.reconciled_with_id.split(',').map(s => s.trim()).filter(Boolean);
+      // Extract all IDs: the primary one from reconciled_with_id + extras from note [IDs:...]
+      const ids: string[] = [tx.reconciled_with_id];
+      const noteMatch = (tx.reconciliation_note || '').match(/\[IDs?:([^\]]+)\]/);
+      if (noteMatch) {
+        const extraIds = noteMatch[1].split(',').map(s => s.trim()).filter(Boolean);
+        for (const eid of extraIds) {
+          if (!ids.includes(eid)) ids.push(eid);
+        }
+      }
       const types = (tx.reconciled_with_type || '').split(',').map(s => s.trim());
       for (const rid of ids) {
-        // Determine type - if single type use it, otherwise check each
         const isPagar = types.includes('pagar');
         const isReceber = types.includes('receber');
         if (isPagar) {
@@ -720,7 +730,12 @@ export default function BankReconciliationPage() {
     // If reclassifying from reconciled/ignored, undo first
     if (tx.reconciliation_status !== "pending") {
       if (tx.reconciled_with_id) {
-        const ids = tx.reconciled_with_id.split(',').map(s => s.trim()).filter(Boolean);
+        const ids: string[] = [tx.reconciled_with_id];
+        const noteMatch = (tx.reconciliation_note || '').match(/\[IDs?:([^\]]+)\]/);
+        if (noteMatch) {
+          const extraIds = noteMatch[1].split(',').map(s => s.trim()).filter(Boolean);
+          for (const eid of extraIds) { if (!ids.includes(eid)) ids.push(eid); }
+        }
         const types = (tx.reconciled_with_type || '').split(',').map(s => s.trim());
         for (const rid of ids) {
           if (types.includes('pagar')) {
