@@ -171,7 +171,7 @@ export default function SuppliersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>CNPJ</TableHead>
+                  <TableHead>CPF/CNPJ</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Cidade</TableHead>
