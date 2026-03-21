@@ -45,6 +45,10 @@ interface BankAccount {
   agency: string;
   color: string;
   empresa_id: string;
+  initial_balance: number;
+  bank_code: string;
+  is_default: boolean;
+  holder_name: string;
 }
 interface BankTx {
   id: string;
