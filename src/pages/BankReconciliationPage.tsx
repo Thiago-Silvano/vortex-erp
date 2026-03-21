@@ -789,7 +789,7 @@ export default function BankReconciliationPage() {
 
   const filteredTitles = titles.filter((t) => {
     if (t.is_reconciled) return false;
-    if (t.status === 'paid') return false;
+    if (t.status === 'paid' || t.status === 'received') return false;
     if (
       searchTitle &&
       !t.description.toLowerCase().includes(searchTitle.toLowerCase()) &&
