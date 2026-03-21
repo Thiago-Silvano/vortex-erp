@@ -185,7 +185,7 @@ export default function AccountsReceivablePage() {
       if (r.status === 'received') { received += r.amount; return; }
       if (r.due_date && r.due_date < todayStr && r.status !== 'received') { overdue += r.amount; return; }
       if (r.due_date && r.due_date === todayStr && r.status !== 'received') { dueToday += r.amount; return; }
-      if (r.status === 'pending') { pending += r.amount; }
+      if (r.status === 'pending' || r.status === 'partial') { pending += r.amount; }
     });
     return { overdue, dueToday, pending, received };
   }, [periodItems]);

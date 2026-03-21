@@ -179,7 +179,7 @@ export default function AccountsPayablePage() {
       if (r.status === 'paid') { paid += r.amount; return; }
       if (r.due_date && r.due_date < todayStr && r.status !== 'paid') { overdue += r.amount; return; }
       if (r.due_date && r.due_date === todayStr && r.status !== 'paid') { dueToday += r.amount; return; }
-      if (r.status === 'open') { pending += r.amount; }
+      if (r.status === 'open' || r.status === 'partial') { pending += r.amount; }
     });
     return { overdue, dueToday, pending, paid };
   }, [periodItems]);
