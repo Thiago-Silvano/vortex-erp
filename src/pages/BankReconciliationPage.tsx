@@ -129,6 +129,7 @@ export default function BankReconciliationPage() {
   const [manualType, setManualType] = useState("");
   const [showIgnoredView, setShowIgnoredView] = useState(false);
   const [selectedTitleIds, setSelectedTitleIds] = useState<Set<string>>(new Set());
+  const [selectedBankTx, setSelectedBankTx] = useState<BankTx | null>(null);
 
   // Quick-create title inline
   const [quickCreateType, setQuickCreateType] = useState<"payable" | "receivable" | null>(null);
@@ -822,10 +823,22 @@ export default function BankReconciliationPage() {
       .slice(0, 3);
   };
 
+  // Signed total: payable = negative (expense), receivable = positive (income)
+  const selectedTitlesSignedTotal = Array.from(selectedTitleIds).reduce((sum, id) => {
+    const t = titles.find(tt => tt.id === id);
+    if (!t) return sum;
+    return sum + (t.type === 'payable' ? -Number(t.amount) : Number(t.amount));
+  }, 0);
+
   const selectedTitlesTotal = Array.from(selectedTitleIds).reduce((sum, id) => {
     const t = titles.find(tt => tt.id === id);
     return sum + (t ? Number(t.amount) : 0);
   }, 0);
+
+  // Balance calculation when a bank tx is selected
+  const bankTxAmount = selectedBankTx ? Number(selectedBankTx.amount) : 0;
+  const balanceDifference = selectedBankTx ? bankTxAmount - selectedTitlesSignedTotal : 0;
+  const isBalanced = selectedBankTx && selectedTitleIds.size > 0 && Math.abs(balanceDifference) < 0.01;
 
   const toggleTitleSelection = (id: string) => {
     setSelectedTitleIds(prev => {
@@ -835,10 +848,29 @@ export default function BankReconciliationPage() {
     });
   };
 
+  const selectBankTx = (tx: BankTx) => {
+    if (tx.reconciliation_status !== 'pending') return;
+    if (selectedBankTx?.id === tx.id) {
+      setSelectedBankTx(null);
+      setSelectedTitleIds(new Set());
+    } else {
+      setSelectedBankTx(tx);
+      setSelectedTitleIds(new Set());
+    }
+  };
+
+  const reconcileBalanced = async () => {
+    if (!selectedBankTx || !isBalanced) return;
+    const selectedTitles = titles.filter(t => selectedTitleIds.has(t.id));
+    await executeReconcile(selectedBankTx, selectedTitles, false);
+    setSelectedBankTx(null);
+  };
+
   const reconcileWithSelected = async (tx: BankTx) => {
     const selectedTitles = titles.filter(t => selectedTitleIds.has(t.id));
     if (selectedTitles.length === 0) { toast.error("Selecione ao menos um título"); return; }
     await multiReconcile(tx, selectedTitles);
+    setSelectedBankTx(null);
   };
 
   return (
@@ -1113,9 +1145,14 @@ export default function BankReconciliationPage() {
                       </TableRow>
                     ) : (
                       filteredTx.map((tx) => {
-                        const suggestions = tx.reconciliation_status === "pending" ? getSuggestions(tx) : [];
+                        const suggestions = tx.reconciliation_status === "pending" && !selectedBankTx ? getSuggestions(tx) : [];
+                        const isSelected = selectedBankTx?.id === tx.id;
                         return (
-                          <TableRow key={tx.id} className="group">
+                          <TableRow
+                            key={tx.id}
+                            className={`group ${tx.reconciliation_status === 'pending' ? 'cursor-pointer' : ''} ${isSelected ? 'bg-primary/10 border-l-2 border-l-primary' : ''}`}
+                            onClick={() => tx.reconciliation_status === 'pending' && selectBankTx(tx)}
+                          >
                             <TableCell className="text-xs whitespace-nowrap">
                               {tx.transaction_date
                                 ? new Date(tx.transaction_date + "T12:00:00").toLocaleDateString("pt-BR")
@@ -1123,12 +1160,17 @@ export default function BankReconciliationPage() {
                             </TableCell>
                             <TableCell className="text-xs max-w-[180px] truncate" title={tx.description}>
                               {tx.description}
-                              {suggestions.length > 0 && (
+                              {isSelected && (
+                                <div className="mt-1 text-[10px] font-medium text-primary">
+                                  ✓ Selecionado — escolha títulos à direita
+                                </div>
+                              )}
+                              {suggestions.length > 0 && !selectedBankTx && (
                                 <div className="mt-1 space-y-1">
                                   {suggestions.map((s) => (
                                     <button
                                       key={s.id}
-                                      onClick={() => manualReconcile(tx, s)}
+                                      onClick={(e) => { e.stopPropagation(); manualReconcile(tx, s); }}
                                       className="flex items-center gap-1 text-[10px] text-primary hover:underline w-full text-left bg-primary/5 rounded px-1.5 py-0.5"
                                     >
                                       <Link2 className="h-3 w-3 shrink-0" />
@@ -1153,10 +1195,11 @@ export default function BankReconciliationPage() {
                                 {statusLabels[tx.reconciliation_status] || tx.reconciliation_status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right flex items-center justify-end gap-1">
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1">
                               {tx.reconciliation_status === "pending" && (
                                 <>
-                                  {selectedTitleIds.size > 0 && (
+                                  {!selectedBankTx && selectedTitleIds.size > 0 && (
                                     <Button
                                       variant="default"
                                       size="sm"
@@ -1206,6 +1249,7 @@ export default function BankReconciliationPage() {
                                   </Button>
                                 </>
                               )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
@@ -1216,13 +1260,56 @@ export default function BankReconciliationPage() {
               </CardContent>
             </Card>
 
+            {/* Balance bar when bank tx is selected */}
+            {selectedBankTx && (
+              <div className="lg:col-span-2">
+                <Card className={`border-2 ${isBalanced ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20' : 'border-primary bg-primary/5'}`}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground text-xs">Extrato:</span>
+                          <span className={`ml-1 font-bold ${bankTxAmount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {fmt(bankTxAmount)}
+                          </span>
+                        </div>
+                        <span className="text-muted-foreground">−</span>
+                        <div>
+                          <span className="text-muted-foreground text-xs">Títulos:</span>
+                          <span className="ml-1 font-bold">{fmt(selectedTitlesSignedTotal)}</span>
+                        </div>
+                        <span className="text-muted-foreground">=</span>
+                        <div>
+                          <span className="text-muted-foreground text-xs">Diferença:</span>
+                          <span className={`ml-1 font-bold ${isBalanced ? 'text-emerald-600' : 'text-amber-600'}`}>
+                            {fmt(balanceDifference)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isBalanced && (
+                          <Button size="sm" className="gap-2" onClick={reconcileBalanced}>
+                            <CheckCircle2 className="h-4 w-4" />
+                            Conciliar Tudo ({selectedTitleIds.size} título{selectedTitleIds.size > 1 ? 's' : ''})
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => { setSelectedBankTx(null); setSelectedTitleIds(new Set()); }}>
+                          <X className="h-3 w-3 mr-1" /> Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             {/* Right: Financial titles */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Títulos Financeiros
-                  {selectedTitleIds.size > 0 && (
+                  {selectedTitleIds.size > 0 && !selectedBankTx && (
                     <Badge variant="secondary" className="text-[10px] ml-2">
                       {selectedTitleIds.size} selecionado(s) = {fmt(selectedTitlesTotal)}
                     </Badge>
@@ -1312,7 +1399,9 @@ export default function BankReconciliationPage() {
                             {t.due_date ? new Date(t.due_date + "T12:00:00").toLocaleDateString("pt-BR") : ""}
                           </TableCell>
                           <TableCell className="text-xs text-right font-medium">
-                            {fmt(t.amount)}
+                            <span className={selectedBankTx && t.type === 'payable' ? 'text-red-600' : selectedBankTx && t.type === 'receivable' ? 'text-emerald-600' : ''}>
+                              {selectedBankTx && t.type === 'payable' ? `-${fmt(t.amount)}` : fmt(t.amount)}
+                            </span>
                           </TableCell>
                           <TableCell>
                             <Badge
