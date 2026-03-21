@@ -671,10 +671,17 @@ export default function BankReconciliationPage() {
     } = await supabase.auth.getUser();
 
     if (tx.reconciled_with_id) {
-      const ids = tx.reconciled_with_id.split(',').map(s => s.trim()).filter(Boolean);
+      // Extract all IDs: the primary one from reconciled_with_id + extras from note [IDs:...]
+      const ids: string[] = [tx.reconciled_with_id];
+      const noteMatch = (tx.reconciliation_note || '').match(/\[IDs?:([^\]]+)\]/);
+      if (noteMatch) {
+        const extraIds = noteMatch[1].split(',').map(s => s.trim()).filter(Boolean);
+        for (const eid of extraIds) {
+          if (!ids.includes(eid)) ids.push(eid);
+        }
+      }
       const types = (tx.reconciled_with_type || '').split(',').map(s => s.trim());
       for (const rid of ids) {
-        // Determine type - if single type use it, otherwise check each
         const isPagar = types.includes('pagar');
         const isReceber = types.includes('receber');
         if (isPagar) {
