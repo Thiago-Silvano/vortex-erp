@@ -695,6 +695,60 @@ export default function BankReconciliationPage() {
           </div>
         </div>
 
+        {/* Bank accounts balance overview */}
+        {accounts.length > 0 && (
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Banco</TableHead>
+                    <TableHead>Agência / Conta</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Titular</TableHead>
+                    <TableHead className="text-right">Saldo Atual</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {accounts.map((a) => {
+                    const balance = accountBalances[a.id] ?? Number(a.initial_balance);
+                    return (
+                      <TableRow
+                        key={a.id}
+                        className={`cursor-pointer transition-colors ${selectedAccount === a.id ? 'bg-accent' : 'hover:bg-muted/50'}`}
+                        onClick={() => setSelectedAccount(a.id)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: a.color }} />
+                            <div>
+                              <p className="font-medium text-sm">{a.bank_name}</p>
+                              {a.bank_code && <p className="text-xs text-muted-foreground">Cód: {a.bank_code}</p>}
+                            </div>
+                            {a.is_default && <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{a.agency} / {a.account_number}{a.account_digit ? `-${a.account_digit}` : ''}</TableCell>
+                        <TableCell className="text-sm">Corrente</TableCell>
+                        <TableCell className="text-sm">{a.holder_name}</TableCell>
+                        <TableCell className={`text-right text-sm font-semibold ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {fmt(balance)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={selectedAccount === a.id ? 'default' : 'secondary'}>
+                            {selectedAccount === a.id ? 'Selecionada' : 'Ativa'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Dashboard cards */}
         {selectedAccount && (
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
