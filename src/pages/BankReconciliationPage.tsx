@@ -1416,6 +1416,58 @@ export default function BankReconciliationPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Partial Payment Confirmation Dialog */}
+      <Dialog open={!!partialPayment} onOpenChange={(open) => { if (!open) setPartialPayment(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              Baixa Parcial Detectada
+            </DialogTitle>
+          </DialogHeader>
+          {partialPayment && (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Valor do título:</span>
+                  <span className="font-semibold">{fmt(partialPayment.titleTotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Valor no extrato:</span>
+                  <span className="font-semibold">{fmt(partialPayment.bankAmount)}</span>
+                </div>
+                <div className="border-t pt-2 flex justify-between">
+                  <span className="text-muted-foreground font-medium">Saldo restante:</span>
+                  <span className="font-bold text-amber-600">{fmt(partialPayment.remaining)}</span>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                O valor do extrato bancário é menor que o título financeiro. Deseja registrar como <strong>baixa parcial</strong>?
+                O título permanecerá em aberto com o saldo restante de <strong>{fmt(partialPayment.remaining)}</strong>.
+              </p>
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs text-amber-700 dark:text-amber-400">
+                <p className="font-medium mb-1">O que acontece:</p>
+                <ul className="list-disc ml-4 space-y-0.5">
+                  <li>O lançamento bancário será marcado como conciliado</li>
+                  <li>O título será atualizado para o saldo restante ({fmt(partialPayment.remaining)})</li>
+                  <li>O status do título ficará como "Baixa Parcial"</li>
+                </ul>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setPartialPayment(null)}>Cancelar</Button>
+                <Button
+                  onClick={() => executeReconcile(partialPayment.tx, partialPayment.titles, true)}
+                  className="gap-2"
+                >
+                  <Check className="h-4 w-4" />
+                  Confirmar Baixa Parcial
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
