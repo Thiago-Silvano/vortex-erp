@@ -1145,9 +1145,14 @@ export default function BankReconciliationPage() {
                       </TableRow>
                     ) : (
                       filteredTx.map((tx) => {
-                        const suggestions = tx.reconciliation_status === "pending" ? getSuggestions(tx) : [];
+                        const suggestions = tx.reconciliation_status === "pending" && !selectedBankTx ? getSuggestions(tx) : [];
+                        const isSelected = selectedBankTx?.id === tx.id;
                         return (
-                          <TableRow key={tx.id} className="group">
+                          <TableRow
+                            key={tx.id}
+                            className={`group ${tx.reconciliation_status === 'pending' ? 'cursor-pointer' : ''} ${isSelected ? 'bg-primary/10 border-l-2 border-l-primary' : ''}`}
+                            onClick={() => tx.reconciliation_status === 'pending' && selectBankTx(tx)}
+                          >
                             <TableCell className="text-xs whitespace-nowrap">
                               {tx.transaction_date
                                 ? new Date(tx.transaction_date + "T12:00:00").toLocaleDateString("pt-BR")
@@ -1155,12 +1160,17 @@ export default function BankReconciliationPage() {
                             </TableCell>
                             <TableCell className="text-xs max-w-[180px] truncate" title={tx.description}>
                               {tx.description}
-                              {suggestions.length > 0 && (
+                              {isSelected && (
+                                <div className="mt-1 text-[10px] font-medium text-primary">
+                                  ✓ Selecionado — escolha títulos à direita
+                                </div>
+                              )}
+                              {suggestions.length > 0 && !selectedBankTx && (
                                 <div className="mt-1 space-y-1">
                                   {suggestions.map((s) => (
                                     <button
                                       key={s.id}
-                                      onClick={() => manualReconcile(tx, s)}
+                                      onClick={(e) => { e.stopPropagation(); manualReconcile(tx, s); }}
                                       className="flex items-center gap-1 text-[10px] text-primary hover:underline w-full text-left bg-primary/5 rounded px-1.5 py-0.5"
                                     >
                                       <Link2 className="h-3 w-3 shrink-0" />
@@ -1185,10 +1195,11 @@ export default function BankReconciliationPage() {
                                 {statusLabels[tx.reconciliation_status] || tx.reconciliation_status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right flex items-center justify-end gap-1">
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1">
                               {tx.reconciliation_status === "pending" && (
                                 <>
-                                  {selectedTitleIds.size > 0 && (
+                                  {!selectedBankTx && selectedTitleIds.size > 0 && (
                                     <Button
                                       variant="default"
                                       size="sm"
@@ -1238,6 +1249,7 @@ export default function BankReconciliationPage() {
                                   </Button>
                                 </>
                               )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
