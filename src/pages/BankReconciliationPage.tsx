@@ -584,19 +584,22 @@ export default function BankReconciliationPage() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const titleIds = selectedTitles.map(t => t.id).join(',');
+    const titleIds = selectedTitles.map(t => t.id);
     const titleTypes = [...new Set(selectedTitles.map(t => t.type === "payable" ? "pagar" : "receber"))].join(',');
     const bankAmount = Math.abs(Number(tx.amount));
 
+    // reconciled_with_id is uuid column — store first title id; keep all ids in note
     await supabase
       .from("bank_transactions")
       .update({
         reconciliation_status: "reconciled",
         reconciled_with_type: titleTypes,
-        reconciled_with_id: titleIds,
+        reconciled_with_id: titleIds[0],
         reconciliation_note: isPartial
           ? `Baixa parcial - Pago: ${fmt(bankAmount)}, Saldo restante: ${fmt(selectedTitles[0].amount - bankAmount)}`
-          : `Conciliação manual com ${selectedTitles.length} título(s)`,
+          : selectedTitles.length > 1
+            ? `Conciliação com ${selectedTitles.length} título(s) [IDs:${titleIds.join(',')}]`
+            : `Conciliação manual`,
       } as any)
       .eq("id", tx.id);
 
