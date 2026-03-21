@@ -129,6 +129,7 @@ export default function BankReconciliationPage() {
   const [manualType, setManualType] = useState("");
   const [showIgnoredView, setShowIgnoredView] = useState(false);
   const [selectedTitleIds, setSelectedTitleIds] = useState<Set<string>>(new Set());
+  const [selectedBankTx, setSelectedBankTx] = useState<BankTx | null>(null);
 
   // Quick-create title inline
   const [quickCreateType, setQuickCreateType] = useState<"payable" | "receivable" | null>(null);
