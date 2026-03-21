@@ -36,6 +36,7 @@ import {
   ChevronUp,
   ChevronDown,
   Star,
+  Trash2,
 } from "lucide-react";
 
 interface BankAccount {
