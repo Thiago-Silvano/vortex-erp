@@ -100,6 +100,23 @@ export default function AccountsReceivablePage() {
     fetch_();
   };
 
+  const [confirmUndoId, setConfirmUndoId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleUndo = async (id: string) => {
+    await supabase.from('receivables').update({ status: 'pending', payment_date: null, payment_method: '' } as any).eq('id', id);
+    toast.success('Recebimento desfeito! Status retornado para "Em aberto".');
+    setConfirmUndoId(null);
+    fetch_();
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from('receivables').delete().eq('id', id);
+    toast.success('Lançamento excluído!');
+    setConfirmDeleteId(null);
+    fetch_();
+  };
+
   const [manualDialog, setManualDialog] = useState(false);
   const [cameFromReconciliation, setCameFromReconciliation] = useState(false);
 
