@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown, Pencil } from 'lucide-react';
+import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown, Pencil, Undo2, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, endOfYear, isSameDay } from 'date-fns';
@@ -96,6 +97,23 @@ export default function AccountsReceivablePage() {
     } as any).eq('id', editItem.id);
     toast.success('Registro atualizado!');
     setEditDialog(false);
+    fetch_();
+  };
+
+  const [confirmUndoId, setConfirmUndoId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleUndo = async (id: string) => {
+    await supabase.from('receivables').update({ status: 'pending', payment_date: null, payment_method: '' } as any).eq('id', id);
+    toast.success('Recebimento desfeito! Status retornado para "Em aberto".');
+    setConfirmUndoId(null);
+    fetch_();
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from('receivables').delete().eq('id', id);
+    toast.success('Lançamento excluído!');
+    setConfirmDeleteId(null);
     fetch_();
   };
 
@@ -368,6 +386,14 @@ export default function AccountsReceivablePage() {
                             <Check className="h-4 w-4 text-primary" />
                           </Button>
                         )}
+                        {(r.status === 'received' || r.status === 'paid') && (
+                          <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); setConfirmUndoId(r.id); }} title="Desfazer recebimento">
+                            <Undo2 className="h-4 w-4 text-yellow-600" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); setConfirmDeleteId(r.id); }} title="Excluir">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -485,6 +511,32 @@ export default function AccountsReceivablePage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={!!confirmUndoId} onOpenChange={open => !open && setConfirmUndoId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Desfazer recebimento?</AlertDialogTitle>
+              <AlertDialogDescription>O status será retornado para "Em aberto" e a data de recebimento será removida.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => confirmUndoId && handleUndo(confirmUndoId)}>Confirmar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!confirmDeleteId} onOpenChange={open => !open && setConfirmDeleteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir lançamento?</AlertDialogTitle>
+              <AlertDialogDescription>Esta ação não pode ser desfeita. O lançamento será removido permanentemente.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}>Excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
