@@ -823,10 +823,22 @@ export default function BankReconciliationPage() {
       .slice(0, 3);
   };
 
+  // Signed total: payable = negative (expense), receivable = positive (income)
+  const selectedTitlesSignedTotal = Array.from(selectedTitleIds).reduce((sum, id) => {
+    const t = titles.find(tt => tt.id === id);
+    if (!t) return sum;
+    return sum + (t.type === 'payable' ? -Number(t.amount) : Number(t.amount));
+  }, 0);
+
   const selectedTitlesTotal = Array.from(selectedTitleIds).reduce((sum, id) => {
     const t = titles.find(tt => tt.id === id);
     return sum + (t ? Number(t.amount) : 0);
   }, 0);
+
+  // Balance calculation when a bank tx is selected
+  const bankTxAmount = selectedBankTx ? Number(selectedBankTx.amount) : 0;
+  const balanceDifference = selectedBankTx ? bankTxAmount - selectedTitlesSignedTotal : 0;
+  const isBalanced = selectedBankTx && selectedTitleIds.size > 0 && Math.abs(balanceDifference) < 0.01;
 
   const toggleTitleSelection = (id: string) => {
     setSelectedTitleIds(prev => {
@@ -836,10 +848,29 @@ export default function BankReconciliationPage() {
     });
   };
 
+  const selectBankTx = (tx: BankTx) => {
+    if (tx.reconciliation_status !== 'pending') return;
+    if (selectedBankTx?.id === tx.id) {
+      setSelectedBankTx(null);
+      setSelectedTitleIds(new Set());
+    } else {
+      setSelectedBankTx(tx);
+      setSelectedTitleIds(new Set());
+    }
+  };
+
+  const reconcileBalanced = async () => {
+    if (!selectedBankTx || !isBalanced) return;
+    const selectedTitles = titles.filter(t => selectedTitleIds.has(t.id));
+    await executeReconcile(selectedBankTx, selectedTitles, false);
+    setSelectedBankTx(null);
+  };
+
   const reconcileWithSelected = async (tx: BankTx) => {
     const selectedTitles = titles.filter(t => selectedTitleIds.has(t.id));
     if (selectedTitles.length === 0) { toast.error("Selecione ao menos um título"); return; }
     await multiReconcile(tx, selectedTitles);
+    setSelectedBankTx(null);
   };
 
   return (
