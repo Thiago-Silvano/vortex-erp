@@ -240,11 +240,11 @@ export default function BankReconciliationPage() {
     const [payRes, recRes] = await Promise.all([
       supabase
         .from("accounts_payable")
-        .select("id, description, amount, due_date, status, supplier_id, sale_id")
+        .select("id, description, amount, due_date, status, supplier_id, sale_id, notes")
         .eq("empresa_id", titlesEmpresaId),
       supabase
         .from("receivables")
-        .select("id, description, amount, due_date, status, client_name, sale_id")
+        .select("id, description, amount, due_date, status, client_name, sale_id, notes")
         .eq("empresa_id", titlesEmpresaId),
     ]);
     // Exclude titles linked to draft sales
