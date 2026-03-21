@@ -208,22 +208,28 @@ export default function SuppliersPage() {
             </DialogHeader>
             <div className="space-y-6">
               {/* CNPJ with lookup */}
+              <div className="flex items-center gap-2 mb-2">
+                <Checkbox id="isPF" checked={isPF} onCheckedChange={(v) => { setIsPF(v === true); setForm(p => ({ ...p, cnpj: '' })); }} />
+                <Label htmlFor="isPF" className="cursor-pointer text-sm">Fornecedor é PF?</Label>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>CNPJ *</Label>
+                  <Label>{isPF ? 'CPF *' : 'CNPJ *'}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={form.cnpj}
-                      onChange={e => setForm(p => ({ ...p, cnpj: maskCnpj(e.target.value) }))}
-                      placeholder="00.000.000/0000-00"
+                      onChange={e => setForm(p => ({ ...p, cnpj: isPF ? maskCpf(e.target.value) : maskCnpj(e.target.value) }))}
+                      placeholder={isPF ? '000.000.000-00' : '00.000.000/0000-00'}
                     />
-                    <Button variant="outline" size="icon" onClick={handleCnpjSearch} disabled={cnpjLoading}>
-                      <Search className="h-4 w-4" />
-                    </Button>
+                    {!isPF && (
+                      <Button variant="outline" size="icon" onClick={handleCnpjSearch} disabled={cnpjLoading}>
+                        <Search className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div>
-                  <Label>Razão Social</Label>
+                  <Label>{isPF ? 'Nome completo' : 'Razão Social'}</Label>
                   <Input value={form.razao_social} onChange={e => setForm(p => ({ ...p, razao_social: e.target.value }))} />
                 </div>
               </div>
