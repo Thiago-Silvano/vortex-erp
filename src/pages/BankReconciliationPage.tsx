@@ -123,7 +123,7 @@ export default function BankReconciliationPage() {
   const [transactions, setTransactions] = useState<BankTx[]>([]);
   const [titles, setTitles] = useState<FinancialTitle[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("pending");
   const [filterType, setFilterType] = useState("all");
   const [searchTx, setSearchTx] = useState("");
   const [searchTitle, setSearchTitle] = useState("");
