@@ -131,6 +131,7 @@ export default function SuppliersPage() {
     setEditingId(s.id);
     const { id, ...rest } = s;
     setForm(rest);
+    setIsPF(unmask(rest.cnpj).length <= 11);
     setDialogOpen(true);
   };
 
