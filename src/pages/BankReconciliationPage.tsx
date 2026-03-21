@@ -730,7 +730,12 @@ export default function BankReconciliationPage() {
     // If reclassifying from reconciled/ignored, undo first
     if (tx.reconciliation_status !== "pending") {
       if (tx.reconciled_with_id) {
-        const ids = tx.reconciled_with_id.split(',').map(s => s.trim()).filter(Boolean);
+        const ids: string[] = [tx.reconciled_with_id];
+        const noteMatch = (tx.reconciliation_note || '').match(/\[IDs?:([^\]]+)\]/);
+        if (noteMatch) {
+          const extraIds = noteMatch[1].split(',').map(s => s.trim()).filter(Boolean);
+          for (const eid of extraIds) { if (!ids.includes(eid)) ids.push(eid); }
+        }
         const types = (tx.reconciled_with_type || '').split(',').map(s => s.trim());
         for (const rid of ids) {
           if (types.includes('pagar')) {
