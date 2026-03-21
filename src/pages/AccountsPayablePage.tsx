@@ -202,8 +202,8 @@ export default function AccountsPayablePage() {
     });
   }, [periodItems, filterStatus, filterSupplier, filterCostCenter, sortKey, sortDir, suppliers]);
 
-  const statusLabel: Record<string, string> = { open: 'Em aberto', paid: 'Pago', overdue: 'Em atraso' };
-  const statusClasses = (s: string) => s === 'paid' ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' : s === 'overdue' ? 'bg-red-500/15 text-red-700 border-red-500/30' : 'bg-yellow-500/15 text-yellow-700 border-yellow-500/30';
+  const statusLabel: Record<string, string> = { open: 'Em aberto', paid: 'Pago', overdue: 'Em atraso', partial: 'Baixa Parcial' };
+  const statusClasses = (s: string) => s === 'paid' ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' : s === 'overdue' ? 'bg-red-500/15 text-red-700 border-red-500/30' : s === 'partial' ? 'bg-blue-500/15 text-blue-700 border-blue-500/30' : 'bg-yellow-500/15 text-yellow-700 border-yellow-500/30';
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const supplierName = (id: string | null) => suppliers.find(s => s.id === id)?.name || '-';
 
