@@ -363,7 +363,7 @@ export default function AccountsReceivablePage() {
                         <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openEdit(r); }} title="Editar">
                           <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                        {r.status === 'pending' && (
+                        {(r.status === 'pending' || r.status === 'partial') && (
                           <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openMark(r.id); }} title="Marcar como recebido">
                             <Check className="h-4 w-4 text-primary" />
                           </Button>
