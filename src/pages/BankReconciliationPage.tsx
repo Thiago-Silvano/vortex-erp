@@ -770,8 +770,9 @@ export default function BankReconciliationPage() {
     // Hide ignored from main list (they have their own view)
     if (!showIgnoredView && t.reconciliation_status === "ignored") return false;
     if (showIgnoredView && t.reconciliation_status !== "ignored") return false;
-    // Show only pending in main view (unless viewing ignored)
-    if (!showIgnoredView && t.reconciliation_status !== "pending") return false;
+    // Apply status filter
+    if (!showIgnoredView && filterStatus === "pending" && t.reconciliation_status !== "pending") return false;
+    if (!showIgnoredView && filterStatus === "reconciled" && t.reconciliation_status !== "reconciled") return false;
     if (filterType === "credit" && Number(t.amount) < 0) return false;
     if (filterType === "debit" && Number(t.amount) > 0) return false;
     if (searchTx && !t.description.toLowerCase().includes(searchTx.toLowerCase())) return false;
