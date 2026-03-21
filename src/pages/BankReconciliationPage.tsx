@@ -138,6 +138,9 @@ export default function BankReconciliationPage() {
   const [qcClientName, setQcClientName] = useState("");
   const [qcSaving, setQcSaving] = useState(false);
 
+  // Partial payment
+  const [partialPayment, setPartialPayment] = useState<PartialPaymentInfo | null>(null);
+
   const resetQuickCreate = () => {
     setQuickCreateType(null);
     setQcDescription("");
