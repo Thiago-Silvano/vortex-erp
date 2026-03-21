@@ -806,6 +806,10 @@ export default function BankReconciliationPage() {
                   <Link2 className="h-4 w-4" />
                   Conciliar Auto
                 </Button>
+                <Button variant="destructive" size="sm" onClick={deleteLastOFXImport} className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Desfazer Último OFX
+                </Button>
               </>
             )}
           </div>
