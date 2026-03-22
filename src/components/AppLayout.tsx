@@ -80,6 +80,7 @@ function AppSidebar() {
     { title: 'Clientes', url: '/clients', icon: UserRound, permKey: 'clients_view' },
     { title: 'Fornecedores', url: '/suppliers', icon: Building2, permKey: 'suppliers_view' },
     { title: 'Vendas', url: '/sales', icon: ShoppingCart, permKey: 'sales_view' },
+    { title: 'Cotações', url: '/cotacoes', icon: FileEdit, permKey: 'sales_view' },
     { title: 'Vendedores', url: '/sellers', icon: UserCheck, permKey: 'sellers_view' },
     { title: 'Serviços', url: '/services', icon: ClipboardList, permKey: 'services_view' },
     { title: 'Reservas', url: '/reservations', icon: BookOpen, permKey: 'reservations_view' },
