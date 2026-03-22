@@ -17,6 +17,7 @@ import CalendarPage from "./pages/CalendarPage";
 import ClientsPage from "./pages/ClientsPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import SalesPage from "./pages/SalesPage";
+import CotacoesKanbanPage from "./pages/CotacoesKanbanPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import NewSalePage from "./pages/NewSalePage";
 import AccountsReceivablePage from "./pages/AccountsReceivablePage";
