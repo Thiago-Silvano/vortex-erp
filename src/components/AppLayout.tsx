@@ -85,6 +85,7 @@ function AppSidebar() {
     { title: 'Serviços', url: '/services', icon: ClipboardList, permKey: 'services_view' },
     { title: 'Reservas', url: '/reservations', icon: BookOpen, permKey: 'reservations_view' },
     { title: 'Roteiros', url: '/itineraries', icon: Map },
+    { title: 'Contratos', url: '/contracts/templates', icon: FileText },
     { title: 'Promo Maker', url: '/promo-maker', icon: Sparkles },
   ];
 
