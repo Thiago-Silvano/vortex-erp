@@ -2773,7 +2773,7 @@ export default function NewSalePage() {
 
         {/* Contracts Section */}
         {!isQuoteMode && editSaleId && (
-          <ContractSection saleId={editSaleId} empresaId={activeCompany?.id || ''} clientName={clientName} clientEmail={clientEmail} clientPhone={clientPhone} />
+          <ContractSection saleId={editSaleId} empresaId={activeCompany?.id || ''} clientName={clientName} />
         )}
 
         {/* Notes section moved above suppliers */}
