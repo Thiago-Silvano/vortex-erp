@@ -1468,6 +1468,47 @@ export type Database = {
           },
         ]
       }
+      kanban_columns: {
+        Row: {
+          color: string
+          created_at: string
+          empresa_id: string | null
+          id: string
+          is_default: boolean
+          name: string
+          sort_order: number
+          status_key: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          status_key?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          status_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kanban_columns_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1685,6 +1726,44 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_status_log: {
+        Row: {
+          changed_by: string
+          created_at: string
+          empresa_id: string | null
+          from_status: string
+          id: string
+          sale_id: string
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string
+          created_at?: string
+          empresa_id?: string | null
+          from_status?: string
+          id?: string
+          sale_id: string
+          to_status?: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          empresa_id?: string | null
+          from_status?: string
+          id?: string
+          sale_id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_status_log_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
