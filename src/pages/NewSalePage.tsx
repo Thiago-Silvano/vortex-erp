@@ -1652,6 +1652,20 @@ export default function NewSalePage() {
           )}
         </div>
 
+        {/* Workflow Timeline */}
+        {editSaleId && (
+          <Card className="overflow-hidden">
+            <CardContent className="p-4">
+              <SaleTimeline
+                saleStatus={saleStatus}
+                workflowStatus={saleWorkflowStatus}
+                createdAt={saleDate}
+                hasReceivables={!isQuoteMode && receivables.length > 0}
+              />
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">
             {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Editar Cotação' : 'Nova Cotação'}
