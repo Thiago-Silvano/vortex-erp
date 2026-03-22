@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useCompany } from '@/contexts/CompanyContext';
+import PipelineDashboard from '@/components/PipelineDashboard';
 
 interface DashboardStats {
   totalSales: number;
@@ -66,48 +67,12 @@ export default function Dashboard() {
   const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
   const statCards = [
-    {
-      label: 'Total de Vendas',
-      value: stats.totalSales.toString(),
-      icon: ShoppingCart,
-      color: 'bg-primary text-primary-foreground',
-      iconColor: 'text-primary-foreground/80',
-    },
-    {
-      label: 'Total Faturado',
-      value: fmt(stats.totalRevenue),
-      icon: DollarSign,
-      color: 'bg-yellow-500 text-white',
-      iconColor: 'text-white/80',
-    },
-    {
-      label: 'Lucro Bruto',
-      value: fmt(stats.grossProfit),
-      icon: TrendingUp,
-      color: 'bg-emerald-600 text-white',
-      iconColor: 'text-white/80',
-    },
-    {
-      label: 'Lucro Líquido',
-      value: fmt(stats.netProfit),
-      icon: BarChart3,
-      color: 'bg-blue-600 text-white',
-      iconColor: 'text-white/80',
-    },
-    {
-      label: 'Custos Totais',
-      value: fmt(stats.totalCosts),
-      icon: TrendingDown,
-      color: 'bg-destructive text-destructive-foreground',
-      iconColor: 'text-destructive-foreground/80',
-    },
-    {
-      label: 'Clientes Atendidos',
-      value: stats.clientsCount.toString(),
-      icon: Users,
-      color: 'bg-violet-600 text-white',
-      iconColor: 'text-white/80',
-    },
+    { label: 'Total de Vendas', value: stats.totalSales.toString(), icon: ShoppingCart, color: 'bg-primary text-primary-foreground', iconColor: 'text-primary-foreground/80' },
+    { label: 'Total Faturado', value: fmt(stats.totalRevenue), icon: DollarSign, color: 'bg-yellow-500 text-white', iconColor: 'text-white/80' },
+    { label: 'Lucro Bruto', value: fmt(stats.grossProfit), icon: TrendingUp, color: 'bg-emerald-600 text-white', iconColor: 'text-white/80' },
+    { label: 'Lucro Líquido', value: fmt(stats.netProfit), icon: BarChart3, color: 'bg-blue-600 text-white', iconColor: 'text-white/80' },
+    { label: 'Custos Totais', value: fmt(stats.totalCosts), icon: TrendingDown, color: 'bg-destructive text-destructive-foreground', iconColor: 'text-destructive-foreground/80' },
+    { label: 'Clientes Atendidos', value: stats.clientsCount.toString(), icon: Users, color: 'bg-violet-600 text-white', iconColor: 'text-white/80' },
   ];
 
   return (
@@ -118,7 +83,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-foreground">
               {userName ? `Bem-vindo, ${userName}.` : 'Dashboard'}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">Visão geral das suas vendas</p>
+            <p className="text-muted-foreground text-sm mt-1">Visão geral do mês atual</p>
           </div>
         </div>
 
@@ -146,6 +111,11 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Pipeline Dashboard */}
+        <div>
+          <h2 className="text-lg font-semibold text-foreground mb-3">Pipeline Comercial</h2>
+          <PipelineDashboard />
+        </div>
       </div>
     </AppLayout>
   );

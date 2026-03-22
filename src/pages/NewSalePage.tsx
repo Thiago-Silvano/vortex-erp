@@ -25,6 +25,7 @@ import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
 import ImageSearchModal, { StockImage } from '@/components/ImageSearchModal';
 import ContractSection from '@/components/ContractSection';
+import SaleTimeline from '@/components/SaleTimeline';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, maskCpf, maskEmail, maskCurrency, parseCurrency } from '@/lib/masks';
@@ -184,8 +185,21 @@ export default function NewSalePage() {
   const [showOnlyTotal, setShowOnlyTotal] = useState(false);
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
   const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
+  const [contractInfo, setContractInfo] = useState<{ status?: string; sentAt?: string | null; viewedAt?: string | null; signedAt?: string | null }>({});
 
   const isQuoteMode = saleStatus !== 'active';
+
+  // Load contract info for timeline
+  useEffect(() => {
+    if (!editSaleId) return;
+    supabase.from('contracts').select('status, sent_at, viewed_at, signed_at')
+      .eq('sale_id', editSaleId).order('created_at', { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setContractInfo({ status: data[0].status, sentAt: data[0].sent_at, viewedAt: data[0].viewed_at, signedAt: data[0].signed_at });
+        }
+      });
+  }, [editSaleId]);
 
   useEffect(() => {
     if (initialEditSaleId) loadSale(initialEditSaleId);
@@ -1650,6 +1664,24 @@ export default function NewSalePage() {
             </Button>
           )}
         </div>
+
+        {/* Workflow Timeline */}
+        {editSaleId && (
+          <Card className="overflow-hidden">
+            <CardContent className="p-4">
+              <SaleTimeline
+                saleStatus={saleStatus}
+                workflowStatus={saleWorkflowStatus}
+                createdAt={saleDate}
+                contractStatus={contractInfo.status}
+                contractSentAt={contractInfo.sentAt}
+                contractViewedAt={contractInfo.viewedAt}
+                contractSignedAt={contractInfo.signedAt}
+                hasReceivables={!isQuoteMode && receivables.length > 0}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">
