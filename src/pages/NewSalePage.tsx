@@ -2770,6 +2770,11 @@ export default function NewSalePage() {
         </Card>
         )}
 
+        {/* Contracts Section */}
+        {!isQuoteMode && editSaleId && (
+          <ContractSection saleId={editSaleId} empresaId={activeCompany?.id || ''} clientName={clientName} clientEmail={clientEmail} clientPhone={clientPhone} />
+        )}
+
         {/* Notes section moved above suppliers */}
 
         {/* Financial Summary */}
