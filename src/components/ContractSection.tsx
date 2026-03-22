@@ -31,6 +31,8 @@ interface ContractRow {
   client_email: string;
   body_html: string;
 }
+
+interface TemplateRow {
   id: string;
   name: string;
   category: string;

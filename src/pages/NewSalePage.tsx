@@ -24,6 +24,7 @@ import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
 import ImageSearchModal, { StockImage } from '@/components/ImageSearchModal';
+import ContractSection from '@/components/ContractSection';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { maskPhone, maskCpf, maskEmail, maskCurrency, parseCurrency } from '@/lib/masks';
