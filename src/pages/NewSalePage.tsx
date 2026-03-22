@@ -1673,6 +1673,10 @@ export default function NewSalePage() {
                 saleStatus={saleStatus}
                 workflowStatus={saleWorkflowStatus}
                 createdAt={saleDate}
+                contractStatus={contractInfo.status}
+                contractSentAt={contractInfo.sentAt}
+                contractViewedAt={contractInfo.viewedAt}
+                contractSignedAt={contractInfo.signedAt}
                 hasReceivables={!isQuoteMode && receivables.length > 0}
               />
             </CardContent>
