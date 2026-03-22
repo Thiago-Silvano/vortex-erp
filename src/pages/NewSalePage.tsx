@@ -185,8 +185,21 @@ export default function NewSalePage() {
   const [showOnlyTotal, setShowOnlyTotal] = useState(false);
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
   const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
+  const [contractInfo, setContractInfo] = useState<{ status?: string; sentAt?: string | null; viewedAt?: string | null; signedAt?: string | null }>({});
 
   const isQuoteMode = saleStatus !== 'active';
+
+  // Load contract info for timeline
+  useEffect(() => {
+    if (!editSaleId) return;
+    supabase.from('contracts').select('status, sent_at, viewed_at, signed_at')
+      .eq('sale_id', editSaleId).order('created_at', { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setContractInfo({ status: data[0].status, sentAt: data[0].sent_at, viewedAt: data[0].viewed_at, signedAt: data[0].signed_at });
+        }
+      });
+  }, [editSaleId]);
 
   useEffect(() => {
     if (initialEditSaleId) loadSale(initialEditSaleId);
