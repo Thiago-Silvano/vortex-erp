@@ -29,9 +29,8 @@ interface ContractRow {
   signed_at: string | null;
   client_name: string;
   client_email: string;
+  body_html: string;
 }
-
-interface TemplateRow {
   id: string;
   name: string;
   category: string;
