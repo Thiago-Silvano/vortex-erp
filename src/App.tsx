@@ -62,6 +62,8 @@ import DS160GroupPublicPage from "./pages/DS160GroupPublicPage";
 import VistosDS160Page from "./pages/vistos/VistosDS160Page";
 import ItineraryPublicPage from "./pages/ItineraryPublicPage";
 import PromoMakerPage from "./pages/PromoMakerPage";
+import ContractTemplatesPage from "./pages/ContractTemplatesPage";
+import ContractSignPage from "./pages/ContractSignPage";
 
 // WhatsApp pages
 import WhatsAppInboxPage from "./pages/whatsapp/WhatsAppInboxPage";
@@ -148,6 +150,10 @@ const App = () => (
           <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
           <Route path="/roteiro/:token" element={<ItineraryPublicPage />} />
+          <Route path="/contrato/:token" element={<ContractSignPage />} />
+          
+          {/* Contract templates */}
+          <Route path="/contracts/templates" element={<ProtectedRoute><ContractTemplatesPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
