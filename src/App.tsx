@@ -62,6 +62,8 @@ import DS160GroupPublicPage from "./pages/DS160GroupPublicPage";
 import VistosDS160Page from "./pages/vistos/VistosDS160Page";
 import ItineraryPublicPage from "./pages/ItineraryPublicPage";
 import PromoMakerPage from "./pages/PromoMakerPage";
+import ContractTemplatesPage from "./pages/ContractTemplatesPage";
+import ContractSignPage from "./pages/ContractSignPage";
 
 // WhatsApp pages
 import WhatsAppInboxPage from "./pages/whatsapp/WhatsAppInboxPage";
