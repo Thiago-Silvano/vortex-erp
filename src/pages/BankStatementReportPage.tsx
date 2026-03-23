@@ -305,9 +305,14 @@ export default function BankStatementReportPage() {
             <p className="text-sm text-muted-foreground">Movimentação detalhada e resumo por centro de custo</p>
           </div>
           {transactions.length > 0 && (
-            <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
-              <Download className="h-4 w-4" />Exportar CSV
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={exportPDF} className="gap-2">
+                <FileText className="h-4 w-4" />Exportar PDF
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
+                <Download className="h-4 w-4" />Exportar CSV
+              </Button>
+            </div>
           )}
         </div>
 
