@@ -75,6 +75,7 @@ export default function AccountsReceivablePage() {
   const [editAmount, setEditAmount] = useState(0);
   const [editDueDate, setEditDueDate] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editCostCenterId, setEditCostCenterId] = useState('');
 
   const openEdit = (item: Receivable) => {
     setEditItem(item);
@@ -83,6 +84,7 @@ export default function AccountsReceivablePage() {
     setEditAmount(item.amount || 0);
     setEditDueDate(item.due_date || '');
     setEditNotes(item.notes || '');
+    setEditCostCenterId(item.cost_center_id || '');
     setEditDialog(true);
   };
 
