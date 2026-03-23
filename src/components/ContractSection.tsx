@@ -91,12 +91,35 @@ export default function ContractSection({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [companyInfo, setCompanyInfo] = useState<{ name: string; cnpj: string; endereco: string }>({ name: '', cnpj: '', endereco: '' });
   const [refreshing, setRefreshing] = useState(false);
-  const [prevStatuses, setPrevStatuses] = useState<Record<string, string>>({});
+  const [prevStatuses, setPrevStatuses] = useState<Record<string, string> | null>(null);
 
   useEffect(() => {
     loadContracts();
     loadTemplates();
     loadCompanyInfo();
+
+    // Realtime subscription to detect contract signature changes
+    const channel = supabase
+      .channel(`contract-updates-${saleId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'contracts',
+        filter: `sale_id=eq.${saleId}`,
+      }, (payload) => {
+        const updated = payload.new as any;
+        if (updated.status === 'signed') {
+          toast.success(`Contrato "${updated.title}" foi assinado por ${updated.client_name}!`, {
+            duration: 8000,
+            icon: '🎉',
+          });
+          createSignedNotification(updated as ContractRow);
+          loadContracts();
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [saleId, empresaId]);
 
   useEffect(() => {
@@ -126,17 +149,18 @@ export default function ContractSection({
       .order('created_at', { ascending: false });
     const newContracts = (data as any) || [];
 
-    // Check if any contract changed to 'signed'
-    newContracts.forEach((c: ContractRow) => {
-      if (c.status === 'signed' && prevStatuses[c.id] && prevStatuses[c.id] !== 'signed') {
-        toast.success(`Contrato "${c.title}" foi assinado por ${c.client_name}!`, {
-          duration: 8000,
-          icon: '🎉',
-        });
-        // Create notification in the bell
-        createSignedNotification(c);
-      }
-    });
+    // Check if any contract changed to 'signed' (only after first load)
+    if (prevStatuses !== null) {
+      newContracts.forEach((c: ContractRow) => {
+        if (c.status === 'signed' && prevStatuses[c.id] !== 'signed') {
+          toast.success(`Contrato "${c.title}" foi assinado por ${c.client_name}!`, {
+            duration: 8000,
+            icon: '🎉',
+          });
+          createSignedNotification(c);
+        }
+      });
+    }
 
     // Store current statuses for comparison
     const statusMap: Record<string, string> = {};
