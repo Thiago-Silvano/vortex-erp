@@ -2815,7 +2815,6 @@ export default function NewSalePage() {
               const mainP = passengers.find(p => p.is_main) || passengers[0];
               if (!mainP) return '';
               if (mainP.document_type === 'cpf') return mainP.document_number || '';
-              // If main passenger has passport, look for any passenger with CPF
               const cpfPassenger = passengers.find(p => p.document_type === 'cpf');
               return cpfPassenger?.document_number || '';
             })()}
@@ -2826,6 +2825,8 @@ export default function NewSalePage() {
             paymentMethod={paymentMethods.join(', ')}
             sellerName={allSellers.find(s => s.id === sellerId)?.full_name}
             passengersCount={passengersCount}
+            saleWorkflowStatus={saleWorkflowStatus}
+            onWorkflowStatusChange={(newStatus) => setSaleWorkflowStatus(newStatus)}
           />
         )}
 
