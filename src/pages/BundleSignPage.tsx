@@ -757,7 +757,7 @@ export default function BundleSignPage() {
       </div>
 
       <footer className="py-6 text-center text-xs text-muted-foreground">
-        <p>Documento seguro • Powered by Vortex ERP</p>
+        <p>Documento seguro • {agencyInfo.name || 'Powered by Vortex ERP'}</p>
       </footer>
     </div>
   );
