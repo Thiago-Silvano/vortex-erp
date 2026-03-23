@@ -74,6 +74,7 @@ export default function AccountsPayablePage() {
   const [editAmount, setEditAmount] = useState(0);
   const [editDueDate, setEditDueDate] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editCostCenterId, setEditCostCenterId] = useState('');
 
   const openEdit = (item: Payable) => {
     setEditItem(item);
@@ -81,6 +82,7 @@ export default function AccountsPayablePage() {
     setEditAmount(item.amount || 0);
     setEditDueDate(item.due_date || '');
     setEditNotes(item.notes || '');
+    setEditCostCenterId(item.cost_center_id || '');
     setEditDialog(true);
   };
 
