@@ -884,7 +884,7 @@ export default function ContractSection({
 
           {/* Workflow action buttons */}
           <div className="mt-4 flex flex-wrap gap-2">
-            {bundles.length === 0 && !isAwaitingPayment && !isConcluded && saleWorkflowStatus !== 'sem_contrato' && (
+            {canSkipContract && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button size="sm" variant="outline" className="gap-1.5">
@@ -906,7 +906,7 @@ export default function ContractSection({
               </AlertDialog>
             )}
 
-            {canConfirmPayment && isAwaitingPayment && (
+            {canConfirmPayment && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
