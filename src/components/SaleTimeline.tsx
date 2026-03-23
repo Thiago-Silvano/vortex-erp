@@ -95,25 +95,25 @@ export default function SaleTimeline({
       key: 'billing_enabled',
       label: 'Cobrança Liberada',
       icon: CreditCard,
-      completed: !!contractSignedAt,
+      completed: !!contractSignedAt || workflowStatus === 'aguardando_pagamento' || workflowStatus === 'processo_concluido',
     },
     {
       key: 'payment',
       label: 'Cobrança Gerada',
       icon: CreditCard,
-      completed: !!hasReceivables,
+      completed: !!hasReceivables || workflowStatus === 'aguardando_pagamento' || workflowStatus === 'processo_concluido',
     },
     {
       key: 'paid',
       label: 'Pagamento Realizado',
       icon: DollarSign,
-      completed: !!isPaid,
+      completed: !!isPaid || workflowStatus === 'processo_concluido',
     },
     {
       key: 'completed',
       label: 'Processo Concluído',
       icon: Flag,
-      completed: !!isPaid && !!contractSignedAt,
+      completed: workflowStatus === 'processo_concluido',
     },
   ];
 
