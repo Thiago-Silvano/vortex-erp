@@ -73,11 +73,11 @@ export default function BundleSignPage() {
     if (b.status === 'signed') { setBundle(b); setStep('already_signed'); return; }
 
     // Fetch contracts in this bundle
-    const { data: contractsData } = await (supabase
+    const { data: contractsData } = await (supabase as any)
       .from('contracts')
       .select('id, title, body_html, status, signed_at')
-      .eq('bundle_id' as any, b.id)
-      .order('created_at', { ascending: true }) as any);
+      .eq('bundle_id', b.id)
+      .order('created_at', { ascending: true });
 
     const contractsList = (contractsData || []) as ContractData[];
     
