@@ -303,8 +303,9 @@ export default function PipelineDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
         {kpis.map(kpi => {
+          const hasHover = kpi.details && kpi.details.length > 0;
           const cardContent = (
-            <Card key={kpi.label} className="border shadow-sm cursor-default">
+            <Card key={kpi.label} className={`border shadow-sm ${hasHover ? 'cursor-pointer hover:shadow-md transition-shadow' : 'cursor-default'}`}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
