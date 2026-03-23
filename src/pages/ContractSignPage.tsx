@@ -277,6 +277,12 @@ export default function ContractSignPage() {
             <p>📋 Hash do documento registrado</p>
             <p>🕐 {new Date().toLocaleString('pt-BR')}</p>
           </div>
+          <div className="mt-4 border-t border-emerald-200 pt-4">
+            <p className="text-xs text-emerald-700 italic leading-relaxed">
+              👉 Este contrato possui validade jurídica conforme aceite digital e registro eletrônico,
+              nos termos da Medida Provisória nº 2.200-2/2001 e do artigo 10 da Lei nº 12.965/2014 (Marco Civil da Internet).
+            </p>
+          </div>
         </Card>
       </div>
     );
