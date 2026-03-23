@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Plus, Send, Eye, CheckCircle2, Clock, AlertCircle, Copy, ExternalLink, Loader2, MessageCircle, Mail, ShieldCheck, Download, Trash2 } from 'lucide-react';
+import { FileText, Plus, Send, Eye, CheckCircle2, Clock, AlertCircle, Copy, ExternalLink, Loader2, MessageCircle, Mail, ShieldCheck, Download, Trash2, RefreshCw } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -90,6 +90,8 @@ export default function ContractSection({
   const [exportingProof, setExportingProof] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [companyInfo, setCompanyInfo] = useState<{ name: string; cnpj: string; endereco: string }>({ name: '', cnpj: '', endereco: '' });
+  const [refreshing, setRefreshing] = useState(false);
+  const [prevStatuses, setPrevStatuses] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadContracts();
@@ -122,8 +124,50 @@ export default function ContractSection({
       .select('*')
       .eq('sale_id', saleId)
       .order('created_at', { ascending: false });
-    setContracts((data as any) || []);
+    const newContracts = (data as any) || [];
+
+    // Check if any contract changed to 'signed'
+    newContracts.forEach((c: ContractRow) => {
+      if (c.status === 'signed' && prevStatuses[c.id] && prevStatuses[c.id] !== 'signed') {
+        toast.success(`Contrato "${c.title}" foi assinado por ${c.client_name}!`, {
+          duration: 8000,
+          icon: '🎉',
+        });
+        // Create notification in the bell
+        createSignedNotification(c);
+      }
+    });
+
+    // Store current statuses for comparison
+    const statusMap: Record<string, string> = {};
+    newContracts.forEach((c: ContractRow) => { statusMap[c.id] = c.status; });
+    setPrevStatuses(statusMap);
+
+    setContracts(newContracts);
     setLoading(false);
+  };
+
+  const createSignedNotification = async (contract: ContractRow) => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    await (supabase.from('notifications' as any).insert({
+      empresa_id: empresaId,
+      user_id: userData.user.id,
+      type: 'contract_signed',
+      title: 'Contrato assinado ✅',
+      message: `${contract.client_name} assinou o contrato "${contract.title}"`,
+      reference_id: contract.id,
+      reference_type: 'contract',
+      is_read: false,
+      dismissed: false,
+    }) as any);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadContracts();
+    setRefreshing(false);
+    toast.info('Status dos contratos atualizado');
   };
 
   const loadTemplates = async () => {
@@ -465,9 +509,14 @@ export default function ContractSection({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Contratos</CardTitle>
-            <Button size="sm" onClick={() => setShowGenerate(true)} className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> Gerar Contrato
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={handleRefresh} disabled={refreshing} className="gap-1.5">
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} /> Atualizar
+              </Button>
+              <Button size="sm" onClick={() => setShowGenerate(true)} className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Gerar Contrato
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
