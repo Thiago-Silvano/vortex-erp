@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json();
-    const { user_id, empresa_id, email_id, test, to, subject, html, contract_smtp } = body;
+    const { user_id, empresa_id, email_id, test, to, subject, html, contract_smtp, attachments: bodyAttachments } = body;
 
     // If contract_smtp is provided directly (test mode from settings), use it
     if (contract_smtp && test) {
@@ -129,12 +129,24 @@ Deno.serve(async (req) => {
 
     // Direct send mode (for contracts, OTP, etc.)
     if (to && subject && html && !email_id) {
-      await transporter.sendMail({
+      const mailOpts: any = {
         from: senderAddress,
         to,
         subject,
         html,
-      });
+      };
+
+      // Support base64 attachments from contract signing
+      if (bodyAttachments && Array.isArray(bodyAttachments) && bodyAttachments.length > 0) {
+        mailOpts.attachments = bodyAttachments.map((att: any) => ({
+          filename: att.filename || 'attachment.pdf',
+          content: att.content,
+          encoding: att.encoding || 'base64',
+          contentType: att.contentType || 'application/pdf',
+        }));
+      }
+
+      await transporter.sendMail(mailOpts);
       return new Response(
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
