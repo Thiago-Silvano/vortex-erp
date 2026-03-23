@@ -163,6 +163,139 @@ export default function BankStatementReportPage() {
     a.click(); URL.revokeObjectURL(url);
   };
 
+  // Export PDF
+  const exportPDF = () => {
+    const pdf = new jsPDF({ orientation: 'landscape' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let y = 15;
+
+    // Header
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Relatório de Conta Corrente', pageWidth / 2, y, { align: 'center' });
+    y += 7;
+
+    if (account) {
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`${account.bank_name} — Ag: ${account.agency} | Cc: ${account.account_number}${account.account_digit ? '-' + account.account_digit : ''}`, pageWidth / 2, y, { align: 'center' });
+      y += 5;
+    }
+
+    const fmtDate = (d: string) => {
+      const parts = d.split('-');
+      return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : d;
+    };
+
+    pdf.setFontSize(8);
+    pdf.text(`Período: ${fmtDate(dateFrom)} a ${fmtDate(dateTo)}  |  Gerado em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`, pageWidth / 2, y, { align: 'center' });
+    y += 6;
+
+    // Summary KPIs
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Resumo Financeiro', 14, y);
+    y += 5;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    const summaryLines = [
+      `Total Entradas: ${fmt(totalCredits)}  |  Total Saídas: ${fmt(totalDebits)}  |  Saldo Período: ${fmt(periodBalance)}`,
+      `Saldo Conciliado: ${fmt(reconciledBalance)}  |  Pendente Conciliação: ${fmt(pendingBalance)}`,
+    ];
+    summaryLines.forEach(line => { pdf.text(line, 14, y); y += 4.5; });
+    y += 3;
+
+    // Transactions table
+    let bal = initialBal;
+    const tableData = transactions.map(t => {
+      bal += Number(t.amount);
+      const credit = Number(t.amount) > 0 ? fmt(Number(t.amount)) : '';
+      const debit = Number(t.amount) < 0 ? fmt(Math.abs(Number(t.amount))) : '';
+      return [
+        fmtDate(t.transaction_date),
+        t.description.substring(0, 45),
+        t.reference_number || '',
+        credit,
+        debit,
+        fmt(bal),
+        statusLabels[t.reconciliation_status] || t.reconciliation_status,
+        originLabels[t.origin] || t.origin,
+      ];
+    });
+
+    autoTable(pdf, {
+      startY: y,
+      head: [['Data', 'Descrição', 'Doc', 'Entrada', 'Saída', 'Saldo', 'Status', 'Origem']],
+      body: tableData,
+      styles: { fontSize: 7, cellPadding: 1.5 },
+      headStyles: { fillColor: [30, 30, 60], textColor: 255, fontSize: 7 },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: 60 },
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+        5: { halign: 'right' },
+      },
+      theme: 'grid',
+    });
+
+    // Cost Center Summary
+    if (costCenterSummary.length > 0) {
+      const finalY = (pdf as any).lastAutoTable?.finalY || y + 20;
+      let ccY = finalY + 10;
+      
+      if (ccY > pdf.internal.pageSize.getHeight() - 40) {
+        pdf.addPage();
+        ccY = 15;
+      }
+
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Resumo por Centro de Custo', 14, ccY);
+      ccY += 5;
+
+      const ccTableData = costCenterSummary.map(cc => [
+        cc.name,
+        fmt(cc.credits),
+        fmt(cc.debits),
+        fmt(cc.net),
+        cc.count.toString(),
+      ]);
+
+      // Totals
+      ccTableData.push([
+        'TOTAL',
+        fmt(costCenterSummary.reduce((s, cc) => s + cc.credits, 0)),
+        fmt(costCenterSummary.reduce((s, cc) => s + cc.debits, 0)),
+        fmt(costCenterSummary.reduce((s, cc) => s + cc.net, 0)),
+        costCenterSummary.reduce((s, cc) => s + cc.count, 0).toString(),
+      ]);
+
+      autoTable(pdf, {
+        startY: ccY,
+        head: [['Centro de Custo', 'Entradas', 'Saídas', 'Saldo', 'Lançamentos']],
+        body: ccTableData,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [30, 30, 60], textColor: 255, fontSize: 8 },
+        columnStyles: {
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'right' },
+        },
+        theme: 'grid',
+        didParseCell: (data) => {
+          // Bold the totals row
+          if (data.row.index === ccTableData.length - 1) {
+            data.cell.styles.fontStyle = 'bold';
+          }
+        },
+      });
+    }
+
+    pdf.save(`extrato_${account?.bank_name || 'conta'}_${dateFrom}_${dateTo}.pdf`);
+  };
+
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
