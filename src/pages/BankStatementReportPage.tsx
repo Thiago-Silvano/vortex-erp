@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
-import { Download, FileText, Filter, Banknote, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
+import { Download, FileText, Filter, Banknote, TrendingUp, TrendingDown, BarChart3, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -48,6 +50,10 @@ export default function BankStatementReportPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'full' | 'expenses' | 'revenue' | 'consolidated'>('full');
+  const [showUnclassified, setShowUnclassified] = useState(false);
+  const [editingTxId, setEditingTxId] = useState<string | null>(null);
+  const [editingCcId, setEditingCcId] = useState<string>('');
+  const [savingTxId, setSavingTxId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!activeCompany) return;
@@ -145,6 +151,21 @@ export default function BankStatementReportPage() {
     const debits = unclassified.filter(t => Number(t.amount) < 0).reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
     costCenterSummary.push({ name: 'Sem classificação', credits, debits, net: credits - debits, count: unclassified.length });
   }
+
+  // Save cost center for a transaction
+  const handleSaveCostCenter = async (txId: string, costCenterId: string) => {
+    setSavingTxId(txId);
+    const { error } = await supabase.from('bank_transactions').update({ cost_center_id: costCenterId } as any).eq('id', txId);
+    if (error) {
+      toast.error('Erro ao salvar centro de custo');
+    } else {
+      toast.success('Centro de custo atualizado!');
+      setTransactions(prev => prev.map(t => t.id === txId ? { ...t, cost_center_id: costCenterId, resolved_cost_center_id: costCenterId } : t));
+      setEditingTxId(null);
+      setEditingCcId('');
+    }
+    setSavingTxId(null);
+  };
 
   // Export CSV
   const exportCSV = () => {
@@ -474,8 +495,22 @@ export default function BankStatementReportPage() {
                     </TableHeader>
                     <TableBody>
                       {costCenterSummary.map(cc => (
-                        <TableRow key={cc.name}>
-                          <TableCell className="text-xs font-medium">{cc.name}</TableCell>
+                        <TableRow 
+                          key={cc.name} 
+                          className={cc.name === 'Sem classificação' ? 'cursor-pointer hover:bg-accent/50 transition-colors' : ''}
+                          onClick={() => {
+                            if (cc.name === 'Sem classificação') setShowUnclassified(true);
+                          }}
+                        >
+                          <TableCell className="text-xs font-medium">
+                            {cc.name === 'Sem classificação' ? (
+                              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                                <AlertCircle className="h-3.5 w-3.5" />
+                                {cc.name}
+                                <span className="text-[10px] text-muted-foreground">(clique para classificar)</span>
+                              </span>
+                            ) : cc.name}
+                          </TableCell>
                           {(viewMode === 'full' || viewMode === 'revenue' || viewMode === 'consolidated') && (
                             <TableCell className="text-xs text-right text-emerald-600">{fmt(cc.credits)}</TableCell>
                           )}
@@ -519,6 +554,87 @@ export default function BankStatementReportPage() {
           </Card>
         )}
       </div>
+
+      {/* Unclassified transactions dialog */}
+      <Dialog open={showUnclassified} onOpenChange={setShowUnclassified}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              Transações Sem Classificação
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Clique em uma transação para atribuir um centro de custo.
+          </p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Data</TableHead>
+                  <TableHead className="text-xs">Descrição</TableHead>
+                  <TableHead className="text-xs text-right">Valor</TableHead>
+                  <TableHead className="text-xs">Centro de Custo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions.filter(t => !getResolvedCostCenterId(t)).map(t => (
+                  <TableRow key={t.id} className="group">
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {t.transaction_date ? new Date(t.transaction_date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
+                    </TableCell>
+                    <TableCell className="text-xs max-w-[250px]">{t.description}</TableCell>
+                    <TableCell className={`text-xs text-right font-medium ${Number(t.amount) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {fmt(Math.abs(Number(t.amount)))}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {editingTxId === t.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <Select value={editingCcId} onValueChange={setEditingCcId}>
+                            <SelectTrigger className="h-7 text-xs w-[160px]"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent>
+                              {costCenters.map(cc => (
+                                <SelectItem key={cc.id} value={cc.id} className="text-xs">{cc.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            size="sm" 
+                            className="h-7 text-xs px-2" 
+                            disabled={!editingCcId || savingTxId === t.id}
+                            onClick={() => handleSaveCostCenter(t.id, editingCcId)}
+                          >
+                            Salvar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => { setEditingTxId(null); setEditingCcId(''); }}>
+                            ✕
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 text-xs gap-1" 
+                          onClick={() => { setEditingTxId(t.id); setEditingCcId(''); }}
+                        >
+                          Classificar
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {transactions.filter(t => !getResolvedCostCenterId(t)).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-8">
+                      Todas as transações já foram classificadas! 🎉
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
