@@ -28,6 +28,8 @@ interface ContractSectionProps {
   paymentMethod?: string;
   sellerName?: string;
   passengersCount?: number;
+  saleWorkflowStatus?: string;
+  onWorkflowStatusChange?: (newStatus: string) => void;
 }
 
 interface ContractRow {
