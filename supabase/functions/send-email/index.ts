@@ -38,6 +38,7 @@ Deno.serve(async (req) => {
         .from("email_settings")
         .select("*")
         .eq("empresa_id", empresa_id)
+        .limit(1)
         .maybeSingle();
       if (!error && data) settings = data;
     }
