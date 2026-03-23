@@ -716,9 +716,10 @@ export default function ContractSection({
 
   const hasSignedContract = contracts.some(c => c.status === 'signed');
   const allBundlesSigned = bundles.length > 0 && bundles.every(b => b.contracts.every(c => c.status === 'signed'));
-  const isAwaitingPayment = saleWorkflowStatus === 'aguardando_pagamento';
+  const isAwaitingPayment = saleWorkflowStatus === 'aguardando_pagamento' || saleWorkflowStatus === 'sem_contrato';
   const isConcluded = saleWorkflowStatus === 'processo_concluido';
-  const canConfirmPayment = (allBundlesSigned || saleWorkflowStatus === 'aguardando_pagamento') && !isConcluded;
+  const canConfirmPayment = (allBundlesSigned || isAwaitingPayment) && !isConcluded;
+  const canSkipContract = bundles.length === 0 && !isAwaitingPayment && !isConcluded && saleWorkflowStatus !== 'sem_contrato';
 
   const handleSkipContract = async () => {
     await supabase.from('sales').update({ sale_workflow_status: 'aguardando_pagamento' } as any).eq('id', saleId);
@@ -735,7 +736,7 @@ export default function ContractSection({
   // Auto-set workflow when contracts are signed
   useEffect(() => {
     if (bundles.length === 0) return;
-    if (allBundlesSigned && saleWorkflowStatus === 'aguardando_assinatura') {
+    if (allBundlesSigned && (saleWorkflowStatus === 'aguardando_assinatura' || saleWorkflowStatus === 'em_aberto')) {
       supabase.from('sales').update({ sale_workflow_status: 'aguardando_pagamento' } as any).eq('id', saleId).then(() => {
         onWorkflowStatusChange?.('aguardando_pagamento');
       });
