@@ -507,7 +507,7 @@ export default function BundleSignPage() {
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <FileText className="h-4 w-4 text-primary" />
             </div>
-            <span className="font-semibold text-sm">Vortex</span>
+            <span className="font-semibold text-sm">{agencyInfo.name || 'Vortex'}</span>
           </div>
           <Badge variant="outline" className="text-xs">
             {step === 'view' && `📄 ${contracts.length} contrato(s)`}
