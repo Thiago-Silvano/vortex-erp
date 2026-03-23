@@ -554,6 +554,87 @@ export default function BankStatementReportPage() {
           </Card>
         )}
       </div>
+
+      {/* Unclassified transactions dialog */}
+      <Dialog open={showUnclassified} onOpenChange={setShowUnclassified}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              Transações Sem Classificação
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Clique em uma transação para atribuir um centro de custo.
+          </p>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Data</TableHead>
+                  <TableHead className="text-xs">Descrição</TableHead>
+                  <TableHead className="text-xs text-right">Valor</TableHead>
+                  <TableHead className="text-xs">Centro de Custo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions.filter(t => !getResolvedCostCenterId(t)).map(t => (
+                  <TableRow key={t.id} className="group">
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {t.transaction_date ? new Date(t.transaction_date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
+                    </TableCell>
+                    <TableCell className="text-xs max-w-[250px]">{t.description}</TableCell>
+                    <TableCell className={`text-xs text-right font-medium ${Number(t.amount) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {fmt(Math.abs(Number(t.amount)))}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {editingTxId === t.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <Select value={editingCcId} onValueChange={setEditingCcId}>
+                            <SelectTrigger className="h-7 text-xs w-[160px]"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent>
+                              {costCenters.map(cc => (
+                                <SelectItem key={cc.id} value={cc.id} className="text-xs">{cc.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            size="sm" 
+                            className="h-7 text-xs px-2" 
+                            disabled={!editingCcId || savingTxId === t.id}
+                            onClick={() => handleSaveCostCenter(t.id, editingCcId)}
+                          >
+                            Salvar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => { setEditingTxId(null); setEditingCcId(''); }}>
+                            ✕
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 text-xs gap-1" 
+                          onClick={() => { setEditingTxId(t.id); setEditingCcId(''); }}
+                        >
+                          Classificar
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {transactions.filter(t => !getResolvedCostCenterId(t)).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-8">
+                      Todas as transações já foram classificadas! 🎉
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
