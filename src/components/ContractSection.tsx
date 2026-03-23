@@ -164,7 +164,7 @@ export default function ContractSection({
       .select('*')
       .eq('sale_id', saleId)
       .order('created_at', { ascending: false });
-    const newContracts = (data as any) || [];
+    const newContracts = ((data as any) || []) as ContractRow[];
 
     // Check if any contract changed to 'signed' (only after first load)
     if (prevStatuses !== null) {
@@ -185,6 +185,21 @@ export default function ContractSection({
     setPrevStatuses(statusMap);
 
     setContracts(newContracts);
+
+    // Group contracts by bundle
+    const { data: bundlesData } = await (supabase
+      .from('contract_bundles' as any)
+      .select('*')
+      .eq('sale_id', saleId)
+      .order('created_at', { ascending: false }) as any);
+
+    const bundlesList: BundleRow[] = ((bundlesData as any) || []).map((b: any) => ({
+      ...b,
+      contracts: newContracts.filter(c => c.bundle_id === b.id),
+    }));
+    setBundles(bundlesList);
+
+    // Also get standalone contracts (no bundle)
     setLoading(false);
   };
 
