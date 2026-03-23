@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.send-contract-otp]
 verify_jwt = false
+
+[functions.reservation-reminder]
+verify_jwt = false
