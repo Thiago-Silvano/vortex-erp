@@ -2809,6 +2809,9 @@ export default function NewSalePage() {
             saleId={editSaleId}
             empresaId={activeCompany?.id || ''}
             clientName={clientName}
+            clientEmail={passengers.find(p => p.is_main)?.email || passengers[0]?.email || ''}
+            clientPhone={passengers.find(p => p.is_main)?.phone || passengers[0]?.phone || ''}
+            clientCpf={passengers.find(p => p.is_main)?.document_number || passengers[0]?.document_number || ''}
             destination={destinationName}
             tripStartDate={tripStartDate}
             tripEndDate={tripEndDate}
