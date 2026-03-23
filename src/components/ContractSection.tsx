@@ -90,6 +90,8 @@ export default function ContractSection({
   const [exportingProof, setExportingProof] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [companyInfo, setCompanyInfo] = useState<{ name: string; cnpj: string; endereco: string }>({ name: '', cnpj: '', endereco: '' });
+  const [refreshing, setRefreshing] = useState(false);
+  const [prevStatuses, setPrevStatuses] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadContracts();
