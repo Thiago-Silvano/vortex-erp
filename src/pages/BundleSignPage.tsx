@@ -44,6 +44,8 @@ export default function BundleSignPage() {
   const [contracts, setContracts] = useState<ContractData[]>([]);
   const [acceptedContracts, setAcceptedContracts] = useState<Set<string>>(new Set());
   const [signerName, setSignerName] = useState('');
+  const [agencyInfo, setAgencyInfo] = useState<AgencyInfo>({ name: '', email: '', whatsapp: '' });
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   // OTP
   const [otpCode, setOtpCode] = useState('');

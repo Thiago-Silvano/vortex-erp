@@ -75,6 +75,23 @@ export default function Dashboard() {
     { label: 'Clientes Atendidos', value: stats.clientsCount.toString(), icon: Users, color: 'bg-violet-600 text-white', iconColor: 'text-white/80' },
   ];
 
+  if (!isMaster) {
+    return (
+      <AppLayout>
+        <div className="p-6 max-w-6xl mx-auto flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+            <Lock className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h1 className="text-xl font-bold text-foreground">Acesso Restrito</h1>
+          <p className="text-muted-foreground text-sm max-w-md">
+            O dashboard principal é restrito a usuários com perfil Master. Entre em contato com o administrador para solicitar acesso.
+          </p>
+          <Button variant="outline" onClick={() => navigate('/sales')}>Ir para Vendas</Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="p-6 max-w-6xl mx-auto space-y-8">
