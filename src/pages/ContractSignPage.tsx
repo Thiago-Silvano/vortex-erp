@@ -82,11 +82,24 @@ export default function ContractSignPage() {
   };
 
   const handleScroll = () => {
-    if (!contractRef.current) return;
+    if (!contractRef.current || hasScrolledToBottom) return;
     const el = contractRef.current;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+    // Use a generous threshold to account for rounding, zoom, and mobile browsers
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
     if (atBottom) setHasScrolledToBottom(true);
   };
+
+  // Fallback: use IntersectionObserver on a sentinel at the bottom of the contract
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (hasScrolledToBottom || !sentinelRef.current || !contractRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setHasScrolledToBottom(true); },
+      { root: contractRef.current, threshold: 0.1 }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasScrolledToBottom, step, contract]);
 
   const handleProceedToVerify = async () => {
     if (!contract) return;
@@ -345,8 +358,10 @@ export default function ContractSignPage() {
                   ref={contractRef}
                   onScroll={handleScroll}
                   className="max-h-[60vh] overflow-y-auto p-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: contract.body_html }}
-                />
+                >
+                  <div dangerouslySetInnerHTML={{ __html: contract.body_html }} />
+                  <div ref={sentinelRef} className="h-1" />
+                </div>
               </CardContent>
             </Card>
 
