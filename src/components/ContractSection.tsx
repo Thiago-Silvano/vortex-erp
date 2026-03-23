@@ -286,6 +286,21 @@ export default function ContractSection({
     } as any).eq('id', contract.id).then(() => loadContracts());
   };
 
+  const handleDeleteContract = async (contractId: string) => {
+    setDeletingId(contractId);
+    try {
+      await supabase.from('contract_signatures').delete().eq('contract_id', contractId);
+      await supabase.from('contract_audit_log').delete().eq('contract_id', contractId);
+      const { error } = await supabase.from('contracts').delete().eq('id', contractId);
+      if (error) throw error;
+      toast.success('Contrato excluído com sucesso');
+      loadContracts();
+    } catch (err: any) {
+      toast.error('Erro ao excluir contrato');
+    }
+    setDeletingId(null);
+  };
+
   const handleExportChargebackProof = async (contract: ContractRow) => {
     if (contract.status !== 'signed') {
       toast.error('O contrato precisa estar assinado para exportar prova');
