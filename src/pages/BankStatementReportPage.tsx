@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Download, FileText, Filter, Banknote, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface BankAccount { id: string; bank_name: string; account_number: string; account_digit: string; agency: string; color: string; initial_balance: number; }
 interface Transaction {
