@@ -261,23 +261,22 @@ export default function ContractSection({
 
   const handleSendWhatsApp = (contract: ContractRow) => {
     const link = getSignLink(contract.token);
-    const phone = (contract.client_phone || '').replace(/\D/g, '');
-    const phoneParam = phone ? phone : '';
-    const text = encodeURIComponent(
-      `Olá ${contract.client_name}! Para finalizar sua reserva, revise e assine seu contrato no link abaixo:\n\n${link}\n\nAcesse, leia os termos e assine digitalmente.`
-    );
-    const waUrl = phoneParam
-      ? `https://wa.me/${phoneParam}?text=${text}`
-      : `https://wa.me/?text=${text}`;
+    let digits = (contract.client_phone || '').replace(/\D/g, '');
+    // Ensure Brazilian country code
+    if (digits && !digits.startsWith('55') && (digits.length === 10 || digits.length === 11)) {
+      digits = `55${digits}`;
+    }
 
-    // Use anchor element to avoid popup blockers
-    const a = document.createElement('a');
-    a.href = waUrl;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const mensagem = encodeURIComponent(
+      `Olá ${contract.client_name}!\n\nPara finalizar sua reserva, revise e assine seu contrato no link abaixo:\n\n${link}\n\nAcesse, leia os termos e assine digitalmente.`
+    );
+
+    const waUrl = digits
+      ? `https://wa.me/${digits}?text=${mensagem}`
+      : `https://wa.me/?text=${mensagem}`;
+
+    // Use window.location.href for maximum compatibility (avoids popup/iframe blockers)
+    window.location.href = waUrl;
 
     supabase.from('contracts').update({
       status: contract.status === 'draft' ? 'sent' : contract.status,
