@@ -155,12 +155,24 @@ export default function BankStatementReportPage() {
   // Save cost center for a transaction
   const handleSaveCostCenter = async (txId: string, costCenterId: string) => {
     setSavingTxId(txId);
-    const { error } = await supabase.from('bank_transactions').update({ cost_center_id: costCenterId } as any).eq('id', txId);
+    // If the transaction was ignored and now receives a cost center, mark as reconciled
+    const tx = transactions.find(t => t.id === txId);
+    const updatePayload: any = { cost_center_id: costCenterId };
+    if (tx && tx.reconciliation_status === 'ignored' && costCenterId) {
+      updatePayload.reconciliation_status = 'reconciled';
+      updatePayload.reconciliation_note = tx.reconciliation_note ? `${tx.reconciliation_note} | Reclassificado via centro de custo` : 'Reclassificado via centro de custo';
+    }
+    const { error } = await supabase.from('bank_transactions').update(updatePayload).eq('id', txId);
     if (error) {
       toast.error('Erro ao salvar centro de custo');
     } else {
       toast.success('Centro de custo atualizado!');
-      setTransactions(prev => prev.map(t => t.id === txId ? { ...t, cost_center_id: costCenterId, resolved_cost_center_id: costCenterId } : t));
+      setTransactions(prev => prev.map(t => t.id === txId ? { 
+        ...t, 
+        cost_center_id: costCenterId, 
+        resolved_cost_center_id: costCenterId,
+        ...(t.reconciliation_status === 'ignored' && costCenterId ? { reconciliation_status: 'reconciled' } : {}),
+      } : t));
       setEditingTxId(null);
       setEditingCcId('');
     }
