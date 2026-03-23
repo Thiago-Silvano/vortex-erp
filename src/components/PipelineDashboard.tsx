@@ -130,6 +130,18 @@ export default function PipelineDashboard() {
     }
     setOverdueDetails(Object.values(overdueByClient));
 
+    // Received details - group paid receivables by client
+    const receivedByClient: Record<string, DetailItem> = {};
+    for (const r of paidReceivables) {
+      const sale = allSales?.find(s => s.id === r.sale_id);
+      const name = (sale as any)?.client_name || 'Sem nome';
+      if (!receivedByClient[name]) {
+        receivedByClient[name] = { id: r.id, name, value: 0 };
+      }
+      receivedByClient[name].value = (receivedByClient[name].value || 0) + Number(r.amount || 0);
+    }
+    setReceivedDetails(Object.values(receivedByClient).slice(0, 15));
+
     const totalQuotesValue = quotes.reduce((s, q) => s + Number(q.total_sale || 0), 0);
     const totalSalesValue = sales.reduce((s, q) => s + Number(q.total_sale || 0), 0);
 
