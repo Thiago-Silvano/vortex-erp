@@ -95,6 +95,7 @@ export default function ContractSection({
   saleId, empresaId, clientName, clientEmail = '', clientPhone = '', clientCpf = '',
   destination = '', tripStartDate = '', tripEndDate = '', totalValue = 0,
   paymentMethod = '', sellerName = '', passengersCount = 1,
+  saleWorkflowStatus = '', onWorkflowStatusChange,
 }: ContractSectionProps) {
   const [contracts, setContracts] = useState<ContractRow[]>([]);
   const [bundles, setBundles] = useState<BundleRow[]>([]);
