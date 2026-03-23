@@ -597,74 +597,101 @@ export default function ContractSection({
           </div>
         </CardHeader>
         <CardContent>
-          {contracts.length === 0 ? (
+          {bundles.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Nenhum contrato gerado para esta venda</p>
           ) : (
-            <div className="space-y-3">
-              {contracts.map(c => {
-                const s = STATUS_MAP[c.status] || STATUS_MAP.draft;
+            <div className="space-y-4">
+              {bundles.map(bundle => {
+                const allSigned = bundle.contracts.every(c => c.status === 'signed');
+                const anySigned = bundle.contracts.some(c => c.status === 'signed');
+                const bundleStatus = allSigned ? 'signed' : bundle.status;
+                const s = STATUS_MAP[bundleStatus] || STATUS_MAP.draft;
+                const bundleLink = getBundleLink(bundle.token);
+
                 return (
-                  <div key={c.id} className="flex items-center justify-between p-3 border rounded-lg bg-card hover:bg-accent/30 transition-colors">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.color}`}>
-                        <s.icon className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{c.title}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{format(new Date(c.created_at), 'dd/MM/yyyy HH:mm')}</span>
-                          {c.signed_at && <span className="text-emerald-600">• Assinado {format(new Date(c.signed_at), 'dd/MM HH:mm')}</span>}
-                          {c.viewed_at && !c.signed_at && <span className="text-amber-600">• Visualizado</span>}
+                  <div key={bundle.id} className="border rounded-lg overflow-hidden">
+                    {/* Bundle header */}
+                    <div className="flex items-center justify-between p-3 bg-accent/20">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.color}`}>
+                          <s.icon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm">
+                            {bundle.contracts.length} contrato(s) — Link único
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{format(new Date(bundle.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                            {allSigned && <span className="text-emerald-600">• Todos assinados</span>}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge className={`${s.color} text-xs`}>{allSigned ? 'Assinado' : s.label}</Badge>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(bundleLink); toast.success('Link copiado!'); }} title="Copiar link">
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSendBundleWhatsApp(bundle)} title="WhatsApp">
+                          <MessageCircle className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSendBundleEmail(bundle)} title="Email">
+                          <Mail className="h-3.5 w-3.5" />
+                        </Button>
+                        <a href={bundleLink} target="_blank" rel="noopener noreferrer">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link">
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                        </a>
+                        {!anySigned && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir pacote">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir pacote de contratos?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta ação excluirá {bundle.contracts.length} contrato(s) permanentemente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteBundle(bundle)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Badge className={`${s.color} text-xs`}>{s.label}</Badge>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewHtml(c.body_html)} title="Visualizar">
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopyLink(c.token)} title="Copiar link">
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSendWhatsApp(c)} title="WhatsApp">
-                        <MessageCircle className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSendEmail(c)} title="Email">
-                        <Mail className="h-3.5 w-3.5" />
-                      </Button>
-                      {c.status === 'signed' && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleExportChargebackProof(c)} title="Exportar prova de contestação" disabled={exportingProof}>
-                          {exportingProof ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />}
-                        </Button>
-                      )}
-                      <a href={getSignLink(c.token)} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
-                      </a>
-                      {c.status !== 'signed' && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir contrato">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. O contrato "{c.title}" será removido permanentemente.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteContract(c.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Excluir'}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+
+                    {/* Individual contracts */}
+                    <div className="divide-y">
+                      {bundle.contracts.map(c => {
+                        const cs = STATUS_MAP[c.status] || STATUS_MAP.draft;
+                        return (
+                          <div key={c.id} className="flex items-center justify-between px-4 py-2 bg-card">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <cs.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="text-sm truncate">{c.title}</span>
+                              <Badge variant="outline" className="text-[10px] shrink-0">{cs.label}</Badge>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPreviewHtml(c.body_html)} title="Visualizar">
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                              {c.status === 'signed' && (
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExportChargebackProof(c)} disabled={exportingProof}>
+                                  {exportingProof ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3 text-emerald-600" />}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
