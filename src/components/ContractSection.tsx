@@ -262,7 +262,6 @@ export default function ContractSection({
   const handleSendWhatsApp = (contract: ContractRow) => {
     const link = getSignLink(contract.token);
     let digits = (contract.client_phone || '').replace(/\D/g, '');
-    // Ensure Brazilian country code
     if (digits && !digits.startsWith('55') && (digits.length === 10 || digits.length === 11)) {
       digits = `55${digits}`;
     }
@@ -275,8 +274,26 @@ export default function ContractSection({
       ? `https://wa.me/${digits}?text=${mensagem}`
       : `https://wa.me/?text=${mensagem}`;
 
-    // Use window.location.href for maximum compatibility (avoids popup/iframe blockers)
-    window.location.href = waUrl;
+    // Open in new tab using multiple fallback strategies
+    const newWindow = window.open(waUrl, '_blank', 'noopener,noreferrer');
+    if (!newWindow) {
+      // Fallback: create a visible link for the user to click
+      const a = document.createElement('a');
+      a.href = waUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // If still blocked, copy link and show toast
+      navigator.clipboard.writeText(waUrl).then(() => {
+        toast.info('Link do WhatsApp copiado! Cole no navegador para enviar.', { duration: 8000 });
+      }).catch(() => {
+        toast.info('Abra manualmente: ' + waUrl, { duration: 12000 });
+      });
+    }
 
     supabase.from('contracts').update({
       status: contract.status === 'draft' ? 'sent' : contract.status,
