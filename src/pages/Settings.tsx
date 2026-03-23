@@ -247,6 +247,9 @@ export default function Settings() {
     
     await supabase.from('card_rates').insert(allRates as any);
 
+    // Save contract email settings
+    await saveContractSmtp();
+
     toast.success('Configurações salvas!');
   };
 
