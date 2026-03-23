@@ -8,9 +8,10 @@ import { getAgencySettings, saveAgencySettings, fileToBase64 } from '@/lib/stora
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Save, X, CheckCircle, XCircle, Loader2, MapPin, Image } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Save, X, CheckCircle, XCircle, Loader2, MapPin, Image, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CardRate {
@@ -32,6 +33,15 @@ export default function Settings() {
   const [pexelsKey, setPexelsKey] = useState('');
   const [testingStock, setTestingStock] = useState(false);
   const [stockStatus, setStockStatus] = useState<{ unsplash?: boolean; pexels?: boolean } | null>(null);
+
+  // Contract email SMTP settings
+  const [contractSmtp, setContractSmtp] = useState({
+    smtp_host: '', smtp_port: 587, smtp_user: '', smtp_password: '',
+    smtp_ssl: false, from_name: '', from_email: '',
+  });
+  const [contractSmtpId, setContractSmtpId] = useState<string | null>(null);
+  const [testingContractEmail, setTestingContractEmail] = useState(false);
+  const [contractEmailStatus, setContractEmailStatus] = useState<'idle' | 'ok' | 'error'>('idle');
 
   const defaultEcRates: CardRate[] = [
     { installments: 0, rate: 1.39, label: 'Débito' },
@@ -55,6 +65,7 @@ export default function Settings() {
   useEffect(() => {
     loadRates();
     loadGoogleApiKey();
+    loadContractSmtp();
   }, [activeCompany]);
 
   const loadRates = async () => {
@@ -82,6 +93,62 @@ export default function Settings() {
       if (d.unsplash_api_key) setUnsplashKey(d.unsplash_api_key);
       if (d.pexels_api_key) setPexelsKey(d.pexels_api_key);
       if (d.unsplash_api_key || d.pexels_api_key) setStockStatus({ unsplash: !!d.unsplash_api_key, pexels: !!d.pexels_api_key });
+    }
+  };
+
+  const loadContractSmtp = async () => {
+    if (!activeCompany) return;
+    const { data } = await supabase
+      .from('contract_email_settings' as any)
+      .select('*')
+      .eq('empresa_id', activeCompany.id)
+      .maybeSingle();
+    if (data) {
+      const d = data as any;
+      setContractSmtpId(d.id);
+      setContractSmtp({
+        smtp_host: d.smtp_host || '', smtp_port: d.smtp_port || 587,
+        smtp_user: d.smtp_user || '', smtp_password: d.smtp_password || '',
+        smtp_ssl: d.smtp_ssl || false, from_name: d.from_name || '', from_email: d.from_email || '',
+      });
+      if (d.smtp_host && d.smtp_user) setContractEmailStatus('ok');
+    }
+  };
+
+  const testContractEmail = async () => {
+    if (!contractSmtp.smtp_host || !contractSmtp.smtp_user || !contractSmtp.smtp_password) {
+      toast.error('Preencha host, usuário e senha SMTP');
+      return;
+    }
+    setTestingContractEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          test: true,
+          to: contractSmtp.from_email || contractSmtp.smtp_user,
+          contract_smtp: contractSmtp,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setContractEmailStatus('ok');
+      toast.success('Email de teste enviado com sucesso!');
+    } catch (e: any) {
+      setContractEmailStatus('error');
+      toast.error(e.message || 'Erro ao testar email');
+    } finally {
+      setTestingContractEmail(false);
+    }
+  };
+
+  const saveContractSmtp = async () => {
+    if (!activeCompany) return;
+    const payload = { ...contractSmtp, empresa_id: activeCompany.id, updated_at: new Date().toISOString() };
+    if (contractSmtpId) {
+      await supabase.from('contract_email_settings' as any).update(payload as any).eq('id', contractSmtpId);
+    } else {
+      const { data } = await supabase.from('contract_email_settings' as any).insert(payload as any).select().single();
+      if (data) setContractSmtpId((data as any).id);
     }
   };
 
@@ -179,6 +246,9 @@ export default function Settings() {
     ];
     
     await supabase.from('card_rates').insert(allRates as any);
+
+    // Save contract email settings
+    await saveContractSmtp();
 
     toast.success('Configurações salvas!');
   };
@@ -354,6 +424,99 @@ export default function Settings() {
               {testingStock ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
               Testar conexão
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Contract Email SMTP */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Email para Contratos
+            </CardTitle>
+            <CardDescription>
+              Configuração SMTP compartilhada para envio de contratos por email. Todos os usuários utilizarão esta configuração.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Servidor SMTP</Label>
+                <Input
+                  value={contractSmtp.smtp_host}
+                  onChange={e => { setContractSmtp(p => ({ ...p, smtp_host: e.target.value })); setContractEmailStatus('idle'); }}
+                  placeholder="smtp.seuservidor.com"
+                />
+              </div>
+              <div>
+                <Label>Porta</Label>
+                <Select
+                  value={String(contractSmtp.smtp_port)}
+                  onValueChange={v => setContractSmtp(p => ({ ...p, smtp_port: Number(v), smtp_ssl: Number(v) === 465 }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="587">587 (STARTTLS)</SelectItem>
+                    <SelectItem value="465">465 (SSL/TLS)</SelectItem>
+                    <SelectItem value="25">25 (Sem criptografia)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Usuário SMTP</Label>
+                <Input
+                  value={contractSmtp.smtp_user}
+                  onChange={e => { setContractSmtp(p => ({ ...p, smtp_user: e.target.value })); setContractEmailStatus('idle'); }}
+                  placeholder="email@seuservidor.com"
+                />
+              </div>
+              <div>
+                <Label>Senha SMTP</Label>
+                <Input
+                  type="password"
+                  value={contractSmtp.smtp_password}
+                  onChange={e => { setContractSmtp(p => ({ ...p, smtp_password: e.target.value })); setContractEmailStatus('idle'); }}
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Nome do Remetente</Label>
+                <Input
+                  value={contractSmtp.from_name}
+                  onChange={e => setContractSmtp(p => ({ ...p, from_name: e.target.value }))}
+                  placeholder="Vortex Viagens"
+                />
+              </div>
+              <div>
+                <Label>Email do Remetente</Label>
+                <Input
+                  type="email"
+                  value={contractSmtp.from_email}
+                  onChange={e => setContractSmtp(p => ({ ...p, from_email: e.target.value }))}
+                  placeholder="contratos@seudominio.com"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={testContractEmail} disabled={testingContractEmail}>
+                {testingContractEmail ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Mail className="h-4 w-4 mr-1" />}
+                Testar Email
+              </Button>
+              {contractEmailStatus === 'ok' && (
+                <span className="flex items-center gap-1 text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4" /> Conectado
+                </span>
+              )}
+              {contractEmailStatus === 'error' && (
+                <span className="flex items-center gap-1 text-sm text-destructive">
+                  <XCircle className="h-4 w-4" /> Falha na conexão
+                </span>
+              )}
+            </div>
           </CardContent>
         </Card>
 

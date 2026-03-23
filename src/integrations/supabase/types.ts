@@ -643,6 +643,56 @@ export type Database = {
           },
         ]
       }
+      contract_email_settings: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          from_email: string
+          from_name: string
+          id: string
+          smtp_host: string
+          smtp_password: string
+          smtp_port: number
+          smtp_ssl: boolean
+          smtp_user: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          from_email?: string
+          from_name?: string
+          id?: string
+          smtp_host?: string
+          smtp_password?: string
+          smtp_port?: number
+          smtp_ssl?: boolean
+          smtp_user?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          from_email?: string
+          from_name?: string
+          id?: string
+          smtp_host?: string
+          smtp_password?: string
+          smtp_port?: number
+          smtp_ssl?: boolean
+          smtp_user?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_email_settings_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_signatures: {
         Row: {
           contract_id: string
