@@ -93,7 +93,7 @@ export default function AccountsPayablePage() {
       amount: editAmount,
       due_date: editDueDate || null,
       notes: editNotes,
-      cost_center_id: editCostCenterId || null,
+      cost_center_id: editCostCenterId && editCostCenterId !== 'none' ? editCostCenterId : null,
     }).eq('id', editItem.id);
     toast.success('Registro atualizado!');
     setEditDialog(false);
@@ -510,7 +510,7 @@ export default function AccountsPayablePage() {
                 <Select value={editCostCenterId} onValueChange={setEditCostCenterId}>
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem classificação</SelectItem>
+                    <SelectItem value="none">Sem classificação</SelectItem>
                     {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
