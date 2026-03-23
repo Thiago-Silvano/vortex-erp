@@ -37,7 +37,7 @@ export default function CostCentersPage() {
 
   const fetch_ = async () => {
     let query = supabase.from('cost_centers').select('*').order('name');
-    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+    if (activeCompany?.id) query = query.or(`empresa_id.eq.${activeCompany.id},empresa_id.is.null`);
     const { data } = await query;
     if (data) setItems(data as CostCenter[]);
   };
