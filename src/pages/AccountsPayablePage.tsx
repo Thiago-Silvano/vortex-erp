@@ -93,7 +93,7 @@ export default function AccountsPayablePage() {
       amount: editAmount,
       due_date: editDueDate || null,
       notes: editNotes,
-      cost_center_id: editCostCenterId || null,
+      cost_center_id: editCostCenterId && editCostCenterId !== 'none' ? editCostCenterId : null,
     }).eq('id', editItem.id);
     toast.success('Registro atualizado!');
     setEditDialog(false);
