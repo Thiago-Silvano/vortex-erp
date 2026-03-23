@@ -96,6 +96,20 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Direct send mode (for contracts, OTP, etc.)
+    if (to && subject && html && !email_id) {
+      await transporter.sendMail({
+        from: senderAddress,
+        to,
+        subject,
+        html,
+      });
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Normal send mode
     if (!email_id) {
       return new Response(
