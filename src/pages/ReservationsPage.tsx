@@ -131,8 +131,16 @@ export default function ReservationsPage() {
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhuma reserva encontrada</TableCell></TableRow>
                 ) : filtered.map(r => {
                   const urgent = isUrgent(r);
+                  const isOverdue = r.check_in && r.status === 'pending' && parseISO(r.check_in + 'T12:00:00') < new Date();
+                  const rowBg = r.status === 'confirmed'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/20'
+                    : isOverdue
+                      ? 'bg-red-50 dark:bg-red-950/20'
+                      : r.status === 'pending'
+                        ? 'bg-orange-50 dark:bg-orange-950/20'
+                        : '';
                   return (
-                    <TableRow key={r.id} className={`cursor-pointer hover:bg-muted/50 ${urgent ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''}`} onClick={() => openStatusDialog(r)}>
+                    <TableRow key={r.id} className={`cursor-pointer hover:bg-muted/50 ${rowBg}`} onClick={() => openStatusDialog(r)}>
                       <TableCell><span className="font-medium">{r.description || '-'}</span></TableCell>
                       <TableCell className="font-mono">{r.confirmation_code || '-'}</TableCell>
                       <TableCell>{r.check_in ? format(parseISO(r.check_in + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
