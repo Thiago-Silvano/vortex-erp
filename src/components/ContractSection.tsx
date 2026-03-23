@@ -96,6 +96,7 @@ export default function ContractSection({
 }: ContractSectionProps) {
   const [contracts, setContracts] = useState<ContractRow[]>([]);
   const [bundles, setBundles] = useState<BundleRow[]>([]);
+  const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showGenerate, setShowGenerate] = useState(false);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
