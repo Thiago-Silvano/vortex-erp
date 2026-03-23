@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3 } from 'lucide-react';
+import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3, Lock } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useCompany } from '@/contexts/CompanyContext';
 import PipelineDashboard from '@/components/PipelineDashboard';
@@ -20,20 +20,20 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { activeCompany } = useCompany();
+  const { activeCompany, isMaster } = useCompany();
   const [stats, setStats] = useState<DashboardStats>({ totalSales: 0, totalRevenue: 0, grossProfit: 0, netProfit: 0, totalCosts: 0, clientsCount: 0 });
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    loadStats();
+    if (isMaster) loadStats();
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         const raw = data.user.email?.split('@')[0] || 'Usuário';
         setUserName(raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase());
       }
     });
-  }, [activeCompany?.id]);
+  }, [activeCompany?.id, isMaster]);
 
   const loadStats = async () => {
     setLoading(true);
