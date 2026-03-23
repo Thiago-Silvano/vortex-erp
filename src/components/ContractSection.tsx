@@ -757,9 +757,14 @@ export default function ContractSection({
                                 <Eye className="h-3 w-3" />
                               </Button>
                               {c.status === 'signed' && (
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExportChargebackProof(c)} disabled={exportingProof}>
-                                  {exportingProof ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3 text-emerald-600" />}
-                                </Button>
+                                <>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExportChargebackProof(c)} disabled={exportingProof} title="Exportar prova">
+                                    {exportingProof ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3 text-emerald-600" />}
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDownloadContractPdf(c)} title="Baixar PDF">
+                                    <Download className="h-3 w-3 text-primary" />
+                                  </Button>
+                                </>
                               )}
                             </div>
                           </div>
