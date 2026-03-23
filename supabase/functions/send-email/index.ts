@@ -18,12 +18,43 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json();
-    const { user_id, empresa_id, email_id, test, to, subject, html } = body;
+    const { user_id, empresa_id, email_id, test, to, subject, html, contract_smtp } = body;
 
-    // Support both user_id (new) and empresa_id (legacy) lookups
+    // If contract_smtp is provided directly (test mode from settings), use it
+    if (contract_smtp && test) {
+      const port = contract_smtp.smtp_port || 587;
+      const transporter = nodemailer.createTransport({
+        host: contract_smtp.smtp_host,
+        port,
+        secure: port === 465,
+        auth: { user: contract_smtp.smtp_user, pass: contract_smtp.smtp_password },
+      });
+      const senderAddress = `${contract_smtp.from_name || "ERP"} <${contract_smtp.from_email || contract_smtp.smtp_user}>`;
+      await transporter.sendMail({
+        from: senderAddress,
+        to: to || contract_smtp.from_email || contract_smtp.smtp_user,
+        subject: "✅ Teste de Email de Contratos - ERP Vortex",
+        html: `<div style="font-family: Arial, sans-serif; padding: 20px;"><h2>Teste de Email de Contratos</h2><p>Configuração SMTP para envio de contratos está funcionando! ✅</p></div>`,
+      });
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Try contract_email_settings first for contract sends (when empresa_id is provided and it's a direct send)
     let settings: any = null;
 
-    if (user_id) {
+    if (empresa_id && to && subject && html && !email_id) {
+      const { data: contractSettings } = await supabase
+        .from("contract_email_settings")
+        .select("*")
+        .eq("empresa_id", empresa_id)
+        .maybeSingle();
+      if (contractSettings && contractSettings.smtp_host && contractSettings.smtp_user && contractSettings.smtp_password) {
+        settings = contractSettings;
+      }
+    }
+
+    // Fallback: Support both user_id (new) and empresa_id (legacy) lookups from email_settings
+    if (!settings && user_id) {
       const { data, error } = await supabase
         .from("email_settings")
         .select("*")
@@ -32,7 +63,6 @@ Deno.serve(async (req) => {
       if (!error && data) settings = data;
     }
 
-    // Fallback to empresa_id lookup for backwards compat
     if (!settings && empresa_id) {
       const { data, error } = await supabase
         .from("email_settings")
@@ -45,7 +75,7 @@ Deno.serve(async (req) => {
 
     if (!settings) {
       return new Response(
-        JSON.stringify({ error: "Configurações SMTP não encontradas. Configure seu email em Configurações → Email." }),
+        JSON.stringify({ error: "Configurações SMTP não encontradas. Configure o email de contratos em Configurações ou o email pessoal em Email → Configurações." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
