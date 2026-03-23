@@ -716,6 +716,34 @@ export default function ContractSection({
   if (loading) return null;
 
   const hasSignedContract = contracts.some(c => c.status === 'signed');
+  const allBundlesSigned = bundles.length > 0 && bundles.every(b => b.contracts.every(c => c.status === 'signed'));
+  const isAwaitingPayment = saleWorkflowStatus === 'aguardando_pagamento';
+  const isConcluded = saleWorkflowStatus === 'processo_concluido';
+  const canConfirmPayment = (allBundlesSigned || saleWorkflowStatus === 'aguardando_pagamento') && !isConcluded;
+
+  const handleSkipContract = async () => {
+    await supabase.from('sales').update({ sale_workflow_status: 'aguardando_pagamento' } as any).eq('id', saleId);
+    onWorkflowStatusChange?.('aguardando_pagamento');
+    toast.success('Venda marcada como não necessita de contrato. Aguardando pagamento.');
+  };
+
+  const handleConfirmPayment = async () => {
+    await supabase.from('sales').update({ sale_workflow_status: 'processo_concluido' } as any).eq('id', saleId);
+    onWorkflowStatusChange?.('processo_concluido');
+    toast.success('Pagamento confirmado! Processo concluído.');
+  };
+
+  // Auto-set workflow when contracts are signed
+  useEffect(() => {
+    if (bundles.length === 0) return;
+    if (allBundlesSigned && saleWorkflowStatus === 'aguardando_assinatura') {
+      supabase.from('sales').update({ sale_workflow_status: 'aguardando_pagamento' } as any).eq('id', saleId).then(() => {
+        onWorkflowStatusChange?.('aguardando_pagamento');
+      });
+    }
+  }, [allBundlesSigned, saleWorkflowStatus]);
+
+  if (loading) return null;
 
   return (
     <>
