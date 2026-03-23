@@ -191,27 +191,72 @@ export default function ContractSection({
       toast.error('Email do cliente não informado no contrato');
       return;
     }
-    await supabase.from('contracts').update({
-      status: contract.status === 'draft' ? 'sent' : contract.status,
-      sent_at: new Date().toISOString(),
-      sent_via: 'email',
-    } as any).eq('id', contract.id);
 
-    await supabase.from('contract_audit_log').insert({
-      contract_id: contract.id, action: 'sent_email', actor: 'user', actor_type: 'user',
-      details: { email: contract.client_email },
-    } as any);
+    const link = getSignLink(contract.token);
+    const emailHtml = `
+      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a2e;">Contrato para Assinatura</h2>
+        <p>Olá <strong>${contract.client_name}</strong>,</p>
+        <p>Seu contrato "<strong>${contract.title}</strong>" está pronto para assinatura.</p>
+        <p>Clique no botão abaixo para ler e assinar digitalmente:</p>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${link}" style="background: #6c3ce9; color: #fff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Assinar Contrato</a>
+        </div>
+        <p style="color: #666; font-size: 13px;">Ou copie e cole o link no navegador:<br/>${link}</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #999; font-size: 11px;">${companyInfo.name || 'Vortex'}</p>
+      </div>
+    `;
 
-    toast.success('Contrato marcado como enviado');
-    loadContracts();
+    try {
+      const { error: fnError } = await supabase.functions.invoke('send-email', {
+        body: {
+          empresa_id: empresaId,
+          to: contract.client_email,
+          subject: `Contrato para Assinatura - ${contract.title}`,
+          html: emailHtml,
+        },
+      });
+
+      if (fnError) throw fnError;
+
+      await supabase.from('contracts').update({
+        status: contract.status === 'draft' ? 'sent' : contract.status,
+        sent_at: new Date().toISOString(),
+        sent_via: 'email',
+      } as any).eq('id', contract.id);
+
+      await supabase.from('contract_audit_log').insert({
+        contract_id: contract.id, action: 'sent_email', actor: 'user', actor_type: 'user',
+        details: { email: contract.client_email },
+      } as any);
+
+      toast.success('Contrato enviado por email com sucesso!');
+      loadContracts();
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao enviar email. Verifique as configurações SMTP.');
+    }
   };
 
   const handleSendWhatsApp = (contract: ContractRow) => {
     const link = getSignLink(contract.token);
+    const phone = (contract.client_phone || '').replace(/\D/g, '');
+    const phoneParam = phone ? phone : '';
     const text = encodeURIComponent(
       `Olá ${contract.client_name}! Para finalizar sua reserva, revise e assine seu contrato no link abaixo:\n\n${link}\n\nAcesse, leia os termos e assine digitalmente.`
     );
-    window.open(`https://wa.me/?text=${text}`, '_blank');
+    const waUrl = phoneParam
+      ? `https://wa.me/${phoneParam}?text=${text}`
+      : `https://wa.me/?text=${text}`;
+
+    // Use anchor element to avoid popup blockers
+    const a = document.createElement('a');
+    a.href = waUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 
     supabase.from('contracts').update({
       status: contract.status === 'draft' ? 'sent' : contract.status,
