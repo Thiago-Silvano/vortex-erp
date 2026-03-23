@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json();
-    const { user_id, empresa_id, email_id, test, to } = body;
+    const { user_id, empresa_id, email_id, test, to, subject, html } = body;
 
     // Support both user_id (new) and empresa_id (legacy) lookups
     let settings: any = null;
@@ -89,6 +89,20 @@ Deno.serve(async (req) => {
             <p style="color: #999; font-size: 12px;">Enviado automaticamente pelo sistema.</p>
           </div>
         `,
+      });
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Direct send mode (for contracts, OTP, etc.)
+    if (to && subject && html && !email_id) {
+      await transporter.sendMail({
+        from: senderAddress,
+        to,
+        subject,
+        html,
       });
       return new Response(
         JSON.stringify({ success: true }),
