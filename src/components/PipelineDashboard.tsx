@@ -151,8 +151,17 @@ export default function PipelineDashboard() {
 
     const avgTicket = sales.length > 0 ? totalSalesValue / sales.length : 0;
 
-    // Set detail lists
-    setQuotesDetails(quotes.slice(0, 10).map(q => ({
+    // Conversion details
+    setConversionDetails([
+      { id: 'sales', name: `Vendas convertidas`, value: sales.length },
+      { id: 'quotes', name: `Cotações abertas`, value: quotes.length },
+      { id: 'total', name: `Total de oportunidades`, value: quotes.length + sales.length },
+    ]);
+
+    // Ticket details - top sales by value
+    setTicketDetails(sales.sort((a, b) => Number(b.total_sale || 0) - Number(a.total_sale || 0)).slice(0, 10).map(s => ({
+      id: s.id, name: (s as any).client_name || 'Sem nome', value: Number(s.total_sale || 0),
+    })));
       id: q.id, name: (q as any).client_name || 'Sem nome', value: Number(q.total_sale || 0),
     })));
     setSalesDetails(sales.slice(0, 10).map(s => ({
