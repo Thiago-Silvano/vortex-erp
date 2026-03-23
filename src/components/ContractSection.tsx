@@ -713,7 +713,6 @@ export default function ContractSection({
     toast.success('PDF do contrato baixado!');
   };
 
-  if (loading) return null;
 
   const hasSignedContract = contracts.some(c => c.status === 'signed');
   const allBundlesSigned = bundles.length > 0 && bundles.every(b => b.contracts.every(c => c.status === 'signed'));
