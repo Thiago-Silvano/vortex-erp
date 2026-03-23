@@ -95,7 +95,7 @@ export default function ContractSection({
   paymentMethod = '', sellerName = '', passengersCount = 1,
 }: ContractSectionProps) {
   const [contracts, setContracts] = useState<ContractRow[]>([]);
-  const [templates, setTemplates] = useState<TemplateRow[]>([]);
+  const [bundles, setBundles] = useState<BundleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showGenerate, setShowGenerate] = useState(false);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
