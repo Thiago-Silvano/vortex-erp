@@ -2393,6 +2393,48 @@ export type Database = {
           },
         ]
       }
+      reservation_reminders: {
+        Row: {
+          created_at: string
+          empresa_id: string | null
+          id: string
+          reminder_type: string
+          reservation_id: string
+          sent_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          reminder_type: string
+          reservation_id: string
+          sent_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          reminder_type?: string
+          reservation_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_reminders_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_reminders_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           check_in: string | null
