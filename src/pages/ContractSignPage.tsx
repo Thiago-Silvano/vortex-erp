@@ -70,16 +70,36 @@ export default function ContractSignPage() {
   }, [token]);
 
   const loadAgencyInfo = async (empresaId: string) => {
-    const { data } = await supabase
-      .from('agency_settings')
-      .select('name, logo_url')
-      .eq('empresa_id', empresaId)
-      .maybeSingle() as any;
-    if (data) {
-      setAgencyInfo({ name: data.name || '', logo_url: data.logo_url || '' });
-    } else {
+    try {
+      // First try agency_settings
+      const { data, error } = await supabase
+        .from('agency_settings')
+        .select('name, logo_url')
+        .eq('empresa_id', empresaId)
+        .maybeSingle();
+      
+      if (data && !error) {
+        setAgencyInfo({ name: (data as any).name || '', logo_url: (data as any).logo_url || '' });
+        return;
+      }
+      
+      // Fallback: try without empresa_id filter (for single-company setups)
+      const { data: anySettings } = await supabase
+        .from('agency_settings')
+        .select('name, logo_url')
+        .limit(1)
+        .maybeSingle();
+      
+      if (anySettings) {
+        setAgencyInfo({ name: (anySettings as any).name || '', logo_url: (anySettings as any).logo_url || '' });
+        return;
+      }
+
+      // Last fallback: company name
       const { data: comp } = await supabase.from('companies').select('name').eq('id', empresaId).maybeSingle();
       if (comp) setAgencyInfo({ name: (comp as any).name || '', logo_url: '' });
+    } catch (err) {
+      console.error('Error loading agency info:', err);
     }
   };
 
