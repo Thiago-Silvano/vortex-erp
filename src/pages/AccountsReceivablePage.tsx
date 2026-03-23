@@ -75,6 +75,7 @@ export default function AccountsReceivablePage() {
   const [editAmount, setEditAmount] = useState(0);
   const [editDueDate, setEditDueDate] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editCostCenterId, setEditCostCenterId] = useState('');
 
   const openEdit = (item: Receivable) => {
     setEditItem(item);
@@ -83,6 +84,7 @@ export default function AccountsReceivablePage() {
     setEditAmount(item.amount || 0);
     setEditDueDate(item.due_date || '');
     setEditNotes(item.notes || '');
+    setEditCostCenterId(item.cost_center_id || '');
     setEditDialog(true);
   };
 
@@ -94,6 +96,7 @@ export default function AccountsReceivablePage() {
       amount: editAmount,
       due_date: editDueDate || null,
       notes: editNotes,
+      cost_center_id: editCostCenterId || null,
     } as any).eq('id', editItem.id);
     toast.success('Registro atualizado!');
     setEditDialog(false);
@@ -505,6 +508,16 @@ export default function AccountsReceivablePage() {
               <div><Label>Valor</Label><Input type="number" step="0.01" value={editAmount} onChange={e => setEditAmount(Number(e.target.value))} /></div>
               <div><Label>Vencimento</Label><Input type="date" value={editDueDate} onChange={e => setEditDueDate(e.target.value)} /></div>
               <div><Label>Observação</Label><Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} /></div>
+              <div>
+                <Label>Centro de Custo</Label>
+                <Select value={editCostCenterId} onValueChange={setEditCostCenterId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sem classificação</SelectItem>
+                    {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setEditDialog(false)}>Cancelar</Button>
                 <Button onClick={handleEditSave}>Salvar</Button>
