@@ -124,8 +124,50 @@ export default function ContractSection({
       .select('*')
       .eq('sale_id', saleId)
       .order('created_at', { ascending: false });
-    setContracts((data as any) || []);
+    const newContracts = (data as any) || [];
+
+    // Check if any contract changed to 'signed'
+    newContracts.forEach((c: ContractRow) => {
+      if (c.status === 'signed' && prevStatuses[c.id] && prevStatuses[c.id] !== 'signed') {
+        toast.success(`Contrato "${c.title}" foi assinado por ${c.client_name}!`, {
+          duration: 8000,
+          icon: '🎉',
+        });
+        // Create notification in the bell
+        createSignedNotification(c);
+      }
+    });
+
+    // Store current statuses for comparison
+    const statusMap: Record<string, string> = {};
+    newContracts.forEach((c: ContractRow) => { statusMap[c.id] = c.status; });
+    setPrevStatuses(statusMap);
+
+    setContracts(newContracts);
     setLoading(false);
+  };
+
+  const createSignedNotification = async (contract: ContractRow) => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    await (supabase.from('notifications' as any).insert({
+      empresa_id: empresaId,
+      user_id: userData.user.id,
+      type: 'contract_signed',
+      title: 'Contrato assinado ✅',
+      message: `${contract.client_name} assinou o contrato "${contract.title}"`,
+      reference_id: contract.id,
+      reference_type: 'contract',
+      is_read: false,
+      dismissed: false,
+    }) as any);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadContracts();
+    setRefreshing(false);
+    toast.info('Status dos contratos atualizado');
   };
 
   const loadTemplates = async () => {
