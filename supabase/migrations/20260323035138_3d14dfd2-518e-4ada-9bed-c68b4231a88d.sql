@@ -1,0 +1,1 @@
+UPDATE bank_transactions SET reconciliation_status = 'reconciled', reconciliation_note = COALESCE(reconciliation_note, '') || ' | Reclassificado via centro de custo' WHERE reconciliation_status = 'ignored' AND cost_center_id IS NOT NULL;
