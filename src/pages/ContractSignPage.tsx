@@ -358,8 +358,10 @@ export default function ContractSignPage() {
                   ref={contractRef}
                   onScroll={handleScroll}
                   className="max-h-[60vh] overflow-y-auto p-6 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: contract.body_html }}
-                />
+                >
+                  <div dangerouslySetInnerHTML={{ __html: contract.body_html }} />
+                  <div ref={sentinelRef} className="h-1" />
+                </div>
               </CardContent>
             </Card>
 
