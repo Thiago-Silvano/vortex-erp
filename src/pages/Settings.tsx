@@ -96,6 +96,62 @@ export default function Settings() {
     }
   };
 
+  const loadContractSmtp = async () => {
+    if (!activeCompany) return;
+    const { data } = await supabase
+      .from('contract_email_settings' as any)
+      .select('*')
+      .eq('empresa_id', activeCompany.id)
+      .maybeSingle();
+    if (data) {
+      const d = data as any;
+      setContractSmtpId(d.id);
+      setContractSmtp({
+        smtp_host: d.smtp_host || '', smtp_port: d.smtp_port || 587,
+        smtp_user: d.smtp_user || '', smtp_password: d.smtp_password || '',
+        smtp_ssl: d.smtp_ssl || false, from_name: d.from_name || '', from_email: d.from_email || '',
+      });
+      if (d.smtp_host && d.smtp_user) setContractEmailStatus('ok');
+    }
+  };
+
+  const testContractEmail = async () => {
+    if (!contractSmtp.smtp_host || !contractSmtp.smtp_user || !contractSmtp.smtp_password) {
+      toast.error('Preencha host, usuário e senha SMTP');
+      return;
+    }
+    setTestingContractEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          test: true,
+          to: contractSmtp.from_email || contractSmtp.smtp_user,
+          contract_smtp: contractSmtp,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setContractEmailStatus('ok');
+      toast.success('Email de teste enviado com sucesso!');
+    } catch (e: any) {
+      setContractEmailStatus('error');
+      toast.error(e.message || 'Erro ao testar email');
+    } finally {
+      setTestingContractEmail(false);
+    }
+  };
+
+  const saveContractSmtp = async () => {
+    if (!activeCompany) return;
+    const payload = { ...contractSmtp, empresa_id: activeCompany.id, updated_at: new Date().toISOString() };
+    if (contractSmtpId) {
+      await supabase.from('contract_email_settings' as any).update(payload as any).eq('id', contractSmtpId);
+    } else {
+      const { data } = await supabase.from('contract_email_settings' as any).insert(payload as any).select().single();
+      if (data) setContractSmtpId((data as any).id);
+    }
+  };
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
