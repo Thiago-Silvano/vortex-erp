@@ -7,11 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, FileText, PenTool, Shield, Loader2, AlertCircle, Send, Download } from 'lucide-react';
+import { CheckCircle2, FileText, PenTool, Shield, Loader2, AlertCircle, Send, Download, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
+import SelfieCapture from '@/components/SelfieCapture';
+import { captureSigningContext, type SigningContext } from '@/lib/captureSigningContext';
 
-type Step = 'loading' | 'view' | 'verify' | 'sign' | 'done' | 'error' | 'expired' | 'already_signed';
+type Step = 'loading' | 'view' | 'verify' | 'selfie' | 'sign' | 'done' | 'error' | 'expired' | 'already_signed';
 
 interface ContractData {
   id: string;
@@ -25,6 +27,7 @@ interface AgencyInfo {
   name: string;
   email: string;
   whatsapp: string;
+  logo_url: string;
 }
 
 interface BundleData {
@@ -45,8 +48,14 @@ export default function BundleSignPage() {
   const [contracts, setContracts] = useState<ContractData[]>([]);
   const [acceptedContracts, setAcceptedContracts] = useState<Set<string>>(new Set());
   const [signerName, setSignerName] = useState('');
-  const [agencyInfo, setAgencyInfo] = useState<AgencyInfo>({ name: '', email: '', whatsapp: '' });
+  const [agencyInfo, setAgencyInfo] = useState<AgencyInfo>({ name: '', email: '', whatsapp: '', logo_url: '' });
   const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  // Selfie
+  const [selfieUrl, setSelfieUrl] = useState<string | null>(null);
+
+  // Signing context
+  const [signingContext, setSigningContext] = useState<SigningContext | null>(null);
 
   // OTP
   const [otpCode, setOtpCode] = useState('');
@@ -66,19 +75,22 @@ export default function BundleSignPage() {
   const sentinelRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { loadBundle(); }, [token]);
+  useEffect(() => {
+    loadBundle();
+    captureSigningContext().then(setSigningContext);
+  }, [token]);
 
   const loadAgencyInfo = async (empresaId: string) => {
     const { data } = await supabase
       .from('agency_settings')
-      .select('name, email, whatsapp')
+      .select('name, email, whatsapp, logo_url')
       .eq('empresa_id', empresaId)
       .maybeSingle() as any;
     if (data) {
-      setAgencyInfo({ name: data.name || '', email: data.email || '', whatsapp: data.whatsapp || '' });
+      setAgencyInfo({ name: data.name || '', email: data.email || '', whatsapp: data.whatsapp || '', logo_url: data.logo_url || '' });
     } else {
       const { data: comp } = await supabase.from('companies').select('name').eq('id', empresaId).maybeSingle();
-      if (comp) setAgencyInfo({ name: (comp as any).name || '', email: '', whatsapp: '' });
+      if (comp) setAgencyInfo({ name: (comp as any).name || '', email: '', whatsapp: '', logo_url: '' });
     }
   };
 
@@ -94,12 +106,10 @@ export default function BundleSignPage() {
     if (error || !bundleRow) { setStep('error'); return; }
     const b = bundleRow as any;
 
-    // Load agency info
     if (b.empresa_id) await loadAgencyInfo(b.empresa_id);
 
     if (b.status === 'signed') { setBundle(b); setStep('already_signed'); return; }
 
-    // Fetch contracts in this bundle
     const { data: contractsData } = await (supabase as any)
       .from('contracts')
       .select('id, title, body_html, status, signed_at')
@@ -116,7 +126,6 @@ export default function BundleSignPage() {
     setContracts(contractsList);
     setSignerName(b.client_name || '');
 
-    // Mark as viewed
     if (b.status !== 'viewed') {
       await (supabase.from('contract_bundles' as any).update({ status: 'viewed', viewed_at: new Date().toISOString() } as any).eq('id', b.id) as any);
     }
@@ -126,7 +135,7 @@ export default function BundleSignPage() {
       }
       await supabase.from('contract_audit_log').insert({
         contract_id: c.id, action: 'viewed', actor: b.client_name || 'Cliente', actor_type: 'client',
-        ip_address: '', details: { user_agent: navigator.userAgent, bundle_id: b.id }
+        ip_address: signingContext?.ip_address || '', details: { user_agent: navigator.userAgent, bundle_id: b.id }
       } as any);
     }
 
@@ -165,7 +174,6 @@ export default function BundleSignPage() {
     if (!bundle) return;
     setOtpSending(true);
 
-    // Create signature records for each contract
     const sigIds: Record<string, string> = {};
     const firstContract = contracts[0];
     
@@ -177,13 +185,17 @@ export default function BundleSignPage() {
       signer_cpf: bundle.client_cpf,
       verification_method: 'email_otp',
       status: 'pending',
-      user_agent: navigator.userAgent,
+      user_agent: signingContext?.user_agent || navigator.userAgent,
+      ip_address: signingContext?.ip_address || '',
+      geo_city: signingContext?.geo_city || '',
+      geo_state: signingContext?.geo_state || '',
+      geo_country: signingContext?.geo_country || '',
+      geolocation: signingContext?.geolocation || {},
     } as any).select().single();
 
     if (sigErr || !sig) { toast.error('Erro ao iniciar verificação'); setOtpSending(false); return; }
     sigIds[firstContract.id] = (sig as any).id;
 
-    // Create signatures for remaining contracts (no separate OTP)
     for (const c of contracts.slice(1)) {
       const { data: s } = await supabase.from('contract_signatures').insert({
         contract_id: c.id,
@@ -193,13 +205,17 @@ export default function BundleSignPage() {
         signer_cpf: bundle.client_cpf,
         verification_method: 'email_otp',
         status: 'pending',
-        user_agent: navigator.userAgent,
+        user_agent: signingContext?.user_agent || navigator.userAgent,
+        ip_address: signingContext?.ip_address || '',
+        geo_city: signingContext?.geo_city || '',
+        geo_state: signingContext?.geo_state || '',
+        geo_country: signingContext?.geo_country || '',
+        geolocation: signingContext?.geolocation || {},
       } as any).select().single();
       if (s) sigIds[c.id] = (s as any).id;
     }
     setSignatureIds(sigIds);
 
-    // Send OTP via first contract
     try {
       const { error: fnErr } = await supabase.functions.invoke('send-contract-otp', {
         body: { signature_id: (sig as any).id, contract_id: firstContract.id, email: bundle.client_email, name: signerName || bundle.client_name },
@@ -227,7 +243,6 @@ export default function BundleSignPage() {
       return;
     }
 
-    // Confirm verification for all signatures
     for (const sigId of Object.values(signatureIds)) {
       if (sigId !== firstSigId) {
         await supabase.from('contract_signatures').update({
@@ -237,8 +252,13 @@ export default function BundleSignPage() {
     }
 
     toast.success('Identidade verificada!');
-    setStep('sign');
+    setStep('selfie');
     setSigning(false);
+  };
+
+  const handleSelfieCapture = (url: string) => {
+    setSelfieUrl(url);
+    setStep('sign');
   };
 
   // Canvas
@@ -266,7 +286,7 @@ export default function BundleSignPage() {
     setHasDrawn(false);
   };
 
-  const generateSignedPdf = (contractsToExport: ContractData[], clientName: string, companyName: string) => {
+  const generateSignedPdf = (contractsToExport: ContractData[], clientName: string, companyName: string, docHash?: string) => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
 
@@ -274,7 +294,6 @@ export default function BundleSignPage() {
       if (idx > 0) pdf.addPage();
       let y = 20;
 
-      // Header with company name
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
       pdf.text(companyName || 'Empresa', pageWidth / 2, y, { align: 'center' });
@@ -293,7 +312,6 @@ export default function BundleSignPage() {
       pdf.line(15, y, pageWidth - 15, y);
       y += 8;
 
-      // Strip HTML and render text
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = c.body_html;
       const text = tempDiv.textContent || tempDiv.innerText || '';
@@ -308,7 +326,7 @@ export default function BundleSignPage() {
       }
 
       // Signature section
-      if (y > 240) { pdf.addPage(); y = 20; }
+      if (y > 230) { pdf.addPage(); y = 20; }
       y += 10;
       pdf.setDrawColor(200);
       pdf.line(15, y, pageWidth - 15, y);
@@ -320,15 +338,28 @@ export default function BundleSignPage() {
       pdf.setFont('helvetica', 'normal');
       pdf.text(`Assinante: ${clientName}`, 15, y); y += 5;
       pdf.text(`Data: ${new Date().toLocaleString('pt-BR')}`, 15, y); y += 5;
-      pdf.text('Verificação: Código OTP por Email', 15, y); y += 5;
+      pdf.text('Verificação: Código OTP por Email + Selfie', 15, y); y += 5;
+      if (signingContext?.geo_city) {
+        pdf.text(`Localização: ${signingContext.geo_city}, ${signingContext.geo_state}, ${signingContext.geo_country}`, 15, y); y += 5;
+      }
+      if (signingContext?.ip_address) {
+        pdf.text(`IP: ${signingContext.ip_address}`, 15, y); y += 5;
+      }
 
-      // Legal footer
+      // Legal footer with hash
       y += 5;
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'italic');
-      const legal = 'Este contrato possui validade jurídica conforme aceite digital e registro eletrônico, nos termos da MP nº 2.200-2/2001 e do art. 10 da Lei nº 12.965/2014.';
+      const legal = 'Este contrato possui validade jurídica conforme aceite digital, nos termos da MP nº 2.200-2/2001.';
       const legalLines = pdf.splitTextToSize(legal, pageWidth - 30);
       legalLines.forEach((l: string) => { pdf.text(l, 15, y); y += 4; });
+
+      if (docHash) {
+        y += 2;
+        pdf.setFontSize(6);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Hash SHA-256: ${docHash}`, 15, y);
+      }
     });
 
     return pdf;
@@ -361,7 +392,8 @@ export default function BundleSignPage() {
           <p>Segue em anexo uma cópia dos contratos assinados para sua referência.</p>
           <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin: 16px 0;">
             <p style="margin: 0; color: #166534; font-size: 13px;">✅ Assinatura registrada em ${new Date().toLocaleString('pt-BR')}</p>
-            <p style="margin: 4px 0 0; color: #166534; font-size: 13px;">🔒 Verificação por código OTP realizada</p>
+            <p style="margin: 4px 0 0; color: #166534; font-size: 13px;">🔒 Verificação por código OTP + Selfie realizada</p>
+            ${signingContext?.geo_city ? `<p style="margin: 4px 0 0; color: #166534; font-size: 13px;">📍 ${signingContext.geo_city}, ${signingContext.geo_state}</p>` : ''}
           </div>
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
           <p style="color: #999; font-size: 11px;">${agencyInfo.name || 'Vortex'}</p>
@@ -409,7 +441,13 @@ export default function BundleSignPage() {
         document_hash: docHash,
         status: 'signed',
         signed_at: new Date().toISOString(),
-        device_info: `${navigator.platform} | ${navigator.language}`,
+        device_info: signingContext?.device_info || `${navigator.platform} | ${navigator.language}`,
+        ip_address: signingContext?.ip_address || '',
+        selfie_url: selfieUrl || '',
+        geo_city: signingContext?.geo_city || '',
+        geo_state: signingContext?.geo_state || '',
+        geo_country: signingContext?.geo_country || '',
+        geolocation: signingContext?.geolocation || {},
       } as any).eq('id', sigId);
 
       await supabase.from('contracts').update({
@@ -419,14 +457,22 @@ export default function BundleSignPage() {
 
       await supabase.from('contract_audit_log').insert({
         contract_id: c.id, action: 'signed', actor: signerName || bundle.client_name, actor_type: 'client',
-        details: { signature_type: sigType, document_hash: docHash, verification_method: 'email_otp', bundle_id: bundle.id }
+        ip_address: signingContext?.ip_address || '',
+        details: {
+          signature_type: sigType,
+          document_hash: docHash,
+          verification_method: 'email_otp',
+          bundle_id: bundle.id,
+          selfie_url: selfieUrl,
+          geo_city: signingContext?.geo_city,
+          geo_state: signingContext?.geo_state,
+          geo_country: signingContext?.geo_country,
+        }
       } as any);
     }
 
-    // Update bundle status
     await (supabase.from('contract_bundles' as any).update({ status: 'signed', signed_at: new Date().toISOString() } as any).eq('id', bundle.id) as any);
 
-    // Send signed contracts copy to client via email
     await sendSignedContractsEmail();
 
     setSigning(false);
@@ -434,6 +480,9 @@ export default function BundleSignPage() {
   };
 
   // --- RENDER ---
+  const STEPS_LIST = ['Ler Contratos', 'Verificar', 'Selfie', 'Assinar'];
+  const STEP_MAP = ['view', 'verify', 'selfie', 'sign'];
+
   if (step === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
@@ -480,7 +529,9 @@ export default function BundleSignPage() {
           )}
           <div className="bg-emerald-50 rounded-lg p-3 text-xs text-emerald-600 space-y-1">
             <p>🔒 Assinatura verificada com código de segurança</p>
-            <p>📋 Hash de cada documento registrado</p>
+            <p>📸 Selfie de identificação registrada</p>
+            <p>📋 Hash SHA-256 de cada documento registrado</p>
+            {signingContext?.geo_city && <p>📍 {signingContext.geo_city}, {signingContext.geo_state}</p>}
             <p>🕐 {new Date().toLocaleString('pt-BR')}</p>
           </div>
           <div className="mt-4 space-y-1">
@@ -520,14 +571,19 @@ export default function BundleSignPage() {
       <header className="bg-white border-b shadow-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FileText className="h-4 w-4 text-primary" />
-            </div>
+            {agencyInfo.logo_url ? (
+              <img src={agencyInfo.logo_url} alt={agencyInfo.name} className="h-8 w-auto max-w-[120px] object-contain" />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FileText className="h-4 w-4 text-primary" />
+              </div>
+            )}
             <span className="font-semibold text-sm">{agencyInfo.name || 'Vortex'}</span>
           </div>
           <Badge variant="outline" className="text-xs">
             {step === 'view' && `📄 ${contracts.length} contrato(s)`}
             {step === 'verify' && '🔐 Verificação'}
+            {step === 'selfie' && '📸 Selfie'}
             {step === 'sign' && '✍️ Assinatura'}
           </Badge>
         </div>
@@ -536,9 +592,8 @@ export default function BundleSignPage() {
       <div className="max-w-3xl mx-auto px-4 py-6">
         {/* Progress */}
         <div className="flex items-center gap-2 mb-6">
-          {['Ler Contratos', 'Verificar Identidade', 'Assinar Todos'].map((label, i) => {
-            const stepMap = ['view', 'verify', 'sign'];
-            const currentIdx = stepMap.indexOf(step);
+          {STEPS_LIST.map((label, i) => {
+            const currentIdx = STEP_MAP.indexOf(step);
             const isActive = i === currentIdx;
             const isDone = i < currentIdx;
             return (
@@ -555,7 +610,7 @@ export default function BundleSignPage() {
           })}
         </div>
 
-        {/* Step: View - All contracts in continuous scroll */}
+        {/* Step: View */}
         {step === 'view' && bundle && (
           <div className="space-y-4">
             <Card>
@@ -570,7 +625,6 @@ export default function BundleSignPage() {
                 <div ref={scrollContainerRef} className="max-h-[60vh] overflow-y-auto">
                   {contracts.map((c, idx) => (
                     <div key={c.id}>
-                      {/* Contract header */}
                       <div className="sticky top-0 z-[5] bg-accent/90 backdrop-blur px-6 py-2 border-b flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs">{idx + 1}/{contracts.length}</Badge>
@@ -580,7 +634,6 @@ export default function BundleSignPage() {
                           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                         )}
                       </div>
-                      {/* Contract body */}
                       <div className="p-6 prose prose-sm max-w-none border-b">
                         <div dangerouslySetInnerHTML={{ __html: c.body_html }} />
                         <div ref={el => { sentinelRefs.current[c.id] = el; }} className="h-1" />
@@ -595,7 +648,6 @@ export default function BundleSignPage() {
               <p className="text-xs text-amber-600 text-center animate-pulse">↓ Role até o final de todos os contratos para continuar</p>
             )}
 
-            {/* Individual acceptance checkboxes */}
             <div className="space-y-2">
               {contracts.map(c => (
                 <div key={c.id} className="flex items-start gap-2">
@@ -675,6 +727,17 @@ export default function BundleSignPage() {
           </div>
         )}
 
+        {/* Step: Selfie */}
+        {step === 'selfie' && bundle && (
+          <div className="space-y-4">
+            <SelfieCapture
+              onCapture={handleSelfieCapture}
+              contractId={bundle.id}
+              clientName={bundle.client_name}
+            />
+          </div>
+        )}
+
         {/* Step: Sign */}
         {step === 'sign' && bundle && (
           <div className="space-y-4">
@@ -686,7 +749,16 @@ export default function BundleSignPage() {
                   <p className="text-sm text-muted-foreground">Sua identidade foi verificada. Uma assinatura para todos os {contracts.length} contrato(s).</p>
                 </div>
 
-                {/* List of contracts being signed */}
+                {selfieUrl && (
+                  <div className="flex items-center gap-3 bg-emerald-50 rounded-lg p-3">
+                    <img src={selfieUrl} alt="Selfie" className="w-12 h-12 rounded-full object-cover border-2 border-emerald-300" />
+                    <div className="text-sm text-emerald-700">
+                      <p className="font-medium">Selfie registrada ✓</p>
+                      <p className="text-xs">Vinculada aos contratos</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="bg-muted/30 rounded-lg p-3 space-y-1">
                   {contracts.map(c => (
                     <div key={c.id} className="flex items-center gap-2 text-sm">
@@ -696,7 +768,6 @@ export default function BundleSignPage() {
                   ))}
                 </div>
 
-                {/* Signature type toggle */}
                 <div className="flex gap-2 justify-center">
                   <Button variant={sigType === 'typed' ? 'default' : 'outline'} size="sm" onClick={() => setSigType('typed')}>Digitar Nome</Button>
                   <Button variant={sigType === 'draw' ? 'default' : 'outline'} size="sm" onClick={() => setSigType('draw')}>Desenhar Assinatura</Button>

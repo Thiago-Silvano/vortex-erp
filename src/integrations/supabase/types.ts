@@ -761,8 +761,13 @@ export type Database = {
           created_at: string
           device_info: string | null
           document_hash: string | null
+          geo_city: string | null
+          geo_country: string | null
+          geo_state: string | null
+          geolocation: Json | null
           id: string
           ip_address: string | null
+          selfie_url: string | null
           signature_data: string | null
           signature_type: string
           signed_at: string | null
@@ -782,8 +787,13 @@ export type Database = {
           created_at?: string
           device_info?: string | null
           document_hash?: string | null
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_state?: string | null
+          geolocation?: Json | null
           id?: string
           ip_address?: string | null
+          selfie_url?: string | null
           signature_data?: string | null
           signature_type?: string
           signed_at?: string | null
@@ -803,8 +813,13 @@ export type Database = {
           created_at?: string
           device_info?: string | null
           document_hash?: string | null
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_state?: string | null
+          geolocation?: Json | null
           id?: string
           ip_address?: string | null
+          selfie_url?: string | null
           signature_data?: string | null
           signature_type?: string
           signed_at?: string | null
