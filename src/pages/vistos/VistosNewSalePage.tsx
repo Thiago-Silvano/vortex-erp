@@ -112,7 +112,8 @@ export default function VistosNewSalePage() {
       .then(({ data }) => { if (data) setAllClients(data); });
     supabase.from('suppliers').select('id, name').order('name')
       .then(({ data }) => { if (data) setAllSuppliers(data); });
-    supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name')
+    supabase.from('cost_centers').select('id, name').eq('status', 'active')
+      .or(`empresa_id.eq.${activeCompany?.id},empresa_id.is.null`).order('name')
       .then(({ data }) => { if (data) setAllCostCenters(data); });
   }, [activeCompany?.id]);
 

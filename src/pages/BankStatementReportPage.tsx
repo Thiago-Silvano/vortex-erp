@@ -52,7 +52,9 @@ export default function BankStatementReportPage() {
     supabase.from('bank_accounts').select('id, bank_name, account_number, account_digit, agency, color, initial_balance')
       .eq('empresa_id', activeCompany.id).order('bank_name')
       .then(({ data }) => setAccounts((data as any[]) || []));
-    supabase.from('cost_centers').select('id, name').eq('empresa_id', activeCompany.id).eq('status', 'active')
+    supabase.from('cost_centers').select('id, name').eq('status', 'active')
+      .or(`empresa_id.eq.${activeCompany.id},empresa_id.is.null`)
+      .order('name')
       .then(({ data }) => setCostCenters((data as any[]) || []));
   }, [activeCompany]);
 

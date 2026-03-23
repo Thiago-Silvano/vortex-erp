@@ -153,7 +153,7 @@ export default function AccountsPayablePage() {
   useEffect(() => {
     fetch_();
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setSuppliers(data); });
-    supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name').then(({ data }) => { if (data) setCostCenters(data); });
+    supabase.from('cost_centers').select('id, name').eq('status', 'active').or(`empresa_id.eq.${activeCompany?.id},empresa_id.is.null`).order('name').then(({ data }) => { if (data) setCostCenters(data); });
   }, [activeCompany?.id]);
 
   const generateInstallmentRows = (count: number, total: number, baseDate: string) => {

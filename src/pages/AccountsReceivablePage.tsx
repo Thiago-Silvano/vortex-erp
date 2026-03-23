@@ -157,7 +157,8 @@ export default function AccountsReceivablePage() {
     fetch_();
     supabase.from('clients').select('id, full_name').order('full_name')
       .then(({ data }) => { if (data) setClients(data); });
-    supabase.from('cost_centers').select('id, name').eq('status', 'active').order('name')
+    supabase.from('cost_centers').select('id, name').eq('status', 'active')
+      .or(`empresa_id.eq.${activeCompany?.id},empresa_id.is.null`).order('name')
       .then(({ data }) => { if (data) setCostCenters(data); });
   }, [activeCompany?.id]);
 

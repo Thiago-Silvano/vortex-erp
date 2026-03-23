@@ -56,7 +56,7 @@ export default function ReportDashboard() {
 
   useEffect(() => {
     if (activeCompany?.id) {
-      supabase.from('cost_centers').select('id, name').eq('empresa_id', activeCompany.id).then(({ data }) => { if (data) setCostCenters(data); });
+      supabase.from('cost_centers').select('id, name').or(`empresa_id.eq.${activeCompany.id},empresa_id.is.null`).then(({ data }) => { if (data) setCostCenters(data); });
     }
   }, [activeCompany?.id]);
 
