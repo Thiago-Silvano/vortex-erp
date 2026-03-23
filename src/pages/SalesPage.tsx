@@ -39,7 +39,6 @@ export default function SalesPage() {
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
   const [revertTarget, setRevertTarget] = useState<SaleRow | null>(null);
   const [isMaster, setIsMaster] = useState(false);
   const [sortKey, setSortKey] = useState<'client_name' | 'sale_date' | 'payment_method' | 'total_sale' | 'net_profit' | 'sale_workflow_status'>('sale_date');
