@@ -93,6 +93,9 @@ export default function BundleSignPage() {
     if (error || !bundleRow) { setStep('error'); return; }
     const b = bundleRow as any;
 
+    // Load agency info
+    if (b.empresa_id) await loadAgencyInfo(b.empresa_id);
+
     if (b.status === 'signed') { setBundle(b); setStep('already_signed'); return; }
 
     // Fetch contracts in this bundle
