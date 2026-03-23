@@ -475,6 +475,9 @@ export default function BundleSignPage() {
           </div>
           <h2 className="text-2xl font-bold mb-2 text-emerald-900">{contracts.length} Contrato(s) Assinado(s)!</h2>
           <p className="text-emerald-700 mb-4">Sua assinatura foi registrada com sucesso para todos os contratos.</p>
+          {bundle?.client_email && (
+            <p className="text-sm text-emerald-600 mb-3">📧 Uma cópia foi enviada para o seu email.</p>
+          )}
           <div className="bg-emerald-50 rounded-lg p-3 text-xs text-emerald-600 space-y-1">
             <p>🔒 Assinatura verificada com código de segurança</p>
             <p>📋 Hash de cada documento registrado</p>
@@ -488,12 +491,24 @@ export default function BundleSignPage() {
               </div>
             ))}
           </div>
+          <Button
+            onClick={handleDownloadPdf}
+            disabled={generatingPdf}
+            variant="outline"
+            className="w-full mt-4 gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+          >
+            {generatingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Baixar PDF dos Contratos
+          </Button>
           <div className="mt-4 border-t border-emerald-200 pt-4">
             <p className="text-xs text-emerald-700 italic leading-relaxed">
               👉 Estes contratos possuem validade jurídica conforme aceite digital e registro eletrônico,
               nos termos da MP nº 2.200-2/2001 e do art. 10 da Lei nº 12.965/2014.
             </p>
           </div>
+          {agencyInfo.name && (
+            <p className="text-xs text-muted-foreground mt-3">{agencyInfo.name}</p>
+          )}
         </Card>
       </div>
     );
