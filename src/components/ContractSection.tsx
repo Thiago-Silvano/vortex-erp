@@ -44,6 +44,21 @@ interface ContractRow {
   client_email: string;
   client_phone: string;
   body_html: string;
+  bundle_id: string | null;
+}
+
+interface BundleRow {
+  id: string;
+  token: string;
+  short_id: string;
+  status: string;
+  client_name: string;
+  client_email: string;
+  client_phone: string;
+  created_at: string;
+  sent_at: string | null;
+  signed_at: string | null;
+  contracts: ContractRow[];
 }
 
 interface TemplateRow {
