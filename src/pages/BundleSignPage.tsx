@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, FileText, PenTool, Shield, Loader2, AlertCircle, Send } from 'lucide-react';
+import { CheckCircle2, FileText, PenTool, Shield, Loader2, AlertCircle, Send, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
 
 type Step = 'loading' | 'view' | 'verify' | 'sign' | 'done' | 'error' | 'expired' | 'already_signed';
 
