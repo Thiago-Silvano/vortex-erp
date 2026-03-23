@@ -292,10 +292,10 @@ export default function PipelineDashboard() {
     { label: 'Vendas Ativas', value: stats.totalSales.toString(), sub: fmt(stats.totalSalesValue), icon: DollarSign, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950', details: salesDetails, detailLabel: 'Vendas ativas' },
     { label: 'Aguard. Assinatura', value: stats.awaitingSignature.toString(), icon: PenTool, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950', details: awaitingSignatureDetails, detailLabel: 'Aguardando assinatura' },
     { label: 'Aguard. Pagamento', value: stats.awaitingPayment.toString(), icon: CreditCard, color: 'text-purple-600 bg-purple-50 dark:bg-purple-950', details: awaitingPaymentDetails, detailLabel: 'Aguardando pagamento' },
-    { label: 'Recebido', value: fmt(stats.totalReceived), icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950' },
+    { label: 'Recebido', value: fmt(stats.totalReceived), icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950', details: receivedDetails, detailLabel: 'Pagamentos recebidos por cliente' },
     { label: 'Inadimplente', value: fmt(stats.totalOverdue), icon: AlertTriangle, color: stats.totalOverdue > 0 ? 'text-red-600 bg-red-50 dark:bg-red-950' : 'text-muted-foreground bg-muted', details: overdueDetails, detailLabel: 'Inadimplentes' },
-    { label: 'Taxa Conversão', value: `${stats.conversionRate.toFixed(1)}%`, icon: TrendingUp, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950' },
-    { label: 'Ticket Médio', value: fmt(stats.avgTicket), icon: BarChart3, color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950' },
+    { label: 'Taxa Conversão', value: `${stats.conversionRate.toFixed(1)}%`, icon: TrendingUp, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950', details: conversionDetails, detailLabel: 'Composição da taxa de conversão' },
+    { label: 'Ticket Médio', value: fmt(stats.avgTicket), icon: BarChart3, color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950', details: ticketDetails, detailLabel: 'Maiores vendas (compõem o ticket médio)' },
   ];
 
   return (
