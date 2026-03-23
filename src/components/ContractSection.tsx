@@ -229,41 +229,61 @@ export default function ContractSection({
   };
 
   const handleGenerate = async () => {
-    if (!selectedTemplateId) { toast.error('Selecione um modelo'); return; }
+    if (selectedTemplateIds.length === 0) { toast.error('Selecione pelo menos um modelo'); return; }
     setGenerating(true);
 
-    const template = templates.find(t => t.id === selectedTemplateId);
-    if (!template) { setGenerating(false); return; }
-
-    const bodyHtml = replaceVariables(template.body_html);
     const { data: user } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase.from('contracts').insert({
+    // Create a bundle
+    const { data: bundleData, error: bundleErr } = await (supabase.from('contract_bundles' as any).insert({
       empresa_id: empresaId,
       sale_id: saleId,
-      template_id: selectedTemplateId,
-      title: template.name,
-      body_html: bodyHtml,
       client_name: clientName,
       client_email: formClientEmail,
       client_phone: formClientPhone,
       client_cpf: clientCpf,
       status: 'draft',
       created_by: user?.user?.email || '',
-    } as any).select().single();
+    }).select().single() as any);
 
-    if (error) { toast.error('Erro ao gerar contrato'); setGenerating(false); return; }
+    if (bundleErr || !bundleData) { toast.error('Erro ao criar pacote de contratos'); setGenerating(false); return; }
 
-    await supabase.from('contract_audit_log').insert({
-      contract_id: (data as any).id,
-      action: 'created',
-      actor: user?.user?.email || '',
-      actor_type: 'user',
-      details: { template_id: selectedTemplateId, template_name: template.name },
-    } as any);
+    // Create each contract linked to the bundle
+    for (const templateId of selectedTemplateIds) {
+      const template = templates.find(t => t.id === templateId);
+      if (!template) continue;
 
-    toast.success('Contrato gerado com sucesso!');
+      const bodyHtml = replaceVariables(template.body_html);
+
+      const { data, error } = await supabase.from('contracts').insert({
+        empresa_id: empresaId,
+        sale_id: saleId,
+        template_id: templateId,
+        title: template.name,
+        body_html: bodyHtml,
+        client_name: clientName,
+        client_email: formClientEmail,
+        client_phone: formClientPhone,
+        client_cpf: clientCpf,
+        status: 'draft',
+        created_by: user?.user?.email || '',
+        bundle_id: bundleData.id,
+      } as any).select().single();
+
+      if (!error && data) {
+        await supabase.from('contract_audit_log').insert({
+          contract_id: (data as any).id,
+          action: 'created',
+          actor: user?.user?.email || '',
+          actor_type: 'user',
+          details: { template_id: templateId, template_name: template.name, bundle_id: bundleData.id },
+        } as any);
+      }
+    }
+
+    toast.success(`${selectedTemplateIds.length} contrato(s) gerado(s) com sucesso!`);
     setShowGenerate(false);
+    setSelectedTemplateIds([]);
     setGenerating(false);
     loadContracts();
   };
