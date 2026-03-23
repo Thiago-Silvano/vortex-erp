@@ -362,7 +362,7 @@ export default function NewSalePage() {
           const fp = `${si.description}|${si.cost_price}|${si.total_value}|${si.rav}|${si.service_catalog_id || ''}|${JSON.stringify(si.metadata || {})}`;
           if (mergedMap.has(fp)) {
             const entry = mergedMap.get(fp)!;
-            if (si.quote_option_id) entry.optionIds.push(si.quote_option_id);
+            if (si.quote_option_id && !entry.optionIds.includes(si.quote_option_id)) entry.optionIds.push(si.quote_option_id);
           } else {
             mergedMap.set(fp, {
               item: si,
