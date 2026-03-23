@@ -33,6 +33,7 @@ interface BundleData {
   client_email: string;
   client_phone: string;
   client_cpf: string;
+  empresa_id: string;
   status: string;
   signed_at: string | null;
 }
