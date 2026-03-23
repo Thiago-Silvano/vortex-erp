@@ -192,35 +192,13 @@ export default function SalesPage() {
     <AppLayout>
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Vendas & Cotações</h1>
-            {(() => {
-              const pending = sales.filter(s => s.status === 'draft' && s.sale_workflow_status !== 'emitido' && s.sale_workflow_status !== 'perdido');
-              const pendingCount = pending.length;
-              const pendingTotal = pending.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
-              return pendingCount > 0 ? (
-                <Badge variant="secondary" className="text-sm font-semibold bg-yellow-100 text-yellow-800 border-yellow-300">
-                  {pendingCount} cotação{pendingCount !== 1 ? 'ões' : ''} em andamento — {fmt(pendingTotal)}
-                </Badge>
-              ) : null;
-            })()}
-          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Vendas</h1>
           <Button onClick={() => navigate('/sales/new')} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Nova Cotação</Button>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input className="pl-9" placeholder="Buscar por cliente..." value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <Checkbox checked={showVendas} onCheckedChange={(v) => setShowVendas(!!v)} />
-              <Badge variant="default" className="cursor-pointer">Emitidas</Badge>
-            </label>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <Checkbox checked={showCotacoes} onCheckedChange={(v) => setShowCotacoes(!!v)} />
-              <Badge variant="outline" className="cursor-pointer">Cotações</Badge>
-            </label>
           </div>
         </div>
 
