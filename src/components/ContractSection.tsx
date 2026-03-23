@@ -289,6 +289,7 @@ export default function ContractSection({
   };
 
   const getSignLink = (token: string) => `${window.location.origin}/contrato/${token}`;
+  const getBundleLink = (bundleToken: string) => `${window.location.origin}/contratos/${bundleToken}`;
 
   const handleCopyLink = (token: string) => {
     navigator.clipboard.writeText(getSignLink(token));
