@@ -2811,7 +2811,14 @@ export default function NewSalePage() {
             clientName={clientName}
             clientEmail={passengers.find(p => p.is_main)?.email || passengers[0]?.email || ''}
             clientPhone={passengers.find(p => p.is_main)?.phone || passengers[0]?.phone || ''}
-            clientCpf={passengers.find(p => p.is_main)?.document_number || passengers[0]?.document_number || ''}
+            clientCpf={(() => {
+              const mainP = passengers.find(p => p.is_main) || passengers[0];
+              if (!mainP) return '';
+              if (mainP.document_type === 'cpf') return mainP.document_number || '';
+              // If main passenger has passport, look for any passenger with CPF
+              const cpfPassenger = passengers.find(p => p.document_type === 'cpf');
+              return cpfPassenger?.document_number || '';
+            })()}
             destination={destinationName}
             tripStartDate={tripStartDate}
             tripEndDate={tripEndDate}
