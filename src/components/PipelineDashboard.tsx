@@ -330,7 +330,7 @@ export default function PipelineDashboard() {
                 <HoverCardContent className="w-72" side="bottom" align="start">
                   <div className="space-y-2">
                     <p className="text-sm font-semibold">{kpi.detailLabel}</p>
-                    {renderDetailPopover(kpi.details, 'Nenhum item')}
+                    {renderDetailPopover(kpi.details, 'Nenhum item', kpi.detailFmtPlain)}
                   </div>
                 </HoverCardContent>
               </HoverCard>
