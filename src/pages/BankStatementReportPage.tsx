@@ -495,8 +495,22 @@ export default function BankStatementReportPage() {
                     </TableHeader>
                     <TableBody>
                       {costCenterSummary.map(cc => (
-                        <TableRow key={cc.name}>
-                          <TableCell className="text-xs font-medium">{cc.name}</TableCell>
+                        <TableRow 
+                          key={cc.name} 
+                          className={cc.name === 'Sem classificação' ? 'cursor-pointer hover:bg-accent/50 transition-colors' : ''}
+                          onClick={() => {
+                            if (cc.name === 'Sem classificação') setShowUnclassified(true);
+                          }}
+                        >
+                          <TableCell className="text-xs font-medium">
+                            {cc.name === 'Sem classificação' ? (
+                              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                                <AlertCircle className="h-3.5 w-3.5" />
+                                {cc.name}
+                                <span className="text-[10px] text-muted-foreground">(clique para classificar)</span>
+                              </span>
+                            ) : cc.name}
+                          </TableCell>
                           {(viewMode === 'full' || viewMode === 'revenue' || viewMode === 'consolidated') && (
                             <TableCell className="text-xs text-right text-emerald-600">{fmt(cc.credits)}</TableCell>
                           )}
