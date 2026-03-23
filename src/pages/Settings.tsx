@@ -427,6 +427,99 @@ export default function Settings() {
           </CardContent>
         </Card>
 
+        {/* Contract Email SMTP */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Email para Contratos
+            </CardTitle>
+            <CardDescription>
+              Configuração SMTP compartilhada para envio de contratos por email. Todos os usuários utilizarão esta configuração.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Servidor SMTP</Label>
+                <Input
+                  value={contractSmtp.smtp_host}
+                  onChange={e => { setContractSmtp(p => ({ ...p, smtp_host: e.target.value })); setContractEmailStatus('idle'); }}
+                  placeholder="smtp.seuservidor.com"
+                />
+              </div>
+              <div>
+                <Label>Porta</Label>
+                <Select
+                  value={String(contractSmtp.smtp_port)}
+                  onValueChange={v => setContractSmtp(p => ({ ...p, smtp_port: Number(v), smtp_ssl: Number(v) === 465 }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="587">587 (STARTTLS)</SelectItem>
+                    <SelectItem value="465">465 (SSL/TLS)</SelectItem>
+                    <SelectItem value="25">25 (Sem criptografia)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Usuário SMTP</Label>
+                <Input
+                  value={contractSmtp.smtp_user}
+                  onChange={e => { setContractSmtp(p => ({ ...p, smtp_user: e.target.value })); setContractEmailStatus('idle'); }}
+                  placeholder="email@seuservidor.com"
+                />
+              </div>
+              <div>
+                <Label>Senha SMTP</Label>
+                <Input
+                  type="password"
+                  value={contractSmtp.smtp_password}
+                  onChange={e => { setContractSmtp(p => ({ ...p, smtp_password: e.target.value })); setContractEmailStatus('idle'); }}
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Nome do Remetente</Label>
+                <Input
+                  value={contractSmtp.from_name}
+                  onChange={e => setContractSmtp(p => ({ ...p, from_name: e.target.value }))}
+                  placeholder="Vortex Viagens"
+                />
+              </div>
+              <div>
+                <Label>Email do Remetente</Label>
+                <Input
+                  type="email"
+                  value={contractSmtp.from_email}
+                  onChange={e => setContractSmtp(p => ({ ...p, from_email: e.target.value }))}
+                  placeholder="contratos@seudominio.com"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={testContractEmail} disabled={testingContractEmail}>
+                {testingContractEmail ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Mail className="h-4 w-4 mr-1" />}
+                Testar Email
+              </Button>
+              {contractEmailStatus === 'ok' && (
+                <span className="flex items-center gap-1 text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4" /> Conectado
+                </span>
+              )}
+              {contractEmailStatus === 'error' && (
+                <span className="flex items-center gap-1 text-sm text-destructive">
+                  <XCircle className="h-4 w-4" /> Falha na conexão
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <h2 className="text-xl font-semibold text-foreground pt-4">Taxas de Pagamento - Cartão</h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
