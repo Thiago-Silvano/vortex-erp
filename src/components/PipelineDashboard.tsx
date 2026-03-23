@@ -287,7 +287,7 @@ export default function PipelineDashboard() {
     </div>
   );
 
-  const kpis: { label: string; value: string; sub?: string; icon: any; color: string; details?: DetailItem[]; detailLabel?: string }[] = [
+  const kpis: { label: string; value: string; sub?: string; icon: any; color: string; details?: DetailItem[]; detailLabel?: string; detailFmtPlain?: boolean }[] = [
     { label: 'Cotações Abertas', value: stats.totalQuotes.toString(), sub: fmt(stats.totalQuotesValue), icon: FileText, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950', details: quotesDetails, detailLabel: 'Cotações abertas' },
     { label: 'Vendas Ativas', value: stats.totalSales.toString(), sub: fmt(stats.totalSalesValue), icon: DollarSign, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950', details: salesDetails, detailLabel: 'Vendas ativas' },
     { label: 'Aguard. Assinatura', value: stats.awaitingSignature.toString(), icon: PenTool, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950', details: awaitingSignatureDetails, detailLabel: 'Aguardando assinatura' },
