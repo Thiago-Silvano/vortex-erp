@@ -164,8 +164,7 @@ export default function SalesPage() {
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const filtered = sales
     .filter(s => {
-      if (!showVendas && s.status === 'active') return false;
-      if (!showCotacoes && s.status === 'draft') return false;
+      if (s.status !== 'active') return false;
       return normalize(s.client_name).includes(normalize(search));
     })
     .sort((a, b) => {
