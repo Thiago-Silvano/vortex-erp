@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const body = await req.json();
-    const { user_id, empresa_id, email_id, test, to } = body;
+    const { user_id, empresa_id, email_id, test, to, subject, html } = body;
 
     // Support both user_id (new) and empresa_id (legacy) lookups
     let settings: any = null;
