@@ -269,7 +269,7 @@ export default function PipelineDashboard() {
     );
   }
 
-  const renderDetailPopover = (details: DetailItem[], emptyMsg: string) => (
+  const renderDetailPopover = (details: DetailItem[], emptyMsg: string, plainNumbers?: boolean) => (
     <div className="space-y-1.5 max-h-48 overflow-y-auto">
       {details.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">{emptyMsg}</p>
@@ -277,7 +277,7 @@ export default function PipelineDashboard() {
         details.map((d, i) => (
           <div key={d.id + i} className="flex items-center justify-between gap-2 text-xs">
             <span className="truncate font-medium">{d.name}</span>
-            {d.value !== undefined && <span className="text-muted-foreground shrink-0">{fmt(d.value)}</span>}
+            {d.value !== undefined && <span className="text-muted-foreground shrink-0">{plainNumbers ? d.value : fmt(d.value)}</span>}
           </div>
         ))
       )}
