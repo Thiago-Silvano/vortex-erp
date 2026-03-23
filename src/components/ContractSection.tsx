@@ -149,17 +149,18 @@ export default function ContractSection({
       .order('created_at', { ascending: false });
     const newContracts = (data as any) || [];
 
-    // Check if any contract changed to 'signed'
-    newContracts.forEach((c: ContractRow) => {
-      if (c.status === 'signed' && prevStatuses[c.id] && prevStatuses[c.id] !== 'signed') {
-        toast.success(`Contrato "${c.title}" foi assinado por ${c.client_name}!`, {
-          duration: 8000,
-          icon: '🎉',
-        });
-        // Create notification in the bell
-        createSignedNotification(c);
-      }
-    });
+    // Check if any contract changed to 'signed' (only after first load)
+    if (prevStatuses !== null) {
+      newContracts.forEach((c: ContractRow) => {
+        if (c.status === 'signed' && prevStatuses[c.id] !== 'signed') {
+          toast.success(`Contrato "${c.title}" foi assinado por ${c.client_name}!`, {
+            duration: 8000,
+            icon: '🎉',
+          });
+          createSignedNotification(c);
+        }
+      });
+    }
 
     // Store current statuses for comparison
     const statusMap: Record<string, string> = {};
