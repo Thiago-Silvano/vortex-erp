@@ -658,18 +658,34 @@ export default function ContractSection({
       {/* Generate Dialog */}
       <Dialog open={showGenerate} onOpenChange={setShowGenerate}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Gerar Contrato</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Gerar Contratos</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Modelo de Contrato</Label>
-              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                <SelectTrigger><SelectValue placeholder="Selecione o modelo..." /></SelectTrigger>
-                <SelectContent>
-                  {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {templates.length === 0 && (
+              <Label>Selecione os Modelos de Contrato</Label>
+              {templates.length === 0 ? (
                 <p className="text-xs text-amber-600 mt-1">Nenhum modelo cadastrado. Crie um em Contratos → Modelos.</p>
+              ) : (
+                <div className="space-y-2 mt-2 max-h-48 overflow-y-auto">
+                  {templates.map(t => (
+                    <label key={t.id} className="flex items-center gap-2 p-2 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors">
+                      <Checkbox
+                        checked={selectedTemplateIds.includes(t.id)}
+                        onCheckedChange={(checked) => {
+                          setSelectedTemplateIds(prev =>
+                            checked ? [...prev, t.id] : prev.filter(id => id !== t.id)
+                          );
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{t.name}</p>
+                        <p className="text-xs text-muted-foreground">{t.category}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {selectedTemplateIds.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-2">{selectedTemplateIds.length} modelo(s) selecionado(s) — será gerado um link único para todos</p>
               )}
             </div>
             <div>
@@ -682,9 +698,9 @@ export default function ContractSection({
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowGenerate(false)}>Cancelar</Button>
-              <Button onClick={handleGenerate} disabled={generating || !selectedTemplateId} className="gap-2">
+              <Button onClick={handleGenerate} disabled={generating || selectedTemplateIds.length === 0} className="gap-2">
                 {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-                Gerar Contrato
+                Gerar {selectedTemplateIds.length > 1 ? `${selectedTemplateIds.length} Contratos` : 'Contrato'}
               </Button>
             </div>
           </div>
