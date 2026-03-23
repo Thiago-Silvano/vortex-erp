@@ -88,6 +88,7 @@ export default function ContractSection({
   const [generating, setGenerating] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [exportingProof, setExportingProof] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [companyInfo, setCompanyInfo] = useState<{ name: string; cnpj: string; endereco: string }>({ name: '', cnpj: '', endereco: '' });
 
   useEffect(() => {
