@@ -53,6 +53,10 @@ export default function PipelineDashboard() {
   const [awaitingSignatureDetails, setAwaitingSignatureDetails] = useState<DetailItem[]>([]);
   const [awaitingPaymentDetails, setAwaitingPaymentDetails] = useState<DetailItem[]>([]);
   const [overdueDetails, setOverdueDetails] = useState<DetailItem[]>([]);
+  const [receivedDetails, setReceivedDetails] = useState<DetailItem[]>([]);
+  const [conversionDetails, setConversionDetails] = useState<DetailItem[]>([]);
+  const [ticketDetails, setTicketDetails] = useState<DetailItem[]>([]);
+
 
   useEffect(() => {
     if (!activeCompany?.id) return;
@@ -126,6 +130,18 @@ export default function PipelineDashboard() {
     }
     setOverdueDetails(Object.values(overdueByClient));
 
+    // Received details - group paid receivables by client
+    const receivedByClient: Record<string, DetailItem> = {};
+    for (const r of paidReceivables) {
+      const sale = allSales?.find(s => s.id === r.sale_id);
+      const name = (sale as any)?.client_name || 'Sem nome';
+      if (!receivedByClient[name]) {
+        receivedByClient[name] = { id: r.id, name, value: 0 };
+      }
+      receivedByClient[name].value = (receivedByClient[name].value || 0) + Number(r.amount || 0);
+    }
+    setReceivedDetails(Object.values(receivedByClient).slice(0, 15));
+
     const totalQuotesValue = quotes.reduce((s, q) => s + Number(q.total_sale || 0), 0);
     const totalSalesValue = sales.reduce((s, q) => s + Number(q.total_sale || 0), 0);
 
@@ -135,7 +151,18 @@ export default function PipelineDashboard() {
 
     const avgTicket = sales.length > 0 ? totalSalesValue / sales.length : 0;
 
-    // Set detail lists
+    // Conversion details
+    setConversionDetails([
+      { id: 'sales', name: `Vendas convertidas`, value: sales.length },
+      { id: 'quotes', name: `Cotações abertas`, value: quotes.length },
+      { id: 'total', name: `Total de oportunidades`, value: quotes.length + sales.length },
+    ]);
+
+    // Ticket details - top sales by value
+    setTicketDetails(sales.sort((a, b) => Number(b.total_sale || 0) - Number(a.total_sale || 0)).slice(0, 10).map(s => ({
+      id: s.id, name: (s as any).client_name || 'Sem nome', value: Number(s.total_sale || 0),
+    })));
+
     setQuotesDetails(quotes.slice(0, 10).map(q => ({
       id: q.id, name: (q as any).client_name || 'Sem nome', value: Number(q.total_sale || 0),
     })));
@@ -242,7 +269,7 @@ export default function PipelineDashboard() {
     );
   }
 
-  const renderDetailPopover = (details: DetailItem[], emptyMsg: string) => (
+  const renderDetailPopover = (details: DetailItem[], emptyMsg: string, plainNumbers?: boolean) => (
     <div className="space-y-1.5 max-h-48 overflow-y-auto">
       {details.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">{emptyMsg}</p>
@@ -250,7 +277,7 @@ export default function PipelineDashboard() {
         details.map((d, i) => (
           <div key={d.id + i} className="flex items-center justify-between gap-2 text-xs">
             <span className="truncate font-medium">{d.name}</span>
-            {d.value !== undefined && <span className="text-muted-foreground shrink-0">{fmt(d.value)}</span>}
+            {d.value !== undefined && <span className="text-muted-foreground shrink-0">{plainNumbers ? d.value : fmt(d.value)}</span>}
           </div>
         ))
       )}
@@ -260,15 +287,15 @@ export default function PipelineDashboard() {
     </div>
   );
 
-  const kpis: { label: string; value: string; sub?: string; icon: any; color: string; details?: DetailItem[]; detailLabel?: string }[] = [
+  const kpis: { label: string; value: string; sub?: string; icon: any; color: string; details?: DetailItem[]; detailLabel?: string; detailFmtPlain?: boolean }[] = [
     { label: 'Cotações Abertas', value: stats.totalQuotes.toString(), sub: fmt(stats.totalQuotesValue), icon: FileText, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950', details: quotesDetails, detailLabel: 'Cotações abertas' },
     { label: 'Vendas Ativas', value: stats.totalSales.toString(), sub: fmt(stats.totalSalesValue), icon: DollarSign, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950', details: salesDetails, detailLabel: 'Vendas ativas' },
     { label: 'Aguard. Assinatura', value: stats.awaitingSignature.toString(), icon: PenTool, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950', details: awaitingSignatureDetails, detailLabel: 'Aguardando assinatura' },
     { label: 'Aguard. Pagamento', value: stats.awaitingPayment.toString(), icon: CreditCard, color: 'text-purple-600 bg-purple-50 dark:bg-purple-950', details: awaitingPaymentDetails, detailLabel: 'Aguardando pagamento' },
-    { label: 'Recebido', value: fmt(stats.totalReceived), icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950' },
+    { label: 'Recebido', value: fmt(stats.totalReceived), icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950', details: receivedDetails, detailLabel: 'Pagamentos recebidos por cliente' },
     { label: 'Inadimplente', value: fmt(stats.totalOverdue), icon: AlertTriangle, color: stats.totalOverdue > 0 ? 'text-red-600 bg-red-50 dark:bg-red-950' : 'text-muted-foreground bg-muted', details: overdueDetails, detailLabel: 'Inadimplentes' },
-    { label: 'Taxa Conversão', value: `${stats.conversionRate.toFixed(1)}%`, icon: TrendingUp, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950' },
-    { label: 'Ticket Médio', value: fmt(stats.avgTicket), icon: BarChart3, color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950' },
+    { label: 'Taxa Conversão', value: `${stats.conversionRate.toFixed(1)}%`, icon: TrendingUp, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950', details: conversionDetails, detailLabel: 'Composição da taxa de conversão', detailFmtPlain: true },
+    { label: 'Ticket Médio', value: fmt(stats.avgTicket), icon: BarChart3, color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950', details: ticketDetails, detailLabel: 'Maiores vendas (compõem o ticket médio)' },
   ];
 
   return (
@@ -276,8 +303,9 @@ export default function PipelineDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
         {kpis.map(kpi => {
+          const hasHover = kpi.details && kpi.details.length > 0;
           const cardContent = (
-            <Card key={kpi.label} className="border shadow-sm cursor-default">
+            <Card key={kpi.label} className={`border shadow-sm ${hasHover ? 'cursor-pointer hover:shadow-md transition-shadow' : 'cursor-default'}`}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
@@ -302,7 +330,7 @@ export default function PipelineDashboard() {
                 <HoverCardContent className="w-72" side="bottom" align="start">
                   <div className="space-y-2">
                     <p className="text-sm font-semibold">{kpi.detailLabel}</p>
-                    {renderDetailPopover(kpi.details, 'Nenhum item')}
+                    {renderDetailPopover(kpi.details, 'Nenhum item', kpi.detailFmtPlain)}
                   </div>
                 </HoverCardContent>
               </HoverCard>
