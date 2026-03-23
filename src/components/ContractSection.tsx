@@ -649,6 +649,67 @@ export default function ContractSection({
     toast.success('Prova de contestação exportada com sucesso!');
   };
 
+  const handleDownloadContractPdf = (contract: ContractRow) => {
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let y = 20;
+
+    // Header with company name
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(companyInfo.name || 'Empresa', pageWidth / 2, y, { align: 'center' });
+    y += 8;
+    pdf.setFontSize(11);
+    pdf.text(contract.title, pageWidth / 2, y, { align: 'center' });
+    y += 8;
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`Cliente: ${contract.client_name} | Assinado em: ${contract.signed_at ? format(new Date(contract.signed_at), 'dd/MM/yyyy HH:mm') : ''}`, pageWidth / 2, y, { align: 'center' });
+    y += 10;
+    pdf.setDrawColor(200);
+    pdf.line(15, y, pageWidth - 15, y);
+    y += 8;
+
+    // Strip HTML and render text
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = contract.body_html;
+    const text = tempDiv.textContent || tempDiv.innerText || '';
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    const lines = pdf.splitTextToSize(text, pageWidth - 30);
+    for (const line of lines) {
+      if (y > 275) { pdf.addPage(); y = 20; }
+      pdf.text(line, 15, y);
+      y += 5;
+    }
+
+    // Signature section
+    if (y > 240) { pdf.addPage(); y = 20; }
+    y += 10;
+    pdf.setDrawColor(200);
+    pdf.line(15, y, pageWidth - 15, y);
+    y += 8;
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('ASSINATURA DIGITAL', 15, y);
+    y += 6;
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`Assinante: ${contract.client_name}`, 15, y); y += 5;
+    pdf.text(`Data: ${contract.signed_at ? format(new Date(contract.signed_at), 'dd/MM/yyyy HH:mm:ss') : ''}`, 15, y); y += 5;
+    pdf.text('Verificação: Código OTP por Email', 15, y); y += 5;
+
+    // Legal
+    y += 5;
+    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'italic');
+    const legal = 'Este contrato possui validade jurídica conforme aceite digital, nos termos da MP nº 2.200-2/2001.';
+    const legalLines = pdf.splitTextToSize(legal, pageWidth - 30);
+    legalLines.forEach((l: string) => { pdf.text(l, 15, y); y += 4; });
+
+    pdf.save(`contrato_${contract.short_id}_${contract.client_name.replace(/\s+/g, '_')}.pdf`);
+    toast.success('PDF do contrato baixado!');
+  };
+
   if (loading) return null;
 
   const hasSignedContract = contracts.some(c => c.status === 'signed');
@@ -757,9 +818,14 @@ export default function ContractSection({
                                 <Eye className="h-3 w-3" />
                               </Button>
                               {c.status === 'signed' && (
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExportChargebackProof(c)} disabled={exportingProof}>
-                                  {exportingProof ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3 text-emerald-600" />}
-                                </Button>
+                                <>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExportChargebackProof(c)} disabled={exportingProof} title="Exportar prova">
+                                    {exportingProof ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3 text-emerald-600" />}
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDownloadContractPdf(c)} title="Baixar PDF">
+                                    <Download className="h-3 w-3 text-primary" />
+                                  </Button>
+                                </>
                               )}
                             </div>
                           </div>

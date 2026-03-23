@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3 } from 'lucide-react';
+import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3, Lock } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useCompany } from '@/contexts/CompanyContext';
 import PipelineDashboard from '@/components/PipelineDashboard';
@@ -20,20 +20,20 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { activeCompany } = useCompany();
+  const { activeCompany, isMaster } = useCompany();
   const [stats, setStats] = useState<DashboardStats>({ totalSales: 0, totalRevenue: 0, grossProfit: 0, netProfit: 0, totalCosts: 0, clientsCount: 0 });
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    loadStats();
+    if (isMaster) loadStats();
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         const raw = data.user.email?.split('@')[0] || 'Usuário';
         setUserName(raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase());
       }
     });
-  }, [activeCompany?.id]);
+  }, [activeCompany?.id, isMaster]);
 
   const loadStats = async () => {
     setLoading(true);
@@ -74,6 +74,23 @@ export default function Dashboard() {
     { label: 'Custos Totais', value: fmt(stats.totalCosts), icon: TrendingDown, color: 'bg-destructive text-destructive-foreground', iconColor: 'text-destructive-foreground/80' },
     { label: 'Clientes Atendidos', value: stats.clientsCount.toString(), icon: Users, color: 'bg-violet-600 text-white', iconColor: 'text-white/80' },
   ];
+
+  if (!isMaster) {
+    return (
+      <AppLayout>
+        <div className="p-6 max-w-6xl mx-auto flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+            <Lock className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h1 className="text-xl font-bold text-foreground">Acesso Restrito</h1>
+          <p className="text-muted-foreground text-sm max-w-md">
+            O dashboard principal é restrito a usuários com perfil Master. Entre em contato com o administrador para solicitar acesso.
+          </p>
+          <Button variant="outline" onClick={() => navigate('/sales')}>Ir para Vendas</Button>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

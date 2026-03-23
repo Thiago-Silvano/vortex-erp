@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, FileText, PenTool, Shield, Loader2, AlertCircle, Send } from 'lucide-react';
+import { CheckCircle2, FileText, PenTool, Shield, Loader2, AlertCircle, Send, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
 
 type Step = 'loading' | 'view' | 'verify' | 'sign' | 'done' | 'error' | 'expired' | 'already_signed';
 
@@ -20,12 +21,19 @@ interface ContractData {
   signed_at: string | null;
 }
 
+interface AgencyInfo {
+  name: string;
+  email: string;
+  whatsapp: string;
+}
+
 interface BundleData {
   id: string;
   client_name: string;
   client_email: string;
   client_phone: string;
   client_cpf: string;
+  empresa_id: string;
   status: string;
   signed_at: string | null;
 }
@@ -37,6 +45,8 @@ export default function BundleSignPage() {
   const [contracts, setContracts] = useState<ContractData[]>([]);
   const [acceptedContracts, setAcceptedContracts] = useState<Set<string>>(new Set());
   const [signerName, setSignerName] = useState('');
+  const [agencyInfo, setAgencyInfo] = useState<AgencyInfo>({ name: '', email: '', whatsapp: '' });
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   // OTP
   const [otpCode, setOtpCode] = useState('');
@@ -58,6 +68,20 @@ export default function BundleSignPage() {
 
   useEffect(() => { loadBundle(); }, [token]);
 
+  const loadAgencyInfo = async (empresaId: string) => {
+    const { data } = await supabase
+      .from('agency_settings')
+      .select('name, email, whatsapp')
+      .eq('empresa_id', empresaId)
+      .maybeSingle() as any;
+    if (data) {
+      setAgencyInfo({ name: data.name || '', email: data.email || '', whatsapp: data.whatsapp || '' });
+    } else {
+      const { data: comp } = await supabase.from('companies').select('name').eq('id', empresaId).maybeSingle();
+      if (comp) setAgencyInfo({ name: (comp as any).name || '', email: '', whatsapp: '' });
+    }
+  };
+
   const loadBundle = async () => {
     if (!token) { setStep('error'); return; }
 
@@ -69,6 +93,9 @@ export default function BundleSignPage() {
 
     if (error || !bundleRow) { setStep('error'); return; }
     const b = bundleRow as any;
+
+    // Load agency info
+    if (b.empresa_id) await loadAgencyInfo(b.empresa_id);
 
     if (b.status === 'signed') { setBundle(b); setStep('already_signed'); return; }
 
@@ -239,6 +266,129 @@ export default function BundleSignPage() {
     setHasDrawn(false);
   };
 
+  const generateSignedPdf = (contractsToExport: ContractData[], clientName: string, companyName: string) => {
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+
+    contractsToExport.forEach((c, idx) => {
+      if (idx > 0) pdf.addPage();
+      let y = 20;
+
+      // Header with company name
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(companyName || 'Empresa', pageWidth / 2, y, { align: 'center' });
+      y += 8;
+
+      pdf.setFontSize(11);
+      pdf.text(c.title, pageWidth / 2, y, { align: 'center' });
+      y += 8;
+
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Cliente: ${clientName} | Assinado em: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, y, { align: 'center' });
+      y += 10;
+
+      pdf.setDrawColor(200);
+      pdf.line(15, y, pageWidth - 15, y);
+      y += 8;
+
+      // Strip HTML and render text
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = c.body_html;
+      const text = tempDiv.textContent || tempDiv.innerText || '';
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      const lines = pdf.splitTextToSize(text, pageWidth - 30);
+      for (const line of lines) {
+        if (y > 275) { pdf.addPage(); y = 20; }
+        pdf.text(line, 15, y);
+        y += 5;
+      }
+
+      // Signature section
+      if (y > 240) { pdf.addPage(); y = 20; }
+      y += 10;
+      pdf.setDrawColor(200);
+      pdf.line(15, y, pageWidth - 15, y);
+      y += 8;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('ASSINATURA DIGITAL', 15, y);
+      y += 6;
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Assinante: ${clientName}`, 15, y); y += 5;
+      pdf.text(`Data: ${new Date().toLocaleString('pt-BR')}`, 15, y); y += 5;
+      pdf.text('Verificação: Código OTP por Email', 15, y); y += 5;
+
+      // Legal footer
+      y += 5;
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'italic');
+      const legal = 'Este contrato possui validade jurídica conforme aceite digital e registro eletrônico, nos termos da MP nº 2.200-2/2001 e do art. 10 da Lei nº 12.965/2014.';
+      const legalLines = pdf.splitTextToSize(legal, pageWidth - 30);
+      legalLines.forEach((l: string) => { pdf.text(l, 15, y); y += 4; });
+    });
+
+    return pdf;
+  };
+
+  const handleDownloadPdf = () => {
+    setGeneratingPdf(true);
+    try {
+      const pdf = generateSignedPdf(contracts, bundle?.client_name || signerName, agencyInfo.name);
+      pdf.save(`contratos_assinados_${bundle?.client_name?.replace(/\s+/g, '_') || 'cliente'}.pdf`);
+      toast.success('PDF dos contratos baixado!');
+    } catch {
+      toast.error('Erro ao gerar PDF');
+    }
+    setGeneratingPdf(false);
+  };
+
+  const sendSignedContractsEmail = async () => {
+    if (!bundle?.client_email || !bundle.empresa_id) return;
+    try {
+      const pdf = generateSignedPdf(contracts, bundle.client_name, agencyInfo.name);
+      const pdfBase64 = pdf.output('datauristring').split(',')[1];
+
+      const contractNames = contracts.map(c => c.title).join(', ');
+      const emailHtml = `
+        <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #1a1a2e;">Contratos Assinados</h2>
+          <p>Olá <strong>${bundle.client_name}</strong>,</p>
+          <p>Seus contratos foram assinados com sucesso: <strong>${contractNames}</strong>.</p>
+          <p>Segue em anexo uma cópia dos contratos assinados para sua referência.</p>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin: 16px 0;">
+            <p style="margin: 0; color: #166534; font-size: 13px;">✅ Assinatura registrada em ${new Date().toLocaleString('pt-BR')}</p>
+            <p style="margin: 4px 0 0; color: #166534; font-size: 13px;">🔒 Verificação por código OTP realizada</p>
+          </div>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #999; font-size: 11px;">${agencyInfo.name || 'Vortex'}</p>
+          <p style="color: #999; font-size: 10px; font-style: italic;">
+            Estes contratos possuem validade jurídica conforme aceite digital, nos termos da MP nº 2.200-2/2001.
+          </p>
+        </div>
+      `;
+
+      await supabase.functions.invoke('send-email', {
+        body: {
+          empresa_id: (bundle as any).empresa_id,
+          to: bundle.client_email,
+          subject: `Cópia dos Contratos Assinados - ${agencyInfo.name || 'Vortex'}`,
+          html: emailHtml,
+          attachments: [{
+            filename: `contratos_assinados_${bundle.client_name.replace(/\s+/g, '_')}.pdf`,
+            content: pdfBase64,
+            encoding: 'base64',
+          }],
+        },
+      });
+    } catch (err) {
+      console.error('Erro ao enviar cópia dos contratos:', err);
+    }
+  };
+
   const handleSign = async () => {
     if (!bundle) return;
     setSigning(true);
@@ -275,6 +425,9 @@ export default function BundleSignPage() {
 
     // Update bundle status
     await (supabase.from('contract_bundles' as any).update({ status: 'signed', signed_at: new Date().toISOString() } as any).eq('id', bundle.id) as any);
+
+    // Send signed contracts copy to client via email
+    await sendSignedContractsEmail();
 
     setSigning(false);
     setStep('done');
@@ -322,6 +475,9 @@ export default function BundleSignPage() {
           </div>
           <h2 className="text-2xl font-bold mb-2 text-emerald-900">{contracts.length} Contrato(s) Assinado(s)!</h2>
           <p className="text-emerald-700 mb-4">Sua assinatura foi registrada com sucesso para todos os contratos.</p>
+          {bundle?.client_email && (
+            <p className="text-sm text-emerald-600 mb-3">📧 Uma cópia foi enviada para o seu email.</p>
+          )}
           <div className="bg-emerald-50 rounded-lg p-3 text-xs text-emerald-600 space-y-1">
             <p>🔒 Assinatura verificada com código de segurança</p>
             <p>📋 Hash de cada documento registrado</p>
@@ -335,12 +491,24 @@ export default function BundleSignPage() {
               </div>
             ))}
           </div>
+          <Button
+            onClick={handleDownloadPdf}
+            disabled={generatingPdf}
+            variant="outline"
+            className="w-full mt-4 gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+          >
+            {generatingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Baixar PDF dos Contratos
+          </Button>
           <div className="mt-4 border-t border-emerald-200 pt-4">
             <p className="text-xs text-emerald-700 italic leading-relaxed">
               👉 Estes contratos possuem validade jurídica conforme aceite digital e registro eletrônico,
               nos termos da MP nº 2.200-2/2001 e do art. 10 da Lei nº 12.965/2014.
             </p>
           </div>
+          {agencyInfo.name && (
+            <p className="text-xs text-muted-foreground mt-3">{agencyInfo.name}</p>
+          )}
         </Card>
       </div>
     );
@@ -355,7 +523,7 @@ export default function BundleSignPage() {
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <FileText className="h-4 w-4 text-primary" />
             </div>
-            <span className="font-semibold text-sm">Vortex</span>
+            <span className="font-semibold text-sm">{agencyInfo.name || 'Vortex'}</span>
           </div>
           <Badge variant="outline" className="text-xs">
             {step === 'view' && `📄 ${contracts.length} contrato(s)`}
@@ -589,7 +757,7 @@ export default function BundleSignPage() {
       </div>
 
       <footer className="py-6 text-center text-xs text-muted-foreground">
-        <p>Documento seguro • Powered by Vortex ERP</p>
+        <p>Documento seguro • {agencyInfo.name || 'Powered by Vortex ERP'}</p>
       </footer>
     </div>
   );
