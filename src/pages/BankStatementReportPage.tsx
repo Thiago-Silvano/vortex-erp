@@ -152,6 +152,21 @@ export default function BankStatementReportPage() {
     costCenterSummary.push({ name: 'Sem classificação', credits, debits, net: credits - debits, count: unclassified.length });
   }
 
+  // Save cost center for a transaction
+  const handleSaveCostCenter = async (txId: string, costCenterId: string) => {
+    setSavingTxId(txId);
+    const { error } = await supabase.from('bank_transactions').update({ cost_center_id: costCenterId } as any).eq('id', txId);
+    if (error) {
+      toast.error('Erro ao salvar centro de custo');
+    } else {
+      toast.success('Centro de custo atualizado!');
+      setTransactions(prev => prev.map(t => t.id === txId ? { ...t, cost_center_id: costCenterId, resolved_cost_center_id: costCenterId } : t));
+      setEditingTxId(null);
+      setEditingCcId('');
+    }
+    setSavingTxId(null);
+  };
+
   // Export CSV
   const exportCSV = () => {
     const header = 'Data,Descrição,Documento,Entrada,Saída,Saldo,Status,Origem\n';
