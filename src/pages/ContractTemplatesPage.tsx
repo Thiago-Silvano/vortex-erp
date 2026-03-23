@@ -103,10 +103,15 @@ export default function ContractTemplatesPage() {
   };
 
   useEffect(() => {
-    if (showEditor && editorRef.current) {
-      editorRef.current.innerHTML = formBody;
+    if (showEditor) {
+      const timer = setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.innerHTML = formBody;
+        }
+      }, 50);
+      return () => clearTimeout(timer);
     }
-  }, [showEditor]);
+  }, [showEditor, editingTemplate]);
 
   const insertVariable = (varKey: string) => {
     if (editorRef.current) {
