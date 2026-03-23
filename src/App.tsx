@@ -64,6 +64,7 @@ import ItineraryPublicPage from "./pages/ItineraryPublicPage";
 import PromoMakerPage from "./pages/PromoMakerPage";
 import ContractTemplatesPage from "./pages/ContractTemplatesPage";
 import ContractSignPage from "./pages/ContractSignPage";
+import BundleSignPage from "./pages/BundleSignPage";
 
 // WhatsApp pages
 import WhatsAppInboxPage from "./pages/whatsapp/WhatsAppInboxPage";
