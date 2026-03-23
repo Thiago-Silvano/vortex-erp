@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Plus, Send, Eye, CheckCircle2, Clock, AlertCircle, Copy, ExternalLink, Loader2, MessageCircle, Mail, ShieldCheck, Download } from 'lucide-react';
+import { FileText, Plus, Send, Eye, CheckCircle2, Clock, AlertCircle, Copy, ExternalLink, Loader2, MessageCircle, Mail, ShieldCheck, Download, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
@@ -87,6 +88,7 @@ export default function ContractSection({
   const [generating, setGenerating] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [exportingProof, setExportingProof] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [companyInfo, setCompanyInfo] = useState<{ name: string; cnpj: string; endereco: string }>({ name: '', cnpj: '', endereco: '' });
 
   useEffect(() => {
@@ -282,6 +284,21 @@ export default function ContractSection({
       sent_at: new Date().toISOString(),
       sent_via: 'whatsapp',
     } as any).eq('id', contract.id).then(() => loadContracts());
+  };
+
+  const handleDeleteContract = async (contractId: string) => {
+    setDeletingId(contractId);
+    try {
+      await supabase.from('contract_signatures').delete().eq('contract_id', contractId);
+      await supabase.from('contract_audit_log').delete().eq('contract_id', contractId);
+      const { error } = await supabase.from('contracts').delete().eq('id', contractId);
+      if (error) throw error;
+      toast.success('Contrato excluído com sucesso');
+      loadContracts();
+    } catch (err: any) {
+      toast.error('Erro ao excluir contrato');
+    }
+    setDeletingId(null);
   };
 
   const handleExportChargebackProof = async (contract: ContractRow) => {
@@ -483,6 +500,29 @@ export default function ContractSection({
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Button>
                       </a>
+                      {c.status !== 'signed' && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir contrato">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. O contrato "{c.title}" será removido permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteContract(c.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Excluir'}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </div>
                 );
