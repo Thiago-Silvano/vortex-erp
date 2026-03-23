@@ -744,8 +744,6 @@ export default function ContractSection({
   }, [allBundlesSigned, saleWorkflowStatus]);
 
   if (loading) return null;
-
-  return (
     <>
       <Card>
         <CardHeader>
