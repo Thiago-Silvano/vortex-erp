@@ -67,6 +67,20 @@ export default function BundleSignPage() {
 
   useEffect(() => { loadBundle(); }, [token]);
 
+  const loadAgencyInfo = async (empresaId: string) => {
+    const { data } = await supabase
+      .from('agency_settings')
+      .select('name, email, whatsapp')
+      .eq('empresa_id', empresaId)
+      .maybeSingle() as any;
+    if (data) {
+      setAgencyInfo({ name: data.name || '', email: data.email || '', whatsapp: data.whatsapp || '' });
+    } else {
+      const { data: comp } = await supabase.from('companies').select('name').eq('id', empresaId).maybeSingle();
+      if (comp) setAgencyInfo({ name: (comp as any).name || '', email: '', whatsapp: '' });
+    }
+  };
+
   const loadBundle = async () => {
     if (!token) { setStep('error'); return; }
 
