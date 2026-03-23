@@ -1748,6 +1748,10 @@ export default function NewSalePage() {
                       <SelectItem value="contatando">Contatando</SelectItem>
                       <SelectItem value="reservado">Reservado</SelectItem>
                       <SelectItem value="emitido">Emitido</SelectItem>
+                      <SelectItem value="aguardando_assinatura">Aguardando Assinatura</SelectItem>
+                      <SelectItem value="aguardando_pagamento">Aguardando Pagamento</SelectItem>
+                      <SelectItem value="processo_concluido">Processo Concluído</SelectItem>
+                      <SelectItem value="sem_contrato">Sem Contrato</SelectItem>
                       <SelectItem value="perdido">Perdido</SelectItem>
                     </SelectContent>
                   </Select>
