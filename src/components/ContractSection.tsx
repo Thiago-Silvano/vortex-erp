@@ -500,6 +500,29 @@ export default function ContractSection({
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Button>
                       </a>
+                      {c.status !== 'signed' && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir contrato">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. O contrato "{c.title}" será removido permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteContract(c.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Excluir'}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </div>
                 );
