@@ -34,6 +34,15 @@ export default function Settings() {
   const [testingStock, setTestingStock] = useState(false);
   const [stockStatus, setStockStatus] = useState<{ unsplash?: boolean; pexels?: boolean } | null>(null);
 
+  // Contract email SMTP settings
+  const [contractSmtp, setContractSmtp] = useState({
+    smtp_host: '', smtp_port: 587, smtp_user: '', smtp_password: '',
+    smtp_ssl: false, from_name: '', from_email: '',
+  });
+  const [contractSmtpId, setContractSmtpId] = useState<string | null>(null);
+  const [testingContractEmail, setTestingContractEmail] = useState(false);
+  const [contractEmailStatus, setContractEmailStatus] = useState<'idle' | 'ok' | 'error'>('idle');
+
   const defaultEcRates: CardRate[] = [
     { installments: 0, rate: 1.39, label: 'Débito' },
     { installments: 1, rate: 0.79 }, { installments: 2, rate: 1.80 }, { installments: 3, rate: 1.85 },
