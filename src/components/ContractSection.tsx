@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,6 +44,21 @@ interface ContractRow {
   client_email: string;
   client_phone: string;
   body_html: string;
+  bundle_id: string | null;
+}
+
+interface BundleRow {
+  id: string;
+  token: string;
+  short_id: string;
+  status: string;
+  client_name: string;
+  client_email: string;
+  client_phone: string;
+  created_at: string;
+  sent_at: string | null;
+  signed_at: string | null;
+  contracts: ContractRow[];
 }
 
 interface TemplateRow {
@@ -79,10 +95,11 @@ export default function ContractSection({
   paymentMethod = '', sellerName = '', passengersCount = 1,
 }: ContractSectionProps) {
   const [contracts, setContracts] = useState<ContractRow[]>([]);
+  const [bundles, setBundles] = useState<BundleRow[]>([]);
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showGenerate, setShowGenerate] = useState(false);
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
   const [formClientEmail, setFormClientEmail] = useState(clientEmail);
   const [formClientPhone, setFormClientPhone] = useState(clientPhone);
   const [generating, setGenerating] = useState(false);
@@ -147,7 +164,7 @@ export default function ContractSection({
       .select('*')
       .eq('sale_id', saleId)
       .order('created_at', { ascending: false });
-    const newContracts = (data as any) || [];
+    const newContracts = ((data as any) || []) as ContractRow[];
 
     // Check if any contract changed to 'signed' (only after first load)
     if (prevStatuses !== null) {
@@ -168,6 +185,21 @@ export default function ContractSection({
     setPrevStatuses(statusMap);
 
     setContracts(newContracts);
+
+    // Group contracts by bundle
+    const { data: bundlesData } = await (supabase
+      .from('contract_bundles' as any)
+      .select('*')
+      .eq('sale_id', saleId)
+      .order('created_at', { ascending: false }) as any);
+
+    const bundlesList: BundleRow[] = ((bundlesData as any) || []).map((b: any) => ({
+      ...b,
+      contracts: newContracts.filter(c => c.bundle_id === b.id),
+    }));
+    setBundles(bundlesList);
+
+    // Also get standalone contracts (no bundle)
     setLoading(false);
   };
 
@@ -229,46 +261,67 @@ export default function ContractSection({
   };
 
   const handleGenerate = async () => {
-    if (!selectedTemplateId) { toast.error('Selecione um modelo'); return; }
+    if (selectedTemplateIds.length === 0) { toast.error('Selecione pelo menos um modelo'); return; }
     setGenerating(true);
 
-    const template = templates.find(t => t.id === selectedTemplateId);
-    if (!template) { setGenerating(false); return; }
-
-    const bodyHtml = replaceVariables(template.body_html);
     const { data: user } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase.from('contracts').insert({
+    // Create a bundle
+    const { data: bundleData, error: bundleErr } = await (supabase.from('contract_bundles' as any).insert({
       empresa_id: empresaId,
       sale_id: saleId,
-      template_id: selectedTemplateId,
-      title: template.name,
-      body_html: bodyHtml,
       client_name: clientName,
       client_email: formClientEmail,
       client_phone: formClientPhone,
       client_cpf: clientCpf,
       status: 'draft',
       created_by: user?.user?.email || '',
-    } as any).select().single();
+    }).select().single() as any);
 
-    if (error) { toast.error('Erro ao gerar contrato'); setGenerating(false); return; }
+    if (bundleErr || !bundleData) { toast.error('Erro ao criar pacote de contratos'); setGenerating(false); return; }
 
-    await supabase.from('contract_audit_log').insert({
-      contract_id: (data as any).id,
-      action: 'created',
-      actor: user?.user?.email || '',
-      actor_type: 'user',
-      details: { template_id: selectedTemplateId, template_name: template.name },
-    } as any);
+    // Create each contract linked to the bundle
+    for (const templateId of selectedTemplateIds) {
+      const template = templates.find(t => t.id === templateId);
+      if (!template) continue;
 
-    toast.success('Contrato gerado com sucesso!');
+      const bodyHtml = replaceVariables(template.body_html);
+
+      const { data, error } = await supabase.from('contracts').insert({
+        empresa_id: empresaId,
+        sale_id: saleId,
+        template_id: templateId,
+        title: template.name,
+        body_html: bodyHtml,
+        client_name: clientName,
+        client_email: formClientEmail,
+        client_phone: formClientPhone,
+        client_cpf: clientCpf,
+        status: 'draft',
+        created_by: user?.user?.email || '',
+        bundle_id: bundleData.id,
+      } as any).select().single();
+
+      if (!error && data) {
+        await supabase.from('contract_audit_log').insert({
+          contract_id: (data as any).id,
+          action: 'created',
+          actor: user?.user?.email || '',
+          actor_type: 'user',
+          details: { template_id: templateId, template_name: template.name, bundle_id: bundleData.id },
+        } as any);
+      }
+    }
+
+    toast.success(`${selectedTemplateIds.length} contrato(s) gerado(s) com sucesso!`);
     setShowGenerate(false);
+    setSelectedTemplateIds([]);
     setGenerating(false);
     loadContracts();
   };
 
   const getSignLink = (token: string) => `${window.location.origin}/contrato/${token}`;
+  const getBundleLink = (bundleToken: string) => `${window.location.origin}/contratos/${bundleToken}`;
 
   const handleCopyLink = (token: string) => {
     navigator.clipboard.writeText(getSignLink(token));
@@ -383,6 +436,79 @@ export default function ContractSection({
       toast.error('Erro ao excluir contrato');
     }
     setDeletingId(null);
+  };
+
+  const handleSendBundleWhatsApp = (bundle: BundleRow) => {
+    const link = getBundleLink(bundle.token);
+    let digits = (bundle.client_phone || '').replace(/\D/g, '');
+    if (digits && !digits.startsWith('55') && (digits.length === 10 || digits.length === 11)) {
+      digits = `55${digits}`;
+    }
+    const mensagem = encodeURIComponent(
+      `Olá ${bundle.client_name}!\n\nPara finalizar sua reserva, revise e assine seus contratos no link abaixo:\n\n${link}\n\nAcesse, leia os termos e assine digitalmente.`
+    );
+    const waUrl = digits ? `https://wa.me/${digits}?text=${mensagem}` : `https://wa.me/?text=${mensagem}`;
+    const newWindow = window.open(waUrl, '_blank', 'noopener,noreferrer');
+    if (!newWindow) {
+      const a = document.createElement('a'); a.href = waUrl; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.style.display = 'none';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      navigator.clipboard.writeText(waUrl).then(() => toast.info('Link do WhatsApp copiado!', { duration: 8000 })).catch(() => toast.info('Abra manualmente: ' + waUrl, { duration: 12000 }));
+    }
+    supabase.from('contract_bundles' as any).update({ status: bundle.status === 'draft' ? 'sent' : bundle.status, sent_at: new Date().toISOString() } as any).eq('id', bundle.id).then(() => {
+      bundle.contracts.forEach(c => {
+        if (c.status === 'draft') supabase.from('contracts').update({ status: 'sent', sent_at: new Date().toISOString(), sent_via: 'whatsapp' } as any).eq('id', c.id);
+      });
+      loadContracts();
+    });
+  };
+
+  const handleSendBundleEmail = async (bundle: BundleRow) => {
+    if (!bundle.client_email) { toast.error('Email do cliente não informado'); return; }
+    const link = getBundleLink(bundle.token);
+    const contractNames = bundle.contracts.map(c => c.title).join(', ');
+    const emailHtml = `
+      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a2e;">Contratos para Assinatura</h2>
+        <p>Olá <strong>${bundle.client_name}</strong>,</p>
+        <p>Seus contratos estão prontos para assinatura: <strong>${contractNames}</strong>.</p>
+        <p>Clique no botão abaixo para ler e assinar todos digitalmente:</p>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${link}" style="background: #6c3ce9; color: #fff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Assinar Contratos</a>
+        </div>
+        <p style="color: #666; font-size: 13px;">Ou copie e cole o link no navegador:<br/>${link}</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #999; font-size: 11px;">${companyInfo.name || 'Vortex'}</p>
+      </div>
+    `;
+    try {
+      const { error: fnError } = await supabase.functions.invoke('send-email', {
+        body: { empresa_id: empresaId, to: bundle.client_email, subject: `Contratos para Assinatura - ${contractNames}`, html: emailHtml },
+      });
+      if (fnError) throw fnError;
+      await (supabase.from('contract_bundles' as any).update({ status: bundle.status === 'draft' ? 'sent' : bundle.status, sent_at: new Date().toISOString() } as any).eq('id', bundle.id) as any);
+      for (const c of bundle.contracts) {
+        if (c.status === 'draft') await supabase.from('contracts').update({ status: 'sent', sent_at: new Date().toISOString(), sent_via: 'email' } as any).eq('id', c.id);
+      }
+      toast.success('Contratos enviados por email!');
+      loadContracts();
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao enviar email.');
+    }
+  };
+
+  const handleDeleteBundle = async (bundle: BundleRow) => {
+    try {
+      for (const c of bundle.contracts) {
+        await supabase.from('contract_signatures').delete().eq('contract_id', c.id);
+        await supabase.from('contract_audit_log').delete().eq('contract_id', c.id);
+        await supabase.from('contracts').delete().eq('id', c.id);
+      }
+      await (supabase.from('contract_bundles' as any).delete().eq('id', bundle.id) as any);
+      toast.success('Pacote de contratos excluído');
+      loadContracts();
+    } catch {
+      toast.error('Erro ao excluir pacote');
+    }
   };
 
   const handleExportChargebackProof = async (contract: ContractRow) => {
@@ -544,74 +670,101 @@ export default function ContractSection({
           </div>
         </CardHeader>
         <CardContent>
-          {contracts.length === 0 ? (
+          {bundles.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Nenhum contrato gerado para esta venda</p>
           ) : (
-            <div className="space-y-3">
-              {contracts.map(c => {
-                const s = STATUS_MAP[c.status] || STATUS_MAP.draft;
+            <div className="space-y-4">
+              {bundles.map(bundle => {
+                const allSigned = bundle.contracts.every(c => c.status === 'signed');
+                const anySigned = bundle.contracts.some(c => c.status === 'signed');
+                const bundleStatus = allSigned ? 'signed' : bundle.status;
+                const s = STATUS_MAP[bundleStatus] || STATUS_MAP.draft;
+                const bundleLink = getBundleLink(bundle.token);
+
                 return (
-                  <div key={c.id} className="flex items-center justify-between p-3 border rounded-lg bg-card hover:bg-accent/30 transition-colors">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.color}`}>
-                        <s.icon className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{c.title}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{format(new Date(c.created_at), 'dd/MM/yyyy HH:mm')}</span>
-                          {c.signed_at && <span className="text-emerald-600">• Assinado {format(new Date(c.signed_at), 'dd/MM HH:mm')}</span>}
-                          {c.viewed_at && !c.signed_at && <span className="text-amber-600">• Visualizado</span>}
+                  <div key={bundle.id} className="border rounded-lg overflow-hidden">
+                    {/* Bundle header */}
+                    <div className="flex items-center justify-between p-3 bg-accent/20">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.color}`}>
+                          <s.icon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm">
+                            {bundle.contracts.length} contrato(s) — Link único
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{format(new Date(bundle.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                            {allSigned && <span className="text-emerald-600">• Todos assinados</span>}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge className={`${s.color} text-xs`}>{allSigned ? 'Assinado' : s.label}</Badge>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(bundleLink); toast.success('Link copiado!'); }} title="Copiar link">
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSendBundleWhatsApp(bundle)} title="WhatsApp">
+                          <MessageCircle className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSendBundleEmail(bundle)} title="Email">
+                          <Mail className="h-3.5 w-3.5" />
+                        </Button>
+                        <a href={bundleLink} target="_blank" rel="noopener noreferrer">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link">
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                        </a>
+                        {!anySigned && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir pacote">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir pacote de contratos?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta ação excluirá {bundle.contracts.length} contrato(s) permanentemente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteBundle(bundle)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Badge className={`${s.color} text-xs`}>{s.label}</Badge>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewHtml(c.body_html)} title="Visualizar">
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopyLink(c.token)} title="Copiar link">
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSendWhatsApp(c)} title="WhatsApp">
-                        <MessageCircle className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSendEmail(c)} title="Email">
-                        <Mail className="h-3.5 w-3.5" />
-                      </Button>
-                      {c.status === 'signed' && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleExportChargebackProof(c)} title="Exportar prova de contestação" disabled={exportingProof}>
-                          {exportingProof ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />}
-                        </Button>
-                      )}
-                      <a href={getSignLink(c.token)} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
-                      </a>
-                      {c.status !== 'signed' && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir contrato">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. O contrato "{c.title}" será removido permanentemente.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteContract(c.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Excluir'}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+
+                    {/* Individual contracts */}
+                    <div className="divide-y">
+                      {bundle.contracts.map(c => {
+                        const cs = STATUS_MAP[c.status] || STATUS_MAP.draft;
+                        return (
+                          <div key={c.id} className="flex items-center justify-between px-4 py-2 bg-card">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <cs.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="text-sm truncate">{c.title}</span>
+                              <Badge variant="outline" className="text-[10px] shrink-0">{cs.label}</Badge>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPreviewHtml(c.body_html)} title="Visualizar">
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                              {c.status === 'signed' && (
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleExportChargebackProof(c)} disabled={exportingProof}>
+                                  {exportingProof ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3 text-emerald-600" />}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -637,18 +790,34 @@ export default function ContractSection({
       {/* Generate Dialog */}
       <Dialog open={showGenerate} onOpenChange={setShowGenerate}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Gerar Contrato</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Gerar Contratos</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Modelo de Contrato</Label>
-              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                <SelectTrigger><SelectValue placeholder="Selecione o modelo..." /></SelectTrigger>
-                <SelectContent>
-                  {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {templates.length === 0 && (
+              <Label>Selecione os Modelos de Contrato</Label>
+              {templates.length === 0 ? (
                 <p className="text-xs text-amber-600 mt-1">Nenhum modelo cadastrado. Crie um em Contratos → Modelos.</p>
+              ) : (
+                <div className="space-y-2 mt-2 max-h-48 overflow-y-auto">
+                  {templates.map(t => (
+                    <label key={t.id} className="flex items-center gap-2 p-2 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors">
+                      <Checkbox
+                        checked={selectedTemplateIds.includes(t.id)}
+                        onCheckedChange={(checked) => {
+                          setSelectedTemplateIds(prev =>
+                            checked ? [...prev, t.id] : prev.filter(id => id !== t.id)
+                          );
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{t.name}</p>
+                        <p className="text-xs text-muted-foreground">{t.category}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {selectedTemplateIds.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-2">{selectedTemplateIds.length} modelo(s) selecionado(s) — será gerado um link único para todos</p>
               )}
             </div>
             <div>
@@ -661,9 +830,9 @@ export default function ContractSection({
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowGenerate(false)}>Cancelar</Button>
-              <Button onClick={handleGenerate} disabled={generating || !selectedTemplateId} className="gap-2">
+              <Button onClick={handleGenerate} disabled={generating || selectedTemplateIds.length === 0} className="gap-2">
                 {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-                Gerar Contrato
+                Gerar {selectedTemplateIds.length > 1 ? `${selectedTemplateIds.length} Contratos` : 'Contrato'}
               </Button>
             </div>
           </div>

@@ -643,6 +643,68 @@ export type Database = {
           },
         ]
       }
+      contract_bundles: {
+        Row: {
+          client_cpf: string | null
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string | null
+          id: string
+          sale_id: string | null
+          sent_at: string | null
+          short_id: string
+          signed_at: string | null
+          status: string
+          token: string
+          viewed_at: string | null
+        }
+        Insert: {
+          client_cpf?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          id?: string
+          sale_id?: string | null
+          sent_at?: string | null
+          short_id?: string
+          signed_at?: string | null
+          status?: string
+          token?: string
+          viewed_at?: string | null
+        }
+        Update: {
+          client_cpf?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          id?: string
+          sale_id?: string | null
+          sent_at?: string | null
+          short_id?: string
+          signed_at?: string | null
+          status?: string
+          token?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_bundles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_email_settings: {
         Row: {
           created_at: string
@@ -817,6 +879,7 @@ export type Database = {
       contracts: {
         Row: {
           body_html: string
+          bundle_id: string | null
           client_cpf: string | null
           client_email: string | null
           client_name: string | null
@@ -843,6 +906,7 @@ export type Database = {
         }
         Insert: {
           body_html?: string
+          bundle_id?: string | null
           client_cpf?: string | null
           client_email?: string | null
           client_name?: string | null
@@ -869,6 +933,7 @@ export type Database = {
         }
         Update: {
           body_html?: string
+          bundle_id?: string | null
           client_cpf?: string | null
           client_email?: string | null
           client_name?: string | null
@@ -894,6 +959,13 @@ export type Database = {
           viewed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "contracts_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "contract_bundles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contracts_empresa_id_fkey"
             columns: ["empresa_id"]
