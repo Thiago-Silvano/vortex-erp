@@ -92,6 +92,12 @@ export default function SaleTimeline({
       completed: !!contractSignedAt,
     },
     {
+      key: 'billing_enabled',
+      label: 'Cobrança Liberada',
+      icon: CreditCard,
+      completed: !!contractSignedAt,
+    },
+    {
       key: 'payment',
       label: 'Cobrança Gerada',
       icon: CreditCard,

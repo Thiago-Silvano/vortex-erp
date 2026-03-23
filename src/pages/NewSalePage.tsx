@@ -2805,7 +2805,18 @@ export default function NewSalePage() {
 
         {/* Contracts Section */}
         {!isQuoteMode && editSaleId && (
-          <ContractSection saleId={editSaleId} empresaId={activeCompany?.id || ''} clientName={clientName} />
+          <ContractSection
+            saleId={editSaleId}
+            empresaId={activeCompany?.id || ''}
+            clientName={clientName}
+            destination={destinationName}
+            tripStartDate={tripStartDate}
+            tripEndDate={tripEndDate}
+            totalValue={totalSale}
+            paymentMethod={paymentMethods.join(', ')}
+            sellerName={allSellers.find(s => s.id === sellerId)?.full_name}
+            passengersCount={passengersCount}
+          />
         )}
 
         {/* Notes section moved above suppliers */}

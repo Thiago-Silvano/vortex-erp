@@ -277,6 +277,12 @@ export default function ContractSignPage() {
             <p>📋 Hash do documento registrado</p>
             <p>🕐 {new Date().toLocaleString('pt-BR')}</p>
           </div>
+          <div className="mt-4 border-t border-emerald-200 pt-4">
+            <p className="text-xs text-emerald-700 italic leading-relaxed">
+              👉 Este contrato possui validade jurídica conforme aceite digital e registro eletrônico,
+              nos termos da Medida Provisória nº 2.200-2/2001 e do artigo 10 da Lei nº 12.965/2014 (Marco Civil da Internet).
+            </p>
+          </div>
         </Card>
       </div>
     );
@@ -475,8 +481,12 @@ export default function ContractSignPage() {
                   Assinar Contrato
                 </Button>
 
-                <p className="text-xs text-muted-foreground text-center">
-                  Ao assinar, você confirma que leu e concorda com todos os termos do contrato. Esta assinatura tem validade jurídica.
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  Ao assinar, você confirma que leu e concorda com todos os termos do contrato.
+                </p>
+                <p className="text-[11px] text-muted-foreground/80 text-center italic leading-relaxed mt-2">
+                  👉 Este contrato possui validade jurídica conforme aceite digital e registro eletrônico,
+                  nos termos da MP nº 2.200-2/2001 e do art. 10 da Lei nº 12.965/2014.
                 </p>
               </CardContent>
             </Card>
