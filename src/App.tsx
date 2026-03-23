@@ -152,6 +152,7 @@ const App = () => (
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
           <Route path="/roteiro/:token" element={<ItineraryPublicPage />} />
           <Route path="/contrato/:token" element={<ContractSignPage />} />
+          <Route path="/contratos/:token" element={<BundleSignPage />} />
           
           {/* Contract templates */}
           <Route path="/contracts/templates" element={<ProtectedRoute><ContractTemplatesPage /></ProtectedRoute>} />
