@@ -87,16 +87,32 @@ export default function ContractSection({
   const [generating, setGenerating] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [exportingProof, setExportingProof] = useState(false);
+  const [companyInfo, setCompanyInfo] = useState<{ name: string; cnpj: string; endereco: string }>({ name: '', cnpj: '', endereco: '' });
 
   useEffect(() => {
     loadContracts();
     loadTemplates();
+    loadCompanyInfo();
   }, [saleId, empresaId]);
 
   useEffect(() => {
     setFormClientEmail(clientEmail);
     setFormClientPhone(clientPhone);
   }, [clientEmail, clientPhone]);
+
+  const loadCompanyInfo = async () => {
+    const { data } = await supabase
+      .from('agency_settings')
+      .select('name')
+      .eq('empresa_id', empresaId)
+      .maybeSingle() as any;
+    if (data) {
+      setCompanyInfo({ name: data.name || '', cnpj: '', endereco: '' });
+    } else {
+      const { data: comp } = await supabase.from('companies').select('name').eq('id', empresaId).maybeSingle();
+      if (comp) setCompanyInfo({ name: (comp as any).name || '', cnpj: '', endereco: '' });
+    }
+  };
 
   const loadContracts = async () => {
     const { data } = await supabase
@@ -126,6 +142,9 @@ export default function ContractSection({
       .replace(/\{\{cpf_cliente\}\}/g, clientCpf)
       .replace(/\{\{email_cliente\}\}/g, formClientEmail || clientEmail)
       .replace(/\{\{telefone_cliente\}\}/g, formClientPhone || clientPhone)
+      .replace(/\{\{nome_empresa\}\}/g, companyInfo.name)
+      .replace(/\{\{cnpj_empresa\}\}/g, companyInfo.cnpj)
+      .replace(/\{\{endereco_empresa\}\}/g, companyInfo.endereco)
       .replace(/\{\{data_atual\}\}/g, format(now, 'dd/MM/yyyy'))
       .replace(/\{\{data_venda\}\}/g, format(now, 'dd/MM/yyyy'))
       .replace(/\{\{numero_venda\}\}/g, saleId.slice(0, 8).toUpperCase())
