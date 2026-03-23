@@ -140,7 +140,7 @@ export default function ReservationsPage() {
                         ? 'bg-orange-50 dark:bg-orange-950/20'
                         : '';
                   return (
-                    <TableRow key={r.id} className={`cursor-pointer hover:bg-muted/50 ${rowBg}`} onClick={() => openStatusDialog(r)}>
+                    <TableRow key={r.id} className={`cursor-pointer ${rowBg} ${r.status === 'confirmed' ? 'hover:bg-emerald-100 dark:hover:bg-emerald-950/40' : isOverdue ? 'hover:bg-red-100 dark:hover:bg-red-950/40' : r.status === 'pending' ? 'hover:bg-orange-100 dark:hover:bg-orange-950/40' : 'hover:bg-muted/50'}`} onClick={() => openStatusDialog(r)}>
                       <TableCell><span className="font-medium">{r.description || '-'}</span></TableCell>
                       <TableCell className="font-mono">{r.confirmation_code || '-'}</TableCell>
                       <TableCell>{r.check_in ? format(parseISO(r.check_in + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
