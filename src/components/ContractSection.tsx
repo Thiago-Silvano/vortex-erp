@@ -438,6 +438,79 @@ export default function ContractSection({
     setDeletingId(null);
   };
 
+  const handleSendBundleWhatsApp = (bundle: BundleRow) => {
+    const link = getBundleLink(bundle.token);
+    let digits = (bundle.client_phone || '').replace(/\D/g, '');
+    if (digits && !digits.startsWith('55') && (digits.length === 10 || digits.length === 11)) {
+      digits = `55${digits}`;
+    }
+    const mensagem = encodeURIComponent(
+      `Olá ${bundle.client_name}!\n\nPara finalizar sua reserva, revise e assine seus contratos no link abaixo:\n\n${link}\n\nAcesse, leia os termos e assine digitalmente.`
+    );
+    const waUrl = digits ? `https://wa.me/${digits}?text=${mensagem}` : `https://wa.me/?text=${mensagem}`;
+    const newWindow = window.open(waUrl, '_blank', 'noopener,noreferrer');
+    if (!newWindow) {
+      const a = document.createElement('a'); a.href = waUrl; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.style.display = 'none';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      navigator.clipboard.writeText(waUrl).then(() => toast.info('Link do WhatsApp copiado!', { duration: 8000 })).catch(() => toast.info('Abra manualmente: ' + waUrl, { duration: 12000 }));
+    }
+    supabase.from('contract_bundles' as any).update({ status: bundle.status === 'draft' ? 'sent' : bundle.status, sent_at: new Date().toISOString() } as any).eq('id', bundle.id).then(() => {
+      bundle.contracts.forEach(c => {
+        if (c.status === 'draft') supabase.from('contracts').update({ status: 'sent', sent_at: new Date().toISOString(), sent_via: 'whatsapp' } as any).eq('id', c.id);
+      });
+      loadContracts();
+    });
+  };
+
+  const handleSendBundleEmail = async (bundle: BundleRow) => {
+    if (!bundle.client_email) { toast.error('Email do cliente não informado'); return; }
+    const link = getBundleLink(bundle.token);
+    const contractNames = bundle.contracts.map(c => c.title).join(', ');
+    const emailHtml = `
+      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a2e;">Contratos para Assinatura</h2>
+        <p>Olá <strong>${bundle.client_name}</strong>,</p>
+        <p>Seus contratos estão prontos para assinatura: <strong>${contractNames}</strong>.</p>
+        <p>Clique no botão abaixo para ler e assinar todos digitalmente:</p>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${link}" style="background: #6c3ce9; color: #fff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Assinar Contratos</a>
+        </div>
+        <p style="color: #666; font-size: 13px;">Ou copie e cole o link no navegador:<br/>${link}</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #999; font-size: 11px;">${companyInfo.name || 'Vortex'}</p>
+      </div>
+    `;
+    try {
+      const { error: fnError } = await supabase.functions.invoke('send-email', {
+        body: { empresa_id: empresaId, to: bundle.client_email, subject: `Contratos para Assinatura - ${contractNames}`, html: emailHtml },
+      });
+      if (fnError) throw fnError;
+      await (supabase.from('contract_bundles' as any).update({ status: bundle.status === 'draft' ? 'sent' : bundle.status, sent_at: new Date().toISOString() } as any).eq('id', bundle.id) as any);
+      for (const c of bundle.contracts) {
+        if (c.status === 'draft') await supabase.from('contracts').update({ status: 'sent', sent_at: new Date().toISOString(), sent_via: 'email' } as any).eq('id', c.id);
+      }
+      toast.success('Contratos enviados por email!');
+      loadContracts();
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao enviar email.');
+    }
+  };
+
+  const handleDeleteBundle = async (bundle: BundleRow) => {
+    try {
+      for (const c of bundle.contracts) {
+        await supabase.from('contract_signatures').delete().eq('contract_id', c.id);
+        await supabase.from('contract_audit_log').delete().eq('contract_id', c.id);
+        await supabase.from('contracts').delete().eq('id', c.id);
+      }
+      await (supabase.from('contract_bundles' as any).delete().eq('id', bundle.id) as any);
+      toast.success('Pacote de contratos excluído');
+      loadContracts();
+    } catch {
+      toast.error('Erro ao excluir pacote');
+    }
+  };
+
   const handleExportChargebackProof = async (contract: ContractRow) => {
     if (contract.status !== 'signed') {
       toast.error('O contrato precisa estar assinado para exportar prova');
