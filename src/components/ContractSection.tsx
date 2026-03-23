@@ -97,6 +97,29 @@ export default function ContractSection({
     loadContracts();
     loadTemplates();
     loadCompanyInfo();
+
+    // Realtime subscription to detect contract signature changes
+    const channel = supabase
+      .channel(`contract-updates-${saleId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'contracts',
+        filter: `sale_id=eq.${saleId}`,
+      }, (payload) => {
+        const updated = payload.new as any;
+        if (updated.status === 'signed') {
+          toast.success(`Contrato "${updated.title}" foi assinado por ${updated.client_name}!`, {
+            duration: 8000,
+            icon: '🎉',
+          });
+          createSignedNotification(updated as ContractRow);
+          loadContracts();
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [saleId, empresaId]);
 
   useEffect(() => {
