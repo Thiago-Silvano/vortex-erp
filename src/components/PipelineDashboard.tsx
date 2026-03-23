@@ -162,6 +162,8 @@ export default function PipelineDashboard() {
     setTicketDetails(sales.sort((a, b) => Number(b.total_sale || 0) - Number(a.total_sale || 0)).slice(0, 10).map(s => ({
       id: s.id, name: (s as any).client_name || 'Sem nome', value: Number(s.total_sale || 0),
     })));
+
+    setQuotesDetails(quotes.slice(0, 10).map(q => ({
       id: q.id, name: (q as any).client_name || 'Sem nome', value: Number(q.total_sale || 0),
     })));
     setSalesDetails(sales.slice(0, 10).map(s => ({
