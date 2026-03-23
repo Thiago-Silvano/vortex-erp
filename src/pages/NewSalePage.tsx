@@ -2809,13 +2809,10 @@ export default function NewSalePage() {
             saleId={editSaleId}
             empresaId={activeCompany?.id || ''}
             clientName={clientName}
-            clientEmail={clientEmail}
-            clientPhone={clientPhone}
-            clientCpf={clientCpf}
             destination={destinationName}
             tripStartDate={tripStartDate}
             tripEndDate={tripEndDate}
-            totalValue={totalSaleValue}
+            totalValue={totalSale}
             paymentMethod={paymentMethods.join(', ')}
             sellerName={allSellers.find(s => s.id === sellerId)?.full_name}
             passengersCount={passengersCount}
