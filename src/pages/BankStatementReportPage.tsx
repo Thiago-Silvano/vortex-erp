@@ -50,6 +50,10 @@ export default function BankStatementReportPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'full' | 'expenses' | 'revenue' | 'consolidated'>('full');
+  const [showUnclassified, setShowUnclassified] = useState(false);
+  const [editingTxId, setEditingTxId] = useState<string | null>(null);
+  const [editingCcId, setEditingCcId] = useState<string>('');
+  const [savingTxId, setSavingTxId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!activeCompany) return;
