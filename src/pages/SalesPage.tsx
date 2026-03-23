@@ -38,7 +38,7 @@ interface SaleRow {
 export default function SalesPage() {
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [search, setSearch] = useState('');
-  const [showCotacoes, setShowCotacoes] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
   const [revertTarget, setRevertTarget] = useState<SaleRow | null>(null);
   const [isMaster, setIsMaster] = useState(false);
