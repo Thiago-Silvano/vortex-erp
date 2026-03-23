@@ -157,6 +157,7 @@ const App = () => (
           
           {/* Contract templates */}
           <Route path="/contracts/templates" element={<ProtectedRoute><ContractTemplatesPage /></ProtectedRoute>} />
+          <Route path="/contracts/dashboard" element={<ProtectedRoute><ContractsDashboardPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
