@@ -53,6 +53,10 @@ export default function PipelineDashboard() {
   const [awaitingSignatureDetails, setAwaitingSignatureDetails] = useState<DetailItem[]>([]);
   const [awaitingPaymentDetails, setAwaitingPaymentDetails] = useState<DetailItem[]>([]);
   const [overdueDetails, setOverdueDetails] = useState<DetailItem[]>([]);
+  const [receivedDetails, setReceivedDetails] = useState<DetailItem[]>([]);
+  const [conversionDetails, setConversionDetails] = useState<DetailItem[]>([]);
+  const [ticketDetails, setTicketDetails] = useState<DetailItem[]>([]);
+
 
   useEffect(() => {
     if (!activeCompany?.id) return;
