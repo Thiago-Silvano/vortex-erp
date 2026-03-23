@@ -65,6 +65,7 @@ export default function Settings() {
   useEffect(() => {
     loadRates();
     loadGoogleApiKey();
+    loadContractSmtp();
   }, [activeCompany]);
 
   const loadRates = async () => {
