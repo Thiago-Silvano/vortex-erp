@@ -7,14 +7,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Plus, Send, Eye, CheckCircle2, Clock, AlertCircle, Copy, ExternalLink, Loader2, MessageCircle, Mail } from 'lucide-react';
+import { FileText, Plus, Send, Eye, CheckCircle2, Clock, AlertCircle, Copy, ExternalLink, Loader2, MessageCircle, Mail, ShieldCheck, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import jsPDF from 'jspdf';
 
 interface ContractSectionProps {
   saleId: string;
   empresaId: string;
   clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientCpf?: string;
+  destination?: string;
+  tripStartDate?: string;
+  tripEndDate?: string;
+  totalValue?: number;
+  paymentMethod?: string;
+  sellerName?: string;
+  passengersCount?: number;
 }
 
 interface ContractRow {
@@ -29,6 +40,7 @@ interface ContractRow {
   signed_at: string | null;
   client_name: string;
   client_email: string;
+  client_phone: string;
   body_html: string;
 }
 
@@ -39,6 +51,19 @@ interface TemplateRow {
   body_html: string;
 }
 
+interface SignatureRow {
+  id: string;
+  signer_name: string;
+  signature_type: string;
+  signed_at: string | null;
+  ip_address: string;
+  user_agent: string;
+  device_info: string;
+  document_hash: string;
+  verification_method: string;
+  verification_confirmed_at: string | null;
+}
+
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
   draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground', icon: FileText },
   sent: { label: 'Enviado', color: 'bg-blue-100 text-blue-700', icon: Send },
@@ -47,21 +72,31 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = 
   expired: { label: 'Expirado', color: 'bg-red-100 text-red-700', icon: AlertCircle },
 };
 
-export default function ContractSection({ saleId, empresaId, clientName }: ContractSectionProps) {
+export default function ContractSection({
+  saleId, empresaId, clientName, clientEmail = '', clientPhone = '', clientCpf = '',
+  destination = '', tripStartDate = '', tripEndDate = '', totalValue = 0,
+  paymentMethod = '', sellerName = '', passengersCount = 1,
+}: ContractSectionProps) {
   const [contracts, setContracts] = useState<ContractRow[]>([]);
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showGenerate, setShowGenerate] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
+  const [formClientEmail, setFormClientEmail] = useState(clientEmail);
+  const [formClientPhone, setFormClientPhone] = useState(clientPhone);
   const [generating, setGenerating] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [exportingProof, setExportingProof] = useState(false);
 
   useEffect(() => {
     loadContracts();
     loadTemplates();
   }, [saleId, empresaId]);
+
+  useEffect(() => {
+    setFormClientEmail(clientEmail);
+    setFormClientPhone(clientPhone);
+  }, [clientEmail, clientPhone]);
 
   const loadContracts = async () => {
     const { data } = await supabase
@@ -85,13 +120,23 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
 
   const replaceVariables = (html: string) => {
     const now = new Date();
+    const formatCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     return html
       .replace(/\{\{nome_cliente\}\}/g, clientName)
-      .replace(/\{\{email_cliente\}\}/g, clientEmail)
-      .replace(/\{\{telefone_cliente\}\}/g, clientPhone)
+      .replace(/\{\{cpf_cliente\}\}/g, clientCpf)
+      .replace(/\{\{email_cliente\}\}/g, formClientEmail || clientEmail)
+      .replace(/\{\{telefone_cliente\}\}/g, formClientPhone || clientPhone)
       .replace(/\{\{data_atual\}\}/g, format(now, 'dd/MM/yyyy'))
       .replace(/\{\{data_venda\}\}/g, format(now, 'dd/MM/yyyy'))
-      .replace(/\{\{numero_venda\}\}/g, saleId.slice(0, 8).toUpperCase());
+      .replace(/\{\{numero_venda\}\}/g, saleId.slice(0, 8).toUpperCase())
+      .replace(/\{\{valor_total\}\}/g, formatCurrency(totalValue))
+      .replace(/\{\{forma_pagamento\}\}/g, paymentMethod || 'Não definida')
+      .replace(/\{\{destino\}\}/g, destination || 'Não informado')
+      .replace(/\{\{data_inicio\}\}/g, tripStartDate ? format(new Date(tripStartDate + 'T12:00:00'), 'dd/MM/yyyy') : '')
+      .replace(/\{\{data_fim\}\}/g, tripEndDate ? format(new Date(tripEndDate + 'T12:00:00'), 'dd/MM/yyyy') : '')
+      .replace(/\{\{data_viagem\}\}/g, tripStartDate ? format(new Date(tripStartDate + 'T12:00:00'), 'dd/MM/yyyy') : '')
+      .replace(/\{\{nome_vendedor\}\}/g, sellerName || '')
+      .replace(/\{\{parcelamento\}\}/g, paymentMethod || '');
   };
 
   const handleGenerate = async () => {
@@ -102,7 +147,6 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
     if (!template) { setGenerating(false); return; }
 
     const bodyHtml = replaceVariables(template.body_html);
-
     const { data: user } = await supabase.auth.getUser();
 
     const { data, error } = await supabase.from('contracts').insert({
@@ -112,15 +156,15 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
       title: template.name,
       body_html: bodyHtml,
       client_name: clientName,
-      client_email: clientEmail,
-      client_phone: clientPhone,
+      client_email: formClientEmail,
+      client_phone: formClientPhone,
+      client_cpf: clientCpf,
       status: 'draft',
       created_by: user?.user?.email || '',
     } as any).select().single();
 
     if (error) { toast.error('Erro ao gerar contrato'); setGenerating(false); return; }
 
-    // Audit log
     await supabase.from('contract_audit_log').insert({
       contract_id: (data as any).id,
       action: 'created',
@@ -135,9 +179,7 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
     loadContracts();
   };
 
-  const getSignLink = (token: string) => {
-    return `${window.location.origin}/contrato/${token}`;
-  };
+  const getSignLink = (token: string) => `${window.location.origin}/contrato/${token}`;
 
   const handleCopyLink = (token: string) => {
     navigator.clipboard.writeText(getSignLink(token));
@@ -149,19 +191,14 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
       toast.error('Email do cliente não informado no contrato');
       return;
     }
-
     await supabase.from('contracts').update({
       status: contract.status === 'draft' ? 'sent' : contract.status,
       sent_at: new Date().toISOString(),
       sent_via: 'email',
     } as any).eq('id', contract.id);
 
-    // Audit
     await supabase.from('contract_audit_log').insert({
-      contract_id: contract.id,
-      action: 'sent_email',
-      actor: 'user',
-      actor_type: 'user',
+      contract_id: contract.id, action: 'sent_email', actor: 'user', actor_type: 'user',
       details: { email: contract.client_email },
     } as any);
 
@@ -171,10 +208,11 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
 
   const handleSendWhatsApp = (contract: ContractRow) => {
     const link = getSignLink(contract.token);
-    const text = encodeURIComponent(`Olá ${contract.client_name}! Segue o link do seu contrato para assinatura digital:\n\n${link}\n\nAcesse, leia os termos e assine digitalmente.`);
+    const text = encodeURIComponent(
+      `Olá ${contract.client_name}! Para finalizar sua reserva, revise e assine seu contrato no link abaixo:\n\n${link}\n\nAcesse, leia os termos e assine digitalmente.`
+    );
     window.open(`https://wa.me/?text=${text}`, '_blank');
 
-    // Update status
     supabase.from('contracts').update({
       status: contract.status === 'draft' ? 'sent' : contract.status,
       sent_at: new Date().toISOString(),
@@ -182,7 +220,147 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
     } as any).eq('id', contract.id).then(() => loadContracts());
   };
 
+  const handleExportChargebackProof = async (contract: ContractRow) => {
+    if (contract.status !== 'signed') {
+      toast.error('O contrato precisa estar assinado para exportar prova');
+      return;
+    }
+    setExportingProof(true);
+
+    // Fetch signature evidence
+    const { data: signatures } = await supabase
+      .from('contract_signatures')
+      .select('*')
+      .eq('contract_id', contract.id)
+      .eq('status', 'signed')
+      .order('signed_at', { ascending: false })
+      .limit(1);
+
+    const sig = (signatures as any)?.[0] as SignatureRow | undefined;
+
+    // Fetch audit log
+    const { data: auditLog } = await supabase
+      .from('contract_audit_log')
+      .select('*')
+      .eq('contract_id', contract.id)
+      .order('created_at', { ascending: true });
+
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let y = 20;
+
+    // Title
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('PROVA DE CONTESTAÇÃO - CONTRATO DIGITAL', pageWidth / 2, y, { align: 'center' });
+    y += 10;
+
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`Documento gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm:ss')}`, pageWidth / 2, y, { align: 'center' });
+    y += 12;
+
+    // Separator
+    pdf.setDrawColor(200);
+    pdf.line(15, y, pageWidth - 15, y);
+    y += 8;
+
+    // Section 1: Client Data
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('1. DADOS DO CLIENTE', 15, y);
+    y += 7;
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    const clientData = [
+      `Nome: ${contract.client_name}`,
+      `Email: ${contract.client_email || 'Não informado'}`,
+      `Telefone: ${(contract as any).client_phone || 'Não informado'}`,
+    ];
+    clientData.forEach(line => { pdf.text(line, 15, y); y += 5.5; });
+    y += 5;
+
+    // Section 2: Contract Info
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('2. DADOS DO CONTRATO', 15, y);
+    y += 7;
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    const contractData = [
+      `Título: ${contract.title}`,
+      `ID: ${contract.short_id}`,
+      `Criado em: ${format(new Date(contract.created_at), 'dd/MM/yyyy HH:mm')}`,
+      `Enviado em: ${contract.sent_at ? format(new Date(contract.sent_at), 'dd/MM/yyyy HH:mm') : 'N/A'}`,
+      `Visualizado em: ${contract.viewed_at ? format(new Date(contract.viewed_at), 'dd/MM/yyyy HH:mm') : 'N/A'}`,
+      `Assinado em: ${contract.signed_at ? format(new Date(contract.signed_at), 'dd/MM/yyyy HH:mm') : 'N/A'}`,
+    ];
+    contractData.forEach(line => { pdf.text(line, 15, y); y += 5.5; });
+    y += 5;
+
+    // Section 3: Signature Evidence
+    if (sig) {
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('3. EVIDÊNCIAS DA ASSINATURA DIGITAL', 15, y);
+      y += 7;
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      const sigData = [
+        `Assinante: ${sig.signer_name}`,
+        `Tipo de assinatura: ${sig.signature_type === 'draw' ? 'Desenho' : 'Digitada'}`,
+        `Método de verificação: ${sig.verification_method === 'email_otp' ? 'Código OTP por Email' : sig.verification_method}`,
+        `Verificação confirmada em: ${sig.verification_confirmed_at ? format(new Date(sig.verification_confirmed_at), 'dd/MM/yyyy HH:mm:ss') : 'N/A'}`,
+        `Data da assinatura: ${sig.signed_at ? format(new Date(sig.signed_at), 'dd/MM/yyyy HH:mm:ss') : 'N/A'}`,
+        `IP do assinante: ${sig.ip_address || 'Registrado no servidor'}`,
+        `Dispositivo: ${sig.device_info || 'N/A'}`,
+        `User Agent: ${sig.user_agent || 'N/A'}`,
+        `Hash SHA-256 do documento: ${sig.document_hash || 'N/A'}`,
+      ];
+      sigData.forEach(line => {
+        const lines = pdf.splitTextToSize(line, pageWidth - 30);
+        lines.forEach((l: string) => { pdf.text(l, 15, y); y += 5.5; });
+      });
+      y += 5;
+    }
+
+    // Section 4: Audit Trail
+    if (auditLog && auditLog.length > 0) {
+      if (y > 230) { pdf.addPage(); y = 20; }
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('4. TRILHA DE AUDITORIA', 15, y);
+      y += 7;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      (auditLog as any[]).forEach(log => {
+        if (y > 270) { pdf.addPage(); y = 20; }
+        const line = `${format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')} | ${log.action} | ${log.actor || 'sistema'} (${log.actor_type})`;
+        pdf.text(line, 15, y);
+        y += 5;
+      });
+      y += 5;
+    }
+
+    // Legal footer
+    if (y > 250) { pdf.addPage(); y = 20; }
+    pdf.setDrawColor(200);
+    pdf.line(15, y, pageWidth - 15, y);
+    y += 6;
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'italic');
+    const legalText = 'Este contrato possui validade jurídica conforme aceite digital e registro eletrônico, nos termos da Medida Provisória nº 2.200-2/2001 e do artigo 10 da Lei nº 12.965/2014 (Marco Civil da Internet).';
+    const legalLines = pdf.splitTextToSize(legalText, pageWidth - 30);
+    legalLines.forEach((l: string) => { pdf.text(l, 15, y); y += 4; });
+
+    pdf.save(`prova_contestacao_${contract.short_id}.pdf`);
+    setExportingProof(false);
+    toast.success('Prova de contestação exportada com sucesso!');
+  };
+
   if (loading) return null;
+
+  const hasSignedContract = contracts.some(c => c.status === 'signed');
 
   return (
     <>
@@ -231,6 +409,11 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSendEmail(c)} title="Email">
                         <Mail className="h-3.5 w-3.5" />
                       </Button>
+                      {c.status === 'signed' && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleExportChargebackProof(c)} title="Exportar prova de contestação" disabled={exportingProof}>
+                          {exportingProof ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />}
+                        </Button>
+                      )}
                       <a href={getSignLink(c.token)} target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link">
                           <ExternalLink className="h-3.5 w-3.5" />
@@ -240,6 +423,19 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Chargeback export info */}
+          {hasSignedContract && (
+            <div className="mt-4 p-3 border border-emerald-200 rounded-lg bg-emerald-50/50">
+              <div className="flex items-center gap-2 text-sm text-emerald-700">
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span className="font-medium">Proteção anti-chargeback ativa</span>
+              </div>
+              <p className="text-xs text-emerald-600/80 mt-1 ml-6">
+                Clique no ícone <ShieldCheck className="h-3 w-3 inline" /> no contrato assinado para exportar a prova de contestação em PDF.
+              </p>
             </div>
           )}
         </CardContent>
@@ -264,11 +460,11 @@ export default function ContractSection({ saleId, empresaId, clientName }: Contr
             </div>
             <div>
               <Label>Email do Cliente (para verificação)</Label>
-              <Input value={clientEmail} onChange={e => setClientEmail(e.target.value)} placeholder="email@exemplo.com" />
+              <Input value={formClientEmail} onChange={e => setFormClientEmail(e.target.value)} placeholder="email@exemplo.com" />
             </div>
             <div>
               <Label>Telefone do Cliente</Label>
-              <Input value={clientPhone} onChange={e => setClientPhone(e.target.value)} placeholder="(00) 00000-0000" />
+              <Input value={formClientPhone} onChange={e => setFormClientPhone(e.target.value)} placeholder="(00) 00000-0000" />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowGenerate(false)}>Cancelar</Button>
