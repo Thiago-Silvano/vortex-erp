@@ -21,6 +21,12 @@ interface ContractData {
   signed_at: string | null;
 }
 
+interface AgencyInfo {
+  name: string;
+  email: string;
+  whatsapp: string;
+}
+
 interface BundleData {
   id: string;
   client_name: string;
