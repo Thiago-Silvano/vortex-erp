@@ -82,7 +82,7 @@ export default function ContractSection({
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showGenerate, setShowGenerate] = useState(false);
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
   const [formClientEmail, setFormClientEmail] = useState(clientEmail);
   const [formClientPhone, setFormClientPhone] = useState(clientPhone);
   const [generating, setGenerating] = useState(false);
