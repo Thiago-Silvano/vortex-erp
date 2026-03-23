@@ -28,6 +28,8 @@ interface ContractSectionProps {
   paymentMethod?: string;
   sellerName?: string;
   passengersCount?: number;
+  saleWorkflowStatus?: string;
+  onWorkflowStatusChange?: (newStatus: string) => void;
 }
 
 interface ContractRow {
@@ -93,6 +95,7 @@ export default function ContractSection({
   saleId, empresaId, clientName, clientEmail = '', clientPhone = '', clientCpf = '',
   destination = '', tripStartDate = '', tripEndDate = '', totalValue = 0,
   paymentMethod = '', sellerName = '', passengersCount = 1,
+  saleWorkflowStatus = '', onWorkflowStatusChange,
 }: ContractSectionProps) {
   const [contracts, setContracts] = useState<ContractRow[]>([]);
   const [bundles, setBundles] = useState<BundleRow[]>([]);
@@ -713,6 +716,34 @@ export default function ContractSection({
   if (loading) return null;
 
   const hasSignedContract = contracts.some(c => c.status === 'signed');
+  const allBundlesSigned = bundles.length > 0 && bundles.every(b => b.contracts.every(c => c.status === 'signed'));
+  const isAwaitingPayment = saleWorkflowStatus === 'aguardando_pagamento';
+  const isConcluded = saleWorkflowStatus === 'processo_concluido';
+  const canConfirmPayment = (allBundlesSigned || saleWorkflowStatus === 'aguardando_pagamento') && !isConcluded;
+
+  const handleSkipContract = async () => {
+    await supabase.from('sales').update({ sale_workflow_status: 'aguardando_pagamento' } as any).eq('id', saleId);
+    onWorkflowStatusChange?.('aguardando_pagamento');
+    toast.success('Venda marcada como não necessita de contrato. Aguardando pagamento.');
+  };
+
+  const handleConfirmPayment = async () => {
+    await supabase.from('sales').update({ sale_workflow_status: 'processo_concluido' } as any).eq('id', saleId);
+    onWorkflowStatusChange?.('processo_concluido');
+    toast.success('Pagamento confirmado! Processo concluído.');
+  };
+
+  // Auto-set workflow when contracts are signed
+  useEffect(() => {
+    if (bundles.length === 0) return;
+    if (allBundlesSigned && saleWorkflowStatus === 'aguardando_assinatura') {
+      supabase.from('sales').update({ sale_workflow_status: 'aguardando_pagamento' } as any).eq('id', saleId).then(() => {
+        onWorkflowStatusChange?.('aguardando_pagamento');
+      });
+    }
+  }, [allBundlesSigned, saleWorkflowStatus]);
+
+  if (loading) return null;
 
   return (
     <>
@@ -840,16 +871,69 @@ export default function ContractSection({
 
           {/* Chargeback export info */}
           {hasSignedContract && (
-            <div className="mt-4 p-3 border border-emerald-200 rounded-lg bg-emerald-50/50">
-              <div className="flex items-center gap-2 text-sm text-emerald-700">
+            <div className="mt-4 p-3 border border-emerald-200 dark:border-emerald-800 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/30">
+              <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
                 <span className="font-medium">Proteção anti-chargeback ativa</span>
               </div>
-              <p className="text-xs text-emerald-600/80 mt-1 ml-6">
+              <p className="text-xs text-emerald-600/80 dark:text-emerald-500/80 mt-1 ml-6">
                 Clique no ícone <ShieldCheck className="h-3 w-3 inline" /> no contrato assinado para exportar a prova de contestação em PDF.
               </p>
             </div>
           )}
+
+          {/* Workflow action buttons */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {bundles.length === 0 && !isAwaitingPayment && !isConcluded && saleWorkflowStatus !== 'sem_contrato' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1.5">
+                    <FileText className="h-3.5 w-3.5" /> Venda não necessita de contrato
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta venda será marcada como "não necessita de contrato" e passará direto para aguardando pagamento.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSkipContract}>Confirmar</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
+            {canConfirmPayment && isAwaitingPayment && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Pagamento Realizado
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar recebimento?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Ao confirmar, o status da venda será alterado para "Processo Concluído".
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmPayment} className="bg-emerald-600 hover:bg-emerald-700">Confirmar Pagamento</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+
+            {isConcluded && (
+              <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Processo Concluído
+              </Badge>
+            )}
+          </div>
         </CardContent>
       </Card>
 

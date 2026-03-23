@@ -1748,6 +1748,10 @@ export default function NewSalePage() {
                       <SelectItem value="contatando">Contatando</SelectItem>
                       <SelectItem value="reservado">Reservado</SelectItem>
                       <SelectItem value="emitido">Emitido</SelectItem>
+                      <SelectItem value="aguardando_assinatura">Aguardando Assinatura</SelectItem>
+                      <SelectItem value="aguardando_pagamento">Aguardando Pagamento</SelectItem>
+                      <SelectItem value="processo_concluido">Processo Concluído</SelectItem>
+                      <SelectItem value="sem_contrato">Sem Contrato</SelectItem>
                       <SelectItem value="perdido">Perdido</SelectItem>
                     </SelectContent>
                   </Select>
@@ -2815,7 +2819,6 @@ export default function NewSalePage() {
               const mainP = passengers.find(p => p.is_main) || passengers[0];
               if (!mainP) return '';
               if (mainP.document_type === 'cpf') return mainP.document_number || '';
-              // If main passenger has passport, look for any passenger with CPF
               const cpfPassenger = passengers.find(p => p.document_type === 'cpf');
               return cpfPassenger?.document_number || '';
             })()}
@@ -2826,6 +2829,8 @@ export default function NewSalePage() {
             paymentMethod={paymentMethods.join(', ')}
             sellerName={allSellers.find(s => s.id === sellerId)?.full_name}
             passengersCount={passengersCount}
+            saleWorkflowStatus={saleWorkflowStatus}
+            onWorkflowStatusChange={(newStatus) => setSaleWorkflowStatus(newStatus)}
           />
         )}
 
