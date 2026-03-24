@@ -300,6 +300,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
         paxDetails.push(`${pax.documentType === 'cpf' ? 'CPF' : 'Passaporte'}: ${pax.document}`);
       }
       if (pax.birthDate) paxDetails.push(`Nasc: ${formatDateBR(pax.birthDate)}`);
+      if (pax.eticketNumber) paxDetails.push(`Bilhete: ${pax.eticketNumber}`);
 
       if (paxDetails.length > 0) {
         doc.setFont('helvetica', 'normal');
