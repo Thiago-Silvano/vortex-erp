@@ -335,7 +335,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
         setColor(doc, GOLD);
-        doc.text(s(`Cod: ${res.confirmationCode}`), pw - m - 5, y + 3, { align: 'right' });
+        doc.text(s(`Código de Reserva: ${res.confirmationCode}`), pw - m - 5, y + 3, { align: 'right' });
       }
 
       const resDetails: string[] = [];
