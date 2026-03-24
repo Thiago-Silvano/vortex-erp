@@ -366,7 +366,8 @@ export function generateVoucherPdf(data: VoucherPdfData) {
       doc.setFont('times', 'bold');
       doc.setFontSize(13);
       setColor(doc, DEEP_BLUE);
-      doc.text(s(hotel.name), m + 5, y + 4);
+      const hotelTitle = hotel.reservationNumber ? `${hotel.name}  |  Reserva: ${hotel.reservationNumber}` : hotel.name;
+      doc.text(s(hotelTitle), m + 5, y + 4);
       y += 8;
 
       if (hotel.room) {
