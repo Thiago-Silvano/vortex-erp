@@ -50,6 +50,7 @@ export interface PassengerVoucher {
   documentType?: string;
   birthDate?: string;
   isMain?: boolean;
+  eticketNumber?: string;
 }
 
 export interface ReservationVoucher {

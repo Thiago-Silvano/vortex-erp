@@ -1926,6 +1926,7 @@ export default function NewSalePage() {
                   <div><Label className="text-xs">Vencimento Doc.</Label><Input type="date" value={pax.document_expiry} onChange={e => updatePassenger(idx, 'document_expiry', e.target.value)} /></div>
                   <div><Label className="text-xs">E-mail</Label><Input value={pax.email} onChange={e => updatePassenger(idx, 'email', maskEmail(e.target.value))} placeholder="email@exemplo.com" type="email" /></div>
                   <div><Label className="text-xs">Telefone</Label><Input value={pax.phone} onChange={e => updatePassenger(idx, 'phone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
+                  <div><Label className="text-xs">Nº Bilhete Eletrônico</Label><Input value={pax.eticket_number} onChange={e => updatePassenger(idx, 'eticket_number', e.target.value)} placeholder="Ex: 957-1234567890" /></div>
                 </div>
               </div>
             ))}
