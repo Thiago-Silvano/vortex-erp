@@ -68,6 +68,7 @@ interface Passenger {
   email: string;
   phone: string;
   is_main: boolean;
+  eticket_number: string;
 }
 
 interface SupplierOption { id: string; name: string; }
@@ -343,6 +344,7 @@ export default function NewSalePage() {
       id: p.id, first_name: p.first_name, last_name: p.last_name, birth_date: p.birth_date || '',
       document_type: p.document_type || 'cpf', document_number: p.document_number || '',
       document_expiry: p.document_expiry || '', email: p.email || '', phone: p.phone || '', is_main: p.is_main || false,
+      eticket_number: p.eticket_number || '',
     })));
 
     // Load internal files
@@ -686,6 +688,7 @@ export default function NewSalePage() {
     setPassengers(prev => [...prev, {
       first_name: '', last_name: '', birth_date: '', document_type: 'cpf',
       document_number: '', document_expiry: '', email: '', phone: '', is_main: prev.length === 0,
+      eticket_number: '',
     }]);
   };
 
@@ -1050,6 +1053,7 @@ export default function NewSalePage() {
         birth_date: p.birth_date || null, document_type: p.document_type,
         document_number: p.document_number, document_expiry: p.document_expiry || null,
         email: p.email, phone: p.phone, is_main: p.is_main, sort_order: idx,
+        eticket_number: p.eticket_number || '',
       })));
     }
 
@@ -1372,7 +1376,7 @@ export default function NewSalePage() {
         }
         hotels.push({
           name: h.hotelName,
-          description: h.description,
+          description: h.observations || '',
           checkIn: h.checkInDate,
           checkOut: h.checkOutDate,
           nights: hotelNights,
@@ -1380,6 +1384,7 @@ export default function NewSalePage() {
           meal: '',
           stars: h.stars,
           amenities: h.amenities,
+          reservationNumber: item.reservation_number || '',
         });
       }
     }
@@ -1423,6 +1428,7 @@ export default function NewSalePage() {
         documentType: p.document_type || undefined,
         birthDate: p.birth_date || undefined,
         isMain: p.is_main,
+        eticketNumber: p.eticket_number || undefined,
       })),
       flightLegs,
       flightGroups,
@@ -1920,6 +1926,7 @@ export default function NewSalePage() {
                   <div><Label className="text-xs">Vencimento Doc.</Label><Input type="date" value={pax.document_expiry} onChange={e => updatePassenger(idx, 'document_expiry', e.target.value)} /></div>
                   <div><Label className="text-xs">E-mail</Label><Input value={pax.email} onChange={e => updatePassenger(idx, 'email', maskEmail(e.target.value))} placeholder="email@exemplo.com" type="email" /></div>
                   <div><Label className="text-xs">Telefone</Label><Input value={pax.phone} onChange={e => updatePassenger(idx, 'phone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
+                  <div><Label className="text-xs">Nº Bilhete Eletrônico</Label><Input value={pax.eticket_number} onChange={e => updatePassenger(idx, 'eticket_number', e.target.value)} placeholder="Ex: 957-1234567890" /></div>
                 </div>
               </div>
             ))}

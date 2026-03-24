@@ -32,6 +32,7 @@ export interface HotelVoucher {
   meal?: string;
   description?: string;
   address?: string;
+  reservationNumber?: string;
 }
 
 export interface ServiceVoucher {
@@ -49,6 +50,7 @@ export interface PassengerVoucher {
   documentType?: string;
   birthDate?: string;
   isMain?: boolean;
+  eticketNumber?: string;
 }
 
 export interface ReservationVoucher {
@@ -298,6 +300,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
         paxDetails.push(`${pax.documentType === 'cpf' ? 'CPF' : 'Passaporte'}: ${pax.document}`);
       }
       if (pax.birthDate) paxDetails.push(`Nasc: ${formatDateBR(pax.birthDate)}`);
+      if (pax.eticketNumber) paxDetails.push(`Bilhete: ${pax.eticketNumber}`);
 
       if (paxDetails.length > 0) {
         doc.setFont('helvetica', 'normal');
@@ -363,7 +366,8 @@ export function generateVoucherPdf(data: VoucherPdfData) {
       doc.setFont('times', 'bold');
       doc.setFontSize(13);
       setColor(doc, DEEP_BLUE);
-      doc.text(s(hotel.name), m + 5, y + 4);
+      const hotelTitle = hotel.reservationNumber ? `${hotel.name}  |  Reserva: ${hotel.reservationNumber}` : hotel.name;
+      doc.text(s(hotelTitle), m + 5, y + 4);
       y += 8;
 
       if (hotel.room) {
@@ -426,6 +430,27 @@ export function generateVoucherPdf(data: VoucherPdfData) {
         y += 4;
       }
     });
+
+    // Show eticket numbers per passenger in flight section
+    const paxWithEticket = data.passengers.filter(p => p.eticketNumber);
+    if (paxWithEticket.length > 0) {
+      y += 2;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      setColor(doc, DEEP_BLUE);
+      safeText(doc, 'Bilhetes Eletronicos:', m + 5, y);
+      y += 5;
+
+      paxWithEticket.forEach((pax) => {
+        y = checkPageBreak(doc, y, 5, m);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        setColor(doc, TEXT_MAIN);
+        safeText(doc, `${pax.name}: ${pax.eticketNumber}`, m + 8, y);
+        y += 4;
+      });
+      y += 2;
+    }
 
     drawLine(doc, m, y, pw - m);
     y += 6;

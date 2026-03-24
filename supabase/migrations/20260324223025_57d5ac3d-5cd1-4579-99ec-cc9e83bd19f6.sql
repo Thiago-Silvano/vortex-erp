@@ -1,0 +1,1 @@
+ALTER TABLE sale_passengers ADD COLUMN eticket_number text DEFAULT '';
