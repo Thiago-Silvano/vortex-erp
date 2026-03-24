@@ -68,6 +68,7 @@ interface Passenger {
   email: string;
   phone: string;
   is_main: boolean;
+  eticket_number: string;
 }
 
 interface SupplierOption { id: string; name: string; }
