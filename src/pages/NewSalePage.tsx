@@ -688,6 +688,7 @@ export default function NewSalePage() {
     setPassengers(prev => [...prev, {
       first_name: '', last_name: '', birth_date: '', document_type: 'cpf',
       document_number: '', document_expiry: '', email: '', phone: '', is_main: prev.length === 0,
+      eticket_number: '',
     }]);
   };
 
