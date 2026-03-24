@@ -344,6 +344,7 @@ export default function NewSalePage() {
       id: p.id, first_name: p.first_name, last_name: p.last_name, birth_date: p.birth_date || '',
       document_type: p.document_type || 'cpf', document_number: p.document_number || '',
       document_expiry: p.document_expiry || '', email: p.email || '', phone: p.phone || '', is_main: p.is_main || false,
+      eticket_number: p.eticket_number || '',
     })));
 
     // Load internal files
