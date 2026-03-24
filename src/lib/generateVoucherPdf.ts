@@ -431,6 +431,27 @@ export function generateVoucherPdf(data: VoucherPdfData) {
       }
     });
 
+    // Show eticket numbers per passenger in flight section
+    const paxWithEticket = data.passengers.filter(p => p.eticketNumber);
+    if (paxWithEticket.length > 0) {
+      y += 2;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      setColor(doc, DEEP_BLUE);
+      safeText(doc, 'Bilhetes Eletronicos:', m + 5, y);
+      y += 5;
+
+      paxWithEticket.forEach((pax) => {
+        y = checkPageBreak(doc, y, 5, m);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        setColor(doc, TEXT_MAIN);
+        safeText(doc, `${pax.name}: ${pax.eticketNumber}`, m + 8, y);
+        y += 4;
+      });
+      y += 2;
+    }
+
     drawLine(doc, m, y, pw - m);
     y += 6;
   }
