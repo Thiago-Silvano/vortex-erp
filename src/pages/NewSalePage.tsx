@@ -1052,6 +1052,7 @@ export default function NewSalePage() {
         birth_date: p.birth_date || null, document_type: p.document_type,
         document_number: p.document_number, document_expiry: p.document_expiry || null,
         email: p.email, phone: p.phone, is_main: p.is_main, sort_order: idx,
+        eticket_number: p.eticket_number || '',
       })));
     }
 
