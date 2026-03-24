@@ -2666,6 +2666,7 @@ export type Database = {
           document_number: string
           document_type: string
           email: string | null
+          eticket_number: string | null
           first_name: string
           id: string
           is_main: boolean
@@ -2681,6 +2682,7 @@ export type Database = {
           document_number?: string
           document_type?: string
           email?: string | null
+          eticket_number?: string | null
           first_name?: string
           id?: string
           is_main?: boolean
@@ -2696,6 +2698,7 @@ export type Database = {
           document_number?: string
           document_type?: string
           email?: string | null
+          eticket_number?: string | null
           first_name?: string
           id?: string
           is_main?: boolean
