@@ -1375,7 +1375,7 @@ export default function NewSalePage() {
         }
         hotels.push({
           name: h.hotelName,
-          description: h.description,
+          description: h.observations || '',
           checkIn: h.checkInDate,
           checkOut: h.checkOutDate,
           nights: hotelNights,
@@ -1383,6 +1383,7 @@ export default function NewSalePage() {
           meal: '',
           stars: h.stars,
           amenities: h.amenities,
+          reservationNumber: item.reservation_number || '',
         });
       }
     }
