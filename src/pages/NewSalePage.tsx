@@ -1426,6 +1426,7 @@ export default function NewSalePage() {
         documentType: p.document_type || undefined,
         birthDate: p.birth_date || undefined,
         isMain: p.is_main,
+        eticketNumber: p.eticket_number || undefined,
       })),
       flightLegs,
       flightGroups,
