@@ -3016,7 +3016,7 @@ export default function NewSalePage() {
               quote_option_id: mappedOptions.length > 1 ? optionIdMap.get(item.quote_option_id || '0') : item.quote_option_id,
             }))]);
 
-            if (tripInfo.client_name && tripInfo.client_name.toLowerCase() !== 'não informado') setClientName(tripInfo.client_name);
+            if (!clientName.trim() && tripInfo.client_name && tripInfo.client_name.toLowerCase() !== 'não informado') setClientName(tripInfo.client_name);
             if (tripInfo.destination) setDestinationName(tripInfo.destination);
             if (tripInfo.departure_date) setTripStartDate(tripInfo.departure_date);
             if (tripInfo.return_date) setTripEndDate(tripInfo.return_date);
