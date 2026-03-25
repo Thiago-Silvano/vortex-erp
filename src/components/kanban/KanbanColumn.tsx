@@ -58,6 +58,7 @@ export default function KanbanColumn({ column, sales, onViewSale, onDuplicate, o
               sale={sale}
               columnColor={column.color}
               onView={onViewSale}
+              onDuplicate={onDuplicate}
               onWhatsApp={onWhatsApp}
               onConvert={onConvert}
             />

@@ -91,6 +91,7 @@ export default function KanbanBoard({ columns, sales, onMoveCard, onViewSale, on
             column={col}
             sales={salesByColumn[col.statusKey] || []}
             onViewSale={onViewSale}
+            onDuplicate={onDuplicate}
             onWhatsApp={onWhatsApp}
             onConvert={onConvert}
           />
