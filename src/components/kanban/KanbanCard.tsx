@@ -172,7 +172,7 @@ export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onW
               <TooltipContent>Duplicar</TooltipContent>
             </Tooltip>
           )}
-            <Tooltip>
+          {onWhatsApp && (
               <TooltipTrigger asChild>
                 <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-600" onClick={(e) => { e.stopPropagation(); onWhatsApp(sale); }}>
                   <MessageCircle className="h-3.5 w-3.5" />
