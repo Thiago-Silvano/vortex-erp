@@ -186,6 +186,9 @@ export default function NewSalePage() {
   const [showOnlyTotal, setShowOnlyTotal] = useState(false);
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
   const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
+  const [askAddClientAsPassenger, setAskAddClientAsPassenger] = useState<ClientOption | null>(null);
+  const [passengerSearchOpen, setPassengerSearchOpen] = useState<number | null>(null);
+  const [passengerSearchTerm, setPassengerSearchTerm] = useState('');
   const [contractInfo, setContractInfo] = useState<{ status?: string; sentAt?: string | null; viewedAt?: string | null; signedAt?: string | null }>({});
 
   const isQuoteMode = saleStatus !== 'active';
