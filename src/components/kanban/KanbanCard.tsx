@@ -8,7 +8,7 @@ import { format, differenceInDays } from 'date-fns';
 import {
   Plane, Hotel, Car, Ticket, Eye, FileText, Link2,
   MessageCircle, DollarSign, AlertTriangle, Users, MapPin,
-  Calendar, Clock,
+  Calendar, Clock, Copy,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
