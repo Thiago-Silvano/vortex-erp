@@ -73,7 +73,7 @@ interface Passenger {
 
 interface SupplierOption { id: string; name: string; }
 interface SellerOption { id: string; full_name: string; commission_type?: string; commission_percentage?: number; commission_base?: string; }
-interface ClientOption { id: string; full_name: string; }
+interface ClientOption { id: string; full_name: string; cpf?: string; email?: string; phone?: string; birth_date?: string; passport_number?: string; passport_expiry_date?: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; cost_center_id?: string; payment_method?: string; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
@@ -186,6 +186,9 @@ export default function NewSalePage() {
   const [showOnlyTotal, setShowOnlyTotal] = useState(false);
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
   const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
+  const [askAddClientAsPassenger, setAskAddClientAsPassenger] = useState<ClientOption | null>(null);
+  const [passengerSearchOpen, setPassengerSearchOpen] = useState<number | null>(null);
+  const [passengerSearchTerm, setPassengerSearchTerm] = useState('');
   const [contractInfo, setContractInfo] = useState<{ status?: string; sentAt?: string | null; viewedAt?: string | null; signedAt?: string | null }>({});
 
   const isQuoteMode = saleStatus !== 'active';
@@ -400,9 +403,9 @@ export default function NewSalePage() {
   };
 
   const fetchClients = () => {
-    let q = supabase.from('clients').select('id, full_name').order('full_name');
+    let q = supabase.from('clients').select('id, full_name, cpf, email, phone, birth_date, passport_number, passport_expiry_date').order('full_name');
     if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
-    q.then(({ data }) => { if (data) setAllClients(data); });
+    q.then(({ data }) => { if (data) setAllClients(data as any); });
   };
 
   useEffect(() => {
@@ -690,6 +693,49 @@ export default function NewSalePage() {
       document_number: '', document_expiry: '', email: '', phone: '', is_main: prev.length === 0,
       eticket_number: '',
     }]);
+  };
+
+  const addClientAsPassenger = (client: ClientOption) => {
+    const nameParts = client.full_name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const hasPassport = !!client.passport_number;
+    setPassengers(prev => {
+      const alreadyExists = prev.some(p => 
+        `${p.first_name} ${p.last_name}`.trim().toLowerCase() === client.full_name.trim().toLowerCase()
+      );
+      if (alreadyExists) return prev;
+      return [...prev, {
+        first_name: firstName,
+        last_name: lastName,
+        birth_date: client.birth_date || '',
+        document_type: hasPassport ? 'passaporte' as const : 'cpf' as const,
+        document_number: hasPassport ? (client.passport_number || '') : (client.cpf || ''),
+        document_expiry: hasPassport ? (client.passport_expiry_date || '') : '',
+        email: client.email || '',
+        phone: client.phone || '',
+        is_main: prev.length === 0,
+        eticket_number: '',
+      }];
+    });
+  };
+
+  const fillPassengerFromClient = (idx: number, client: ClientOption) => {
+    const nameParts = client.full_name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const hasPassport = !!client.passport_number;
+    setPassengers(prev => prev.map((p, i) => i === idx ? {
+      ...p,
+      first_name: firstName,
+      last_name: lastName,
+      birth_date: client.birth_date || '',
+      document_type: hasPassport ? 'passaporte' as const : 'cpf' as const,
+      document_number: hasPassport ? (client.passport_number || '') : (client.cpf || ''),
+      document_expiry: hasPassport ? (client.passport_expiry_date || '') : '',
+      email: client.email || '',
+      phone: client.phone || '',
+    } : p));
   };
 
   const updatePassenger = (idx: number, field: keyof Passenger, value: any) => {
@@ -1726,7 +1772,11 @@ export default function NewSalePage() {
                           <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
                           <CommandGroup>
                             {allClients.map(c => (
-                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { setClientName(c.full_name); setClientPopoverOpen(false); }}>
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { 
+                                setClientName(c.full_name); 
+                                setClientPopoverOpen(false); 
+                                setAskAddClientAsPassenger(c);
+                              }}>
                                 {c.full_name}
                               </CommandItem>
                             ))}
@@ -1909,7 +1959,40 @@ export default function NewSalePage() {
                   <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  <div><Label className="text-xs">Nome</Label><Input value={pax.first_name} onChange={e => updatePassenger(idx, 'first_name', e.target.value)} placeholder="Nome" /></div>
+                  <div className="relative">
+                    <Label className="text-xs">Nome</Label>
+                    <Input 
+                      value={pax.first_name} 
+                      onChange={e => { 
+                        updatePassenger(idx, 'first_name', e.target.value); 
+                        setPassengerSearchTerm(e.target.value);
+                        setPassengerSearchOpen(e.target.value.length >= 2 ? idx : null);
+                      }} 
+                      onFocus={() => { if (pax.first_name.length >= 2) { setPassengerSearchTerm(pax.first_name); setPassengerSearchOpen(idx); } }}
+                      onBlur={() => setTimeout(() => setPassengerSearchOpen(null), 200)}
+                      placeholder="Nome" 
+                      autoComplete="off"
+                    />
+                    {passengerSearchOpen === idx && passengerSearchTerm.length >= 2 && (() => {
+                      const filtered = allClients.filter(c => c.full_name.toLowerCase().includes(passengerSearchTerm.toLowerCase())).slice(0, 5);
+                      if (filtered.length === 0) return null;
+                      return (
+                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md max-h-40 overflow-y-auto">
+                          {filtered.map(c => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                              onMouseDown={(e) => { e.preventDefault(); fillPassengerFromClient(idx, c); setPassengerSearchOpen(null); }}
+                            >
+                              {c.full_name}
+                              {c.cpf && <span className="text-xs text-muted-foreground ml-2">({c.cpf})</span>}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
                   <div><Label className="text-xs">Sobrenome</Label><Input value={pax.last_name} onChange={e => updatePassenger(idx, 'last_name', e.target.value)} placeholder="Sobrenome" /></div>
                   <div><Label className="text-xs">Data de Nascimento</Label><Input type="date" value={pax.birth_date} onChange={e => updatePassenger(idx, 'birth_date', e.target.value)} /></div>
                   <div>
@@ -2932,7 +3015,23 @@ export default function NewSalePage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <PdfImportModal
+        {/* Ask to add client as passenger */}
+        <AlertDialog open={!!askAddClientAsPassenger} onOpenChange={(open) => { if (!open) setAskAddClientAsPassenger(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Adicionar como passageiro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O cliente <strong>{askAddClientAsPassenger?.full_name}</strong> está cadastrado. Deseja adicioná-lo como passageiro da reserva com os dados já preenchidos?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Não</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { if (askAddClientAsPassenger) addClientAsPassenger(askAddClientAsPassenger); setAskAddClientAsPassenger(null); }}>Sim, adicionar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+
           open={pdfImportOpen}
           onClose={() => setPdfImportOpen(false)}
           serviceCatalog={serviceCatalog}
@@ -2966,7 +3065,7 @@ export default function NewSalePage() {
               quote_option_id: mappedOptions.length > 1 ? optionIdMap.get(item.quote_option_id || '0') : item.quote_option_id,
             }))]);
 
-            if (tripInfo.client_name && tripInfo.client_name.toLowerCase() !== 'não informado') setClientName(tripInfo.client_name);
+            if (!clientName.trim() && tripInfo.client_name && tripInfo.client_name.toLowerCase() !== 'não informado') setClientName(tripInfo.client_name);
             if (tripInfo.destination) setDestinationName(tripInfo.destination);
             if (tripInfo.departure_date) setTripStartDate(tripInfo.departure_date);
             if (tripInfo.return_date) setTripEndDate(tripInfo.return_date);
