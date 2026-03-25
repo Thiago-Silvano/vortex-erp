@@ -403,9 +403,9 @@ export default function NewSalePage() {
   };
 
   const fetchClients = () => {
-    let q = supabase.from('clients').select('id, full_name').order('full_name');
+    let q = supabase.from('clients').select('id, full_name, cpf, email, phone, birth_date, passport_number, passport_expiry_date').order('full_name');
     if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
-    q.then(({ data }) => { if (data) setAllClients(data); });
+    q.then(({ data }) => { if (data) setAllClients(data as any); });
   };
 
   useEffect(() => {
