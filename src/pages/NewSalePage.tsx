@@ -2075,10 +2075,18 @@ export default function NewSalePage() {
                   />
                   {quoteOptions.length > 1 && (
                     <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => {
-                      setQuoteOptions(prev => prev.filter((_, i) => i !== idx).map((o, i) => ({ ...o, order_index: i })));
-                      // Remove option from items that had it
-                      const removedId = opt.id || String(idx);
-                      setItems(prev => prev.map(item => item.quote_option_id === removedId ? { ...item, quote_option_id: quoteOptions[0]?.id || '0' } : item));
+                    const removedId = opt.id || String(idx);
+                      const remainingOptions = quoteOptions.filter((_, i) => i !== idx);
+                      const fallbackId = remainingOptions[0]?.id || String(remainingOptions[0]?.order_index ?? 0);
+                      setQuoteOptions(remainingOptions.map((o, i) => ({ ...o, order_index: i })));
+                      setItems(prev => prev.map(item => {
+                        const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
+                        const filtered = ids.filter(id => id !== removedId);
+                        if (filtered.length === 0) {
+                          return { ...item, quote_option_id: fallbackId, quote_option_ids: [fallbackId] };
+                        }
+                        return { ...item, quote_option_id: filtered[0], quote_option_ids: filtered };
+                      }));
                     }}>
                       <X className="h-3 w-3 text-destructive" />
                     </Button>
