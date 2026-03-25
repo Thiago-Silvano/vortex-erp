@@ -73,7 +73,7 @@ interface Passenger {
 
 interface SupplierOption { id: string; name: string; }
 interface SellerOption { id: string; full_name: string; commission_type?: string; commission_percentage?: number; commission_base?: string; }
-interface ClientOption { id: string; full_name: string; }
+interface ClientOption { id: string; full_name: string; cpf?: string; email?: string; phone?: string; birth_date?: string; passport_number?: string; passport_expiry_date?: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; cost_center_id?: string; payment_method?: string; }
 interface CostCenter { id: string; name: string; }
 interface CardRateEntry { installments: number; rate: number; }
