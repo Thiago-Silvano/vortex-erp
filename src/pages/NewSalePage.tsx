@@ -2982,7 +2982,23 @@ export default function NewSalePage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <PdfImportModal
+        {/* Ask to add client as passenger */}
+        <AlertDialog open={!!askAddClientAsPassenger} onOpenChange={(open) => { if (!open) setAskAddClientAsPassenger(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Adicionar como passageiro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                O cliente <strong>{askAddClientAsPassenger?.full_name}</strong> está cadastrado. Deseja adicioná-lo como passageiro da reserva com os dados já preenchidos?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Não</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { if (askAddClientAsPassenger) addClientAsPassenger(askAddClientAsPassenger); setAskAddClientAsPassenger(null); }}>Sim, adicionar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+
           open={pdfImportOpen}
           onClose={() => setPdfImportOpen(false)}
           serviceCatalog={serviceCatalog}
