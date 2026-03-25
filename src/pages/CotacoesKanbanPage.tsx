@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Plus, Search, LayoutGrid, List, Eye, Trash2, Filter, X,
   MapPin, Users, Calendar, DollarSign, AlertTriangle, Clock,
-  Plane, Hotel, Car, Ticket, FileText, Link2, MessageCircle,
+  Plane, Hotel, Car, Ticket, FileText, Link2, MessageCircle, Copy,
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
@@ -187,6 +187,68 @@ export default function CotacoesKanbanPage() {
     navigate('/sales/new', { state: { editSaleId: id } });
   };
 
+  const handleDuplicate = async (sale: KanbanSale) => {
+    try {
+      // 1. Fetch full sale record
+      const { data: original, error: saleErr } = await supabase
+        .from('sales')
+        .select('*')
+        .eq('id', sale.id)
+        .single();
+      if (saleErr || !original) throw new Error('Erro ao buscar cotação original');
+
+      // 2. Create new sale copy
+      const { id: _id, short_id: _sid, created_at: _ca, updated_at: _ua, ...saleFields } = original as any;
+      const { data: newSale, error: insertErr } = await supabase
+        .from('sales')
+        .insert({
+          ...saleFields,
+          client_name: `Cópia de ${original.client_name}`,
+          sale_workflow_status: 'em_aberto',
+        } as any)
+        .select('id')
+        .single();
+      if (insertErr || !newSale) throw new Error('Erro ao criar cópia');
+
+      // 3. Copy sale_items
+      const { data: items } = await supabase.from('sale_items').select('*').eq('sale_id', sale.id);
+      if (items && items.length > 0) {
+        const newItems = items.map((item: any) => {
+          const { id: _iid, sale_id: _sid2, created_at: _ica, ...itemFields } = item;
+          return { ...itemFields, sale_id: newSale.id };
+        });
+        await supabase.from('sale_items').insert(newItems as any);
+      }
+
+      // 4. Copy quote options
+      const { data: options } = await supabase.from('sale_quote_options' as any).select('*').eq('sale_id', sale.id);
+      if (options && (options as any[]).length > 0) {
+        const oldToNew: Record<string, string> = {};
+        for (const opt of options as any[]) {
+          const { id: _oid, sale_id: _osid, created_at: _oca, ...optFields } = opt;
+          const { data: newOpt } = await supabase.from('sale_quote_options' as any).insert({ ...optFields, sale_id: newSale.id } as any).select('id').single();
+          if (newOpt) oldToNew[opt.id] = (newOpt as any).id;
+        }
+        // Update copied items with new option IDs
+        if (Object.keys(oldToNew).length > 0) {
+          const { data: copiedItems } = await supabase.from('sale_items').select('id, quote_option_id, metadata').eq('sale_id', newSale.id);
+          if (copiedItems) {
+            for (const ci of copiedItems as any[]) {
+              if (ci.quote_option_id && oldToNew[ci.quote_option_id]) {
+                await supabase.from('sale_items').update({ quote_option_id: oldToNew[ci.quote_option_id] } as any).eq('id', ci.id);
+              }
+            }
+          }
+        }
+      }
+
+      toast.success('Cotação duplicada com sucesso!');
+      fetchSales();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao duplicar cotação');
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
@@ -312,6 +374,7 @@ export default function CotacoesKanbanPage() {
             sales={filteredSales}
             onMoveCard={handleMoveCard}
             onViewSale={handleViewSale}
+            onDuplicate={handleDuplicate}
           />
         )}
 
@@ -361,6 +424,7 @@ export default function CotacoesKanbanPage() {
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleViewSale(s.id); }}><Eye className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleDuplicate(s); }} title="Duplicar"><Copy className="h-4 w-4 text-muted-foreground" /></Button>
                               <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                             </div>
                           </TableCell>

@@ -15,11 +15,12 @@ interface KanbanColumnProps {
   column: KanbanColumnData;
   sales: KanbanSale[];
   onViewSale: (id: string) => void;
+  onDuplicate?: (sale: KanbanSale) => void;
   onWhatsApp?: (sale: KanbanSale) => void;
   onConvert?: (sale: KanbanSale) => void;
 }
 
-export default function KanbanColumn({ column, sales, onViewSale, onWhatsApp, onConvert }: KanbanColumnProps) {
+export default function KanbanColumn({ column, sales, onViewSale, onDuplicate, onWhatsApp, onConvert }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.statusKey });
 
   const totalValue = sales.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
@@ -57,6 +58,7 @@ export default function KanbanColumn({ column, sales, onViewSale, onWhatsApp, on
               sale={sale}
               columnColor={column.color}
               onView={onViewSale}
+              onDuplicate={onDuplicate}
               onWhatsApp={onWhatsApp}
               onConvert={onConvert}
             />
