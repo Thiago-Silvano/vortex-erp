@@ -374,6 +374,7 @@ export default function CotacoesKanbanPage() {
             sales={filteredSales}
             onMoveCard={handleMoveCard}
             onViewSale={handleViewSale}
+            onDuplicate={handleDuplicate}
           />
         )}
 
