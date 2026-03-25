@@ -36,11 +36,12 @@ interface KanbanCardProps {
   sale: KanbanSale;
   columnColor: string;
   onView: (id: string) => void;
+  onDuplicate?: (sale: KanbanSale) => void;
   onWhatsApp?: (sale: KanbanSale) => void;
   onConvert?: (sale: KanbanSale) => void;
 }
 
-export default function KanbanCard({ sale, columnColor, onView, onWhatsApp, onConvert }: KanbanCardProps) {
+export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onWhatsApp, onConvert }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sale.id,
     data: { type: 'card', sale },
