@@ -11,11 +11,12 @@ interface KanbanBoardProps {
   sales: KanbanSale[];
   onMoveCard: (saleId: string, newStatus: string) => void;
   onViewSale: (id: string) => void;
+  onDuplicate?: (sale: KanbanSale) => void;
   onWhatsApp?: (sale: KanbanSale) => void;
   onConvert?: (sale: KanbanSale) => void;
 }
 
-export default function KanbanBoard({ columns, sales, onMoveCard, onViewSale, onWhatsApp, onConvert }: KanbanBoardProps) {
+export default function KanbanBoard({ columns, sales, onMoveCard, onViewSale, onDuplicate, onWhatsApp, onConvert }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
