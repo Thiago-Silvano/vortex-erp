@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Plus, Search, LayoutGrid, List, Eye, Trash2, Filter, X,
   MapPin, Users, Calendar, DollarSign, AlertTriangle, Clock,
-  Plane, Hotel, Car, Ticket, FileText, Link2, MessageCircle,
+  Plane, Hotel, Car, Ticket, FileText, Link2, MessageCircle, Copy,
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
