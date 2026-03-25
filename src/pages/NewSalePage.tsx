@@ -1959,7 +1959,40 @@ export default function NewSalePage() {
                   <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  <div><Label className="text-xs">Nome</Label><Input value={pax.first_name} onChange={e => updatePassenger(idx, 'first_name', e.target.value)} placeholder="Nome" /></div>
+                  <div className="relative">
+                    <Label className="text-xs">Nome</Label>
+                    <Input 
+                      value={pax.first_name} 
+                      onChange={e => { 
+                        updatePassenger(idx, 'first_name', e.target.value); 
+                        setPassengerSearchTerm(e.target.value);
+                        setPassengerSearchOpen(e.target.value.length >= 2 ? idx : null);
+                      }} 
+                      onFocus={() => { if (pax.first_name.length >= 2) { setPassengerSearchTerm(pax.first_name); setPassengerSearchOpen(idx); } }}
+                      onBlur={() => setTimeout(() => setPassengerSearchOpen(null), 200)}
+                      placeholder="Nome" 
+                      autoComplete="off"
+                    />
+                    {passengerSearchOpen === idx && passengerSearchTerm.length >= 2 && (() => {
+                      const filtered = allClients.filter(c => c.full_name.toLowerCase().includes(passengerSearchTerm.toLowerCase())).slice(0, 5);
+                      if (filtered.length === 0) return null;
+                      return (
+                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md max-h-40 overflow-y-auto">
+                          {filtered.map(c => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                              onMouseDown={(e) => { e.preventDefault(); fillPassengerFromClient(idx, c); setPassengerSearchOpen(null); }}
+                            >
+                              {c.full_name}
+                              {c.cpf && <span className="text-xs text-muted-foreground ml-2">({c.cpf})</span>}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
                   <div><Label className="text-xs">Sobrenome</Label><Input value={pax.last_name} onChange={e => updatePassenger(idx, 'last_name', e.target.value)} placeholder="Sobrenome" /></div>
                   <div><Label className="text-xs">Data de Nascimento</Label><Input type="date" value={pax.birth_date} onChange={e => updatePassenger(idx, 'birth_date', e.target.value)} /></div>
                   <div>
