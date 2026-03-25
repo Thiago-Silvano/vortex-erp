@@ -695,6 +695,49 @@ export default function NewSalePage() {
     }]);
   };
 
+  const addClientAsPassenger = (client: ClientOption) => {
+    const nameParts = client.full_name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const hasPassport = !!client.passport_number;
+    setPassengers(prev => {
+      const alreadyExists = prev.some(p => 
+        `${p.first_name} ${p.last_name}`.trim().toLowerCase() === client.full_name.trim().toLowerCase()
+      );
+      if (alreadyExists) return prev;
+      return [...prev, {
+        first_name: firstName,
+        last_name: lastName,
+        birth_date: client.birth_date || '',
+        document_type: hasPassport ? 'passaporte' as const : 'cpf' as const,
+        document_number: hasPassport ? (client.passport_number || '') : (client.cpf || ''),
+        document_expiry: hasPassport ? (client.passport_expiry_date || '') : '',
+        email: client.email || '',
+        phone: client.phone || '',
+        is_main: prev.length === 0,
+        eticket_number: '',
+      }];
+    });
+  };
+
+  const fillPassengerFromClient = (idx: number, client: ClientOption) => {
+    const nameParts = client.full_name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const hasPassport = !!client.passport_number;
+    setPassengers(prev => prev.map((p, i) => i === idx ? {
+      ...p,
+      first_name: firstName,
+      last_name: lastName,
+      birth_date: client.birth_date || '',
+      document_type: hasPassport ? 'passaporte' as const : 'cpf' as const,
+      document_number: hasPassport ? (client.passport_number || '') : (client.cpf || ''),
+      document_expiry: hasPassport ? (client.passport_expiry_date || '') : '',
+      email: client.email || '',
+      phone: client.phone || '',
+    } : p));
+  };
+
   const updatePassenger = (idx: number, field: keyof Passenger, value: any) => {
     setPassengers(prev => prev.map((p, i) => {
       if (i !== idx) return field === 'is_main' && value === true ? { ...p, is_main: false } : p;
