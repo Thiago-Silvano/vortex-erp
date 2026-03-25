@@ -162,7 +162,16 @@ export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onW
             </TooltipTrigger>
             <TooltipContent>Link interativo</TooltipContent>
           </Tooltip>
-          {onWhatsApp && (
+          {onDuplicate && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onDuplicate(sale); }}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Duplicar</TooltipContent>
+            </Tooltip>
+          )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-600" onClick={(e) => { e.stopPropagation(); onWhatsApp(sale); }}>
