@@ -1772,7 +1772,11 @@ export default function NewSalePage() {
                           <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
                           <CommandGroup>
                             {allClients.map(c => (
-                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { setClientName(c.full_name); setClientPopoverOpen(false); }}>
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { 
+                                setClientName(c.full_name); 
+                                setClientPopoverOpen(false); 
+                                setAskAddClientAsPassenger(c);
+                              }}>
                                 {c.full_name}
                               </CommandItem>
                             ))}
