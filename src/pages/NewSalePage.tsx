@@ -3041,7 +3041,7 @@ export default function NewSalePage() {
           </AlertDialogContent>
         </AlertDialog>
 
-
+        <PdfImportModal
           open={pdfImportOpen}
           onClose={() => setPdfImportOpen(false)}
           serviceCatalog={serviceCatalog}
