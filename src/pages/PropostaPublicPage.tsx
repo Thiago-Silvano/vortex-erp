@@ -215,10 +215,21 @@ export default function PropostaPublicPage() {
     );
   }
 
-  // Filter items by selected option if options exist
-  const filteredItems = quoteOptions.length > 1 && selectedOptionId
+  // Filter items by selected option if options exist, then deduplicate by description+metadata fingerprint
+  const rawFilteredItems = quoteOptions.length > 1 && selectedOptionId
     ? items.filter(i => i.quote_option_id === selectedOptionId)
     : items;
+  
+  // Deduplicate items that may have been saved multiple times for the same option
+  const filteredItems = (() => {
+    const seen = new Set<string>();
+    return rawFilteredItems.filter(item => {
+      const fp = `${item.description}|${item.total_value}|${item.service_catalog_id || ''}|${JSON.stringify(item.metadata || {})}`;
+      if (seen.has(fp)) return false;
+      seen.add(fp);
+      return true;
+    });
+  })();
 
   const totalSale = filteredItems.reduce((s, i) => s + i.total_value, 0);
   const destination = (sale as any).destination_name || quoteData?.trip_destination || '';

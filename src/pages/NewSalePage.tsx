@@ -1046,9 +1046,11 @@ export default function NewSalePage() {
       // Expand items with multiple quote_option_ids into separate rows
       const expandedItems: { item: SaleItem; idx: number; optionId: string | null }[] = [];
       items.forEach((item, idx) => {
-        const optionIds = item.quote_option_ids && item.quote_option_ids.length > 0
+        const rawIds = item.quote_option_ids && item.quote_option_ids.length > 0
           ? item.quote_option_ids
           : item.quote_option_id ? [item.quote_option_id] : [null as any];
+        // Deduplicate option IDs to prevent duplicate rows for the same option
+        const optionIds = [...new Set(rawIds)];
         for (const optId of optionIds) {
           expandedItems.push({ item, idx, optionId: optId });
         }
@@ -3039,7 +3041,7 @@ export default function NewSalePage() {
           </AlertDialogContent>
         </AlertDialog>
 
-
+        <PdfImportModal
           open={pdfImportOpen}
           onClose={() => setPdfImportOpen(false)}
           serviceCatalog={serviceCatalog}
