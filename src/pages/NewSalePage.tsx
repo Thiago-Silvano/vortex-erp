@@ -190,6 +190,8 @@ export default function NewSalePage() {
   const [passengerSearchOpen, setPassengerSearchOpen] = useState<number | null>(null);
   const [passengerSearchTerm, setPassengerSearchTerm] = useState('');
   const [contractInfo, setContractInfo] = useState<{ status?: string; sentAt?: string | null; viewedAt?: string | null; signedAt?: string | null }>({});
+  const [clientChoices, setClientChoices] = useState<any[]>([]);
+  const [showChoicesModal, setShowChoicesModal] = useState(false);
 
   const isQuoteMode = saleStatus !== 'active';
 
