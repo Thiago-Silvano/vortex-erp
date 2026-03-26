@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Save, Building2 } from 'lucide-react';
-import { maskCnpj, maskCep, maskPhone } from '@/lib/masks';
+import { maskCnpj, maskPhone } from '@/lib/masks';
 
 function maskCnpj2(v: string) {
   const d = v.replace(/\D/g, '').slice(0, 14);
