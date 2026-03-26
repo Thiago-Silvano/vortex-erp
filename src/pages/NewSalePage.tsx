@@ -2406,13 +2406,14 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base">Forma de Pagamento</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
               {[
                 { value: 'pix', label: 'Pix' },
                 { value: 'dinheiro', label: 'Dinheiro' },
                 { value: 'boleto', label: 'Boleto' },
                 { value: 'credito', label: 'Cartão de Crédito' },
                 { value: 'debito', label: 'Cartão de Débito' },
+                { value: 'operadora', label: 'Pgto Operadora' },
               ].map(opt => (
                 <Button key={opt.value} variant={paymentMethods.includes(opt.value) ? 'default' : 'outline'} className="w-full" onClick={() => setPaymentMethods(prev => prev.includes(opt.value) ? (prev.length > 1 ? prev.filter(m => m !== opt.value) : prev) : [...prev, opt.value])}>
                   {paymentMethods.includes(opt.value) && <span className="mr-1">✓</span>}{opt.label}
