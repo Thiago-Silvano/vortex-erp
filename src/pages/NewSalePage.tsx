@@ -2996,6 +2996,15 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Nota Fiscal</CardTitle></CardHeader>
           <CardContent className="space-y-3">
+            {editSaleId && (
+              <Button
+                variant="outline"
+                className="w-full justify-center gap-2"
+                onClick={() => navigate('/nfse/emit', { state: { saleId: editSaleId } })}
+              >
+                <Send className="h-4 w-4" /> Emitir NFS-e
+              </Button>
+            )}
             <div>
               <Label className="text-sm">Enviar PDF da Nota Fiscal</Label>
               <Input type="file" accept="application/pdf" onChange={handleInvoiceUpload} disabled={uploadingInvoice} />
