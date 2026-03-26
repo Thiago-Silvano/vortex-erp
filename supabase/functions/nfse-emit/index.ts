@@ -189,9 +189,9 @@ serve(async (req) => {
             numero_nfse: simulatedResponse.numero_nfse,
             chave: simulatedResponse.chave,
             protocolo: simulatedResponse.protocolo,
-            message: ambiente === "homologacao"
-              ? "NFS-e emitida em HOMOLOGAÇÃO (simulação). Para produção, configure o ambiente e certificado real."
-              : "NFS-e emitida com sucesso.",
+            message: isProducao
+              ? "NFS-e emitida com sucesso em PRODUÇÃO."
+              : "NFS-e emitida em HOMOLOGAÇÃO (simulação). Para produção, configure o ambiente e certificado real.",
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
