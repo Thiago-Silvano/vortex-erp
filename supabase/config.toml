@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.reservation-reminder]
 verify_jwt = false
+
+[functions.nfse-certificate]
+verify_jwt = false
+
+[functions.nfse-emit]
+verify_jwt = false
