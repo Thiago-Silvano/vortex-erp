@@ -68,6 +68,15 @@ import ContractsDashboardPage from "./pages/ContractsDashboardPage";
 import ContractSignPage from "./pages/ContractSignPage";
 import BundleSignPage from "./pages/BundleSignPage";
 
+// NFS-e pages
+import NfseDashboardPage from "./pages/nfse/NfseDashboardPage";
+import NfseSettingsPage from "./pages/nfse/NfseSettingsPage";
+import NfseCertificatePage from "./pages/nfse/NfseCertificatePage";
+import NfseServicesPage from "./pages/nfse/NfseServicesPage";
+import NfseEmitPage from "./pages/nfse/NfseEmitPage";
+import NfseListPage from "./pages/nfse/NfseListPage";
+import NfseDetailPage from "./pages/nfse/NfseDetailPage";
+
 // WhatsApp pages
 import WhatsAppInboxPage from "./pages/whatsapp/WhatsAppInboxPage";
 import WhatsAppContactsPage from "./pages/whatsapp/WhatsAppContactsPage";
