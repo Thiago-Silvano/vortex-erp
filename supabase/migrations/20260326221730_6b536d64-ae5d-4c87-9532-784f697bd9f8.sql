@@ -1,0 +1,1 @@
+ALTER TABLE public.nfse_documents ADD COLUMN IF NOT EXISTS fiscal_service_id uuid REFERENCES public.fiscal_service_mappings(id);
