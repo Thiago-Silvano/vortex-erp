@@ -468,7 +468,12 @@ export default function NewSalePage() {
   const hasBoleto = paymentMethods.includes('boleto');
   const hasDebito = paymentMethods.includes('debito');
   const hasOperadora = paymentMethods.includes('operadora');
+  const hasPix = paymentMethods.includes('pix');
+  const hasDinheiro = paymentMethods.includes('dinheiro');
+  const hasTransferencia = paymentMethods.includes('transferencia');
   const hasMachineFeeMethod = hasCredito || hasDebito || hasBoleto;
+  // Methods that show a generic installment selector (no interest, no machine fee)
+  const hasGenericInstallmentMethod = (hasPix || hasDinheiro || hasDebito) && !hasCredito && !hasBoleto && !hasOperadora;
 
   useEffect(() => {
     if (!hasCredito || !cardPaymentType) return;
@@ -541,9 +546,17 @@ export default function NewSalePage() {
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
         }
       } else {
-        // Single installment methods: pix, dinheiro, debito, transferencia
+        // Methods that now support installments: pix, dinheiro, debito, transferencia
         const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
-        recs.push({ installment_number: recIndex++, due_date: baseDate.toISOString().split('T')[0], amount: Math.round(amountPerMethod * 100) / 100, payment_method: labelMap[method] || method });
+        const numInst = installments > 0 ? installments : 1;
+        const perInstallment = amountPerMethod / numInst;
+        for (let i = 1; i <= numInst; i++) {
+          const dueDate = new Date(baseDate);
+          if (numInst > 1) {
+            dueDate.setMonth(dueDate.getMonth() + i);
+          }
+          recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method });
+        }
       }
     }
 
@@ -2442,6 +2455,30 @@ export default function NewSalePage() {
                 )}
               </div>
             </div>
+
+            {hasGenericInstallmentMethod && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Número de Parcelas</Label>
+                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Valor da Venda</Label>
+                    <Input value={fmt(totalSaleWithInterest)} disabled className="bg-muted" />
+                  </div>
+                  {installments > 1 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor por parcela</p>
+                      <p className="text-sm font-bold">{fmt(totalSaleWithInterest / installments)}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {hasCredito && (
               <div className="space-y-4 pt-4 border-t">
