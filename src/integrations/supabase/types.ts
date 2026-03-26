@@ -1500,6 +1500,246 @@ export type Database = {
           },
         ]
       }
+      fiscal_certificates: {
+        Row: {
+          arquivo_encrypted: string | null
+          arquivo_hash: string | null
+          cnpj_certificado: string | null
+          created_at: string | null
+          emissor: string | null
+          empresa_id: string
+          id: string
+          senha_encrypted: string | null
+          status: string | null
+          titular: string | null
+          updated_at: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+          validade_fim: string | null
+          validade_inicio: string | null
+          validated_at: string | null
+        }
+        Insert: {
+          arquivo_encrypted?: string | null
+          arquivo_hash?: string | null
+          cnpj_certificado?: string | null
+          created_at?: string | null
+          emissor?: string | null
+          empresa_id: string
+          id?: string
+          senha_encrypted?: string | null
+          status?: string | null
+          titular?: string | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+          validade_fim?: string | null
+          validade_inicio?: string | null
+          validated_at?: string | null
+        }
+        Update: {
+          arquivo_encrypted?: string | null
+          arquivo_hash?: string | null
+          cnpj_certificado?: string | null
+          created_at?: string | null
+          emissor?: string | null
+          empresa_id?: string
+          id?: string
+          senha_encrypted?: string | null
+          status?: string | null
+          titular?: string | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+          validade_fim?: string | null
+          validade_inicio?: string | null
+          validated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_certificates_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_companies: {
+        Row: {
+          aliquota_padrao: number | null
+          ambiente: string | null
+          bairro: string | null
+          cep: string | null
+          cnae: string | null
+          cnpj: string
+          codigo_servico: string | null
+          codigo_tributacao: string | null
+          complemento: string | null
+          created_at: string | null
+          email_fiscal: string | null
+          empresa_id: string
+          exigibilidade_iss: string | null
+          id: string
+          incidencia_tributaria: string | null
+          inscricao_municipal: string | null
+          item_lista_servico: string | null
+          logradouro: string | null
+          municipio: string | null
+          natureza_operacao: string | null
+          nome_fantasia: string
+          numero: string | null
+          observacoes_padrao: string | null
+          optante_simples: boolean | null
+          razao_social: string
+          regime_tributario: string | null
+          retencao_iss_padrao: boolean | null
+          serie_nfse: string | null
+          telefone: string | null
+          uf: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aliquota_padrao?: number | null
+          ambiente?: string | null
+          bairro?: string | null
+          cep?: string | null
+          cnae?: string | null
+          cnpj?: string
+          codigo_servico?: string | null
+          codigo_tributacao?: string | null
+          complemento?: string | null
+          created_at?: string | null
+          email_fiscal?: string | null
+          empresa_id: string
+          exigibilidade_iss?: string | null
+          id?: string
+          incidencia_tributaria?: string | null
+          inscricao_municipal?: string | null
+          item_lista_servico?: string | null
+          logradouro?: string | null
+          municipio?: string | null
+          natureza_operacao?: string | null
+          nome_fantasia?: string
+          numero?: string | null
+          observacoes_padrao?: string | null
+          optante_simples?: boolean | null
+          razao_social?: string
+          regime_tributario?: string | null
+          retencao_iss_padrao?: boolean | null
+          serie_nfse?: string | null
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aliquota_padrao?: number | null
+          ambiente?: string | null
+          bairro?: string | null
+          cep?: string | null
+          cnae?: string | null
+          cnpj?: string
+          codigo_servico?: string | null
+          codigo_tributacao?: string | null
+          complemento?: string | null
+          created_at?: string | null
+          email_fiscal?: string | null
+          empresa_id?: string
+          exigibilidade_iss?: string | null
+          id?: string
+          incidencia_tributaria?: string | null
+          inscricao_municipal?: string | null
+          item_lista_servico?: string | null
+          logradouro?: string | null
+          municipio?: string | null
+          natureza_operacao?: string | null
+          nome_fantasia?: string
+          numero?: string | null
+          observacoes_padrao?: string | null
+          optante_simples?: boolean | null
+          razao_social?: string
+          regime_tributario?: string | null
+          retencao_iss_padrao?: boolean | null
+          serie_nfse?: string | null
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_companies_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_service_mappings: {
+        Row: {
+          aliquota: number | null
+          categoria: string | null
+          codigo_servico: string | null
+          created_at: string | null
+          descricao_fiscal: string | null
+          empresa_id: string
+          id: string
+          is_active: boolean | null
+          item_lista_lc116: string | null
+          municipio_incidencia: string | null
+          nome_interno: string
+          observacoes: string | null
+          retencao_iss: boolean | null
+          service_catalog_id: string | null
+          tributacao: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aliquota?: number | null
+          categoria?: string | null
+          codigo_servico?: string | null
+          created_at?: string | null
+          descricao_fiscal?: string | null
+          empresa_id: string
+          id?: string
+          is_active?: boolean | null
+          item_lista_lc116?: string | null
+          municipio_incidencia?: string | null
+          nome_interno?: string
+          observacoes?: string | null
+          retencao_iss?: boolean | null
+          service_catalog_id?: string | null
+          tributacao?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aliquota?: number | null
+          categoria?: string | null
+          codigo_servico?: string | null
+          created_at?: string | null
+          descricao_fiscal?: string | null
+          empresa_id?: string
+          id?: string
+          is_active?: boolean | null
+          item_lista_lc116?: string | null
+          municipio_incidencia?: string | null
+          nome_interno?: string
+          observacoes?: string | null
+          retencao_iss?: boolean | null
+          service_catalog_id?: string | null
+          tributacao?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_service_mappings_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flight_legs: {
         Row: {
           arrival_date: string | null
@@ -1939,6 +2179,482 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfse_api_logs: {
+        Row: {
+          ambiente: string | null
+          created_at: string | null
+          empresa_id: string | null
+          endpoint: string | null
+          error_message: string | null
+          id: string
+          method: string | null
+          nfse_id: string | null
+          request_payload: string | null
+          response_payload: string | null
+          response_status: number | null
+          response_time_ms: number | null
+          xml_hash: string | null
+        }
+        Insert: {
+          ambiente?: string | null
+          created_at?: string | null
+          empresa_id?: string | null
+          endpoint?: string | null
+          error_message?: string | null
+          id?: string
+          method?: string | null
+          nfse_id?: string | null
+          request_payload?: string | null
+          response_payload?: string | null
+          response_status?: number | null
+          response_time_ms?: number | null
+          xml_hash?: string | null
+        }
+        Update: {
+          ambiente?: string | null
+          created_at?: string | null
+          empresa_id?: string | null
+          endpoint?: string | null
+          error_message?: string | null
+          id?: string
+          method?: string | null
+          nfse_id?: string | null
+          request_payload?: string | null
+          response_payload?: string | null
+          response_status?: number | null
+          response_time_ms?: number | null
+          xml_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfse_api_logs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfse_api_logs_nfse_id_fkey"
+            columns: ["nfse_id"]
+            isOneToOne: false
+            referencedRelation: "nfse_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfse_audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          description: string | null
+          details: Json | null
+          empresa_id: string | null
+          id: string
+          ip_address: string | null
+          nfse_id: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string
+          created_at?: string | null
+          description?: string | null
+          details?: Json | null
+          empresa_id?: string | null
+          id?: string
+          ip_address?: string | null
+          nfse_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          description?: string | null
+          details?: Json | null
+          empresa_id?: string | null
+          id?: string
+          ip_address?: string | null
+          nfse_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfse_audit_logs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfse_audit_logs_nfse_id_fkey"
+            columns: ["nfse_id"]
+            isOneToOne: false
+            referencedRelation: "nfse_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfse_documents: {
+        Row: {
+          aliquota: number | null
+          ambiente: string | null
+          base_calculo: number | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          chave_nfse: string | null
+          client_id: string | null
+          codigo_servico: string | null
+          created_at: string | null
+          data_competencia: string | null
+          data_emissao: string | null
+          descricao_servico: string | null
+          emitido_por: string | null
+          empresa_id: string
+          exigibilidade_iss: string | null
+          id: string
+          iss_retido: boolean | null
+          item_lista_servico: string | null
+          motivo_cancelamento: string | null
+          motivo_rejeicao: string | null
+          motivo_rejeicao_tecnico: string | null
+          municipio_incidencia: string | null
+          natureza_operacao: string | null
+          numero_nfse: string | null
+          observacoes: string | null
+          pdf_url: string | null
+          protocolo: string | null
+          protocolo_cancelamento: string | null
+          sale_id: string | null
+          serie: string | null
+          status: string | null
+          tomador_bairro: string | null
+          tomador_cep: string | null
+          tomador_cnpj_cpf: string | null
+          tomador_complemento: string | null
+          tomador_email: string | null
+          tomador_logradouro: string | null
+          tomador_municipio: string | null
+          tomador_numero: string | null
+          tomador_razao_social: string | null
+          tomador_telefone: string | null
+          tomador_uf: string | null
+          updated_at: string | null
+          valor_deducoes: number | null
+          valor_descontos: number | null
+          valor_iss: number | null
+          valor_liquido: number | null
+          valor_servicos: number | null
+          xml_dps: string | null
+          xml_nfse_autorizada: string | null
+        }
+        Insert: {
+          aliquota?: number | null
+          ambiente?: string | null
+          base_calculo?: number | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_nfse?: string | null
+          client_id?: string | null
+          codigo_servico?: string | null
+          created_at?: string | null
+          data_competencia?: string | null
+          data_emissao?: string | null
+          descricao_servico?: string | null
+          emitido_por?: string | null
+          empresa_id: string
+          exigibilidade_iss?: string | null
+          id?: string
+          iss_retido?: boolean | null
+          item_lista_servico?: string | null
+          motivo_cancelamento?: string | null
+          motivo_rejeicao?: string | null
+          motivo_rejeicao_tecnico?: string | null
+          municipio_incidencia?: string | null
+          natureza_operacao?: string | null
+          numero_nfse?: string | null
+          observacoes?: string | null
+          pdf_url?: string | null
+          protocolo?: string | null
+          protocolo_cancelamento?: string | null
+          sale_id?: string | null
+          serie?: string | null
+          status?: string | null
+          tomador_bairro?: string | null
+          tomador_cep?: string | null
+          tomador_cnpj_cpf?: string | null
+          tomador_complemento?: string | null
+          tomador_email?: string | null
+          tomador_logradouro?: string | null
+          tomador_municipio?: string | null
+          tomador_numero?: string | null
+          tomador_razao_social?: string | null
+          tomador_telefone?: string | null
+          tomador_uf?: string | null
+          updated_at?: string | null
+          valor_deducoes?: number | null
+          valor_descontos?: number | null
+          valor_iss?: number | null
+          valor_liquido?: number | null
+          valor_servicos?: number | null
+          xml_dps?: string | null
+          xml_nfse_autorizada?: string | null
+        }
+        Update: {
+          aliquota?: number | null
+          ambiente?: string | null
+          base_calculo?: number | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          chave_nfse?: string | null
+          client_id?: string | null
+          codigo_servico?: string | null
+          created_at?: string | null
+          data_competencia?: string | null
+          data_emissao?: string | null
+          descricao_servico?: string | null
+          emitido_por?: string | null
+          empresa_id?: string
+          exigibilidade_iss?: string | null
+          id?: string
+          iss_retido?: boolean | null
+          item_lista_servico?: string | null
+          motivo_cancelamento?: string | null
+          motivo_rejeicao?: string | null
+          motivo_rejeicao_tecnico?: string | null
+          municipio_incidencia?: string | null
+          natureza_operacao?: string | null
+          numero_nfse?: string | null
+          observacoes?: string | null
+          pdf_url?: string | null
+          protocolo?: string | null
+          protocolo_cancelamento?: string | null
+          sale_id?: string | null
+          serie?: string | null
+          status?: string | null
+          tomador_bairro?: string | null
+          tomador_cep?: string | null
+          tomador_cnpj_cpf?: string | null
+          tomador_complemento?: string | null
+          tomador_email?: string | null
+          tomador_logradouro?: string | null
+          tomador_municipio?: string | null
+          tomador_numero?: string | null
+          tomador_razao_social?: string | null
+          tomador_telefone?: string | null
+          tomador_uf?: string | null
+          updated_at?: string | null
+          valor_deducoes?: number | null
+          valor_descontos?: number | null
+          valor_iss?: number | null
+          valor_liquido?: number | null
+          valor_servicos?: number | null
+          xml_dps?: string | null
+          xml_nfse_autorizada?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfse_documents_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfse_events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          nfse_id: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          nfse_id: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          nfse_id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfse_events_nfse_id_fkey"
+            columns: ["nfse_id"]
+            isOneToOne: false
+            referencedRelation: "nfse_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfse_items: {
+        Row: {
+          aliquota: number | null
+          codigo_servico: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nfse_id: string
+          quantidade: number | null
+          sale_item_id: string | null
+          valor: number | null
+          valor_iss: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          aliquota?: number | null
+          codigo_servico?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nfse_id: string
+          quantidade?: number | null
+          sale_item_id?: string | null
+          valor?: number | null
+          valor_iss?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          aliquota?: number | null
+          codigo_servico?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nfse_id?: string
+          quantidade?: number | null
+          sale_item_id?: string | null
+          valor?: number | null
+          valor_iss?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfse_items_nfse_id_fkey"
+            columns: ["nfse_id"]
+            isOneToOne: false
+            referencedRelation: "nfse_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfse_notification_logs: {
+        Row: {
+          channel: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          nfse_id: string
+          recipient: string | null
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          nfse_id: string
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          nfse_id?: string
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfse_notification_logs_nfse_id_fkey"
+            columns: ["nfse_id"]
+            isOneToOne: false
+            referencedRelation: "nfse_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfse_status_queue: {
+        Row: {
+          action: string | null
+          attempts: number | null
+          created_at: string | null
+          empresa_id: string
+          id: string
+          last_error: string | null
+          max_attempts: number | null
+          next_attempt_at: string | null
+          nfse_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          action?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          empresa_id: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number | null
+          next_attempt_at?: string | null
+          nfse_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          action?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          empresa_id?: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number | null
+          next_attempt_at?: string | null
+          nfse_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfse_status_queue_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfse_status_queue_nfse_id_fkey"
+            columns: ["nfse_id"]
+            isOneToOne: false
+            referencedRelation: "nfse_documents"
             referencedColumns: ["id"]
           },
         ]
@@ -2839,6 +3555,7 @@ export type Database = {
           destination_image_url: string | null
           destination_name: string | null
           empresa_id: string | null
+          fiscal_status: string | null
           gross_profit: number | null
           id: string
           installments: number | null
@@ -2846,6 +3563,8 @@ export type Database = {
           machine_fee: number | null
           machine_fee_supplier_id: string | null
           net_profit: number | null
+          nfse_id: string | null
+          nfse_number: string | null
           notes: string | null
           operator_taxes: number | null
           passengers_count: number | null
@@ -2885,6 +3604,7 @@ export type Database = {
           destination_image_url?: string | null
           destination_name?: string | null
           empresa_id?: string | null
+          fiscal_status?: string | null
           gross_profit?: number | null
           id?: string
           installments?: number | null
@@ -2892,6 +3612,8 @@ export type Database = {
           machine_fee?: number | null
           machine_fee_supplier_id?: string | null
           net_profit?: number | null
+          nfse_id?: string | null
+          nfse_number?: string | null
           notes?: string | null
           operator_taxes?: number | null
           passengers_count?: number | null
@@ -2931,6 +3653,7 @@ export type Database = {
           destination_image_url?: string | null
           destination_name?: string | null
           empresa_id?: string | null
+          fiscal_status?: string | null
           gross_profit?: number | null
           id?: string
           installments?: number | null
@@ -2938,6 +3661,8 @@ export type Database = {
           machine_fee?: number | null
           machine_fee_supplier_id?: string | null
           net_profit?: number | null
+          nfse_id?: string | null
+          nfse_number?: string | null
           notes?: string | null
           operator_taxes?: number | null
           passengers_count?: number | null

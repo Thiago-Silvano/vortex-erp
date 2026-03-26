@@ -68,6 +68,15 @@ import ContractsDashboardPage from "./pages/ContractsDashboardPage";
 import ContractSignPage from "./pages/ContractSignPage";
 import BundleSignPage from "./pages/BundleSignPage";
 
+// NFS-e pages
+import NfseDashboardPage from "./pages/nfse/NfseDashboardPage";
+import NfseSettingsPage from "./pages/nfse/NfseSettingsPage";
+import NfseCertificatePage from "./pages/nfse/NfseCertificatePage";
+import NfseServicesPage from "./pages/nfse/NfseServicesPage";
+import NfseEmitPage from "./pages/nfse/NfseEmitPage";
+import NfseListPage from "./pages/nfse/NfseListPage";
+import NfseDetailPage from "./pages/nfse/NfseDetailPage";
+
 // WhatsApp pages
 import WhatsAppInboxPage from "./pages/whatsapp/WhatsAppInboxPage";
 import WhatsAppContactsPage from "./pages/whatsapp/WhatsAppContactsPage";
@@ -160,6 +169,15 @@ const App = () => (
           {/* Contract templates */}
           <Route path="/contracts/templates" element={<ProtectedRoute><ContractTemplatesPage /></ProtectedRoute>} />
           <Route path="/contracts/dashboard" element={<ProtectedRoute><ContractsDashboardPage /></ProtectedRoute>} />
+
+          {/* NFS-e routes */}
+          <Route path="/nfse" element={<ProtectedRoute><NfseDashboardPage /></ProtectedRoute>} />
+          <Route path="/nfse/settings" element={<ProtectedRoute><NfseSettingsPage /></ProtectedRoute>} />
+          <Route path="/nfse/certificate" element={<ProtectedRoute><NfseCertificatePage /></ProtectedRoute>} />
+          <Route path="/nfse/services" element={<ProtectedRoute><NfseServicesPage /></ProtectedRoute>} />
+          <Route path="/nfse/emit" element={<ProtectedRoute><NfseEmitPage /></ProtectedRoute>} />
+          <Route path="/nfse/list" element={<ProtectedRoute><NfseListPage /></ProtectedRoute>} />
+          <Route path="/nfse/detail/:id" element={<ProtectedRoute><NfseDetailPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -13,7 +13,7 @@ import {
   ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
   Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
   Mail, FileEdit, MessageCircle, Search, Bell, User, Camera, Landmark, Link2, FileSpreadsheet,
-  Palette, Map, Sparkles,
+  Palette, Map, Sparkles, Receipt,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -154,6 +154,15 @@ function AppSidebar() {
     { title: 'Configurações', url: '/whatsapp/settings', icon: Settings },
   ];
 
+  const nfseItems: MenuItem[] = [
+    { title: 'Dashboard Fiscal', url: '/nfse', icon: BarChart3 },
+    { title: 'Emitir NFS-e', url: '/nfse/emit', icon: FileText },
+    { title: 'Notas Emitidas', url: '/nfse/list', icon: ClipboardList },
+    { title: 'Serviços Fiscais', url: '/nfse/services', icon: Tag },
+    { title: 'Configurações', url: '/nfse/settings', icon: Cog },
+    { title: 'Certificado Digital', url: '/nfse/certificate', icon: Receipt },
+  ];
+
   const adminItems: MenuItem[] = [
     { title: 'Configurações', url: '/settings', icon: Settings, permKey: 'settings_access' },
     { title: 'Aparência', url: '/settings/appearance', icon: Palette, permKey: 'settings_access' },
@@ -164,6 +173,7 @@ function AppSidebar() {
   const isReportsActive = location.pathname.startsWith('/reports');
   const isEmailActive = location.pathname.startsWith('/email');
   const isWhatsAppActive = location.pathname.startsWith('/whatsapp');
+  const isNfseActive = location.pathname.startsWith('/nfse');
 
   const filteredFinancial = filterItems(financialItems);
   const filteredReports = filterItems(reportItems);
@@ -255,6 +265,9 @@ function AppSidebar() {
 
         {/* Relatórios right after Calendário */}
         {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
+
+        {/* NFS-e */}
+        {renderCollapsibleGroup('NFS-e', Receipt, filterItems(nfseItems), isNfseActive)}
 
         <div className="px-3 my-1">
           <div className="h-px bg-border" />
