@@ -372,11 +372,19 @@ export default function PropostaClienteBuildsPage() {
               const isHotel = meta?.type === 'hotel';
               const typeEmoji: Record<string, string> = { aereo: '✈️', hotel: '🏨', carro: '🚗', seguro: '🛡️', experiencia: '🎟️', adicional: '📋' };
 
+              const supplierName = meta?.supplier || meta?.hotel?.supplier || '';
+              const location = meta?.location || meta?.hotel?.city || meta?.hotel?.address || '';
+              const startDate = meta?.startDate || meta?.hotel?.checkInDate || '';
+              const endDate = meta?.endDate || meta?.hotel?.checkOutDate || '';
+              const roomType = meta?.hotel?.roomType || meta?.hotel?.accommodation || '';
+              const boardType = meta?.hotel?.boardType || meta?.hotel?.regime || '';
+              const flightCode = meta?.flightCode || '';
+              const baggageInfo = meta?.baggage;
+
               return (
                 <div
                   key={item.id}
-                  onClick={() => toggleItem(item.id)}
-                  className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-300"
+                  className="rounded-2xl overflow-hidden transition-all duration-300"
                   style={{
                     background: '#fff',
                     boxShadow: isSelected ? '0 4px 24px rgba(34,197,94,0.2)' : '0 4px 24px rgba(0,0,0,0.06)',
@@ -387,16 +395,23 @@ export default function PropostaClienteBuildsPage() {
                   <div className="flex flex-col md:flex-row">
                     {/* Image */}
                     {hasImages && (
-                      <div className="relative w-full md:w-56 h-48 md:h-auto flex-shrink-0 overflow-hidden">
+                      <div
+                        className="relative w-full md:w-64 h-52 md:h-auto flex-shrink-0 overflow-hidden cursor-pointer group"
+                        onClick={() => setLightbox({ images: item.images, index: 0 })}
+                      >
                         <img
                           src={item.images[0]}
                           alt={name}
-                          className="w-full h-full object-cover"
-                          onClick={(e) => { e.stopPropagation(); setLightbox({ images: item.images, index: 0 }); }}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-10 h-10 rounded-full bg-white/80 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D1B2A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+                          </div>
+                        </div>
                         {item.images.length > 1 && (
                           <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: 'rgba(0,0,0,0.5)' }}>
-                            {item.images.length} fotos
+                            📷 {item.images.length} fotos
                           </div>
                         )}
                       </div>
@@ -413,53 +428,108 @@ export default function PropostaClienteBuildsPage() {
                                 {name}
                               </h3>
                             </div>
+
+                            {/* Detail tags */}
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {location && (
+                                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
+                                  <MapPin className="h-3 w-3" style={{ color: '#C8A45B' }} /> {location}
+                                </span>
+                              )}
+                              {startDate && (
+                                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
+                                  📅 {formatDateBR(startDate)}{endDate ? ` - ${formatDateBR(endDate)}` : ''}
+                                </span>
+                              )}
+                              {supplierName && (
+                                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
+                                  🏢 {supplierName}
+                                </span>
+                              )}
+                              {roomType && (
+                                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
+                                  🛏️ {roomType}
+                                </span>
+                              )}
+                              {boardType && (
+                                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
+                                  🍽️ {boardType}
+                                </span>
+                              )}
+                              {isHotel && meta.hotel?.stars > 0 && (
+                                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
+                                  {'⭐'.repeat(meta.hotel.stars)}
+                                </span>
+                              )}
+                              {flightCode && (
+                                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
+                                  🎫 {flightCode}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Description */}
                             {meta?.detailedDescription && (
-                              <div className="text-sm leading-relaxed mt-1 line-clamp-2" style={{ color: '#888' }}
+                              <div className="text-sm leading-relaxed mt-3 line-clamp-3" style={{ color: '#777' }}
                                 dangerouslySetInnerHTML={{ __html: meta.detailedDescription }} />
                             )}
                             {!meta?.detailedDescription && item.description && (
-                              <p className="text-sm leading-relaxed mt-1 line-clamp-2" style={{ color: '#888' }}>
+                              <p className="text-sm leading-relaxed mt-3 line-clamp-3" style={{ color: '#777' }}>
                                 {item.description}
                               </p>
                             )}
                           </div>
 
-                          {/* Selection indicator */}
-                          <div className="flex-shrink-0 flex items-center gap-3">
+                          {/* Price + Add button */}
+                          <div className="flex-shrink-0 flex flex-col items-end gap-2">
                             <span className="text-lg font-bold whitespace-nowrap" style={{ color: isSelected ? '#22c55e' : '#C8A45B' }}>
                               {fmt(item.total_value)}
                             </span>
-                            <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300"
+                            {showPerPassenger && passengersCount > 1 && (
+                              <span className="text-[10px] whitespace-nowrap" style={{ color: '#999' }}>
+                                {fmt(item.total_value / passengersCount)}/pessoa
+                              </span>
+                            )}
+                            <button
+                              onClick={() => toggleItem(item.id)}
+                              className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                               style={{
-                                background: isSelected ? '#22c55e' : '#e5e7eb',
-                                transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+                                background: isSelected ? '#22c55e' : 'linear-gradient(135deg, #C8A45B, #E8D5A3)',
+                                boxShadow: isSelected ? '0 4px 12px rgba(34,197,94,0.3)' : '0 4px 12px rgba(200,164,91,0.3)',
                               }}
+                              title={isSelected ? 'Remover seleção' : 'Adicionar à viagem'}
                             >
-                              {isSelected && <Check className="h-5 w-5 text-white" />}
-                            </div>
+                              {isSelected ? (
+                                <Check className="h-5 w-5 text-white" />
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                              )}
+                            </button>
                           </div>
                         </div>
 
-                        {/* Flight details compact */}
+                        {/* Flight legs */}
                         {isAereo && meta.flightLegs && meta.flightLegs.length > 0 && (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {meta.flightLegs.map((leg: any, i: number) => (
-                              <div key={i} className="flex items-center gap-1.5 text-xs px-2 py-1 rounded" style={{ background: '#f5f0e8', color: '#666' }}>
+                              <div key={i} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg" style={{ background: '#f5f0e8', color: '#555' }}>
                                 <Plane className="h-3 w-3" style={{ color: '#C8A45B' }} />
-                                {leg.origin} → {leg.destination}
-                                {leg.departureDate && <span className="text-[10px]" style={{ color: '#999' }}>({formatDateBR(leg.departureDate)})</span>}
+                                <span className="font-medium">{leg.origin}</span>
+                                <span style={{ color: '#C8A45B' }}>→</span>
+                                <span className="font-medium">{leg.destination}</span>
+                                {leg.departureDate && <span className="text-[10px] ml-1" style={{ color: '#999' }}>({formatDateBR(leg.departureDate)}{leg.departureTime ? ` ${leg.departureTime}` : ''})</span>}
+                                {leg.flightCode && <span className="text-[10px] ml-1 font-semibold" style={{ color: '#C8A45B' }}>{leg.flightCode}</span>}
                               </div>
                             ))}
                           </div>
                         )}
 
-                        {/* Hotel details compact */}
-                        {isHotel && meta.hotel && (
-                          <div className="mt-3 flex flex-wrap gap-2 text-xs" style={{ color: '#999' }}>
-                            {meta.hotel.stars > 0 && <span>{'⭐'.repeat(meta.hotel.stars)}</span>}
-                            {meta.hotel.checkInDate && <span>📅 {formatDateBR(meta.hotel.checkInDate)} - {formatDateBR(meta.hotel.checkOutDate)}</span>}
-                            {meta.hotel.city && <span>📍 {meta.hotel.city}</span>}
+                        {/* Baggage info */}
+                        {baggageInfo && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {baggageInfo.personalItem > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#e8f5e9', color: '#2e7d32' }}>👜 Item pessoal</span>}
+                            {baggageInfo.carryOn > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#e8f5e9', color: '#2e7d32' }}>🧳 Bagagem de mão</span>}
+                            {baggageInfo.checkedBag > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#e8f5e9', color: '#2e7d32' }}>🛄 {baggageInfo.checkedBag} despachada(s)</span>}
                           </div>
                         )}
                       </div>
