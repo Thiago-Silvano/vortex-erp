@@ -354,7 +354,7 @@ export default function NfseEmitPage() {
         navigate('/nfse/list');
       } else {
         // Backend returned error
-        const err = result.error;
+        const err = (result as any).error;
         const errorDisplay = mapErrorToDisplay(err);
         toast.error(errorDisplay.title + ': ' + errorDisplay.message);
 
