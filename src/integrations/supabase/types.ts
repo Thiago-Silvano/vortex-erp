@@ -2317,6 +2317,7 @@ export type Database = {
           emitido_por: string | null
           empresa_id: string
           exigibilidade_iss: string | null
+          fiscal_service_id: string | null
           id: string
           iss_retido: boolean | null
           item_lista_servico: string | null
@@ -2369,6 +2370,7 @@ export type Database = {
           emitido_por?: string | null
           empresa_id: string
           exigibilidade_iss?: string | null
+          fiscal_service_id?: string | null
           id?: string
           iss_retido?: boolean | null
           item_lista_servico?: string | null
@@ -2421,6 +2423,7 @@ export type Database = {
           emitido_por?: string | null
           empresa_id?: string
           exigibilidade_iss?: string | null
+          fiscal_service_id?: string | null
           id?: string
           iss_retido?: boolean | null
           item_lista_servico?: string | null
@@ -2463,6 +2466,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfse_documents_fiscal_service_id_fkey"
+            columns: ["fiscal_service_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_service_mappings"
             referencedColumns: ["id"]
           },
         ]
