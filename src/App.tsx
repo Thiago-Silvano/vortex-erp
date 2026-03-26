@@ -169,6 +169,15 @@ const App = () => (
           {/* Contract templates */}
           <Route path="/contracts/templates" element={<ProtectedRoute><ContractTemplatesPage /></ProtectedRoute>} />
           <Route path="/contracts/dashboard" element={<ProtectedRoute><ContractsDashboardPage /></ProtectedRoute>} />
+
+          {/* NFS-e routes */}
+          <Route path="/nfse" element={<ProtectedRoute><NfseDashboardPage /></ProtectedRoute>} />
+          <Route path="/nfse/settings" element={<ProtectedRoute><NfseSettingsPage /></ProtectedRoute>} />
+          <Route path="/nfse/certificate" element={<ProtectedRoute><NfseCertificatePage /></ProtectedRoute>} />
+          <Route path="/nfse/services" element={<ProtectedRoute><NfseServicesPage /></ProtectedRoute>} />
+          <Route path="/nfse/emit" element={<ProtectedRoute><NfseEmitPage /></ProtectedRoute>} />
+          <Route path="/nfse/list" element={<ProtectedRoute><NfseListPage /></ProtectedRoute>} />
+          <Route path="/nfse/detail/:id" element={<ProtectedRoute><NfseDetailPage /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
