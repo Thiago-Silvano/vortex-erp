@@ -2456,6 +2456,30 @@ export default function NewSalePage() {
               </div>
             </div>
 
+            {hasGenericInstallmentMethod && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Número de Parcelas</Label>
+                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Valor da Venda</Label>
+                    <Input value={fmt(totalSaleWithInterest)} disabled className="bg-muted" />
+                  </div>
+                  {installments > 1 && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor por parcela</p>
+                      <p className="text-sm font-bold">{fmt(totalSaleWithInterest / installments)}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {hasCredito && (
               <div className="space-y-4 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
