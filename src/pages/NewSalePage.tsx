@@ -1733,19 +1733,6 @@ export default function NewSalePage() {
     }
   };
 
-  const [clientChoices, setClientChoices] = useState<any[]>([]);
-  const [showChoicesModal, setShowChoicesModal] = useState(false);
-
-  useEffect(() => {
-    if (!editSaleId) return;
-    (supabase.from('client_proposal_choices' as any) as any)
-      .select('*')
-      .eq('sale_id', editSaleId)
-      .order('submitted_at', { ascending: false })
-      .then(({ data }: any) => {
-        if (data) setClientChoices(data);
-      });
-  }, [editSaleId]);
 
   const getServiceTypeLabel = (metadata?: ServiceMetadata) => {
     if (!metadata?.type) return null;
