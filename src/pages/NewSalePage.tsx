@@ -467,6 +467,7 @@ export default function NewSalePage() {
   const hasCredito = paymentMethods.includes('credito');
   const hasBoleto = paymentMethods.includes('boleto');
   const hasDebito = paymentMethods.includes('debito');
+  const hasOperadora = paymentMethods.includes('operadora');
   const hasMachineFeeMethod = hasCredito || hasDebito || hasBoleto;
 
   useEffect(() => {
