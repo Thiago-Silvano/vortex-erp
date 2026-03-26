@@ -467,6 +467,7 @@ export default function NewSalePage() {
   const hasCredito = paymentMethods.includes('credito');
   const hasBoleto = paymentMethods.includes('boleto');
   const hasDebito = paymentMethods.includes('debito');
+  const hasOperadora = paymentMethods.includes('operadora');
   const hasMachineFeeMethod = hasCredito || hasDebito || hasBoleto;
 
   useEffect(() => {
@@ -491,12 +492,26 @@ export default function NewSalePage() {
     const baseDate = new Date(saleDate || new Date());
     let recIndex = 1;
 
+    // For "operadora" payment, receivables are only for the gross commission
+    const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
+    const baseAmount = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
+
     // Split total equally among selected payment methods
     const methodCount = paymentMethods.length;
-    const amountPerMethod = methodCount > 0 ? totalSaleWithInterest / methodCount : totalSaleWithInterest;
+    const amountPerMethod = methodCount > 0 ? baseAmount / methodCount : baseAmount;
 
     for (const method of paymentMethods) {
-      if (method === 'boleto' && installments > 1) {
+      if (method === 'operadora') {
+        // Operadora: generate receivables for commission only, supports installments
+        const operadoraAmount = amountPerMethod;
+        const numInst = installments > 0 ? installments : 1;
+        const perInstallment = operadoraAmount / numInst;
+        for (let i = 1; i <= numInst; i++) {
+          const dueDate = new Date(baseDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+          recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
+        }
+      } else if (method === 'boleto' && installments > 1) {
         // Boleto with installments
         const boletoAmount = amountPerMethod;
         if (boletoInterestRate > 0) {
@@ -533,11 +548,11 @@ export default function NewSalePage() {
     }
 
     if (recs.length === 0) {
-      recs.push({ installment_number: 1, due_date: '', amount: totalSaleWithInterest });
+      recs.push({ installment_number: 1, due_date: '', amount: baseAmount });
     }
 
     setReceivables(recs);
-  }, [installments, paymentMethods, totalSaleWithInterest, boletoInterestRate, saleDate, hasCredito, hasBoleto]);
+  }, [installments, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
@@ -1138,49 +1153,55 @@ export default function NewSalePage() {
   };
 
   const generatePayablesForSale = async (saleId: string) => {
-    if (supplierPayments.length > 0) {
-      const payables: any[] = [];
-      for (const sp of supplierPayments) {
-        if (sp.amount <= 0) continue;
-          const desc = sp.description || 'Pagamento de operadoras';
-          if (sp.payment_method === 'pix') {
-            payables.push({
-              sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
-              due_date: sp.payment_date, description: `${desc} - ${clientName} (Pix)`,
-              status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-              installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
-            });
-          } else if (sp.payment_method === 'faturado') {
-            payables.push({
-              sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
-              due_date: sp.installment_dates[0]?.date || sp.payment_date,
-              description: `${desc} - ${clientName} (Faturado)`,
-              status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-              installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
-            });
-          } else if (sp.payment_method === 'credito') {
-            sp.installment_dates.forEach((inst, idx) => {
+    // When "operadora" is the only payment method, skip supplier payables entirely
+    // (client pays the supplier directly; we only receive the commission)
+    const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
+
+    if (!isOperadoraOnly) {
+      if (supplierPayments.length > 0) {
+        const payables: any[] = [];
+        for (const sp of supplierPayments) {
+          if (sp.amount <= 0) continue;
+            const desc = sp.description || 'Pagamento de operadoras';
+            if (sp.payment_method === 'pix') {
               payables.push({
-                sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
-                due_date: inst.date, description: `${desc} - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
+                sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+                due_date: sp.payment_date, description: `${desc} - ${clientName} (Pix)`,
                 status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
-                installment_number: idx + 1, total_installments: sp.installments, cost_center_id: sp.cost_center_id || null,
+                installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
               });
-            });
-          }
+            } else if (sp.payment_method === 'faturado') {
+              payables.push({
+                sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+                due_date: sp.installment_dates[0]?.date || sp.payment_date,
+                description: `${desc} - ${clientName} (Faturado)`,
+                status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+                installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
+              });
+            } else if (sp.payment_method === 'credito') {
+              sp.installment_dates.forEach((inst, idx) => {
+                payables.push({
+                  sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
+                  due_date: inst.date, description: `${desc} - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
+                  status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
+                  installment_number: idx + 1, total_installments: sp.installments, cost_center_id: sp.cost_center_id || null,
+                });
+              });
+            }
+        }
+        if (payables.length > 0) {
+          const { error } = await supabase.from('accounts_payable').insert(payables);
+          if (error) console.error('Erro ao gerar contas a pagar:', error);
+        }
+      } else if (totalCost > 0 && selectedSupplierIds.length > 0) {
+        const costPerSupplier = totalCost / selectedSupplierIds.length;
+        const { error } = await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
+          sale_id: saleId, supplier_id: sid, amount: costPerSupplier,
+          due_date: saleDate, description: `Venda - ${clientName}`, status: 'open', origin_type: 'sale',
+          empresa_id: activeCompany?.id || null,
+        })));
+        if (error) console.error('Erro ao gerar contas a pagar fallback:', error);
       }
-      if (payables.length > 0) {
-        const { error } = await supabase.from('accounts_payable').insert(payables);
-        if (error) console.error('Erro ao gerar contas a pagar:', error);
-      }
-    } else if (totalCost > 0 && selectedSupplierIds.length > 0) {
-      const costPerSupplier = totalCost / selectedSupplierIds.length;
-      const { error } = await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
-        sale_id: saleId, supplier_id: sid, amount: costPerSupplier,
-        due_date: saleDate, description: `Venda - ${clientName}`, status: 'open', origin_type: 'sale',
-        empresa_id: activeCompany?.id || null,
-      })));
-      if (error) console.error('Erro ao gerar contas a pagar fallback:', error);
     }
 
     // Machine fee as accounts payable
@@ -2391,13 +2412,14 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base">Forma de Pagamento</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
               {[
                 { value: 'pix', label: 'Pix' },
                 { value: 'dinheiro', label: 'Dinheiro' },
                 { value: 'boleto', label: 'Boleto' },
                 { value: 'credito', label: 'Cartão de Crédito' },
                 { value: 'debito', label: 'Cartão de Débito' },
+                { value: 'operadora', label: 'Pgto Operadora' },
               ].map(opt => (
                 <Button key={opt.value} variant={paymentMethods.includes(opt.value) ? 'default' : 'outline'} className="w-full" onClick={() => setPaymentMethods(prev => prev.includes(opt.value) ? (prev.length > 1 ? prev.filter(m => m !== opt.value) : prev) : [...prev, opt.value])}>
                   {paymentMethods.includes(opt.value) && <span className="mr-1">✓</span>}{opt.label}
@@ -2472,6 +2494,26 @@ export default function NewSalePage() {
                     <p>Valor de cada parcela: <strong>{fmt(receivables[0]?.amount || 0)}</strong></p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {hasOperadora && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="p-3 rounded-lg bg-accent/50 border border-accent text-sm">
+                  <p className="font-medium text-accent-foreground">📋 Pagamento Operadora/Consolidadora</p>
+                  <p className="text-muted-foreground mt-1">O cliente paga diretamente ao fornecedor. Será gerado apenas um contas a receber do valor da comissão bruta ({fmt(grossProfit)}). Não será gerado contas a pagar do fornecedor.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Número de Parcelas</Label>
+                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div><p className="text-sm text-muted-foreground">Comissão Bruta</p><p className="text-sm font-bold text-primary">{fmt(grossProfit)}</p></div>
+                  {installments > 1 && <div><p className="text-sm text-muted-foreground">Valor por parcela</p><p className="text-sm font-bold">{fmt(grossProfit / installments)}</p></div>}
+                </div>
               </div>
             )}
 
@@ -2621,12 +2663,13 @@ export default function NewSalePage() {
           <CardHeader>
             <CardTitle className="text-base">Controle de Recebíveis</CardTitle>
             {(() => {
+               const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
                const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
-                const expectedReceivables = totalSaleWithInterest;
+                const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
                 const diff = expectedReceivables - totalReceivables;
                 return (
                   <div className="flex items-center gap-4 text-sm mt-1">
-                    <span className="text-muted-foreground">Total da Venda: <strong className="text-foreground">{fmt(totalSaleWithInterest)}</strong></span>
+                    <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
                   <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
                   {Math.abs(diff) > 0.01 ? (
                     <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
