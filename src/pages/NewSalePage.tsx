@@ -2663,12 +2663,13 @@ export default function NewSalePage() {
           <CardHeader>
             <CardTitle className="text-base">Controle de Recebíveis</CardTitle>
             {(() => {
+               const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
                const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
-                const expectedReceivables = totalSaleWithInterest;
+                const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
                 const diff = expectedReceivables - totalReceivables;
                 return (
                   <div className="flex items-center gap-4 text-sm mt-1">
-                    <span className="text-muted-foreground">Total da Venda: <strong className="text-foreground">{fmt(totalSaleWithInterest)}</strong></span>
+                    <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
                   <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
                   {Math.abs(diff) > 0.01 ? (
                     <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
