@@ -541,9 +541,17 @@ export default function NewSalePage() {
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
         }
       } else {
-        // Single installment methods: pix, dinheiro, debito, transferencia
+        // Methods that now support installments: pix, dinheiro, debito, transferencia
         const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
-        recs.push({ installment_number: recIndex++, due_date: baseDate.toISOString().split('T')[0], amount: Math.round(amountPerMethod * 100) / 100, payment_method: labelMap[method] || method });
+        const numInst = installments > 0 ? installments : 1;
+        const perInstallment = amountPerMethod / numInst;
+        for (let i = 1; i <= numInst; i++) {
+          const dueDate = new Date(baseDate);
+          if (numInst > 1) {
+            dueDate.setMonth(dueDate.getMonth() + i);
+          }
+          recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method });
+        }
       }
     }
 
