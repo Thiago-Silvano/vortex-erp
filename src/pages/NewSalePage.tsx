@@ -492,12 +492,26 @@ export default function NewSalePage() {
     const baseDate = new Date(saleDate || new Date());
     let recIndex = 1;
 
+    // For "operadora" payment, receivables are only for the gross commission
+    const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
+    const baseAmount = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
+
     // Split total equally among selected payment methods
     const methodCount = paymentMethods.length;
-    const amountPerMethod = methodCount > 0 ? totalSaleWithInterest / methodCount : totalSaleWithInterest;
+    const amountPerMethod = methodCount > 0 ? baseAmount / methodCount : baseAmount;
 
     for (const method of paymentMethods) {
-      if (method === 'boleto' && installments > 1) {
+      if (method === 'operadora') {
+        // Operadora: generate receivables for commission only, supports installments
+        const operadoraAmount = amountPerMethod;
+        const numInst = installments > 0 ? installments : 1;
+        const perInstallment = operadoraAmount / numInst;
+        for (let i = 1; i <= numInst; i++) {
+          const dueDate = new Date(baseDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+          recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
+        }
+      } else if (method === 'boleto' && installments > 1) {
         // Boleto with installments
         const boletoAmount = amountPerMethod;
         if (boletoInterestRate > 0) {
@@ -534,11 +548,11 @@ export default function NewSalePage() {
     }
 
     if (recs.length === 0) {
-      recs.push({ installment_number: 1, due_date: '', amount: totalSaleWithInterest });
+      recs.push({ installment_number: 1, due_date: '', amount: baseAmount });
     }
 
     setReceivables(recs);
-  }, [installments, paymentMethods, totalSaleWithInterest, boletoInterestRate, saleDate, hasCredito, hasBoleto]);
+  }, [installments, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
