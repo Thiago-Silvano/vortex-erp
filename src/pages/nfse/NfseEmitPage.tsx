@@ -275,6 +275,7 @@ export default function NfseEmitPage() {
         status: 'processando',
         ambiente: fiscalCompany.ambiente || 'homologacao',
         ...form,
+        fiscal_service_id: form.fiscal_service_id || null,
         base_calculo: baseCalculo,
         valor_iss: valorIss,
         valor_liquido: valorLiquido,
