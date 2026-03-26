@@ -468,7 +468,12 @@ export default function NewSalePage() {
   const hasBoleto = paymentMethods.includes('boleto');
   const hasDebito = paymentMethods.includes('debito');
   const hasOperadora = paymentMethods.includes('operadora');
+  const hasPix = paymentMethods.includes('pix');
+  const hasDinheiro = paymentMethods.includes('dinheiro');
+  const hasTransferencia = paymentMethods.includes('transferencia');
   const hasMachineFeeMethod = hasCredito || hasDebito || hasBoleto;
+  // Methods that show a generic installment selector (no interest, no machine fee)
+  const hasGenericInstallmentMethod = (hasPix || hasDinheiro || hasDebito) && !hasCredito && !hasBoleto && !hasOperadora;
 
   useEffect(() => {
     if (!hasCredito || !cardPaymentType) return;
