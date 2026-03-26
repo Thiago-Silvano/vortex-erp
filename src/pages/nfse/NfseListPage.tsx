@@ -77,7 +77,7 @@ export default function NfseListPage() {
         });
 
         if (!result.success) {
-          const display = mapErrorToDisplay(result.error);
+          const display = mapErrorToDisplay((result as any).error);
           toast.error(display.title + ': ' + display.message);
           return;
         }
