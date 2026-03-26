@@ -266,6 +266,9 @@ function AppSidebar() {
         {/* Relatórios right after Calendário */}
         {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
 
+        {/* NFS-e */}
+        {renderCollapsibleGroup('NFS-e', Receipt, filterItems(nfseItems), isNfseActive)}
+
         <div className="px-3 my-1">
           <div className="h-px bg-border" />
         </div>
