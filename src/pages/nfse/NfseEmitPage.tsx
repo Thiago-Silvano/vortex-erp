@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -10,23 +10,29 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Send, Save, FileText, Loader2, CheckCircle2, AlertTriangle, Building2, User } from 'lucide-react';
+import { Send, Save, FileText, Loader2, CheckCircle2, AlertTriangle, User, ChevronsUpDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function NfseEmitPage() {
   const { activeCompany } = useCompany();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
-  const saleId = searchParams.get('sale_id');
+  const saleId = searchParams.get('sale_id') || (location.state as any)?.saleId || null;
 
   const [fiscalCompany, setFiscalCompany] = useState<any>(null);
   const [fiscalServices, setFiscalServices] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [clientOpen, setClientOpen] = useState(false);
   const [emitting, setEmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [step, setStep] = useState<'form' | 'preparing' | 'signing' | 'transmitting' | 'result'>('form');
   const [result, setResult] = useState<any>(null);
+  const [isCommissionPayment, setIsCommissionPayment] = useState(false);
 
   const [form, setForm] = useState({
     tomador_cnpj_cpf: '', tomador_razao_social: '', tomador_email: '',
@@ -44,12 +50,23 @@ export default function NfseEmitPage() {
   useEffect(() => {
     if (activeCompany) {
       loadFiscalData();
+      loadClients();
     }
   }, [activeCompany]);
 
   useEffect(() => {
     if (saleId && activeCompany) loadSaleData();
   }, [saleId, activeCompany]);
+
+  const loadClients = async () => {
+    if (!activeCompany) return;
+    const { data } = await supabase
+      .from('clients')
+      .select('id, full_name, cpf, email, phone, address, address_number, complement, neighborhood, city, state, cep')
+      .eq('empresa_id', activeCompany.id)
+      .order('full_name');
+    setClients(data || []);
+  };
 
   const loadFiscalData = async () => {
     if (!activeCompany) return;
@@ -81,36 +98,107 @@ export default function NfseEmitPage() {
     setFiscalServices(fs || []);
   };
 
+  const fillClientData = (client: any) => {
+    setForm(p => ({
+      ...p,
+      tomador_cnpj_cpf: client.cpf || '',
+      tomador_razao_social: client.full_name || '',
+      tomador_email: client.email || '',
+      tomador_telefone: client.phone || '',
+      tomador_logradouro: client.address || '',
+      tomador_numero: client.address_number || '',
+      tomador_complemento: client.complement || '',
+      tomador_bairro: client.neighborhood || '',
+      tomador_municipio: client.city || '',
+      tomador_uf: client.state || '',
+      tomador_cep: client.cep || '',
+    }));
+  };
+
+  const fillSupplierData = (supplier: any) => {
+    setForm(p => ({
+      ...p,
+      tomador_cnpj_cpf: supplier.cnpj || '',
+      tomador_razao_social: supplier.razao_social || supplier.name || '',
+      tomador_email: supplier.email || '',
+      tomador_telefone: supplier.phone || '',
+      tomador_logradouro: supplier.address || '',
+      tomador_numero: supplier.address_number || '',
+      tomador_complemento: supplier.complement || '',
+      tomador_bairro: supplier.neighborhood || '',
+      tomador_municipio: supplier.city || '',
+      tomador_uf: supplier.state || '',
+      tomador_cep: supplier.cep || '',
+    }));
+  };
+
   const loadSaleData = async () => {
     if (!saleId) return;
     const { data: sale } = await supabase.from('sales').select('*').eq('id', saleId).single();
     if (!sale) return;
 
-    // Load client
-    if ((sale as any).client_id) {
-      const { data: client } = await supabase.from('clients').select('*').eq('id', (sale as any).client_id).single();
-      if (client) {
-        setForm(p => ({
-          ...p,
-          tomador_cnpj_cpf: (client as any).cpf || '',
-          tomador_razao_social: (client as any).full_name || '',
-          tomador_email: (client as any).email || '',
-          tomador_telefone: (client as any).phone || '',
-          tomador_logradouro: (client as any).address || '',
-          tomador_numero: (client as any).address_number || '',
-          tomador_complemento: (client as any).complement || '',
-          tomador_bairro: (client as any).neighborhood || '',
-          tomador_municipio: (client as any).city || '',
-          tomador_uf: (client as any).state || '',
-          tomador_cep: (client as any).cep || '',
-        }));
+    const paymentMethod = (sale as any).payment_method || '';
+    const isOperadora = paymentMethod === 'operadora';
+    setIsCommissionPayment(isOperadora);
+
+    if (isOperadora) {
+      // Commission-only: fill with supplier data and use commission as value
+      const { data: saleSuppliers } = await supabase
+        .from('sale_suppliers')
+        .select('supplier_id')
+        .eq('sale_id', saleId);
+
+      if (saleSuppliers && saleSuppliers.length > 0) {
+        const { data: supplier } = await supabase
+          .from('suppliers')
+          .select('*')
+          .eq('id', saleSuppliers[0].supplier_id)
+          .single();
+        if (supplier) {
+          fillSupplierData(supplier);
+        }
       }
+
+      // Value = commission (gross profit)
+      const commissionValue = (sale as any).commission_value || (sale as any).gross_profit || 0;
+      setForm(p => ({ ...p, valor_servicos: commissionValue }));
+    } else {
+      // Normal: fill with client data
+      const clientName = (sale as any).client_name || '';
+      if (clientName) {
+        const { data: client } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('empresa_id', activeCompany!.id)
+          .ilike('full_name', clientName)
+          .single();
+        if (client) {
+          fillClientData(client);
+        } else {
+          setForm(p => ({ ...p, tomador_razao_social: clientName }));
+        }
+      }
+
+      // Load items total
+      const { data: items } = await supabase.from('sale_items').select('*').eq('sale_id', saleId);
+      const total = (items || []).reduce((s: number, i: any) => s + (i.total_value || 0), 0);
+      setForm(p => ({ ...p, valor_servicos: total }));
     }
 
-    // Load items total
-    const { data: items } = await supabase.from('sale_items').select('*').eq('sale_id', saleId);
-    const total = (items || []).reduce((s: number, i: any) => s + (i.total_value || 0), 0);
-    setForm(p => ({ ...p, valor_servicos: total }));
+    // Build description from sale items
+    const { data: items } = await supabase.from('sale_items').select('description').eq('sale_id', saleId);
+    if (items && items.length > 0) {
+      const desc = items.map((i: any) => i.description).filter(Boolean).join('; ');
+      setForm(p => ({ ...p, descricao_servico: p.descricao_servico || desc }));
+    }
+  };
+
+  const handleClientSelect = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      fillClientData(client);
+    }
+    setClientOpen(false);
   };
 
   const handleFiscalServiceChange = (id: string) => {
@@ -181,7 +269,6 @@ export default function NfseEmitPage() {
     try {
       const { data: user } = await supabase.auth.getUser();
 
-      // Save document
       const { data: doc, error: docErr } = await supabase.from('nfse_documents').insert({
         empresa_id: activeCompany.id,
         sale_id: saleId || null,
@@ -201,7 +288,6 @@ export default function NfseEmitPage() {
 
       setStep('transmitting');
 
-      // Call edge function to build DPS, sign and transmit
       const { data: emitResult, error: emitErr } = await supabase.functions.invoke('nfse-emit', {
         body: { nfse_id: (doc as any).id, empresa_id: activeCompany.id },
       });
@@ -213,7 +299,6 @@ export default function NfseEmitPage() {
 
       if (emitResult?.success) {
         toast.success('NFS-e emitida com sucesso!');
-        // Update sale fiscal status
         if (saleId) {
           await supabase.from('sales').update({
             fiscal_status: 'emitida',
@@ -298,6 +383,7 @@ export default function NfseEmitPage() {
             <h1 className="text-2xl font-bold text-foreground">Emissão de NFS-e</h1>
             <p className="text-sm text-muted-foreground">
               {fiscalCompany ? `${fiscalCompany.razao_social} • ${fiscalCompany.ambiente === 'producao' ? 'Produção' : 'Homologação'}` : 'Configure os dados fiscais'}
+              {isCommissionPayment && ' • Pagamento Operadora (Comissão)'}
             </p>
           </div>
           <div className="flex gap-2">
@@ -326,16 +412,56 @@ export default function NfseEmitPage() {
         {/* Tomador */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2"><User className="h-4 w-4" /> Tomador do Serviço</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <User className="h-4 w-4" /> Tomador do Serviço
+              {isCommissionPayment && (
+                <span className="text-xs font-normal text-muted-foreground ml-2">(Fornecedor — Pagamento Operadora)</span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <Label>Nome / Razão Social *</Label>
+              <Popover open={clientOpen} onOpenChange={setClientOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={clientOpen}
+                    className="w-full justify-between font-normal h-10"
+                  >
+                    {form.tomador_razao_social || 'Selecione um cliente...'}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar cliente..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {clients.map(c => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.full_name}
+                            onSelect={() => handleClientSelect(c.id)}
+                          >
+                            <Check className={cn("mr-2 h-4 w-4", form.tomador_razao_social === c.full_name ? "opacity-100" : "opacity-0")} />
+                            <div className="flex flex-col">
+                              <span>{c.full_name}</span>
+                              {c.cpf && <span className="text-xs text-muted-foreground">{c.cpf}</span>}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
             <div>
               <Label>CPF/CNPJ *</Label>
               <Input value={form.tomador_cnpj_cpf} onChange={e => updateField('tomador_cnpj_cpf', e.target.value)} />
-            </div>
-            <div className="md:col-span-2">
-              <Label>Nome / Razão Social *</Label>
-              <Input value={form.tomador_razao_social} onChange={e => updateField('tomador_razao_social', e.target.value)} />
             </div>
             <div>
               <Label>E-mail</Label>
