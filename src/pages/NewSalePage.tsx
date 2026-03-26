@@ -1719,6 +1719,34 @@ export default function NewSalePage() {
     }
   };
 
+  const handleGenerateClientBuildsLink = async () => {
+    if (!editSaleId) { toast.error('Salve a venda primeiro antes de gerar o link.'); return; }
+    const { data, error } = await (supabase.from('sales').select('short_id' as any).eq('id', editSaleId).single() as any);
+    if (error || !data?.short_id) { toast.error('Erro ao buscar código da proposta.'); return; }
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/montar-proposta/${data.short_id}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('Link "Cliente monta proposta" copiado!');
+    } catch {
+      window.prompt('Copie o link:', link);
+    }
+  };
+
+  const [clientChoices, setClientChoices] = useState<any[]>([]);
+  const [showChoicesModal, setShowChoicesModal] = useState(false);
+
+  useEffect(() => {
+    if (!editSaleId) return;
+    (supabase.from('client_proposal_choices' as any) as any)
+      .select('*')
+      .eq('sale_id', editSaleId)
+      .order('submitted_at', { ascending: false })
+      .then(({ data }: any) => {
+        if (data) setClientChoices(data);
+      });
+  }, [editSaleId]);
+
   const getServiceTypeLabel = (metadata?: ServiceMetadata) => {
     if (!metadata?.type) return null;
     const labels: Record<string, string> = { aereo: '✈️', hotel: '🏨', carro: '🚗', seguro: '🛡️', experiencia: '🎟️', adicional: '📋' };
