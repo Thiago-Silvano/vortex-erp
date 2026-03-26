@@ -148,7 +148,7 @@ export default function NfseListPage() {
         toast.success(`Status atualizado: ${display?.label || result.data.status}`);
         loadNotes();
       } else {
-        const display = mapErrorToDisplay(result.error);
+        const display = mapErrorToDisplay((result as any).error);
         toast.error(display.message);
       }
     } catch (e: any) {

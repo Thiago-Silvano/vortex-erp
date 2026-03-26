@@ -70,7 +70,7 @@ export default function NfseDetailPage() {
         toast.success('Status atualizado.');
         loadNote();
       } else {
-        toast.error(mapErrorToDisplay(result.error).message);
+        toast.error(mapErrorToDisplay((result as any).error).message);
       }
     } catch (e) {
       toast.error(mapRawErrorToMessage(e));

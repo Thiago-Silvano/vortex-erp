@@ -354,14 +354,15 @@ export default function NfseEmitPage() {
         navigate('/nfse/list');
       } else {
         // Backend returned error
-        const errorDisplay = mapErrorToDisplay(result.error);
+        const err = result.error;
+        const errorDisplay = mapErrorToDisplay(err);
         toast.error(errorDisplay.title + ': ' + errorDisplay.message);
 
         // Update status to reflect the error
         await supabase.from('nfse_documents').update({
           status: 'validation_failed',
-          motivo_rejeicao: result.error.message,
-          motivo_rejeicao_tecnico: result.error.details || result.error.code,
+          motivo_rejeicao: err.message,
+          motivo_rejeicao_tecnico: err.details || err.code,
           updated_at: new Date().toISOString(),
         }).eq('id', (doc as any).id);
       }
