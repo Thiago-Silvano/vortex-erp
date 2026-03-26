@@ -5,11 +5,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { ArrowLeft, Download, Mail, MessageCircle, XCircle, RefreshCw, FileText, Building2, User, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Download, Mail, MessageCircle, XCircle, RefreshCw, FileText, Building2, Clock, AlertTriangle, Info } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  DOCUMENT_STATUS_MAP,
+  normalizeDocumentStatus,
+  isFiscalBackendConfigured,
+  nfseApi,
+  mapErrorToDisplay,
+  mapRawErrorToMessage,
+  type NfseDocumentStatus,
+} from '@/lib/fiscal';
 
 export default function NfseDetailPage() {
   const { id } = useParams();
@@ -36,20 +44,44 @@ export default function NfseDetailPage() {
     setLoading(false);
   };
 
-  const statusBadge = (status: string) => {
-    const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      rascunho: { label: 'Rascunho', variant: 'secondary' },
-      processando: { label: 'Processando', variant: 'outline' },
-      autorizada: { label: 'Autorizada', variant: 'default' },
-      rejeitada: { label: 'Rejeitada', variant: 'destructive' },
-      cancelada: { label: 'Cancelada', variant: 'destructive' },
-    };
-    const s = map[status] || { label: status, variant: 'secondary' as const };
-    return <Badge variant={s.variant} className="text-sm">{s.label}</Badge>;
+  const statusBadge = (rawStatus: string) => {
+    const status = normalizeDocumentStatus(rawStatus);
+    const display = DOCUMENT_STATUS_MAP[status];
+    return <Badge variant={display.variant} className="text-sm">{display.label}</Badge>;
+  };
+
+  const handleCheckStatus = async () => {
+    if (!isFiscalBackendConfigured()) {
+      toast.info('Backend fiscal não conectado. Não é possível consultar status.');
+      return;
+    }
+    try {
+      const result = await nfseApi.getStatus(id!);
+      if (result.success) {
+        await supabase.from('nfse_documents').update({
+          status: result.data.status,
+          numero_nfse: result.data.numero_nfse || note.numero_nfse,
+          chave_nfse: result.data.chave_nfse || note.chave_nfse,
+          protocolo: result.data.protocolo || note.protocolo,
+          data_emissao: result.data.data_emissao || note.data_emissao,
+          motivo_rejeicao: result.data.motivo_rejeicao || null,
+          updated_at: new Date().toISOString(),
+        }).eq('id', id);
+        toast.success('Status atualizado.');
+        loadNote();
+      } else {
+        toast.error(mapErrorToDisplay(result.error).message);
+      }
+    } catch (e) {
+      toast.error(mapRawErrorToMessage(e));
+    }
   };
 
   if (loading) return <AppLayout><div className="p-6 text-muted-foreground">Carregando...</div></AppLayout>;
   if (!note) return <AppLayout><div className="p-6 text-muted-foreground">Nota não encontrada.</div></AppLayout>;
+
+  const normalizedStatus = normalizeDocumentStatus(note.status);
+  const statusDisplay = DOCUMENT_STATUS_MAP[normalizedStatus];
 
   return (
     <AppLayout>
@@ -76,15 +108,26 @@ export default function NfseDetailPage() {
             {note.pdf_url && <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" /> PDF</Button>}
             <Button variant="outline" size="sm"><Mail className="h-4 w-4 mr-1" /> E-mail</Button>
             <Button variant="outline" size="sm"><MessageCircle className="h-4 w-4 mr-1" /> WhatsApp</Button>
-            <Button variant="outline" size="sm"><RefreshCw className="h-4 w-4 mr-1" /> Consultar</Button>
-            {note.status === 'autorizada' && (
+            <Button variant="outline" size="sm" onClick={handleCheckStatus}><RefreshCw className="h-4 w-4 mr-1" /> Consultar</Button>
+            {['authorized', 'autorizada'].includes(note.status) && (
               <Button variant="destructive" size="sm"><XCircle className="h-4 w-4 mr-1" /> Cancelar</Button>
             )}
           </div>
         </div>
 
+        {/* Status description */}
+        <Card className="border-border/50">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Info className={`h-5 w-5 ${statusDisplay.color}`} />
+            <div>
+              <p className="text-sm font-medium">{statusDisplay.label}</p>
+              <p className="text-xs text-muted-foreground">{statusDisplay.description}</p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Rejection info */}
-        {note.status === 'rejeitada' && note.motivo_rejeicao && (
+        {['rejected', 'rejeitada', 'validation_failed'].includes(note.status) && note.motivo_rejeicao && (
           <Card className="border-destructive/50 bg-destructive/5">
             <CardContent className="p-4 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
@@ -100,12 +143,19 @@ export default function NfseDetailPage() {
         )}
 
         {/* Cancellation info */}
-        {note.status === 'cancelada' && (
+        {['canceled', 'cancelada', 'cancel_requested'].includes(note.status) && (
           <Card className="border-destructive/50 bg-destructive/5">
             <CardContent className="p-4">
-              <p className="text-sm font-medium text-destructive">Nota Cancelada</p>
+              <p className="text-sm font-medium text-destructive">
+                {note.status === 'cancel_requested' ? 'Cancelamento Solicitado' : 'Nota Cancelada'}
+              </p>
               <p className="text-sm">Motivo: {note.motivo_cancelamento || '—'}</p>
-              <p className="text-xs text-muted-foreground">Por {note.cancelado_por} em {note.cancelado_em ? format(new Date(note.cancelado_em), 'dd/MM/yyyy HH:mm') : '—'}</p>
+              <p className="text-xs text-muted-foreground">
+                Por {note.cancelado_por} em {note.cancelado_em ? format(new Date(note.cancelado_em), 'dd/MM/yyyy HH:mm') : '—'}
+              </p>
+              {note.protocolo_cancelamento && (
+                <p className="text-xs text-muted-foreground">Protocolo: {note.protocolo_cancelamento}</p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -119,7 +169,6 @@ export default function NfseDetailPage() {
           </TabsList>
 
           <TabsContent value="dados" className="space-y-4 mt-4">
-            {/* Prestador / Tomador side by side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Building2 className="h-4 w-4" /> Tomador</CardTitle></CardHeader>
@@ -142,7 +191,6 @@ export default function NfseDetailPage() {
               </Card>
             </div>
 
-            {/* Values */}
             <Card>
               <CardHeader><CardTitle className="text-sm">Valores</CardTitle></CardHeader>
               <CardContent>
@@ -159,7 +207,6 @@ export default function NfseDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Protocol info */}
             {(note.chave_nfse || note.protocolo) && (
               <Card>
                 <CardHeader><CardTitle className="text-sm">Protocolo</CardTitle></CardHeader>
@@ -177,7 +224,7 @@ export default function NfseDetailPage() {
               <CardHeader><CardTitle className="text-sm">XML DPS (Enviado)</CardTitle></CardHeader>
               <CardContent>
                 <pre className="text-xs bg-muted p-4 rounded-lg overflow-auto max-h-[400px] whitespace-pre-wrap font-mono">
-                  {note.xml_dps || 'Nenhum XML disponível.'}
+                  {note.xml_dps || 'Nenhum XML disponível — será gerado pelo backend fiscal externo.'}
                 </pre>
               </CardContent>
             </Card>
@@ -206,10 +253,16 @@ export default function NfseDetailPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">{ev.event_type}</span>
+                            <Badge variant="outline" className="text-[10px]">{ev.source || 'frontend'}</Badge>
                             <span className="text-xs text-muted-foreground">{format(new Date(ev.created_at), 'dd/MM/yyyy HH:mm:ss')}</span>
                           </div>
                           <p className="text-sm text-muted-foreground">{ev.description}</p>
                           {ev.user_email && <p className="text-xs text-muted-foreground">Por: {ev.user_email}</p>}
+                          {ev.previous_status && ev.new_status && (
+                            <p className="text-xs text-muted-foreground">
+                              Status: {ev.previous_status} → {ev.new_status}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -231,11 +284,13 @@ export default function NfseDetailPage() {
                         <div className="flex items-center gap-2">
                           <Badge variant="outline">{log.method}</Badge>
                           <span className="text-xs font-mono">{log.endpoint}</span>
+                          <Badge variant="outline" className="text-[10px]">{log.source || 'frontend'}</Badge>
                           <Badge variant={log.response_status && log.response_status < 300 ? 'default' : 'destructive'} className="ml-auto">
                             {log.response_status || 'N/A'}
                           </Badge>
                           <span className="text-xs text-muted-foreground">{log.response_time_ms}ms</span>
                         </div>
+                        {log.request_id && <p className="text-xs text-muted-foreground">Request ID: {log.request_id}</p>}
                         <p className="text-xs text-muted-foreground">{format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss')}</p>
                         {log.error_message && <p className="text-xs text-destructive">{log.error_message}</p>}
                       </div>
