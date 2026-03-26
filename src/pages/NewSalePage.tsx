@@ -190,6 +190,8 @@ export default function NewSalePage() {
   const [passengerSearchOpen, setPassengerSearchOpen] = useState<number | null>(null);
   const [passengerSearchTerm, setPassengerSearchTerm] = useState('');
   const [contractInfo, setContractInfo] = useState<{ status?: string; sentAt?: string | null; viewedAt?: string | null; signedAt?: string | null }>({});
+  const [clientChoices, setClientChoices] = useState<any[]>([]);
+  const [showChoicesModal, setShowChoicesModal] = useState(false);
 
   const isQuoteMode = saleStatus !== 'active';
 
@@ -202,6 +204,18 @@ export default function NewSalePage() {
         if (data && data.length > 0) {
           setContractInfo({ status: data[0].status, sentAt: data[0].sent_at, viewedAt: data[0].viewed_at, signedAt: data[0].signed_at });
         }
+      });
+  }, [editSaleId]);
+
+  // Load client proposal choices
+  useEffect(() => {
+    if (!editSaleId) return;
+    (supabase.from('client_proposal_choices' as any) as any)
+      .select('*')
+      .eq('sale_id', editSaleId)
+      .order('submitted_at', { ascending: false })
+      .then(({ data }: any) => {
+        if (data) setClientChoices(data);
       });
   }, [editSaleId]);
 
@@ -1719,6 +1733,21 @@ export default function NewSalePage() {
     }
   };
 
+  const handleGenerateClientBuildsLink = async () => {
+    if (!editSaleId) { toast.error('Salve a venda primeiro antes de gerar o link.'); return; }
+    const { data, error } = await (supabase.from('sales').select('short_id' as any).eq('id', editSaleId).single() as any);
+    if (error || !data?.short_id) { toast.error('Erro ao buscar código da proposta.'); return; }
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/montar-proposta/${data.short_id}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('Link "Cliente monta proposta" copiado!');
+    } catch {
+      window.prompt('Copie o link:', link);
+    }
+  };
+
+
   const getServiceTypeLabel = (metadata?: ServiceMetadata) => {
     if (!metadata?.type) return null;
     const labels: Record<string, string> = { aereo: '✈️', hotel: '🏨', carro: '🚗', seguro: '🛡️', experiencia: '🎟️', adicional: '📋' };
@@ -3066,6 +3095,47 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
+        {/* Client Proposal Choices */}
+        {clientChoices.length > 0 && (
+          <Card className="border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600" />
+                Escolhas do Cliente ({clientChoices.length} envio{clientChoices.length > 1 ? 's' : ''})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {clientChoices.map((choice: any, cIdx: number) => {
+                const selectedItemIds = choice.selected_item_ids as string[];
+                const chosenItems = items.filter(item => selectedItemIds.includes(item.id || ''));
+                return (
+                  <div key={cIdx} className="rounded-lg border border-emerald-200 bg-white dark:bg-background p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-muted-foreground">
+                        Enviado em {new Date(choice.submitted_at).toLocaleString('pt-BR')}
+                      </span>
+                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
+                        {fmt(choice.total_value)}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      {chosenItems.length > 0 ? chosenItems.map((item, iIdx) => (
+                        <div key={iIdx} className="flex items-center gap-2 text-sm">
+                          <span className="text-emerald-600">✓</span>
+                          <span className="text-foreground">{(item.metadata as any)?.hotel?.hotelName || (item.metadata as any)?.hotelName || item.description}</span>
+                          <span className="text-muted-foreground ml-auto tabular-nums">{fmt(item.total_value)}</span>
+                        </div>
+                      )) : (
+                        <p className="text-xs text-muted-foreground">IDs selecionados: {selectedItemIds.join(', ')}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Actions */}
         <div className="flex flex-wrap justify-end gap-2 pb-8">
           <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
@@ -3076,6 +3146,9 @@ export default function NewSalePage() {
           )}
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
+          )}
+          {editSaleId && (
+            <Button variant="outline" onClick={handleGenerateClientBuildsLink} className="w-full sm:w-auto"><Sparkles className="h-4 w-4 mr-1" /> Cliente Monta Proposta</Button>
           )}
           {isQuoteMode && (
             <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">

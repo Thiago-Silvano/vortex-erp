@@ -57,6 +57,7 @@ import EmailInboxPage from "./pages/email/EmailInboxPage";
 import EmailTemplatesPage from "./pages/email/EmailTemplatesPage";
 import EmailSettingsPage from "./pages/email/EmailSettingsPage";
 import PropostaPublicPage from "./pages/PropostaPublicPage";
+import PropostaClienteBuildsPage from "./pages/PropostaClienteBuildsPage";
 import DS160PublicPage from "./pages/DS160PublicPage";
 import DS160GroupPublicPage from "./pages/DS160GroupPublicPage";
 import VistosDS160Page from "./pages/vistos/VistosDS160Page";
@@ -149,6 +150,7 @@ const App = () => (
           <Route path="/whatsapp/settings" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
           {/* Public pages (no auth required) */}
           <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
+          <Route path="/montar-proposta/:shortId" element={<PropostaClienteBuildsPage />} />
           <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
           <Route path="/roteiro/:token" element={<ItineraryPublicPage />} />

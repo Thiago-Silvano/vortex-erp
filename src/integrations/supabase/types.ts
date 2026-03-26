@@ -457,6 +457,45 @@ export type Database = {
           },
         ]
       }
+      client_proposal_choices: {
+        Row: {
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          sale_id: string
+          selected_item_ids: Json
+          submitted_at: string
+          total_value: number
+        }
+        Insert: {
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sale_id: string
+          selected_item_ids?: Json
+          submitted_at?: string
+          total_value?: number
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sale_id?: string
+          selected_item_ids?: Json
+          submitted_at?: string
+          total_value?: number
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -2812,6 +2851,7 @@ export type Database = {
           passengers_count: number | null
           payment_method: string | null
           proposal_payment_options: Json | null
+          proposal_type: string
           quote_id: string | null
           quote_title: string | null
           sale_date: string
@@ -2857,6 +2897,7 @@ export type Database = {
           passengers_count?: number | null
           payment_method?: string | null
           proposal_payment_options?: Json | null
+          proposal_type?: string
           quote_id?: string | null
           quote_title?: string | null
           sale_date?: string
@@ -2902,6 +2943,7 @@ export type Database = {
           passengers_count?: number | null
           payment_method?: string | null
           proposal_payment_options?: Json | null
+          proposal_type?: string
           quote_id?: string | null
           quote_title?: string | null
           sale_date?: string
