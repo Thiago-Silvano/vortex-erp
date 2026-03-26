@@ -136,13 +136,15 @@ serve(async (req) => {
       //   // client certificate would be configured here
       // });
 
-      // Simulated response for development
+      // Simulated response - prefix based on environment
+      const isProducao = ambiente === 'producao';
+      const nfsePrefix = isProducao ? 'NFSE' : 'HML';
       const simulatedResponse = {
         success: true,
-        numero_nfse: `HML-${Date.now().toString().slice(-8)}`,
+        numero_nfse: `${nfsePrefix}-${Date.now().toString().slice(-8)}`,
         chave: `NFSE-${empresa_id.slice(0, 8)}-${Date.now()}`,
         protocolo: `PROT-${Date.now()}`,
-        xml_autorizada: `<!-- NFS-e Autorizada (simulação) -->\n${signedXml}`,
+        xml_autorizada: `<!-- NFS-e Autorizada (${isProducao ? 'produção' : 'simulação'}) -->\n${signedXml}`,
       };
 
       apiLogData.response_status = 200;
@@ -187,9 +189,9 @@ serve(async (req) => {
             numero_nfse: simulatedResponse.numero_nfse,
             chave: simulatedResponse.chave,
             protocolo: simulatedResponse.protocolo,
-            message: ambiente === "homologacao"
-              ? "NFS-e emitida em HOMOLOGAÇÃO (simulação). Para produção, configure o ambiente e certificado real."
-              : "NFS-e emitida com sucesso.",
+            message: isProducao
+              ? "NFS-e emitida com sucesso em PRODUÇÃO."
+              : "NFS-e emitida em HOMOLOGAÇÃO (simulação). Para produção, configure o ambiente e certificado real.",
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
