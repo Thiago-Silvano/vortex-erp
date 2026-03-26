@@ -150,6 +150,7 @@ const App = () => (
           <Route path="/whatsapp/settings" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
           {/* Public pages (no auth required) */}
           <Route path="/proposta/:shortId" element={<PropostaPublicPage />} />
+          <Route path="/montar-proposta/:shortId" element={<PropostaClienteBuildsPage />} />
           <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
           <Route path="/roteiro/:token" element={<ItineraryPublicPage />} />
