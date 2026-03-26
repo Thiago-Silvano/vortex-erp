@@ -3122,7 +3122,7 @@ export default function NewSalePage() {
                       {chosenItems.length > 0 ? chosenItems.map((item, iIdx) => (
                         <div key={iIdx} className="flex items-center gap-2 text-sm">
                           <span className="text-emerald-600">✓</span>
-                          <span className="text-foreground">{item.metadata?.hotel?.hotelName || item.metadata?.hotelName || item.description}</span>
+                          <span className="text-foreground">{(item.metadata as any)?.hotel?.hotelName || (item.metadata as any)?.hotelName || item.description}</span>
                           <span className="text-muted-foreground ml-auto tabular-nums">{fmt(item.total_value)}</span>
                         </div>
                       )) : (
