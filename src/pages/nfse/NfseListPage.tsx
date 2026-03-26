@@ -11,8 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Plus, Search, MoreHorizontal, Eye, Download, Mail, MessageCircle, RefreshCw, XCircle, Copy, ExternalLink, FileText } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, Download, Mail, MessageCircle, RefreshCw, XCircle, Copy, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  DOCUMENT_STATUS_MAP,
+  DOCUMENT_STATUS_OPTIONS,
+  normalizeDocumentStatus,
+  isFiscalBackendConfigured,
+  nfseApi,
+  mapErrorToDisplay,
+  mapRawErrorToMessage,
+  type NfseDocumentStatus,
+} from '@/lib/fiscal';
 
 export default function NfseListPage() {
   const { activeCompany } = useCompany();
@@ -43,44 +53,106 @@ export default function NfseListPage() {
     setLoading(false);
   };
 
-  const statusBadge = (status: string) => {
-    const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      rascunho: { label: 'Rascunho', variant: 'secondary' },
-      processando: { label: 'Processando', variant: 'outline' },
-      transmitindo: { label: 'Transmitindo', variant: 'outline' },
-      autorizada: { label: 'Autorizada', variant: 'default' },
-      rejeitada: { label: 'Rejeitada', variant: 'destructive' },
-      cancelada: { label: 'Cancelada', variant: 'destructive' },
-    };
-    const s = map[status] || { label: status, variant: 'secondary' as const };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+  const statusBadge = (rawStatus: string) => {
+    const status = normalizeDocumentStatus(rawStatus);
+    const display = DOCUMENT_STATUS_MAP[status];
+    return <Badge variant={display.variant}>{display.label}</Badge>;
   };
 
   const handleCancel = async (note: any) => {
     const motivo = prompt('Informe o motivo do cancelamento:');
     if (!motivo) return;
+
+    const previousStatus = note.status;
+
     try {
       const { data: user } = await supabase.auth.getUser();
-      await supabase.from('nfse_documents').update({
-        status: 'cancelada',
-        motivo_cancelamento: motivo,
-        cancelado_por: user.user?.email || '',
-        cancelado_em: new Date().toISOString(),
-      }).eq('id', note.id);
 
-      // Log audit
+      if (isFiscalBackendConfigured()) {
+        // Call external backend for real cancellation
+        const result = await nfseApi.cancel({
+          empresa_id: activeCompany!.id,
+          nfse_id: note.id,
+          motivo,
+        });
+
+        if (!result.success) {
+          const display = mapErrorToDisplay((result as any).error);
+          toast.error(display.title + ': ' + display.message);
+          return;
+        }
+
+        await supabase.from('nfse_documents').update({
+          status: result.data.status,
+          motivo_cancelamento: motivo,
+          cancelado_por: user.user?.email || '',
+          cancelado_em: new Date().toISOString(),
+          protocolo_cancelamento: result.data.protocolo_cancelamento || null,
+        }).eq('id', note.id);
+      } else {
+        // No backend — just mark as cancel_requested locally
+        await supabase.from('nfse_documents').update({
+          status: 'cancel_requested',
+          motivo_cancelamento: motivo,
+          cancelado_por: user.user?.email || '',
+          cancelado_em: new Date().toISOString(),
+        }).eq('id', note.id);
+      }
+
+      await supabase.from('nfse_events').insert({
+        nfse_id: note.id,
+        event_type: 'cancel_requested',
+        description: `Cancelamento solicitado: ${motivo}`,
+        user_email: user.user?.email || '',
+        source: 'frontend',
+        previous_status: previousStatus,
+        new_status: isFiscalBackendConfigured() ? 'canceled' : 'cancel_requested',
+      });
+
       await supabase.from('nfse_audit_logs').insert({
         empresa_id: activeCompany?.id,
         nfse_id: note.id,
-        action: 'cancelamento',
+        action: 'cancel_requested',
         description: motivo,
         user_email: user.user?.email || '',
+        previous_status: previousStatus,
+        new_status: isFiscalBackendConfigured() ? 'canceled' : 'cancel_requested',
       });
 
-      toast.success('Nota cancelada.');
+      toast.success(isFiscalBackendConfigured() ? 'Nota cancelada.' : 'Cancelamento solicitado. Será processado quando o backend fiscal estiver conectado.');
       loadNotes();
     } catch (e: any) {
-      toast.error('Erro: ' + e.message);
+      toast.error(mapRawErrorToMessage(e));
+    }
+  };
+
+  const handleCheckStatus = async (note: any) => {
+    if (!isFiscalBackendConfigured()) {
+      toast.info('Backend fiscal não conectado. Não é possível consultar status.');
+      return;
+    }
+    try {
+      const result = await nfseApi.getStatus(note.id);
+      if (result.success) {
+        await supabase.from('nfse_documents').update({
+          status: result.data.status,
+          numero_nfse: result.data.numero_nfse || note.numero_nfse,
+          chave_nfse: result.data.chave_nfse || note.chave_nfse,
+          protocolo: result.data.protocolo || note.protocolo,
+          data_emissao: result.data.data_emissao || note.data_emissao,
+          motivo_rejeicao: result.data.motivo_rejeicao || null,
+          updated_at: new Date().toISOString(),
+        }).eq('id', note.id);
+
+        const display = DOCUMENT_STATUS_MAP[result.data.status as NfseDocumentStatus];
+        toast.success(`Status atualizado: ${display?.label || result.data.status}`);
+        loadNotes();
+      } else {
+        const display = mapErrorToDisplay((result as any).error);
+        toast.error(display.message);
+      }
+    } catch (e: any) {
+      toast.error(mapRawErrorToMessage(e));
     }
   };
 
@@ -109,14 +181,12 @@ export default function NfseListPage() {
             <Input placeholder="Buscar por tomador, CPF/CNPJ ou número..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos Status</SelectItem>
-              <SelectItem value="rascunho">Rascunho</SelectItem>
-              <SelectItem value="processando">Processando</SelectItem>
-              <SelectItem value="autorizada">Autorizada</SelectItem>
-              <SelectItem value="rejeitada">Rejeitada</SelectItem>
-              <SelectItem value="cancelada">Cancelada</SelectItem>
+              {DOCUMENT_STATUS_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon" onClick={loadNotes}><RefreshCw className="h-4 w-4" /></Button>
@@ -172,8 +242,10 @@ export default function NfseListPage() {
                           )}
                           <DropdownMenuItem><Mail className="h-4 w-4 mr-2" /> Reenviar por E-mail</DropdownMenuItem>
                           <DropdownMenuItem><MessageCircle className="h-4 w-4 mr-2" /> Reenviar por WhatsApp</DropdownMenuItem>
-                          <DropdownMenuItem><RefreshCw className="h-4 w-4 mr-2" /> Consultar Status</DropdownMenuItem>
-                          {note.status === 'autorizada' && (
+                          <DropdownMenuItem onClick={() => handleCheckStatus(note)}>
+                            <RefreshCw className="h-4 w-4 mr-2" /> Consultar Status
+                          </DropdownMenuItem>
+                          {['authorized', 'autorizada'].includes(note.status) && (
                             <DropdownMenuItem className="text-destructive" onClick={() => handleCancel(note)}>
                               <XCircle className="h-4 w-4 mr-2" /> Cancelar Nota
                             </DropdownMenuItem>

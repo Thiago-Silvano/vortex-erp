@@ -3,16 +3,15 @@ import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { FileText, CheckCircle2, AlertTriangle, XCircle, Clock, DollarSign, TrendingUp, BarChart3 } from 'lucide-react';
+import { FileText, CheckCircle2, AlertTriangle, XCircle, Clock, DollarSign } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { DOCUMENT_STATUS_MAP, normalizeDocumentStatus, type NfseDocumentStatus } from '@/lib/fiscal';
 
 interface DashboardStats {
   today: number;
   month: number;
-  pending: number;
+  pendingBackend: number;
   rejected: number;
   cancelled: number;
   totalValue: number;
@@ -20,15 +19,13 @@ interface DashboardStats {
 
 export default function NfseDashboardPage() {
   const { activeCompany } = useCompany();
-  const [stats, setStats] = useState<DashboardStats>({ today: 0, month: 0, pending: 0, rejected: 0, cancelled: 0, totalValue: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ today: 0, month: 0, pendingBackend: 0, rejected: 0, cancelled: 0, totalValue: 0 });
   const [recentNotes, setRecentNotes] = useState<any[]>([]);
-  const [period, setPeriod] = useState('month');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!activeCompany) return;
-    loadStats();
-  }, [activeCompany, period]);
+    if (activeCompany) loadStats();
+  }, [activeCompany]);
 
   const loadStats = async () => {
     if (!activeCompany) return;
@@ -40,51 +37,45 @@ export default function NfseDashboardPage() {
     const monthStart = startOfMonth(now).toISOString();
     const monthEnd = endOfMonth(now).toISOString();
 
-    // Today's emissions
     const { count: todayCount } = await supabase
       .from('nfse_documents')
       .select('*', { count: 'exact', head: true })
       .eq('empresa_id', activeCompany.id)
-      .eq('status', 'autorizada')
+      .in('status', ['authorized', 'autorizada'])
       .gte('data_emissao', todayStart)
       .lte('data_emissao', todayEnd);
 
-    // Month emissions
     const { count: monthCount } = await supabase
       .from('nfse_documents')
       .select('*', { count: 'exact', head: true })
       .eq('empresa_id', activeCompany.id)
-      .eq('status', 'autorizada')
+      .in('status', ['authorized', 'autorizada'])
       .gte('data_emissao', monthStart)
       .lte('data_emissao', monthEnd);
 
-    // Pending
     const { count: pendingCount } = await supabase
       .from('nfse_documents')
       .select('*', { count: 'exact', head: true })
       .eq('empresa_id', activeCompany.id)
-      .in('status', ['rascunho', 'processando', 'transmitindo']);
+      .in('status', ['draft', 'rascunho', 'waiting_backend', 'processando', 'queued', 'signing', 'transmitting', 'transmitindo', 'awaiting_status', 'validating']);
 
-    // Rejected
     const { count: rejectedCount } = await supabase
       .from('nfse_documents')
       .select('*', { count: 'exact', head: true })
       .eq('empresa_id', activeCompany.id)
-      .eq('status', 'rejeitada');
+      .in('status', ['rejected', 'rejeitada', 'validation_failed', 'internal_error']);
 
-    // Cancelled
     const { count: cancelledCount } = await supabase
       .from('nfse_documents')
       .select('*', { count: 'exact', head: true })
       .eq('empresa_id', activeCompany.id)
-      .eq('status', 'cancelada');
+      .in('status', ['canceled', 'cancelada', 'cancel_requested']);
 
-    // Total value this month
     const { data: valueData } = await supabase
       .from('nfse_documents')
       .select('valor_servicos')
       .eq('empresa_id', activeCompany.id)
-      .eq('status', 'autorizada')
+      .in('status', ['authorized', 'autorizada'])
       .gte('data_emissao', monthStart)
       .lte('data_emissao', monthEnd);
 
@@ -93,13 +84,12 @@ export default function NfseDashboardPage() {
     setStats({
       today: todayCount || 0,
       month: monthCount || 0,
-      pending: pendingCount || 0,
+      pendingBackend: pendingCount || 0,
       rejected: rejectedCount || 0,
       cancelled: cancelledCount || 0,
       totalValue,
     });
 
-    // Recent notes
     const { data: recent } = await supabase
       .from('nfse_documents')
       .select('*')
@@ -111,24 +101,17 @@ export default function NfseDashboardPage() {
     setLoading(false);
   };
 
-  const statusBadge = (status: string) => {
-    const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      rascunho: { label: 'Rascunho', variant: 'secondary' },
-      processando: { label: 'Processando', variant: 'outline' },
-      transmitindo: { label: 'Transmitindo', variant: 'outline' },
-      autorizada: { label: 'Autorizada', variant: 'default' },
-      rejeitada: { label: 'Rejeitada', variant: 'destructive' },
-      cancelada: { label: 'Cancelada', variant: 'destructive' },
-    };
-    const s = map[status] || { label: status, variant: 'secondary' as const };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+  const statusBadge = (rawStatus: string) => {
+    const status = normalizeDocumentStatus(rawStatus);
+    const display = DOCUMENT_STATUS_MAP[status];
+    return <Badge variant={display.variant}>{display.label}</Badge>;
   };
 
   const cards = [
-    { title: 'Emitidas Hoje', value: stats.today, icon: FileText, color: 'text-primary' },
-    { title: 'Emitidas no Mês', value: stats.month, icon: CheckCircle2, color: 'text-emerald-500' },
-    { title: 'Pendentes', value: stats.pending, icon: Clock, color: 'text-amber-500' },
-    { title: 'Rejeitadas', value: stats.rejected, icon: AlertTriangle, color: 'text-orange-500' },
+    { title: 'Autorizadas Hoje', value: stats.today, icon: FileText, color: 'text-primary' },
+    { title: 'Autorizadas no Mês', value: stats.month, icon: CheckCircle2, color: 'text-emerald-500' },
+    { title: 'Pendentes', value: stats.pendingBackend, icon: Clock, color: 'text-amber-500' },
+    { title: 'Rejeitadas / Erros', value: stats.rejected, icon: AlertTriangle, color: 'text-orange-500' },
     { title: 'Canceladas', value: stats.cancelled, icon: XCircle, color: 'text-destructive' },
     { title: 'Faturado no Mês', value: `R$ ${stats.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'text-emerald-600' },
   ];
@@ -136,14 +119,11 @@ export default function NfseDashboardPage() {
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Dashboard Fiscal</h1>
-            <p className="text-sm text-muted-foreground">Visão geral das NFS-e</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard Fiscal</h1>
+          <p className="text-sm text-muted-foreground">Visão geral das NFS-e</p>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {cards.map((card) => (
             <Card key={card.title} className="border-border/50">
@@ -158,7 +138,6 @@ export default function NfseDashboardPage() {
           ))}
         </div>
 
-        {/* Recent Notes */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Notas Recentes</CardTitle>
@@ -167,7 +146,7 @@ export default function NfseDashboardPage() {
             {loading ? (
               <p className="text-sm text-muted-foreground">Carregando...</p>
             ) : recentNotes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma nota fiscal emitida ainda.</p>
+              <p className="text-sm text-muted-foreground">Nenhuma nota fiscal registrada ainda.</p>
             ) : (
               <div className="space-y-2">
                 {recentNotes.map((note) => (

@@ -12,10 +12,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Send, Save, FileText, Loader2, CheckCircle2, AlertTriangle, User, ChevronsUpDown, Check } from 'lucide-react';
+import { Send, Save, FileText, Loader2, AlertTriangle, User, ChevronsUpDown, Check, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  isFiscalBackendConfigured,
+  nfseApi,
+  type NfseDocumentStatus,
+  DOCUMENT_STATUS_MAP,
+  mapErrorToDisplay,
+  mapRawErrorToMessage,
+} from '@/lib/fiscal';
 
 export default function NfseEmitPage() {
   const { activeCompany } = useCompany();
@@ -30,8 +38,6 @@ export default function NfseEmitPage() {
   const [clientOpen, setClientOpen] = useState(false);
   const [emitting, setEmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
-  const [step, setStep] = useState<'form' | 'preparing' | 'signing' | 'transmitting' | 'result'>('form');
-  const [result, setResult] = useState<any>(null);
   const [isCommissionPayment, setIsCommissionPayment] = useState(false);
 
   const [form, setForm] = useState({
@@ -142,7 +148,6 @@ export default function NfseEmitPage() {
     setIsCommissionPayment(isOperadora);
 
     if (isOperadora) {
-      // Commission-only: fill with supplier data and use commission as value
       const { data: saleSuppliers } = await supabase
         .from('sale_suppliers')
         .select('supplier_id')
@@ -154,16 +159,12 @@ export default function NfseEmitPage() {
           .select('*')
           .eq('id', saleSuppliers[0].supplier_id)
           .single();
-        if (supplier) {
-          fillSupplierData(supplier);
-        }
+        if (supplier) fillSupplierData(supplier);
       }
 
-      // Value = commission (gross profit)
       const commissionValue = (sale as any).commission_value || (sale as any).gross_profit || 0;
       setForm(p => ({ ...p, valor_servicos: commissionValue }));
     } else {
-      // Normal: fill with client data
       const clientName = (sale as any).client_name || '';
       if (clientName) {
         const { data: client } = await supabase
@@ -172,20 +173,15 @@ export default function NfseEmitPage() {
           .eq('empresa_id', activeCompany!.id)
           .ilike('full_name', clientName)
           .single();
-        if (client) {
-          fillClientData(client);
-        } else {
-          setForm(p => ({ ...p, tomador_razao_social: clientName }));
-        }
+        if (client) fillClientData(client);
+        else setForm(p => ({ ...p, tomador_razao_social: clientName }));
       }
 
-      // Load items total
       const { data: items } = await supabase.from('sale_items').select('*').eq('sale_id', saleId);
       const total = (items || []).reduce((s: number, i: any) => s + (i.total_value || 0), 0);
       setForm(p => ({ ...p, valor_servicos: total }));
     }
 
-    // Build description from sale items
     const { data: items } = await supabase.from('sale_items').select('description').eq('sale_id', saleId);
     if (items && items.length > 0) {
       const desc = items.map((i: any) => i.description).filter(Boolean).join('; ');
@@ -195,9 +191,7 @@ export default function NfseEmitPage() {
 
   const handleClientSelect = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
-    if (client) {
-      fillClientData(client);
-    }
+    if (client) fillClientData(client);
     setClientOpen(false);
   };
 
@@ -232,7 +226,7 @@ export default function NfseEmitPage() {
       const { error } = await supabase.from('nfse_documents').insert({
         empresa_id: activeCompany.id,
         sale_id: saleId || null,
-        status: 'rascunho',
+        status: 'draft',
         ambiente: fiscalCompany?.ambiente || 'homologacao',
         ...form,
         fiscal_service_id: form.fiscal_service_id || null,
@@ -264,16 +258,46 @@ export default function NfseEmitPage() {
       return;
     }
 
-    setEmitting(true);
-    setStep('preparing');
+    // Check if external backend is configured
+    if (!isFiscalBackendConfigured()) {
+      toast.error('Backend fiscal não configurado. A emissão real requer um backend externo conectado.');
+      // Save as waiting_backend so it can be processed later
+      setEmitting(true);
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        const { error } = await supabase.from('nfse_documents').insert({
+          empresa_id: activeCompany.id,
+          sale_id: saleId || null,
+          status: 'waiting_backend',
+          ambiente: fiscalCompany.ambiente || 'homologacao',
+          ...form,
+          fiscal_service_id: form.fiscal_service_id || null,
+          base_calculo: baseCalculo,
+          valor_iss: valorIss,
+          valor_liquido: valorLiquido,
+          emitido_por: user.user?.email || '',
+        });
+        if (error) throw error;
 
+        toast.info('Nota salva com status "Aguardando backend fiscal". Configure o backend externo para emissão real.');
+        navigate('/nfse/list');
+      } catch (e: any) {
+        toast.error('Erro: ' + e.message);
+      }
+      setEmitting(false);
+      return;
+    }
+
+    // With backend configured — call external API
+    setEmitting(true);
     try {
       const { data: user } = await supabase.auth.getUser();
 
+      // 1. Save document locally first
       const { data: doc, error: docErr } = await supabase.from('nfse_documents').insert({
         empresa_id: activeCompany.id,
         sale_id: saleId || null,
-        status: 'processando',
+        status: 'waiting_backend',
         ambiente: fiscalCompany.ambiente || 'homologacao',
         ...form,
         fiscal_service_id: form.fiscal_service_id || null,
@@ -285,97 +309,70 @@ export default function NfseEmitPage() {
 
       if (docErr) throw docErr;
 
-      setStep('signing');
-      await new Promise(r => setTimeout(r, 800));
-
-      setStep('transmitting');
-
-      const { data: emitResult, error: emitErr } = await supabase.functions.invoke('nfse-emit', {
-        body: { nfse_id: (doc as any).id, empresa_id: activeCompany.id },
+      // 2. Call external backend to emit
+      const result = await nfseApi.emit({
+        empresa_id: activeCompany.id,
+        nfse_id: (doc as any).id,
       });
 
-      if (emitErr) throw emitErr;
+      if (result.success) {
+        const emitData = result.data;
+        // Update local DB with backend response
+        await supabase.from('nfse_documents').update({
+          status: emitData.status,
+          numero_nfse: emitData.numero_nfse || null,
+          chave_nfse: emitData.chave_nfse || null,
+          protocolo: emitData.protocolo || null,
+          data_emissao: emitData.data_emissao || null,
+          xml_storage_path: emitData.xml_storage_path || null,
+          pdf_storage_path: emitData.pdf_storage_path || null,
+          pdf_url: emitData.pdf_url || null,
+          updated_at: new Date().toISOString(),
+        }).eq('id', (doc as any).id);
 
-      setStep('result');
-      setResult(emitResult);
+        // Log event
+        await supabase.from('nfse_events').insert({
+          nfse_id: (doc as any).id,
+          event_type: 'emit_requested',
+          description: emitData.message,
+          source: 'frontend',
+          new_status: emitData.status,
+          previous_status: 'waiting_backend',
+        });
 
-      if (emitResult?.success) {
-        toast.success('NFS-e emitida com sucesso!');
-        if (saleId) {
+        const statusInfo = DOCUMENT_STATUS_MAP[emitData.status as NfseDocumentStatus];
+        toast.success(statusInfo?.label || emitData.message);
+
+        if (emitData.status === 'authorized' && saleId) {
           await supabase.from('sales').update({
             fiscal_status: 'emitida',
             nfse_id: (doc as any).id,
-            nfse_number: emitResult.numero_nfse || '',
+            nfse_number: emitData.numero_nfse || '',
           }).eq('id', saleId);
         }
+
+        navigate('/nfse/list');
       } else {
-        toast.error(emitResult?.message || 'Erro na emissão da NFS-e.');
+        // Backend returned error
+        const err = (result as any).error;
+        const errorDisplay = mapErrorToDisplay(err);
+        toast.error(errorDisplay.title + ': ' + errorDisplay.message);
+
+        // Update status to reflect the error
+        await supabase.from('nfse_documents').update({
+          status: 'validation_failed',
+          motivo_rejeicao: err.message,
+          motivo_rejeicao_tecnico: err.details || err.code,
+          updated_at: new Date().toISOString(),
+        }).eq('id', (doc as any).id);
       }
     } catch (e: any) {
-      setStep('result');
-      setResult({ success: false, message: e.message });
-      toast.error('Erro na emissão: ' + e.message);
+      toast.error(mapRawErrorToMessage(e));
     }
     setEmitting(false);
   };
 
-  if (step !== 'form' && step !== 'result') {
-    const steps = [
-      { key: 'preparing', label: 'Preparando DPS...', icon: FileText },
-      { key: 'signing', label: 'Assinando XML...', icon: FileText },
-      { key: 'transmitting', label: 'Transmitindo para API Nacional...', icon: Send },
-    ];
-    return (
-      <AppLayout>
-        <div className="p-4 md:p-6 flex items-center justify-center min-h-[60vh]">
-          <Card className="max-w-md w-full">
-            <CardContent className="p-8 text-center space-y-6">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-              <div className="space-y-2">
-                {steps.map(s => (
-                  <div key={s.key} className={`flex items-center gap-2 justify-center ${step === s.key ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                    {step === s.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                    <span className="text-sm">{s.label}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </AppLayout>
-    );
-  }
-
-  if (step === 'result') {
-    return (
-      <AppLayout>
-        <div className="p-4 md:p-6 flex items-center justify-center min-h-[60vh]">
-          <Card className="max-w-md w-full">
-            <CardContent className="p-8 text-center space-y-4">
-              {result?.success ? (
-                <>
-                  <CheckCircle2 className="h-16 w-16 text-emerald-500 mx-auto" />
-                  <h2 className="text-xl font-bold">NFS-e Emitida!</h2>
-                  {result.numero_nfse && <p className="text-sm text-muted-foreground">Número: {result.numero_nfse}</p>}
-                  {result.chave && <p className="text-xs text-muted-foreground break-all">Chave: {result.chave}</p>}
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="h-16 w-16 text-destructive mx-auto" />
-                  <h2 className="text-xl font-bold">Erro na Emissão</h2>
-                  <p className="text-sm text-muted-foreground">{result?.message || 'Erro desconhecido'}</p>
-                </>
-              )}
-              <div className="flex gap-2 justify-center">
-                <Button variant="outline" onClick={() => navigate('/nfse/list')}>Ver Listagem</Button>
-                <Button onClick={() => { setStep('form'); setResult(null); }}>Nova Emissão</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </AppLayout>
-    );
-  }
+  const backendConfigured = isFiscalBackendConfigured();
 
   return (
     <AppLayout>
@@ -393,10 +390,26 @@ export default function NfseEmitPage() {
               <Save className="h-4 w-4 mr-2" /> Salvar Rascunho
             </Button>
             <Button onClick={handleEmit} disabled={emitting}>
-              <Send className="h-4 w-4 mr-2" /> Emitir NFS-e
+              <Send className="h-4 w-4 mr-2" />
+              {backendConfigured ? 'Emitir NFS-e' : 'Salvar para Emissão'}
             </Button>
           </div>
         </div>
+
+        {/* Backend not configured warning */}
+        {!backendConfigured && (
+          <Card className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Info className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-sm font-medium">Backend fiscal não conectado</p>
+                <p className="text-xs text-muted-foreground">
+                  A nota será salva com status "Aguardando backend fiscal". Para emissão real, configure o backend externo (Node.js/TypeScript) que processa assinatura XML e transmissão para a API Nacional.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {!fiscalCompany && (
           <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
