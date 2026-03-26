@@ -207,6 +207,18 @@ export default function NewSalePage() {
       });
   }, [editSaleId]);
 
+  // Load client proposal choices
+  useEffect(() => {
+    if (!editSaleId) return;
+    (supabase.from('client_proposal_choices' as any) as any)
+      .select('*')
+      .eq('sale_id', editSaleId)
+      .order('submitted_at', { ascending: false })
+      .then(({ data }: any) => {
+        if (data) setClientChoices(data);
+      });
+  }, [editSaleId]);
+
   useEffect(() => {
     if (initialEditSaleId) loadSale(initialEditSaleId);
   }, [initialEditSaleId]);
