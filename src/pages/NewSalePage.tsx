@@ -607,6 +607,7 @@ export default function NewSalePage() {
           installments: 1,
           installment_dates: [{ date: today, amount: costPerSupplier }],
           amount: costPerSupplier,
+          cost_center_id: (() => { try { return localStorage.getItem(`supplier_cc_${sid}`) || undefined; } catch { return undefined; } })(),
           description: 'Pagamento de operadoras',
         };
       });
