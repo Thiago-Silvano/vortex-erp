@@ -2960,8 +2960,7 @@ export default function NewSalePage() {
           <CardContent className="space-y-3">
             {editSaleId && (
               <Button
-                variant="outline"
-                className="w-full justify-center gap-2"
+                className="w-full justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                 onClick={() => navigate('/nfse/emit', { state: { saleId: editSaleId } })}
               >
                 <Send className="h-4 w-4" /> Emitir NFS-e
