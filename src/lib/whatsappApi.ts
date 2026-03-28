@@ -24,7 +24,8 @@ async function proxyRequest(serverUrl: string, endpoint: string, method = 'GET',
     body: { server_url: serverUrl, endpoint, method, payload },
   });
   if (error) {
-    throw new Error(normalizeProxyError(error.message || 'Erro ao comunicar com servidor WhatsApp', serverUrl, endpoint));
+    const parsedMessage = extractEdgeFunctionErrorMessage(error.message || 'Erro ao comunicar com servidor WhatsApp');
+    throw new Error(normalizeProxyError(parsedMessage, serverUrl, endpoint));
   }
   // Check if the response itself contains an error (e.g. connection timeout)
   if (data && typeof data === 'object' && data.error) {
@@ -33,9 +34,37 @@ async function proxyRequest(serverUrl: string, endpoint: string, method = 'GET',
   return data;
 }
 
+function extractEdgeFunctionErrorMessage(message: string): string {
+  const msg = String(message || '');
+  const start = msg.indexOf('{');
+  const end = msg.lastIndexOf('}');
+
+  if (start !== -1 && end > start) {
+    try {
+      const parsed = JSON.parse(msg.slice(start, end + 1));
+      if (parsed && typeof parsed === 'object') {
+        if ('error' in parsed && typeof parsed.error === 'string') {
+          return parsed.error;
+        }
+        if ('raw' in parsed && typeof parsed.raw === 'string') {
+          return parsed.raw;
+        }
+      }
+    } catch {
+      // Ignore invalid embedded JSON and fallback to the original message
+    }
+  }
+
+  return msg;
+}
+
 function normalizeProxyError(message: string, serverUrl: string, endpoint: string): string {
   const msg = String(message || '');
   const endpointMatch = msg.match(/Cannot\s+(GET|POST|PUT|PATCH|DELETE)\s+([^\s<]+)/i);
+
+  if (msg.includes('Servidor WhatsApp indisponível')) {
+    return msg;
+  }
 
   if (endpointMatch) {
     return `O servidor WhatsApp em ${serverUrl} não suporta o endpoint ${endpointMatch[2]}.`;

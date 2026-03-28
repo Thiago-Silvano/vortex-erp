@@ -6,6 +6,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/json",
+};
+
 function extractUpstreamErrorMessage(text: string, parsed: unknown) {
   if (parsed && typeof parsed === "object" && "error" in parsed && typeof parsed.error === "string") {
     return parsed.error;
@@ -30,7 +35,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders,
       });
     }
 
@@ -44,7 +49,7 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders,
       });
     }
 
@@ -54,7 +59,7 @@ Deno.serve(async (req) => {
     if (!server_url || !endpoint) {
       return new Response(
         JSON.stringify({ error: "server_url and endpoint are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: jsonHeaders }
       );
     }
 
@@ -78,9 +83,20 @@ Deno.serve(async (req) => {
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (msg.includes("timed out") || msg.includes("aborted")) {
-          throw new Error(`Servidor WhatsApp indisponível (timeout ao conectar em ${server_url}). Verifique se o servidor está online e acessível.`);
+          const timeoutMessage = `Servidor WhatsApp indisponível (timeout ao conectar em ${server_url}). Verifique se o servidor está online e acessível.`;
+          return {
+            status: 503,
+            parsed: { error: timeoutMessage },
+            text: timeoutMessage,
+          };
         }
-        throw e;
+
+        const connectionMessage = `Servidor WhatsApp indisponível ao conectar em ${server_url}. Verifique se o servidor está online e acessível.`;
+        return {
+          status: 503,
+          parsed: { error: connectionMessage },
+          text: connectionMessage,
+        };
       }
 
       const text = await res.text();
@@ -124,19 +140,19 @@ Deno.serve(async (req) => {
         }),
         {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: jsonHeaders,
         }
       );
     }
 
     return new Response(JSON.stringify(result.parsed), {
       status: result.status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Proxy error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: jsonHeaders }
     );
   }
 });
