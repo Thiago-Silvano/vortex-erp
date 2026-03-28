@@ -9,9 +9,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Wifi, WifiOff, Save, Smartphone } from 'lucide-react';
+import { Settings, Wifi, WifiOff, Save, Smartphone, LogOut, QrCode, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { resetServerUrl, checkStatus } from '@/lib/whatsappApi';
+import { resetServerUrl, checkStatus, disconnectSession, getQrCode } from '@/lib/whatsappApi';
 
 export default function WhatsAppSettingsPage() {
   const { activeCompany } = useCompany();
@@ -28,6 +28,9 @@ export default function WhatsAppSettingsPage() {
   });
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [loadingQr, setLoadingQr] = useState(false);
 
   useEffect(() => {
     if (empresaId) loadSettings();
@@ -97,6 +100,45 @@ export default function WhatsAppSettingsPage() {
     setChecking(false);
   };
 
+  const handleDisconnect = async () => {
+    if (!settings.server_url || settings.server_url.includes('localhost')) {
+      toast.error('Configure uma URL de servidor válida');
+      return;
+    }
+    setDisconnecting(true);
+    try {
+      await disconnectSession(settings.server_url);
+      await (supabase.from('whatsapp_settings').update({ is_connected: false, connected_phone: '', connected_name: '' }).eq('id', settings.id) as any);
+      setSettings(prev => ({ ...prev, is_connected: false, connected_phone: '', connected_name: '' }));
+      toast.success('WhatsApp desconectado! Escaneie o QR Code para reconectar.');
+      fetchQrCode();
+    } catch {
+      toast.error('Erro ao desconectar. Verifique o servidor.');
+    }
+    setDisconnecting(false);
+  };
+
+  const fetchQrCode = async () => {
+    if (!settings.server_url || settings.server_url.includes('localhost')) {
+      toast.error('Configure uma URL de servidor válida');
+      return;
+    }
+    setLoadingQr(true);
+    setQrCode(null);
+    try {
+      const data = await getQrCode(settings.server_url);
+      const qr = data?.qr || data?.qrcode || data?.qr_code || data?.base64 || data?.image || null;
+      if (qr) {
+        setQrCode(typeof qr === 'string' && !qr.startsWith('data:') ? `data:image/png;base64,${qr}` : qr);
+      } else {
+        toast.error('QR Code não disponível. O servidor pode já estar conectado ou ainda está gerando.');
+      }
+    } catch {
+      toast.error('Não foi possível obter o QR Code do servidor.');
+    }
+    setLoadingQr(false);
+  };
+
   const formatPhone = (phone: string) => {
     if (!phone) return '';
     const clean = phone.replace(/\D/g, '');
@@ -151,6 +193,31 @@ export default function WhatsAppSettingsPage() {
                   </p>
                   <p className="text-xs text-muted-foreground">Número autenticado no WhatsApp</p>
                 </div>
+              </div>
+            )}
+
+            {/* Disconnect button */}
+            {settings.is_connected && (
+              <Button variant="destructive" size="sm" className="gap-2" onClick={handleDisconnect} disabled={disconnecting}>
+                <LogOut className="h-4 w-4" />
+                {disconnecting ? 'Desconectando...' : 'Desconectar WhatsApp'}
+              </Button>
+            )}
+
+            {/* QR Code section */}
+            {!settings.is_connected && (
+              <div className="space-y-3">
+                <Button variant="outline" size="sm" className="gap-2" onClick={fetchQrCode} disabled={loadingQr}>
+                  {loadingQr ? <RefreshCw className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+                  {loadingQr ? 'Carregando QR Code...' : 'Exibir QR Code'}
+                </Button>
+                {qrCode && (
+                  <div className="flex flex-col items-center gap-3 p-4 rounded-lg border bg-card">
+                    <p className="text-sm font-medium">Escaneie o QR Code com o WhatsApp</p>
+                    <img src={qrCode} alt="QR Code WhatsApp" className="w-64 h-64 object-contain" />
+                    <p className="text-xs text-muted-foreground">Abra o WhatsApp no celular → Menu → Aparelhos conectados → Conectar</p>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
