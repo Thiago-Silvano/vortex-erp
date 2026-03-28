@@ -3237,8 +3237,11 @@ export default function NewSalePage() {
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          {editSaleId && (
+          {editSaleId && isQuoteMode && (
             <Button variant="outline" onClick={handleGenerateClientBuildsLink} className="w-full sm:w-auto"><Sparkles className="h-4 w-4 mr-1" /> Cliente Monta Proposta</Button>
+          )}
+          {editSaleId && (
+            <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} className="w-full sm:w-auto"><Trash2 className="h-4 w-4 mr-1" /> Excluir</Button>
           )}
           {isQuoteMode && (
             <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
