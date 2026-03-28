@@ -1874,6 +1874,28 @@ export default function NewSalePage() {
     }
   };
 
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'F8') {
+        e.preventDefault();
+        if (saleStatus === 'active') handleExportVoucher();
+        else handleExportDraftPdf();
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        handleGenerateLink();
+      } else if (e.key === 'F10') {
+        e.preventDefault();
+        if (isQuoteMode) handleSaveDraft();
+        else handleSave();
+      } else if (e.key === 'F11' && isQuoteMode) {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  });
 
   const getServiceTypeLabel = (metadata?: ServiceMetadata) => {
     if (!metadata?.type) return null;
