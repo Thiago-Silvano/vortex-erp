@@ -174,22 +174,35 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
   y += discLines.length * 3.5 + 4;
 
   // ─── NOTES ────────────────────────────────────────────────
-  if (data.notes) {
+  if (data.airlineName || data.notes) {
     y = checkPage(doc, y, 15);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
     doc.text('Obs:', m, y);
     y += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-    const noteLines = doc.splitTextToSize(s(data.notes), cw);
-    noteLines.forEach((line: string) => {
-      y = checkPage(doc, y, 5);
-      doc.text(line, m, y);
-      y += 4;
-    });
+
+    // Main airline name in bold
+    if (data.airlineName) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      doc.text(s(`Cia Aerea principal: ${data.airlineName}`), m, y);
+      y += 5;
+    }
+
+    // Detailed description
+    if (data.notes) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+      const noteLines = doc.splitTextToSize(s(data.notes), cw);
+      noteLines.forEach((line: string) => {
+        y = checkPage(doc, y, 5);
+        doc.text(line, m, y);
+        y += 4;
+      });
+    }
   }
 
   // ─── FOOTER ───────────────────────────────────────────────
