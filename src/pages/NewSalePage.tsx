@@ -687,7 +687,10 @@ export default function NewSalePage() {
     setItems(prev => prev.map((item, i) => {
       if (i !== idx) return item;
       const updated = { ...item, [field]: value };
-      if (field === 'cost_price' || field === 'rav') updated.total_value = updated.cost_price + updated.rav;
+      if (field === 'cost_price' || field === 'rav' || field === 'markup_percent') {
+        const base = updated.cost_price + updated.rav;
+        updated.total_value = base + base * ((updated.markup_percent || 0) / 100);
+      }
       return updated;
     }));
   };
