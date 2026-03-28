@@ -1600,24 +1600,32 @@ export default function NewSalePage() {
         const meta = airItem.metadata!;
         const legs = meta.flightLegs || [];
 
-        // Load airline logo
-        let airlineLogoBase64: string | undefined;
+        // Load main airline name
         let airlineName = '';
         if (meta.airlineId && activeCompany?.id) {
-          const { data: airlineData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', meta.airlineId).maybeSingle() as any);
-          if (airlineData) {
-            airlineName = airlineData.name || '';
-            if (airlineData.logo_url) {
+          const { data: airlineData } = await (supabase.from('airlines' as any).select('name').eq('id', meta.airlineId).maybeSingle() as any);
+          if (airlineData) airlineName = airlineData.name || '';
+        }
+
+        // Collect unique airline IDs from legs
+        const legAirlineIds = [...new Set(legs.map((l: any) => l.airlineId).filter(Boolean))];
+        const airlineCache: Record<string, { name: string; logoBase64?: string }> = {};
+        for (const aid of legAirlineIds) {
+          const { data: aData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', aid).maybeSingle() as any);
+          if (aData) {
+            let legLogoBase64: string | undefined;
+            if (aData.logo_url) {
               try {
-                const resp = await fetch(airlineData.logo_url);
+                const resp = await fetch(aData.logo_url);
                 const blob = await resp.blob();
-                airlineLogoBase64 = await new Promise<string>((resolve) => {
+                legLogoBase64 = await new Promise<string>((resolve) => {
                   const reader = new FileReader();
                   reader.onload = () => resolve(reader.result as string);
                   reader.readAsDataURL(blob);
                 });
               } catch { /* skip */ }
             }
+            airlineCache[aid] = { name: aData.name || '', logoBase64: legLogoBase64 };
           }
         }
 
@@ -1641,7 +1649,6 @@ export default function NewSalePage() {
 
         const airVoucherData: AirlineVoucherData = {
           agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
-          airlineLogoBase64,
           airlineName,
           shortId: shortId || undefined,
           localizador: airItem.reservation_number || '',
@@ -1658,6 +1665,8 @@ export default function NewSalePage() {
             flightCode: l.flightCode || '',
             connectionDuration: l.connectionDuration || '',
             direction: l.direction || 'ida',
+            airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
+            airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
           })),
           notes: meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim() : undefined,
           agencyName: agency.name,
