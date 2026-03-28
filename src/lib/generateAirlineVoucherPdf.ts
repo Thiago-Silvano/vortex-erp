@@ -257,7 +257,7 @@ function drawFlightSection(
   doc.setFontSize(9);
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
   const dirIcon = label === 'IDA' ? '>' : '<';
-  const dirLabel = label === 'IDA' ? 'Itinerario de IDA' : 'Itinerario de VOLTA';
+  const dirLabel = label === 'IDA' ? 'IDA' : 'VOLTA';
   doc.text(`${dirIcon}  ${dirLabel}`, m + 7, y + 6.5);
 
   // Date + time center (bold)
