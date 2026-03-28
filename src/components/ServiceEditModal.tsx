@@ -157,9 +157,20 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setHotelImages(metadata.hotel?.images || []);
       setSelectedImageIndices(new Set());
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
+      setAirlineId(metadata.airlineId || '');
       loadGoogleApiKey();
+      loadAirlines();
     }
   }, [open]);
+
+  const loadAirlines = async () => {
+    if (!activeCompany) return;
+    const { data } = await (supabase.from('airlines' as any).select('*') as any)
+      .eq('empresa_id', activeCompany.id)
+      .eq('is_active', true)
+      .order('name');
+    setAirlinesList(data || []);
+  };
 
   // Calculate nights when dates change
   useEffect(() => {
