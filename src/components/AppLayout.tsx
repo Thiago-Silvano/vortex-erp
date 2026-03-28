@@ -215,7 +215,12 @@ function TopMenuBar() {
           const isActive = filteredItems.some(i => location.pathname === i.url || location.pathname.startsWith(i.url + '/'));
 
           return (
-            <div key={group.label} className="relative">
+            <div
+              key={group.label}
+              className="relative"
+              onMouseEnter={() => setOpenMenu(group.label)}
+              onMouseLeave={() => setOpenMenu(null)}
+            >
               <button
                 onClick={() => setOpenMenu(isOpen ? null : group.label)}
                 className={`px-3 py-1 text-xs font-medium transition-colors hover:bg-accent ${isActive ? 'text-primary font-semibold' : 'text-foreground/80'} ${isOpen ? 'bg-accent' : ''}`}
