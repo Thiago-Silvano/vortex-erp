@@ -83,6 +83,14 @@ export async function checkStatus(serverUrl: string) {
   return proxyRequest(serverUrl, '/status');
 }
 
+export async function disconnectSession(serverUrl: string) {
+  return proxyRequest(serverUrl, '/logout', 'POST');
+}
+
+export async function getQrCode(serverUrl: string) {
+  return proxyRequest(serverUrl, '/qr');
+}
+
 /**
  * Upload media to storage and return the public URL
  */
