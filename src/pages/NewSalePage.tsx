@@ -1632,7 +1632,7 @@ export default function NewSalePage() {
             connectionDuration: l.connectionDuration || '',
             direction: l.direction || 'ida',
           })),
-          notes: meta.detailedDescription || undefined,
+          notes: meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim() : undefined,
           agencyName: agency.name,
           agencyWhatsapp: agency.whatsapp || '',
           agencyEmail: agency.email || '',
