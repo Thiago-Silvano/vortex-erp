@@ -1,22 +1,11 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import React from 'react';
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, useSidebar,
-} from '@/components/ui/sidebar';
-import { NavLink } from '@/components/NavLink';
-import {
-  LayoutDashboard, FileText, Settings, Users, LogOut, Menu, CalendarDays,
-  UserRound, Building2, ShoppingCart, BookOpen, DollarSign, ArrowDownCircle,
-  ArrowUpCircle, BarChart3, Tag, PieChart, TrendingUp, ClipboardList,
-  Plane, Award, ChevronDown, Building, Cog, Package, FileBarChart, UserCheck, Percent,
-  Mail, FileEdit, MessageCircle, Search, Bell, User, Camera, Landmark, Link2, FileSpreadsheet,
-  Palette, Map, Sparkles, Receipt,
+  LogOut, Building, User, Camera, MessageCircle, Mail, Bell, ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -24,29 +13,25 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { useIsMobile } from '@/hooks/use-mobile';
 import PhotoCaptureModal from '@/components/PhotoCaptureModal';
 import NotificationBell from '@/components/NotificationBell';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Input } from '@/components/ui/input';
 
 interface MenuItem {
   title: string;
   url: string;
-  icon: any;
   permKey?: string;
 }
 
-function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === 'collapsed';
-  const location = useLocation();
+interface MenuGroup {
+  label: string;
+  items: MenuItem[];
+}
+
+function usePermissions() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>('vendedor');
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
-  const [permLoaded, setPermLoaded] = useState(false);
-  const { activeCompany } = useCompany();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -64,275 +49,205 @@ function AppSidebar() {
       } else {
         if (userEmail === 'thiago@vortexviagens.com.br') setUserRole('master');
       }
-      setPermLoaded(true);
     });
   }, [userId, userEmail]);
 
   const isAdmin = userRole === 'master' || userEmail === 'thiago@vortexviagens.com.br';
   const hasPerm = (key?: string) => !key || isAdmin || !!permissions[key];
-  const filterItems = (items: MenuItem[]) => items.filter(i => hasPerm(i.permKey));
+
+  return { userEmail, isAdmin, hasPerm };
+}
+
+function TopMenuBar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { activeCompany } = useCompany();
+  const { hasPerm, isAdmin } = usePermissions();
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const isVistos = activeCompany?.slug === 'vortex-vistos';
 
-  // --- Viagens menu ---
-  const viagensMain: MenuItem[] = [
-    { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-    { title: 'Clientes', url: '/clients', icon: UserRound, permKey: 'clients_view' },
-    { title: 'Fornecedores', url: '/suppliers', icon: Building2, permKey: 'suppliers_view' },
-    { title: 'Vendas', url: '/sales', icon: ShoppingCart, permKey: 'sales_view' },
-    { title: 'Cotações', url: '/cotacoes', icon: FileEdit, permKey: 'sales_view' },
-    { title: 'Vendedores', url: '/sellers', icon: UserCheck, permKey: 'sellers_view' },
-    { title: 'Serviços', url: '/services', icon: ClipboardList, permKey: 'services_view' },
-    { title: 'Reservas', url: '/reservations', icon: BookOpen, permKey: 'reservations_view' },
-    { title: 'Roteiros', url: '/itineraries', icon: Map },
-    { title: 'Contratos', url: '/contracts/templates', icon: FileText },
-    { title: 'Promo Maker', url: '/promo-maker', icon: Sparkles },
-  ];
+  // Close menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-  const viagensFinancial: MenuItem[] = [
-    { title: 'Contas a Receber', url: '/financial/receivable', icon: ArrowDownCircle, permKey: 'financial_receivable' },
-    { title: 'Contas a Pagar', url: '/financial/payable', icon: ArrowUpCircle, permKey: 'financial_payable' },
-    { title: 'Conciliação Bancária', url: '/financial/reconciliation', icon: Link2, permKey: 'financial_reconciliation' },
-    { title: 'Contas Correntes', url: '/financial/bank-accounts', icon: Landmark, permKey: 'financial_bank_accounts' },
-    { title: 'Relatório de Conta', url: '/financial/bank-report', icon: FileSpreadsheet, permKey: 'financial_bank_report' },
-    { title: 'Comissões', url: '/financial/commissions', icon: Percent, permKey: 'financial_commissions' },
-    { title: 'Fluxo de Caixa', url: '/financial/cashflow', icon: BarChart3, permKey: 'financial_cashflow' },
-    { title: 'Centros de Custo', url: '/financial/cost-centers', icon: Tag, permKey: 'financial_cashflow' },
-  ];
+  // Close menu on navigation
+  useEffect(() => {
+    setOpenMenu(null);
+  }, [location.pathname]);
 
-  const viagensReports: MenuItem[] = [
-    { title: 'Dashboard Geral', url: '/reports/dashboard', icon: PieChart, permKey: 'reports_dashboard' },
-    { title: 'Relatório de Vendas', url: '/reports/sales', icon: ShoppingCart, permKey: 'reports_sales' },
-    { title: 'Relatório Financeiro', url: '/reports/financial', icon: DollarSign, permKey: 'reports_financial' },
-    { title: 'Fluxo de Caixa', url: '/reports/cashflow', icon: TrendingUp, permKey: 'reports_financial' },
-    { title: 'Relatório de Clientes', url: '/reports/clients', icon: UserRound, permKey: 'reports_sales' },
-    { title: 'Relatório de Fornecedores', url: '/reports/suppliers', icon: Building2, permKey: 'reports_sales' },
-    { title: 'Centro de Custo', url: '/reports/cost-centers', icon: Tag, permKey: 'reports_financial' },
-    { title: 'Relatório de Produtos', url: '/reports/products', icon: ClipboardList, permKey: 'reports_sales' },
-    { title: 'Relatório de Check-ins', url: '/reports/checkins', icon: Plane, permKey: 'reports_sales' },
-    { title: 'Lucro por Venda', url: '/reports/profit', icon: Award, permKey: 'reports_financial' },
-  ];
-
-  // --- Vistos menu ---
-  const vistosMain: MenuItem[] = [
-    { title: 'Dashboard', url: '/vistos/dashboard', icon: LayoutDashboard },
-    { title: 'Clientes', url: '/clients', icon: UserRound, permKey: 'clients_view' },
-    { title: 'Fornecedores', url: '/suppliers', icon: Building2, permKey: 'suppliers_view' },
-    { title: 'Vendas', url: '/vistos/sales', icon: ShoppingCart, permKey: 'sales_view' },
-    { title: 'Serviços', url: '/vistos/products', icon: Package },
-    { title: 'Produção', url: '/vistos/production', icon: Cog },
-    { title: 'DS-160 Grupo', url: '/vistos/ds160', icon: FileEdit },
-    { title: 'Calendário', url: '/calendar', icon: CalendarDays },
-    { title: 'Relatórios', url: '/vistos/reports', icon: FileBarChart },
-  ];
-
-  const vistosFinancial: MenuItem[] = [
-    { title: 'Contas a Receber', url: '/financial/receivable', icon: ArrowDownCircle, permKey: 'financial_receivable' },
-    { title: 'Contas a Pagar', url: '/financial/payable', icon: ArrowUpCircle, permKey: 'financial_payable' },
-    { title: 'Conciliação Bancária', url: '/financial/reconciliation', icon: Link2, permKey: 'financial_reconciliation' },
-    { title: 'Contas Correntes', url: '/financial/bank-accounts', icon: Landmark, permKey: 'financial_bank_accounts' },
-    { title: 'Relatório de Conta', url: '/financial/bank-report', icon: FileSpreadsheet, permKey: 'financial_bank_report' },
-    { title: 'Fluxo de Caixa', url: '/financial/cashflow', icon: BarChart3, permKey: 'financial_cashflow' },
-    { title: 'Centros de Custo', url: '/financial/cost-centers', icon: Tag, permKey: 'financial_cashflow' },
-  ];
-
-  const mainItems = isVistos ? vistosMain : viagensMain;
-  const financialItems = isVistos ? vistosFinancial : viagensFinancial;
-  const reportItems = isVistos ? [] : viagensReports;
-
-  const emailItems: MenuItem[] = [
-    { title: 'Inbox', url: '/email', icon: Mail },
-    { title: 'Templates', url: '/email/templates', icon: FileText },
-    { title: 'Configurações', url: '/email/settings', icon: Cog },
-  ];
-
-  const whatsappItems: MenuItem[] = [
-    { title: 'Inbox', url: '/whatsapp', icon: MessageCircle },
-    { title: 'Contatos', url: '/whatsapp/contacts', icon: UserRound },
-    { title: 'Etiquetas', url: '/whatsapp/labels', icon: Tag },
-    { title: 'Respostas Rápidas', url: '/whatsapp/quick-replies', icon: Cog },
-    { title: 'Configurações', url: '/whatsapp/settings', icon: Settings },
-  ];
-
-  const nfseItems: MenuItem[] = [
-    { title: 'Dashboard Fiscal', url: '/nfse', icon: BarChart3 },
-    { title: 'Emitir NFS-e', url: '/nfse/emit', icon: FileText },
-    { title: 'Notas Emitidas', url: '/nfse/list', icon: ClipboardList },
-    { title: 'Serviços Fiscais', url: '/nfse/services', icon: Tag },
-    { title: 'Configurações', url: '/nfse/settings', icon: Cog },
-    { title: 'Certificado Digital', url: '/nfse/certificate', icon: Receipt },
-  ];
-
-  const adminItems: MenuItem[] = [
-    { title: 'Configurações', url: '/settings', icon: Settings, permKey: 'settings_access' },
-    { title: 'Aparência', url: '/settings/appearance', icon: Palette, permKey: 'settings_access' },
-    { title: 'Usuários', url: '/users', icon: Users },
-  ];
-
-  const isFinancialActive = location.pathname.startsWith('/financial');
-  const isReportsActive = location.pathname.startsWith('/reports');
-  const isEmailActive = location.pathname.startsWith('/email');
-  const isWhatsAppActive = location.pathname.startsWith('/whatsapp');
-  const isNfseActive = location.pathname.startsWith('/nfse');
-
-  const filteredFinancial = filterItems(financialItems);
-  const filteredReports = filterItems(reportItems);
-  const filteredEmail = filterItems(emailItems);
-  const filteredWhatsApp = filterItems(whatsappItems);
-
-  const renderMenuItems = (items: MenuItem[]) => (
-    <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.title + item.url}>
-          <SidebarMenuButton asChild>
-            <NavLink
-              to={item.url}
-              end
-              className="flex items-center gap-3 px-3 py-2.5 rounded-md text-foreground/70 hover:bg-primary/10 hover:text-primary transition-all duration-150 text-[14px]"
-              activeClassName="bg-primary/10 text-primary font-semibold"
-            >
-              <item.icon className="h-[18px] w-[18px] shrink-0" />
-              {!collapsed && <span>{item.title}</span>}
-            </NavLink>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
-  );
-
-  const renderCollapsibleGroup = (label: string, icon: any, items: MenuItem[], isActive: boolean) => {
-    if (items.length === 0) return null;
-    return (
-      <SidebarGroup>
-        <Collapsible defaultOpen={isActive}>
-          <CollapsibleTrigger className="flex items-center gap-2.5 px-4 py-2.5 w-full text-muted-foreground text-[12px] uppercase tracking-widest font-semibold hover:text-foreground transition-colors">
-            {React.createElement(icon, { className: 'h-4 w-4' })}
-            {!collapsed && <>
-              <span>{label}</span>
-              <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform" />
-            </>}
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <SidebarGroupContent>{renderMenuItems(items)}</SidebarGroupContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </SidebarGroup>
-    );
-  };
-
-  // Calendar + Reports inline items (shown after main menu)
-  const calendarItem: MenuItem[] = [
-    { title: 'Calendário', url: '/calendar', icon: CalendarDays },
+  const menus: MenuGroup[] = isVistos ? [
+    {
+      label: 'Cadastros',
+      items: [
+        { title: 'Clientes', url: '/clients', permKey: 'clients_view' },
+        { title: 'Fornecedores', url: '/suppliers', permKey: 'suppliers_view' },
+        { title: 'Serviços', url: '/vistos/products' },
+      ],
+    },
+    {
+      label: 'Vendas',
+      items: [
+        { title: 'Dashboard', url: '/vistos/dashboard' },
+        { title: 'Vendas', url: '/vistos/sales', permKey: 'sales_view' },
+        { title: 'Produção', url: '/vistos/production' },
+        { title: 'DS-160 Grupo', url: '/vistos/ds160' },
+      ],
+    },
+    {
+      label: 'Financeiro',
+      items: [
+        { title: 'Contas a Receber', url: '/financial/receivable', permKey: 'financial_receivable' },
+        { title: 'Contas a Pagar', url: '/financial/payable', permKey: 'financial_payable' },
+        { title: 'Contas Correntes', url: '/financial/bank-accounts', permKey: 'financial_bank_accounts' },
+        { title: 'Conciliação Bancária', url: '/financial/reconciliation', permKey: 'financial_reconciliation' },
+        { title: 'Fluxo de Caixa', url: '/financial/cashflow', permKey: 'financial_cashflow' },
+        { title: 'Centros de Custo', url: '/financial/cost-centers', permKey: 'financial_cashflow' },
+        { title: 'Relatório de Conta', url: '/financial/bank-report', permKey: 'financial_bank_report' },
+      ],
+    },
+    {
+      label: 'Relatórios',
+      items: [
+        { title: 'Relatórios', url: '/vistos/reports' },
+      ],
+    },
+    {
+      label: 'Ferramentas',
+      items: [
+        { title: 'Calendário', url: '/calendar' },
+        { title: 'WhatsApp', url: '/whatsapp' },
+        { title: 'Email', url: '/email' },
+      ],
+    },
+  ] : [
+    {
+      label: 'Cadastros',
+      items: [
+        { title: 'Clientes', url: '/clients', permKey: 'clients_view' },
+        { title: 'Fornecedores', url: '/suppliers', permKey: 'suppliers_view' },
+        { title: 'Vendedores', url: '/sellers', permKey: 'sellers_view' },
+        { title: 'Serviços', url: '/services', permKey: 'services_view' },
+        { title: 'Centros de Custo', url: '/financial/cost-centers', permKey: 'financial_cashflow' },
+      ],
+    },
+    {
+      label: 'Vendas',
+      items: [
+        { title: 'Dashboard', url: '/dashboard' },
+        { title: 'Vendas', url: '/sales', permKey: 'sales_view' },
+        { title: 'Cotações', url: '/cotacoes', permKey: 'sales_view' },
+        { title: 'Reservas', url: '/reservations', permKey: 'reservations_view' },
+        { title: 'Roteiros', url: '/itineraries' },
+        { title: 'Contratos', url: '/contracts/templates' },
+        { title: 'Promo Maker', url: '/promo-maker' },
+      ],
+    },
+    {
+      label: 'Financeiro',
+      items: [
+        { title: 'Contas a Receber', url: '/financial/receivable', permKey: 'financial_receivable' },
+        { title: 'Contas a Pagar', url: '/financial/payable', permKey: 'financial_payable' },
+        { title: 'Contas Correntes', url: '/financial/bank-accounts', permKey: 'financial_bank_accounts' },
+        { title: 'Conciliação Bancária', url: '/financial/reconciliation', permKey: 'financial_reconciliation' },
+        { title: 'Fluxo de Caixa', url: '/financial/cashflow', permKey: 'financial_cashflow' },
+        { title: 'Comissões', url: '/financial/commissions', permKey: 'financial_commissions' },
+        { title: 'Relatório de Conta', url: '/financial/bank-report', permKey: 'financial_bank_report' },
+      ],
+    },
+    {
+      label: 'Relatórios',
+      items: [
+        { title: 'Dashboard Geral', url: '/reports/dashboard', permKey: 'reports_dashboard' },
+        { title: 'Vendas', url: '/reports/sales', permKey: 'reports_sales' },
+        { title: 'Financeiro', url: '/reports/financial', permKey: 'reports_financial' },
+        { title: 'Fluxo de Caixa', url: '/reports/cashflow', permKey: 'reports_financial' },
+        { title: 'Clientes', url: '/reports/clients', permKey: 'reports_sales' },
+        { title: 'Fornecedores', url: '/reports/suppliers', permKey: 'reports_sales' },
+        { title: 'Centro de Custo', url: '/reports/cost-centers', permKey: 'reports_financial' },
+        { title: 'Produtos', url: '/reports/products', permKey: 'reports_sales' },
+        { title: 'Check-ins', url: '/reports/checkins', permKey: 'reports_sales' },
+        { title: 'Lucro por Venda', url: '/reports/profit', permKey: 'reports_financial' },
+      ],
+    },
+    {
+      label: 'NFS-e',
+      items: [
+        { title: 'Dashboard Fiscal', url: '/nfse' },
+        { title: 'Emitir NFS-e', url: '/nfse/emit' },
+        { title: 'Notas Emitidas', url: '/nfse/list' },
+        { title: 'Serviços Fiscais', url: '/nfse/services' },
+        { title: 'Configurações', url: '/nfse/settings' },
+        { title: 'Certificado Digital', url: '/nfse/certificate' },
+      ],
+    },
+    {
+      label: 'Ferramentas',
+      items: [
+        { title: 'Calendário', url: '/calendar' },
+        { title: 'WhatsApp', url: '/whatsapp' },
+        { title: 'Email', url: '/email' },
+        ...(isAdmin ? [
+          { title: 'Configurações', url: '/settings', permKey: 'settings_access' },
+          { title: 'Aparência', url: '/settings/appearance', permKey: 'settings_access' },
+          { title: 'Usuários', url: '/users' },
+        ] : []),
+      ],
+    },
   ];
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
-      <SidebarContent className="bg-card text-foreground scrollbar-thin">
-        {/* Logo area */}
-        <div className="px-4 py-5 flex items-center gap-3">
-          {!collapsed ? (
-            <div>
-              <h2 className="font-bold text-[16px] text-primary tracking-wide">
-                {isVistos ? 'VORTEX VISTOS' : 'VORTEX VIAGENS'}
-              </h2>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Enterprise Resource Planning</p>
+    <div ref={menuRef} className="relative">
+      {/* Main menu bar */}
+      <nav className="flex items-center bg-secondary/60 border-b h-7 px-1 gap-0">
+        {menus.map(group => {
+          const filteredItems = group.items.filter(i => hasPerm(i.permKey));
+          if (filteredItems.length === 0) return null;
+          const isOpen = openMenu === group.label;
+          const isActive = filteredItems.some(i => location.pathname === i.url || location.pathname.startsWith(i.url + '/'));
+
+          return (
+            <div key={group.label} className="relative">
+              <button
+                onClick={() => setOpenMenu(isOpen ? null : group.label)}
+                className={`px-3 py-1 text-xs font-medium transition-colors hover:bg-accent ${isActive ? 'text-primary font-semibold' : 'text-foreground/80'} ${isOpen ? 'bg-accent' : ''}`}
+              >
+                {group.label}
+              </button>
+              {/* Dropdown */}
+              {isOpen && (
+                <div className="absolute top-full left-0 z-50 min-w-[180px] bg-popover border shadow-md py-0.5">
+                  {filteredItems.map(item => (
+                    <button
+                      key={item.url}
+                      onClick={() => navigate(item.url)}
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors ${location.pathname === item.url ? 'bg-accent text-primary font-medium' : 'text-foreground/80'}`}
+                    >
+                      {item.title}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-bold text-sm">V</span>
-            </div>
-          )}
-        </div>
-
-        <div className="px-3 mb-1">
-          <div className="h-px bg-border" />
-        </div>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground text-[12px] uppercase tracking-widest font-semibold px-4">
-            Menu
-          </SidebarGroupLabel>
-          <SidebarGroupContent>{renderMenuItems(filterItems(mainItems))}</SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Financeiro right after Vendas (main menu) */}
-        {renderCollapsibleGroup('Financeiro', DollarSign, filteredFinancial, isFinancialActive)}
-
-        {/* Calendário */}
-        <SidebarGroup>
-          <SidebarGroupContent>{renderMenuItems(calendarItem)}</SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Relatórios right after Calendário */}
-        {renderCollapsibleGroup('Relatórios', BarChart3, filteredReports, isReportsActive)}
-
-        {/* NFS-e */}
-        {renderCollapsibleGroup('NFS-e', Receipt, filterItems(nfseItems), isNfseActive)}
-
-        <div className="px-3 my-1">
-          <div className="h-px bg-border" />
-        </div>
-
-        {/* Apps section */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground text-[12px] uppercase tracking-widest font-semibold px-4">
-            Apps
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            {renderMenuItems(filterItems([
-              { title: 'WhatsApp', url: '/whatsapp', icon: MessageCircle },
-              { title: 'Email', url: '/email', icon: Mail },
-            ]))}
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {isWhatsAppActive && renderCollapsibleGroup('WhatsApp', MessageCircle, filteredWhatsApp, true)}
-        {isEmailActive && renderCollapsibleGroup('Email', Mail, filteredEmail, true)}
-
-        {isAdmin && (
-          <>
-            <div className="px-3 my-1">
-              <div className="h-px bg-border" />
-            </div>
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-muted-foreground text-[12px] uppercase tracking-widest font-semibold px-4">
-                Admin
-              </SidebarGroupLabel>
-              <SidebarGroupContent>{renderMenuItems(adminItems)}</SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
-
-        {/* Footer */}
-        <div className="mt-auto p-4">
-          <div className="h-px bg-border mb-3" />
-          {!collapsed && userEmail && (
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0">
-                <User className="h-3.5 w-3.5 text-muted-foreground" />
-              </div>
-              <p className="text-[12px] text-muted-foreground truncate">{userEmail}</p>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size={collapsed ? 'icon' : 'sm'}
-            className="w-full text-muted-foreground hover:text-foreground hover:bg-muted text-[14px] justify-start"
-            onClick={() => supabase.auth.signOut()}
-          >
-            <LogOut className="h-4 w-4" />
-            {!collapsed && <span className="ml-2">Sair</span>}
-          </Button>
-        </div>
-      </SidebarContent>
-    </Sidebar>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
+  const { userEmail } = usePermissions();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const accessibleCompanies = companies.filter(c => userCompanyIds.includes(c.id));
   const showSelector = isMaster && accessibleCompanies.length > 1;
 
@@ -351,9 +266,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (pendingCompany) {
       setActiveCompany(pendingCompany);
       navigate('/dashboard');
-      toast.success(`Empresa alterada para ${pendingCompany.name}`, {
-        description: 'Os dados exibidos agora são desta empresa.',
-      });
+      toast.success(`Empresa alterada para ${pendingCompany.name}`);
     }
     setShowConfirm(false);
     setPendingCompany(null);
@@ -365,116 +278,83 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Modern Header */}
-          <header className="h-[56px] flex items-center bg-card border-b px-4 shrink-0 gap-3">
-            <SidebarTrigger className="mr-1 text-muted-foreground hover:text-foreground">
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
+    <div className="min-h-screen flex flex-col w-full bg-background">
+      {/* Top header bar */}
+      <header className="h-8 flex items-center bg-card border-b px-2 shrink-0 gap-2">
+        {/* Logo */}
+        <span className="text-xs font-bold text-primary tracking-wide mr-3">
+          {activeCompany?.slug === 'vortex-vistos' ? 'VORTEX VISTOS' : 'VORTEX'}
+        </span>
 
-            {/* Company selector */}
-            {showSelector ? (
-              <Select value={activeCompany?.id || ''} onValueChange={handleCompanyChange}>
-                <SelectTrigger className="w-[180px] h-9 text-sm border-border/50 bg-secondary/50 rounded-lg font-medium">
-                  <Building className="h-4 w-4 mr-2 shrink-0 text-primary" />
-                  <SelectValue placeholder="Selecione a empresa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accessibleCompanies.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : activeCompany ? (
-              <span className="text-sm text-muted-foreground flex items-center gap-2 font-medium">
-                <Building className="h-4 w-4 text-primary" />
-                {activeCompany.name}
-              </span>
-            ) : null}
+        {/* Company selector */}
+        {showSelector ? (
+          <Select value={activeCompany?.id || ''} onValueChange={handleCompanyChange}>
+            <SelectTrigger className="w-[160px] h-6 text-xs border-border/50 bg-secondary/50">
+              <Building className="h-3 w-3 mr-1 shrink-0 text-primary" />
+              <SelectValue placeholder="Empresa" />
+            </SelectTrigger>
+            <SelectContent>
+              {accessibleCompanies.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : activeCompany ? (
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <Building className="h-3 w-3 text-primary" />
+            {activeCompany.name}
+          </span>
+        ) : null}
 
-
-            {/* Right actions */}
-            <div className="ml-auto flex items-center gap-2">
-              {!isMobile && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => navigate('/whatsapp')}
-                        size="sm"
-                        className="h-9 rounded-lg gap-2 font-medium bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 shadow-sm"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        WhatsApp
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Abrir WhatsApp</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => navigate('/email')}
-                        size="sm"
-                        className="h-9 rounded-lg gap-2 font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-                      >
-                        <Mail className="h-4 w-4" />
-                        Email
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Abrir Email</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => setShowPhotoModal(true)}
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-lg border-border/50"
-                      >
-                        <Camera className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Capturar foto</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <NotificationBell />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>Notificações</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-          </header>
-
-          <main className="flex-1 overflow-auto bg-background">{children}</main>
-        </div>
-      </div>
-
-      {/* Floating buttons - mobile */}
-      {isMobile && (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
-          <button
+        {/* Right actions */}
+        <div className="ml-auto flex items-center gap-1">
+          <Button
             onClick={() => navigate('/whatsapp')}
-            className="h-12 w-12 rounded-full flex items-center justify-center shadow-lg bg-whatsapp text-whatsapp-foreground"
-            title="WhatsApp"
+            size="sm"
+            className="h-6 text-[11px] gap-1 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
           >
-            <MessageCircle className="h-5 w-5" />
-          </button>
-          <button
+            <MessageCircle className="h-3 w-3" />
+            WhatsApp
+          </Button>
+          <Button
+            onClick={() => navigate('/email')}
+            size="sm"
+            className="h-6 text-[11px] gap-1"
+          >
+            <Mail className="h-3 w-3" />
+            Email
+          </Button>
+          <Button
             onClick={() => setShowPhotoModal(true)}
-            className="h-12 w-12 rounded-full flex items-center justify-center shadow-lg bg-primary text-primary-foreground"
-            title="Capturar foto"
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
           >
-            <Camera className="h-5 w-5" />
-          </button>
+            <Camera className="h-3 w-3" />
+          </Button>
+          <NotificationBell />
+          {userEmail && (
+            <span className="text-[11px] text-muted-foreground max-w-[120px] truncate hidden lg:inline">
+              {userEmail}
+            </span>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+            onClick={() => supabase.auth.signOut()}
+            title="Sair"
+          >
+            <LogOut className="h-3 w-3" />
+          </Button>
         </div>
-      )}
+      </header>
+
+      {/* Horizontal menu */}
+      <TopMenuBar />
+
+      {/* Main content */}
+      <main className="flex-1 overflow-auto">{children}</main>
 
       <PhotoCaptureModal
         open={showPhotoModal}
@@ -487,16 +367,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <AlertDialogTitle>Trocar de empresa?</AlertDialogTitle>
             <AlertDialogDescription>
               Você está prestes a mudar para <strong>{pendingCompany?.name}</strong>.
-              Qualquer cadastro, edição ou venda em andamento será perdido.
-              Deseja continuar?
+              Qualquer cadastro em andamento será perdido. Deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelSwitch}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmSwitch}>Sim, trocar empresa</AlertDialogAction>
+            <AlertDialogAction onClick={confirmSwitch}>Sim, trocar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SidebarProvider>
+    </div>
   );
 }
