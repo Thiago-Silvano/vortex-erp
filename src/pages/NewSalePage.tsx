@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
+import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger } from '@/lib/generateAirlineVoucherPdf';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
@@ -1563,7 +1564,75 @@ export default function NewSalePage() {
 
     const doc = generateVoucherPdf(voucherData);
     doc.save(`voucher-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('Voucher gerado com sucesso!');
+    toast.success('Voucher geral gerado com sucesso!');
+
+    // ─── Generate separate Airline Voucher for aereo services ──
+    const airlineItems = items.filter(i => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
+    if (airlineItems.length > 0) {
+      for (const airItem of airlineItems) {
+        const meta = airItem.metadata!;
+        const legs = meta.flightLegs || [];
+
+        // Load airline logo
+        let airlineLogoBase64: string | undefined;
+        let airlineName = '';
+        if (meta.airlineId && activeCompany?.id) {
+          const { data: airlineData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', meta.airlineId).maybeSingle() as any);
+          if (airlineData) {
+            airlineName = airlineData.name || '';
+            if (airlineData.logo_url) {
+              try {
+                const resp = await fetch(airlineData.logo_url);
+                const blob = await resp.blob();
+                airlineLogoBase64 = await new Promise<string>((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result as string);
+                  reader.readAsDataURL(blob);
+                });
+              } catch { /* skip */ }
+            }
+          }
+        }
+
+        const airPax: AirlineVoucherPassenger[] = passengers.map((p, i) => ({
+          name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
+          eticketNumber: p.eticket_number || undefined,
+          baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
+        }));
+
+        const airVoucherData: AirlineVoucherData = {
+          agencyLogoBase64: logoBase64,
+          airlineLogoBase64,
+          airlineName,
+          shortId: shortId || undefined,
+          localizador: airItem.reservation_number || '',
+          passengers: airPax,
+          flightLegs: legs.map((l: any) => ({
+            origin: l.origin || '',
+            destination: l.destination || '',
+            originFull: l.originFull || '',
+            destinationFull: l.destinationFull || '',
+            departureDate: l.departureDate || '',
+            departureTime: l.departureTime || '',
+            arrivalDate: l.arrivalDate || '',
+            arrivalTime: l.arrivalTime || '',
+            flightCode: l.flightCode || '',
+            connectionDuration: l.connectionDuration || '',
+            direction: l.direction || 'ida',
+          })),
+          notes: notes || undefined,
+          agencyName: agency.name,
+          agencyWhatsapp: agency.whatsapp || '',
+          agencyEmail: agency.email || '',
+          agencyWebsite: agency.website || '',
+        };
+
+        const airDoc = generateAirlineVoucherPdf(airVoucherData);
+        const airFileName = `voucher-aereo-${airlineName ? airlineName.replace(/\s+/g, '-').toLowerCase() + '-' : ''}${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+        airDoc.save(airFileName);
+      }
+      toast.success('Voucher(s) aereo(s) gerado(s)!');
+    }
   };
 
   const handleExportDraftPdf = async () => {
