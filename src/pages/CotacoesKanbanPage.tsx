@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
 import { KanbanColumnData } from '@/components/kanban/KanbanColumn';
