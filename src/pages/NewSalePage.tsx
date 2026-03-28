@@ -43,6 +43,7 @@ interface SaleItem {
   cost_center_id?: string;
   metadata?: ServiceMetadata;
   reservation_number?: string;
+  purchase_number?: string;
   quote_option_id?: string;
   quote_option_ids?: string[];
 }
