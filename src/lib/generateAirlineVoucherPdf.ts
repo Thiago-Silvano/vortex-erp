@@ -195,7 +195,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-    doc.text('Observacoes', m, y);
+    doc.text('Obs:', m, y);
     y += 5;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
