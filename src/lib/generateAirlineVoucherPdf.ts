@@ -117,9 +117,9 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
   if (data.airlineLogoBase64) {
     try {
       const logoX = m + 35;
-      const logoY = 2;
+      const logoY = 1;
       const logoW = 38;
-      const logoH = 18;
+      const logoH = 20;
       doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
       doc.roundedRect(logoX - 1, logoY, logoW + 2, logoH, 2, 2, 'F');
       doc.addImage(data.airlineLogoBase64, 'PNG', logoX, logoY + 1, logoW, logoH - 2);
