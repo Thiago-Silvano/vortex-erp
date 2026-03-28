@@ -325,7 +325,7 @@ function drawLegRow(
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
   doc.text(s(leg.departureTime || '--:--'), leftCol, y + 9);
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
   doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
   doc.text(formatDateBR(leg.departureDate), leftCol, y + 14);
