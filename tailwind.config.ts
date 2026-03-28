@@ -117,22 +117,8 @@ export default {
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
-  				'BlinkMacSystemFont',
-  				'Segoe UI',
-  				'Roboto',
-  				'Helvetica Neue',
-  				'Arial',
   				'sans-serif'
   			],
-  			mono: [
-  				'Space Mono',
-  				'ui-monospace',
-  				'SFMono-Regular',
-  				'Menlo',
-  				'Monaco',
-  				'Consolas',
-  				'monospace'
-  			]
   		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',

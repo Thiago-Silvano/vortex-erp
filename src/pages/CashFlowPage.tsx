@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
-import { format, startOfMonth, endOfMonth, eachMonthOfInterval, eachWeekOfInterval, startOfWeek, endOfWeek, addMonths } from 'date-fns';
+import { format, eachMonthOfInterval, eachWeekOfInterval, startOfWeek, endOfWeek, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface CostCenter { id: string; name: string; }
@@ -43,48 +43,25 @@ export default function CashFlowPage() {
       return weeks.map(w => {
         const start = startOfWeek(w, { weekStartsOn: 1 });
         const end = endOfWeek(w, { weekStartsOn: 1 });
-        const entradas = filteredReceivables.filter(r => {
-          if (!r.due_date) return false;
-          const d = new Date(r.due_date + 'T12:00:00');
-          return d >= start && d <= end;
-        }).reduce((s: number, r: any) => s + Number(r.amount), 0);
-        const saidas = filteredPayables.filter(r => {
-          if (!r.due_date) return false;
-          const d = new Date(r.due_date + 'T12:00:00');
-          return d >= start && d <= end;
-        }).reduce((s: number, r: any) => s + Number(r.amount), 0);
+        const entradas = filteredReceivables.filter(r => { if (!r.due_date) return false; const d = new Date(r.due_date + 'T12:00:00'); return d >= start && d <= end; }).reduce((s: number, r: any) => s + Number(r.amount), 0);
+        const saidas = filteredPayables.filter(r => { if (!r.due_date) return false; const d = new Date(r.due_date + 'T12:00:00'); return d >= start && d <= end; }).reduce((s: number, r: any) => s + Number(r.amount), 0);
         return { name: format(start, 'dd/MM'), entradas, saidas, saldo: entradas - saidas };
       });
     }
   }, [view, filteredReceivables, filteredPayables]);
 
-  // Cost center distribution
   const costCenterData = useMemo(() => {
     const map = new Map<string, { receitas: number; despesas: number }>();
     costCenters.forEach(c => map.set(c.id, { receitas: 0, despesas: 0 }));
-    filteredReceivables.forEach(r => {
-      if (r.cost_center_id && map.has(r.cost_center_id)) {
-        map.get(r.cost_center_id)!.receitas += Number(r.amount);
-      }
-    });
-    filteredPayables.forEach(r => {
-      if (r.cost_center_id && map.has(r.cost_center_id)) {
-        map.get(r.cost_center_id)!.despesas += Number(r.amount);
-      }
-    });
-    return costCenters.filter(c => {
-      const d = map.get(c.id);
-      return d && (d.receitas > 0 || d.despesas > 0);
-    }).map(c => {
+    filteredReceivables.forEach(r => { if (r.cost_center_id && map.has(r.cost_center_id)) map.get(r.cost_center_id)!.receitas += Number(r.amount); });
+    filteredPayables.forEach(r => { if (r.cost_center_id && map.has(r.cost_center_id)) map.get(r.cost_center_id)!.despesas += Number(r.amount); });
+    return costCenters.filter(c => { const d = map.get(c.id); return d && (d.receitas > 0 || d.despesas > 0); }).map(c => {
       const d = map.get(c.id)!;
       return { name: c.name, receitas: d.receitas, despesas: d.despesas, saldo: d.receitas - d.despesas };
     });
   }, [costCenters, filteredReceivables, filteredPayables]);
 
-  const pieData = useMemo(() => {
-    return costCenterData.map(c => ({ name: c.name, value: c.despesas })).filter(c => c.value > 0);
-  }, [costCenterData]);
-
+  const pieData = useMemo(() => costCenterData.map(c => ({ name: c.name, value: c.despesas })).filter(c => c.value > 0), [costCenterData]);
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', 'hsl(var(--accent))', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f43f5e'];
 
   const totalEntradas = chartData.reduce((s, d) => s + d.entradas, 0);
@@ -92,61 +69,42 @@ export default function CashFlowPage() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Fluxo de Caixa</h1>
-          <div className="flex gap-3">
-            <Select value={filterCostCenter} onValueChange={setFilterCostCenter}>
-              <SelectTrigger className="w-48"><SelectValue placeholder="Centro de Custo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {costCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={view} onValueChange={v => setView(v as any)}>
-              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="month">Por Mês</SelectItem>
-                <SelectItem value="week">Por Semana</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="p-2 space-y-2">
+        {/* Toolbar */}
+        <div className="flex items-center gap-2 bg-card border p-1.5">
+          <span className="text-xs font-bold">Fluxo de Caixa</span>
+          <Select value={filterCostCenter} onValueChange={setFilterCostCenter}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Centro de Custo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {costCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={view} onValueChange={v => setView(v as any)}>
+            <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="month">Por Mês</SelectItem>
+              <SelectItem value="week">Por Semana</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="ml-auto flex gap-4 text-xs">
+            <span>Entradas: <strong className="text-primary">{fmt(totalEntradas)}</strong></span>
+            <span>Saídas: <strong className="text-destructive">{fmt(totalSaidas)}</strong></span>
+            <span>Resultado: <strong className={totalEntradas - totalSaidas >= 0 ? 'text-primary' : 'text-destructive'}>{fmt(totalEntradas - totalSaidas)}</strong></span>
           </div>
-        </div>
-
-        {/* Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">Entradas Previstas</p>
-              <p className="text-2xl font-bold text-primary">{fmt(totalEntradas)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">Saídas Previstas</p>
-              <p className="text-2xl font-bold text-destructive">{fmt(totalSaidas)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">Resultado Previsto</p>
-              <p className={`text-2xl font-bold ${totalEntradas - totalSaidas >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(totalEntradas - totalSaidas)}</p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Chart */}
         <Card>
-          <CardHeader><CardTitle>Fluxo de Caixa {view === 'month' ? 'Mensal' : 'Semanal'}</CardTitle></CardHeader>
-          <CardContent>
-            <div className="h-80">
+          <CardContent className="p-2">
+            <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                  <YAxis tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(v: number) => fmt(v)} />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
                   <Bar dataKey="entradas" name="Entradas" fill="hsl(var(--primary))" />
                   <Bar dataKey="saidas" name="Saídas" fill="hsl(var(--destructive))" />
                 </BarChart>
@@ -157,14 +115,14 @@ export default function CashFlowPage() {
 
         {/* Cost Center Distribution */}
         {pieData.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-2">
             <Card>
               <CardHeader><CardTitle>Distribuição por Centro de Custo</CardTitle></CardHeader>
               <CardContent>
-                <div className="h-64">
+                <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                      <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                         {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
                       <Tooltip formatter={(v: number) => fmt(v)} />
