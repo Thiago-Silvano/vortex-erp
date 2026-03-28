@@ -152,12 +152,6 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
   y = headerH + 8;
 
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-  doc.text('Informacoes do voo', m, y);
-  y += 5;
-
   const outbound = data.flightLegs.filter(l => l.direction !== 'volta');
   const returnLegs = data.flightLegs.filter(l => l.direction === 'volta');
 
