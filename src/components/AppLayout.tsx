@@ -153,16 +153,19 @@ function TopMenuBar() {
       label: 'Cotações',
       items: [
         { title: 'Kanban', url: '/cotacoes', permKey: 'sales_view' },
+        { title: 'Lista', url: '/cotacoes/lista', permKey: 'sales_view' },
       ],
     },
     {
       label: 'Reservas',
+      url: '/reservations',
       items: [
         { title: 'Reservas', url: '/reservations', permKey: 'reservations_view' },
       ],
     },
     {
       label: 'Promo Maker',
+      url: '/promo-maker',
       items: [
         { title: 'Promo Maker', url: '/promo-maker' },
       ],
