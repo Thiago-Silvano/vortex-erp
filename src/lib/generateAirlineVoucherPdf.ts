@@ -24,6 +24,8 @@ export interface AirlineVoucherLeg {
   flightCode?: string;
   connectionDuration?: string;
   direction?: 'ida' | 'volta';
+  airlineLogoBase64?: string;
+  airlineName?: string;
 }
 
 export interface AirlineVoucherPassenger {

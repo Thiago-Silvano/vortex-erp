@@ -468,6 +468,22 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     <div><Label className="text-xs">Código do Voo</Label><Input value={leg.flightCode} onChange={e => updateLeg(idx, 'flightCode', e.target.value)} placeholder="LA1234" /></div>
                     <div><Label className="text-xs">Origem</Label><Input value={leg.origin} onChange={e => updateLeg(idx, 'origin', e.target.value)} placeholder="GRU" /></div>
                     <div><Label className="text-xs">Destino</Label><Input value={leg.destination} onChange={e => updateLeg(idx, 'destination', e.target.value)} placeholder="MIA" /></div>
+                    <div>
+                      <Label className="text-xs">Cia Aérea do trecho</Label>
+                      <Select value={leg.airlineId || ''} onValueChange={v => updateLeg(idx, 'airlineId', v)}>
+                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
+                          {airlinesList.map((a: any) => (
+                            <SelectItem key={a.id} value={a.id}>
+                              <span className="flex items-center gap-2">
+                                {a.logo_url && <img src={a.logo_url} alt="" className="h-4 w-6 object-contain inline" />}
+                                {a.name}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div><Label className="text-xs">Conexão (duração)</Label><Input value={leg.connectionDuration} onChange={e => updateLeg(idx, 'connectionDuration', e.target.value)} placeholder="2h30" /></div>
                     <div><Label className="text-xs">Data Partida</Label><Input type="date" value={leg.departureDate} onChange={e => updateLeg(idx, 'departureDate', e.target.value)} /></div>
                     <div><Label className="text-xs">Hora Partida</Label><Input type="time" value={leg.departureTime} onChange={e => updateLeg(idx, 'departureTime', e.target.value)} /></div>
