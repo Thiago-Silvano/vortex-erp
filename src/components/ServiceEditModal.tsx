@@ -81,6 +81,7 @@ export interface ExperienceInfo {
 
 export interface ServiceMetadata {
   type?: 'aereo' | 'hotel' | 'carro' | 'seguro' | 'experiencia' | 'adicional';
+  airlineId?: string;
   flightLegs?: FlightLeg[];
   baggage?: BaggageInfo;
   hotel?: HotelInfo;
@@ -142,6 +143,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
+  const [airlineId, setAirlineId] = useState(metadata.airlineId || '');
+  const [airlinesList, setAirlinesList] = useState<any[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -154,9 +157,20 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setHotelImages(metadata.hotel?.images || []);
       setSelectedImageIndices(new Set());
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
+      setAirlineId(metadata.airlineId || '');
       loadGoogleApiKey();
+      loadAirlines();
     }
   }, [open]);
+
+  const loadAirlines = async () => {
+    if (!activeCompany) return;
+    const { data } = await (supabase.from('airlines' as any).select('*') as any)
+      .eq('empresa_id', activeCompany.id)
+      .eq('is_active', true)
+      .order('name');
+    setAirlinesList(data || []);
+  };
 
   // Calculate nights when dates change
   useEffect(() => {
@@ -302,6 +316,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     const selectedImages = hotelImages.filter((_, i) => selectedImageIndices.has(i));
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
     if (type === 'aereo') {
+      meta.airlineId = airlineId || undefined;
       meta.flightLegs = flightLegs;
       meta.baggage = baggage;
       const outbound = flightLegs.filter(l => l.direction === 'ida');
@@ -410,6 +425,25 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           {/* ── AÉREO ── */}
           {type === 'aereo' && (
             <div className="space-y-4 border-t pt-4">
+              {/* Cia Aérea principal */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Cia Aérea principal da viagem</Label>
+                  <Select value={airlineId} onValueChange={setAirlineId}>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {airlinesList.map((a: any) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          <span className="flex items-center gap-2">
+                            {a.logo_url && <img src={a.logo_url} alt="" className="h-4 w-6 object-contain inline" />}
+                            {a.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-sm">Trechos do Voo</h3>
                 <Button size="sm" variant="outline" onClick={addFlightLeg}><Plus className="h-3 w-3 mr-1" />Trecho</Button>

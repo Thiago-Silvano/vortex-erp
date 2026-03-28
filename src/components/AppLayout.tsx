@@ -136,6 +136,7 @@ function TopMenuBar() {
         { title: 'Fornecedores', url: '/suppliers', permKey: 'suppliers_view' },
         { title: 'Vendedores', url: '/sellers', permKey: 'sellers_view' },
         { title: 'Serviços', url: '/services', permKey: 'services_view' },
+        { title: 'Cias Aéreas', url: '/airlines' },
         { title: 'Centros de Custo', url: '/financial/cost-centers', permKey: 'financial_cashflow' },
       ],
     },
@@ -144,10 +145,25 @@ function TopMenuBar() {
       items: [
         { title: 'Dashboard', url: '/dashboard' },
         { title: 'Vendas', url: '/sales', permKey: 'sales_view' },
-        { title: 'Cotações', url: '/cotacoes', permKey: 'sales_view' },
-        { title: 'Reservas', url: '/reservations', permKey: 'reservations_view' },
         { title: 'Roteiros', url: '/itineraries' },
         { title: 'Contratos', url: '/contracts/templates' },
+      ],
+    },
+    {
+      label: 'Cotações',
+      items: [
+        { title: 'Kanban', url: '/cotacoes', permKey: 'sales_view' },
+      ],
+    },
+    {
+      label: 'Reservas',
+      items: [
+        { title: 'Reservas', url: '/reservations', permKey: 'reservations_view' },
+      ],
+    },
+    {
+      label: 'Promo Maker',
+      items: [
         { title: 'Promo Maker', url: '/promo-maker' },
       ],
     },
