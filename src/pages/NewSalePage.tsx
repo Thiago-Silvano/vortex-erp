@@ -2735,57 +2735,7 @@ export default function NewSalePage() {
         </Card>
         )}
 
-        {/* Receivables - only in sale mode */}
-        {!isQuoteMode && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Controle de Recebíveis</CardTitle>
-            {(() => {
-               const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
-               const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
-                const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
-                const diff = expectedReceivables - totalReceivables;
-                return (
-                  <div className="flex items-center gap-4 text-sm mt-1">
-                    <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
-                  <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
-                  {Math.abs(diff) > 0.01 ? (
-                    <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
-                      {diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`}
-                    </span>
-                  ) : (
-                    <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
-                  )}
-                </div>
-              );
-            })()}
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead className="w-36">Forma</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {receivables.map((r, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{r.installment_number}ª</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{r.payment_method || '-'}</TableCell>
-                    <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
-                    <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
-                    <TableCell>
-                      <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Nenhum</SelectItem>
-                          {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        )}
+        {/* Receivables card removed - now inline inside Recebimento */}
 
         {/* Controle de Pagamentos - only in sale mode */}
         {!isQuoteMode && (
