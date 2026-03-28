@@ -100,6 +100,45 @@ export default function WhatsAppSettingsPage() {
     setChecking(false);
   };
 
+  const handleDisconnect = async () => {
+    if (!settings.server_url || settings.server_url.includes('localhost')) {
+      toast.error('Configure uma URL de servidor válida');
+      return;
+    }
+    setDisconnecting(true);
+    try {
+      await disconnectSession(settings.server_url);
+      await (supabase.from('whatsapp_settings').update({ is_connected: false, connected_phone: '', connected_name: '' }).eq('id', settings.id) as any);
+      setSettings(prev => ({ ...prev, is_connected: false, connected_phone: '', connected_name: '' }));
+      toast.success('WhatsApp desconectado! Escaneie o QR Code para reconectar.');
+      fetchQrCode();
+    } catch {
+      toast.error('Erro ao desconectar. Verifique o servidor.');
+    }
+    setDisconnecting(false);
+  };
+
+  const fetchQrCode = async () => {
+    if (!settings.server_url || settings.server_url.includes('localhost')) {
+      toast.error('Configure uma URL de servidor válida');
+      return;
+    }
+    setLoadingQr(true);
+    setQrCode(null);
+    try {
+      const data = await getQrCode(settings.server_url);
+      const qr = data?.qr || data?.qrcode || data?.qr_code || data?.base64 || data?.image || null;
+      if (qr) {
+        setQrCode(typeof qr === 'string' && !qr.startsWith('data:') ? `data:image/png;base64,${qr}` : qr);
+      } else {
+        toast.error('QR Code não disponível. O servidor pode já estar conectado ou ainda está gerando.');
+      }
+    } catch {
+      toast.error('Não foi possível obter o QR Code do servidor.');
+    }
+    setLoadingQr(false);
+  };
+
   const formatPhone = (phone: string) => {
     if (!phone) return '';
     const clean = phone.replace(/\D/g, '');
