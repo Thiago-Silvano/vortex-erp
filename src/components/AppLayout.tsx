@@ -210,10 +210,19 @@ function TopMenuBar() {
       ],
     },
     {
+      label: 'WhatsApp',
+      items: [
+        { title: 'Conversas', url: '/whatsapp' },
+        { title: 'Contatos', url: '/whatsapp/contacts' },
+        { title: 'Etiquetas', url: '/whatsapp/labels' },
+        { title: 'Respostas Rápidas', url: '/whatsapp/quick-replies' },
+        { title: 'Configurações', url: '/whatsapp/settings' },
+      ],
+    },
+    {
       label: 'Ferramentas',
       items: [
         { title: 'Calendário', url: '/calendar' },
-        { title: 'WhatsApp', url: '/whatsapp' },
         { title: 'Email', url: '/email' },
         ...(isAdmin ? [
           { title: 'Configurações', url: '/settings', permKey: 'settings_access' },
