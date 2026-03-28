@@ -22,6 +22,7 @@ interface FlightLeg {
   connectionDuration: string;
   direction: 'ida' | 'volta';
   flightCode: string;
+  airlineId?: string;
 }
 
 interface BaggageInfo {
