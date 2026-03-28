@@ -417,77 +417,135 @@ function drawLegRow(
   return y + rowH + 2;
 }
 
+// ─── Baggage icon helper (draws a small colored icon) ───────
+function drawBagIcon(doc: jsPDF, type: 'personal' | 'carryon' | 'checked', x: number, y: number) {
+  const size = 5;
+  if (type === 'personal') {
+    // Green backpack
+    doc.setFillColor(76, 175, 80);
+    doc.roundedRect(x, y - size + 1, size, size, 1, 1, 'F');
+    doc.setFillColor(56, 142, 60);
+    doc.roundedRect(x + 0.8, y - size + 2.2, size - 1.6, size - 2.5, 0.5, 0.5, 'F');
+    // Straps
+    doc.setDrawColor(56, 142, 60);
+    doc.setLineWidth(0.4);
+    doc.line(x + 1, y + 1, x + 1, y + 2.5);
+    doc.line(x + size - 1, y + 1, x + size - 1, y + 2.5);
+  } else if (type === 'carryon') {
+    // Blue suitcase
+    doc.setFillColor(66, 165, 245);
+    doc.roundedRect(x + 0.5, y - size + 1.5, size - 1, size - 0.5, 0.8, 0.8, 'F');
+    // Handle
+    doc.setDrawColor(33, 150, 243);
+    doc.setLineWidth(0.5);
+    doc.line(x + size / 2, y - size + 1.5, x + size / 2, y - size);
+    // Wheels
+    doc.setFillColor(33, 33, 33);
+    doc.circle(x + 1.5, y + 1.2, 0.4, 'F');
+    doc.circle(x + size - 1.5, y + 1.2, 0.4, 'F');
+  } else {
+    // Red/pink checked bag
+    doc.setFillColor(211, 47, 47);
+    doc.roundedRect(x + 0.3, y - size + 1, size - 0.6, size, 1, 1, 'F');
+    // Handle
+    doc.setDrawColor(183, 28, 28);
+    doc.setLineWidth(0.5);
+    doc.line(x + size / 2, y - size + 1, x + size / 2, y - size - 0.5);
+    // Wheels
+    doc.setFillColor(33, 33, 33);
+    doc.circle(x + 1.5, y + 1.3, 0.4, 'F');
+    doc.circle(x + size - 1.5, y + 1.3, 0.4, 'F');
+  }
+}
+
 // ─── Passenger Card ─────────────────────────────────────────
 function drawPassengerCard(
   doc: jsPDF, pax: AirlineVoucherPassenger, y: number, m: number, pw: number, cw: number
 ): number {
-  const cardH = 26;
+  const cardH = 30;
 
-  // Card border
+  // Card background + border
+  doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
+  doc.rect(m, y, cw, cardH, 'F');
   doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   doc.setLineWidth(0.3);
   doc.rect(m, y, cw, cardH, 'S');
 
   // Left accent
   doc.setFillColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-  doc.rect(m, y, 2, cardH, 'F');
+  doc.rect(m, y, 2.5, cardH, 'F');
 
-  // Name (top-left, bold)
+  const innerLeft = m + 8;
+  const innerRight = m + cw - 6;
+
+  // ── Row 1: Name + E-ticket ──
+  const row1Y = y + 7;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-  doc.text(s(pax.name.toUpperCase()), m + 6, y + 6);
+  doc.text(s(pax.name.toUpperCase()), innerLeft, row1Y);
 
-  // E-ticket (top-right)
   if (pax.eticketNumber) {
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(9);
     doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-    doc.text(`E-ticket: ${s(pax.eticketNumber)}`, m + cw - 4, y + 6, { align: 'right' });
+    doc.text(`E-ticket: ${s(pax.eticketNumber)}`, innerRight, row1Y, { align: 'right' });
   }
 
   // Separator line
+  const sepY = y + 11;
   doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   doc.setLineWidth(0.15);
-  doc.line(m + 4, y + 10, m + cw - 4, y + 10);
+  doc.line(innerLeft, sepY, innerRight, sepY);
 
-  // Baggage section
-  const bagY = y + 15;
-  const bag = pax.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 };
+  // ── Row 2: Seats + Baggage ──
+  const row2LabelY = sepY + 5;
+  const row2ValueY = row2LabelY + 5;
 
-  // Seats column
+  // Seats column (fixed width ~30mm)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-  doc.text('Assentos', m + 6, bagY);
+  doc.text('Assentos', innerLeft, row2LabelY);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-  doc.text('Nao informado', m + 6, bagY + 4.5);
+  doc.text('Nao informado', innerLeft, row2ValueY);
 
-  // Baggage items
-  const bagStartX = m + 45;
+  // Baggage header
+  const bagCol = innerLeft + 35;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-  doc.text('Bagagens*', bagStartX, bagY - 3);
+  doc.text('Bagagens*', bagCol, row2LabelY);
+
+  const bag = pax.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 };
+  const colSpacing = 45;
+  let colIdx = 0;
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
+  doc.setFontSize(7.5);
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
 
   if (bag.personalItem > 0) {
-    doc.text('Bolsa ou mochila', bagStartX, bagY + 2);
+    const cx = bagCol + colIdx * colSpacing;
+    drawBagIcon(doc, 'personal', cx, row2ValueY);
+    doc.text('Bolsa ou mochila', cx + 7, row2ValueY);
+    colIdx++;
   }
 
-  const col2X = bagStartX + 42;
   if (bag.carryOn > 0) {
-    doc.text('Mala pequena 12kg', col2X, bagY + 2);
+    const cx = bagCol + colIdx * colSpacing;
+    drawBagIcon(doc, 'carryon', cx, row2ValueY);
+    doc.text('Mala pequena 12kg', cx + 7, row2ValueY);
+    colIdx++;
   }
 
-  const col3X = col2X + 42;
   if (bag.checkedBag > 0) {
-    doc.text(`Bagagem despachada 23kg`, col3X, bagY + 2);
+    const cx = bagCol + colIdx * colSpacing;
+    drawBagIcon(doc, 'checked', cx, row2ValueY);
+    doc.text('Bagagem despachada 23kg', cx + 7, row2ValueY);
+    colIdx++;
   }
 
   return y + cardH;
