@@ -40,7 +40,6 @@ export interface AirlineVoucherPassenger {
 
 export interface AirlineVoucherData {
   agencyLogoBase64?: string;
-  airlineLogoBase64?: string;
   airlineName?: string;
   shortId?: string;
   localizador?: string; // reservation code from airline
