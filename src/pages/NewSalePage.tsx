@@ -1653,7 +1653,7 @@ export default function NewSalePage() {
         const airVoucherData: AirlineVoucherData = {
           agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
           airlineName,
-          shortId: shortId || undefined,
+          shortId: airItem.purchase_number || shortId || undefined,
           localizador: airItem.reservation_number || '',
           passengers: airPax,
           flightLegs: legs.map((l: any) => ({
