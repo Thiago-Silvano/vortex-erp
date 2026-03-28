@@ -3392,6 +3392,7 @@ export type Database = {
           description: string
           id: string
           metadata: Json | null
+          purchase_number: string | null
           quote_option_id: string | null
           rav: number | null
           reservation_number: string | null
@@ -3407,6 +3408,7 @@ export type Database = {
           description?: string
           id?: string
           metadata?: Json | null
+          purchase_number?: string | null
           quote_option_id?: string | null
           rav?: number | null
           reservation_number?: string | null
@@ -3422,6 +3424,7 @@ export type Database = {
           description?: string
           id?: string
           metadata?: Json | null
+          purchase_number?: string | null
           quote_option_id?: string | null
           rav?: number | null
           reservation_number?: string | null

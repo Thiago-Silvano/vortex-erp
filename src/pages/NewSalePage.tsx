@@ -43,6 +43,7 @@ interface SaleItem {
   cost_center_id?: string;
   metadata?: ServiceMetadata;
   reservation_number?: string;
+  purchase_number?: string;
   quote_option_id?: string;
   quote_option_ids?: string[];
 }
@@ -290,6 +291,7 @@ export default function NewSalePage() {
         cost_center_id: i.cost_center_id || undefined,
         metadata: (i as any).metadata || {},
         reservation_number: (i as any).reservation_number || '',
+        purchase_number: (i as any).purchase_number || '',
         quote_option_id: (i as any).quote_option_id || undefined,
         quote_option_ids: (i as any).quote_option_id ? [(i as any).quote_option_id] : undefined,
       })));
@@ -404,6 +406,7 @@ export default function NewSalePage() {
             cost_center_id: si.cost_center_id || undefined,
             metadata: si.metadata || {},
             reservation_number: si.reservation_number || '',
+            purchase_number: (si as any).purchase_number || '',
             quote_option_id: optionIds[0] || undefined,
             quote_option_ids: optionIds.length > 0 ? optionIds : undefined,
           });
@@ -1120,7 +1123,7 @@ export default function NewSalePage() {
           sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
           total_value: item.total_value, sort_order: sortIdx,
           service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
-          metadata: item.metadata || {}, reservation_number: item.reservation_number || '',
+          metadata: item.metadata || {}, reservation_number: item.reservation_number || '', purchase_number: item.purchase_number || '',
           quote_option_id: resolvedOptionId,
         };
       }) as any).select('id');
@@ -1650,7 +1653,7 @@ export default function NewSalePage() {
         const airVoucherData: AirlineVoucherData = {
           agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
           airlineName,
-          shortId: shortId || undefined,
+          shortId: airItem.purchase_number || shortId || undefined,
           localizador: airItem.reservation_number || '',
           passengers: airPax,
           flightLegs: legs.map((l: any) => ({
@@ -2393,15 +2396,26 @@ export default function NewSalePage() {
                         <TableCell colSpan={isQuoteMode && quoteOptions.length > 1 ? 8 : 7} className="py-1.5 px-2">
                           <div className="flex items-center gap-2">
                             {!isQuoteMode && (
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                <Label className="text-xs text-muted-foreground whitespace-nowrap">Reserva:</Label>
-                                <Input
-                                  value={item.reservation_number || ''}
-                                  onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)}
-                                  placeholder="ABC123"
-                                  className="h-6 text-xs w-28"
-                                />
-                              </div>
+                              <>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Reserva:</Label>
+                                  <Input
+                                    value={item.reservation_number || ''}
+                                    onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)}
+                                    placeholder="ABC123"
+                                    className="h-6 text-xs w-28"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Nº Compra:</Label>
+                                  <Input
+                                    value={item.purchase_number || ''}
+                                    onChange={e => updateItem(idx, 'purchase_number' as keyof SaleItem, e.target.value)}
+                                    placeholder="123456"
+                                    className="h-6 text-xs w-28"
+                                  />
+                                </div>
+                              </>
                             )}
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {uploadingItemImages[idx] ? (
