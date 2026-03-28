@@ -2396,15 +2396,26 @@ export default function NewSalePage() {
                         <TableCell colSpan={isQuoteMode && quoteOptions.length > 1 ? 8 : 7} className="py-1.5 px-2">
                           <div className="flex items-center gap-2">
                             {!isQuoteMode && (
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                <Label className="text-xs text-muted-foreground whitespace-nowrap">Reserva:</Label>
-                                <Input
-                                  value={item.reservation_number || ''}
-                                  onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)}
-                                  placeholder="ABC123"
-                                  className="h-6 text-xs w-28"
-                                />
-                              </div>
+                              <>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Reserva:</Label>
+                                  <Input
+                                    value={item.reservation_number || ''}
+                                    onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)}
+                                    placeholder="ABC123"
+                                    className="h-6 text-xs w-28"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Nº Compra:</Label>
+                                  <Input
+                                    value={item.purchase_number || ''}
+                                    onChange={e => updateItem(idx, 'purchase_number' as keyof SaleItem, e.target.value)}
+                                    placeholder="123456"
+                                    className="h-6 text-xs w-28"
+                                  />
+                                </div>
+                              </>
                             )}
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {uploadingItemImages[idx] ? (
