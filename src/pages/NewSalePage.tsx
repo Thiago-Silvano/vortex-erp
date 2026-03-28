@@ -36,6 +36,7 @@ interface SaleItem {
   description: string;
   cost_price: number;
   rav: number;
+  markup_percent: number;
   total_value: number;
   service_catalog_id?: string;
   cost_center_id?: string;
@@ -283,6 +284,7 @@ export default function NewSalePage() {
     if (saleItems) {
       setItems(saleItems.map(i => ({
         id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav),
+        markup_percent: Number((i as any).markup_percent) || 0,
         total_value: Number(i.total_value), service_catalog_id: i.service_catalog_id || undefined,
         cost_center_id: i.cost_center_id || undefined,
         metadata: (i as any).metadata || {},
@@ -396,6 +398,7 @@ export default function NewSalePage() {
         for (const [, { item: si, optionIds }] of mergedMap) {
           mergedItems.push({
             id: si.id, description: si.description, cost_price: Number(si.cost_price), rav: Number(si.rav),
+            markup_percent: Number(si.markup_percent) || 0,
             total_value: Number(si.total_value), service_catalog_id: si.service_catalog_id || undefined,
             cost_center_id: si.cost_center_id || undefined,
             metadata: si.metadata || {},
@@ -604,6 +607,7 @@ export default function NewSalePage() {
           installments: 1,
           installment_dates: [{ date: today, amount: costPerSupplier }],
           amount: costPerSupplier,
+          cost_center_id: (() => { try { return localStorage.getItem(`supplier_cc_${sid}`) || undefined; } catch { return undefined; } })(),
           description: 'Pagamento de operadoras',
         };
       });
@@ -686,7 +690,10 @@ export default function NewSalePage() {
     setItems(prev => prev.map((item, i) => {
       if (i !== idx) return item;
       const updated = { ...item, [field]: value };
-      if (field === 'cost_price' || field === 'rav') updated.total_value = updated.cost_price + updated.rav;
+      if (field === 'cost_price' || field === 'rav' || field === 'markup_percent') {
+        const base = updated.cost_price + updated.rav;
+        updated.total_value = base + base * ((updated.markup_percent || 0) / 100);
+      }
       return updated;
     }));
   };
@@ -1757,48 +1764,34 @@ export default function NewSalePage() {
   return (
     <AppLayout>
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
-        {/* Status Banner */}
-        <div className={`rounded-lg border-2 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isQuoteMode ? 'border-amber-400/50 bg-amber-50 dark:bg-amber-950/20' : 'border-emerald-400/50 bg-emerald-50 dark:bg-emerald-950/20'}`}>
-          <div className="flex items-center gap-3">
-            {isQuoteMode ? <FileEdit className="h-6 w-6 text-amber-600" /> : <ShieldCheck className="h-6 w-6 text-emerald-600" />}
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-foreground">{isQuoteMode ? 'Modo Cotação' : 'Modo Venda'}</h2>
-                <Badge variant={isQuoteMode ? 'secondary' : 'default'} className={isQuoteMode ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'}>
-                  {isQuoteMode ? 'Cotação' : 'Venda Ativa'}
-                </Badge>
+        {/* Compact Progress Bar */}
+        {editSaleId && (() => {
+          const steps = [
+            { key: 'created', label: 'Cotação', done: true },
+            { key: 'sale', label: 'Venda', done: saleStatus === 'active' },
+            { key: 'contract', label: 'Contrato', done: !!contractInfo.signedAt },
+            { key: 'payment', label: 'Pagamento', done: saleWorkflowStatus === 'aguardando_pagamento' || saleWorkflowStatus === 'processo_concluido' },
+            { key: 'done', label: 'Concluído', done: saleWorkflowStatus === 'processo_concluido' },
+          ];
+          const completed = steps.filter(s => s.done).length;
+          const pct = Math.round((completed / steps.length) * 100);
+          const currentStep = steps.find(s => !s.done) || steps[steps.length - 1];
+          const statusLabels: Record<string, string> = {
+            em_aberto: 'Em aberto', contatando: 'Contatando', reservado: 'Reservado',
+            emitido: 'Emitido', aguardando_assinatura: 'Aguard. Assinatura',
+            aguardando_pagamento: 'Aguard. Pagamento', processo_concluido: 'Concluído',
+            sem_contrato: 'Sem Contrato', perdido: 'Perdido',
+          };
+          return (
+            <div className="flex items-center gap-3 px-1">
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-500 transition-all rounded-full" style={{ width: `${pct}%` }} />
               </div>
-              <p className="text-sm text-muted-foreground">
-                {isQuoteMode 
-                  ? 'Monte sua proposta comercial. Após aprovação do cliente, converta em venda para liberar os campos operacionais.'
-                  : 'Venda convertida. Preencha os dados operacionais, financeiros e de reserva.'}
-              </p>
+              <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">{pct}%</span>
+              <Badge variant="outline" className="text-xs shrink-0">{statusLabels[saleWorkflowStatus] || saleWorkflowStatus}</Badge>
             </div>
-          </div>
-          {isQuoteMode && (
-            <Button onClick={handleSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0">
-              <ShieldCheck className="h-4 w-4" /> Converter em Venda
-            </Button>
-          )}
-        </div>
-
-        {/* Workflow Timeline */}
-        {editSaleId && (
-          <Card className="overflow-hidden">
-            <CardContent className="p-4">
-              <SaleTimeline
-                saleStatus={saleStatus}
-                workflowStatus={saleWorkflowStatus}
-                createdAt={saleDate}
-                contractStatus={contractInfo.status}
-                contractSentAt={contractInfo.sentAt}
-                contractViewedAt={contractInfo.viewedAt}
-                contractSignedAt={contractInfo.signedAt}
-                hasReceivables={!isQuoteMode && receivables.length > 0}
-              />
-            </CardContent>
-          </Card>
-        )}
+          );
+        })()}
 
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">
@@ -2082,38 +2075,7 @@ export default function NewSalePage() {
         </Card>
         )}
 
-        {/* Notes + Internal Files - moved above suppliers */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Observações da Cotação' : 'Observação da Venda'}</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações internas sobre a venda..." rows={6} className="min-h-[120px]" />
-            
-            {/* Internal Files */}
-            <div className="border-t pt-4">
-              <Label className="text-sm font-medium flex items-center gap-2 mb-2"><Paperclip className="h-4 w-4" />Arquivos Internos</Label>
-              <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50 w-fit">
-                <Upload className="h-4 w-4" />
-                {uploadingFile ? 'Enviando...' : 'Adicionar arquivos'}
-                <input type="file" multiple className="hidden" onChange={handleInternalFileUpload} disabled={uploadingFile} />
-              </label>
-              {internalFiles.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {internalFiles.map((f, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
-                      <FileText className="h-4 w-4 text-primary shrink-0" />
-                      <a href={f.file_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline hover:text-primary/80 truncate flex items-center gap-1">
-                        {f.file_name}<ExternalLink className="h-3 w-3 shrink-0" />
-                      </a>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 ml-auto" onClick={() => removeInternalFile(idx)}>
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Notes section moved below contracts */}
 
         {/* Suppliers card removed - moved to Controle de Pagamentos */}
 
@@ -2169,7 +2131,7 @@ export default function NewSalePage() {
             <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
             <Button size="sm" variant="outline" onClick={() => {
               const defaultOptIds = quoteOptions.length > 0 ? [quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0)] : [];
-              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, total_value: 0, metadata: {}, quote_option_id: defaultOptIds[0], quote_option_ids: defaultOptIds }]);
+              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, markup_percent: 0, total_value: 0, metadata: {}, quote_option_id: defaultOptIds[0], quote_option_ids: defaultOptIds }]);
               setTimeout(() => setEditingItemIdx(items.length), 50);
             }}>
               <Plus className="h-4 w-4 mr-1" />Adicionar
@@ -2185,8 +2147,9 @@ export default function NewSalePage() {
                     {isQuoteMode && quoteOptions.length > 1 && <TableHead className="min-w-[130px]">Opção</TableHead>}
                     <TableHead className="min-w-[120px]">Serviço</TableHead>
                     <TableHead className="min-w-[100px]">Descrição</TableHead>
-                    <TableHead className="w-28 text-right">Custo</TableHead>
+                    <TableHead className="w-24 text-right">Custo</TableHead>
                     <TableHead className="w-20 text-right">RAV</TableHead>
+                    <TableHead className="w-20 text-right">Acrésc.%</TableHead>
                     <TableHead className="w-28 text-right">Total</TableHead>
                     <TableHead className="w-8" />
                   </TableRow>
@@ -2194,7 +2157,16 @@ export default function NewSalePage() {
                 <TableBody>
                   {items.map((item, idx) => (
                     <React.Fragment key={idx}>
-                      <TableRow>
+                      <TableRow className={(() => {
+                        const type = item.metadata?.type;
+                        if (type === 'aereo') return 'bg-blue-50 dark:bg-blue-950/20';
+                        if (type === 'hotel') return 'bg-orange-50 dark:bg-orange-950/20';
+                        if (type === 'carro') return 'bg-green-50 dark:bg-green-950/20';
+                        if (type === 'seguro') return 'bg-purple-50 dark:bg-purple-950/20';
+                        if (type === 'experiencia') return 'bg-pink-50 dark:bg-pink-950/20';
+                        if (type === 'adicional') return 'bg-yellow-50 dark:bg-yellow-950/20';
+                        return '';
+                      })()}>
                         <TableCell className="px-1">
                           <div className="flex flex-col items-center gap-0.5">
                             <Button size="icon" variant="ghost" className="h-5 w-5" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
@@ -2274,6 +2246,15 @@ export default function NewSalePage() {
                           <Input
                             value={maskCurrency(item.rav)}
                             onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))}
+                            className="text-right h-7 text-xs w-20"
+                          />
+                        </TableCell>
+                        <TableCell className="px-1">
+                          <Input
+                            type="number"
+                            step="0.5"
+                            value={item.markup_percent || 0}
+                            onChange={e => updateItem(idx, 'markup_percent', parseFloat(e.target.value) || 0)}
                             className="text-right h-7 text-xs w-20"
                           />
                         </TableCell>
@@ -2430,58 +2411,50 @@ export default function NewSalePage() {
                 </div>
               ))}
             </div>
-            {/* Operator Taxes */}
-            <div className="border-t pt-4 mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end px-4 sm:px-6 pb-4">
-                <div>
-                  <Label>Taxas da Operadora (R$)</Label>
-                  <Input value={operatorTaxes ? `R$ ${operatorTaxes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setOperatorTaxes(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" className="mt-1" />
-                  <p className="text-xs text-muted-foreground mt-1">Valor somado ao total da venda.</p>
-                </div>
-                {operatorTaxes > 0 && (
-                  <>
-                    <div><p className="text-sm text-muted-foreground">Total dos serviços</p><p className="text-sm font-medium">{fmt(totalSale)}</p></div>
-                    <div><p className="text-sm text-muted-foreground">Total + Taxas</p><p className="text-sm font-bold text-primary">{fmt(totalSale + operatorTaxes)}</p></div>
-                  </>
-                )}
-              </div>
-            </div>
           </CardContent>
         </Card>
 
-        {/* Payment Method - only in sale mode */}
+        {/* Recebimento - only in sale mode */}
         {!isQuoteMode && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Forma de Pagamento</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Recebimento</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              {[
-                { value: 'pix', label: 'Pix' },
-                { value: 'dinheiro', label: 'Dinheiro' },
-                { value: 'boleto', label: 'Boleto' },
-                { value: 'credito', label: 'Cartão de Crédito' },
-                { value: 'debito', label: 'Cartão de Débito' },
-                { value: 'operadora', label: 'Pgto Operadora' },
-              ].map(opt => (
-                <Button key={opt.value} variant={paymentMethods.includes(opt.value) ? 'default' : 'outline'} className="w-full" onClick={() => setPaymentMethods(prev => prev.includes(opt.value) ? (prev.length > 1 ? prev.filter(m => m !== opt.value) : prev) : [...prev, opt.value])}>
-                  {paymentMethods.includes(opt.value) && <span className="mr-1">✓</span>}{opt.label}
-                </Button>
-              ))}
-            </div>
-
-            <div className="pt-4 border-t">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                  <Label>Juros na venda? (R$)</Label>
-                  <Input value={saleInterest ? `R$ ${saleInterest.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setSaleInterest(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
-                  <p className="text-xs text-muted-foreground mt-1">Valor somado internamente. Não aparece para o cliente.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div>
+                <Label>Adicionar forma de recebimento</Label>
+                <Select value="" onValueChange={v => {
+                  if (v && !paymentMethods.includes(v)) setPaymentMethods(prev => [...prev, v]);
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {[
+                      { value: 'pix', label: 'Pix' },
+                      { value: 'dinheiro', label: 'Dinheiro' },
+                      { value: 'boleto', label: 'Boleto' },
+                      { value: 'credito', label: 'Cartão de Crédito' },
+                      { value: 'debito', label: 'Cartão de Débito' },
+                      { value: 'transferencia', label: 'Transferência' },
+                      { value: 'operadora', label: 'Pgto Operadora/Consolidadora' },
+                    ].filter(opt => !paymentMethods.includes(opt.value)).map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {paymentMethods.map(m => {
+                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora' };
+                    return (
+                      <Badge key={m} variant="secondary" className="gap-1 pr-1">
+                        {labels[m] || m}
+                        {paymentMethods.length > 1 && (
+                          <button type="button" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))} className="ml-1 hover:text-destructive">×</button>
+                        )}
+                      </Badge>
+                    );
+                  })}
                 </div>
-                {saleInterest > 0 && (
-                  <>
-                    <div><p className="text-sm text-muted-foreground">Total dos serviços</p><p className="text-sm font-medium">{fmt(totalSale)}</p></div>
-                    <div><p className="text-sm text-muted-foreground">Total com juros</p><p className="text-sm font-bold text-primary">{fmt(totalSaleWithInterest)}</p></div>
-                  </>
-                )}
               </div>
             </div>
 
@@ -2565,10 +2538,6 @@ export default function NewSalePage() {
 
             {hasOperadora && (
               <div className="space-y-4 pt-4 border-t">
-                <div className="p-3 rounded-lg bg-accent/50 border border-accent text-sm">
-                  <p className="font-medium text-accent-foreground">📋 Pagamento Operadora/Consolidadora</p>
-                  <p className="text-muted-foreground mt-1">O cliente paga diretamente ao fornecedor. Será gerado apenas um contas a receber do valor da comissão bruta ({fmt(grossProfit)}). Não será gerado contas a pagar do fornecedor.</p>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Número de Parcelas</Label>
@@ -2589,7 +2558,6 @@ export default function NewSalePage() {
                   <div>
                     <Label>Taxa de Máquina (R$)</Label>
                     <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
-                    <p className="text-xs text-muted-foreground mt-1">Valor descontado do lucro. Gera contas a pagar automaticamente.</p>
                   </div>
                   <div>
                     <Label>Fornecedor da Taxa</Label>
@@ -2610,6 +2578,51 @@ export default function NewSalePage() {
                 </div>
               </div>
             )}
+
+            {/* Receivables inline */}
+            <div className="border-t pt-4">
+              {(() => {
+                const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
+                const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
+                const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
+                const diff = expectedReceivables - totalReceivables;
+                return (
+                  <div className="flex items-center gap-4 text-sm mb-2">
+                    <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
+                    <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
+                    {Math.abs(diff) > 0.01 ? (
+                      <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
+                        {diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`}
+                      </span>
+                    ) : (
+                      <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
+                    )}
+                  </div>
+                );
+              })()}
+              <Table>
+                <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead className="w-36">Forma</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {receivables.map((r, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">{r.installment_number}ª</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{r.payment_method || '-'}</TableCell>
+                      <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
+                      <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
+                      <TableCell>
+                        <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
         )}
@@ -2723,57 +2736,7 @@ export default function NewSalePage() {
         </Card>
         )}
 
-        {/* Receivables - only in sale mode */}
-        {!isQuoteMode && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Controle de Recebíveis</CardTitle>
-            {(() => {
-               const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
-               const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
-                const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
-                const diff = expectedReceivables - totalReceivables;
-                return (
-                  <div className="flex items-center gap-4 text-sm mt-1">
-                    <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
-                  <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
-                  {Math.abs(diff) > 0.01 ? (
-                    <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
-                      {diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`}
-                    </span>
-                  ) : (
-                    <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
-                  )}
-                </div>
-              );
-            })()}
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead className="w-36">Forma</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {receivables.map((r, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{r.installment_number}ª</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{r.payment_method || '-'}</TableCell>
-                    <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
-                    <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
-                    <TableCell>
-                      <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Nenhum</SelectItem>
-                          {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        )}
+        {/* Receivables card removed - now inline inside Recebimento */}
 
         {/* Controle de Pagamentos - only in sale mode */}
         {!isQuoteMode && (
@@ -2905,7 +2868,11 @@ export default function NewSalePage() {
 
                       <div>
                         <Label className="text-xs">Centro de Custo</Label>
-                        <Select value={sp.cost_center_id || 'none'} onValueChange={v => setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, cost_center_id: v === 'none' ? undefined : v } : s))}>
+                        <Select value={sp.cost_center_id || 'none'} onValueChange={v => {
+                          const val = v === 'none' ? undefined : v;
+                          setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, cost_center_id: val } : s));
+                          if (val) { try { localStorage.setItem(`supplier_cc_${sp.supplier_id}`, val); } catch {} }
+                        }}>
                           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">Nenhum</SelectItem>
@@ -2998,8 +2965,7 @@ export default function NewSalePage() {
           <CardContent className="space-y-3">
             {editSaleId && (
               <Button
-                variant="outline"
-                className="w-full justify-center gap-2"
+                className="w-full justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                 onClick={() => navigate('/nfse/emit', { state: { saleId: editSaleId } })}
               >
                 <Send className="h-4 w-4" /> Emitir NFS-e
@@ -3052,7 +3018,36 @@ export default function NewSalePage() {
           />
         )}
 
-        {/* Notes section moved above suppliers */}
+        {/* Notes + Internal Files - below contracts */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Observações da Cotação' : 'Observação da Venda'}</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações internas sobre a venda..." rows={4} className="min-h-[80px]" />
+            <div className="border-t pt-4">
+              <Label className="text-sm font-medium flex items-center gap-2 mb-2"><Paperclip className="h-4 w-4" />Arquivos Internos</Label>
+              <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50 w-fit">
+                <Upload className="h-4 w-4" />
+                {uploadingFile ? 'Enviando...' : 'Adicionar arquivos'}
+                <input type="file" multiple className="hidden" onChange={handleInternalFileUpload} disabled={uploadingFile} />
+              </label>
+              {internalFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {internalFiles.map((f, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                      <FileText className="h-4 w-4 text-primary shrink-0" />
+                      <a href={f.file_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline hover:text-primary/80 truncate flex items-center gap-1">
+                        {f.file_name}<ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 ml-auto" onClick={() => removeInternalFile(idx)}>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Financial Summary */}
         <Card className="border-primary/20 bg-primary/5">
@@ -3230,6 +3225,7 @@ export default function NewSalePage() {
               description: item.description,
               cost_price: item.cost_price,
               rav: item.rav,
+              markup_percent: 0,
               total_value: item.total_value,
               service_catalog_id: item.service_catalog_id,
               cost_center_id: item.cost_center_id,
