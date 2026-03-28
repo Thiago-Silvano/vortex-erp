@@ -152,12 +152,6 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
   y = headerH + 8;
 
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-  doc.text('Informacoes do voo', m, y);
-  y += 5;
-
   const outbound = data.flightLegs.filter(l => l.direction !== 'volta');
   const returnLegs = data.flightLegs.filter(l => l.direction === 'volta');
 
@@ -263,11 +257,12 @@ function drawFlightSection(
   doc.setFontSize(9);
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
   const dirIcon = label === 'IDA' ? '>' : '<';
-  doc.text(`${dirIcon}  Itinerario de ${label}`, m + 7, y + 6.5);
+  const dirLabel = label === 'IDA' ? 'Itinerario de IDA' : 'Itinerario de VOLTA';
+  doc.text(`${dirIcon}  ${dirLabel}`, m + 7, y + 6.5);
 
-  // Date + time center
+  // Date + time center (bold)
   if (firstDate) {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
     const dateStr = `${formatDateLong(firstDate)}${firstTime ? ` (${firstTime})` : ''}`;
@@ -330,7 +325,7 @@ function drawLegRow(
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
   doc.text(s(leg.departureTime || '--:--'), leftCol, y + 9);
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
   doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
   doc.text(formatDateBR(leg.departureDate), leftCol, y + 14);
@@ -374,7 +369,7 @@ function drawLegRow(
 
   // Flight number below icon
   if (leg.flightCode) {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
     doc.text(s(leg.flightCode), midX, y + 14, { align: 'center' });
@@ -399,7 +394,7 @@ function drawLegRow(
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
   doc.text(s(leg.arrivalTime || '--:--'), rightCol, y + 9, { align: 'right' });
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
   doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
   doc.text(formatDateBR(leg.arrivalDate), rightCol, y + 14, { align: 'right' });
