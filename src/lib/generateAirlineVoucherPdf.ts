@@ -407,6 +407,27 @@ function drawLegRow(
     doc.text(destLines, rightCol - 26, y + 7, { align: 'right' });
   }
 
+  // Airline logo for this leg (bottom-left of row)
+  if (leg.airlineLogoBase64) {
+    try {
+      const alX = leftCol;
+      const alY = y + 17;
+      const alW = 18;
+      const alH = 8;
+      doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
+      doc.roundedRect(alX - 0.5, alY - 0.5, alW + 1, alH + 1, 1, 1, 'F');
+      doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+      doc.setLineWidth(0.15);
+      doc.roundedRect(alX - 0.5, alY - 0.5, alW + 1, alH + 1, 1, 1, 'S');
+      doc.addImage(leg.airlineLogoBase64, 'PNG', alX, alY, alW, alH);
+    } catch { /* skip */ }
+  } else if (leg.airlineName) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+    doc.text(s(leg.airlineName), leftCol, y + 22);
+  }
+
   return y + rowH + 2;
 }
 
