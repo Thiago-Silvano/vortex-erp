@@ -24,6 +24,7 @@ interface MenuItem {
 
 interface MenuGroup {
   label: string;
+  url?: string; // direct navigation URL for single-item menus
   items: MenuItem[];
 }
 
