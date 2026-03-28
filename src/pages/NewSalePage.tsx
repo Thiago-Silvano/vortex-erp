@@ -2187,7 +2187,16 @@ export default function NewSalePage() {
                 <TableBody>
                   {items.map((item, idx) => (
                     <React.Fragment key={idx}>
-                      <TableRow>
+                      <TableRow className={(() => {
+                        const type = item.metadata?.type;
+                        if (type === 'aereo') return 'bg-blue-50 dark:bg-blue-950/20';
+                        if (type === 'hotel') return 'bg-orange-50 dark:bg-orange-950/20';
+                        if (type === 'carro') return 'bg-green-50 dark:bg-green-950/20';
+                        if (type === 'seguro') return 'bg-purple-50 dark:bg-purple-950/20';
+                        if (type === 'experiencia') return 'bg-pink-50 dark:bg-pink-950/20';
+                        if (type === 'adicional') return 'bg-yellow-50 dark:bg-yellow-950/20';
+                        return '';
+                      })()}>
                         <TableCell className="px-1">
                           <div className="flex flex-col items-center gap-0.5">
                             <Button size="icon" variant="ghost" className="h-5 w-5" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
