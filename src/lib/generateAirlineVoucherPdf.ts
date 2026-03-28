@@ -302,7 +302,8 @@ function drawFlightSection(
 function drawLegRow(
   doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw: number, cw: number
 ): number {
-  const rowH = 24;
+  const hasAirlineLogo = !!leg.airlineLogoBase64;
+  const rowH = hasAirlineLogo ? 28 : 24;
   const leftCol = m + 4;
   const rightCol = m + cw - 4;
   const midX = m + cw / 2;
