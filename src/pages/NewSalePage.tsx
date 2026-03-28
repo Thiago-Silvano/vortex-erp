@@ -3222,6 +3222,7 @@ export default function NewSalePage() {
               description: item.description,
               cost_price: item.cost_price,
               rav: item.rav,
+              markup_percent: 0,
               total_value: item.total_value,
               service_catalog_id: item.service_catalog_id,
               cost_center_id: item.cost_center_id,
