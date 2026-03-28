@@ -2867,7 +2867,11 @@ export default function NewSalePage() {
 
                       <div>
                         <Label className="text-xs">Centro de Custo</Label>
-                        <Select value={sp.cost_center_id || 'none'} onValueChange={v => setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, cost_center_id: v === 'none' ? undefined : v } : s))}>
+                        <Select value={sp.cost_center_id || 'none'} onValueChange={v => {
+                          const val = v === 'none' ? undefined : v;
+                          setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, cost_center_id: val } : s));
+                          if (val) { try { localStorage.setItem(`supplier_cc_${sp.supplier_id}`, val); } catch {} }
+                        }}>
                           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">Nenhum</SelectItem>
