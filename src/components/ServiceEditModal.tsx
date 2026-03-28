@@ -436,7 +436,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Cia Aérea principal da viagem</Label>
-                  <Select value={airlineId} onValueChange={setAirlineId}>
+                  <Select value={airlineId} onValueChange={handleAirlineIdChange}>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
                       {airlinesList.map((a: any) => (
