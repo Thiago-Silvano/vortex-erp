@@ -316,6 +316,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     const selectedImages = hotelImages.filter((_, i) => selectedImageIndices.has(i));
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
     if (type === 'aereo') {
+      meta.airlineId = airlineId || undefined;
       meta.flightLegs = flightLegs;
       meta.baggage = baggage;
       const outbound = flightLegs.filter(l => l.direction === 'ida');
