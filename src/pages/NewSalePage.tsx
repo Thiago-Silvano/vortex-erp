@@ -36,6 +36,7 @@ interface SaleItem {
   description: string;
   cost_price: number;
   rav: number;
+  markup_percent: number;
   total_value: number;
   service_catalog_id?: string;
   cost_center_id?: string;
