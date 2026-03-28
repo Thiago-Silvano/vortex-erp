@@ -1600,8 +1600,20 @@ export default function NewSalePage() {
           baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
         }));
 
+        // Load white Vortex logo for dark header
+        let vortexWhiteLogoBase64: string | undefined;
+        try {
+          const vortexResp = await fetch('/images/vortex-logo-white.png');
+          const vortexBlob = await vortexResp.blob();
+          vortexWhiteLogoBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(vortexBlob);
+          });
+        } catch { /* fallback to agency logo */ }
+
         const airVoucherData: AirlineVoucherData = {
-          agencyLogoBase64: logoBase64,
+          agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
           airlineLogoBase64,
           airlineName,
           shortId: shortId || undefined,
