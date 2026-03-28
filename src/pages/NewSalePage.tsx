@@ -1562,9 +1562,14 @@ export default function NewSalePage() {
       shortId,
     };
 
-    const doc = generateVoucherPdf(voucherData);
-    doc.save(`voucher-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('Voucher geral gerado com sucesso!');
+    // Only generate general voucher if there are non-airline services
+    const hasNonAirlineItems = items.some(i => i.metadata?.type !== 'aereo');
+    const hasAirlineItems = items.some(i => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
+    if (hasNonAirlineItems || !hasAirlineItems) {
+      const doc = generateVoucherPdf(voucherData);
+      doc.save(`voucher-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+      toast.success('Voucher geral gerado com sucesso!');
+    }
 
     // ─── Generate separate Airline Voucher for aereo services ──
     const airlineItems = items.filter(i => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
