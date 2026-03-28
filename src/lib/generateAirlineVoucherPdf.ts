@@ -109,7 +109,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
   // Agency logo (left)
   if (data.agencyLogoBase64) {
     try {
-      doc.addImage(data.agencyLogoBase64, 'PNG', m, 2, 28, 18);
+      doc.addImage(data.agencyLogoBase64, 'PNG', m, 1, 24, 20);
     } catch { /* skip */ }
   }
 
