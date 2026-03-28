@@ -143,6 +143,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
+  const [airlineId, setAirlineId] = useState(metadata.airlineId || '');
+  const [airlinesList, setAirlinesList] = useState<any[]>([]);
 
   useEffect(() => {
     if (open) {
