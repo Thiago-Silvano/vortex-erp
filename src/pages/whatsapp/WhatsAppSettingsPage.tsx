@@ -195,6 +195,31 @@ export default function WhatsAppSettingsPage() {
                 </div>
               </div>
             )}
+
+            {/* Disconnect button */}
+            {settings.is_connected && (
+              <Button variant="destructive" size="sm" className="gap-2" onClick={handleDisconnect} disabled={disconnecting}>
+                <LogOut className="h-4 w-4" />
+                {disconnecting ? 'Desconectando...' : 'Desconectar WhatsApp'}
+              </Button>
+            )}
+
+            {/* QR Code section */}
+            {!settings.is_connected && (
+              <div className="space-y-3">
+                <Button variant="outline" size="sm" className="gap-2" onClick={fetchQrCode} disabled={loadingQr}>
+                  {loadingQr ? <RefreshCw className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+                  {loadingQr ? 'Carregando QR Code...' : 'Exibir QR Code'}
+                </Button>
+                {qrCode && (
+                  <div className="flex flex-col items-center gap-3 p-4 rounded-lg border bg-card">
+                    <p className="text-sm font-medium">Escaneie o QR Code com o WhatsApp</p>
+                    <img src={qrCode} alt="QR Code WhatsApp" className="w-64 h-64 object-contain" />
+                    <p className="text-xs text-muted-foreground">Abra o WhatsApp no celular → Menu → Aparelhos conectados → Conectar</p>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
