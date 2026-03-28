@@ -257,7 +257,7 @@ function TopMenuBar() {
                 {group.label}
               </button>
               {/* Dropdown */}
-              {isOpen && (
+              {isOpen && !isSingleItem && (
                 <div className="absolute top-full left-0 z-50 min-w-[180px] bg-popover border shadow-md py-0.5">
                   {filteredItems.map(item => (
                     <button
