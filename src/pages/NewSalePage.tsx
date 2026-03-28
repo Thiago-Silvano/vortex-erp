@@ -291,6 +291,7 @@ export default function NewSalePage() {
         cost_center_id: i.cost_center_id || undefined,
         metadata: (i as any).metadata || {},
         reservation_number: (i as any).reservation_number || '',
+        purchase_number: (i as any).purchase_number || '',
         quote_option_id: (i as any).quote_option_id || undefined,
         quote_option_ids: (i as any).quote_option_id ? [(i as any).quote_option_id] : undefined,
       })));
