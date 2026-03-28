@@ -81,6 +81,7 @@ export interface ExperienceInfo {
 
 export interface ServiceMetadata {
   type?: 'aereo' | 'hotel' | 'carro' | 'seguro' | 'experiencia' | 'adicional';
+  airlineId?: string;
   flightLegs?: FlightLeg[];
   baggage?: BaggageInfo;
   hotel?: HotelInfo;
