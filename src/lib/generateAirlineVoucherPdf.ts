@@ -394,7 +394,7 @@ function drawLegRow(
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
   doc.text(s(leg.arrivalTime || '--:--'), rightCol, y + 9, { align: 'right' });
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
   doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
   doc.text(formatDateBR(leg.arrivalDate), rightCol, y + 14, { align: 'right' });
