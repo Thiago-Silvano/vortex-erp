@@ -1293,6 +1293,28 @@ export default function NewSalePage() {
   };
 
   const [showEditConfirm, setShowEditConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeleteSale = async () => {
+    if (!editSaleId) return;
+    try {
+      // Delete related records first
+      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      await supabase.from('seller_commissions').delete().eq('sale_id', editSaleId);
+      await supabase.from('reservations').delete().eq('sale_id', editSaleId);
+      await supabase.from('sale_items').delete().eq('sale_id', editSaleId);
+      await supabase.from('sale_suppliers').delete().eq('sale_id', editSaleId);
+      await (supabase.from('sale_passengers' as any) as any).delete().eq('sale_id', editSaleId);
+      await (supabase.from('sale_internal_files' as any) as any).delete().eq('sale_id', editSaleId);
+      await (supabase.from('sale_quote_options' as any) as any).delete().eq('sale_id', editSaleId);
+      await supabase.from('sales').delete().eq('id', editSaleId);
+      toast.success(saleStatus === 'active' ? 'Venda excluída com sucesso!' : 'Cotação excluída com sucesso!');
+      navigate('/sales');
+    } catch (err) {
+      toast.error('Erro ao excluir');
+    }
+  };
 
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
