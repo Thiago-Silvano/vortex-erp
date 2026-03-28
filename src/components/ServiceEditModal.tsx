@@ -196,9 +196,15 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     }
   };
 
-  const addFlightLeg = () => setFlightLegs(prev => [...prev, emptyLeg()]);
+  const addFlightLeg = () => setFlightLegs(prev => [...prev, { ...emptyLeg(), airlineId: airlineId || undefined }]);
   const updateLeg = (idx: number, field: keyof FlightLeg, value: string) => {
     setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, [field]: value } : l));
+  };
+
+  const handleAirlineIdChange = (newId: string) => {
+    setAirlineId(newId);
+    // Apply to all existing legs
+    setFlightLegs(prev => prev.map(l => ({ ...l, airlineId: newId })));
   };
   const removeLeg = (idx: number) => setFlightLegs(prev => prev.filter((_, i) => i !== idx));
 
@@ -430,7 +436,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Cia Aérea principal da viagem</Label>
-                  <Select value={airlineId} onValueChange={setAirlineId}>
+                  <Select value={airlineId} onValueChange={handleAirlineIdChange}>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
                       {airlinesList.map((a: any) => (
