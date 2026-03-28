@@ -2413,39 +2413,47 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Payment Method - only in sale mode */}
+        {/* Recebimento - only in sale mode */}
         {!isQuoteMode && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Forma de Pagamento</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Recebimento</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              {[
-                { value: 'pix', label: 'Pix' },
-                { value: 'dinheiro', label: 'Dinheiro' },
-                { value: 'boleto', label: 'Boleto' },
-                { value: 'credito', label: 'Cartão de Crédito' },
-                { value: 'debito', label: 'Cartão de Débito' },
-                { value: 'operadora', label: 'Pgto Operadora' },
-              ].map(opt => (
-                <Button key={opt.value} variant={paymentMethods.includes(opt.value) ? 'default' : 'outline'} className="w-full" onClick={() => setPaymentMethods(prev => prev.includes(opt.value) ? (prev.length > 1 ? prev.filter(m => m !== opt.value) : prev) : [...prev, opt.value])}>
-                  {paymentMethods.includes(opt.value) && <span className="mr-1">✓</span>}{opt.label}
-                </Button>
-              ))}
-            </div>
-
-            <div className="pt-4 border-t">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                  <Label>Juros na venda? (R$)</Label>
-                  <Input value={saleInterest ? `R$ ${saleInterest.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setSaleInterest(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
-                  <p className="text-xs text-muted-foreground mt-1">Valor somado internamente. Não aparece para o cliente.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div>
+                <Label>Adicionar forma de recebimento</Label>
+                <Select value="" onValueChange={v => {
+                  if (v && !paymentMethods.includes(v)) setPaymentMethods(prev => [...prev, v]);
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {[
+                      { value: 'pix', label: 'Pix' },
+                      { value: 'dinheiro', label: 'Dinheiro' },
+                      { value: 'boleto', label: 'Boleto' },
+                      { value: 'credito', label: 'Cartão de Crédito' },
+                      { value: 'debito', label: 'Cartão de Débito' },
+                      { value: 'transferencia', label: 'Transferência' },
+                      { value: 'operadora', label: 'Pgto Operadora/Consolidadora' },
+                    ].filter(opt => !paymentMethods.includes(opt.value)).map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {paymentMethods.map(m => {
+                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora' };
+                    return (
+                      <Badge key={m} variant="secondary" className="gap-1 pr-1">
+                        {labels[m] || m}
+                        {paymentMethods.length > 1 && (
+                          <button type="button" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))} className="ml-1 hover:text-destructive">×</button>
+                        )}
+                      </Badge>
+                    );
+                  })}
                 </div>
-                {saleInterest > 0 && (
-                  <>
-                    <div><p className="text-sm text-muted-foreground">Total dos serviços</p><p className="text-sm font-medium">{fmt(totalSale)}</p></div>
-                    <div><p className="text-sm text-muted-foreground">Total com juros</p><p className="text-sm font-bold text-primary">{fmt(totalSaleWithInterest)}</p></div>
-                  </>
-                )}
               </div>
             </div>
 
@@ -2529,10 +2537,6 @@ export default function NewSalePage() {
 
             {hasOperadora && (
               <div className="space-y-4 pt-4 border-t">
-                <div className="p-3 rounded-lg bg-accent/50 border border-accent text-sm">
-                  <p className="font-medium text-accent-foreground">📋 Pagamento Operadora/Consolidadora</p>
-                  <p className="text-muted-foreground mt-1">O cliente paga diretamente ao fornecedor. Será gerado apenas um contas a receber do valor da comissão bruta ({fmt(grossProfit)}). Não será gerado contas a pagar do fornecedor.</p>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Número de Parcelas</Label>
@@ -2553,7 +2557,6 @@ export default function NewSalePage() {
                   <div>
                     <Label>Taxa de Máquina (R$)</Label>
                     <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
-                    <p className="text-xs text-muted-foreground mt-1">Valor descontado do lucro. Gera contas a pagar automaticamente.</p>
                   </div>
                   <div>
                     <Label>Fornecedor da Taxa</Label>
@@ -2574,6 +2577,51 @@ export default function NewSalePage() {
                 </div>
               </div>
             )}
+
+            {/* Receivables inline */}
+            <div className="border-t pt-4">
+              {(() => {
+                const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
+                const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
+                const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
+                const diff = expectedReceivables - totalReceivables;
+                return (
+                  <div className="flex items-center gap-4 text-sm mb-2">
+                    <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
+                    <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
+                    {Math.abs(diff) > 0.01 ? (
+                      <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
+                        {diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`}
+                      </span>
+                    ) : (
+                      <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
+                    )}
+                  </div>
+                );
+              })()}
+              <Table>
+                <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead className="w-36">Forma</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {receivables.map((r, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">{r.installment_number}ª</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{r.payment_method || '-'}</TableCell>
+                      <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
+                      <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
+                      <TableCell>
+                        <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
         )}
