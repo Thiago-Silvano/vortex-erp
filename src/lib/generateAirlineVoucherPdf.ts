@@ -257,11 +257,12 @@ function drawFlightSection(
   doc.setFontSize(9);
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
   const dirIcon = label === 'IDA' ? '>' : '<';
-  doc.text(`${dirIcon}  Itinerario de ${label}`, m + 7, y + 6.5);
+  const dirLabel = label === 'IDA' ? 'Itinerario de IDA' : 'Itinerario de VOLTA';
+  doc.text(`${dirIcon}  ${dirLabel}`, m + 7, y + 6.5);
 
-  // Date + time center
+  // Date + time center (bold)
   if (firstDate) {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
     const dateStr = `${formatDateLong(firstDate)}${firstTime ? ` (${firstTime})` : ''}`;
