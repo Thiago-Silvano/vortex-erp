@@ -113,10 +113,16 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
     } catch { /* skip */ }
   }
 
-  // Airline logo (center-left)
+  // Airline logo (center-left) — white bg for PNG transparency
   if (data.airlineLogoBase64) {
     try {
-      doc.addImage(data.airlineLogoBase64, 'PNG', m + 35, 3, 35, 16);
+      const logoX = m + 35;
+      const logoY = 2;
+      const logoW = 38;
+      const logoH = 18;
+      doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
+      doc.roundedRect(logoX - 1, logoY, logoW + 2, logoH, 2, 2, 'F');
+      doc.addImage(data.airlineLogoBase64, 'PNG', logoX, logoY + 1, logoW, logoH - 2);
     } catch { /* skip */ }
   } else if (data.airlineName) {
     doc.setFont('helvetica', 'bold');
