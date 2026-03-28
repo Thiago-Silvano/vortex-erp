@@ -425,6 +425,25 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           {/* ── AÉREO ── */}
           {type === 'aereo' && (
             <div className="space-y-4 border-t pt-4">
+              {/* Cia Aérea principal */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Cia Aérea principal da viagem</Label>
+                  <Select value={airlineId} onValueChange={setAirlineId}>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {airlinesList.map((a: any) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          <span className="flex items-center gap-2">
+                            {a.logo_url && <img src={a.logo_url} alt="" className="h-4 w-6 object-contain inline" />}
+                            {a.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-sm">Trechos do Voo</h3>
                 <Button size="sm" variant="outline" onClick={addFlightLeg}><Plus className="h-3 w-3 mr-1" />Trecho</Button>
