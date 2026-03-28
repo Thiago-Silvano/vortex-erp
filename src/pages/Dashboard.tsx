@@ -49,7 +49,6 @@ export default function Dashboard() {
       if (!sales) { setLoading(false); return; }
 
       const activeSales = sales.filter(s => s.status === 'active');
-
       const totalSales = activeSales.length;
       const totalRevenue = activeSales.reduce((s, v) => s + Number(v.total_sale || 0), 0);
       const grossProfit = activeSales.reduce((s, v) => s + Number(v.gross_profit || 0), 0);
@@ -67,26 +66,22 @@ export default function Dashboard() {
   const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
   const statCards = [
-    { label: 'Total de Vendas', value: stats.totalSales.toString(), icon: ShoppingCart, color: 'bg-primary text-primary-foreground', iconColor: 'text-primary-foreground/80' },
-    { label: 'Total Faturado', value: fmt(stats.totalRevenue), icon: DollarSign, color: 'bg-yellow-500 text-white', iconColor: 'text-white/80' },
-    { label: 'Lucro Bruto', value: fmt(stats.grossProfit), icon: TrendingUp, color: 'bg-emerald-600 text-white', iconColor: 'text-white/80' },
-    { label: 'Lucro Líquido', value: fmt(stats.netProfit), icon: BarChart3, color: 'bg-blue-600 text-white', iconColor: 'text-white/80' },
-    { label: 'Custos Totais', value: fmt(stats.totalCosts), icon: TrendingDown, color: 'bg-destructive text-destructive-foreground', iconColor: 'text-destructive-foreground/80' },
-    { label: 'Clientes Atendidos', value: stats.clientsCount.toString(), icon: Users, color: 'bg-violet-600 text-white', iconColor: 'text-white/80' },
+    { label: 'Vendas', value: stats.totalSales.toString(), icon: ShoppingCart, color: 'text-primary' },
+    { label: 'Faturado', value: fmt(stats.totalRevenue), icon: DollarSign, color: 'text-yellow-600' },
+    { label: 'Lucro Bruto', value: fmt(stats.grossProfit), icon: TrendingUp, color: 'text-emerald-600' },
+    { label: 'Lucro Líquido', value: fmt(stats.netProfit), icon: BarChart3, color: 'text-blue-600' },
+    { label: 'Custos', value: fmt(stats.totalCosts), icon: TrendingDown, color: 'text-destructive' },
+    { label: 'Clientes', value: stats.clientsCount.toString(), icon: Users, color: 'text-violet-600' },
   ];
 
   if (!isMaster) {
     return (
       <AppLayout>
-        <div className="p-6 max-w-6xl mx-auto flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-            <Lock className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h1 className="text-xl font-bold text-foreground">Acesso Restrito</h1>
-          <p className="text-muted-foreground text-sm max-w-md">
-            O dashboard principal é restrito a usuários com perfil Master. Entre em contato com o administrador para solicitar acesso.
-          </p>
-          <Button variant="outline" onClick={() => navigate('/sales')}>Ir para Vendas</Button>
+        <div className="p-4 flex flex-col items-center justify-center min-h-[40vh] text-center gap-2">
+          <Lock className="h-6 w-6 text-muted-foreground" />
+          <p className="text-sm font-medium">Acesso Restrito</p>
+          <p className="text-xs text-muted-foreground">Dashboard restrito a usuários Master.</p>
+          <Button variant="outline" size="sm" onClick={() => navigate('/sales')}>Ir para Vendas</Button>
         </div>
       </AppLayout>
     );
@@ -94,43 +89,34 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-6xl mx-auto space-y-8">
+      <div className="p-3 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {userName ? `Bem-vindo, ${userName}.` : 'Dashboard'}
+            <h1 className="text-sm font-bold text-foreground">
+              {userName ? `Bem-vindo, ${userName}` : 'Dashboard'}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">Visão geral do mês atual</p>
+            <p className="text-xs text-muted-foreground">Mês atual</p>
           </div>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6 h-28" />
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {statCards.map((card) => (
-              <Card key={card.label} className={`${card.color} border-0 shadow-md hover:shadow-lg transition-shadow`}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <card.icon className={`h-5 w-5 ${card.iconColor}`} />
-                  </div>
-                  <p className="text-lg font-bold leading-tight">{card.value}</p>
-                  <p className="text-xs opacity-80 mt-1">{card.label}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        {/* Stat cards - compact inline */}
+        <div className="grid grid-cols-6 gap-2">
+          {statCards.map((card) => (
+            <Card key={card.label}>
+              <CardContent className="px-2 py-1.5">
+                <div className="flex items-center gap-1.5">
+                  <card.icon className={`h-3.5 w-3.5 ${card.color}`} />
+                  <span className="text-xs text-muted-foreground">{card.label}</span>
+                </div>
+                <p className={`text-sm font-bold ${card.color} mt-0.5`}>{card.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-        {/* Pipeline Dashboard */}
+        {/* Pipeline */}
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3">Pipeline Comercial</h2>
+          <h2 className="text-xs font-semibold text-foreground mb-1">Pipeline Comercial</h2>
           <PipelineDashboard />
         </div>
       </div>
