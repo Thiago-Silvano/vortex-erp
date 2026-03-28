@@ -398,6 +398,7 @@ export default function NewSalePage() {
         for (const [, { item: si, optionIds }] of mergedMap) {
           mergedItems.push({
             id: si.id, description: si.description, cost_price: Number(si.cost_price), rav: Number(si.rav),
+            markup_percent: Number(si.markup_percent) || 0,
             total_value: Number(si.total_value), service_catalog_id: si.service_catalog_id || undefined,
             cost_center_id: si.cost_center_id || undefined,
             metadata: si.metadata || {},
