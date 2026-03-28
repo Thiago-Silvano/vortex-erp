@@ -24,6 +24,7 @@ interface MenuItem {
 
 interface MenuGroup {
   label: string;
+  url?: string; // direct navigation URL for single-item menus
   items: MenuItem[];
 }
 
@@ -153,16 +154,19 @@ function TopMenuBar() {
       label: 'Cotações',
       items: [
         { title: 'Kanban', url: '/cotacoes', permKey: 'sales_view' },
+        { title: 'Lista', url: '/cotacoes/lista', permKey: 'sales_view' },
       ],
     },
     {
       label: 'Reservas',
+      url: '/reservations',
       items: [
         { title: 'Reservas', url: '/reservations', permKey: 'reservations_view' },
       ],
     },
     {
       label: 'Promo Maker',
+      url: '/promo-maker',
       items: [
         { title: 'Promo Maker', url: '/promo-maker' },
       ],
@@ -230,21 +234,30 @@ function TopMenuBar() {
           const isOpen = openMenu === group.label;
           const isActive = filteredItems.some(i => location.pathname === i.url || location.pathname.startsWith(i.url + '/'));
 
+          const isSingleItem = filteredItems.length === 1 && group.url;
+
           return (
             <div
               key={group.label}
               className="relative"
-              onMouseEnter={() => setOpenMenu(group.label)}
+              onMouseEnter={() => !isSingleItem && setOpenMenu(group.label)}
               onMouseLeave={() => setOpenMenu(null)}
             >
               <button
-                onClick={() => setOpenMenu(isOpen ? null : group.label)}
+                onClick={() => {
+                  if (isSingleItem && group.url) {
+                    navigate(group.url);
+                    setOpenMenu(null);
+                  } else {
+                    setOpenMenu(isOpen ? null : group.label);
+                  }
+                }}
                 className={`px-3 py-1 text-xs font-medium transition-colors hover:bg-accent ${isActive ? 'text-primary font-semibold' : 'text-foreground/80'} ${isOpen ? 'bg-accent' : ''}`}
               >
                 {group.label}
               </button>
               {/* Dropdown */}
-              {isOpen && (
+              {isOpen && !isSingleItem && (
                 <div className="absolute top-full left-0 z-50 min-w-[180px] bg-popover border shadow-md py-0.5">
                   {filteredItems.map(item => (
                     <button

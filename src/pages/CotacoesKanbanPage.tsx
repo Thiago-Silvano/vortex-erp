@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
 import { KanbanColumnData } from '@/components/kanban/KanbanColumn';
@@ -43,7 +43,10 @@ export default function CotacoesKanbanPage() {
   const [sales, setSales] = useState<KanbanSale[]>([]);
   const [columns, setColumns] = useState<KanbanColumnData[]>(DEFAULT_COLUMNS);
   const [sellers, setSellers] = useState<SellerOption[]>([]);
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>(() => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/cotacoes/lista') return 'list';
+    return 'kanban';
+  });
   const [search, setSearch] = useState('');
   const [filterSeller, setFilterSeller] = useState('all');
   const [filterDestination, setFilterDestination] = useState('all');
