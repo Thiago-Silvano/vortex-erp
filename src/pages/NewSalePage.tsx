@@ -2177,8 +2177,9 @@ export default function NewSalePage() {
                     {isQuoteMode && quoteOptions.length > 1 && <TableHead className="min-w-[130px]">Opção</TableHead>}
                     <TableHead className="min-w-[120px]">Serviço</TableHead>
                     <TableHead className="min-w-[100px]">Descrição</TableHead>
-                    <TableHead className="w-28 text-right">Custo</TableHead>
+                    <TableHead className="w-24 text-right">Custo</TableHead>
                     <TableHead className="w-20 text-right">RAV</TableHead>
+                    <TableHead className="w-20 text-right">Acrésc.%</TableHead>
                     <TableHead className="w-28 text-right">Total</TableHead>
                     <TableHead className="w-8" />
                   </TableRow>
