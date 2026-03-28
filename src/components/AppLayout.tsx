@@ -234,15 +234,24 @@ function TopMenuBar() {
           const isOpen = openMenu === group.label;
           const isActive = filteredItems.some(i => location.pathname === i.url || location.pathname.startsWith(i.url + '/'));
 
+          const isSingleItem = filteredItems.length === 1 && group.url;
+
           return (
             <div
               key={group.label}
               className="relative"
-              onMouseEnter={() => setOpenMenu(group.label)}
+              onMouseEnter={() => !isSingleItem && setOpenMenu(group.label)}
               onMouseLeave={() => setOpenMenu(null)}
             >
               <button
-                onClick={() => setOpenMenu(isOpen ? null : group.label)}
+                onClick={() => {
+                  if (isSingleItem && group.url) {
+                    navigate(group.url);
+                    setOpenMenu(null);
+                  } else {
+                    setOpenMenu(isOpen ? null : group.label);
+                  }
+                }}
                 className={`px-3 py-1 text-xs font-medium transition-colors hover:bg-accent ${isActive ? 'text-primary font-semibold' : 'text-foreground/80'} ${isOpen ? 'bg-accent' : ''}`}
               >
                 {group.label}
