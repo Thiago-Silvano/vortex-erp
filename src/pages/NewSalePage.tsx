@@ -284,6 +284,7 @@ export default function NewSalePage() {
     if (saleItems) {
       setItems(saleItems.map(i => ({
         id: i.id, description: i.description, cost_price: Number(i.cost_price), rav: Number(i.rav),
+        markup_percent: Number((i as any).markup_percent) || 0,
         total_value: Number(i.total_value), service_catalog_id: i.service_catalog_id || undefined,
         cost_center_id: i.cost_center_id || undefined,
         metadata: (i as any).metadata || {},
