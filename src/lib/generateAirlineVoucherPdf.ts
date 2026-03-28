@@ -115,24 +115,6 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
     } catch { /* skip */ }
   }
 
-  // Airline logo (center-left) — white bg for PNG transparency
-  if (data.airlineLogoBase64) {
-    try {
-      const logoX = m + 35;
-      const logoY = 1;
-      const logoW = 38;
-      const logoH = 20;
-      doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
-      doc.roundedRect(logoX - 1, logoY, logoW + 2, logoH, 2, 2, 'F');
-      doc.addImage(data.airlineLogoBase64, 'PNG', logoX, logoY + 1, logoW, logoH - 2);
-    } catch { /* skip */ }
-  } else if (data.airlineName) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-    doc.text(s(data.airlineName), m + 52, 13);
-  }
-
   // Numero da Compra + Localizador (center-right)
   const infoX = pw - m - 60;
   doc.setFont('helvetica', 'normal');
