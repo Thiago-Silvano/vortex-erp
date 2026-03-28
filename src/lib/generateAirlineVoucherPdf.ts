@@ -411,8 +411,8 @@ function drawLegRow(
     try {
       const alX = leftCol;
       const alY = y + 17;
-      const alW = 18;
-      const alH = 8;
+      const alW = 24;
+      const alH = 10;
       doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
       doc.roundedRect(alX - 0.5, alY - 0.5, alW + 1, alH + 1, 1, 1, 'F');
       doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);

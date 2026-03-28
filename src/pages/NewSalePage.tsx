@@ -1874,6 +1874,28 @@ export default function NewSalePage() {
     }
   };
 
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'F8') {
+        e.preventDefault();
+        if (saleStatus === 'active') handleExportVoucher();
+        else handleExportDraftPdf();
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        handleGenerateLink();
+      } else if (e.key === 'F10') {
+        e.preventDefault();
+        if (isQuoteMode) handleSaveDraft();
+        else handleSave();
+      } else if (e.key === 'F11' && isQuoteMode) {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  });
 
   const getServiceTypeLabel = (metadata?: ServiceMetadata) => {
     if (!metadata?.type) return null;
@@ -3275,12 +3297,12 @@ export default function NewSalePage() {
         <div className="flex flex-wrap justify-end gap-2 pb-8">
           <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
           {saleStatus === 'active' ? (
-            <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher</Button>
+            <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher (F8)</Button>
           ) : (
-            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação</Button>
+            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
           )}
           {editSaleId && (
-            <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
+            <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta (F9)</Button>
           )}
           {editSaleId && isQuoteMode && (
             <Button variant="outline" onClick={handleGenerateClientBuildsLink} className="w-full sm:w-auto"><Sparkles className="h-4 w-4 mr-1" /> Cliente Monta Proposta</Button>
@@ -3290,12 +3312,12 @@ export default function NewSalePage() {
           )}
           {isQuoteMode && (
             <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
-              {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Cotação'}
+              {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Cotação (F10)'}
             </Button>
           )}
           <Button onClick={handleSave} className={`w-full sm:w-auto ${isQuoteMode ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
-            {saleStatus === 'active' ? 'Salvar Venda' : (
-              <><ShieldCheck className="h-4 w-4 mr-1" /> Converter em Venda</>
+            {saleStatus === 'active' ? 'Salvar Venda (F10)' : (
+              <><ShieldCheck className="h-4 w-4 mr-1" /> Converter em Venda (F11)</>
             )}
           </Button>
         </div>
