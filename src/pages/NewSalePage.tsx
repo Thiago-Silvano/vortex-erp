@@ -1761,48 +1761,34 @@ export default function NewSalePage() {
   return (
     <AppLayout>
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
-        {/* Status Banner */}
-        <div className={`rounded-lg border-2 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isQuoteMode ? 'border-amber-400/50 bg-amber-50 dark:bg-amber-950/20' : 'border-emerald-400/50 bg-emerald-50 dark:bg-emerald-950/20'}`}>
-          <div className="flex items-center gap-3">
-            {isQuoteMode ? <FileEdit className="h-6 w-6 text-amber-600" /> : <ShieldCheck className="h-6 w-6 text-emerald-600" />}
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-foreground">{isQuoteMode ? 'Modo Cotação' : 'Modo Venda'}</h2>
-                <Badge variant={isQuoteMode ? 'secondary' : 'default'} className={isQuoteMode ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'}>
-                  {isQuoteMode ? 'Cotação' : 'Venda Ativa'}
-                </Badge>
+        {/* Compact Progress Bar */}
+        {editSaleId && (() => {
+          const steps = [
+            { key: 'created', label: 'Cotação', done: true },
+            { key: 'sale', label: 'Venda', done: saleStatus === 'active' },
+            { key: 'contract', label: 'Contrato', done: !!contractInfo.signedAt },
+            { key: 'payment', label: 'Pagamento', done: saleWorkflowStatus === 'aguardando_pagamento' || saleWorkflowStatus === 'processo_concluido' },
+            { key: 'done', label: 'Concluído', done: saleWorkflowStatus === 'processo_concluido' },
+          ];
+          const completed = steps.filter(s => s.done).length;
+          const pct = Math.round((completed / steps.length) * 100);
+          const currentStep = steps.find(s => !s.done) || steps[steps.length - 1];
+          const statusLabels: Record<string, string> = {
+            em_aberto: 'Em aberto', contatando: 'Contatando', reservado: 'Reservado',
+            emitido: 'Emitido', aguardando_assinatura: 'Aguard. Assinatura',
+            aguardando_pagamento: 'Aguard. Pagamento', processo_concluido: 'Concluído',
+            sem_contrato: 'Sem Contrato', perdido: 'Perdido',
+          };
+          return (
+            <div className="flex items-center gap-3 px-1">
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-500 transition-all rounded-full" style={{ width: `${pct}%` }} />
               </div>
-              <p className="text-sm text-muted-foreground">
-                {isQuoteMode 
-                  ? 'Monte sua proposta comercial. Após aprovação do cliente, converta em venda para liberar os campos operacionais.'
-                  : 'Venda convertida. Preencha os dados operacionais, financeiros e de reserva.'}
-              </p>
+              <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">{pct}%</span>
+              <Badge variant="outline" className="text-xs shrink-0">{statusLabels[saleWorkflowStatus] || saleWorkflowStatus}</Badge>
             </div>
-          </div>
-          {isQuoteMode && (
-            <Button onClick={handleSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0">
-              <ShieldCheck className="h-4 w-4" /> Converter em Venda
-            </Button>
-          )}
-        </div>
-
-        {/* Workflow Timeline */}
-        {editSaleId && (
-          <Card className="overflow-hidden">
-            <CardContent className="p-4">
-              <SaleTimeline
-                saleStatus={saleStatus}
-                workflowStatus={saleWorkflowStatus}
-                createdAt={saleDate}
-                contractStatus={contractInfo.status}
-                contractSentAt={contractInfo.sentAt}
-                contractViewedAt={contractInfo.viewedAt}
-                contractSignedAt={contractInfo.signedAt}
-                hasReceivables={!isQuoteMode && receivables.length > 0}
-              />
-            </CardContent>
-          </Card>
-        )}
+          );
+        })()}
 
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">
