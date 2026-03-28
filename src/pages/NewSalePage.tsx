@@ -1293,6 +1293,28 @@ export default function NewSalePage() {
   };
 
   const [showEditConfirm, setShowEditConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeleteSale = async () => {
+    if (!editSaleId) return;
+    try {
+      // Delete related records first
+      await supabase.from('receivables').delete().eq('sale_id', editSaleId);
+      await supabase.from('accounts_payable').delete().eq('sale_id', editSaleId);
+      await supabase.from('seller_commissions').delete().eq('sale_id', editSaleId);
+      await supabase.from('reservations').delete().eq('sale_id', editSaleId);
+      await supabase.from('sale_items').delete().eq('sale_id', editSaleId);
+      await supabase.from('sale_suppliers').delete().eq('sale_id', editSaleId);
+      await (supabase.from('sale_passengers' as any) as any).delete().eq('sale_id', editSaleId);
+      await (supabase.from('sale_internal_files' as any) as any).delete().eq('sale_id', editSaleId);
+      await (supabase.from('sale_quote_options' as any) as any).delete().eq('sale_id', editSaleId);
+      await supabase.from('sales').delete().eq('id', editSaleId);
+      toast.success(saleStatus === 'active' ? 'Venda excluída com sucesso!' : 'Cotação excluída com sucesso!');
+      navigate('/sales');
+    } catch (err) {
+      toast.error('Erro ao excluir');
+    }
+  };
 
   const handleSave = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório'); return; }
@@ -3237,8 +3259,11 @@ export default function NewSalePage() {
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta</Button>
           )}
-          {editSaleId && (
+          {editSaleId && isQuoteMode && (
             <Button variant="outline" onClick={handleGenerateClientBuildsLink} className="w-full sm:w-auto"><Sparkles className="h-4 w-4 mr-1" /> Cliente Monta Proposta</Button>
+          )}
+          {editSaleId && (
+            <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} className="w-full sm:w-auto"><Trash2 className="h-4 w-4 mr-1" /> Excluir</Button>
           )}
           {isQuoteMode && (
             <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
@@ -3268,7 +3293,22 @@ export default function NewSalePage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Ask to add client as passenger */}
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir {saleStatus === 'active' ? 'Venda' : 'Cotação'}</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir? Todos os dados relacionados (serviços, financeiro, passageiros, reservas) serão removidos permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteSale} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <AlertDialog open={!!askAddClientAsPassenger} onOpenChange={(open) => { if (!open) setAskAddClientAsPassenger(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
