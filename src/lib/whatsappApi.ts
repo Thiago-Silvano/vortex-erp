@@ -24,17 +24,36 @@ async function proxyRequest(serverUrl: string, endpoint: string, method = 'GET',
     body: { server_url: serverUrl, endpoint, method, payload },
   });
   if (error) {
-    throw new Error(error.message || 'Erro ao comunicar com servidor WhatsApp');
+    throw new Error(normalizeProxyError(error.message || 'Erro ao comunicar com servidor WhatsApp', serverUrl, endpoint));
   }
   // Check if the response itself contains an error (e.g. connection timeout)
   if (data && typeof data === 'object' && data.error) {
-    const msg = String(data.error);
-    if (msg.includes('timed out') || msg.includes('Connection') || msg.includes('connect error')) {
-      throw new Error(`Servidor WhatsApp indisponível. Verifique se o servidor em ${serverUrl} está online e com a porta aberta para conexões externas.`);
-    }
-    throw new Error(msg);
+    throw new Error(normalizeProxyError(String(data.error), serverUrl, endpoint));
   }
   return data;
+}
+
+function normalizeProxyError(message: string, serverUrl: string, endpoint: string): string {
+  const msg = String(message || '');
+  const endpointMatch = msg.match(/Cannot\s+(GET|POST|PUT|PATCH|DELETE)\s+([^\s<]+)/i);
+
+  if (endpointMatch) {
+    return `O servidor WhatsApp em ${serverUrl} não suporta o endpoint ${endpointMatch[2]}.`;
+  }
+
+  if (msg.includes('timed out') || msg.includes('Connection') || msg.includes('connect error')) {
+    return `Servidor WhatsApp indisponível. Verifique se o servidor em ${serverUrl} está online e com a porta aberta para conexões externas.`;
+  }
+
+  if (msg.includes('não suporta o endpoint')) {
+    return msg;
+  }
+
+  if (msg.includes('Edge function returned 404')) {
+    return `O servidor WhatsApp em ${serverUrl} não suporta o endpoint ${endpoint}.`;
+  }
+
+  return msg;
 }
 
 export async function fetchChats(serverUrl: string) {

@@ -93,8 +93,8 @@ export default function WhatsAppSettingsPage() {
       await (supabase.from('whatsapp_settings').update(updatePayload).eq('id', settings.id) as any);
       setSettings(prev => ({ ...prev, is_connected: connected, connected_phone: updatePayload.connected_phone, connected_name: updatePayload.connected_name }));
       toast.success(connected ? 'WhatsApp conectado!' : 'WhatsApp desconectado');
-    } catch {
-      toast.error('Não foi possível conectar ao servidor. Verifique se a URL está correta e o servidor está rodando.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível conectar ao servidor. Verifique se a URL está correta e o servidor está rodando.');
       setSettings(prev => ({ ...prev, is_connected: false }));
     }
     setChecking(false);
@@ -112,8 +112,8 @@ export default function WhatsAppSettingsPage() {
       setSettings(prev => ({ ...prev, is_connected: false, connected_phone: '', connected_name: '' }));
       toast.success('WhatsApp desconectado! Escaneie o QR Code para reconectar.');
       fetchQrCode();
-    } catch {
-      toast.error('Erro ao desconectar. Verifique o servidor.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao desconectar. Verifique o servidor.');
     }
     setDisconnecting(false);
   };
@@ -133,8 +133,8 @@ export default function WhatsAppSettingsPage() {
       } else {
         toast.error('QR Code não disponível. O servidor pode já estar conectado ou ainda está gerando.');
       }
-    } catch {
-      toast.error('Não foi possível obter o QR Code do servidor.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível obter o QR Code do servidor.');
     }
     setLoadingQr(false);
   };

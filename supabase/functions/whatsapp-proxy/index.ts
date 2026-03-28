@@ -6,6 +6,20 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function extractUpstreamErrorMessage(text: string, parsed: unknown) {
+  if (parsed && typeof parsed === "object" && "error" in parsed && typeof parsed.error === "string") {
+    return parsed.error;
+  }
+
+  const match = text.match(/Cannot\s+(GET|POST|PUT|PATCH|DELETE)\s+([^\s<]+)/i);
+  if (match) {
+    return `O servidor WhatsApp não suporta o endpoint ${match[2]} (${match[1]}).`;
+  }
+
+  const sanitized = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return sanitized || "Erro ao comunicar com o servidor WhatsApp.";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -100,6 +114,19 @@ Deno.serve(async (req) => {
         result = await doFetch(retryPayload);
         if (result.status < 400) break;
       }
+    }
+
+    if (result.status >= 400) {
+      return new Response(
+        JSON.stringify({
+          error: extractUpstreamErrorMessage(result.text, result.parsed),
+          upstream_status: result.status,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     return new Response(JSON.stringify(result.parsed), {
