@@ -28,6 +28,9 @@ export default function WhatsAppSettingsPage() {
   });
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [loadingQr, setLoadingQr] = useState(false);
 
   useEffect(() => {
     if (empresaId) loadSettings();
