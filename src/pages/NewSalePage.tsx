@@ -406,6 +406,7 @@ export default function NewSalePage() {
             cost_center_id: si.cost_center_id || undefined,
             metadata: si.metadata || {},
             reservation_number: si.reservation_number || '',
+            purchase_number: (si as any).purchase_number || '',
             quote_option_id: optionIds[0] || undefined,
             quote_option_ids: optionIds.length > 0 ? optionIds : undefined,
           });
