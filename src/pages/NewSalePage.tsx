@@ -3375,8 +3375,10 @@ export default function NewSalePage() {
                 }
                 return updated;
               });
-              // Auto-save draft after service detail save
-              setTimeout(() => handleSilentSaveDraft(), 300);
+              // Auto-save after service detail save (preserve status for active sales)
+              if (saleStatus !== 'active') {
+                setTimeout(() => handleSilentSaveDraft(), 300);
+              }
             }}
             onHotelImagesFound={(images) => {
               setItemImages(prev => ({
