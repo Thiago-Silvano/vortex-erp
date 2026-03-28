@@ -149,20 +149,26 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
 
   useEffect(() => {
     if (open) {
+      const mainAirline = metadata.airlineId || '';
       setType(metadata.type || 'adicional');
       setDesc(description);
       setDetailedDesc(metadata.detailedDescription || '');
-      setFlightLegs(metadata.flightLegs || []);
+      // Sync main airlineId to legs that don't have their own
+      const legs = (metadata.flightLegs || []).map(l => ({
+        ...l,
+        airlineId: l.airlineId || mainAirline || undefined,
+      }));
+      setFlightLegs(legs);
       setBaggage(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
       setHotel(metadata.hotel || emptyHotel());
       setHotelImages(metadata.hotel?.images || []);
       setSelectedImageIndices(new Set());
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
-      setAirlineId(metadata.airlineId || '');
+      setAirlineId(mainAirline);
       loadGoogleApiKey();
       loadAirlines();
     }
-  }, [open]);
+  }, [open, metadata, description]);
 
   const loadAirlines = async () => {
     if (!activeCompany) return;
