@@ -84,7 +84,7 @@ export async function checkStatus(serverUrl: string) {
 }
 
 export async function disconnectSession(serverUrl: string) {
-  return proxyRequest(serverUrl, '/logout', 'POST');
+  return proxyRequest(serverUrl, '/disconnect', 'POST');
 }
 
 export async function getQrCode(serverUrl: string) {
