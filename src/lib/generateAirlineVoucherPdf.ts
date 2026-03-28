@@ -24,6 +24,8 @@ export interface AirlineVoucherLeg {
   flightCode?: string;
   connectionDuration?: string;
   direction?: 'ida' | 'volta';
+  airlineLogoBase64?: string;
+  airlineName?: string;
 }
 
 export interface AirlineVoucherPassenger {
@@ -38,7 +40,6 @@ export interface AirlineVoucherPassenger {
 
 export interface AirlineVoucherData {
   agencyLogoBase64?: string;
-  airlineLogoBase64?: string;
   airlineName?: string;
   shortId?: string;
   localizador?: string; // reservation code from airline
@@ -113,24 +114,6 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
     } catch { /* skip */ }
   }
 
-  // Airline logo (center-left) — white bg for PNG transparency
-  if (data.airlineLogoBase64) {
-    try {
-      const logoX = m + 35;
-      const logoY = 1;
-      const logoW = 38;
-      const logoH = 20;
-      doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
-      doc.roundedRect(logoX - 1, logoY, logoW + 2, logoH, 2, 2, 'F');
-      doc.addImage(data.airlineLogoBase64, 'PNG', logoX, logoY + 1, logoW, logoH - 2);
-    } catch { /* skip */ }
-  } else if (data.airlineName) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-    doc.text(s(data.airlineName), m + 52, 13);
-  }
-
   // Numero da Compra + Localizador (center-right)
   const infoX = pw - m - 60;
   doc.setFont('helvetica', 'normal');
@@ -190,22 +173,35 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
   y += discLines.length * 3.5 + 4;
 
   // ─── NOTES ────────────────────────────────────────────────
-  if (data.notes) {
+  if (data.airlineName || data.notes) {
     y = checkPage(doc, y, 15);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
     doc.text('Obs:', m, y);
     y += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-    const noteLines = doc.splitTextToSize(s(data.notes), cw);
-    noteLines.forEach((line: string) => {
-      y = checkPage(doc, y, 5);
-      doc.text(line, m, y);
-      y += 4;
-    });
+
+    // Main airline name in bold
+    if (data.airlineName) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      doc.text(s(`Cia Aerea principal: ${data.airlineName}`), m, y);
+      y += 5;
+    }
+
+    // Detailed description
+    if (data.notes) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+      const noteLines = doc.splitTextToSize(s(data.notes), cw);
+      noteLines.forEach((line: string) => {
+        y = checkPage(doc, y, 5);
+        doc.text(line, m, y);
+        y += 4;
+      });
+    }
   }
 
   // ─── FOOTER ───────────────────────────────────────────────
@@ -305,7 +301,8 @@ function drawFlightSection(
 function drawLegRow(
   doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw: number, cw: number
 ): number {
-  const rowH = 24;
+  const hasAirlineLogo = !!leg.airlineLogoBase64;
+  const rowH = hasAirlineLogo ? 28 : 24;
   const leftCol = m + 4;
   const rightCol = m + cw - 4;
   const midX = m + cw / 2;
@@ -407,6 +404,27 @@ function drawLegRow(
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
     const destLines = doc.splitTextToSize(s(destLabel), 42);
     doc.text(destLines, rightCol - 26, y + 7, { align: 'right' });
+  }
+
+  // Airline logo for this leg (bottom-left of row)
+  if (leg.airlineLogoBase64) {
+    try {
+      const alX = leftCol;
+      const alY = y + 17;
+      const alW = 18;
+      const alH = 8;
+      doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
+      doc.roundedRect(alX - 0.5, alY - 0.5, alW + 1, alH + 1, 1, 1, 'F');
+      doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+      doc.setLineWidth(0.15);
+      doc.roundedRect(alX - 0.5, alY - 0.5, alW + 1, alH + 1, 1, 1, 'S');
+      doc.addImage(leg.airlineLogoBase64, 'PNG', alX, alY, alW, alH);
+    } catch { /* skip */ }
+  } else if (leg.airlineName) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+    doc.text(s(leg.airlineName), leftCol, y + 22);
   }
 
   return y + rowH + 2;
