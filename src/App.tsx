@@ -135,6 +135,7 @@ const App = () => (
           <Route path="/itineraries" element={<ProtectedRoute><ItinerariesPage /></ProtectedRoute>} />
           <Route path="/itineraries/:id" element={<ProtectedRoute><ItineraryEditorPage /></ProtectedRoute>} />
           <Route path="/promo-maker" element={<ProtectedRoute><PromoMakerPage /></ProtectedRoute>} />
+          <Route path="/airlines" element={<ProtectedRoute><AirlinesPage /></ProtectedRoute>} />
 
           {/* Vistos routes */}
           <Route path="/vistos/dashboard" element={<ProtectedRoute><VistosDashboard /></ProtectedRoute>} />

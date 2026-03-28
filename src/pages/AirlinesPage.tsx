@@ -40,9 +40,7 @@ export default function AirlinesPage() {
   const loadAirlines = async () => {
     if (!activeCompany) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('airlines')
-      .select('*')
+    const { data } = await (supabase.from('airlines' as any).select('*') as any)
       .eq('empresa_id', activeCompany.id)
       .order('name');
     setAirlines(data || []);
@@ -74,12 +72,12 @@ export default function AirlinesPage() {
     }
     try {
       if (editingId) {
-        await supabase.from('airlines')
+        await (supabase.from('airlines' as any) as any)
           .update({ name: editing.name, logo_url: editing.logo_url, is_active: editing.is_active, updated_at: new Date().toISOString() })
           .eq('id', editingId);
         toast.success('Cia aérea atualizada!');
       } else {
-        await supabase.from('airlines')
+        await (supabase.from('airlines' as any) as any)
           .insert({ name: editing.name, logo_url: editing.logo_url, is_active: editing.is_active, empresa_id: activeCompany.id });
         toast.success('Cia aérea cadastrada!');
       }
@@ -100,7 +98,7 @@ export default function AirlinesPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Deseja excluir esta cia aérea?')) return;
-    await supabase.from('airlines').delete().eq('id', id);
+    await (supabase.from('airlines' as any) as any).delete().eq('id', id);
     toast.success('Cia aérea excluída.');
     loadAirlines();
   };
