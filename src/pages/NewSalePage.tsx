@@ -3293,7 +3293,22 @@ export default function NewSalePage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Ask to add client as passenger */}
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir {saleStatus === 'active' ? 'Venda' : 'Cotação'}</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir? Todos os dados relacionados (serviços, financeiro, passageiros, reservas) serão removidos permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteSale} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <AlertDialog open={!!askAddClientAsPassenger} onOpenChange={(open) => { if (!open) setAskAddClientAsPassenger(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
