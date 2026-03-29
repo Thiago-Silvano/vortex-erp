@@ -3315,7 +3315,11 @@ export default function NewSalePage() {
         <div className="flex flex-wrap justify-end gap-2 pb-8">
           <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
           {saleStatus === 'active' ? (
-            <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher (F8)</Button>
+            <>
+              <Button variant="outline" onClick={handleExportServicesVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Voucher Servicos</Button>
+              <Button variant="outline" onClick={handleExportAirlineVoucher} className="w-full sm:w-auto"><Plane className="h-4 w-4 mr-1" /> Voucher Aereo</Button>
+            </>
+          ) : (
           ) : (
             <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
           )}
