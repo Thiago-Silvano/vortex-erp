@@ -1568,6 +1568,7 @@ export default function NewSalePage() {
           name: catalogName || item.description || `Serviço ${idx + 1}`,
           description: item.metadata?.detailedDescription || item.description,
           value: item.total_value,
+          type: item.metadata?.type || '',
         };
       }),
       allItems: showIndividualValues ? items.map((item, idx) => {
