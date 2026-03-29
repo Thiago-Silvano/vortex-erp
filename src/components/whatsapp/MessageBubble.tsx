@@ -51,13 +51,16 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply }: Me
     const loadMedia = async () => {
       setLoadingMedia(true);
       try {
-        const result = await fetchMedia(serverUrl, msgIdentifier);
-        if (result) {
-          // Upload to storage for permanent access
-          const publicUrl = await uploadMediaToStorage(result.data, result.mimetype, empresaId, msgIdentifier.replace(/[^a-zA-Z0-9_-]/g, '_'));
-          if (publicUrl) {
-            mediaCache.set(msgIdentifier, publicUrl);
-            setMediaUrl(publicUrl);
+        // Media is now stored in DB/storage via webhook, no server fetch needed
+        // Check if there's a stored URL in the database
+        const { data: dbMsg } = await supabase
+          .from('whatsapp_messages')
+          .select('media_url')
+          .eq('whatsapp_msg_id', msgIdentifier)
+          .maybeSingle() as any;
+        if (dbMsg?.media_url) {
+          mediaCache.set(msgIdentifier, dbMsg.media_url);
+          setMediaUrl(dbMsg.media_url);
 
             // Update DB record
             await (supabase.from('whatsapp_messages')

@@ -127,7 +127,8 @@ export default function WhatsAppSettingsPage() {
     setLoadingQr(true);
     setQrCode(null);
     try {
-      const data = await getQrCode(settings.server_url);
+      await connectSession(settings.server_url, empresaId);
+      const data = await getQrCode(settings.server_url, empresaId);
       const qr = data?.qr || data?.qrcode || data?.qr_code || data?.base64 || data?.image || null;
       if (qr) {
         setQrCode(typeof qr === 'string' && !qr.startsWith('data:') ? `data:image/png;base64,${qr}` : qr);

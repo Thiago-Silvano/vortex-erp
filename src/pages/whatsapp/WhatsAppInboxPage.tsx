@@ -415,7 +415,7 @@ export default function WhatsAppInboxPage() {
       }
 
       try {
-        await sendMessage(serverUrl, phone, messageText);
+        await sendMessage(serverUrl, empresaId, phone, messageText);
         toast.success('Mensagem enviada!');
       } catch (sendErr) {
         console.error('Error sending via server:', sendErr);
