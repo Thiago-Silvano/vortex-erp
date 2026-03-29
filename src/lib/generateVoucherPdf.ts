@@ -191,6 +191,20 @@ function drawPageHeader(
 
   y += clientCardH + 5;
 
+  // Passenger names below client card
+  if (data.passengers.length > 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+    const paxNames = data.passengers.map(p => s(p.name.toUpperCase())).join('  |  ');
+    const paxLines = doc.splitTextToSize(`Passageiros: ${paxNames}`, cw);
+    paxLines.forEach((line: string) => {
+      doc.text(line, m, y);
+      y += 4;
+    });
+    y += 2;
+  }
+
   // Service title bar if provided
   if (serviceName) {
     y = drawSectionBar(doc, s(serviceName.toUpperCase()), y, m, cw);
@@ -432,55 +446,11 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   if (pages.length === 0) {
     // Fallback: single page with just client info
     drawPageHeader(doc, data, pw, m, cw);
-    let y = 50;
-    y = drawPassengers(doc, data, y, m, cw);
-    y = drawReservations(doc, data.reservations, y, m, cw);
   } else {
     pages.forEach((page, idx) => {
       if (idx > 0) doc.addPage();
 
       let y = drawPageHeader(doc, data, pw, m, cw, page.name);
-
-      // Trip summary on first page only
-      if (idx === 0) {
-        const summaryItems: Array<{ label: string; value: string }> = [];
-        if (data.destination) summaryItems.push({ label: 'Destino', value: data.destination });
-        if (data.origin) summaryItems.push({ label: 'Origem', value: data.origin });
-        if (data.departureDate && data.returnDate)
-          summaryItems.push({ label: 'Periodo', value: `${formatDateBR(data.departureDate)} - ${formatDateBR(data.returnDate)}` });
-        if (data.nights) summaryItems.push({ label: 'Duracao', value: `${data.nights} noites` });
-        if (data.passengersCount) summaryItems.push({ label: 'Passageiros', value: `${data.passengersCount}` });
-
-        if (summaryItems.length > 0) {
-          y = drawSectionBar(doc, 'RESUMO DA VIAGEM', y, m, cw);
-          y += 3;
-
-          summaryItems.forEach((item, i) => {
-            const colW = cw / Math.min(summaryItems.length, 3);
-            const col = i % 3;
-            const row = Math.floor(i / 3);
-            const cx = m + col * colW;
-            const cy = y + row * 14;
-
-            doc.setFillColor(LIGHT_BG[0], LIGHT_BG[1], LIGHT_BG[2]);
-            doc.rect(cx + 1, cy, colW - 2, 12, 'F');
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7);
-            doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-            doc.text(item.label, cx + 4, cy + 5);
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(9);
-            doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-            doc.text(s(item.value), cx + 4, cy + 10);
-          });
-          y += Math.ceil(summaryItems.length / 3) * 14 + 4;
-        }
-      }
-
-      // Passengers on each page
-      y = drawPassengers(doc, data, y, m, cw);
 
       // Service-specific content
       if (page.type === 'hotel' && page.hotel) {
@@ -491,11 +461,6 @@ export function generateVoucherPdf(data: VoucherPdfData) {
         y = drawSectionBar(doc, 'DETALHES DO SERVICO', y, m, cw);
         y += 3;
         y = drawServiceContent(doc, page.service, y, m, cw);
-      }
-
-      // Reservations on first page
-      if (idx === 0) {
-        y = drawReservations(doc, data.reservations, y, m, cw);
       }
 
       // Notes on last page
