@@ -57,7 +57,7 @@ export default function WhatsAppSettingsPage() {
       await (supabase.from('whatsapp_settings').insert({ ...payload, empresa_id: empresaId }) as any);
     }
 
-    resetServerUrl();
+    resetServerUrl(empresaId);
     toast.success('Configurações salvas');
     setLoading(false);
     loadSettings();

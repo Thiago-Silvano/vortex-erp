@@ -202,6 +202,7 @@ export default function WhatsAppInboxPage() {
   };
 
   const loadConversations = async () => {
+    if (!empresaId) return;
     try {
       const url = await getServerUrl(empresaId);
       setServerUrl(url);
