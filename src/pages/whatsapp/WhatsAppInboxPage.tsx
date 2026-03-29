@@ -11,7 +11,7 @@ import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X } from '
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { fetchChats, fetchMessages, sendMessage, sendMedia, getServerUrl } from '@/lib/whatsappApi';
+import { sendMessage, sendMedia, getServerUrl, connectSession } from '@/lib/whatsappApi';
 import { io, Socket } from 'socket.io-client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
