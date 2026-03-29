@@ -60,15 +60,15 @@ export default function WhatsAppInboxPage() {
   const [agentName, setAgentName] = useState('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const socketRef = useRef<Socket | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch current user display name
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
-        const raw = data.user.email?.split('@')[0] || '';
-        const name = raw.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const displayName = data.user.user_metadata?.display_name || '';
+        const name = displayName || (data.user.email?.split('@')[0] || '').replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         setAgentName(name);
       }
     });
@@ -79,87 +79,58 @@ export default function WhatsAppInboxPage() {
     loadConversations();
   }, [empresaId]);
 
-  // Socket.IO connection
+  // Supabase Realtime: listen for new incoming messages
   useEffect(() => {
-    if (!serverUrl) return;
-    console.log('[WhatsApp Socket] Connecting to:', serverUrl);
-    const socket = io(serverUrl, { transports: ['websocket', 'polling'] });
-    socketRef.current = socket;
+    if (!empresaId) return;
 
-    socket.on('connect', () => {
-      console.log('[WhatsApp Socket] Connected! ID:', socket.id);
-    });
+    const channel = supabase
+      .channel(`whatsapp-messages-${empresaId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'whatsapp_messages',
+          filter: `empresa_id=eq.${empresaId}`,
+        },
+        (payload: any) => {
+          const newRow = payload.new;
+          // Only process incoming messages (from webhook)
+          if (newRow.sender !== 'them') return;
 
-    socket.on('connect_error', (err: any) => {
-      console.error('[WhatsApp Socket] Connection error:', err?.message || err);
-    });
+          console.log('[WhatsApp Realtime] New incoming message:', newRow.id);
 
-    socket.on('disconnect', (reason: string) => {
-      console.log('[WhatsApp Socket] Disconnected:', reason);
-    });
+          // If the active conversation matches, add message to the chat
+          if (activeConv?.id === newRow.conversation_id) {
+            setMessages(prev => {
+              // Avoid duplicates
+              if (prev.some(m => m.id === newRow.id)) return prev;
+              return [...prev, {
+                id: newRow.id,
+                sender: newRow.sender,
+                content: newRow.content || '',
+                message_type: newRow.message_type || 'chat',
+                media_url: newRow.media_url || '',
+                created_at: newRow.created_at,
+                whatsapp_msg_id: newRow.whatsapp_msg_id || '',
+              }];
+            });
+          }
 
-    socket.onAny((eventName: string, ...args: any[]) => {
-      console.log('[WhatsApp Socket] Event received:', eventName, args);
-    });
+          // Refresh conversations list to update last_message and unread counts
+          loadConversations();
 
-    socket.on('nova_mensagem', async (data: any) => {
-      console.log('[WhatsApp Socket] nova_mensagem data:', JSON.stringify(data));
-      const phone = extractIncomingPhone(data);
-      const content = data.body || data.message || '';
-      if (!phone || phone.length < 8) {
-        console.warn('[WhatsApp Socket] Ignoring message - invalid phone:', phone);
-        return;
-      }
-
-      const whatsappId = extractWhatsappId(data);
-      const msgType = data.type || 'chat';
-      const hasMediaFlag = data.hasMedia || false;
-
-      const { data: convId, error: rpcError } = await (supabase.rpc('find_or_create_conversation', {
-        p_empresa_id: empresaId,
-        p_phone: phone,
-        p_client_name: data.name || data.pushname || phone,
-        p_last_message: content || (hasMediaFlag ? getMsgTypeLabel(msgType) : ''),
-        p_whatsapp_id: whatsappId || null,
-      }) as any);
-
-      if (convId) {
-        const insertData: any = {
-          conversation_id: convId,
-          empresa_id: empresaId,
-          sender: 'them',
-          content,
-          message_type: msgType,
-          whatsapp_msg_id: data.id?._serialized || data.id || '',
-        };
-
-        await (supabase.from('whatsapp_messages').insert(insertData) as any);
-
-        if (activeConv?.id === convId || (activeConv?.phone && normalizePhone(activeConv.phone) === phone)) {
-          setMessages(prev => [...prev, {
-            id: crypto.randomUUID(),
-            sender: 'them',
-            content,
-            message_type: msgType,
-            media_url: '',
-            created_at: new Date().toISOString(),
-            whatsapp_msg_id: insertData.whatsapp_msg_id,
-          }]);
+          toast.info('Nova mensagem recebida');
         }
+      )
+      .subscribe();
 
-        const { data: updated } = await (supabase
-          .from('whatsapp_conversations')
-          .select('*')
-          .eq('empresa_id', empresaId)
-          .order('last_message_at', { ascending: false }) as any);
-        if (updated) setConversations(updated);
-      }
+    channelRef.current = channel;
 
-      toast.info(`Nova mensagem de ${data.name || phone}`);
-    });
-
-    return () => { socket.disconnect(); };
-  }, [serverUrl, activeConv, empresaId]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [empresaId, activeConv]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
