@@ -1596,6 +1596,20 @@ export default function NewSalePage() {
     if (!result) return;
     const { voucherData } = result;
 
+    // Load Vortex white logo (same as airline voucher)
+    let vortexWhiteLogoBase64: string | undefined;
+    try {
+      const vortexResp = await fetch('/images/vortex-logo-white.png');
+      const vortexBlob = await vortexResp.blob();
+      vortexWhiteLogoBase64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(vortexBlob);
+      });
+    } catch { /* fallback to agency logo */ }
+
+    voucherData.vortexWhiteLogoBase64 = vortexWhiteLogoBase64;
+
     const doc = generateVoucherPdf(voucherData);
     doc.save(`voucher-servicos-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
     toast.success('Voucher de servicos gerado com sucesso!');
