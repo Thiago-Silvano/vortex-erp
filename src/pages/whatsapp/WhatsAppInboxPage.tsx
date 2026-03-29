@@ -217,47 +217,11 @@ export default function WhatsAppInboxPage() {
         setConversations(dbConvs);
       }
 
-      // Sync from server
+      // Ensure session is connected on server
       try {
-        const chats = await fetchChats(url);
-        if (Array.isArray(chats)) {
-          const dbPhones = new Set((dbConvs || []).map((c: any) => normalizePhone(c.phone)));
-
-          const newChats = chats.filter((chat: any) => {
-            const chatId = extractWhatsappId(chat) || '';
-            const phone = extractIncomingPhone(chat);
-            if (typeof chatId === 'string' && chatId.includes('@g.us')) return false;
-            return phone.length >= 8 && !dbPhones.has(normalizePhone(phone));
-          });
-
-          if (newChats.length > 0 && newChats.length < 200) {
-            for (const chat of newChats) {
-              const phone = extractIncomingPhone(chat);
-              const name = chat.nome || chat.name || chat.pushname || phone;
-              const whatsappId = extractWhatsappId(chat);
-
-              await (supabase.rpc('find_or_create_conversation', {
-                p_empresa_id: empresaId,
-                p_phone: phone,
-                p_client_name: name,
-                p_last_message: '',
-                p_last_message_at: chat.timestamp
-                  ? new Date(chat.timestamp * 1000).toISOString()
-                  : new Date().toISOString(),
-                p_whatsapp_id: whatsappId,
-              }) as any);
-            }
-
-            const { data: updated } = await (supabase
-              .from('whatsapp_conversations')
-              .select('*')
-              .eq('empresa_id', empresaId)
-              .order('last_message_at', { ascending: false }) as any);
-            if (updated) setConversations(updated);
-          }
-        }
+        await connectSession(url, empresaId);
       } catch {
-        // Server offline, use DB data
+        // Server offline, use DB data only
       }
     } catch (err) {
       console.error('Error loading conversations:', err);
