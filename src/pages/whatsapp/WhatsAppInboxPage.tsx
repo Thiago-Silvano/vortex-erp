@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { sendMessage, sendMedia, getServerUrl, connectSession } from '@/lib/whatsappApi';
-import { io, Socket } from 'socket.io-client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import MessageBubble from '@/components/whatsapp/MessageBubble';
