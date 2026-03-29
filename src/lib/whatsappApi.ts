@@ -1,9 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 
-let _serverUrl = '';
+const _serverUrlCache: Record<string, string> = {};
 
 export async function getServerUrl(empresaId: string): Promise<string> {
-  if (_serverUrl) return _serverUrl;
+  if (!empresaId) throw new Error('ID da empresa é obrigatório para buscar configurações do WhatsApp.');
+  if (_serverUrlCache[empresaId]) return _serverUrlCache[empresaId];
   
   const { data } = await supabase
     .from('whatsapp_settings')
@@ -11,12 +12,16 @@ export async function getServerUrl(empresaId: string): Promise<string> {
     .eq('empresa_id', empresaId)
     .maybeSingle() as any;
   
-  _serverUrl = data?.server_url || 'http://localhost:3000';
-  return _serverUrl;
+  _serverUrlCache[empresaId] = data?.server_url || 'http://localhost:3000';
+  return _serverUrlCache[empresaId];
 }
 
-export function resetServerUrl() {
-  _serverUrl = '';
+export function resetServerUrl(empresaId?: string) {
+  if (empresaId) {
+    delete _serverUrlCache[empresaId];
+  } else {
+    Object.keys(_serverUrlCache).forEach(k => delete _serverUrlCache[k]);
+  }
 }
 
 async function proxyRequest(serverUrl: string, endpoint: string, method = 'GET', payload?: any) {
