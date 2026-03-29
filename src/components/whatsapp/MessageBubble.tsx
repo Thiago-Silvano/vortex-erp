@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Download, FileText, Play, Reply, Mic, Image as ImageIcon, Video } from 'lucide-react';
-import { fetchMedia, uploadMediaToStorage } from '@/lib/whatsappApi';
+import { uploadMediaToStorage } from '@/lib/whatsappApi';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MessageBubbleProps {
