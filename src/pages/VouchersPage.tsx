@@ -281,10 +281,11 @@ export default function VouchersPage() {
         const legAirlineIds = [...new Set(legs.map((l: any) => l.airlineId).filter(Boolean))];
         const airlineCache: Record<string, { name: string; logoBase64?: string }> = {};
         for (const aid of legAirlineIds) {
-          const { data: aData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', aid).maybeSingle() as any);
+          const aidStr = String(aid);
+          const { data: aData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', aidStr).maybeSingle() as any);
           if (aData) {
             const legLogo = await loadLogoBase64(aData.logo_url);
-            airlineCache[aid] = { name: aData.name || '', logoBase64: legLogo };
+            airlineCache[aidStr] = { name: aData.name || '', logoBase64: legLogo };
           }
         }
 
