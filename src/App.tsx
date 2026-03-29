@@ -64,6 +64,7 @@ import VistosDS160Page from "./pages/vistos/VistosDS160Page";
 import ItineraryPublicPage from "./pages/ItineraryPublicPage";
 import PromoMakerPage from "./pages/PromoMakerPage";
 import AirlinesPage from "./pages/AirlinesPage";
+import VouchersPage from "./pages/VouchersPage";
 import ContractTemplatesPage from "./pages/ContractTemplatesPage";
 import ContractsDashboardPage from "./pages/ContractsDashboardPage";
 import ContractSignPage from "./pages/ContractSignPage";
@@ -108,6 +109,7 @@ const App = () => (
           <Route path="/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />
           <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
           <Route path="/sales" element={<ProtectedRoute><SalesPage /></ProtectedRoute>} />
+          <Route path="/sales/vouchers" element={<ProtectedRoute><VouchersPage /></ProtectedRoute>} />
           <Route path="/cotacoes" element={<ProtectedRoute><CotacoesKanbanPage /></ProtectedRoute>} />
           <Route path="/cotacoes/lista" element={<ProtectedRoute><CotacoesKanbanPage /></ProtectedRoute>} />
           <Route path="/sales/new" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
