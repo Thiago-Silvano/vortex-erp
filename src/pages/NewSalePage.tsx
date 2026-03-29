@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
@@ -1438,7 +1438,7 @@ export default function NewSalePage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const handleExportVoucher = async () => {
+  const prepareVoucherCommonData = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o voucher'); return; }
     let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
     const agQuery = activeCompany?.id
@@ -1587,103 +1587,121 @@ export default function NewSalePage() {
       shortId,
     };
 
-    // Only generate general voucher if there are non-airline services
-    const hasNonAirlineItems = items.some(i => i.metadata?.type !== 'aereo');
-    const hasAirlineItems = items.some(i => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
-    if (hasNonAirlineItems || !hasAirlineItems) {
-      const doc = generateVoucherPdf(voucherData);
-      doc.save(`voucher-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-      toast.success('Voucher geral gerado com sucesso!');
-    }
+    return { voucherData, logoBase64, shortId };
+  };
 
-    // ─── Generate separate Airline Voucher for aereo services ──
+  const handleExportServicesVoucher = async () => {
+    const result = await prepareVoucherCommonData();
+    if (!result) return;
+    const { voucherData } = result;
+
+    const doc = generateVoucherPdf(voucherData);
+    doc.save(`voucher-servicos-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+    toast.success('Voucher de servicos gerado com sucesso!');
+  };
+
+  const handleExportAirlineVoucher = async () => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o voucher'); return; }
+
     const airlineItems = items.filter(i => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
-    if (airlineItems.length > 0) {
-      for (const airItem of airlineItems) {
-        const meta = airItem.metadata!;
-        const legs = meta.flightLegs || [];
-
-        // Load main airline name
-        let airlineName = '';
-        if (meta.airlineId && activeCompany?.id) {
-          const { data: airlineData } = await (supabase.from('airlines' as any).select('name').eq('id', meta.airlineId).maybeSingle() as any);
-          if (airlineData) airlineName = airlineData.name || '';
-        }
-
-        // Collect unique airline IDs from legs
-        const legAirlineIds = [...new Set(legs.map((l: any) => l.airlineId).filter(Boolean))];
-        const airlineCache: Record<string, { name: string; logoBase64?: string }> = {};
-        for (const aid of legAirlineIds) {
-          const { data: aData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', aid).maybeSingle() as any);
-          if (aData) {
-            let legLogoBase64: string | undefined;
-            if (aData.logo_url) {
-              try {
-                const resp = await fetch(aData.logo_url);
-                const blob = await resp.blob();
-                legLogoBase64 = await new Promise<string>((resolve) => {
-                  const reader = new FileReader();
-                  reader.onload = () => resolve(reader.result as string);
-                  reader.readAsDataURL(blob);
-                });
-              } catch { /* skip */ }
-            }
-            airlineCache[aid] = { name: aData.name || '', logoBase64: legLogoBase64 };
-          }
-        }
-
-        const airPax: AirlineVoucherPassenger[] = passengers.map((p, i) => ({
-          name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
-          eticketNumber: p.eticket_number || undefined,
-          baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
-        }));
-
-        // Load white Vortex logo for dark header
-        let vortexWhiteLogoBase64: string | undefined;
-        try {
-          const vortexResp = await fetch('/images/vortex-logo-white.png');
-          const vortexBlob = await vortexResp.blob();
-          vortexWhiteLogoBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(vortexBlob);
-          });
-        } catch { /* fallback to agency logo */ }
-
-        const airVoucherData: AirlineVoucherData = {
-          agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
-          airlineName,
-          shortId: airItem.purchase_number || shortId || undefined,
-          localizador: airItem.reservation_number || '',
-          passengers: airPax,
-          flightLegs: legs.map((l: any) => ({
-            origin: l.origin || '',
-            destination: l.destination || '',
-            originFull: l.originFull || '',
-            destinationFull: l.destinationFull || '',
-            departureDate: l.departureDate || '',
-            departureTime: l.departureTime || '',
-            arrivalDate: l.arrivalDate || '',
-            arrivalTime: l.arrivalTime || '',
-            flightCode: l.flightCode || '',
-            connectionDuration: l.connectionDuration || '',
-            direction: l.direction || 'ida',
-            airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
-            airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
-          })),
-          notes: meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim() : undefined,
-          agencyName: agency.name,
-          agencyWhatsapp: agency.whatsapp || '',
-          agencyEmail: agency.email || '',
-          agencyWebsite: agency.website || '',
-        };
-
-        const airDoc = generateAirlineVoucherPdf(airVoucherData);
-        const airFileName = `voucher-aereo-${airlineName ? airlineName.replace(/\s+/g, '-').toLowerCase() + '-' : ''}${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
-        airDoc.save(airFileName);
-      }
-      toast.success('Voucher(s) aereo(s) gerado(s)!');
+    if (airlineItems.length === 0) {
+      toast.error('Nenhum serviço aéreo encontrado nesta venda');
+      return;
     }
+
+    const result = await prepareVoucherCommonData();
+    if (!result) return;
+    const { logoBase64, shortId } = result;
+
+    // Load agency for footer
+    let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
+    const agQuery = activeCompany?.id
+      ? supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1)
+      : supabase.from('agency_settings').select('*').limit(1);
+    const { data: agData } = await agQuery;
+    if (agData && agData.length > 0) agency = agData[0] as any;
+
+    for (const airItem of airlineItems) {
+      const meta = airItem.metadata!;
+      const legs = meta.flightLegs || [];
+
+      let airlineName = '';
+      if (meta.airlineId && activeCompany?.id) {
+        const { data: airlineData } = await (supabase.from('airlines' as any).select('name').eq('id', meta.airlineId).maybeSingle() as any);
+        if (airlineData) airlineName = airlineData.name || '';
+      }
+
+      const legAirlineIds = [...new Set(legs.map((l: any) => l.airlineId).filter(Boolean))];
+      const airlineCache: Record<string, { name: string; logoBase64?: string }> = {};
+      for (const aid of legAirlineIds) {
+        const { data: aData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', aid).maybeSingle() as any);
+        if (aData) {
+          let legLogoBase64: string | undefined;
+          if (aData.logo_url) {
+            try {
+              const resp = await fetch(aData.logo_url);
+              const blob = await resp.blob();
+              legLogoBase64 = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+              });
+            } catch { /* skip */ }
+          }
+          airlineCache[aid] = { name: aData.name || '', logoBase64: legLogoBase64 };
+        }
+      }
+
+      const airPax: AirlineVoucherPassenger[] = passengers.map((p, i) => ({
+        name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
+        eticketNumber: p.eticket_number || undefined,
+        baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
+      }));
+
+      let vortexWhiteLogoBase64: string | undefined;
+      try {
+        const vortexResp = await fetch('/images/vortex-logo-white.png');
+        const vortexBlob = await vortexResp.blob();
+        vortexWhiteLogoBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(vortexBlob);
+        });
+      } catch { /* fallback to agency logo */ }
+
+      const airVoucherData: AirlineVoucherData = {
+        agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
+        airlineName,
+        shortId: airItem.purchase_number || shortId || undefined,
+        localizador: airItem.reservation_number || '',
+        passengers: airPax,
+        flightLegs: legs.map((l: any) => ({
+          origin: l.origin || '',
+          destination: l.destination || '',
+          originFull: l.originFull || '',
+          destinationFull: l.destinationFull || '',
+          departureDate: l.departureDate || '',
+          departureTime: l.departureTime || '',
+          arrivalDate: l.arrivalDate || '',
+          arrivalTime: l.arrivalTime || '',
+          flightCode: l.flightCode || '',
+          connectionDuration: l.connectionDuration || '',
+          direction: l.direction || 'ida',
+          airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
+          airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
+        })),
+        notes: meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim() : undefined,
+        agencyName: agency.name,
+        agencyWhatsapp: agency.whatsapp || '',
+        agencyEmail: agency.email || '',
+        agencyWebsite: agency.website || '',
+      };
+
+      const airDoc = generateAirlineVoucherPdf(airVoucherData);
+      const airFileName = `voucher-aereo-${airlineName ? airlineName.replace(/\s+/g, '-').toLowerCase() + '-' : ''}${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      airDoc.save(airFileName);
+    }
+    toast.success('Voucher(s) aereo(s) gerado(s)!');
   };
 
   const handleExportDraftPdf = async () => {
@@ -1879,7 +1897,7 @@ export default function NewSalePage() {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'F8') {
         e.preventDefault();
-        if (saleStatus === 'active') handleExportVoucher();
+        if (saleStatus === 'active') handleExportServicesVoucher();
         else handleExportDraftPdf();
       } else if (e.key === 'F9') {
         e.preventDefault();
@@ -3297,7 +3315,10 @@ export default function NewSalePage() {
         <div className="flex flex-wrap justify-end gap-2 pb-8">
           <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
           {saleStatus === 'active' ? (
-            <Button variant="outline" onClick={handleExportVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar Voucher (F8)</Button>
+            <>
+              <Button variant="outline" onClick={handleExportServicesVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Voucher Servicos</Button>
+              <Button variant="outline" onClick={handleExportAirlineVoucher} className="w-full sm:w-auto"><Plane className="h-4 w-4 mr-1" /> Voucher Aereo</Button>
+            </>
           ) : (
             <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
           )}
