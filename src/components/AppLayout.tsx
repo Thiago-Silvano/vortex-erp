@@ -146,6 +146,7 @@ function TopMenuBar() {
       items: [
         { title: 'Dashboard', url: '/dashboard' },
         { title: 'Vendas', url: '/sales', permKey: 'sales_view' },
+        { title: 'Vouchers', url: '/sales/vouchers', permKey: 'sales_view' },
         { title: 'Roteiros', url: '/itineraries' },
         { title: 'Contratos', url: '/contracts/templates' },
       ],
