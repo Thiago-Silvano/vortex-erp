@@ -51,8 +51,6 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply }: Me
     const loadMedia = async () => {
       setLoadingMedia(true);
       try {
-        // Media is now stored in DB/storage via webhook, no server fetch needed
-        // Check if there's a stored URL in the database
         const { data: dbMsg } = await supabase
           .from('whatsapp_messages')
           .select('media_url')
@@ -61,17 +59,6 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply }: Me
         if (dbMsg?.media_url) {
           mediaCache.set(msgIdentifier, dbMsg.media_url);
           setMediaUrl(dbMsg.media_url);
-
-            // Update DB record
-            await (supabase.from('whatsapp_messages')
-              .update({ media_url: publicUrl, media_type: result.mimetype })
-              .eq('id', msg.id) as any);
-          } else {
-            // Fallback to data URI
-            const dataUri = `data:${result.mimetype};base64,${result.data}`;
-            mediaCache.set(msgIdentifier, dataUri);
-            setMediaUrl(dataUri);
-          }
         }
       } catch (err) {
         console.error('Error loading media:', err);
