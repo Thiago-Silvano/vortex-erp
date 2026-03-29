@@ -108,7 +108,7 @@ export default function WhatsAppSettingsPage() {
     }
     setDisconnecting(true);
     try {
-      await disconnectSession(settings.server_url);
+      await disconnectSession(settings.server_url, empresaId);
       await (supabase.from('whatsapp_settings').update({ is_connected: false, connected_phone: '', connected_name: '' }).eq('id', settings.id) as any);
       setSettings(prev => ({ ...prev, is_connected: false, connected_phone: '', connected_name: '' }));
       toast.success('WhatsApp desconectado! Escaneie o QR Code para reconectar.');
