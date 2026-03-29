@@ -281,7 +281,8 @@ export default function WhatsAppInboxPage() {
 
     try {
       const targetId = activeConv.whatsapp_id || activeConv.phone;
-      await sendMessage(serverUrl, empresaId, targetId, text);
+      const whatsappText = agentName ? `*${agentName}:*\n${text}` : text;
+      await sendMessage(serverUrl, empresaId, targetId, whatsappText);
 
       await (supabase.from('whatsapp_messages').insert({
         conversation_id: activeConv.id,
