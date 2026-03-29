@@ -1897,7 +1897,7 @@ export default function NewSalePage() {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'F8') {
         e.preventDefault();
-        if (saleStatus === 'active') handleExportVoucher();
+        if (saleStatus === 'active') handleExportServicesVoucher();
         else handleExportDraftPdf();
       } else if (e.key === 'F9') {
         e.preventDefault();
