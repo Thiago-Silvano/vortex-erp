@@ -9,7 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Wifi, WifiOff, Save, Smartphone, LogOut, QrCode, RefreshCw } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Settings, Wifi, WifiOff, Save, Smartphone, LogOut, QrCode, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { resetServerUrl, checkStatus, disconnectSession, getQrCode, connectSession } from '@/lib/whatsappApi';
 
@@ -31,6 +32,7 @@ export default function WhatsAppSettingsPage() {
   const [disconnecting, setDisconnecting] = useState(false);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [loadingQr, setLoadingQr] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     if (empresaId) loadSettings();
@@ -82,17 +84,18 @@ export default function WhatsAppSettingsPage() {
       const connected = Boolean(data?.connected ?? data?.is_connected ?? data?.isConnected ?? data?.authenticated) || ['connected', 'open', 'ready'].includes(statusValue);
 
       // Extract phone number from response - try multiple fields
-      const phone = data?.phone || data?.wid?.user || data?.me?.user || data?.number || data?.pushname || '';
+      // Always prefer fresh data from the server over cached DB values
+      const phone = data?.phone || data?.wid?.user || data?.me?.user || data?.number || '';
       const name = data?.pushname || data?.name || data?.displayName || '';
 
       const updatePayload: any = {
         is_connected: connected,
-        connected_phone: phone ? String(phone) : settings.connected_phone,
-        connected_name: name ? String(name) : settings.connected_name,
+        connected_phone: phone ? String(phone) : '',
+        connected_name: name ? String(name) : '',
       };
 
       await (supabase.from('whatsapp_settings').update(updatePayload).eq('id', settings.id) as any);
-      setSettings(prev => ({ ...prev, is_connected: connected, connected_phone: updatePayload.connected_phone, connected_name: updatePayload.connected_name }));
+      setSettings(prev => ({ ...prev, ...updatePayload }));
       toast.success(connected ? 'WhatsApp conectado!' : 'WhatsApp desconectado');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Não foi possível conectar ao servidor. Verifique se a URL está correta e o servidor está rodando.');
@@ -139,6 +142,20 @@ export default function WhatsAppSettingsPage() {
       toast.error(error instanceof Error ? error.message : 'Não foi possível obter o QR Code do servidor.');
     }
     setLoadingQr(false);
+  };
+
+  const handleClearConversations = async () => {
+    setClearing(true);
+    try {
+      // Delete all messages first, then conversations for this empresa
+      await (supabase.from('whatsapp_messages').delete().eq('empresa_id', empresaId) as any);
+      await (supabase.from('whatsapp_conversations').delete().eq('empresa_id', empresaId) as any);
+      toast.success('Todas as conversas foram removidas do ERP.');
+    } catch (error) {
+      toast.error('Erro ao limpar conversas.');
+      console.error(error);
+    }
+    setClearing(false);
   };
 
   const formatPhone = (phone: string) => {
@@ -246,6 +263,38 @@ export default function WhatsAppSettingsPage() {
                 />
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Clear conversations */}
+        <Card className="border-destructive/30">
+          <CardHeader>
+            <CardTitle className="text-lg text-destructive">Limpar Conversas</CardTitle>
+            <CardDescription>Remove todas as conversas e mensagens do ERP. As mensagens no WhatsApp não serão afetadas.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="gap-2" disabled={clearing}>
+                  <Trash2 className="h-4 w-4" />
+                  {clearing ? 'Limpando...' : 'Limpar Todas as Conversas'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Limpar todas as conversas?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação irá remover todas as conversas e mensagens do ERP permanentemente. As mensagens no WhatsApp do celular não serão afetadas. Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearConversations} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Sim, limpar tudo
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
 
