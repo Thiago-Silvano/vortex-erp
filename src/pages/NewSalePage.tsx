@@ -1438,7 +1438,7 @@ export default function NewSalePage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const handleExportVoucher = async () => {
+  const prepareVoucherCommonData = async () => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o voucher'); return; }
     let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
     const agQuery = activeCompany?.id
