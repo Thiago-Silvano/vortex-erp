@@ -314,7 +314,7 @@ export default function WhatsAppInboxPage() {
 
     try {
       const targetId = activeConv.whatsapp_id || activeConv.phone;
-      await sendMedia(serverUrl, targetId, file);
+      await sendMedia(serverUrl, empresaId, targetId, file);
 
       // Upload to storage
       const reader = new FileReader();
