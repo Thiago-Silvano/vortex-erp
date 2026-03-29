@@ -64,6 +64,7 @@ import VistosDS160Page from "./pages/vistos/VistosDS160Page";
 import ItineraryPublicPage from "./pages/ItineraryPublicPage";
 import PromoMakerPage from "./pages/PromoMakerPage";
 import AirlinesPage from "./pages/AirlinesPage";
+import VouchersPage from "./pages/VouchersPage";
 import ContractTemplatesPage from "./pages/ContractTemplatesPage";
 import ContractsDashboardPage from "./pages/ContractsDashboardPage";
 import ContractSignPage from "./pages/ContractSignPage";
