@@ -156,34 +156,6 @@ export default function WhatsAppInboxPage() {
     }
   };
 
-  const extractIncomingPhone = (payload: any) => {
-    const candidates = [
-      payload?.number,
-      payload?.phone,
-      payload?.numero,
-      payload?.from,
-      payload?.chatId,
-      typeof payload?.id === 'string' ? payload.id : payload?.id?.user,
-    ];
-
-    for (const candidate of candidates) {
-      if (typeof candidate !== 'string') continue;
-      const digits = normalizePhone(candidate);
-      if (digits.length >= 8) return normalizePhoneForSend(digits);
-    }
-
-    return '';
-  };
-
-  const extractWhatsappId = (payload: any) => {
-    if (typeof payload?.from === 'string' && payload.from.includes('@')) return payload.from;
-    if (typeof payload?.id === 'string' && payload.id.includes('@')) return payload.id;
-    if (typeof payload?.id?._serialized === 'string' && payload.id._serialized.includes('@')) return payload.id._serialized;
-
-    const number = extractIncomingPhone(payload);
-    return number ? `${number}@c.us` : null;
-  };
-
   const loadConversations = async () => {
     if (!empresaId) return;
     try {
