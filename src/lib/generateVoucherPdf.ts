@@ -191,6 +191,20 @@ function drawPageHeader(
 
   y += clientCardH + 5;
 
+  // Passenger names below client card
+  if (data.passengers.length > 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+    const paxNames = data.passengers.map(p => s(p.name.toUpperCase())).join('  |  ');
+    const paxLines = doc.splitTextToSize(`Passageiros: ${paxNames}`, cw);
+    paxLines.forEach((line: string) => {
+      doc.text(line, m, y);
+      y += 4;
+    });
+    y += 2;
+  }
+
   // Service title bar if provided
   if (serviceName) {
     y = drawSectionBar(doc, s(serviceName.toUpperCase()), y, m, cw);
