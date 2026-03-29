@@ -242,45 +242,7 @@ export default function WhatsAppInboxPage() {
       .eq('conversation_id', conv.id)
       .order('created_at', { ascending: true }) as any);
 
-    if (dbMsgs?.length) {
-      setMessages(dbMsgs);
-    } else {
-      // Fetch from server
-      try {
-        const queryId = conv.whatsapp_id || conv.phone;
-        if (!queryId) throw new Error('No phone');
-        const serverMsgs = await fetchMessages(serverUrl, queryId);
-        if (Array.isArray(serverMsgs)) {
-          const mapped = serverMsgs.map((m: any) => ({
-            id: m.id || crypto.randomUUID(),
-            sender: m.fromMe ? 'me' : 'them',
-            content: m.body || '',
-            message_type: m.type || 'chat',
-            media_url: m.mediaUrl || '',
-            created_at: m.timestamp ? new Date(m.timestamp * 1000).toISOString() : new Date().toISOString(),
-            whatsapp_msg_id: typeof m.id === 'string' ? m.id : m.id?._serialized || '',
-            reply_to_content: m.quotedMsg?.body || '',
-          }));
-          setMessages(mapped);
-
-          const inserts = mapped.map((msg: any) => ({
-            conversation_id: conv.id,
-            empresa_id: empresaId,
-            sender: msg.sender,
-            content: msg.content,
-            message_type: msg.message_type,
-            media_url: msg.media_url,
-            whatsapp_msg_id: msg.whatsapp_msg_id,
-            reply_to_content: msg.reply_to_content || null,
-          }));
-          if (inserts.length > 0) {
-            await (supabase.from('whatsapp_messages').insert(inserts) as any);
-          }
-        }
-      } catch {
-        setMessages([]);
-      }
-    }
+    setMessages(dbMsgs || []);
 
     setLoading(false);
   };
