@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       const opts: RequestInit = {
         method: normalizedMethod,
         headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(15000),
       };
 
       if (normalizedMethod !== "GET" && fetchPayload !== undefined) {
@@ -84,19 +84,11 @@ Deno.serve(async (req) => {
         const msg = e instanceof Error ? e.message : String(e);
         if (msg.includes("timed out") || msg.includes("aborted")) {
           const timeoutMessage = `Servidor WhatsApp indisponível (timeout ao conectar em ${server_url}). Verifique se o servidor está online e acessível.`;
-          return {
-            status: 503,
-            parsed: { error: timeoutMessage },
-            text: timeoutMessage,
-          };
+          return { status: 503, parsed: { error: timeoutMessage }, text: timeoutMessage };
         }
 
         const connectionMessage = `Servidor WhatsApp indisponível ao conectar em ${server_url}. Verifique se o servidor está online e acessível.`;
-        return {
-          status: 503,
-          parsed: { error: connectionMessage },
-          text: connectionMessage,
-        };
+        return { status: 503, parsed: { error: connectionMessage }, text: connectionMessage };
       }
 
       const text = await res.text();
@@ -105,32 +97,7 @@ Deno.serve(async (req) => {
       return { status: res.status, parsed, text };
     };
 
-    let result = await doFetch(payload);
-
-    // Retry with alternative number formats for "No LID for user" errors
-    const originalNumber = (payload as { number?: unknown } | null)?.number;
-    if (
-      result.status >= 400 &&
-      typeof originalNumber === "string" &&
-      result.text.toLowerCase().includes("no lid for user")
-    ) {
-      const digits = originalNumber.replace(/@.*/, "").replace(/\D/g, "");
-      const candidates: string[] = [];
-      if (!digits.startsWith("55") && (digits.length === 10 || digits.length === 11)) {
-        candidates.push(`55${digits}`);
-      }
-      candidates.push(digits);
-
-      for (const candidate of candidates) {
-        if (!candidate || candidate.length < 8) continue;
-        const retryPayload = {
-          ...(typeof payload === "object" && payload !== null ? payload as Record<string, unknown> : {}),
-          number: candidate,
-        };
-        result = await doFetch(retryPayload);
-        if (result.status < 400) break;
-      }
-    }
+    const result = await doFetch(payload);
 
     if (result.status >= 400) {
       return new Response(
@@ -138,10 +105,7 @@ Deno.serve(async (req) => {
           error: extractUpstreamErrorMessage(result.text, result.parsed),
           upstream_status: result.status,
         }),
-        {
-          status: 200,
-          headers: jsonHeaders,
-        }
+        { status: 200, headers: jsonHeaders }
       );
     }
 
