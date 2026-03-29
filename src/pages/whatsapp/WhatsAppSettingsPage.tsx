@@ -74,7 +74,8 @@ export default function WhatsAppSettingsPage() {
     }
     setChecking(true);
     try {
-      const data = await checkStatus(settings.server_url);
+      await connectSession(settings.server_url, empresaId);
+      const data = await checkStatus(settings.server_url, empresaId);
       console.log('WhatsApp status response:', JSON.stringify(data));
 
       const statusValue = String(data?.status ?? data?.state ?? '').toLowerCase();
