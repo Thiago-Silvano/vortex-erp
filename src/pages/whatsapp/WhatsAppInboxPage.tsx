@@ -57,10 +57,22 @@ export default function WhatsAppInboxPage() {
   const [clientForm, setClientForm] = useState({ full_name: '', phone: '', email: '' });
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [sendingFile, setSendingFile] = useState(false);
+  const [agentName, setAgentName] = useState('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch current user display name
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        const raw = data.user.email?.split('@')[0] || '';
+        const name = raw.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        setAgentName(name);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!empresaId) return;
@@ -269,7 +281,8 @@ export default function WhatsAppInboxPage() {
 
     try {
       const targetId = activeConv.whatsapp_id || activeConv.phone;
-      await sendMessage(serverUrl, empresaId, targetId, text);
+      const whatsappText = agentName ? `*${agentName}:*\n${text}` : text;
+      await sendMessage(serverUrl, empresaId, targetId, whatsappText);
 
       await (supabase.from('whatsapp_messages').insert({
         conversation_id: activeConv.id,
