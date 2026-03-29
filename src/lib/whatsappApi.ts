@@ -32,7 +32,6 @@ async function proxyRequest(serverUrl: string, endpoint: string, method = 'GET',
     const parsedMessage = extractEdgeFunctionErrorMessage(error.message || 'Erro ao comunicar com servidor WhatsApp');
     throw new Error(normalizeProxyError(parsedMessage, serverUrl, endpoint));
   }
-  // Check if the response itself contains an error (e.g. connection timeout)
   if (data && typeof data === 'object' && data.error) {
     throw new Error(normalizeProxyError(String(data.error), serverUrl, endpoint));
   }
@@ -56,7 +55,7 @@ function extractEdgeFunctionErrorMessage(message: string): string {
         }
       }
     } catch {
-      // Ignore invalid embedded JSON and fallback to the original message
+      // fallback
     }
   }
 
@@ -67,22 +66,12 @@ function normalizeProxyError(message: string, serverUrl: string, endpoint: strin
   const msg = String(message || '');
   const endpointMatch = msg.match(/Cannot\s+(GET|POST|PUT|PATCH|DELETE)\s+([^\s<]+)/i);
 
-  if (msg.includes('Servidor WhatsApp indisponível')) {
-    return msg;
-  }
-
-  if (endpointMatch) {
-    return `O servidor WhatsApp em ${serverUrl} não suporta o endpoint ${endpointMatch[2]}.`;
-  }
-
+  if (msg.includes('Servidor WhatsApp indisponível')) return msg;
+  if (endpointMatch) return `O servidor WhatsApp em ${serverUrl} não suporta o endpoint ${endpointMatch[2]}.`;
   if (msg.includes('timed out') || msg.includes('Connection') || msg.includes('connect error')) {
     return `Servidor WhatsApp indisponível. Verifique se o servidor em ${serverUrl} está online e com a porta aberta para conexões externas.`;
   }
-
-  if (msg.includes('não suporta o endpoint')) {
-    return msg;
-  }
-
+  if (msg.includes('não suporta o endpoint')) return msg;
   if (msg.includes('Edge function returned 404')) {
     return `O servidor WhatsApp em ${serverUrl} não suporta o endpoint ${endpoint}.`;
   }
@@ -90,58 +79,83 @@ function normalizeProxyError(message: string, serverUrl: string, endpoint: strin
   return msg;
 }
 
-export async function fetchChats(serverUrl: string) {
-  return proxyRequest(serverUrl, '/chats');
+// =============================
+// Server endpoints (matching server.js)
+// =============================
+
+/**
+ * Connect / initialize the WhatsApp client on the server
+ */
+export async function connectSession(serverUrl: string, empresaId: string) {
+  return proxyRequest(serverUrl, `/connect?empresa_id=${encodeURIComponent(empresaId)}`);
 }
 
-export async function fetchMessages(serverUrl: string, number: string) {
-  const chatId = formatChatId(number);
-  return proxyRequest(serverUrl, `/messages/${encodeURIComponent(chatId)}`);
+/**
+ * Check status - returns { connected: true } or { qr: "data:..." } or { status: "waiting" }
+ */
+export async function checkStatus(serverUrl: string, empresaId: string) {
+  return proxyRequest(serverUrl, `/status?empresa_id=${encodeURIComponent(empresaId)}`);
 }
 
-export async function sendMessage(serverUrl: string, number: string, message: string, quotedMsgId?: string) {
-  const chatId = formatChatId(number);
-  const payload: any = { number: chatId, message };
-  if (quotedMsgId) {
-    payload.quotedMsgId = quotedMsgId;
-  }
-  return proxyRequest(serverUrl, '/send', 'POST', payload);
+/**
+ * Get QR code - same as checkStatus, extracts qr from response
+ */
+export async function getQrCode(serverUrl: string, empresaId: string) {
+  return proxyRequest(serverUrl, `/status?empresa_id=${encodeURIComponent(empresaId)}`);
 }
 
-export async function sendMedia(serverUrl: string, number: string, file: File, caption?: string) {
-  const base64 = await fileToBase64(file);
-  const chatId = formatChatId(number);
-  return proxyRequest(serverUrl, '/send-media', 'POST', {
-    number: chatId,
-    file_base64: base64,
-    file_name: file.name,
-    mime_type: file.type,
-    caption,
+/**
+ * Disconnect the WhatsApp session (GET endpoint on the server)
+ */
+export async function disconnectSession(serverUrl: string, empresaId: string) {
+  return proxyRequest(serverUrl, `/disconnect?empresa_id=${encodeURIComponent(empresaId)}`);
+}
+
+/**
+ * Send a text message via /send-message (POST)
+ */
+export async function sendMessage(serverUrl: string, empresaId: string, number: string, message: string) {
+  const phone = formatChatId(number);
+  return proxyRequest(serverUrl, '/send-message', 'POST', {
+    empresa_id: empresaId,
+    phone,
+    message,
   });
 }
 
-export async function fetchMedia(serverUrl: string, msgId: string): Promise<{ data: string; mimetype: string } | null> {
-  try {
-    const result = await proxyRequest(serverUrl, `/media/${encodeURIComponent(msgId)}`);
-    if (result && result.data && result.mimetype) {
-      return { data: result.data, mimetype: result.mimetype };
-    }
-    return null;
-  } catch {
-    return null;
+/**
+ * Send media via /send-message with media_url (POST)
+ * First uploads file to storage, then sends the public URL
+ */
+export async function sendMedia(serverUrl: string, empresaId: string, number: string, file: File, caption?: string) {
+  // Upload file to storage first to get a public URL
+  const base64 = await fileToBase64(file);
+  const ext = file.name.split('.').pop() || 'bin';
+  const fileName = `${empresaId}/${crypto.randomUUID()}.${ext}`;
+
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
   }
-}
 
-export async function checkStatus(serverUrl: string) {
-  return proxyRequest(serverUrl, '/status');
-}
+  const { error: uploadError } = await supabase.storage
+    .from('whatsapp-media')
+    .upload(fileName, bytes, { contentType: file.type, upsert: true });
 
-export async function disconnectSession(serverUrl: string) {
-  return proxyRequest(serverUrl, '/disconnect', 'POST');
-}
+  if (uploadError) {
+    throw new Error('Erro ao fazer upload da mídia: ' + uploadError.message);
+  }
 
-export async function getQrCode(serverUrl: string) {
-  return proxyRequest(serverUrl, '/qr');
+  const { data: urlData } = supabase.storage.from('whatsapp-media').getPublicUrl(fileName);
+
+  const phone = formatChatId(number);
+  return proxyRequest(serverUrl, '/send-message', 'POST', {
+    empresa_id: empresaId,
+    phone,
+    message: caption || '',
+    media_url: urlData.publicUrl,
+  });
 }
 
 /**
@@ -157,7 +171,6 @@ export async function uploadMediaToStorage(
     const ext = mimetype.split('/')[1]?.split(';')[0] || 'bin';
     const fileName = `${empresaId}/${msgId}.${ext}`;
 
-    // Convert base64 to Uint8Array
     const binaryStr = atob(base64Data);
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) {
@@ -166,10 +179,7 @@ export async function uploadMediaToStorage(
 
     const { error } = await supabase.storage
       .from('whatsapp-media')
-      .upload(fileName, bytes, {
-        contentType: mimetype,
-        upsert: true,
-      });
+      .upload(fileName, bytes, { contentType: mimetype, upsert: true });
 
     if (error) {
       console.error('Error uploading media:', error);
@@ -184,9 +194,10 @@ export async function uploadMediaToStorage(
   }
 }
 
-/**
- * Normalize outbound number for WhatsApp send.
- */
+// =============================
+// Helpers
+// =============================
+
 function normalizeOutboundNumber(phone: string): string {
   const digits = (phone || '').replace(/\D/g, '');
   if (!digits) return '';

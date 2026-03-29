@@ -11,7 +11,7 @@ import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X } from '
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { fetchChats, fetchMessages, sendMessage, sendMedia, getServerUrl } from '@/lib/whatsappApi';
+import { sendMessage, sendMedia, getServerUrl, connectSession } from '@/lib/whatsappApi';
 import { io, Socket } from 'socket.io-client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -217,47 +217,11 @@ export default function WhatsAppInboxPage() {
         setConversations(dbConvs);
       }
 
-      // Sync from server
+      // Ensure session is connected on server
       try {
-        const chats = await fetchChats(url);
-        if (Array.isArray(chats)) {
-          const dbPhones = new Set((dbConvs || []).map((c: any) => normalizePhone(c.phone)));
-
-          const newChats = chats.filter((chat: any) => {
-            const chatId = extractWhatsappId(chat) || '';
-            const phone = extractIncomingPhone(chat);
-            if (typeof chatId === 'string' && chatId.includes('@g.us')) return false;
-            return phone.length >= 8 && !dbPhones.has(normalizePhone(phone));
-          });
-
-          if (newChats.length > 0 && newChats.length < 200) {
-            for (const chat of newChats) {
-              const phone = extractIncomingPhone(chat);
-              const name = chat.nome || chat.name || chat.pushname || phone;
-              const whatsappId = extractWhatsappId(chat);
-
-              await (supabase.rpc('find_or_create_conversation', {
-                p_empresa_id: empresaId,
-                p_phone: phone,
-                p_client_name: name,
-                p_last_message: '',
-                p_last_message_at: chat.timestamp
-                  ? new Date(chat.timestamp * 1000).toISOString()
-                  : new Date().toISOString(),
-                p_whatsapp_id: whatsappId,
-              }) as any);
-            }
-
-            const { data: updated } = await (supabase
-              .from('whatsapp_conversations')
-              .select('*')
-              .eq('empresa_id', empresaId)
-              .order('last_message_at', { ascending: false }) as any);
-            if (updated) setConversations(updated);
-          }
-        }
+        await connectSession(url, empresaId);
       } catch {
-        // Server offline, use DB data
+        // Server offline, use DB data only
       }
     } catch (err) {
       console.error('Error loading conversations:', err);
@@ -278,45 +242,7 @@ export default function WhatsAppInboxPage() {
       .eq('conversation_id', conv.id)
       .order('created_at', { ascending: true }) as any);
 
-    if (dbMsgs?.length) {
-      setMessages(dbMsgs);
-    } else {
-      // Fetch from server
-      try {
-        const queryId = conv.whatsapp_id || conv.phone;
-        if (!queryId) throw new Error('No phone');
-        const serverMsgs = await fetchMessages(serverUrl, queryId);
-        if (Array.isArray(serverMsgs)) {
-          const mapped = serverMsgs.map((m: any) => ({
-            id: m.id || crypto.randomUUID(),
-            sender: m.fromMe ? 'me' : 'them',
-            content: m.body || '',
-            message_type: m.type || 'chat',
-            media_url: m.mediaUrl || '',
-            created_at: m.timestamp ? new Date(m.timestamp * 1000).toISOString() : new Date().toISOString(),
-            whatsapp_msg_id: typeof m.id === 'string' ? m.id : m.id?._serialized || '',
-            reply_to_content: m.quotedMsg?.body || '',
-          }));
-          setMessages(mapped);
-
-          const inserts = mapped.map((msg: any) => ({
-            conversation_id: conv.id,
-            empresa_id: empresaId,
-            sender: msg.sender,
-            content: msg.content,
-            message_type: msg.message_type,
-            media_url: msg.media_url,
-            whatsapp_msg_id: msg.whatsapp_msg_id,
-            reply_to_content: msg.reply_to_content || null,
-          }));
-          if (inserts.length > 0) {
-            await (supabase.from('whatsapp_messages').insert(inserts) as any);
-          }
-        }
-      } catch {
-        setMessages([]);
-      }
-    }
+    setMessages(dbMsgs || []);
 
     setLoading(false);
   };
@@ -343,7 +269,7 @@ export default function WhatsAppInboxPage() {
 
     try {
       const targetId = activeConv.whatsapp_id || activeConv.phone;
-      await sendMessage(serverUrl, targetId, text, quotedMsgId);
+      await sendMessage(serverUrl, empresaId, targetId, text);
 
       await (supabase.from('whatsapp_messages').insert({
         conversation_id: activeConv.id,
@@ -388,7 +314,7 @@ export default function WhatsAppInboxPage() {
 
     try {
       const targetId = activeConv.whatsapp_id || activeConv.phone;
-      await sendMedia(serverUrl, targetId, file);
+      await sendMedia(serverUrl, empresaId, targetId, file);
 
       // Upload to storage
       const reader = new FileReader();
@@ -489,7 +415,7 @@ export default function WhatsAppInboxPage() {
       }
 
       try {
-        await sendMessage(serverUrl, phone, messageText);
+        await sendMessage(serverUrl, empresaId, phone, messageText);
         toast.success('Mensagem enviada!');
       } catch (sendErr) {
         console.error('Error sending via server:', sendErr);

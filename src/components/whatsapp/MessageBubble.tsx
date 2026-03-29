@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Download, FileText, Play, Reply, Mic, Image as ImageIcon, Video } from 'lucide-react';
-import { fetchMedia, uploadMediaToStorage } from '@/lib/whatsappApi';
+import { uploadMediaToStorage } from '@/lib/whatsappApi';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MessageBubbleProps {
@@ -51,24 +51,14 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply }: Me
     const loadMedia = async () => {
       setLoadingMedia(true);
       try {
-        const result = await fetchMedia(serverUrl, msgIdentifier);
-        if (result) {
-          // Upload to storage for permanent access
-          const publicUrl = await uploadMediaToStorage(result.data, result.mimetype, empresaId, msgIdentifier.replace(/[^a-zA-Z0-9_-]/g, '_'));
-          if (publicUrl) {
-            mediaCache.set(msgIdentifier, publicUrl);
-            setMediaUrl(publicUrl);
-
-            // Update DB record
-            await (supabase.from('whatsapp_messages')
-              .update({ media_url: publicUrl, media_type: result.mimetype })
-              .eq('id', msg.id) as any);
-          } else {
-            // Fallback to data URI
-            const dataUri = `data:${result.mimetype};base64,${result.data}`;
-            mediaCache.set(msgIdentifier, dataUri);
-            setMediaUrl(dataUri);
-          }
+        const { data: dbMsg } = await supabase
+          .from('whatsapp_messages')
+          .select('media_url')
+          .eq('whatsapp_msg_id', msgIdentifier)
+          .maybeSingle() as any;
+        if (dbMsg?.media_url) {
+          mediaCache.set(msgIdentifier, dbMsg.media_url);
+          setMediaUrl(dbMsg.media_url);
         }
       } catch (err) {
         console.error('Error loading media:', err);

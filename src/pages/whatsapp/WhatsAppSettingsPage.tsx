@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Settings, Wifi, WifiOff, Save, Smartphone, LogOut, QrCode, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { resetServerUrl, checkStatus, disconnectSession, getQrCode } from '@/lib/whatsappApi';
+import { resetServerUrl, checkStatus, disconnectSession, getQrCode, connectSession } from '@/lib/whatsappApi';
 
 export default function WhatsAppSettingsPage() {
   const { activeCompany } = useCompany();
@@ -74,7 +74,8 @@ export default function WhatsAppSettingsPage() {
     }
     setChecking(true);
     try {
-      const data = await checkStatus(settings.server_url);
+      await connectSession(settings.server_url, empresaId);
+      const data = await checkStatus(settings.server_url, empresaId);
       console.log('WhatsApp status response:', JSON.stringify(data));
 
       const statusValue = String(data?.status ?? data?.state ?? '').toLowerCase();
@@ -107,7 +108,7 @@ export default function WhatsAppSettingsPage() {
     }
     setDisconnecting(true);
     try {
-      await disconnectSession(settings.server_url);
+      await disconnectSession(settings.server_url, empresaId);
       await (supabase.from('whatsapp_settings').update({ is_connected: false, connected_phone: '', connected_name: '' }).eq('id', settings.id) as any);
       setSettings(prev => ({ ...prev, is_connected: false, connected_phone: '', connected_name: '' }));
       toast.success('WhatsApp desconectado! Escaneie o QR Code para reconectar.');
@@ -126,7 +127,8 @@ export default function WhatsAppSettingsPage() {
     setLoadingQr(true);
     setQrCode(null);
     try {
-      const data = await getQrCode(settings.server_url);
+      await connectSession(settings.server_url, empresaId);
+      const data = await getQrCode(settings.server_url, empresaId);
       const qr = data?.qr || data?.qrcode || data?.qr_code || data?.base64 || data?.image || null;
       if (qr) {
         setQrCode(typeof qr === 'string' && !qr.startsWith('data:') ? `data:image/png;base64,${qr}` : qr);
