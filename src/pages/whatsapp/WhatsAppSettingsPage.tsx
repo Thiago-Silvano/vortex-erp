@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Settings, Wifi, WifiOff, Save, Smartphone, LogOut, QrCode, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { resetServerUrl, checkStatus, disconnectSession, getQrCode } from '@/lib/whatsappApi';
+import { resetServerUrl, checkStatus, disconnectSession, getQrCode, connectSession } from '@/lib/whatsappApi';
 
 export default function WhatsAppSettingsPage() {
   const { activeCompany } = useCompany();
