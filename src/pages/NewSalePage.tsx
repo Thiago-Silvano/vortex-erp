@@ -3320,7 +3320,6 @@ export default function NewSalePage() {
               <Button variant="outline" onClick={handleExportAirlineVoucher} className="w-full sm:w-auto"><Plane className="h-4 w-4 mr-1" /> Voucher Aereo</Button>
             </>
           ) : (
-          ) : (
             <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
           )}
           {editSaleId && (
