@@ -1994,7 +1994,7 @@ export default function NewSalePage() {
           <TabsList className="w-full justify-start border-b mb-4">
             <TabsTrigger value="dados">📋 Dados</TabsTrigger>
             <TabsTrigger value="servicos">🛒 Serviços</TabsTrigger>
-            {!isQuoteMode && <TabsTrigger value="passageiros">👤 Passageiros</TabsTrigger>}
+            <TabsTrigger value="passageiros">👤 Passageiros</TabsTrigger>
             <TabsTrigger value="financeiro">💰 Financeiro</TabsTrigger>
             <TabsTrigger value="documentos">📄 Documentos</TabsTrigger>
           </TabsList>
