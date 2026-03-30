@@ -188,7 +188,9 @@ export default function VouchersPage() {
             }
           }
           hotels.push({
-            name: h.hotelName, description: h.observations || '', checkIn: h.checkInDate,
+            name: h.hotelName, description: h.observations || '',
+            detailedDescription: item.metadata?.detailedDescription || '',
+            checkIn: h.checkInDate,
             checkOut: h.checkOutDate, nights, room: h.roomType || '', meal: '',
             reservationNumber: item.reservation_number || '',
           });
@@ -226,6 +228,7 @@ export default function VouchersPage() {
             description: item.metadata?.detailedDescription || item.description,
             value: item.total_value,
             type: item.metadata?.type || '',
+            reservationNumber: item.reservation_number || '',
           };
         }),
         allItems: [], showIndividualValues: false,

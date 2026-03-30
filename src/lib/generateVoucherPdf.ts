@@ -32,6 +32,7 @@ export interface HotelVoucher {
   nights: number;
   meal?: string;
   description?: string;
+  detailedDescription?: string;
   address?: string;
   reservationNumber?: string;
 }
@@ -43,6 +44,7 @@ export interface ServiceVoucher {
   quantity?: number;
   value: number;
   type?: string;
+  reservationNumber?: string;
 }
 
 export interface PassengerVoucher {
@@ -302,6 +304,22 @@ function drawHotelContent(doc: jsPDF, hotel: HotelVoucher, y: number, m: number,
     y += descLines.length * 3 + 2;
   }
 
+  if (hotel.detailedDescription) {
+    const cleanDesc = hotel.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+    if (cleanDesc) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      const detLines = doc.splitTextToSize(s(cleanDesc), cw - 14);
+      detLines.forEach((line: string) => {
+        y = checkPage(doc, y, 5);
+        doc.text(line, m + 7, y);
+        y += 3.5;
+      });
+      y += 1;
+    }
+  }
+
   const cardH = y - hotelStartY + 2;
   doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   doc.setLineWidth(0.2);
@@ -324,6 +342,14 @@ function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: n
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
   doc.text(s(service.name), m + 7, y + 6);
   y += 9;
+
+  if (service.reservationNumber) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+    doc.text(`Reserva: ${s(service.reservationNumber)}`, m + 7, y);
+    y += 4;
+  }
 
   if (service.date) {
     doc.setFont('helvetica', 'normal');

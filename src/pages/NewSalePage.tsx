@@ -1515,6 +1515,7 @@ export default function NewSalePage() {
         hotels.push({
           name: h.hotelName,
           description: h.observations || '',
+          detailedDescription: item.metadata?.detailedDescription || '',
           checkIn: h.checkInDate,
           checkOut: h.checkOutDate,
           nights: hotelNights,
@@ -1578,6 +1579,7 @@ export default function NewSalePage() {
           description: item.metadata?.detailedDescription || item.description,
           value: item.total_value,
           type: item.metadata?.type || '',
+          reservationNumber: item.reservation_number || '',
         };
       }),
       allItems: showIndividualValues ? items.map((item, idx) => {
