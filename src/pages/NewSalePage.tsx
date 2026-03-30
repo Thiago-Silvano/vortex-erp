@@ -132,7 +132,9 @@ export default function NewSalePage() {
   const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
 
   const [paymentMethods, setPaymentMethods] = useState<string[]>(['pix']);
-  const [installments, setInstallments] = useState(1);
+  const [installmentsMap, setInstallmentsMap] = useState<Record<string, number>>({});
+  const getInstallments = (method: string) => installmentsMap[method] || 1;
+  const setMethodInstallments = (method: string, count: number) => setInstallmentsMap(prev => ({ ...prev, [method]: count }));
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
   const [machineFee, setMachineFee] = useState(0);
@@ -238,7 +240,11 @@ export default function NewSalePage() {
     setSaleDate(sale.sale_date);
     const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
     setPaymentMethods(savedMethods.length > 0 ? savedMethods : ['pix']);
-    setInstallments(sale.installments || 1);
+    const savedInstallments = sale.installments || 1;
+    // Set installments for all saved methods
+    const instMap: Record<string, number> = {};
+    savedMethods.forEach((m: string) => { instMap[m] = savedInstallments; });
+    setInstallmentsMap(instMap);
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setMachineFee(Number((sale as any).machine_fee) || 0);
@@ -501,9 +507,10 @@ export default function NewSalePage() {
   useEffect(() => {
     if (!hasCredito || !cardPaymentType) return;
     const rates = cardPaymentType === 'ec' ? ecRates : linkRates;
-    const found = rates.find(r => r.installments === installments);
+    const creditInst = getInstallments('credito');
+    const found = rates.find(r => r.installments === creditInst);
     if (found) setFeeRate(found.rate);
-  }, [cardPaymentType, installments, ecRates, linkRates, hasCredito]);
+  }, [cardPaymentType, installmentsMap, ecRates, linkRates, hasCredito]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
   const totalSaleWithInterest = totalSale + saleInterest + operatorTaxes;
@@ -532,47 +539,50 @@ export default function NewSalePage() {
     for (const method of paymentMethods) {
       if (method === 'operadora') {
         const operadoraAmount = amountPerMethod;
-        const numInst = installments > 0 ? installments : 1;
-        const perInstallment = operadoraAmount / numInst;
-        for (let i = 1; i <= numInst; i++) {
+        const numInst = getInstallments('operadora');
+        const perInstallment = operadoraAmount / (numInst > 0 ? numInst : 1);
+        for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
           const dueDate = new Date(baseDate);
           dueDate.setMonth(dueDate.getMonth() + i);
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
         }
-      } else if (method === 'boleto' && installments > 1) {
+      } else if (method === 'boleto') {
+        const boletoInst = getInstallments('boleto');
         const boletoAmount = amountPerMethod;
-        if (boletoInterestRate > 0) {
+        if (boletoInst > 1 && boletoInterestRate > 0) {
           const monthlyRate = boletoInterestRate / 100;
-          const pmt = boletoAmount * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
-          for (let i = 1; i <= installments; i++) {
+          const pmt = boletoAmount * (monthlyRate * Math.pow(1 + monthlyRate, boletoInst)) / (Math.pow(1 + monthlyRate, boletoInst) - 1);
+          for (let i = 1; i <= boletoInst; i++) {
             const dueDate = new Date(baseDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto' });
           }
         } else {
-          const perInstallment = boletoAmount / installments;
-          for (let i = 1; i <= installments; i++) {
+          const numInst = boletoInst > 0 ? boletoInst : 1;
+          const perInstallment = boletoAmount / numInst;
+          for (let i = 1; i <= numInst; i++) {
             const dueDate = new Date(baseDate);
-            dueDate.setMonth(dueDate.getMonth() + i);
+            if (numInst > 1) dueDate.setMonth(dueDate.getMonth() + i);
             recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto' });
           }
         }
       } else if (method === 'credito') {
         const creditAmount = amountPerMethod;
-        const numInst = installments > 0 ? installments : 1;
-        const perInstallment = creditAmount / numInst;
-        for (let i = 1; i <= numInst; i++) {
+        const numInst = getInstallments('credito');
+        const perInstallment = creditAmount / (numInst > 0 ? numInst : 1);
+        for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
           const dueDate = new Date(baseDate);
           dueDate.setDate(dueDate.getDate() + i * 30);
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
         }
       } else {
         const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
-        const numInst = installments > 0 ? installments : 1;
-        const perInstallment = amountPerMethod / numInst;
-        for (let i = 1; i <= numInst; i++) {
+        const numInst = getInstallments(method);
+        const effInst = numInst > 0 ? numInst : 1;
+        const perInstallment = amountPerMethod / effInst;
+        for (let i = 1; i <= effInst; i++) {
           const dueDate = new Date(baseDate);
-          if (numInst > 1) {
+          if (effInst > 1) {
             dueDate.setMonth(dueDate.getMonth() + i);
           }
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method });
@@ -594,7 +604,7 @@ export default function NewSalePage() {
         return r;
       });
     });
-  }, [installments, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
+  }, [installmentsMap, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
@@ -1040,7 +1050,7 @@ export default function NewSalePage() {
         client_name: clientName,
         sale_date: saleDate,
         payment_method: paymentMethod,
-        installments: hasCredito ? installments : 1,
+        installments: hasCredito ? getInstallments('credito') : (Math.max(...Object.values(installmentsMap), 1)),
         card_charge_type: '',
         card_payment_type: hasCredito ? cardPaymentType : '',
         card_fee_rate: hasCredito ? feeRate : 0,
@@ -1630,7 +1640,7 @@ export default function NewSalePage() {
       reservations,
       payment: {
         method: paymentMethod,
-        installments,
+        installments: Math.max(...Object.values(installmentsMap), 1),
         receivables: receivables.map(r => ({ number: r.installment_number, amount: r.amount, dueDate: r.due_date || undefined })),
       },
       notes: notes || undefined,
@@ -1879,7 +1889,7 @@ export default function NewSalePage() {
       proposalPaymentOptions: proposalPaymentOptions.filter(o => o.enabled),
       payment: {
         method: paymentMethod,
-        installments,
+        installments: Math.max(...Object.values(installmentsMap), 1),
         receivables: receivables.map(r => ({ number: r.installment_number, amount: r.amount, dueDate: r.due_date || undefined })),
       },
       notes: notes || undefined,
@@ -2721,26 +2731,23 @@ export default function NewSalePage() {
               </div>
             </div>
 
-            {hasGenericInstallmentMethod && (
+            {/* Per-method installment selectors for generic methods (pix, dinheiro, debito, transferencia) */}
+            {paymentMethods.filter(m => !['credito', 'boleto', 'operadora'].includes(m)).length > 0 && (
               <div className="space-y-4 pt-4 border-t">
+                <p className="text-sm font-medium text-muted-foreground">Parcelamento por forma de pagamento</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Número de Parcelas</Label>
-                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Valor da Venda</Label>
-                    <Input value={fmt(totalSaleWithInterest)} disabled className="bg-muted" />
-                  </div>
-                  {installments > 1 && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Valor por parcela</p>
-                      <p className="text-sm font-bold">{fmt(totalSaleWithInterest / installments)}</p>
-                    </div>
-                  )}
+                  {paymentMethods.filter(m => !['credito', 'boleto', 'operadora'].includes(m)).map(m => {
+                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
+                    return (
+                      <div key={m}>
+                        <Label>{labels[m] || m} — Parcelas</Label>
+                        <Select value={String(getInstallments(m))} onValueChange={v => setMethodInstallments(m, parseInt(v))}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -2757,7 +2764,7 @@ export default function NewSalePage() {
                   </div>
                   <div>
                     <Label>Parcelamento</Label>
-                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                    <Select value={String(getInstallments('credito'))} onValueChange={v => setMethodInstallments('credito', parseInt(v))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>{Array.from({ length: 18 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
                     </Select>
@@ -2771,7 +2778,7 @@ export default function NewSalePage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Número de Parcelas</Label>
-                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                    <Select value={String(getInstallments('boleto'))} onValueChange={v => setMethodInstallments('boleto', parseInt(v))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
                     </Select>
@@ -2785,7 +2792,7 @@ export default function NewSalePage() {
                     <Input value={fmt(totalSaleWithInterest)} disabled className="bg-muted" />
                   </div>
                 </div>
-                {installments > 1 && boletoInterestRate > 0 && (
+                {getInstallments('boleto') > 1 && boletoInterestRate > 0 && (
                   <div className="p-3 bg-muted/50 rounded-lg text-sm">
                     <p>Valor total com juros: <strong>{fmt(receivables.reduce((s, r) => s + r.amount, 0))}</strong></p>
                     <p>Valor de cada parcela: <strong>{fmt(receivables[0]?.amount || 0)}</strong></p>
@@ -2799,13 +2806,13 @@ export default function NewSalePage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Número de Parcelas</Label>
-                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                    <Select value={String(getInstallments('operadora'))} onValueChange={v => setMethodInstallments('operadora', parseInt(v))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div><p className="text-sm text-muted-foreground">Comissão Bruta</p><p className="text-sm font-bold text-primary">{fmt(grossProfit)}</p></div>
-                  {installments > 1 && <div><p className="text-sm text-muted-foreground">Valor por parcela</p><p className="text-sm font-bold">{fmt(grossProfit / installments)}</p></div>}
+                  {getInstallments('operadora') > 1 && <div><p className="text-sm text-muted-foreground">Valor por parcela</p><p className="text-sm font-bold">{fmt(grossProfit / getInstallments('operadora'))}</p></div>}
                 </div>
               </div>
             )}
