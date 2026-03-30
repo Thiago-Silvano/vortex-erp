@@ -136,6 +136,8 @@ function drawPageHeader(
   const headerH = 22;
   doc.setFillColor(DARK_HEADER[0], DARK_HEADER[1], DARK_HEADER[2]);
   doc.rect(0, 0, pw, headerH, 'F');
+  doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+  doc.rect(0, headerH, pw, 0.8, 'F');
 
   // Vortex white logo (same as airline voucher: 24x20mm)
   const logoSrc = data.vortexWhiteLogoBase64 || data.agency.logoBase64;
