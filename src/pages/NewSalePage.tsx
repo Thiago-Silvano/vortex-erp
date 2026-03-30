@@ -1687,7 +1687,7 @@ export default function NewSalePage() {
 
       let vortexWhiteLogoBase64: string | undefined;
       try {
-        const vortexResp = await fetch('/images/vortex-logo-white.png');
+        const vortexResp = await fetch('/images/vortex-white-logo.png');
         const vortexBlob = await vortexResp.blob();
         vortexWhiteLogoBase64 = await new Promise<string>((resolve) => {
           const reader = new FileReader();
