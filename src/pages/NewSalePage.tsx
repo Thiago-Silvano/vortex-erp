@@ -2627,6 +2627,11 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
+          </TabsContent>
+
+          {/* TAB: Financeiro */}
+          <TabsContent value="financeiro" className="space-y-4">
+
         {/* Recebimento - only in sale mode */}
         {!isQuoteMode && (
         <Card>
