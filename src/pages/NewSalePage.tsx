@@ -604,7 +604,7 @@ export default function NewSalePage() {
         return r;
       });
     });
-  }, [installments, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
+  }, [installmentsMap, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
