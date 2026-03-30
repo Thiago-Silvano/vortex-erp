@@ -600,11 +600,17 @@ export default function NewSalePage() {
     }
     setSupplierPayments(prev => {
       const today = format(new Date(), 'yyyy-MM-dd');
-      const costPerSupplier = selectedSupplierIds.length > 0 ? totalCost / selectedSupplierIds.length : 0;
+      // When mixed with operadora, auto-set supplier amount to (non-operadora amount - gross commission)
+      const isMixedWithOp = paymentMethods.includes('operadora') && paymentMethods.length > 1;
+      let effectiveCost = totalCost;
+      if (isMixedWithOp) {
+        const operadoraPortionOfSale = totalSaleWithInterest / paymentMethods.length;
+        effectiveCost = Math.max(0, Math.round((totalCost - operadoraPortionOfSale) * 100) / 100);
+      }
+      const costPerSupplier = selectedSupplierIds.length > 0 ? effectiveCost / selectedSupplierIds.length : 0;
       return selectedSupplierIds.map(sid => {
         const existing = prev.find(sp => sp.supplier_id === sid);
         if (existing) {
-          // Only update amount if it hasn't been manually edited (check if it matches old cost split)
           return existing;
         }
         return {
@@ -619,7 +625,7 @@ export default function NewSalePage() {
         };
       });
     });
-  }, [selectedSupplierIds, totalCost]);
+  }, [selectedSupplierIds, totalCost, paymentMethods, totalSaleWithInterest]);
 
   // Auto-set commission rate from seller config
   useEffect(() => {
