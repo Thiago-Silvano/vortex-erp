@@ -2750,9 +2750,7 @@ export default function NewSalePage() {
                     return (
                       <Badge key={m} variant="secondary" className="gap-1 pr-1">
                         {labels[m] || m}
-                        {paymentMethods.length > 1 && (
-                          <button type="button" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))} className="ml-1 hover:text-destructive">×</button>
-                        )}
+                        <button type="button" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))} className="ml-1 hover:text-destructive">×</button>
                       </Badge>
                     );
                   })}
