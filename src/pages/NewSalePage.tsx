@@ -2769,8 +2769,8 @@ export default function NewSalePage() {
                   </div>
                   {machineFee > 0 && (
                     <>
-                      <div><p className="text-sm text-muted-foreground">Lucro antes da taxa</p><p className="text-sm font-medium">{fmt(netProfit + machineFee)}</p></div>
-                      <div><p className="text-sm text-muted-foreground">Lucro após taxa</p><p className="text-sm font-bold text-destructive">{fmt(netProfit)}</p></div>
+                      <div><p className="text-sm text-muted-foreground">Lucro antes da taxa</p><p className="text-sm font-medium">{fmt(grossProfit)}</p></div>
+                      <div><p className="text-sm text-muted-foreground">Lucro após taxa</p><p className="text-sm font-bold text-destructive">{fmt(grossProfit - machineFee)}</p></div>
                     </>
                   )}
                 </div>
