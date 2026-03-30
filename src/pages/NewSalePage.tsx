@@ -2792,7 +2792,7 @@ export default function NewSalePage() {
                     <Input value={fmt(totalSaleWithInterest)} disabled className="bg-muted" />
                   </div>
                 </div>
-                {installments > 1 && boletoInterestRate > 0 && (
+                {getInstallments('boleto') > 1 && boletoInterestRate > 0 && (
                   <div className="p-3 bg-muted/50 rounded-lg text-sm">
                     <p>Valor total com juros: <strong>{fmt(receivables.reduce((s, r) => s + r.amount, 0))}</strong></p>
                     <p>Valor de cada parcela: <strong>{fmt(receivables[0]?.amount || 0)}</strong></p>
