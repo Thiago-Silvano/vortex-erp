@@ -1050,7 +1050,7 @@ export default function NewSalePage() {
         client_name: clientName,
         sale_date: saleDate,
         payment_method: paymentMethod,
-        installments: hasCredito ? installments : 1,
+        installments: hasCredito ? getInstallments('credito') : (Math.max(...Object.values(installmentsMap), 1)),
         card_charge_type: '',
         card_payment_type: hasCredito ? cardPaymentType : '',
         card_fee_rate: hasCredito ? feeRate : 0,
