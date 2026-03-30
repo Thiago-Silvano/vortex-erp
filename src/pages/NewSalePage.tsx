@@ -2201,11 +2201,9 @@ export default function NewSalePage() {
 
           {/* TAB: Passageiros */}
           <TabsContent value="passageiros" className="space-y-4">
-        {/* Passengers - only in sale mode */}
-        {!isQuoteMode && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Passageiros da Reserva</CardTitle>
+            <CardTitle className="text-base">{isQuoteMode ? 'Passageiros' : 'Passageiros da Reserva'}</CardTitle>
             <Button size="sm" variant="outline" onClick={addPassenger}><Plus className="h-4 w-4 mr-1" />Adicionar</Button>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -2276,7 +2274,6 @@ export default function NewSalePage() {
             ))}
           </CardContent>
         </Card>
-        )}
           </TabsContent>
 
           {/* TAB: Serviços */}
