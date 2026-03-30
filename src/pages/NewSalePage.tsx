@@ -1375,6 +1375,7 @@ export default function NewSalePage() {
         check_in: tripStartDate || null,
         check_out: tripEndDate || null,
         empresa_id: activeCompany?.id || null,
+        service_type: item.metadata?.type || null,
       })));
     } else if (selectedSupplierIds.length > 0) {
       // Fallback: create reservations per supplier if no items have reservation numbers
