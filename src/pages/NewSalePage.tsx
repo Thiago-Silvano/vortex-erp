@@ -3281,8 +3281,8 @@ export default function NewSalePage() {
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
               {!isQuoteMode && (
                 <>
-                  {paymentMethod === 'credito' && (
-                    <div><p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p><p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p></div>
+                  {machineFee > 0 && (
+                    <div><p className="text-sm text-muted-foreground">Taxa Cartão ({cardFeePercent.toFixed(2)}%)</p><p className="text-lg font-semibold text-destructive">{fmt(machineFee)}</p></div>
                   )}
                   {commissionValue > 0 && (
                     <div><p className="text-sm text-muted-foreground">Comissão ({commissionRate}%)</p><p className="text-lg font-semibold">{fmt(commissionValue)}</p></div>
