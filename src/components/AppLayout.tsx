@@ -323,79 +323,81 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
-      {/* Top header bar */}
-      <header className="h-8 flex items-center bg-card border-b px-2 shrink-0 gap-2">
-        {/* Logo */}
-        <span className="text-xs font-bold text-primary tracking-wide mr-3">
-          {activeCompany?.slug === 'vortex-vistos' ? 'VORTEX VISTOS' : 'VORTEX'}
-        </span>
-
-        {/* Company selector */}
-        {showSelector ? (
-          <Select value={activeCompany?.id || ''} onValueChange={handleCompanyChange}>
-            <SelectTrigger className="w-[160px] h-6 text-xs border-border/50 bg-secondary/50">
-              <Building className="h-3 w-3 mr-1 shrink-0 text-primary" />
-              <SelectValue placeholder="Empresa" />
-            </SelectTrigger>
-            <SelectContent>
-              {accessibleCompanies.map(c => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : activeCompany ? (
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Building className="h-3 w-3 text-primary" />
-            {activeCompany.name}
+      {/* Sticky top header + menu */}
+      <div className="sticky top-0 z-50 bg-background">
+        <header className="h-8 flex items-center bg-card border-b px-2 shrink-0 gap-2">
+          {/* Logo */}
+          <span className="text-xs font-bold text-primary tracking-wide mr-3">
+            {activeCompany?.slug === 'vortex-vistos' ? 'VORTEX VISTOS' : 'VORTEX'}
           </span>
-        ) : null}
 
-        {/* Right actions */}
-        <div className="ml-auto flex items-center gap-1">
-          <Button
-            onClick={() => navigate('/whatsapp')}
-            size="sm"
-            className="h-6 text-[11px] gap-1 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
-          >
-            <MessageCircle className="h-3 w-3" />
-            WhatsApp
-          </Button>
-          <Button
-            onClick={() => navigate('/email')}
-            size="sm"
-            className="h-6 text-[11px] gap-1"
-          >
-            <Mail className="h-3 w-3" />
-            Email
-          </Button>
-          <Button
-            onClick={() => setShowPhotoModal(true)}
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0"
-          >
-            <Camera className="h-3 w-3" />
-          </Button>
-          <NotificationBell />
-          {userEmail && (
-            <span className="text-[11px] text-muted-foreground max-w-[120px] truncate hidden lg:inline">
-              {userEmail}
+          {/* Company selector */}
+          {showSelector ? (
+            <Select value={activeCompany?.id || ''} onValueChange={handleCompanyChange}>
+              <SelectTrigger className="w-[160px] h-6 text-xs border-border/50 bg-secondary/50">
+                <Building className="h-3 w-3 mr-1 shrink-0 text-primary" />
+                <SelectValue placeholder="Empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                {accessibleCompanies.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : activeCompany ? (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Building className="h-3 w-3 text-primary" />
+              {activeCompany.name}
             </span>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-            onClick={() => supabase.auth.signOut()}
-            title="Sair"
-          >
-            <LogOut className="h-3 w-3" />
-          </Button>
-        </div>
-      </header>
+          ) : null}
 
-      {/* Horizontal menu */}
-      <TopMenuBar />
+          {/* Right actions */}
+          <div className="ml-auto flex items-center gap-1">
+            <Button
+              onClick={() => navigate('/whatsapp')}
+              size="sm"
+              className="h-6 text-[11px] gap-1 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+            >
+              <MessageCircle className="h-3 w-3" />
+              WhatsApp
+            </Button>
+            <Button
+              onClick={() => navigate('/email')}
+              size="sm"
+              className="h-6 text-[11px] gap-1"
+            >
+              <Mail className="h-3 w-3" />
+              Email
+            </Button>
+            <Button
+              onClick={() => setShowPhotoModal(true)}
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+            >
+              <Camera className="h-3 w-3" />
+            </Button>
+            <NotificationBell />
+            {userEmail && (
+              <span className="text-[11px] text-muted-foreground max-w-[120px] truncate hidden lg:inline">
+                {userEmail}
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+              onClick={() => supabase.auth.signOut()}
+              title="Sair"
+            >
+              <LogOut className="h-3 w-3" />
+            </Button>
+          </div>
+        </header>
+
+        {/* Horizontal menu */}
+        <TopMenuBar />
+      </div>
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">{children}</main>
