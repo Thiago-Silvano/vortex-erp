@@ -22,18 +22,22 @@ interface ReservationRow {
   notes: string;
   sale_id: string;
   created_at: string;
+  service_type: string | null;
 }
 
 export default function ReservationsPage() {
   const { activeCompany } = useCompany();
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('pending');
   const [selectedReservation, setSelectedReservation] = useState<ReservationRow | null>(null);
   const [editStatus, setEditStatus] = useState('pending');
   const [saving, setSaving] = useState(false);
 
   const fetchReservations = async () => {
-    let query = supabase.from('reservations').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('reservations').select('*')
+      .eq('service_type', 'aereo')
+      .order('check_in', { ascending: true, nullsFirst: false });
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     const { data } = await query;
     if (data) setReservations(data as ReservationRow[]);
@@ -44,10 +48,18 @@ export default function ReservationsPage() {
   }, [activeCompany?.id]);
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const filtered = reservations.filter(r =>
-    normalize(r.description || '').includes(normalize(search)) ||
-    (r.confirmation_code || '').includes(search)
-  );
+
+  const filtered = reservations.filter(r => {
+    // Status filter
+    if (statusFilter === 'pending' && r.status !== 'pending') return false;
+    if (statusFilter === 'confirmed' && r.status !== 'confirmed') return false;
+    // Search
+    if (search) {
+      return normalize(r.description || '').includes(normalize(search)) ||
+        (r.confirmation_code || '').includes(search);
+    }
+    return true;
+  });
 
   const pendingCount = reservations.filter(r => r.status === 'pending').length;
   const confirmedCount = reservations.filter(r => r.status === 'confirmed').length;
@@ -77,13 +89,13 @@ export default function ReservationsPage() {
     fetchReservations();
   };
 
-  const urgentReservations = reservations.filter(isUrgent);
+  const urgentReservations = filtered.filter(isUrgent);
 
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Reservas</h1>
+          <h1 className="text-2xl font-bold text-foreground">Reservas Aéreas</h1>
         </div>
 
         {urgentReservations.length > 0 && (
@@ -97,7 +109,7 @@ export default function ReservationsPage() {
           </div>
         )}
 
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg border bg-card">
             <Clock className="h-4 w-4 text-amber-500" />
             <span className="text-sm font-medium">{pendingCount} Pendente{pendingCount !== 1 ? 's' : ''}</span>
@@ -106,6 +118,17 @@ export default function ReservationsPage() {
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             <span className="text-sm font-medium">{confirmedCount} Confirmada{confirmedCount !== 1 ? 's' : ''}</span>
           </div>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Pendentes</SelectItem>
+              <SelectItem value="confirmed">Confirmadas</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="relative max-w-md">
