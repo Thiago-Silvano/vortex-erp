@@ -239,7 +239,7 @@ export default function NewSalePage() {
     setClientName(sale.client_name);
     setSaleDate(sale.sale_date);
     const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
-    setPaymentMethods(savedMethods.length > 0 ? savedMethods : ['pix']);
+    setPaymentMethods(savedMethods.length > 0 ? savedMethods : []);
     const savedInstallments = sale.installments || 1;
     // Set installments for all saved methods
     const instMap: Record<string, number> = {};
