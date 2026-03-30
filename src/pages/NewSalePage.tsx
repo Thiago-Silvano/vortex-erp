@@ -2778,7 +2778,7 @@ export default function NewSalePage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Número de Parcelas</Label>
-                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                    <Select value={String(getInstallments('boleto'))} onValueChange={v => setMethodInstallments('boleto', parseInt(v))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
                     </Select>
