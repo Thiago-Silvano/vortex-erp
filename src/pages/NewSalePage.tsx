@@ -2812,7 +2812,7 @@ export default function NewSalePage() {
                     </Select>
                   </div>
                   <div><p className="text-sm text-muted-foreground">Comissão Bruta</p><p className="text-sm font-bold text-primary">{fmt(grossProfit)}</p></div>
-                  {installments > 1 && <div><p className="text-sm text-muted-foreground">Valor por parcela</p><p className="text-sm font-bold">{fmt(grossProfit / installments)}</p></div>}
+                  {getInstallments('operadora') > 1 && <div><p className="text-sm text-muted-foreground">Valor por parcela</p><p className="text-sm font-bold">{fmt(grossProfit / getInstallments('operadora'))}</p></div>}
                 </div>
               </div>
             )}
