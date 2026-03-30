@@ -3358,6 +3358,9 @@ export default function NewSalePage() {
           </Card>
         )}
 
+          </TabsContent>
+        </Tabs>
+
         {/* Actions */}
         <div className="flex flex-wrap justify-end gap-2 pb-8">
           <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
