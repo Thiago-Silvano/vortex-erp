@@ -14,7 +14,7 @@ export default function ReportProfit() {
   const [range, setRange] = useState({ start: format(subDays(new Date(), 30), 'yyyy-MM-dd'), end: format(new Date(), 'yyyy-MM-dd') });
 
   useEffect(() => {
-    let q = supabase.from('sales').select('*').gte('sale_date', range.start).lte('sale_date', range.end).order('sale_date', { ascending: false });
+    let q = supabase.from('sales').select('*').eq('status', 'active').gte('sale_date', range.start).lte('sale_date', range.end).order('sale_date', { ascending: false });
     if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
     q.then(({ data }) => { if (data) setSales(data); });
   }, [range, activeCompany?.id]);
