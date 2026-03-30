@@ -3391,6 +3391,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          markup_percent: number | null
           metadata: Json | null
           purchase_number: string | null
           quote_option_id: string | null
@@ -3407,6 +3408,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          markup_percent?: number | null
           metadata?: Json | null
           purchase_number?: string | null
           quote_option_id?: string | null
@@ -3423,6 +3425,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          markup_percent?: number | null
           metadata?: Json | null
           purchase_number?: string | null
           quote_option_id?: string | null
