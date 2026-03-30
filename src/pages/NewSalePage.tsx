@@ -1889,7 +1889,7 @@ export default function NewSalePage() {
       proposalPaymentOptions: proposalPaymentOptions.filter(o => o.enabled),
       payment: {
         method: paymentMethod,
-        installments,
+        installments: Math.max(...Object.values(installmentsMap), 1),
         receivables: receivables.map(r => ({ number: r.installment_number, amount: r.amount, dueDate: r.due_date || undefined })),
       },
       notes: notes || undefined,
