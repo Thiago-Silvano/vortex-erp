@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Undo2 } from 'lucide-react';
+import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Undo2, FileCheck, FileX } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +33,7 @@ interface SaleRow {
   payment_method: string;
   created_at: string;
   sale_workflow_status: string;
+  invoice_url: string | null;
 }
 
 export default function SalesPage() {
@@ -226,13 +227,14 @@ export default function SalesPage() {
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_workflow_status')}>
                     <span className="inline-flex items-center">Status Venda <SortIcon col="sale_workflow_status" /></span>
                   </TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-24">Ações</TableHead>
+                   <TableHead>Status</TableHead>
+                   <TableHead>Nota Fiscal</TableHead>
+                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
@@ -246,8 +248,19 @@ export default function SalesPage() {
                         return <Badge className={`${ws.color} border`} variant="outline">{ws.label}</Badge>;
                       })()}
                     </TableCell>
-                    <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Venda' : s.status === 'draft' ? 'Cotação' : s.status}</Badge></TableCell>
-                    <TableCell>
+                     <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Venda' : s.status === 'draft' ? 'Cotação' : s.status}</Badge></TableCell>
+                     <TableCell>
+                       {s.invoice_url ? (
+                         <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border gap-1" variant="outline">
+                           <FileCheck className="h-3 w-3" /> Emitida
+                         </Badge>
+                       ) : (
+                         <Badge className="bg-red-100 text-red-800 border-red-300 border gap-1" variant="outline">
+                           <FileX className="h-3 w-3" /> Emitir
+                         </Badge>
+                       )}
+                     </TableCell>
+                     <TableCell>
                        <div className="flex items-center gap-1">
                          <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
                          {s.status === 'active' && isMaster && (
@@ -291,9 +304,18 @@ export default function SalesPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between mt-2">
-                <div className="flex gap-4 text-sm">
+                <div className="flex gap-3 text-sm items-center flex-wrap">
                   <span>Total: <strong>{fmt(Number(s.total_sale))}</strong></span>
                   <span>Lucro: <strong>{fmt(Number(s.net_profit))}</strong></span>
+                  {s.invoice_url ? (
+                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border gap-1 text-xs" variant="outline">
+                      <FileCheck className="h-3 w-3" /> NF Emitida
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-red-100 text-red-800 border-red-300 border gap-1 text-xs" variant="outline">
+                      <FileX className="h-3 w-3" /> Emitir NF
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
