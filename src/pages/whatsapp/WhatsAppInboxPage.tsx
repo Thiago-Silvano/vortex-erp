@@ -80,6 +80,19 @@ export default function WhatsAppInboxPage() {
     loadConversations();
   }, [empresaId]);
 
+  // Fetch profile pictures for conversations
+  useEffect(() => {
+    if (!serverUrl || !conversations.length || serverUrl.includes('localhost')) return;
+    conversations.forEach((conv) => {
+      const phone = conv.phone?.replace(/\D/g, '') || '';
+      if (!phone || profilePics[phone] !== undefined) return;
+      setProfilePics(prev => ({ ...prev, [phone]: null }));
+      getProfilePic(serverUrl, empresaId, phone).then(url => {
+        if (url) setProfilePics(prev => ({ ...prev, [phone]: url }));
+      });
+    });
+  }, [conversations, serverUrl, empresaId]);
+
   // Supabase Realtime: listen for new incoming messages
   useEffect(() => {
     if (!empresaId) return;
