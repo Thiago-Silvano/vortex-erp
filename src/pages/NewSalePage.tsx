@@ -2697,11 +2697,6 @@ export default function NewSalePage() {
                       <SelectContent>{Array.from({ length: 18 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>Taxa (%)</Label>
-                    <Input type="number" step="0.01" value={feeRate} onChange={e => setFeeRate(parseFloat(e.target.value) || 0)} />
-                    <p className="text-xs text-muted-foreground mt-1">Preenchida automaticamente, editável manualmente</p>
-                  </div>
                 </div>
               </div>
             )}
