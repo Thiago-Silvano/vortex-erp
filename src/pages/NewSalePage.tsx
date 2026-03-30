@@ -3081,9 +3081,10 @@ export default function NewSalePage() {
             <CardHeader>
               <CardTitle className="text-base">💰 Controle de Pagamentos</CardTitle>
               {(() => {
+                const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
                 const isMixedOp = hasOperadora && paymentMethods.length > 1;
                 const operadoraPortion = isMixedOp ? totalSaleWithInterest / paymentMethods.length : 0;
-                const expectedCost = isMixedOp ? Math.max(0, Math.round((totalCost - operadoraPortion) * 100) / 100) : totalCost;
+                const expectedCost = isOperadoraOnly ? 0 : (isMixedOp ? Math.max(0, Math.round((totalCost - operadoraPortion) * 100) / 100) : totalCost);
                 const totalPayments = supplierPayments.reduce((s, sp) => s + sp.amount, 0);
                 const diff = expectedCost - totalPayments;
                 return (
