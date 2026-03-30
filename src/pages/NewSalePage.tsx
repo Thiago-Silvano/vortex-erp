@@ -2785,7 +2785,7 @@ export default function NewSalePage() {
               <div className="space-y-4 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>Tipo de Pagamento</Label>
+                    <Label>Cartão de Crédito</Label>
                     <Select value={cardPaymentType} onValueChange={setCardPaymentType}>
                       <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
                       <SelectContent><SelectItem value="ec">EC (Máquina)</SelectItem><SelectItem value="link">Link de Pagamento</SelectItem></SelectContent>
