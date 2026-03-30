@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CompanyProvider } from "@/contexts/CompanyContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import HomeRedirect from "./components/HomeRedirect";
 import Settings from "./pages/Settings";
 import AppearancePage from "./pages/AppearancePage";
 import Dashboard from "./pages/Dashboard";
@@ -101,7 +102,7 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute><HomeRedirect /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/settings/appearance" element={<ProtectedRoute><AppearancePage /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><UserAdmin /></ProtectedRoute>} />
