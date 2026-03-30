@@ -326,6 +326,14 @@ function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: n
   doc.text(s(service.name), m + 7, y + 6);
   y += 9;
 
+  if (service.reservationNumber) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+    doc.text(`Reserva: ${s(service.reservationNumber)}`, m + 7, y);
+    y += 4;
+  }
+
   if (service.date) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);

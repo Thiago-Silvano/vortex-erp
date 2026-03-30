@@ -1578,6 +1578,7 @@ export default function NewSalePage() {
           description: item.metadata?.detailedDescription || item.description,
           value: item.total_value,
           type: item.metadata?.type || '',
+          reservationNumber: item.reservation_number || '',
         };
       }),
       allItems: showIndividualValues ? items.map((item, idx) => {

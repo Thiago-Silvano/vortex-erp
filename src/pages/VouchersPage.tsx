@@ -226,6 +226,7 @@ export default function VouchersPage() {
             description: item.metadata?.detailedDescription || item.description,
             value: item.total_value,
             type: item.metadata?.type || '',
+            reservationNumber: item.reservation_number || '',
           };
         }),
         allItems: [], showIndividualValues: false,
