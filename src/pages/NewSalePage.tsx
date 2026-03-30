@@ -172,6 +172,7 @@ export default function NewSalePage() {
   const supplierPaymentsLoadedRef = useRef(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [savingSale, setSavingSale] = useState(false);
   const [searchingItemImages, setSearchingItemImages] = useState<Record<number, boolean>>({});
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
@@ -1342,6 +1343,8 @@ export default function NewSalePage() {
   };
 
   const doSave = async () => {
+    setSavingSale(true);
+    try {
     const { payload, userEmail } = await buildSalePayload('active');
     // Auto-set workflow status to "emitido" when generating a sale
     payload.sale_workflow_status = 'emitido';
@@ -1446,6 +1449,11 @@ export default function NewSalePage() {
     if (!editSaleId) setEditSaleId(saleId);
     setSaleStatus('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      toast.error('Erro ao salvar venda');
+    } finally {
+      setSavingSale(false);
+    }
   };
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -1952,6 +1960,16 @@ export default function NewSalePage() {
 
   return (
     <AppLayout>
+      {(savingDraft || savingSale) && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
+          <div className="bg-card rounded-xl shadow-lg px-8 py-6 flex flex-col items-center gap-3">
+            <span className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+            <span className="text-sm font-medium text-foreground">
+              {savingSale ? 'Salvando venda...' : 'Salvando cotação...'}
+            </span>
+          </div>
+        </div>
+      )}
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
         {/* Compact Progress Bar */}
         {editSaleId && (() => {
