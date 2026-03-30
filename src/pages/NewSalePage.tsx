@@ -1449,6 +1449,11 @@ export default function NewSalePage() {
     if (!editSaleId) setEditSaleId(saleId);
     setSaleStatus('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      toast.error('Erro ao salvar venda');
+    } finally {
+      setSavingSale(false);
+    }
   };
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
