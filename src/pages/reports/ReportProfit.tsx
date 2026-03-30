@@ -7,6 +7,9 @@ import ReportFilters from '@/components/ReportFilters';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { useCompany } from '@/contexts/CompanyContext';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 export default function ReportProfit() {
   const { activeCompany } = useCompany();
@@ -21,16 +24,48 @@ export default function ReportProfit() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  const totalVenda = useMemo(() => sales.reduce((s, v) => s + Number(v.total_sale || 0), 0), [sales]);
+  const totalLucro = useMemo(() => sales.reduce((s, v) => s + Number(v.net_profit || 0), 0), [sales]);
+
   const chartData = sales.map((s) => ({
     name: `${s.client_name?.slice(0, 12) || 'Venda'}`,
     lucro: Number(s.net_profit || 0),
   }));
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Relatório de Lucro por Venda',
+      period: `${format(new Date(range.start + 'T12:00:00'), 'dd/MM/yyyy')} a ${format(new Date(range.end + 'T12:00:00'), 'dd/MM/yyyy')}`,
+      headers: ['Código', 'Cliente', 'Valor Venda', 'Custo Fornecedor', 'Comissão', 'Taxa Cartão', 'Lucro Líquido'],
+      rows: sales.map(s => [
+        s.id.slice(0, 8),
+        s.client_name || '-',
+        fmt(Number(s.total_sale)),
+        fmt(Number(s.total_supplier_cost)),
+        fmt(Number(s.commission_value)),
+        fmt(Number(s.card_fee_value)),
+        fmt(Number(s.net_profit)),
+      ]),
+      totals: [
+        { label: 'Total de Vendas', value: fmt(totalVenda) },
+        { label: 'Lucro Líquido Total', value: fmt(totalLucro) },
+      ],
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Relatório de Lucro por Venda</h1>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h1 className="text-2xl font-bold text-foreground">Relatório de Lucro por Venda</h1>
+          <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Exportar PDF</Button>
+        </div>
         <ReportFilters onChange={setRange} />
+
+        <div className="grid grid-cols-2 gap-4">
+          <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Total de Vendas</p><p className="text-xl font-bold text-foreground">{fmt(totalVenda)}</p></CardContent></Card>
+          <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Lucro Líquido Total</p><p className={`text-xl font-bold ${totalLucro >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(totalLucro)}</p></CardContent></Card>
+        </div>
 
         <Card>
           <CardHeader><CardTitle className="text-base">Lucro por Venda</CardTitle></CardHeader>

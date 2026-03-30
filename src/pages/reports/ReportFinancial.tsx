@@ -9,6 +9,9 @@ import { format, subDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { useCompany } from '@/contexts/CompanyContext';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 export default function ReportFinancial() {
   const { activeCompany } = useCompany();
@@ -59,11 +62,31 @@ export default function ReportFinancial() {
     ...payables.map(r => ({ ...r, tipo: 'Despesa', entity: '-' })),
   ].sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''));
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Relatório Financeiro',
+      period: `${format(new Date(range.start + 'T12:00:00'), 'dd/MM/yyyy')} a ${format(new Date(range.end + 'T12:00:00'), 'dd/MM/yyyy')}`,
+      headers: ['Data', 'Tipo', 'Cliente/Fornecedor', 'Descrição', 'Valor', 'Status'],
+      rows: allItems.slice(0, 500).map(item => [
+        item.due_date ? format(new Date(item.due_date + 'T12:00:00'), 'dd/MM/yyyy') : '-',
+        item.tipo, item.entity, item.description || '-', fmt(Number(item.amount)), item.status || '-',
+      ]),
+      totals: [
+        { label: 'Total a Receber', value: fmt(totalReceber) },
+        { label: 'Total Recebido', value: fmt(totalRecebido) },
+        { label: 'Total a Pagar', value: fmt(totalPagar) },
+        { label: 'Total Pago', value: fmt(totalPago) },
+        { label: 'Saldo', value: fmt(saldo) },
+      ],
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-2xl font-bold text-foreground">Relatório Financeiro</h1>
+          <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Exportar PDF</Button>
         </div>
         <ReportFilters onChange={setRange} />
 

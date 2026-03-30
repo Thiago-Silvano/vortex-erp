@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useCompany } from '@/contexts/CompanyContext';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 export default function ReportSuppliers() {
   const { activeCompany } = useCompany();
@@ -39,10 +42,21 @@ export default function ReportSuppliers() {
 
   const chartData = supplierStats.map(s => ({ name: s.name.length > 15 ? s.name.slice(0, 15) + '...' : s.name, vendas: s.numVendas, valor: s.totalGerado }));
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Relatório de Fornecedores',
+      headers: ['Fornecedor', 'Nº Vendas', 'Valor Total', 'Custo Total', 'Lucro'],
+      rows: supplierStats.map(s => [s.name, String(s.numVendas), fmt(s.totalGerado), fmt(s.totalCusto), fmt(s.lucro)]),
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Relatório de Fornecedores</h1>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h1 className="text-2xl font-bold text-foreground">Relatório de Fornecedores</h1>
+          <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Exportar PDF</Button>
+        </div>
 
         <Card>
           <CardHeader><CardTitle className="text-base">Vendas por Fornecedor</CardTitle></CardHeader>

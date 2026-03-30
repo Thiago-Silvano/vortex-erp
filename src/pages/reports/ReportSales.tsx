@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ReportFilters from '@/components/ReportFilters';
 import { format, subDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, FileDown } from 'lucide-react';
 import { useCompany } from '@/contexts/CompanyContext';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 export default function ReportSales() {
   const { activeCompany } = useCompany();
@@ -55,12 +56,33 @@ export default function ReportSales() {
     a.href = url; a.download = 'relatorio-vendas.csv'; a.click();
   };
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Relatório de Vendas',
+      period: `${format(new Date(range.start + 'T12:00:00'), 'dd/MM/yyyy')} a ${format(new Date(range.end + 'T12:00:00'), 'dd/MM/yyyy')}`,
+      headers: ['Código', 'Cliente', 'Data', 'Valor Venda', 'Custo', 'Lucro Bruto', 'Taxa Cartão', 'Lucro Líquido'],
+      rows: filtered.map(s => [
+        s.id.slice(0, 8), s.client_name || '-', format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy'),
+        fmt(Number(s.total_sale)), fmt(Number(s.total_supplier_cost)), fmt(Number(s.gross_profit)),
+        fmt(Number(s.card_fee_value)), fmt(Number(s.net_profit)),
+      ]),
+      totals: [
+        { label: 'Total Vendas', value: String(totalVendas) },
+        { label: 'Faturamento', value: fmt(totalFaturamento) },
+        { label: 'Lucro Total', value: fmt(totalLucro) },
+      ],
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-2xl font-bold text-foreground">Relatório de Vendas</h1>
-          <Button variant="outline" onClick={exportCSV}><Download className="h-4 w-4 mr-2" />Exportar CSV</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={exportCSV}><Download className="h-4 w-4 mr-2" />CSV</Button>
+            <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />PDF</Button>
+          </div>
         </div>
 
         <ReportFilters onChange={setRange}>

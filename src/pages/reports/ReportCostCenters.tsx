@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useCompany } from '@/contexts/CompanyContext';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16', '#f43f5e', '#14b8a6'];
 
@@ -40,10 +43,21 @@ export default function ReportCostCenters() {
 
   const pieData = ccData.map(c => ({ name: c.name, value: c.receitas + c.despesas })).filter(c => c.value > 0);
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Relatório por Centro de Custo',
+      headers: ['Centro de Custo', 'Receitas', 'Despesas', 'Saldo'],
+      rows: ccData.map(c => [c.name, fmt(c.receitas), fmt(c.despesas), fmt(c.saldo)]),
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Relatório por Centro de Custo</h1>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h1 className="text-2xl font-bold text-foreground">Relatório por Centro de Custo</h1>
+          <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Exportar PDF</Button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
