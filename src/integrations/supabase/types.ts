@@ -3264,6 +3264,7 @@ export type Database = {
           id: string
           notes: string | null
           sale_id: string
+          service_type: string | null
           status: string | null
           supplier_id: string | null
           updated_at: string
@@ -3278,6 +3279,7 @@ export type Database = {
           id?: string
           notes?: string | null
           sale_id: string
+          service_type?: string | null
           status?: string | null
           supplier_id?: string | null
           updated_at?: string
@@ -3292,6 +3294,7 @@ export type Database = {
           id?: string
           notes?: string | null
           sale_id?: string
+          service_type?: string | null
           status?: string | null
           supplier_id?: string | null
           updated_at?: string

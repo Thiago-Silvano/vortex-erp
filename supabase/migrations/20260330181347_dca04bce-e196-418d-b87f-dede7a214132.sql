@@ -1,0 +1,1 @@
+ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS service_type text DEFAULT NULL;
