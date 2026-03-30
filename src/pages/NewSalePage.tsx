@@ -2198,9 +2198,8 @@ export default function NewSalePage() {
         </Card>
           </TabsContent>
 
-          {/* TAB: Serviços */}
-          <TabsContent value="servicos" className="space-y-4">
-
+          {/* TAB: Passageiros */}
+          <TabsContent value="passageiros" className="space-y-4">
         {/* Passengers - only in sale mode */}
         {!isQuoteMode && (
         <Card>
@@ -2277,10 +2276,10 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
         )}
+          </TabsContent>
 
-        {/* Notes section moved below contracts */}
-
-        {/* Suppliers card removed - moved to Controle de Pagamentos */}
+          {/* TAB: Serviços */}
+          <TabsContent value="servicos" className="space-y-4">
 
         {/* Opções da Cotação */}
         {isQuoteMode && (
