@@ -3171,6 +3171,11 @@ export default function NewSalePage() {
           </Card>
         )}
 
+          </TabsContent>
+
+          {/* TAB: Documentos */}
+          <TabsContent value="documentos" className="space-y-4">
+
         {/* Invoice Upload - only in sale mode */}
         {!isQuoteMode && (
         <Card>
