@@ -2196,6 +2196,10 @@ export default function NewSalePage() {
             />
           </CardContent>
         </Card>
+          </TabsContent>
+
+          {/* TAB: Serviços */}
+          <TabsContent value="servicos" className="space-y-4">
 
         {/* Passengers - only in sale mode */}
         {!isQuoteMode && (
