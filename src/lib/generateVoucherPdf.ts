@@ -43,6 +43,7 @@ export interface ServiceVoucher {
   quantity?: number;
   value: number;
   type?: string;
+  reservationNumber?: string;
 }
 
 export interface PassengerVoucher {
