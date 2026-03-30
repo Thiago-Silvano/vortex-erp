@@ -1206,32 +1206,48 @@ export default function NewSalePage() {
     // When "operadora" is the only payment method, skip supplier payables entirely
     // (client pays the supplier directly; we only receive the commission)
     const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
+    // When mixed (operadora + other methods), calculate the amount the agency actually needs to forward:
+    // non-operadora amount - gross commission = totalCost - operadora portion
+    const isMixedWithOperadora = hasOperadora && paymentMethods.length > 1;
 
     if (!isOperadoraOnly) {
+      // Calculate the operadora portion of the total sale for mixed payments
+      let mixedPayableAdjustmentRatio = 1;
+      if (isMixedWithOperadora) {
+        // The operadora portion covers part of the cost directly, so the agency only pays the rest
+        // Formula: payable = total_cost - operadora_amount = non_operadora_amount - gross_profit
+        const operadoraPortionOfSale = totalSaleWithInterest / paymentMethods.length; // equal split
+        const adjustedPayableTotal = totalCost - operadoraPortionOfSale;
+        mixedPayableAdjustmentRatio = totalCost > 0 ? Math.max(0, adjustedPayableTotal / totalCost) : 1;
+      }
+
       if (supplierPayments.length > 0) {
         const payables: any[] = [];
         for (const sp of supplierPayments) {
           if (sp.amount <= 0) continue;
+            const adjustedAmount = isMixedWithOperadora ? Math.round(sp.amount * mixedPayableAdjustmentRatio * 100) / 100 : sp.amount;
+            if (adjustedAmount <= 0) continue;
             const desc = sp.description || 'Pagamento de operadoras';
             if (sp.payment_method === 'pix') {
               payables.push({
-                sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+                sale_id: saleId, supplier_id: sp.supplier_id, amount: adjustedAmount,
                 due_date: sp.payment_date, description: `${desc} - ${clientName} (Pix)`,
                 status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
                 installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
               });
             } else if (sp.payment_method === 'faturado') {
               payables.push({
-                sale_id: saleId, supplier_id: sp.supplier_id, amount: sp.amount,
+                sale_id: saleId, supplier_id: sp.supplier_id, amount: adjustedAmount,
                 due_date: sp.installment_dates[0]?.date || sp.payment_date,
                 description: `${desc} - ${clientName} (Faturado)`,
                 status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
                 installment_number: 1, total_installments: 1, cost_center_id: sp.cost_center_id || null,
               });
             } else if (sp.payment_method === 'credito') {
+              const perInstallment = adjustedAmount / sp.installments;
               sp.installment_dates.forEach((inst, idx) => {
                 payables.push({
-                  sale_id: saleId, supplier_id: sp.supplier_id, amount: inst.amount,
+                  sale_id: saleId, supplier_id: sp.supplier_id, amount: Math.round(perInstallment * 100) / 100,
                   due_date: inst.date, description: `${desc} - ${clientName} (Crédito ${idx + 1}/${sp.installments})`,
                   status: 'open', origin_type: 'sale', empresa_id: activeCompany?.id || null,
                   installment_number: idx + 1, total_installments: sp.installments, cost_center_id: sp.cost_center_id || null,
@@ -1244,9 +1260,10 @@ export default function NewSalePage() {
           if (error) console.error('Erro ao gerar contas a pagar:', error);
         }
       } else if (totalCost > 0 && selectedSupplierIds.length > 0) {
-        const costPerSupplier = totalCost / selectedSupplierIds.length;
+        const adjustedCost = isMixedWithOperadora ? totalCost * mixedPayableAdjustmentRatio : totalCost;
+        const costPerSupplier = adjustedCost / selectedSupplierIds.length;
         const { error } = await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
-          sale_id: saleId, supplier_id: sid, amount: costPerSupplier,
+          sale_id: saleId, supplier_id: sid, amount: Math.round(costPerSupplier * 100) / 100,
           due_date: saleDate, description: `Venda - ${clientName}`, status: 'open', origin_type: 'sale',
           empresa_id: activeCompany?.id || null,
         })));
