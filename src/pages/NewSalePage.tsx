@@ -539,9 +539,9 @@ export default function NewSalePage() {
     for (const method of paymentMethods) {
       if (method === 'operadora') {
         const operadoraAmount = amountPerMethod;
-        const numInst = installments > 0 ? installments : 1;
-        const perInstallment = operadoraAmount / numInst;
-        for (let i = 1; i <= numInst; i++) {
+        const numInst = getInstallments('operadora');
+        const perInstallment = operadoraAmount / (numInst > 0 ? numInst : 1);
+        for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
           const dueDate = new Date(baseDate);
           dueDate.setMonth(dueDate.getMonth() + i);
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
