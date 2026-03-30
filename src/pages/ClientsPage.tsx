@@ -377,6 +377,28 @@ export default function ClientsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <AlertDialog open={!!duplicateClient} onOpenChange={(open) => { if (!open) setDuplicateClient(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cliente já cadastrado</AlertDialogTitle>
+              <AlertDialogDescription>
+                Foi encontrado um cliente com dados semelhantes: <strong>{duplicateClient?.full_name}</strong>
+                {duplicateClient?.cpf ? ` — CPF: ${duplicateClient.cpf}` : ''}.
+                Deseja abrir o cadastro deste cliente para atualizar os dados?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => {
+                if (duplicateClient) {
+                  handleEdit(duplicateClient);
+                }
+                setDuplicateClient(null);
+              }}>Atualizar cliente existente</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
