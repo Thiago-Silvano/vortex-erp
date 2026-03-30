@@ -172,6 +172,7 @@ export default function NewSalePage() {
   const supplierPaymentsLoadedRef = useRef(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [savingSale, setSavingSale] = useState(false);
   const [searchingItemImages, setSearchingItemImages] = useState<Record<number, boolean>>({});
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
