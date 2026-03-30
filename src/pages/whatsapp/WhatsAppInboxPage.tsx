@@ -58,6 +58,7 @@ export default function WhatsAppInboxPage() {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [sendingFile, setSendingFile] = useState(false);
   const [agentName, setAgentName] = useState('');
+  const [profilePics, setProfilePics] = useState<Record<string, string | null>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
