@@ -2997,11 +2997,14 @@ export default function NewSalePage() {
             <CardHeader>
               <CardTitle className="text-base">💰 Controle de Pagamentos</CardTitle>
               {(() => {
+                const isMixedOp = hasOperadora && paymentMethods.length > 1;
+                const operadoraPortion = isMixedOp ? totalSaleWithInterest / paymentMethods.length : 0;
+                const expectedCost = isMixedOp ? Math.max(0, Math.round((totalCost - operadoraPortion) * 100) / 100) : totalCost;
                 const totalPayments = supplierPayments.reduce((s, sp) => s + sp.amount, 0);
-                const diff = totalCost - totalPayments;
+                const diff = expectedCost - totalPayments;
                 return (
                   <div className="flex items-center gap-4 text-sm mt-1">
-                    <span className="text-muted-foreground">Custo Total: <strong className="text-foreground">{fmt(totalCost)}</strong></span>
+                    <span className="text-muted-foreground">{isMixedOp ? 'Custo Ajustado' : 'Custo Total'}: <strong className="text-foreground">{fmt(expectedCost)}</strong></span>
                     <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalPayments)}</strong></span>
                     {Math.abs(diff) > 0.01 ? (
                       <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
