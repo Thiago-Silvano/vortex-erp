@@ -1973,10 +1973,11 @@ export default function NewSalePage() {
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
         {/* Compact Progress Bar */}
         {editSaleId && (() => {
+          const needsContract = saleWorkflowStatus !== 'sem_contrato';
           const steps = [
             { key: 'created', label: 'Cotação', done: true },
             { key: 'sale', label: 'Venda', done: saleStatus === 'active' },
-            { key: 'contract', label: 'Contrato', done: !!contractInfo.signedAt },
+            ...(needsContract ? [{ key: 'contract', label: 'Contrato', done: !!contractInfo.signedAt }] : []),
             { key: 'payment', label: 'Pagamento', done: saleWorkflowStatus === 'aguardando_pagamento' || saleWorkflowStatus === 'processo_concluido' },
             { key: 'done', label: 'Concluído', done: saleWorkflowStatus === 'processo_concluido' },
           ];
