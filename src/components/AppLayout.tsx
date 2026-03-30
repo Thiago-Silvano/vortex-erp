@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState, useRef } from 'react';
 import React from 'react';
 import {
-  LogOut, Building, User, Camera, MessageCircle, Mail, Bell, ChevronDown,
+  LogOut, Building, User, Camera, MessageCircle, Mail, Bell, ChevronDown, Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -350,6 +350,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {activeCompany.name}
             </span>
           ) : null}
+
+          {/* Nova Cotação button */}
+          <Button
+            onClick={() => navigate('/sales/new')}
+            size="sm"
+            className="h-6 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 ml-2"
+          >
+            <Plus className="h-3 w-3" />
+            Nova Cotação
+          </Button>
 
           {/* Right actions */}
           <div className="ml-auto flex items-center gap-1">
