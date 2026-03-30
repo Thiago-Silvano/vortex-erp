@@ -577,7 +577,7 @@ export default function NewSalePage() {
         }
       } else if (method === 'boleto') {
         const boletoInst = getInstallments('boleto');
-        const boletoAmount = amountPerMethod;
+        const boletoAmount = methodAmount;
         if (boletoInst > 1 && boletoInterestRate > 0) {
           const monthlyRate = boletoInterestRate / 100;
           const pmt = boletoAmount * (monthlyRate * Math.pow(1 + monthlyRate, boletoInst)) / (Math.pow(1 + monthlyRate, boletoInst) - 1);
