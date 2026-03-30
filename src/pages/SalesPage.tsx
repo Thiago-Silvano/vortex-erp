@@ -33,6 +33,7 @@ interface SaleRow {
   payment_method: string;
   created_at: string;
   sale_workflow_status: string;
+  invoice_url: string | null;
 }
 
 export default function SalesPage() {
