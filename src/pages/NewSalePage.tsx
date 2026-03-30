@@ -3316,55 +3316,7 @@ export default function NewSalePage() {
           </CardContent>
         </Card>
 
-        {/* Financial Summary */}
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Resumo da Cotação' : 'Resumo Financeiro'}</CardTitle></CardHeader>
-          <CardContent>
-            {/* Per-option totals in quote mode */}
-            {isQuoteMode && quoteOptions.length > 1 && (
-              <div className="mb-4 space-y-2">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Totais por Opção:</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {quoteOptions.map((opt, oi) => {
-                    const optionId = opt.id || String(oi);
-                    const optItems = items.filter(it => (it.quote_option_id || String(quoteOptions[0]?.order_index ?? 0)) === optionId);
-                    const optTotal = optItems.reduce((s, i) => s + i.total_value, 0) + saleInterest + operatorTaxes;
-                    return (
-                      <div key={oi} className="border rounded-lg p-3 bg-background">
-                        <p className="text-xs font-semibold text-muted-foreground">{opt.name}</p>
-                        <p className="text-lg font-bold text-primary">{fmt(optTotal)}</p>
-                        <p className="text-xs text-muted-foreground">{optItems.length} serviço(s)</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">{isQuoteMode ? 'Total Geral (todos)' : 'Total da Venda'}</p>
-                <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
-                {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
-              </div>
-              <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
-              <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
-              {!isQuoteMode && (
-                <>
-                  {machineFee > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Taxa Cartão ({cardFeePercent.toFixed(2)}%)</p><p className="text-lg font-semibold text-destructive">{fmt(machineFee)}</p></div>
-                  )}
-                  {commissionValue > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Comissão ({commissionRate}%)</p><p className="text-lg font-semibold">{fmt(commissionValue)}</p></div>
-                  )}
-                  <div>
-                    <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
-                    <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
-                  </div>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Client Proposal Choices */}
         {clientChoices.length > 0 && (
