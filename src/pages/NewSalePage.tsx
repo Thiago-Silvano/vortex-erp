@@ -132,7 +132,9 @@ export default function NewSalePage() {
   const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
 
   const [paymentMethods, setPaymentMethods] = useState<string[]>(['pix']);
-  const [installments, setInstallments] = useState(1);
+  const [installmentsMap, setInstallmentsMap] = useState<Record<string, number>>({});
+  const getInstallments = (method: string) => installmentsMap[method] || 1;
+  const setMethodInstallments = (method: string, count: number) => setInstallmentsMap(prev => ({ ...prev, [method]: count }));
   const [cardPaymentType, setCardPaymentType] = useState('');
   const [feeRate, setFeeRate] = useState(0);
   const [machineFee, setMachineFee] = useState(0);
