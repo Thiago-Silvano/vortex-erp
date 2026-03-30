@@ -3362,7 +3362,10 @@ export default function NewSalePage() {
 
         {/* Actions */}
         <div className="flex flex-wrap justify-end gap-2 pb-8">
-          <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
+           <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
+          {editSaleId && (
+            <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} className="w-full sm:w-auto"><Trash2 className="h-4 w-4 mr-1" /> Excluir</Button>
+          )}
           {saleStatus === 'active' ? (
             <>
               <Button variant="outline" onClick={handleExportServicesVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Voucher Servicos</Button>
@@ -3376,9 +3379,6 @@ export default function NewSalePage() {
           )}
           {editSaleId && isQuoteMode && (
             <Button variant="outline" onClick={handleGenerateClientBuildsLink} className="w-full sm:w-auto"><Sparkles className="h-4 w-4 mr-1" /> Cliente Monta Proposta</Button>
-          )}
-          {editSaleId && (
-            <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} className="w-full sm:w-auto"><Trash2 className="h-4 w-4 mr-1" /> Excluir</Button>
           )}
           {isQuoteMode && (
             <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
