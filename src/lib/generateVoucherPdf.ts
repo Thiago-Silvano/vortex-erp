@@ -145,7 +145,7 @@ function drawPageHeader(
   const logoSrc = data.vortexWhiteLogoBase64 || data.agency.logoBase64;
   if (logoSrc) {
     try {
-      doc.addImage(logoSrc, 'PNG', m, 0.5, 30, 21);
+      doc.addImage(logoSrc, 'PNG', m, 0.5, 30, 35);
     } catch { /* skip */ }
   }
 
