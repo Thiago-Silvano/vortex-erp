@@ -2764,7 +2764,7 @@ export default function NewSalePage() {
                   </div>
                   <div>
                     <Label>Parcelamento</Label>
-                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
+                    <Select value={String(getInstallments('credito'))} onValueChange={v => setMethodInstallments('credito', parseInt(v))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>{Array.from({ length: 18 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
                     </Select>
