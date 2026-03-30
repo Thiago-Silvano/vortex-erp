@@ -131,7 +131,7 @@ export default function NewSalePage() {
   const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
 
-  const [paymentMethods, setPaymentMethods] = useState<string[]>(['pix']);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [installmentsMap, setInstallmentsMap] = useState<Record<string, number>>({});
   const getInstallments = (method: string) => installmentsMap[method] || 1;
   const setMethodInstallments = (method: string, count: number) => setInstallmentsMap(prev => ({ ...prev, [method]: count }));
