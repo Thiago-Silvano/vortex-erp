@@ -1990,6 +1990,17 @@ export default function NewSalePage() {
           </Button>
         </div>
 
+        <Tabs defaultValue="dados" className="w-full">
+          <TabsList className="w-full justify-start border-b mb-4">
+            <TabsTrigger value="dados">📋 Dados</TabsTrigger>
+            <TabsTrigger value="servicos">🛒 Serviços</TabsTrigger>
+            {!isQuoteMode && <TabsTrigger value="passageiros">👤 Passageiros</TabsTrigger>}
+            <TabsTrigger value="financeiro">💰 Financeiro</TabsTrigger>
+            <TabsTrigger value="documentos">📄 Documentos</TabsTrigger>
+          </TabsList>
+
+          {/* TAB: Dados */}
+          <TabsContent value="dados" className="space-y-4">
         {/* Basic Info */}
         <Card>
           <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Informações da Cotação' : 'Informações da Venda'}</CardTitle></CardHeader>
