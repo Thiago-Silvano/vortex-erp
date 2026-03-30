@@ -640,9 +640,12 @@ export default function NewSalePage() {
     setSupplierPayments(prev => {
       const today = format(new Date(), 'yyyy-MM-dd');
       // When mixed with operadora, auto-set supplier amount to (non-operadora amount - gross commission)
+      const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
       const isMixedWithOp = paymentMethods.includes('operadora') && paymentMethods.length > 1;
       let effectiveCost = totalCost;
-      if (isMixedWithOp) {
+      if (isOperadoraOnly) {
+        effectiveCost = 0;
+      } else if (isMixedWithOp) {
         const operadoraPortionOfSale = totalSaleWithInterest / paymentMethods.length;
         effectiveCost = Math.max(0, Math.round((totalCost - operadoraPortionOfSale) * 100) / 100);
       }
