@@ -596,7 +596,7 @@ export default function NewSalePage() {
           }
         }
       } else if (method === 'credito') {
-        const creditAmount = amountPerMethod;
+        const creditAmount = methodAmount;
         const numInst = getInstallments('credito');
         const perInstallment = creditAmount / (numInst > 0 ? numInst : 1);
         for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
