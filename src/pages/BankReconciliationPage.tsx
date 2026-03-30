@@ -399,7 +399,7 @@ export default function BankReconciliationPage() {
   }, [loadTransactions]);
 
   // OFX Import
-  const [importingOFX, setImportingOFX] = useState(false);
+  // OFX Import
   const handleOFXImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedAccount || !activeCompany) return;
