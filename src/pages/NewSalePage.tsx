@@ -240,7 +240,11 @@ export default function NewSalePage() {
     setSaleDate(sale.sale_date);
     const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
     setPaymentMethods(savedMethods.length > 0 ? savedMethods : ['pix']);
-    setInstallments(sale.installments || 1);
+    const savedInstallments = sale.installments || 1;
+    // Set installments for all saved methods
+    const instMap: Record<string, number> = {};
+    savedMethods.forEach((m: string) => { instMap[m] = savedInstallments; });
+    setInstallmentsMap(instMap);
     setCardPaymentType((sale as any).card_payment_type || '');
     setFeeRate(Number(sale.card_fee_rate) || 0);
     setMachineFee(Number((sale as any).machine_fee) || 0);
