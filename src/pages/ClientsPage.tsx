@@ -89,12 +89,30 @@ export default function ClientsPage() {
     if (!form.full_name.trim()) { toast.error('Nome é obrigatório'); return; }
     if (form.email && !validateEmail(form.email)) { toast.error('Email inválido'); return; }
 
+    const nameUpper = form.full_name.toUpperCase().trim();
+    const formToSave = { ...form, full_name: nameUpper };
+
+    // Duplicate check only when creating new client
+    if (!editingId) {
+      const normalizedName = normalize(nameUpper);
+      const cleanCpf = formToSave.cpf.replace(/\D/g, '');
+      const found = clients.find(c => {
+        if (cleanCpf && c.cpf.replace(/\D/g, '') === cleanCpf && cleanCpf.length >= 11) return true;
+        if (normalize(c.full_name) === normalizedName && normalizedName.length > 2) return true;
+        return false;
+      });
+      if (found) {
+        setDuplicateClient(found);
+        return;
+      }
+    }
+
     if (editingId) {
-      const { error } = await supabase.from('clients').update(form).eq('id', editingId);
+      const { error } = await supabase.from('clients').update(formToSave).eq('id', editingId);
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Cliente atualizado!');
     } else {
-      const { error } = await supabase.from('clients').insert({ ...form, empresa_id: activeCompany?.id } as any);
+      const { error } = await supabase.from('clients').insert({ ...formToSave, empresa_id: activeCompany?.id } as any);
       if (error) { toast.error('Erro ao cadastrar'); return; }
       toast.success('Cliente cadastrado!');
     }
