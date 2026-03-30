@@ -467,12 +467,6 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        <h2 className="text-xl font-semibold text-foreground pt-4">Taxas de Pagamento - Cartão</h2>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {renderRateTable('ec', ecRates, 'Taxas EC (Máquina)')}
-          {renderRateTable('link', linkRates, 'Taxas Link de Pagamento')}
-        </div>
 
         <Button onClick={handleSave} className="w-full">
           <Save className="h-4 w-4 mr-2" /> Salvar Configurações

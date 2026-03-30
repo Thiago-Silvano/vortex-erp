@@ -508,8 +508,9 @@ export default function NewSalePage() {
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
   const grossProfit = totalSale + saleInterest - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
-  const cardFeeValue = hasCredito ? totalSaleWithInterest * (feeRate / 100) : 0;
-  const netProfit = grossProfit - commissionValue - cardFeeValue - machineFee;
+  const cardFeeValue = machineFee;
+  const cardFeePercent = totalSaleWithInterest > 0 ? (machineFee / totalSaleWithInterest) * 100 : 0;
+  const netProfit = grossProfit - commissionValue - machineFee;
 
   // No longer need auto-recalculate since we store only discount % now
 
@@ -1130,7 +1131,7 @@ export default function NewSalePage() {
         }
         return {
           sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
-          total_value: item.total_value, sort_order: sortIdx,
+          markup_percent: item.markup_percent || 0, total_value: item.total_value, sort_order: sortIdx,
           service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
           metadata: item.metadata || {}, reservation_number: item.reservation_number || '', purchase_number: item.purchase_number || '',
           quote_option_id: resolvedOptionId,
@@ -2768,8 +2769,8 @@ export default function NewSalePage() {
                   </div>
                   {machineFee > 0 && (
                     <>
-                      <div><p className="text-sm text-muted-foreground">Lucro antes da taxa</p><p className="text-sm font-medium">{fmt(netProfit + machineFee)}</p></div>
-                      <div><p className="text-sm text-muted-foreground">Lucro após taxa</p><p className="text-sm font-bold text-destructive">{fmt(netProfit)}</p></div>
+                      <div><p className="text-sm text-muted-foreground">Lucro antes da taxa</p><p className="text-sm font-medium">{fmt(grossProfit)}</p></div>
+                      <div><p className="text-sm text-muted-foreground">Lucro após taxa</p><p className="text-sm font-bold text-destructive">{fmt(grossProfit - machineFee)}</p></div>
                     </>
                   )}
                 </div>
@@ -3280,8 +3281,8 @@ export default function NewSalePage() {
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
               {!isQuoteMode && (
                 <>
-                  {paymentMethod === 'credito' && (
-                    <div><p className="text-sm text-muted-foreground">Taxa Cartão ({feeRate}%)</p><p className="text-lg font-semibold text-destructive">{fmt(cardFeeValue)}</p></div>
+                  {machineFee > 0 && (
+                    <div><p className="text-sm text-muted-foreground">Taxa Cartão ({cardFeePercent.toFixed(2)}%)</p><p className="text-lg font-semibold text-destructive">{fmt(machineFee)}</p></div>
                   )}
                   {commissionValue > 0 && (
                     <div><p className="text-sm text-muted-foreground">Comissão ({commissionRate}%)</p><p className="text-lg font-semibold">{fmt(commissionValue)}</p></div>
