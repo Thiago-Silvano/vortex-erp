@@ -283,7 +283,7 @@ export default function ClientsPage() {
                 </div>
                 <div className="col-span-2">
                   <Label>Nome completo *</Label>
-                  <Input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} />
+                  <Input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value.toUpperCase() }))} style={{ textTransform: 'uppercase' }} />
                 </div>
               </div>
 
