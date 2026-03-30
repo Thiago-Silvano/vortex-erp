@@ -608,7 +608,7 @@ export default function NewSalePage() {
         const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
         const numInst = getInstallments(method);
         const effInst = numInst > 0 ? numInst : 1;
-        const perInstallment = amountPerMethod / effInst;
+        const perInstallment = methodAmount / effInst;
         for (let i = 1; i <= effInst; i++) {
           const dueDate = new Date(baseDate);
           if (effInst > 1) {
