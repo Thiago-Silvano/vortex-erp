@@ -122,6 +122,7 @@ export default function BankReconciliationPage() {
   const [selectedAccount, setSelectedAccount] = useState(searchParams.get("account") || "");
   const [transactions, setTransactions] = useState<BankTx[]>([]);
   const [titles, setTitles] = useState<FinancialTitle[]>([]);
+  const [importingOFX, setImportingOFX] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState("pending");
   const [filterType, setFilterType] = useState("all");
