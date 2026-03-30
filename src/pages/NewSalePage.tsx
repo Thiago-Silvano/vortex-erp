@@ -2837,49 +2837,84 @@ export default function NewSalePage() {
               </div>
             )}
 
-            {/* Receivables inline */}
+            {/* Receivables inline with tabs per payment method */}
             <div className="border-t pt-4">
               {(() => {
                 const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
                 const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
                 const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
                 const diff = expectedReceivables - totalReceivables;
+
+                // Group receivables by payment_method
+                const methodLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora' };
+                const uniqueMethods = Array.from(new Set(receivables.map(r => r.payment_method || 'outros')));
+                const hasMultipleMethods = uniqueMethods.length > 1;
+
+                const renderTable = (items: { rec: Receivable; globalIdx: number }[]) => (
+                  <Table>
+                    <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {items.map(({ rec: r, globalIdx: idx }, localIdx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{localIdx + 1}ª</TableCell>
+                          <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
+                          <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
+                          <TableCell>
+                            <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
+                              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">Nenhum</SelectItem>
+                                {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                );
+
                 return (
-                  <div className="flex items-center gap-4 text-sm mb-2">
-                    <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
-                    <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
-                    {Math.abs(diff) > 0.01 ? (
-                      <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
-                        {diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`}
-                      </span>
+                  <>
+                    <div className="flex items-center gap-4 text-sm mb-2">
+                      <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
+                      <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
+                      {Math.abs(diff) > 0.01 ? (
+                        <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
+                          {diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`}
+                        </span>
+                      ) : (
+                        <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
+                      )}
+                    </div>
+                    {hasMultipleMethods ? (
+                      <Tabs defaultValue={uniqueMethods[0]} className="w-full">
+                        <TabsList className="w-full justify-start">
+                          {uniqueMethods.map(m => {
+                            const methodItems = receivables.filter(r => (r.payment_method || 'outros') === m);
+                            const methodTotal = methodItems.reduce((s, r) => s + r.amount, 0);
+                            return (
+                              <TabsTrigger key={m} value={m}>
+                                {Object.values(methodLabels).find(l => l === m) || m} ({methodItems.length}x) - {fmt(methodTotal)}
+                              </TabsTrigger>
+                            );
+                          })}
+                        </TabsList>
+                        {uniqueMethods.map(m => {
+                          const items = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => (rec.payment_method || 'outros') === m);
+                          return (
+                            <TabsContent key={m} value={m}>
+                              {renderTable(items)}
+                            </TabsContent>
+                          );
+                        })}
+                      </Tabs>
                     ) : (
-                      <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
+                      renderTable(receivables.map((rec, idx) => ({ rec, globalIdx: idx })))
                     )}
-                  </div>
+                  </>
                 );
               })()}
-              <Table>
-                <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead className="w-36">Forma</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {receivables.map((r, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium">{r.installment_number}ª</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{r.payment_method || '-'}</TableCell>
-                      <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
-                      <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
-                      <TableCell>
-                        <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhum</SelectItem>
-                            {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
             </div>
           </CardContent>
         </Card>
