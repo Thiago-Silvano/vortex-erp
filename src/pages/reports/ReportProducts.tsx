@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useCompany } from '@/contexts/CompanyContext';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16'];
 
@@ -23,7 +26,6 @@ export default function ReportProducts() {
   const [saleItems, setSaleItems] = useState<any[]>([]);
 
   useEffect(() => {
-    // First get sales for this company, then get their items
     let qSales = supabase.from('sales').select('id');
     if (activeCompany?.id) qSales = qSales.eq('empresa_id', activeCompany.id);
     qSales.then(({ data: salesData }) => {
@@ -53,10 +55,21 @@ export default function ReportProducts() {
 
   const pieData = productStats.map(p => ({ name: p.name, value: p.faturamento }));
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Relatório de Serviços',
+      headers: ['Serviço', 'Qtd Vendas', 'Faturamento', 'Lucro (RAV)'],
+      rows: productStats.map(p => [p.name, String(p.count), fmt(p.faturamento), fmt(p.lucro)]),
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Relatório de Serviços</h1>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h1 className="text-2xl font-bold text-foreground">Relatório de Serviços</h1>
+          <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Exportar PDF</Button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>

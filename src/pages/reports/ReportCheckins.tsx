@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { useCompany } from '@/contexts/CompanyContext';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 export default function ReportCheckins() {
   const { activeCompany } = useCompany();
@@ -27,19 +30,35 @@ export default function ReportCheckins() {
 
   const statusMap: Record<string, string> = { pending: 'Pendente', confirmed: 'Realizado', cancelled: 'Cancelado' };
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Relatório de Check-ins',
+      headers: ['Descrição', 'Localizador', 'Check-in', 'Check-out', 'Status', 'Observações'],
+      rows: filtered.map(r => [
+        r.description || '-', r.confirmation_code || '-',
+        r.check_in ? format(new Date(r.check_in + 'T12:00:00'), 'dd/MM/yyyy') : '-',
+        r.check_out ? format(new Date(r.check_out + 'T12:00:00'), 'dd/MM/yyyy') : '-',
+        statusMap[r.status] || r.status, r.notes || '-',
+      ]),
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-2xl font-bold text-foreground">Relatório de Check-ins</h1>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="upcoming">Próximos</SelectItem>
-              <SelectItem value="done">Realizados</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="upcoming">Próximos</SelectItem>
+                <SelectItem value="done">Realizados</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />PDF</Button>
+          </div>
         </div>
 
         <Card>

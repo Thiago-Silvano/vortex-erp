@@ -8,6 +8,9 @@ import { format, subDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ShoppingCart, DollarSign, TrendingUp, Users, BookOpen, BarChart3 } from 'lucide-react';
 import { useCompany } from '@/contexts/CompanyContext';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', '#f59e0b', '#8b5cf6', '#06b6d4', '#84cc16'];
 
@@ -86,12 +89,30 @@ export default function ReportDashboard() {
     { label: 'Reservas', value: totalReservas, icon: BookOpen },
   ];
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Dashboard Geral',
+      period: `${format(new Date(range.start + 'T12:00:00'), 'dd/MM/yyyy')} a ${format(new Date(range.end + 'T12:00:00'), 'dd/MM/yyyy')}`,
+      headers: ['Mês', 'Receita', 'Custos', 'Lucro'],
+      rows: salesByMonth.map(m => [m.name, fmt(m.faturamento), fmt(m.custos), fmt(m.lucro)]),
+      totals: [
+        { label: 'Total Vendas', value: String(totalVendas) },
+        { label: 'Total Faturado', value: fmt(totalFaturado) },
+        { label: 'Lucro Bruto', value: fmt(lucroBruto) },
+        { label: 'Lucro Líquido', value: fmt(lucroLiquido) },
+      ],
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-2xl font-bold text-foreground">Dashboard Geral</h1>
-          <ReportFilters onChange={setRange} />
+          <div className="flex items-center gap-2">
+            <ReportFilters onChange={setRange} />
+            <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />PDF</Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

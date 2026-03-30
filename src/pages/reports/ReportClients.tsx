@@ -7,6 +7,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCompany } from '@/contexts/CompanyContext';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 export default function ReportClients() {
   const { activeCompany } = useCompany();
@@ -29,11 +32,7 @@ export default function ReportClients() {
   const clientStats = useMemo(() => {
     return clients.map(c => {
       const clientSales = sales.filter(s => s.client_name?.toLowerCase() === c.full_name?.toLowerCase());
-      return {
-        ...c,
-        numCompras: clientSales.length,
-        totalGasto: clientSales.reduce((s, v) => s + Number(v.total_sale || 0), 0),
-      };
+      return { ...c, numCompras: clientSales.length, totalGasto: clientSales.reduce((s, v) => s + Number(v.total_sale || 0), 0) };
     });
   }, [clients, sales]);
 
@@ -50,10 +49,26 @@ export default function ReportClients() {
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
   }, [clients]);
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Relatório de Clientes',
+      headers: ['Nome', 'Email', 'Telefone', 'Nº Compras', 'Total Gasto'],
+      rows: clientStats.map(c => [c.full_name, c.email || '-', c.phone || '-', String(c.numCompras), fmt(c.totalGasto)]),
+      totals: [
+        { label: 'Total Cadastrados', value: String(totalClientes) },
+        { label: 'Com Compras', value: String(comCompras) },
+        { label: 'Sem Compras', value: String(semCompras) },
+      ],
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Relatório de Clientes</h1>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h1 className="text-2xl font-bold text-foreground">Relatório de Clientes</h1>
+          <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />Exportar PDF</Button>
+        </div>
 
         <div className="grid grid-cols-3 gap-4">
           <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Total Cadastrados</p><p className="text-xl font-bold">{totalClientes}</p></CardContent></Card>

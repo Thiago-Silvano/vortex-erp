@@ -9,6 +9,9 @@ import { format, addMonths, eachMonthOfInterval, eachWeekOfInterval, startOfWeek
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { useCompany } from '@/contexts/CompanyContext';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { generateReportPdf } from '@/lib/generateReportPdf';
 
 export default function ReportCashFlow() {
   const { activeCompany } = useCompany();
@@ -60,18 +63,37 @@ export default function ReportCashFlow() {
     ...payables.map(r => ({ ...r, tipo: 'Saída', desc: r.description || 'Pagamento' })),
   ].sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''));
 
+  const exportPdf = () => {
+    generateReportPdf({
+      title: 'Fluxo de Caixa',
+      headers: ['Data', 'Tipo', 'Descrição', 'Valor'],
+      rows: allItems.slice(0, 500).map(item => [
+        item.due_date ? format(new Date(item.due_date + 'T12:00:00'), 'dd/MM/yyyy') : '-',
+        item.tipo, item.desc, fmt(Number(item.amount)),
+      ]),
+      totals: [
+        { label: 'Entradas', value: fmt(totalEntradas) },
+        { label: 'Saídas', value: fmt(totalSaidas) },
+        { label: 'Saldo', value: fmt(totalEntradas - totalSaidas) },
+      ],
+    });
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-2xl font-bold text-foreground">Fluxo de Caixa</h1>
-          <Select value={view} onValueChange={v => setView(v as any)}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="month">Por Mês</SelectItem>
-              <SelectItem value="week">Por Semana</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={view} onValueChange={v => setView(v as any)}>
+              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="month">Por Mês</SelectItem>
+                <SelectItem value="week">Por Semana</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={exportPdf}><FileDown className="h-4 w-4 mr-2" />PDF</Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
