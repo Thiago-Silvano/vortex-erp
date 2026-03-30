@@ -628,11 +628,6 @@ export default function NewSalePage() {
         return r;
       });
     });
-          return { ...r, cost_center_id: oldRec.cost_center_id };
-        }
-        return r;
-      });
-    });
   }, [installmentsMap, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
 
   // Sync supplier payments when suppliers or totalCost change
