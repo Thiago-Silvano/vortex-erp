@@ -2720,7 +2720,10 @@ export default function NewSalePage() {
               <div>
                 <Label>Adicionar forma de recebimento</Label>
                 <Select value="" onValueChange={v => {
-                  if (v && !paymentMethods.includes(v)) setPaymentMethods(prev => [...prev, v]);
+                  if (v && !paymentMethods.includes(v)) {
+                    setInstallmentsMap(prev => ({ ...prev, [v]: 1 }));
+                    setPaymentMethods(prev => [...prev, v]);
+                  }
                 }}>
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
