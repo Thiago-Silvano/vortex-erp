@@ -508,6 +508,9 @@ export default function WhatsAppInboxPage() {
                   className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/30 ${activeConv?.id === conv.id ? 'bg-muted' : ''}`}
                 >
                   <Avatar className="h-11 w-11 shrink-0">
+                    {profilePics[conv.phone?.replace(/\D/g, '')] && (
+                      <AvatarImage src={profilePics[conv.phone?.replace(/\D/g, '')]!} alt={displayName} />
+                    )}
                     <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
                       {displayName.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
