@@ -2731,26 +2731,23 @@ export default function NewSalePage() {
               </div>
             </div>
 
-            {hasGenericInstallmentMethod && (
+            {/* Per-method installment selectors for generic methods (pix, dinheiro, debito, transferencia) */}
+            {paymentMethods.filter(m => !['credito', 'boleto', 'operadora'].includes(m)).length > 0 && (
               <div className="space-y-4 pt-4 border-t">
+                <p className="text-sm font-medium text-muted-foreground">Parcelamento por forma de pagamento</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Número de Parcelas</Label>
-                    <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Valor da Venda</Label>
-                    <Input value={fmt(totalSaleWithInterest)} disabled className="bg-muted" />
-                  </div>
-                  {installments > 1 && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Valor por parcela</p>
-                      <p className="text-sm font-bold">{fmt(totalSaleWithInterest / installments)}</p>
-                    </div>
-                  )}
+                  {paymentMethods.filter(m => !['credito', 'boleto', 'operadora'].includes(m)).map(m => {
+                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
+                    return (
+                      <div key={m}>
+                        <Label>{labels[m] || m} — Parcelas</Label>
+                        <Select value={String(getInstallments(m))} onValueChange={v => setMethodInstallments(m, parseInt(v))}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
