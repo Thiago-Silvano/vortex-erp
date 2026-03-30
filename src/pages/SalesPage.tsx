@@ -304,9 +304,18 @@ export default function SalesPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between mt-2">
-                <div className="flex gap-4 text-sm">
+                <div className="flex gap-3 text-sm items-center flex-wrap">
                   <span>Total: <strong>{fmt(Number(s.total_sale))}</strong></span>
                   <span>Lucro: <strong>{fmt(Number(s.net_profit))}</strong></span>
+                  {s.invoice_url ? (
+                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border gap-1 text-xs" variant="outline">
+                      <FileCheck className="h-3 w-3" /> NF Emitida
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-red-100 text-red-800 border-red-300 border gap-1 text-xs" variant="outline">
+                      <FileX className="h-3 w-3" /> Emitir NF
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
