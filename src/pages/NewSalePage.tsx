@@ -2323,7 +2323,7 @@ export default function NewSalePage() {
             </div>
           </CardContent>
         </Card>
-
+        )}
 
         {/* Serviços da Venda */}
         <Card>
