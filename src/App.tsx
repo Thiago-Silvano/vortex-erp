@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CompanyProvider } from "@/contexts/CompanyContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import HomeRedirect from "./components/HomeRedirect";
 import Settings from "./pages/Settings";
 import AppearancePage from "./pages/AppearancePage";
 import Dashboard from "./pages/Dashboard";
