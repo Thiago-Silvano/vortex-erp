@@ -694,9 +694,18 @@ export default function NewSalePage() {
     setItems(prev => prev.map((item, i) => {
       if (i !== idx) return item;
       const updated = { ...item, [field]: value };
-      if (field === 'cost_price' || field === 'rav' || field === 'markup_percent') {
-        const base = updated.cost_price + updated.rav;
-        updated.total_value = base + base * ((updated.markup_percent || 0) / 100);
+      if (field === 'markup_percent') {
+        // Acréscimo% altera a RAV: RAV = Custo * (Acréscimo% / 100)
+        updated.rav = updated.cost_price * ((updated.markup_percent || 0) / 100);
+        updated.total_value = updated.cost_price + updated.rav;
+      } else if (field === 'rav') {
+        // RAV manual: recalcula Acréscimo% = (RAV / Custo) * 100
+        updated.markup_percent = updated.cost_price > 0 ? (updated.rav / updated.cost_price) * 100 : 0;
+        updated.total_value = updated.cost_price + updated.rav;
+      } else if (field === 'cost_price') {
+        // Custo alterado: recalcula RAV com base no Acréscimo% existente
+        updated.rav = updated.cost_price * ((updated.markup_percent || 0) / 100);
+        updated.total_value = updated.cost_price + updated.rav;
       }
       return updated;
     }));
