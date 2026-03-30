@@ -531,7 +531,6 @@ export default function NewSalePage() {
 
     for (const method of paymentMethods) {
       if (method === 'operadora') {
-        // Operadora: generate receivables for commission only, supports installments
         const operadoraAmount = amountPerMethod;
         const numInst = installments > 0 ? installments : 1;
         const perInstallment = operadoraAmount / numInst;
@@ -541,7 +540,6 @@ export default function NewSalePage() {
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
         }
       } else if (method === 'boleto' && installments > 1) {
-        // Boleto with installments
         const boletoAmount = amountPerMethod;
         if (boletoInterestRate > 0) {
           const monthlyRate = boletoInterestRate / 100;
@@ -560,7 +558,6 @@ export default function NewSalePage() {
           }
         }
       } else if (method === 'credito') {
-        // Credit card with installments
         const creditAmount = amountPerMethod;
         const numInst = installments > 0 ? installments : 1;
         const perInstallment = creditAmount / numInst;
@@ -570,7 +567,6 @@ export default function NewSalePage() {
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
         }
       } else {
-        // Methods that now support installments: pix, dinheiro, debito, transferencia
         const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
         const numInst = installments > 0 ? installments : 1;
         const perInstallment = amountPerMethod / numInst;
@@ -588,7 +584,16 @@ export default function NewSalePage() {
       recs.push({ installment_number: 1, due_date: '', amount: baseAmount });
     }
 
-    setReceivables(recs);
+    // Preserve user-edited cost_center_id from previous receivables
+    setReceivables(prev => {
+      return recs.map((r, idx) => {
+        const oldRec = prev[idx];
+        if (oldRec && oldRec.cost_center_id) {
+          return { ...r, cost_center_id: oldRec.cost_center_id };
+        }
+        return r;
+      });
+    });
   }, [installments, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
 
   // Sync supplier payments when suppliers or totalCost change
