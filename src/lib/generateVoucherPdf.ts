@@ -32,6 +32,7 @@ export interface HotelVoucher {
   nights: number;
   meal?: string;
   description?: string;
+  detailedDescription?: string;
   address?: string;
   reservationNumber?: string;
 }
