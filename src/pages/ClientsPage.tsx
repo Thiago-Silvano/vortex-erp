@@ -59,6 +59,7 @@ export default function ClientsPage() {
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [isDependent, setIsDependent] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
 
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
@@ -88,12 +89,30 @@ export default function ClientsPage() {
     if (!form.full_name.trim()) { toast.error('Nome é obrigatório'); return; }
     if (form.email && !validateEmail(form.email)) { toast.error('Email inválido'); return; }
 
+    const nameUpper = form.full_name.toUpperCase().trim();
+    const formToSave = { ...form, full_name: nameUpper };
+
+    // Duplicate check only when creating new client
+    if (!editingId) {
+      const normalizedName = normalize(nameUpper);
+      const cleanCpf = formToSave.cpf.replace(/\D/g, '');
+      const found = clients.find(c => {
+        if (cleanCpf && c.cpf.replace(/\D/g, '') === cleanCpf && cleanCpf.length >= 11) return true;
+        if (normalize(c.full_name) === normalizedName && normalizedName.length > 2) return true;
+        return false;
+      });
+      if (found) {
+        setDuplicateClient(found);
+        return;
+      }
+    }
+
     if (editingId) {
-      const { error } = await supabase.from('clients').update(form).eq('id', editingId);
+      const { error } = await supabase.from('clients').update(formToSave).eq('id', editingId);
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Cliente atualizado!');
     } else {
-      const { error } = await supabase.from('clients').insert({ ...form, empresa_id: activeCompany?.id } as any);
+      const { error } = await supabase.from('clients').insert({ ...formToSave, empresa_id: activeCompany?.id } as any);
       if (error) { toast.error('Erro ao cadastrar'); return; }
       toast.success('Cliente cadastrado!');
     }
@@ -264,7 +283,7 @@ export default function ClientsPage() {
                 </div>
                 <div className="col-span-2">
                   <Label>Nome completo *</Label>
-                  <Input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))} />
+                  <Input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value.toUpperCase() }))} style={{ textTransform: 'uppercase' }} />
                 </div>
               </div>
 
@@ -355,6 +374,28 @@ export default function ClientsPage() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!duplicateClient} onOpenChange={(open) => { if (!open) setDuplicateClient(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cliente já cadastrado</AlertDialogTitle>
+              <AlertDialogDescription>
+                Foi encontrado um cliente com dados semelhantes: <strong>{duplicateClient?.full_name}</strong>
+                {duplicateClient?.cpf ? ` — CPF: ${duplicateClient.cpf}` : ''}.
+                Deseja abrir o cadastro deste cliente para atualizar os dados?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => {
+                if (duplicateClient) {
+                  handleEdit(duplicateClient);
+                }
+                setDuplicateClient(null);
+              }}>Atualizar cliente existente</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
