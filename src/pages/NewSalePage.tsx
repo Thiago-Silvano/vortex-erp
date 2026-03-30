@@ -568,20 +568,21 @@ export default function NewSalePage() {
         }
       } else if (method === 'credito') {
         const creditAmount = amountPerMethod;
-        const numInst = installments > 0 ? installments : 1;
-        const perInstallment = creditAmount / numInst;
-        for (let i = 1; i <= numInst; i++) {
+        const numInst = getInstallments('credito');
+        const perInstallment = creditAmount / (numInst > 0 ? numInst : 1);
+        for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
           const dueDate = new Date(baseDate);
           dueDate.setDate(dueDate.getDate() + i * 30);
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
         }
       } else {
         const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
-        const numInst = installments > 0 ? installments : 1;
-        const perInstallment = amountPerMethod / numInst;
-        for (let i = 1; i <= numInst; i++) {
+        const numInst = getInstallments(method);
+        const effInst = numInst > 0 ? numInst : 1;
+        const perInstallment = amountPerMethod / effInst;
+        for (let i = 1; i <= effInst; i++) {
           const dueDate = new Date(baseDate);
-          if (numInst > 1) {
+          if (effInst > 1) {
             dueDate.setMonth(dueDate.getMonth() + i);
           }
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method });
