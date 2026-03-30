@@ -194,6 +194,30 @@ export async function uploadMediaToStorage(
   }
 }
 
+/**
+ * Get profile picture URL for a contact
+ */
+const _profilePicCache: Record<string, { url: string | null; ts: number }> = {};
+
+export async function getProfilePic(serverUrl: string, empresaId: string, phone: string): Promise<string | null> {
+  const cacheKey = `${empresaId}:${phone}`;
+  const cached = _profilePicCache[cacheKey];
+  // Cache for 30 minutes
+  if (cached && Date.now() - cached.ts < 30 * 60 * 1000) return cached.url;
+
+  try {
+    const normalized = (phone || '').replace(/\D/g, '');
+    if (!normalized || normalized.length < 8) return null;
+    const data = await proxyRequest(serverUrl, `/profile-pic?empresa_id=${encodeURIComponent(empresaId)}&phone=${encodeURIComponent(normalized)}`);
+    const url = data?.url || null;
+    _profilePicCache[cacheKey] = { url, ts: Date.now() };
+    return url;
+  } catch {
+    _profilePicCache[cacheKey] = { url: null, ts: Date.now() };
+    return null;
+  }
+}
+
 // =============================
 // Helpers
 // =============================

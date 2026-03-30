@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { sendMessage, sendMedia, getServerUrl, connectSession } from '@/lib/whatsappApi';
+import { sendMessage, sendMedia, getServerUrl, connectSession, getProfilePic } from '@/lib/whatsappApi';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -58,6 +58,7 @@ export default function WhatsAppInboxPage() {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [sendingFile, setSendingFile] = useState(false);
   const [agentName, setAgentName] = useState('');
+  const [profilePics, setProfilePics] = useState<Record<string, string | null>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -78,6 +79,19 @@ export default function WhatsAppInboxPage() {
     if (!empresaId) return;
     loadConversations();
   }, [empresaId]);
+
+  // Fetch profile pictures for conversations
+  useEffect(() => {
+    if (!serverUrl || !conversations.length || serverUrl.includes('localhost')) return;
+    conversations.forEach((conv) => {
+      const phone = conv.phone?.replace(/\D/g, '') || '';
+      if (!phone || profilePics[phone] !== undefined) return;
+      setProfilePics(prev => ({ ...prev, [phone]: null }));
+      getProfilePic(serverUrl, empresaId, phone).then(url => {
+        if (url) setProfilePics(prev => ({ ...prev, [phone]: url }));
+      });
+    });
+  }, [conversations, serverUrl, empresaId]);
 
   // Supabase Realtime: listen for new incoming messages
   useEffect(() => {
@@ -494,6 +508,9 @@ export default function WhatsAppInboxPage() {
                   className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/30 ${activeConv?.id === conv.id ? 'bg-muted' : ''}`}
                 >
                   <Avatar className="h-11 w-11 shrink-0">
+                    {profilePics[conv.phone?.replace(/\D/g, '')] && (
+                      <AvatarImage src={profilePics[conv.phone?.replace(/\D/g, '')]!} alt={displayName} />
+                    )}
                     <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
                       {displayName.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -529,6 +546,9 @@ export default function WhatsAppInboxPage() {
             <>
               <div className="h-14 flex items-center gap-3 px-4 border-b bg-card shrink-0">
                 <Avatar className="h-9 w-9">
+                  {profilePics[activeConv.phone?.replace(/\D/g, '')] && (
+                    <AvatarImage src={profilePics[activeConv.phone?.replace(/\D/g, '')]!} alt={getDisplayName(activeConv)} />
+                  )}
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                     {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
                   </AvatarFallback>
