@@ -1515,6 +1515,7 @@ export default function NewSalePage() {
         hotels.push({
           name: h.hotelName,
           description: h.observations || '',
+          detailedDescription: item.metadata?.detailedDescription || '',
           checkIn: h.checkInDate,
           checkOut: h.checkOutDate,
           nights: hotelNights,

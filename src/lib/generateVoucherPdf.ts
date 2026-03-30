@@ -304,6 +304,22 @@ function drawHotelContent(doc: jsPDF, hotel: HotelVoucher, y: number, m: number,
     y += descLines.length * 3 + 2;
   }
 
+  if (hotel.detailedDescription) {
+    const cleanDesc = hotel.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+    if (cleanDesc) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      const detLines = doc.splitTextToSize(s(cleanDesc), cw - 14);
+      detLines.forEach((line: string) => {
+        y = checkPage(doc, y, 5);
+        doc.text(line, m + 7, y);
+        y += 3.5;
+      });
+      y += 1;
+    }
+  }
+
   const cardH = y - hotelStartY + 2;
   doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
   doc.setLineWidth(0.2);
