@@ -1,14 +1,14 @@
 import jsPDF from 'jspdf';
 
 // ─── Color Palette (matching LATAM voucher) ──────────────────
-const DARK_HEADER = [27, 20, 48] as const; // deep purple-black header bar
+const DARK_HEADER = [20, 20, 25] as const;
 const WHITE = [255, 255, 255] as const;
 const TEXT_MAIN = [40, 40, 40] as const;
 const TEXT_MUTED = [120, 120, 120] as const;
 const ACCENT_PURPLE = [91, 46, 255] as const;
 const BORDER = [210, 210, 210] as const;
 const LIGHT_BG = [248, 248, 250] as const;
-const SECTION_HEADER_BG = [40, 30, 65] as const;
+const SECTION_HEADER_BG = [30, 30, 35] as const;
 const GOLD_ACCENT = [200, 164, 91] as const;
 
 // ─── Types ──────────────────────────────────────────────────
