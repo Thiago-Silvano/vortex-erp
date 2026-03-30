@@ -507,9 +507,10 @@ export default function NewSalePage() {
   useEffect(() => {
     if (!hasCredito || !cardPaymentType) return;
     const rates = cardPaymentType === 'ec' ? ecRates : linkRates;
-    const found = rates.find(r => r.installments === installments);
+    const creditInst = getInstallments('credito');
+    const found = rates.find(r => r.installments === creditInst);
     if (found) setFeeRate(found.rate);
-  }, [cardPaymentType, installments, ecRates, linkRates, hasCredito]);
+  }, [cardPaymentType, installmentsMap, ecRates, linkRates, hasCredito]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
   const totalSaleWithInterest = totalSale + saleInterest + operatorTaxes;
