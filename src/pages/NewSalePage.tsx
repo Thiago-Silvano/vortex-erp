@@ -1343,6 +1343,8 @@ export default function NewSalePage() {
   };
 
   const doSave = async () => {
+    setSavingSale(true);
+    try {
     const { payload, userEmail } = await buildSalePayload('active');
     // Auto-set workflow status to "emitido" when generating a sale
     payload.sale_workflow_status = 'emitido';
