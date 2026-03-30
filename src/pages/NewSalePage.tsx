@@ -131,7 +131,7 @@ export default function NewSalePage() {
   const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
 
-  const [paymentMethods, setPaymentMethods] = useState<string[]>(['pix']);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [installmentsMap, setInstallmentsMap] = useState<Record<string, number>>({});
   const getInstallments = (method: string) => installmentsMap[method] || 1;
   const setMethodInstallments = (method: string, count: number) => setInstallmentsMap(prev => ({ ...prev, [method]: count }));
@@ -239,7 +239,7 @@ export default function NewSalePage() {
     setClientName(sale.client_name);
     setSaleDate(sale.sale_date);
     const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
-    setPaymentMethods(savedMethods.length > 0 ? savedMethods : ['pix']);
+    setPaymentMethods(savedMethods.length > 0 ? savedMethods : []);
     const savedInstallments = sale.installments || 1;
     // Set installments for all saved methods
     const instMap: Record<string, number> = {};
@@ -524,78 +524,102 @@ export default function NewSalePage() {
   // No longer need auto-recalculate since we store only discount % now
 
   useEffect(() => {
-    const recs: Receivable[] = [];
     const baseDate = new Date(saleDate || new Date());
-    let recIndex = 1;
 
     // For "operadora" payment, receivables are only for the gross commission
     const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
     const baseAmount = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
 
-    // Split total equally among selected payment methods
-    const methodCount = paymentMethods.length;
-    const amountPerMethod = methodCount > 0 ? baseAmount / methodCount : baseAmount;
+    // Use functional update to read previous receivables without adding to deps
+    setReceivables(prev => {
+      const recs: Receivable[] = [];
+      let recIndex = 1;
 
-    for (const method of paymentMethods) {
-      if (method === 'operadora') {
-        const operadoraAmount = amountPerMethod;
-        const numInst = getInstallments('operadora');
-        const perInstallment = operadoraAmount / (numInst > 0 ? numInst : 1);
-        for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
-          const dueDate = new Date(baseDate);
-          dueDate.setMonth(dueDate.getMonth() + i);
-          recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
-        }
-      } else if (method === 'boleto') {
-        const boletoInst = getInstallments('boleto');
-        const boletoAmount = amountPerMethod;
-        if (boletoInst > 1 && boletoInterestRate > 0) {
-          const monthlyRate = boletoInterestRate / 100;
-          const pmt = boletoAmount * (monthlyRate * Math.pow(1 + monthlyRate, boletoInst)) / (Math.pow(1 + monthlyRate, boletoInst) - 1);
-          for (let i = 1; i <= boletoInst; i++) {
-            const dueDate = new Date(baseDate);
-            dueDate.setMonth(dueDate.getMonth() + i);
-            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto' });
+      // Calculate amount per method: preserve existing amounts, assign remainder to newest
+      const methodAmounts: Record<string, number> = {};
+      if (paymentMethods.length > 0) {
+        const existingAmountsByMethod: Record<string, number> = {};
+        const labelToKey: Record<string, string> = { 'Pix': 'pix', 'Dinheiro': 'dinheiro', 'Boleto': 'boleto', 'Cartão de Crédito': 'credito', 'Cartão de Débito': 'debito', 'Transferência': 'transferencia', 'Pgto Operadora/Consolidadora': 'operadora', 'Pgto Operadora': 'operadora' };
+        prev.forEach(r => {
+          const key = labelToKey[r.payment_method || ''] || r.payment_method || '';
+          if (key && paymentMethods.includes(key)) {
+            existingAmountsByMethod[key] = (existingAmountsByMethod[key] || 0) + r.amount;
           }
-        } else {
-          const numInst = boletoInst > 0 ? boletoInst : 1;
-          const perInstallment = boletoAmount / numInst;
-          for (let i = 1; i <= numInst; i++) {
-            const dueDate = new Date(baseDate);
-            if (numInst > 1) dueDate.setMonth(dueDate.getMonth() + i);
-            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto' });
-          }
-        }
-      } else if (method === 'credito') {
-        const creditAmount = amountPerMethod;
-        const numInst = getInstallments('credito');
-        const perInstallment = creditAmount / (numInst > 0 ? numInst : 1);
-        for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
-          const dueDate = new Date(baseDate);
-          dueDate.setDate(dueDate.getDate() + i * 30);
-          recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
-        }
-      } else {
-        const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
-        const numInst = getInstallments(method);
-        const effInst = numInst > 0 ? numInst : 1;
-        const perInstallment = amountPerMethod / effInst;
-        for (let i = 1; i <= effInst; i++) {
-          const dueDate = new Date(baseDate);
-          if (effInst > 1) {
-            dueDate.setMonth(dueDate.getMonth() + i);
-          }
-          recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method });
+        });
+
+        let usedAmount = 0;
+        const methodsWithExisting = paymentMethods.filter(m => existingAmountsByMethod[m] && existingAmountsByMethod[m] > 0);
+        const methodsWithout = paymentMethods.filter(m => !existingAmountsByMethod[m] || existingAmountsByMethod[m] <= 0);
+
+        methodsWithExisting.forEach(m => {
+          methodAmounts[m] = existingAmountsByMethod[m];
+          usedAmount += existingAmountsByMethod[m];
+        });
+
+        const remainder = Math.max(0, baseAmount - usedAmount);
+        if (methodsWithout.length > 0) {
+          const perNew = remainder / methodsWithout.length;
+          methodsWithout.forEach(m => { methodAmounts[m] = Math.round(perNew * 100) / 100; });
         }
       }
-    }
 
-    if (recs.length === 0) {
-      recs.push({ installment_number: 1, due_date: '', amount: baseAmount });
-    }
+      for (const method of paymentMethods) {
+        const methodAmount = methodAmounts[method] || 0;
+        if (method === 'operadora') {
+          const numInst = getInstallments('operadora');
+          const perInstallment = methodAmount / (numInst > 0 ? numInst : 1);
+          for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
+            const dueDate = new Date(baseDate);
+            dueDate.setMonth(dueDate.getMonth() + i);
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
+          }
+        } else if (method === 'boleto') {
+          const boletoInst = getInstallments('boleto');
+          if (boletoInst > 1 && boletoInterestRate > 0) {
+            const monthlyRate = boletoInterestRate / 100;
+            const pmt = methodAmount * (monthlyRate * Math.pow(1 + monthlyRate, boletoInst)) / (Math.pow(1 + monthlyRate, boletoInst) - 1);
+            for (let i = 1; i <= boletoInst; i++) {
+              const dueDate = new Date(baseDate);
+              dueDate.setMonth(dueDate.getMonth() + i);
+              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto' });
+            }
+          } else {
+            const numInst = boletoInst > 0 ? boletoInst : 1;
+            const perInstallment = methodAmount / numInst;
+            for (let i = 1; i <= numInst; i++) {
+              const dueDate = new Date(baseDate);
+              if (numInst > 1) dueDate.setMonth(dueDate.getMonth() + i);
+              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto' });
+            }
+          }
+        } else if (method === 'credito') {
+          const numInst = getInstallments('credito');
+          const perInstallment = methodAmount / (numInst > 0 ? numInst : 1);
+          for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
+            const dueDate = new Date(baseDate);
+            dueDate.setDate(dueDate.getDate() + i * 30);
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
+          }
+        } else {
+          const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
+          const numInst = getInstallments(method);
+          const effInst = numInst > 0 ? numInst : 1;
+          const perInstallment = methodAmount / effInst;
+          for (let i = 1; i <= effInst; i++) {
+            const dueDate = new Date(baseDate);
+            if (effInst > 1) {
+              dueDate.setMonth(dueDate.getMonth() + i);
+            }
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method });
+          }
+        }
+      }
 
-    // Preserve user-edited cost_center_id from previous receivables
-    setReceivables(prev => {
+      if (recs.length === 0) {
+        recs.push({ installment_number: 1, due_date: '', amount: baseAmount });
+      }
+
+      // Preserve user-edited cost_center_id
       return recs.map((r, idx) => {
         const oldRec = prev[idx];
         if (oldRec && oldRec.cost_center_id) {
@@ -2721,9 +2745,7 @@ export default function NewSalePage() {
                     return (
                       <Badge key={m} variant="secondary" className="gap-1 pr-1">
                         {labels[m] || m}
-                        {paymentMethods.length > 1 && (
-                          <button type="button" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))} className="ml-1 hover:text-destructive">×</button>
-                        )}
+                        <button type="button" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))} className="ml-1 hover:text-destructive">×</button>
                       </Badge>
                     );
                   })}
@@ -2756,7 +2778,7 @@ export default function NewSalePage() {
               <div className="space-y-4 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>Tipo de Pagamento</Label>
+                    <Label>Cartão de Crédito</Label>
                     <Select value={cardPaymentType} onValueChange={setCardPaymentType}>
                       <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
                       <SelectContent><SelectItem value="ec">EC (Máquina)</SelectItem><SelectItem value="link">Link de Pagamento</SelectItem></SelectContent>
