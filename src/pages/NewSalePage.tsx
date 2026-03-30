@@ -2892,7 +2892,16 @@ export default function NewSalePage() {
                           <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
                           <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
                           <TableCell>
-                            <Select value={r.cost_center_id || 'none'} onValueChange={v => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: v === 'none' ? undefined : v } : rec))}>
+                            <Select value={r.cost_center_id || 'none'} onValueChange={v => {
+                              const newVal = v === 'none' ? undefined : v;
+                              if (localIdx === 0) {
+                                // First installment sets all in this group
+                                const groupIndices = items.map(it => it.globalIdx);
+                                setReceivables(prev => prev.map((rec, i) => groupIndices.includes(i) ? { ...rec, cost_center_id: newVal } : rec));
+                              } else {
+                                setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, cost_center_id: newVal } : rec));
+                              }
+                            }}>
                               <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="none">Nenhum</SelectItem>
