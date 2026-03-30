@@ -532,13 +532,42 @@ export default function NewSalePage() {
     const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
     const baseAmount = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
 
-    // Split total equally among selected payment methods
-    const methodCount = paymentMethods.length;
-    const amountPerMethod = methodCount > 0 ? baseAmount / methodCount : baseAmount;
+    // Calculate amount per method: preserve existing receivable amounts, assign remainder to newest method
+    const methodAmounts: Record<string, number> = {};
+    if (paymentMethods.length > 0) {
+      // Sum existing receivable amounts per method (from previous state)
+      const existingAmountsByMethod: Record<string, number> = {};
+      const labelToKey: Record<string, string> = { 'Pix': 'pix', 'Dinheiro': 'dinheiro', 'Boleto': 'boleto', 'Cartão de Crédito': 'credito', 'Cartão de Débito': 'debito', 'Transferência': 'transferencia', 'Pgto Operadora/Consolidadora': 'operadora', 'Pgto Operadora': 'operadora' };
+      receivables.forEach(r => {
+        const key = labelToKey[r.payment_method || ''] || r.payment_method || '';
+        if (key && paymentMethods.includes(key)) {
+          existingAmountsByMethod[key] = (existingAmountsByMethod[key] || 0) + r.amount;
+        }
+      });
+
+      // For methods that already have receivables, keep their total; for the newest, assign the remainder
+      let usedAmount = 0;
+      const methodsWithExisting = paymentMethods.filter(m => existingAmountsByMethod[m] && existingAmountsByMethod[m] > 0);
+      const methodsWithout = paymentMethods.filter(m => !existingAmountsByMethod[m] || existingAmountsByMethod[m] <= 0);
+
+      methodsWithExisting.forEach(m => {
+        methodAmounts[m] = existingAmountsByMethod[m];
+        usedAmount += existingAmountsByMethod[m];
+      });
+
+      const remainder = Math.max(0, baseAmount - usedAmount);
+      if (methodsWithout.length > 0) {
+        const perNew = remainder / methodsWithout.length;
+        methodsWithout.forEach(m => { methodAmounts[m] = Math.round(perNew * 100) / 100; });
+      } else if (methodsWithExisting.length > 0 && methodsWithout.length === 0) {
+        // All methods have existing amounts — keep them as-is (user edited)
+      }
+    }
 
     for (const method of paymentMethods) {
+      const methodAmount = methodAmounts[method] || 0;
       if (method === 'operadora') {
-        const operadoraAmount = amountPerMethod;
+        const operadoraAmount = methodAmount;
         const numInst = getInstallments('operadora');
         const perInstallment = operadoraAmount / (numInst > 0 ? numInst : 1);
         for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
