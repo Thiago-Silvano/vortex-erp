@@ -398,71 +398,77 @@ export default function BankReconciliationPage() {
   }, [loadTransactions]);
 
   // OFX Import
+  const [importingOFX, setImportingOFX] = useState(false);
   const handleOFXImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedAccount || !activeCompany) return;
 
-    const text = await file.text();
-    const ofx = parseOFX(text);
+    setImportingOFX(true);
+    try {
+      const text = await file.text();
+      const ofx = parseOFX(text);
 
-    if (ofx.transactions.length === 0) {
-      toast.error("Nenhuma transação encontrada no arquivo OFX");
-      return;
-    }
+      if (ofx.transactions.length === 0) {
+        toast.error("Nenhuma transação encontrada no arquivo OFX");
+        return;
+      }
 
-    const batchId = `${Date.now()}_${file.name}`;
-    let imported = 0,
-      duplicates = 0;
+      const batchId = `${Date.now()}_${file.name}`;
+      let imported = 0,
+        duplicates = 0;
 
-    // Get user email
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      // Get user email
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    for (const tx of ofx.transactions) {
-      const hash = generateTransactionHash(selectedAccount, tx.fitId, tx.datePosted, tx.amount);
+      for (const tx of ofx.transactions) {
+        const hash = generateTransactionHash(selectedAccount, tx.fitId, tx.datePosted, tx.amount);
 
-      const { error } = await supabase.from("bank_transactions").insert({
+        const { error } = await supabase.from("bank_transactions").insert({
+          empresa_id: activeCompany.id,
+          bank_account_id: selectedAccount,
+          transaction_date: tx.datePosted,
+          description: tx.name,
+          reference_number: tx.refNum || tx.fitId,
+          amount: tx.amount,
+          transaction_type: tx.type,
+          unique_hash: hash,
+          import_batch: batchId,
+          origin: "ofx",
+        } as any);
+
+        if (error) {
+          if (error.message.includes("unique") || error.message.includes("duplicate")) duplicates++;
+          else console.error(error);
+        } else {
+          imported++;
+        }
+      }
+
+      // Save import batch
+      await supabase.from("ofx_imports").insert({
         empresa_id: activeCompany.id,
         bank_account_id: selectedAccount,
-        transaction_date: tx.datePosted,
-        description: tx.name,
-        reference_number: tx.refNum || tx.fitId,
-        amount: tx.amount,
-        transaction_type: tx.type,
-        unique_hash: hash,
-        import_batch: batchId,
-        origin: "ofx",
+        file_name: file.name,
+        period_start: ofx.startDate || null,
+        period_end: ofx.endDate || null,
+        balance_start: ofx.balanceStart ?? null,
+        balance_end: ofx.balanceEnd ?? null,
+        total_transactions: imported,
+        total_credits: ofx.transactions.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0),
+        total_debits: ofx.transactions.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
+        imported_by: user?.email || "",
       } as any);
 
-      if (error) {
-        if (error.message.includes("unique") || error.message.includes("duplicate")) duplicates++;
-        else console.error(error);
-      } else {
-        imported++;
-      }
+      toast.success(
+        `Importação concluída: ${imported} lançamentos importados${duplicates > 0 ? `, ${duplicates} duplicados ignorados` : ""}`,
+      );
+      if (fileRef.current) fileRef.current.value = "";
+      loadTransactions();
+    } finally {
+      setImportingOFX(false);
     }
-
-    // Save import batch
-    await supabase.from("ofx_imports").insert({
-      empresa_id: activeCompany.id,
-      bank_account_id: selectedAccount,
-      file_name: file.name,
-      period_start: ofx.startDate || null,
-      period_end: ofx.endDate || null,
-      balance_start: ofx.balanceStart ?? null,
-      balance_end: ofx.balanceEnd ?? null,
-      total_transactions: imported,
-      total_credits: ofx.transactions.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0),
-      total_debits: ofx.transactions.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
-      imported_by: user?.email || "",
-    } as any);
-
-    toast.success(
-      `Importação concluída: ${imported} lançamentos importados${duplicates > 0 ? `, ${duplicates} duplicados ignorados` : ""}`,
-    );
-    if (fileRef.current) fileRef.current.value = "";
-    loadTransactions();
   };
 
   // Delete last OFX import
