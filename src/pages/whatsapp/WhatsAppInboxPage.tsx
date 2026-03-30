@@ -98,7 +98,7 @@ export default function WhatsAppInboxPage() {
     if (!empresaId) return;
 
     const channel = supabase
-      .channel(`whatsapp-messages-${empresaId}`)
+      .channel(`whatsapp-realtime-${empresaId}`)
       .on(
         'postgres_changes',
         {
@@ -117,7 +117,6 @@ export default function WhatsAppInboxPage() {
           // If the active conversation matches, add message to the chat
           if (activeConv?.id === newRow.conversation_id) {
             setMessages(prev => {
-              // Avoid duplicates
               if (prev.some(m => m.id === newRow.id)) return prev;
               return [...prev, {
                 id: newRow.id,
@@ -131,10 +130,34 @@ export default function WhatsAppInboxPage() {
             });
           }
 
-          // Refresh conversations list to update last_message and unread counts
-          loadConversations();
-
           toast.info('Nova mensagem recebida');
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'whatsapp_conversations',
+          filter: `empresa_id=eq.${empresaId}`,
+        },
+        (payload: any) => {
+          const eventType = payload.eventType;
+          const row = payload.new;
+
+          if (eventType === 'INSERT') {
+            setConversations(prev => {
+              if (prev.some(c => c.id === row.id)) return prev;
+              return [row, ...prev];
+            });
+          } else if (eventType === 'UPDATE') {
+            setConversations(prev =>
+              prev.map(c => c.id === row.id ? { ...c, ...row } : c)
+                .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
+            );
+          } else if (eventType === 'DELETE') {
+            setConversations(prev => prev.filter(c => c.id !== payload.old?.id));
+          }
         }
       )
       .subscribe();
