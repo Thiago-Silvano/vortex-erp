@@ -2274,7 +2274,6 @@ export default function NewSalePage() {
             ))}
           </CardContent>
         </Card>
-        )}
           </TabsContent>
 
           {/* TAB: Serviços */}
