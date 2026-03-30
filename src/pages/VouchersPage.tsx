@@ -110,7 +110,7 @@ export default function VouchersPage() {
 
   const loadVortexWhiteLogo = async (): Promise<string | undefined> => {
     try {
-      const resp = await fetch('/images/vortex-logo-white.png');
+      const resp = await fetch('/images/vortex-white-logo.png');
       const blob = await resp.blob();
       return new Promise<string>((resolve) => {
         const reader = new FileReader();
