@@ -106,6 +106,8 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
   const headerH = 22;
   doc.setFillColor(DARK_HEADER[0], DARK_HEADER[1], DARK_HEADER[2]);
   doc.rect(0, 0, pw, headerH, 'F');
+  doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+  doc.rect(0, headerH, pw, 0.8, 'F');
 
   // Agency logo (left)
   if (data.agencyLogoBase64) {
