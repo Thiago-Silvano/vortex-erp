@@ -546,21 +546,23 @@ export default function NewSalePage() {
           dueDate.setMonth(dueDate.getMonth() + i);
           recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
         }
-      } else if (method === 'boleto' && installments > 1) {
+      } else if (method === 'boleto') {
+        const boletoInst = getInstallments('boleto');
         const boletoAmount = amountPerMethod;
-        if (boletoInterestRate > 0) {
+        if (boletoInst > 1 && boletoInterestRate > 0) {
           const monthlyRate = boletoInterestRate / 100;
-          const pmt = boletoAmount * (monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
-          for (let i = 1; i <= installments; i++) {
+          const pmt = boletoAmount * (monthlyRate * Math.pow(1 + monthlyRate, boletoInst)) / (Math.pow(1 + monthlyRate, boletoInst) - 1);
+          for (let i = 1; i <= boletoInst; i++) {
             const dueDate = new Date(baseDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto' });
           }
         } else {
-          const perInstallment = boletoAmount / installments;
-          for (let i = 1; i <= installments; i++) {
+          const numInst = boletoInst > 0 ? boletoInst : 1;
+          const perInstallment = boletoAmount / numInst;
+          for (let i = 1; i <= numInst; i++) {
             const dueDate = new Date(baseDate);
-            dueDate.setMonth(dueDate.getMonth() + i);
+            if (numInst > 1) dueDate.setMonth(dueDate.getMonth() + i);
             recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto' });
           }
         }
