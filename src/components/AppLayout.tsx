@@ -351,6 +351,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </span>
           ) : null}
 
+          {/* Nova Cotação button */}
+          <Button
+            onClick={() => navigate('/sales/new')}
+            size="sm"
+            className="h-6 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 ml-2"
+          >
+            <Plus className="h-3 w-3" />
+            Nova Cotação
+          </Button>
+
           {/* Right actions */}
           <div className="ml-auto flex items-center gap-1">
             <Button
