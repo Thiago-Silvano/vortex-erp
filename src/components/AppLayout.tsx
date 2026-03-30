@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState, useRef } from 'react';
 import React from 'react';
 import {
-  LogOut, Building, User, Camera, MessageCircle, Mail, Bell, ChevronDown,
+  LogOut, Building, User, Camera, MessageCircle, Mail, Bell, ChevronDown, Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompany } from '@/contexts/CompanyContext';
