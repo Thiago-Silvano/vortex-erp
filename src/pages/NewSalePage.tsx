@@ -100,6 +100,7 @@ interface ProposalPaymentOption {
   discountPercent: number;
   enabled: boolean;
   fixedValue?: number;
+  showPerPerson?: boolean;
 }
 interface InternalFile { id?: string; file_name: string; file_url: string; }
 
