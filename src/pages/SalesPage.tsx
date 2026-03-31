@@ -213,6 +213,10 @@ export default function SalesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input className="pl-9" placeholder="Buscar por cliente..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
+          <SalesDateFilter period={datePeriod} onPeriodChange={setDatePeriod} customStart={customStart} customEnd={customEnd} onCustomStartChange={setCustomStart} onCustomEndChange={setCustomEnd} />
+          <div className="ml-auto text-sm font-semibold text-foreground whitespace-nowrap">
+            Total: <span className="text-primary">{fmt(totalFiltered)}</span> <span className="text-muted-foreground font-normal">({filtered.length} vendas)</span>
+          </div>
         </div>
 
         {/* Desktop Table */}
