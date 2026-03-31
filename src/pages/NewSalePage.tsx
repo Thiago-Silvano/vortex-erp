@@ -800,6 +800,43 @@ export default function NewSalePage() {
     });
   };
 
+  const duplicateItem = (idx: number) => {
+    const original = items[idx];
+    const cloned: SaleItem = {
+      description: original.description,
+      cost_price: original.cost_price,
+      rav: original.rav,
+      markup_percent: original.markup_percent,
+      total_value: original.total_value,
+      service_catalog_id: original.service_catalog_id,
+      cost_center_id: original.cost_center_id,
+      metadata: original.metadata ? JSON.parse(JSON.stringify(original.metadata)) : {},
+      reservation_number: original.reservation_number,
+      purchase_number: original.purchase_number,
+      quote_option_id: original.quote_option_id,
+      quote_option_ids: original.quote_option_ids ? [...original.quote_option_ids] : undefined,
+    };
+    const newIdx = idx + 1;
+    setItems(prev => [...prev.slice(0, newIdx), cloned, ...prev.slice(newIdx)]);
+    // duplicate images too
+    setItemImages(prev => {
+      const newImgs: Record<number, string[]> = {};
+      Object.keys(prev).forEach(key => {
+        const k = parseInt(key);
+        if (k < newIdx) {
+          newImgs[k] = prev[k];
+        } else {
+          newImgs[k + 1] = prev[k];
+        }
+      });
+      if (prev[idx]) {
+        newImgs[newIdx] = [...prev[idx]];
+      }
+      return newImgs;
+    });
+    toast.success('Item duplicado!');
+  };
+
   const addSupplier = () => {
     if (!addingSupplierId || selectedSupplierIds.includes(addingSupplierId)) return;
     setSelectedSupplierIds(prev => [...prev, addingSupplierId]);
