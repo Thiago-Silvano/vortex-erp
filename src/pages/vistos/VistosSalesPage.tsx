@@ -34,6 +34,9 @@ export default function VistosSalesPage() {
   const [deleting, setDeleting] = useState(false);
   const [sortKey, setSortKey] = useState<'client_name' | 'product_name' | 'sale_date' | 'total_value' | 'payment_method'>('sale_date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [datePeriod, setDatePeriod] = useState<DateFilterPeriod>('month');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
 
   const toggleSort = (key: typeof sortKey) => {
     if (sortKey === key) {
