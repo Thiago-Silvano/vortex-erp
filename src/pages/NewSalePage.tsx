@@ -2601,9 +2601,14 @@ export default function NewSalePage() {
                           />
                         </TableCell>
                         <TableCell className="px-0">
-                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(idx)}>
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
+                          <div className="flex items-center">
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => duplicateItem(idx)} title="Duplicar item">
+                              <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(idx)}>
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                       {/* Second row: reservation + images */}
