@@ -33,6 +33,7 @@ interface ProposalPaymentOption {
   enabled: boolean;
   fixedValue?: number;
   showPerPerson?: boolean;
+  highlighted?: boolean;
 }
 
 interface SaleItemData {
