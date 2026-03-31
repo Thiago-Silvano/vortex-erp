@@ -21,6 +21,8 @@ export interface FlightLegPdf {
   connectionDuration?: string;
   direction?: 'ida' | 'volta';
   flightCode?: string;
+  stopover?: boolean;
+  stopoverDays?: number;
 }
 
 export interface HotelPdf {
