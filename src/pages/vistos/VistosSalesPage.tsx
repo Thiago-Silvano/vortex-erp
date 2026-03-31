@@ -86,11 +86,18 @@ export default function VistosSalesPage() {
 
   useEffect(() => { fetchSales(); }, [activeCompany?.id]);
 
+  const dateRange = useMemo(() => getDateRange(datePeriod, customStart, customEnd), [datePeriod, customStart, customEnd]);
+
   const filtered = sales
-    .filter(s =>
-      s.client_name.toLowerCase().includes(filter.toLowerCase()) ||
-      (s.services_summary || '').toLowerCase().includes(filter.toLowerCase())
-    )
+    .filter(s => {
+      if (!s.client_name.toLowerCase().includes(filter.toLowerCase()) &&
+          !(s.services_summary || '').toLowerCase().includes(filter.toLowerCase())) return false;
+      if (dateRange && s.sale_date) {
+        const d = new Date(s.sale_date + 'T12:00:00');
+        if (d < dateRange.start || d > dateRange.end) return false;
+      }
+      return true;
+    })
     .sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'client_name') cmp = a.client_name.localeCompare(b.client_name);
@@ -100,6 +107,8 @@ export default function VistosSalesPage() {
       else if (sortKey === 'payment_method') cmp = (a.payment_method || '').localeCompare(b.payment_method || '');
       return sortDir === 'asc' ? cmp : -cmp;
     });
+
+  const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + (s.total_value || 0), 0), [filtered]);
 
   const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto', cartao_credito: 'Cartão Crédito', cartao_debito: 'Cartão Débito', transferencia: 'Transferência' };
 
