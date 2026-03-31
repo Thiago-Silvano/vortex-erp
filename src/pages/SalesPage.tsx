@@ -166,11 +166,17 @@ export default function SalesPage() {
     }
   };
 
-  const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const dateRange = useMemo(() => getDateRange(datePeriod, customStart, customEnd), [datePeriod, customStart, customEnd]);
+
   const filtered = sales
     .filter(s => {
       if (s.status !== 'active') return false;
-      return normalize(s.client_name).includes(normalize(search));
+      if (!normalize(s.client_name).includes(normalize(search))) return false;
+      if (dateRange && s.sale_date) {
+        const d = new Date(s.sale_date + 'T12:00:00');
+        if (d < dateRange.start || d > dateRange.end) return false;
+      }
+      return true;
     })
     .sort((a, b) => {
       let cmp = 0;
@@ -182,6 +188,8 @@ export default function SalesPage() {
       else if (sortKey === 'sale_workflow_status') cmp = (a.sale_workflow_status || '').localeCompare(b.sale_workflow_status || '');
       return sortDir === 'asc' ? cmp : -cmp;
     });
+
+  const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + Number(s.total_sale || 0), 0), [filtered]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
