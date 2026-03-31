@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Search, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import SalesDateFilter, { DateFilterPeriod, getDateRange } from '@/components/SalesDateFilter';
 
 interface VisaSale {
   id: string;
