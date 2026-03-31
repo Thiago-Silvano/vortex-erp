@@ -21,6 +21,8 @@ export interface FlightLegPdf {
   connectionDuration?: string;
   direction?: 'ida' | 'volta';
   flightCode?: string;
+  stopover?: boolean;
+  stopoverDays?: number;
 }
 
 export interface HotelPdf {
@@ -979,13 +981,24 @@ function drawFlightDirection(
   }
 
   // Duration & connections summary on right
-  if (totalDurStr) {
+  const totalStopoverDays = legs.reduce((sum, l) => sum + ((l.stopover && l.stopoverDays) ? l.stopoverDays : 0), 0);
+  if (totalDurStr || totalStopoverDays > 0) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
-    const summaryParts: string[] = [totalDurStr];
+    const summaryParts: string[] = [];
+    if (totalDurStr) summaryParts.push(totalDurStr);
     if (connectionsCount > 0) summaryParts.push(`${connectionsCount} ${connectionsCount === 1 ? 'conexao' : 'conexoes'}`);
-    safeText(doc, summaryParts.join('  |  '), m + cw - 5, y + 13, { align: 'right' });
+    const mainSummary = summaryParts.join('  |  ');
+    safeText(doc, mainSummary, m + cw - 5, y + 13, { align: 'right' });
+    if (totalStopoverDays > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(220, 38, 38);
+      const stopText = `STOPOVER DE ${totalStopoverDays} DIA${totalStopoverDays > 1 ? 'S' : ''}`;
+      const mainWidth = doc.getTextWidth(mainSummary);
+      safeText(doc, stopText, m + cw - 5 - mainWidth - 8, y + 13, { align: 'right' });
+    }
   }
 
   y += headerH + 4;
@@ -1085,10 +1098,6 @@ function drawFlightDirection(
       doc.setFillColor(CONNECTION_BG[0], CONNECTION_BG[1], CONNECTION_BG[2]);
       doc.roundedRect(connX, y, connW, connH, 2, 2, 'F');
 
-      // Dashed border lines top and bottom
-      doc.setDrawColor(BORDER_COLOR[0], BORDER_COLOR[1], BORDER_COLOR[2]);
-      doc.setLineWidth(0.15);
-
       // Connection icon and text
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
@@ -1103,6 +1112,30 @@ function drawFlightDirection(
       safeText(doc, connText, m + cw / 2, y + connH / 2 + 1.5, { align: 'center' });
 
       y += connH + 2;
+    }
+
+    // ── Stopover block after this leg ──
+    if (leg.stopover && (leg.stopoverDays || 0) > 0) {
+      y = checkPageBreak(doc, y, 12, m);
+      const stopH = 10;
+      const stopX = m + 15;
+      const stopW = cw - 30;
+
+      doc.setFillColor(255, 235, 235);
+      doc.roundedRect(stopX, y, stopW, stopH, 2, 2, 'F');
+
+      // Red border
+      doc.setDrawColor(220, 38, 38);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(stopX, y, stopW, stopH, 2, 2, 'S');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(220, 38, 38);
+      const stopText = `STOPOVER DE ${leg.stopoverDays} DIA${leg.stopoverDays! > 1 ? 'S' : ''} em ${leg.destination || ''}`;
+      safeText(doc, stopText, m + cw / 2, y + stopH / 2 + 1.5, { align: 'center' });
+
+      y += stopH + 2;
     }
   });
 

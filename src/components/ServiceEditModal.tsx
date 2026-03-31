@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import RichTextEditor from '@/components/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, MapPin, Calendar } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, MapPin, Calendar, OctagonAlert } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import HotelSearchAutocomplete, { HotelDetails } from '@/components/HotelSearchAutocomplete';
@@ -23,6 +24,8 @@ interface FlightLeg {
   direction: 'ida' | 'volta';
   flightCode: string;
   airlineId?: string;
+  stopover?: boolean;
+  stopoverDays?: number;
 }
 
 interface BaggageInfo {
@@ -472,6 +475,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                           <SelectItem value="volta">Volta</SelectItem>
                         </SelectContent>
                       </Select>
+                      <OctagonAlert className="h-3.5 w-3.5 text-destructive" />
                       <span className="text-xs text-muted-foreground">Trecho {idx + 1}</span>
                     </div>
                     <Button size="icon" variant="ghost" onClick={() => removeLeg(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -502,6 +506,33 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     <div><Label className="text-xs">Data Chegada</Label><Input type="date" value={leg.arrivalDate} onChange={e => updateLeg(idx, 'arrivalDate', e.target.value)} /></div>
                     <div><Label className="text-xs">Hora Chegada</Label><Input type="time" value={leg.arrivalTime} onChange={e => updateLeg(idx, 'arrivalTime', e.target.value)} /></div>
                   </div>
+                  {/* Stopover option */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`stopover-${idx}`}
+                        checked={!!leg.stopover}
+                        onCheckedChange={(checked) => {
+                          setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, stopover: !!checked, stopoverDays: checked ? (l.stopoverDays || 1) : 0 } : l));
+                        }}
+                      />
+                      <Label htmlFor={`stopover-${idx}`} className="text-xs font-medium text-destructive flex items-center gap-1 cursor-pointer">
+                        <OctagonAlert className="h-3 w-3" /> Stopover
+                      </Label>
+                    </div>
+                    {leg.stopover && (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs">Dias:</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={leg.stopoverDays || 1}
+                          onChange={e => setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, stopoverDays: parseInt(e.target.value) || 1 } : l))}
+                          className="w-20 h-7 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
 
@@ -511,10 +542,17 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 const returnL = flightLegs.filter(l => l.direction === 'volta');
                 const durOut = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
                 const durRet = calcTotalTravelDuration(returnL);
-                return (durOut || durRet) ? (
+                const stopoverLegs = flightLegs.filter(l => l.stopover && (l.stopoverDays || 0) > 0);
+                const totalStopoverDays = stopoverLegs.reduce((sum, l) => sum + (l.stopoverDays || 0), 0);
+                return (durOut || durRet || totalStopoverDays > 0) ? (
                   <div className="border-t pt-3 flex flex-wrap gap-4 text-sm">
                     {durOut && <span className="text-muted-foreground">⏱ Tempo total IDA: <strong className="text-foreground">{durOut}</strong></span>}
                     {durRet && <span className="text-muted-foreground">⏱ Tempo total VOLTA: <strong className="text-foreground">{durRet}</strong></span>}
+                    {totalStopoverDays > 0 && (
+                      <span className="text-destructive font-semibold flex items-center gap-1">
+                        <OctagonAlert className="h-3.5 w-3.5" /> Stopover de {totalStopoverDays} dia{totalStopoverDays > 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
                 ) : null;
               })()}
