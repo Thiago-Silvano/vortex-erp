@@ -238,6 +238,11 @@ export default function NewSalePage() {
     setSaleWorkflowStatus((sale as any).sale_workflow_status || 'em_aberto');
     setQuoteId(sale.quote_id || '');
     setClientName(sale.client_name);
+    // Resolve client ID from name
+    if (sale.client_name) {
+      const { data: foundClient } = await supabase.from('clients').select('id').eq('full_name', sale.client_name).eq('empresa_id', activeCompany?.id).limit(1).single();
+      if (foundClient) setSelectedClientId(foundClient.id);
+    }
     setSaleDate(sale.sale_date);
     const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
     setPaymentMethods(savedMethods.length > 0 ? savedMethods : []);
