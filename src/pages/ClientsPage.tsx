@@ -141,11 +141,16 @@ export default function ClientsPage() {
       toast.success('Cliente cadastrado!');
     }
     filesRef.current?.clearPending();
+    const shouldReturn = returnTo;
     setDialogOpen(false);
     setEditingId(null);
     setForm(emptyClient());
     setEmailError('');
     fetchClients();
+    if (shouldReturn) {
+      setReturnTo(null);
+      navigate(shouldReturn.path, { state: shouldReturn.state });
+    }
   };
 
   const handleEdit = (c: Client) => {
