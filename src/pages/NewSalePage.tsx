@@ -280,6 +280,7 @@ export default function NewSalePage() {
         installments: o.installments || 1,
         discountPercent: o.discountPercent ?? 0,
         enabled: o.enabled !== false,
+        fixedValue: o.fixedValue || undefined,
       })));
     }
     if ((sale as any).show_individual_values !== undefined) {
