@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
+import ClientFilesSection from '@/components/ClientFilesSection';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
@@ -230,6 +231,7 @@ export default function ClientsPage() {
 
             <div className="space-y-3">
               {editingId && <ClientPhotosSection clientId={editingId} />}
+              {editingId && <ClientFilesSection clientId={editingId} />}
               {editingId && activeCompany?.slug === 'vortex-vistos' && (
                 <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} isMaster={isMaster} />
               )}
