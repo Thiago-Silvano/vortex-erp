@@ -110,10 +110,14 @@ export default function VistosDashboard() {
       totalServices = totalRevenue;
     }
 
+    // Filter processes to current month only using visa_sale_id from month sales
     const { data: processes } = await supabase
       .from('visa_processes')
-      .select('status, product_id')
+      .select('status, product_id, visa_sale_id')
       .eq('empresa_id', empresaId);
+
+    const monthSaleIdSet = new Set(allSaleIds);
+    const monthProcesses = (processes || []).filter(p => p.visa_sale_id && monthSaleIdSet.has(p.visa_sale_id));
 
     const { data: products } = await supabase
       .from('visa_products')
@@ -126,7 +130,7 @@ export default function VistosDashboard() {
     const statusCounts: Record<string, number> = {};
     let inProd = 0, appr = 0, den = 0;
     const productionStatuses = ['falta_passaporte', 'produzindo', 'agendado', 'aguardando_renovacao'];
-    processes?.forEach(p => {
+    monthProcesses.forEach(p => {
       statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
       if (productionStatuses.includes(p.status)) inProd++;
       if (p.status === 'aprovado') appr++;
