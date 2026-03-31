@@ -2859,7 +2859,7 @@ export default function NewSalePage() {
               </div>
             )}
 
-            {hasMachineFeeMethod && (
+            {paymentMethods.length > 0 && (
               <div className="space-y-3 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                   <div>
