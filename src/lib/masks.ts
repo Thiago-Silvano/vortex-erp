@@ -87,7 +87,7 @@ export function unmask(value: string): string {
 
 export function maskCurrency(value: string | number): string {
   const num = typeof value === 'number' ? value : parseFloat(value.replace(/[^\d]/g, '')) / 100;
-  if (isNaN(num)) return 'R$ 0,00';
+  if (isNaN(num) || num === 0) return '';
   return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 

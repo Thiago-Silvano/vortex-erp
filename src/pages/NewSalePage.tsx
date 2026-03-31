@@ -2524,6 +2524,7 @@ export default function NewSalePage() {
                             value={maskCurrency(item.cost_price)}
                             onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))}
                             className="text-right h-7 text-xs"
+                            placeholder="R$ 0,00"
                           />
                         </TableCell>
                         <TableCell className="px-1">
@@ -2531,13 +2532,14 @@ export default function NewSalePage() {
                             value={maskCurrency(item.rav)}
                             onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))}
                             className="text-right h-7 text-xs w-20"
+                            placeholder="R$ 0,00"
                           />
                         </TableCell>
                         <TableCell className="px-1">
                           <Input
                             type="number"
                             step="0.5"
-                            value={item.markup_percent || 0}
+                            value={item.markup_percent ? item.markup_percent : ''}
                             onChange={e => updateItem(idx, 'markup_percent', parseFloat(e.target.value) || 0)}
                             className="text-right h-7 text-xs w-20"
                           />
