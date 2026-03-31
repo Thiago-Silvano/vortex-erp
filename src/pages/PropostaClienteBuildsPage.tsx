@@ -32,6 +32,7 @@ interface ProposalPaymentOption {
   discountPercent: number;
   enabled: boolean;
   fixedValue?: number;
+  showPerPerson?: boolean;
 }
 
 interface SaleItemData {
@@ -592,8 +593,9 @@ export default function PropostaClienteBuildsPage() {
                     const isHighlighted = opt.installments === maxInstallments;
                     const optTotal = getOptTotal(opt);
                     const optInstallment = getOptInstallment(opt);
-                    const displayTotal = showPerPassenger ? optTotal / passengersCount : optTotal;
-                    const displayInstallment = showPerPassenger ? optInstallment / passengersCount : optInstallment;
+                    const optPerPerson = (opt.showPerPerson && passengersCount > 1) || showPerPassenger;
+                    const displayTotal = optPerPerson ? optTotal / passengersCount : optTotal;
+                    const displayInstallment = optPerPerson ? optInstallment / passengersCount : optInstallment;
 
                     return (
                       <div key={idx} className="rounded-2xl overflow-hidden" style={{
@@ -621,7 +623,7 @@ export default function PropostaClienteBuildsPage() {
                           ) : (
                             <span className="text-2xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>{fmt(displayTotal)}</span>
                           )}
-                          {showPerPassenger && passengersCount > 1 && <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.4)' : '#bbb' }}>por pessoa</p>}
+                          {optPerPerson && passengersCount > 1 && <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.4)' : '#bbb' }}>por pessoa</p>}
                         </div>
                       </div>
                     );
