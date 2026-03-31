@@ -23,6 +23,7 @@ export interface FlightLegPdf {
   flightCode?: string;
   stopover?: boolean;
   stopoverDays?: number;
+  stopoverMinutes?: number;
 }
 
 export interface HotelPdf {

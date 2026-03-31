@@ -26,6 +26,7 @@ interface FlightLeg {
   airlineId?: string;
   stopover?: boolean;
   stopoverDays?: number;
+  stopoverMinutes?: number;
 }
 
 interface BaggageInfo {
