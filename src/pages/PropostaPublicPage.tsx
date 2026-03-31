@@ -887,6 +887,14 @@ function ServiceCard({
                           </span>
                         )}
                       </div>
+                      {leg.stopover && (leg.stopoverDays || 0) > 0 && (
+                        <div className="flex items-center justify-center py-1">
+                          <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: '#fee2e2', color: '#DC2626', border: '1px solid #DC2626' }}>
+                            🛑 STOPOVER DE {leg.stopoverDays} DIA{leg.stopoverDays > 1 ? 'S' : ''} em {leg.destination}
+                          </span>
+                        </div>
+                      )}
+                    </React.Fragment>
                     ))}
                   </div>
                   );
