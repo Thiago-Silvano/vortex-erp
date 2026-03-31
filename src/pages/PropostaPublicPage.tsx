@@ -860,41 +860,42 @@ function ServiceCard({
                       </div>
                     )}
                     {group.legs.map((leg: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-4 p-3 rounded-xl mb-2" style={{ background: '#faf9f6' }}>
-                        <div className="px-2 py-1 rounded text-[10px] font-bold uppercase" style={{ background: leg.direction === 'ida' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
-                          {leg.direction === 'ida' ? 'IDA' : 'VOLTA'}
+                      <React.Fragment key={idx}>
+                        <div className="flex items-center gap-4 p-3 rounded-xl mb-2" style={{ background: '#faf9f6' }}>
+                          <div className="px-2 py-1 rounded text-[10px] font-bold uppercase" style={{ background: leg.direction === 'ida' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
+                            {leg.direction === 'ida' ? 'IDA' : 'VOLTA'}
+                          </div>
+                          <div className="flex-1 flex items-center gap-3 text-sm">
+                            <div className="text-center">
+                              <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.origin}</p>
+                              {leg.departureTime && <p className="text-xs" style={{ color: '#999' }}>{leg.departureTime}</p>}
+                              {leg.departureDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.departureDate)}</p>}
+                            </div>
+                            <div className="flex-1 flex items-center gap-1">
+                              <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
+                              {leg.flightCode && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: '#f0ede8', color: '#999' }}>{leg.flightCode}</span>}
+                              <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
+                            </div>
+                            <div className="text-center">
+                              <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.destination}</p>
+                              {leg.arrivalTime && <p className="text-xs" style={{ color: '#999' }}>{leg.arrivalTime}</p>}
+                              {leg.arrivalDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.arrivalDate)}</p>}
+                            </div>
+                          </div>
+                          {leg.connectionDuration && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#fff3cd', color: '#856404' }}>
+                              Conexão: {leg.connectionDuration}
+                            </span>
+                          )}
                         </div>
-                        <div className="flex-1 flex items-center gap-3 text-sm">
-                          <div className="text-center">
-                            <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.origin}</p>
-                            {leg.departureTime && <p className="text-xs" style={{ color: '#999' }}>{leg.departureTime}</p>}
-                            {leg.departureDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.departureDate)}</p>}
+                        {leg.stopover && (leg.stopoverDays || 0) > 0 && (
+                          <div className="flex items-center justify-center py-1">
+                            <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: '#fee2e2', color: '#DC2626', border: '1px solid #DC2626' }}>
+                              🛑 STOPOVER DE {leg.stopoverDays} DIA{leg.stopoverDays > 1 ? 'S' : ''} em {leg.destination}
+                            </span>
                           </div>
-                          <div className="flex-1 flex items-center gap-1">
-                            <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
-                            {leg.flightCode && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: '#f0ede8', color: '#999' }}>{leg.flightCode}</span>}
-                            <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.destination}</p>
-                            {leg.arrivalTime && <p className="text-xs" style={{ color: '#999' }}>{leg.arrivalTime}</p>}
-                            {leg.arrivalDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.arrivalDate)}</p>}
-                          </div>
-                        </div>
-                        {leg.connectionDuration && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#fff3cd', color: '#856404' }}>
-                            Conexão: {leg.connectionDuration}
-                          </span>
                         )}
-                      </div>
-                      {leg.stopover && (leg.stopoverDays || 0) > 0 && (
-                        <div className="flex items-center justify-center py-1">
-                          <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: '#fee2e2', color: '#DC2626', border: '1px solid #DC2626' }}>
-                            🛑 STOPOVER DE {leg.stopoverDays} DIA{leg.stopoverDays > 1 ? 'S' : ''} em {leg.destination}
-                          </span>
-                        </div>
-                      )}
-                    </React.Fragment>
+                      </React.Fragment>
                     ))}
                   </div>
                   );
