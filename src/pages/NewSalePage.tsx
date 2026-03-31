@@ -112,6 +112,7 @@ export default function NewSalePage() {
 
   const [quoteId, setQuoteId] = useState(quoteData?.id || '');
   const [clientName, setClientName] = useState(quoteData?.clientName || '');
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [notes, setNotes] = useState('');
   const [passengersCount, setPassengersCount] = useState(1);
