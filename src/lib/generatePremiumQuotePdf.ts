@@ -449,7 +449,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
           y = checkPageBreak(doc, y, 6, m);
           const optTotal = option.totalTrip;
           const discount = payOpt.discountPercent || 0;
-          const adjustedTotal = Math.round(optTotal * (1 - discount / 100) * 100) / 100;
+          const adjustedTotal = (payOpt.fixedValue && payOpt.fixedValue > 0) ? payOpt.fixedValue : Math.round(optTotal * (1 - discount / 100) * 100) / 100;
           const perInstallment = payOpt.installments > 0 ? Math.round((adjustedTotal / payOpt.installments) * 100) / 100 : adjustedTotal;
           let text = payOpt.installments > 1
             ? `${payOpt.label}: ${payOpt.installments}x de ${fmt(perInstallment)}`
