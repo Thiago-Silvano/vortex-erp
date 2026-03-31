@@ -283,6 +283,7 @@ export default function NewSalePage() {
         enabled: o.enabled !== false,
         fixedValue: o.fixedValue || undefined,
         showPerPerson: o.showPerPerson || false,
+        highlighted: o.highlighted || false,
       })));
     }
     if ((sale as any).show_individual_values !== undefined) {
