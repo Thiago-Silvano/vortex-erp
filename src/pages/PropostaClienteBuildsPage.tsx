@@ -261,6 +261,7 @@ export default function PropostaClienteBuildsPage() {
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
 
   const getOptTotal = (opt: ProposalPaymentOption) => {
+    if (opt.fixedValue && opt.fixedValue > 0) return opt.fixedValue;
     const discount = opt.discountPercent || 0;
     return Math.round(selectedTotal * (1 - discount / 100) * 100) / 100;
   };
