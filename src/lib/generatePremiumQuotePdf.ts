@@ -104,6 +104,7 @@ export interface PremiumPdfData {
     receivables: Array<{ number: number; amount: number; dueDate?: string }>;
   };
   proposalPaymentOptions?: ProposalPaymentOptionPdf[];
+  showPerPassenger?: boolean;
   notes?: string;
   destinationImageBase64?: string;
   quoteOptions?: QuoteOptionPdf[];
