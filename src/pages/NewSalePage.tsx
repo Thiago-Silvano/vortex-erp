@@ -2135,7 +2135,7 @@ export default function NewSalePage() {
                     </PopoverContent>
                   </Popover>
                   {selectedClientId && (
-                    <Button type="button" size="icon" variant="outline" onClick={() => navigate('/clients', { state: { openEditId: selectedClientId, returnTo: editSaleId ? '/sales/edit' : '/sales/new', returnState: editSaleId ? { editSaleId } : undefined } })} title="Editar cliente">
+                    <Button type="button" size="icon" variant="outline" onClick={() => navigate('/clients', { state: { openEditId: selectedClientId, returnTo: '/sales/new', returnState: editSaleId ? { editSaleId } : undefined } })} title="Editar cliente">
                       <UserPen className="h-4 w-4" />
                     </Button>
                   )}
