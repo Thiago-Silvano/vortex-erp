@@ -1138,28 +1138,49 @@ function drawFlightDirection(
       y += connH + 2;
     }
 
-    // ── Stopover block after this leg ──
-    if (leg.stopover && (leg.stopoverDays || 0) > 0) {
-      y = checkPageBreak(doc, y, 12, m);
-      const stopH = 10;
-      const stopX = m + 15;
-      const stopW = cw - 30;
+    // ── Stopover block after this leg (auto-computed) ──
+    const nextLegForStop = legs[idx + 1];
+    if (nextLegForStop) {
+      const sameCityStop = leg.destination && nextLegForStop.origin && leg.destination.trim().toUpperCase() === nextLegForStop.origin.trim().toUpperCase();
+      let legStopMinutes = 0;
+      if (sameCityStop && leg.arrivalDate && leg.arrivalTime && nextLegForStop.departureDate && nextLegForStop.departureTime) {
+        const arrStop = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+        const depStop = new Date(`${nextLegForStop.departureDate}T${nextLegForStop.departureTime}:00`);
+        if (!isNaN(arrStop.getTime()) && !isNaN(depStop.getTime())) {
+          legStopMinutes = Math.round((depStop.getTime() - arrStop.getTime()) / 60000);
+        }
+      }
+      // Fallback to stored flag
+      if (legStopMinutes <= 720 && leg.stopover && (leg.stopoverDays || 0) > 0) {
+        legStopMinutes = (leg.stopoverDays || 0) * 1440;
+      }
+      if (legStopMinutes > 720) {
+        y = checkPageBreak(doc, y, 12, m);
+        const stopH = 10;
+        const stopX = m + 15;
+        const stopW = cw - 30;
 
-      doc.setFillColor(255, 235, 235);
-      doc.roundedRect(stopX, y, stopW, stopH, 2, 2, 'F');
+        doc.setFillColor(255, 235, 235);
+        doc.roundedRect(stopX, y, stopW, stopH, 2, 2, 'F');
+        doc.setDrawColor(220, 38, 38);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(stopX, y, stopW, stopH, 2, 2, 'S');
 
-      // Red border
-      doc.setDrawColor(220, 38, 38);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(stopX, y, stopW, stopH, 2, 2, 'S');
+        const sd = Math.floor(legStopMinutes / 1440);
+        const sh = Math.floor((legStopMinutes % 1440) / 60);
+        const sm = legStopMinutes % 60;
+        const sp: string[] = [];
+        if (sd > 0) sp.push(`${sd} DIA${sd > 1 ? 'S' : ''}`);
+        if (sh > 0) sp.push(`${sh}H`);
+        if (sm > 0) sp.push(`${sm}MIN`);
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor(220, 38, 38);
-      const stopText = `STOPOVER DE ${leg.stopoverDays} DIA${leg.stopoverDays! > 1 ? 'S' : ''} em ${leg.destination || ''}`;
-      safeText(doc, stopText, m + cw / 2, y + stopH / 2 + 1.5, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(220, 38, 38);
+        safeText(doc, `STOPOVER DE ${sp.join(' ')} em ${leg.destination || ''}`, m + cw / 2, y + stopH / 2 + 1.5, { align: 'center' });
 
-      y += stopH + 2;
+        y += stopH + 2;
+      }
     }
   });
 
