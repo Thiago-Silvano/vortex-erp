@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
-import ClientFilesSection from '@/components/ClientFilesSection';
+import ClientFilesSection, { type ClientFilesSectionRef } from '@/components/ClientFilesSection';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
@@ -61,6 +61,7 @@ export default function ClientsPage() {
   const [isDependent, setIsDependent] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
+  const filesRef = useRef<ClientFilesSectionRef>(null);
 
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
@@ -113,10 +114,15 @@ export default function ClientsPage() {
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Cliente atualizado!');
     } else {
-      const { error } = await supabase.from('clients').insert({ ...formToSave, empresa_id: activeCompany?.id } as any);
+      const { data: newClient, error } = await supabase.from('clients').insert({ ...formToSave, empresa_id: activeCompany?.id } as any).select('id').single();
       if (error) { toast.error('Erro ao cadastrar'); return; }
+      // Upload pending files for the new client
+      if (newClient && filesRef.current?.hasPendingFiles()) {
+        await filesRef.current.uploadPendingFiles(newClient.id);
+      }
       toast.success('Cliente cadastrado!');
     }
+    filesRef.current?.clearPending();
     setDialogOpen(false);
     setEditingId(null);
     setForm(emptyClient());
@@ -231,7 +237,7 @@ export default function ClientsPage() {
 
             <div className="space-y-3">
               {editingId && <ClientPhotosSection clientId={editingId} />}
-              {editingId && <ClientFilesSection clientId={editingId} />}
+              <ClientFilesSection ref={filesRef} clientId={editingId || undefined} />
               {editingId && activeCompany?.slug === 'vortex-vistos' && (
                 <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} isMaster={isMaster} />
               )}
