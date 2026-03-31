@@ -333,11 +333,27 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
     if (type === 'aereo') {
       meta.airlineId = airlineId || undefined;
-      meta.flightLegs = flightLegs;
+      // Auto-compute stopover flags based on time between consecutive legs
+      const legsWithStopover = flightLegs.map((leg, idx) => {
+        const nextLeg = flightLegs[idx + 1];
+        if (!nextLeg) return { ...leg, stopover: false, stopoverDays: 0 };
+        const sameCity = leg.destination && nextLeg.origin && leg.destination.trim().toUpperCase() === nextLeg.origin.trim().toUpperCase();
+        if (!sameCity || !leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) return { ...leg, stopover: false, stopoverDays: 0 };
+        const arrival = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+        const departure = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}:00`);
+        if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return { ...leg, stopover: false, stopoverDays: 0 };
+        const diffMinutes = Math.round((departure.getTime() - arrival.getTime()) / 60000);
+        if (diffMinutes > 720) { // > 12h = stopover
+          const days = Math.floor(diffMinutes / 1440);
+          return { ...leg, stopover: true, stopoverDays: days || 1, stopoverMinutes: diffMinutes };
+        }
+        return { ...leg, stopover: false, stopoverDays: 0 };
+      });
+      meta.flightLegs = legsWithStopover;
       meta.baggage = baggage;
-      const outbound = flightLegs.filter(l => l.direction === 'ida');
-      const returnL = flightLegs.filter(l => l.direction === 'volta');
-      meta.totalTravelDurationOutbound = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
+      const outbound = legsWithStopover.filter(l => l.direction === 'ida');
+      const returnL = legsWithStopover.filter(l => l.direction === 'volta');
+      meta.totalTravelDurationOutbound = calcTotalTravelDuration(outbound.length > 0 ? outbound : legsWithStopover.filter(l => l.direction !== 'volta'));
       meta.totalTravelDurationReturn = calcTotalTravelDuration(returnL);
     }
     if (type === 'hotel') {
