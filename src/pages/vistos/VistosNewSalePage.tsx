@@ -652,10 +652,11 @@ export default function VistosNewSalePage() {
                           <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
                           <CommandGroup>
                           {allClients.map(c => (
-                              <CommandItem key={c.id} value={c.full_name} onSelect={() => {
+                            <CommandItem key={c.id} value={c.full_name} onSelect={() => {
                                 setClientName(c.full_name);
                                 setClientPhone(c.phone || '');
                                 setClientEmail(c.email || '');
+                                setSelectedClientId(c.id);
                                 setClientPopoverOpen(false);
                               }}>
                                 {c.full_name}
@@ -666,6 +667,11 @@ export default function VistosNewSalePage() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {selectedClientId && (
+                    <Button type="button" size="icon" variant="outline" onClick={() => navigate('/clients', { state: { openEditId: selectedClientId, returnTo: '/vistos/sales/edit', returnState: { editSaleId } } })} title="Editar cliente">
+                      <UserPen className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
                     <Plus className="h-4 w-4" />
                   </Button>
