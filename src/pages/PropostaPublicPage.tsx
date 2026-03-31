@@ -32,6 +32,7 @@ interface ProposalPaymentOption {
   discountPercent: number;
   enabled: boolean;
   fixedValue?: number;
+  showPerPerson?: boolean;
 }
 
 interface SaleItemData {
