@@ -101,6 +101,7 @@ interface ProposalPaymentOption {
   enabled: boolean;
   fixedValue?: number;
   showPerPerson?: boolean;
+  highlighted?: boolean;
 }
 interface InternalFile { id?: string; file_name: string; file_url: string; }
 
@@ -282,6 +283,7 @@ export default function NewSalePage() {
         enabled: o.enabled !== false,
         fixedValue: o.fixedValue || undefined,
         showPerPerson: o.showPerPerson || false,
+        highlighted: o.highlighted || false,
       })));
     }
     if ((sale as any).show_individual_values !== undefined) {
@@ -3168,6 +3170,18 @@ export default function NewSalePage() {
                             />
                             <Label htmlFor={`perPerson_${idx}`} className="text-xs text-muted-foreground cursor-pointer">
                               Mostrar valor por pessoa nesta opção
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Checkbox
+                              id={`highlighted_${idx}`}
+                              checked={opt.highlighted || false}
+                              onCheckedChange={(checked) => {
+                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, highlighted: !!checked } : o));
+                              }}
+                            />
+                            <Label htmlFor={`highlighted_${idx}`} className="text-xs text-muted-foreground cursor-pointer">
+                              Mais Popular (destaque na proposta)
                             </Label>
                           </div>
                         </>
