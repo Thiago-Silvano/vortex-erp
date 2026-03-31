@@ -2704,6 +2704,9 @@ export default function NewSalePage() {
                         {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => duplicateItem(idx)} title="Duplicar item">
+                      <Copy className="h-4 w-4 text-muted-foreground" />
+                    </Button>
                     <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => removeItem(idx)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
