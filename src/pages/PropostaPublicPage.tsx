@@ -584,11 +584,6 @@ export default function PropostaPublicPage() {
                                 Total geral: {fmt(optTotal)}
                               </p>
                             )}
-                            {!optPerPerson && passengersCount > 1 && (
-                              <p className="text-xs mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.3)' : '#bbb' }}>
-                                {fmt(optTotal / passengersCount)} /pessoa
-                              </p>
-                            )}
                           </>
                         );
                       })()}
