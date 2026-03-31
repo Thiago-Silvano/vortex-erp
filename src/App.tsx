@@ -121,6 +121,7 @@ const App = () => (
           <Route path="/financial/receivable" element={<ProtectedRoute><AccountsReceivablePage /></ProtectedRoute>} />
           <Route path="/financial/payable" element={<ProtectedRoute><AccountsPayablePage /></ProtectedRoute>} />
           <Route path="/financial/group-accounts" element={<ProtectedRoute><GroupAccountsPage /></ProtectedRoute>} />
+          <Route path="/financial/ungroup-accounts" element={<ProtectedRoute><UngroupAccountsPage /></ProtectedRoute>} />
           <Route path="/financial/cashflow" element={<ProtectedRoute><CashFlowPage /></ProtectedRoute>} />
           <Route path="/financial/cost-centers" element={<ProtectedRoute><CostCentersPage /></ProtectedRoute>} />
           <Route path="/reports/dashboard" element={<ProtectedRoute><ReportDashboard /></ProtectedRoute>} />

@@ -143,13 +143,14 @@ export default function GroupAccountsPage() {
       const allReceivableIds = [...selectedReceivables];
       const today = format(new Date(), 'yyyy-MM-dd');
       const supplierName = suppliers.find(s => s.id === targetSupplierId)?.name || '';
+      const groupId = crypto.randomUUID();
 
-      // Mark all selected as "agrupado"
+      // Mark all selected as "agrupado" with group_id
       if (allPayableIds.length > 0) {
-        await supabase.from('accounts_payable').update({ status: 'agrupado' } as any).in('id', allPayableIds);
+        await supabase.from('accounts_payable').update({ status: 'agrupado', group_id: groupId } as any).in('id', allPayableIds);
       }
       if (allReceivableIds.length > 0) {
-        await supabase.from('receivables').update({ status: 'agrupado' } as any).in('id', allReceivableIds);
+        await supabase.from('receivables').update({ status: 'agrupado', group_id: groupId } as any).in('id', allReceivableIds);
       }
 
       const absBalance = Math.abs(balance);
@@ -166,6 +167,7 @@ export default function GroupAccountsPage() {
           notes: groupNote,
           installment_number: 1,
           origin_type: 'agrupamento',
+          group_id: groupId,
         } as any);
       } else {
         await supabase.from('accounts_payable').insert({
@@ -179,6 +181,7 @@ export default function GroupAccountsPage() {
           installment_number: 1,
           total_installments: 1,
           origin_type: 'agrupamento',
+          group_id: groupId,
         } as any);
       }
 
