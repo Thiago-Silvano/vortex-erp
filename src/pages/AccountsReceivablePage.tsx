@@ -204,6 +204,7 @@ export default function AccountsReceivablePage() {
     const todayStr = format(today, 'yyyy-MM-dd');
     let overdue = 0, dueToday = 0, pending = 0, received = 0;
     periodItems.forEach(r => {
+      if (r.status === 'agrupado') return;
       if (r.status === 'received') { received += r.amount; return; }
       if (r.due_date && r.due_date < todayStr && r.status !== 'received') { overdue += r.amount; return; }
       if (r.due_date && r.due_date === todayStr && r.status !== 'received') { dueToday += r.amount; return; }
