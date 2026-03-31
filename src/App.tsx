@@ -23,6 +23,7 @@ import ReservationsPage from "./pages/ReservationsPage";
 import NewSalePage from "./pages/NewSalePage";
 import AccountsReceivablePage from "./pages/AccountsReceivablePage";
 import AccountsPayablePage from "./pages/AccountsPayablePage";
+import GroupAccountsPage from "./pages/GroupAccountsPage";
 import CashFlowPage from "./pages/CashFlowPage";
 import CostCentersPage from "./pages/CostCentersPage";
 import ReportDashboard from "./pages/reports/ReportDashboard";
