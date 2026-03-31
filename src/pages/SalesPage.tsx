@@ -45,6 +45,9 @@ export default function SalesPage() {
   const [isMaster, setIsMaster] = useState(false);
   const [sortKey, setSortKey] = useState<'client_name' | 'sale_date' | 'payment_method' | 'total_sale' | 'net_profit' | 'sale_workflow_status'>('sale_date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [datePeriod, setDatePeriod] = useState<DateFilterPeriod>('month');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
 
