@@ -145,25 +145,18 @@ export default function GroupAccountsPage() {
       const supplierName = suppliers.find(s => s.id === targetSupplierId)?.name || '';
 
       // Mark all selected as "agrupado"
-      const updates: Promise<any>[] = [];
       if (allPayableIds.length > 0) {
-        updates.push(
-          supabase.from('accounts_payable').update({ status: 'agrupado' }).in('id', allPayableIds)
-        );
+        await supabase.from('accounts_payable').update({ status: 'agrupado' } as any).in('id', allPayableIds);
       }
       if (allReceivableIds.length > 0) {
-        updates.push(
-          supabase.from('accounts_receivable').update({ status: 'agrupado' }).in('id', allReceivableIds)
-        );
+        await supabase.from('receivables').update({ status: 'agrupado' } as any).in('id', allReceivableIds);
       }
-      await Promise.all(updates);
 
       const absBalance = Math.abs(balance);
       const groupNote = `Agrupamento: ${allPayableIds.length} pagar + ${allReceivableIds.length} receber. Saldo: R$${balance.toFixed(2)}`;
 
       if (balance >= 0) {
-        // Positive or zero → create receivable
-        await supabase.from('accounts_receivable').insert({
+        await supabase.from('receivables').insert({
           empresa_id: activeCompany.id,
           client_name: supplierName,
           description: `Agrupamento de contas`,
@@ -173,9 +166,8 @@ export default function GroupAccountsPage() {
           notes: groupNote,
           installment_number: 1,
           origin_type: 'agrupamento',
-        });
+        } as any);
       } else {
-        // Negative → create payable
         await supabase.from('accounts_payable').insert({
           empresa_id: activeCompany.id,
           supplier_id: targetSupplierId,
@@ -187,7 +179,7 @@ export default function GroupAccountsPage() {
           installment_number: 1,
           total_installments: 1,
           origin_type: 'agrupamento',
-        });
+        } as any);
       }
 
       toast.success('Contas agrupadas com sucesso!');
