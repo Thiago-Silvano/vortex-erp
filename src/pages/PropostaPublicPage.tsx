@@ -549,8 +549,9 @@ export default function PropostaPublicPage() {
                       {(() => {
                         const optTotal = getOptTotal(opt);
                         const optInstallment = getOptInstallment(opt);
-                        const displayTotal = showPerPassenger ? optTotal / passengersCount : optTotal;
-                        const displayInstallment = showPerPassenger ? optInstallment / passengersCount : optInstallment;
+                        const optPerPerson = (opt.showPerPerson && passengersCount > 1) || showPerPassenger;
+                        const displayTotal = optPerPerson ? optTotal / passengersCount : optTotal;
+                        const displayInstallment = optPerPerson ? optInstallment / passengersCount : optInstallment;
                         return (
                           <>
                             {opt.installments > 1 ? (
@@ -568,22 +569,22 @@ export default function PropostaPublicPage() {
                                 {fmt(displayTotal)}
                               </span>
                             )}
-                            {showPerPassenger && passengersCount > 1 && (
+                            {optPerPerson && passengersCount > 1 && (
                               <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.4)' : '#bbb' }}>
                                 por pessoa
                               </p>
                             )}
-                            {showPerPassenger && passengersCount > 1 && opt.installments > 1 && (
+                            {optPerPerson && passengersCount > 1 && opt.installments > 1 && (
                               <p className="text-sm font-semibold mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.7)' : '#555' }}>
                                 {fmt(displayTotal)} por pessoa
                               </p>
                             )}
-                            {showPerPassenger && passengersCount > 1 && (
+                            {optPerPerson && passengersCount > 1 && (
                               <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.25)' : '#ccc' }}>
                                 Total geral: {fmt(optTotal)}
                               </p>
                             )}
-                            {!showPerPassenger && passengersCount > 1 && (
+                            {!optPerPerson && passengersCount > 1 && (
                               <p className="text-xs mt-2" style={{ color: isHighlighted ? 'rgba(255,255,255,0.3)' : '#bbb' }}>
                                 {fmt(optTotal / passengersCount)} /pessoa
                               </p>

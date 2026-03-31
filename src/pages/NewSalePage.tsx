@@ -3073,66 +3073,103 @@ export default function NewSalePage() {
                       }}
                     />
                     <div className="flex-1">
-                      <Label className="font-medium">{opt.label}</Label>
+                      <div className="flex items-center gap-2">
+                        {opt.method.startsWith('custom_') || opt.method.startsWith('pdf_import_') ? (
+                          <Input
+                            value={opt.label}
+                            onChange={e => {
+                              setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, label: e.target.value } : o));
+                            }}
+                            className="h-7 text-sm font-medium w-48"
+                            placeholder="Nome da opção"
+                          />
+                        ) : (
+                          <Label className="font-medium">{opt.label}</Label>
+                        )}
+                        {opt.method.startsWith('custom_') && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            onClick={() => setProposalPaymentOptions(prev => prev.filter((_, i) => i !== idx))}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                       {opt.enabled && (
-                        <div className="mt-2 grid grid-cols-3 gap-2">
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Parcelas</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="24"
-                              value={opt.installments}
-                              onChange={e => {
-                                const inst = parseInt(e.target.value) || 1;
-                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
-                                  ...o,
-                                  installments: inst,
-                                } : o));
-                              }}
-                              className="h-8"
-                            />
+                        <>
+                          <div className="mt-2 grid grid-cols-3 gap-2">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Parcelas</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="24"
+                                value={opt.installments}
+                                onChange={e => {
+                                  const inst = parseInt(e.target.value) || 1;
+                                  setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
+                                    ...o,
+                                    installments: inst,
+                                  } : o));
+                                }}
+                                className="h-8"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Desconto / Acréscimo (%)</Label>
+                              <Input
+                                type="number"
+                                step="0.5"
+                                value={opt.discountPercent || 0}
+                                onChange={e => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
+                                    ...o,
+                                    discountPercent: val,
+                                    fixedValue: undefined,
+                                  } : o));
+                                }}
+                                placeholder="Ex: 5 = 5% desconto"
+                                className="h-8"
+                              />
+                              <p className="text-[10px] text-muted-foreground mt-0.5">Positivo = desconto · Negativo = acréscimo</p>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={opt.fixedValue || ''}
+                                onChange={e => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
+                                    ...o,
+                                    fixedValue: val > 0 ? val : undefined,
+                                    discountPercent: val > 0 ? 0 : o.discountPercent,
+                                  } : o));
+                                }}
+                                placeholder="Ex: 3000"
+                                className="h-8"
+                              />
+                              <p className="text-[10px] text-muted-foreground mt-0.5">Preencha para valor fixo (ignora %)</p>
+                            </div>
                           </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Desconto / Acréscimo (%)</Label>
-                            <Input
-                              type="number"
-                              step="0.5"
-                              value={opt.discountPercent || 0}
-                              onChange={e => {
-                                const val = parseFloat(e.target.value) || 0;
-                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
-                                  ...o,
-                                  discountPercent: val,
-                                  fixedValue: undefined,
-                                } : o));
+                          <div className="flex items-center gap-2 mt-2">
+                            <Checkbox
+                              id={`perPerson_${idx}`}
+                              checked={opt.showPerPerson || false}
+                              onCheckedChange={(checked) => {
+                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, showPerPerson: !!checked } : o));
                               }}
-                              placeholder="Ex: 5 = 5% desconto"
-                              className="h-8"
                             />
-                            <p className="text-[10px] text-muted-foreground mt-0.5">Positivo = desconto · Negativo = acréscimo</p>
+                            <Label htmlFor={`perPerson_${idx}`} className="text-xs text-muted-foreground cursor-pointer">
+                              Mostrar valor por pessoa nesta opção
+                            </Label>
                           </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={opt.fixedValue || ''}
-                              onChange={e => {
-                                const val = parseFloat(e.target.value) || 0;
-                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
-                                  ...o,
-                                  fixedValue: val > 0 ? val : undefined,
-                                  discountPercent: val > 0 ? 0 : o.discountPercent,
-                                } : o));
-                              }}
-                              placeholder="Ex: 3000"
-                              className="h-8"
-                            />
-                            <p className="text-[10px] text-muted-foreground mt-0.5">Preencha para valor fixo (ignora %)</p>
-                          </div>
-                        </div>
+                        </>
                       )}
                     </div>
                   </div>
