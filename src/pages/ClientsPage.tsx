@@ -114,10 +114,15 @@ export default function ClientsPage() {
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Cliente atualizado!');
     } else {
-      const { error } = await supabase.from('clients').insert({ ...formToSave, empresa_id: activeCompany?.id } as any);
+      const { data: newClient, error } = await supabase.from('clients').insert({ ...formToSave, empresa_id: activeCompany?.id } as any).select('id').single();
       if (error) { toast.error('Erro ao cadastrar'); return; }
+      // Upload pending files for the new client
+      if (newClient && filesRef.current?.hasPendingFiles()) {
+        await filesRef.current.uploadPendingFiles(newClient.id);
+      }
       toast.success('Cliente cadastrado!');
     }
+    filesRef.current?.clearPending();
     setDialogOpen(false);
     setEditingId(null);
     setForm(emptyClient());
