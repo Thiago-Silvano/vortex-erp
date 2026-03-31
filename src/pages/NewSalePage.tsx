@@ -1960,6 +1960,7 @@ export default function NewSalePage() {
       totalTaxes: 0,
       totalTrip: totalSaleWithInterest,
       proposalPaymentOptions: proposalPaymentOptions.filter(o => o.enabled),
+      showPerPassenger,
       payment: {
         method: paymentMethod,
         installments: Math.max(...Object.values(installmentsMap), 1),
