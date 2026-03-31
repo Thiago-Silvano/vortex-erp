@@ -914,13 +914,43 @@ function ServiceCard({
                             </span>
                           )}
                         </div>
-                        {leg.stopover && (leg.stopoverDays || 0) > 0 && (
-                          <div className="flex items-center justify-center py-1">
-                            <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: '#fee2e2', color: '#DC2626', border: '1px solid #DC2626' }}>
-                              🛑 STOPOVER DE {leg.stopoverDays} DIA{leg.stopoverDays > 1 ? 'S' : ''} em {leg.destination}
-                            </span>
-                          </div>
-                        )}
+                        {(() => {
+                          const nextLeg = group.legs[idx + 1];
+                          if (!nextLeg) return null;
+                          const sameCity = leg.destination && nextLeg.origin && leg.destination.trim().toUpperCase() === nextLeg.origin.trim().toUpperCase();
+                          if (!sameCity || !leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) {
+                            // Fallback to stored flag
+                            if (leg.stopover && (leg.stopoverDays || 0) > 0) {
+                              return (
+                                <div className="flex items-center justify-center py-1">
+                                  <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: '#fee2e2', color: '#DC2626', border: '1px solid #DC2626' }}>
+                                    🛑 STOPOVER DE {leg.stopoverDays} DIA{leg.stopoverDays > 1 ? 'S' : ''} em {leg.destination}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }
+                          const arrival = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+                          const departure = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}:00`);
+                          if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return null;
+                          const diffMin = Math.round((departure.getTime() - arrival.getTime()) / 60000);
+                          if (diffMin <= 720) return null;
+                          const d = Math.floor(diffMin / 1440);
+                          const h = Math.floor((diffMin % 1440) / 60);
+                          const mi = diffMin % 60;
+                          const ps: string[] = [];
+                          if (d > 0) ps.push(`${d} DIA${d > 1 ? 'S' : ''}`);
+                          if (h > 0) ps.push(`${h}H`);
+                          if (mi > 0) ps.push(`${mi}MIN`);
+                          return (
+                            <div className="flex items-center justify-center py-1">
+                              <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: '#fee2e2', color: '#DC2626', border: '1px solid #DC2626' }}>
+                                🛑 STOPOVER DE {ps.join(' ')} em {leg.destination}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </React.Fragment>
                     ))}
                   </div>
