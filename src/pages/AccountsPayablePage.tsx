@@ -198,6 +198,7 @@ export default function AccountsPayablePage() {
     const todayStr = format(today, 'yyyy-MM-dd');
     let overdue = 0, dueToday = 0, pending = 0, paid = 0;
     periodItems.forEach(r => {
+      if (r.status === 'agrupado') return;
       if (r.status === 'paid') { paid += r.amount; return; }
       if (r.due_date && r.due_date < todayStr && r.status !== 'paid') { overdue += r.amount; return; }
       if (r.due_date && r.due_date === todayStr && r.status !== 'paid') { dueToday += r.amount; return; }
@@ -224,8 +225,8 @@ export default function AccountsPayablePage() {
     });
   }, [periodItems, filterStatus, filterSupplier, filterCostCenter, sortKey, sortDir, suppliers]);
 
-  const statusLabel: Record<string, string> = { open: 'Em aberto', paid: 'Pago', overdue: 'Em atraso', partial: 'Baixa Parcial' };
-  const statusClasses = (s: string) => s === 'paid' ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' : s === 'overdue' ? 'bg-red-500/15 text-red-700 border-red-500/30' : s === 'partial' ? 'bg-blue-500/15 text-blue-700 border-blue-500/30' : 'bg-yellow-500/15 text-yellow-700 border-yellow-500/30';
+  const statusLabel: Record<string, string> = { open: 'Em aberto', paid: 'Pago', overdue: 'Em atraso', partial: 'Baixa Parcial', agrupado: 'Agrupado' };
+  const statusClasses = (s: string) => s === 'paid' ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' : s === 'overdue' ? 'bg-red-500/15 text-red-700 border-red-500/30' : s === 'partial' ? 'bg-blue-500/15 text-blue-700 border-blue-500/30' : s === 'agrupado' ? 'bg-blue-500/15 text-blue-700 border-blue-500/30' : 'bg-yellow-500/15 text-yellow-700 border-yellow-500/30';
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const supplierName = (id: string | null) => suppliers.find(s => s.id === id)?.name || '-';
 
@@ -336,6 +337,7 @@ export default function AccountsPayablePage() {
               <SelectItem value="open">Em aberto</SelectItem>
               <SelectItem value="paid">Pago</SelectItem>
               <SelectItem value="overdue">Atrasado</SelectItem>
+              <SelectItem value="agrupado">Agrupado</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterSupplier} onValueChange={setFilterSupplier}>

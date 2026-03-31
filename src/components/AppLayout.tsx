@@ -108,6 +108,7 @@ function TopMenuBar() {
       items: [
         { title: 'Contas a Receber', url: '/financial/receivable', permKey: 'financial_receivable' },
         { title: 'Contas a Pagar', url: '/financial/payable', permKey: 'financial_payable' },
+        { title: 'Agrupar Contas', url: '/financial/group-accounts', permKey: 'financial_payable' },
         { title: 'Contas Correntes', url: '/financial/bank-accounts', permKey: 'financial_bank_accounts' },
         { title: 'Conciliação Bancária', url: '/financial/reconciliation', permKey: 'financial_reconciliation' },
         { title: 'Fluxo de Caixa', url: '/financial/cashflow', permKey: 'financial_cashflow' },
@@ -177,6 +178,7 @@ function TopMenuBar() {
       items: [
         { title: 'Contas a Receber', url: '/financial/receivable', permKey: 'financial_receivable' },
         { title: 'Contas a Pagar', url: '/financial/payable', permKey: 'financial_payable' },
+        { title: 'Agrupar Contas', url: '/financial/group-accounts', permKey: 'financial_payable' },
         { title: 'Contas Correntes', url: '/financial/bank-accounts', permKey: 'financial_bank_accounts' },
         { title: 'Conciliação Bancária', url: '/financial/reconciliation', permKey: 'financial_reconciliation' },
         { title: 'Fluxo de Caixa', url: '/financial/cashflow', permKey: 'financial_cashflow' },
