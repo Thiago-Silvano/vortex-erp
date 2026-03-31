@@ -842,14 +842,21 @@ function ServiceCard({
                 if (returnLegs.length > 0) groups.push({ label: 'VOLTA', legs: returnLegs, duration: metadata.totalTravelDurationReturn });
                 if (groups.length === 0) groups.push({ label: 'IDA', legs, duration: metadata.totalTravelDurationOutbound });
 
-                return groups.map((group, gIdx) => (
+                return groups.map((group, gIdx) => {
+                  const groupStopoverDays = group.legs.reduce((sum: number, l: any) => sum + ((l.stopover && l.stopoverDays) ? l.stopoverDays : 0), 0);
+                  return (
                   <div key={gIdx}>
-                    {group.duration && (
-                      <div className="flex items-center gap-2 mb-2 mt-1">
+                    {(group.duration || groupStopoverDays > 0) && (
+                      <div className="flex items-center gap-2 mb-2 mt-1 flex-wrap">
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ background: group.label === 'IDA' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
                           {group.label}
                         </span>
-                        <span className="text-xs" style={{ color: '#999' }}>⏱ Tempo total: <strong style={{ color: '#0D1B2A' }}>{group.duration}</strong></span>
+                        {group.duration && <span className="text-xs" style={{ color: '#999' }}>⏱ Tempo total: <strong style={{ color: '#0D1B2A' }}>{group.duration}</strong></span>}
+                        {groupStopoverDays > 0 && (
+                          <span className="text-xs font-bold" style={{ color: '#DC2626' }}>
+                            🛑 STOPOVER DE {groupStopoverDays} DIA{groupStopoverDays > 1 ? 'S' : ''}
+                          </span>
+                        )}
                       </div>
                     )}
                     {group.legs.map((leg: any, idx: number) => (
