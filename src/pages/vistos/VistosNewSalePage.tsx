@@ -127,6 +127,9 @@ export default function VistosNewSalePage() {
     if (!sale) return;
     setClientName(sale.client_name); setClientPhone(sale.client_phone || '');
     setClientEmail(sale.client_email || '');
+    // Try to match client ID
+    const { data: matchedClient } = await supabase.from('clients').select('id').eq('empresa_id', activeCompany?.id).ilike('full_name', sale.client_name).limit(1).maybeSingle();
+    if (matchedClient) setSelectedClientId(matchedClient.id);
     setNotes(sale.notes || '');
     setSaleDate(sale.sale_date);
     setCardFeeValue(Number(sale.card_fee_value) || 0);
