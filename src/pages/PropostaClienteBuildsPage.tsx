@@ -593,8 +593,9 @@ export default function PropostaClienteBuildsPage() {
                     const isHighlighted = opt.installments === maxInstallments;
                     const optTotal = getOptTotal(opt);
                     const optInstallment = getOptInstallment(opt);
-                    const displayTotal = showPerPassenger ? optTotal / passengersCount : optTotal;
-                    const displayInstallment = showPerPassenger ? optInstallment / passengersCount : optInstallment;
+                    const optPerPerson = (opt.showPerPerson && passengersCount > 1) || showPerPassenger;
+                    const displayTotal = optPerPerson ? optTotal / passengersCount : optTotal;
+                    const displayInstallment = optPerPerson ? optInstallment / passengersCount : optInstallment;
 
                     return (
                       <div key={idx} className="rounded-2xl overflow-hidden" style={{
