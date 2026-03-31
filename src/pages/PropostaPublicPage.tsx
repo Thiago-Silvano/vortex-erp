@@ -31,6 +31,7 @@ interface ProposalPaymentOption {
   installments: number;
   discountPercent: number;
   enabled: boolean;
+  fixedValue?: number;
 }
 
 interface SaleItemData {

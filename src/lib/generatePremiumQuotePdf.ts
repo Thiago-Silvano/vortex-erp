@@ -51,6 +51,7 @@ export interface ProposalPaymentOptionPdf {
   installments: number;
   discountPercent: number;
   enabled: boolean;
+  fixedValue?: number;
 }
 
 export interface QuoteOptionPdf {
