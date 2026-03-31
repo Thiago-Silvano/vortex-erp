@@ -2122,6 +2122,7 @@ export default function NewSalePage() {
                             {allClients.map(c => (
                               <CommandItem key={c.id} value={c.full_name} onSelect={() => { 
                                 setClientName(c.full_name); 
+                                setSelectedClientId(c.id);
                                 setClientPopoverOpen(false); 
                                 setAskAddClientAsPassenger(c);
                               }}>
