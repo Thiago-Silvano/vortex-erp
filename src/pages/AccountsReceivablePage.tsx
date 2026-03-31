@@ -345,6 +345,7 @@ export default function AccountsReceivablePage() {
               <SelectItem value="pending">Em aberto</SelectItem>
               <SelectItem value="received">Recebido</SelectItem>
               <SelectItem value="overdue">Atrasado</SelectItem>
+              <SelectItem value="agrupado">Agrupado</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterCostCenter} onValueChange={setFilterCostCenter}>

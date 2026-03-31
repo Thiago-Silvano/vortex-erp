@@ -337,6 +337,7 @@ export default function AccountsPayablePage() {
               <SelectItem value="open">Em aberto</SelectItem>
               <SelectItem value="paid">Pago</SelectItem>
               <SelectItem value="overdue">Atrasado</SelectItem>
+              <SelectItem value="agrupado">Agrupado</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterSupplier} onValueChange={setFilterSupplier}>
