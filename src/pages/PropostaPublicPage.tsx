@@ -845,18 +845,42 @@ function ServiceCard({
                 if (groups.length === 0) groups.push({ label: 'IDA', legs, duration: metadata.totalTravelDurationOutbound });
 
                 return groups.map((group, gIdx) => {
-                  const groupStopoverDays = group.legs.reduce((sum: number, l: any) => sum + ((l.stopover && l.stopoverDays) ? l.stopoverDays : 0), 0);
+                  // Auto-compute stopover from leg times
+                  let groupStopoverMinutes = 0;
+                  group.legs.forEach((leg: any, idx: number) => {
+                    const nextLeg = group.legs[idx + 1];
+                    if (!nextLeg) return;
+                    const sameCity = leg.destination && nextLeg.origin && leg.destination.trim().toUpperCase() === nextLeg.origin.trim().toUpperCase();
+                    if (!sameCity || !leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) return;
+                    const arrival = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+                    const departure = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}:00`);
+                    if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return;
+                    const diff = Math.round((departure.getTime() - arrival.getTime()) / 60000);
+                    if (diff > 720) groupStopoverMinutes += diff;
+                  });
+                  // Also check stored stopover flag as fallback
+                  if (groupStopoverMinutes === 0) {
+                    groupStopoverMinutes = group.legs.reduce((sum: number, l: any) => sum + ((l.stopover && l.stopoverDays) ? l.stopoverDays * 1440 : 0), 0);
+                  }
+                  const stopDays = Math.floor(groupStopoverMinutes / 1440);
+                  const stopHours = Math.floor((groupStopoverMinutes % 1440) / 60);
+                  const stopMins = groupStopoverMinutes % 60;
+                  const stopParts: string[] = [];
+                  if (stopDays > 0) stopParts.push(`${stopDays} dia${stopDays > 1 ? 's' : ''}`);
+                  if (stopHours > 0) stopParts.push(`${stopHours}h`);
+                  if (stopMins > 0) stopParts.push(`${stopMins}min`);
+                  const stopLabel = stopParts.join(' ');
                   return (
                   <div key={gIdx}>
-                    {(group.duration || groupStopoverDays > 0) && (
+                    {(group.duration || groupStopoverMinutes > 0) && (
                       <div className="flex items-center gap-2 mb-2 mt-1 flex-wrap">
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ background: group.label === 'IDA' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
                           {group.label}
                         </span>
                         {group.duration && <span className="text-xs" style={{ color: '#999' }}>⏱ Tempo total: <strong style={{ color: '#0D1B2A' }}>{group.duration}</strong></span>}
-                        {groupStopoverDays > 0 && (
+                        {groupStopoverMinutes > 0 && (
                           <span className="text-xs font-bold" style={{ color: '#DC2626' }}>
-                            🛑 STOPOVER DE {groupStopoverDays} DIA{groupStopoverDays > 1 ? 'S' : ''}
+                            🛑 STOPOVER DE {stopLabel}
                           </span>
                         )}
                       </div>
