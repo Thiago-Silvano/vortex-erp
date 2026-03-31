@@ -753,7 +753,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
         const isHighlighted = opt.installments === maxInstallments;
 
         const discount = opt.discountPercent || 0;
-        const optTotalValue = Math.round(data.totalTrip * (1 - discount / 100) * 100) / 100;
+        const optTotalValue = (opt.fixedValue && opt.fixedValue > 0) ? opt.fixedValue : Math.round(data.totalTrip * (1 - discount / 100) * 100) / 100;
         const optInstallmentValue = opt.installments > 0 ? Math.round((optTotalValue / opt.installments) * 100) / 100 : optTotalValue;
 
         const optBoxH = isHighlighted ? 22 : 18;
