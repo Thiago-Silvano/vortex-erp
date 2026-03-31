@@ -252,7 +252,13 @@ export default function ClientsPage() {
         </div>
 
         {/* Form Dialog - Compact multi-column layout */}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open && returnTo) {
+            navigate(returnTo.path, { state: returnTo.state });
+            setReturnTo(null);
+          }
+        }}>
           <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? 'Editar Cliente' : 'Cadastrar Cliente'}</DialogTitle>
