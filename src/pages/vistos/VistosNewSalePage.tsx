@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Plus, Trash2, ChevronsUpDown } from 'lucide-react';
+import { Plus, Trash2, ChevronsUpDown, UserPen } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import QuickClientModal from '@/components/QuickClientModal';
@@ -84,6 +84,7 @@ export default function VistosNewSalePage() {
   const [cardFeeValue, setCardFeeValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; phone?: string; email?: string }[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [quickClientForApplicant, setQuickClientForApplicant] = useState<number | null>(null);
@@ -126,6 +127,9 @@ export default function VistosNewSalePage() {
     if (!sale) return;
     setClientName(sale.client_name); setClientPhone(sale.client_phone || '');
     setClientEmail(sale.client_email || '');
+    // Try to match client ID
+    const { data: matchedClient } = await supabase.from('clients').select('id').eq('empresa_id', activeCompany?.id).ilike('full_name', sale.client_name).limit(1).maybeSingle();
+    if (matchedClient) setSelectedClientId(matchedClient.id);
     setNotes(sale.notes || '');
     setSaleDate(sale.sale_date);
     setCardFeeValue(Number(sale.card_fee_value) || 0);
@@ -651,10 +655,11 @@ export default function VistosNewSalePage() {
                           <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
                           <CommandGroup>
                           {allClients.map(c => (
-                              <CommandItem key={c.id} value={c.full_name} onSelect={() => {
+                            <CommandItem key={c.id} value={c.full_name} onSelect={() => {
                                 setClientName(c.full_name);
                                 setClientPhone(c.phone || '');
                                 setClientEmail(c.email || '');
+                                setSelectedClientId(c.id);
                                 setClientPopoverOpen(false);
                               }}>
                                 {c.full_name}
@@ -665,6 +670,11 @@ export default function VistosNewSalePage() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {selectedClientId && (
+                    <Button type="button" size="icon" variant="outline" onClick={() => navigate('/clients', { state: { openEditId: selectedClientId, returnTo: '/vistos/sales/edit', returnState: { editSaleId } } })} title="Editar cliente">
+                      <UserPen className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
                     <Plus className="h-4 w-4" />
                   </Button>
