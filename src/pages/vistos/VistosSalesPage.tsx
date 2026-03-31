@@ -108,7 +108,8 @@ export default function VistosSalesPage() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
 
-  const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + (s.total_value || 0), 0), [filtered]);
+  const salesForTotal = useMemo(() => filtered.filter(s => (s.total_value || 0) > 0), [filtered]);
+  const totalFiltered = useMemo(() => salesForTotal.reduce((sum, s) => sum + (s.total_value || 0), 0), [salesForTotal]);
 
   const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto', cartao_credito: 'Cartão Crédito', cartao_debito: 'Cartão Débito', transferencia: 'Transferência' };
 
