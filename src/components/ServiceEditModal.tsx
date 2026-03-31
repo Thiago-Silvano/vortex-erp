@@ -24,6 +24,8 @@ interface FlightLeg {
   direction: 'ida' | 'volta';
   flightCode: string;
   airlineId?: string;
+  stopover?: boolean;
+  stopoverDays?: number;
 }
 
 interface BaggageInfo {
