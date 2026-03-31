@@ -2537,7 +2537,7 @@ export default function NewSalePage() {
                           <Input
                             type="number"
                             step="0.5"
-                            value={item.markup_percent || 0}
+                            value={item.markup_percent ? item.markup_percent : ''}
                             onChange={e => updateItem(idx, 'markup_percent', parseFloat(e.target.value) || 0)}
                             className="text-right h-7 text-xs w-20"
                           />
