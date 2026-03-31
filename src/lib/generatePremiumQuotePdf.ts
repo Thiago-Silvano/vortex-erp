@@ -1098,10 +1098,6 @@ function drawFlightDirection(
       doc.setFillColor(CONNECTION_BG[0], CONNECTION_BG[1], CONNECTION_BG[2]);
       doc.roundedRect(connX, y, connW, connH, 2, 2, 'F');
 
-      // Dashed border lines top and bottom
-      doc.setDrawColor(BORDER_COLOR[0], BORDER_COLOR[1], BORDER_COLOR[2]);
-      doc.setLineWidth(0.15);
-
       // Connection icon and text
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
@@ -1116,6 +1112,30 @@ function drawFlightDirection(
       safeText(doc, connText, m + cw / 2, y + connH / 2 + 1.5, { align: 'center' });
 
       y += connH + 2;
+    }
+
+    // ── Stopover block after this leg ──
+    if (leg.stopover && (leg.stopoverDays || 0) > 0) {
+      y = checkPageBreak(doc, y, 12, m);
+      const stopH = 10;
+      const stopX = m + 15;
+      const stopW = cw - 30;
+
+      doc.setFillColor(255, 235, 235);
+      doc.roundedRect(stopX, y, stopW, stopH, 2, 2, 'F');
+
+      // Red border
+      doc.setDrawColor(220, 38, 38);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(stopX, y, stopW, stopH, 2, 2, 'S');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(220, 38, 38);
+      const stopText = `STOPOVER DE ${leg.stopoverDays} DIA${leg.stopoverDays! > 1 ? 'S' : ''} em ${leg.destination || ''}`;
+      safeText(doc, stopText, m + cw / 2, y + stopH / 2 + 1.5, { align: 'center' });
+
+      y += stopH + 2;
     }
   });
 
