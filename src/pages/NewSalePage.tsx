@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -112,6 +112,7 @@ export default function NewSalePage() {
 
   const [quoteId, setQuoteId] = useState(quoteData?.id || '');
   const [clientName, setClientName] = useState(quoteData?.clientName || '');
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [notes, setNotes] = useState('');
   const [passengersCount, setPassengersCount] = useState(1);
@@ -237,6 +238,11 @@ export default function NewSalePage() {
     setSaleWorkflowStatus((sale as any).sale_workflow_status || 'em_aberto');
     setQuoteId(sale.quote_id || '');
     setClientName(sale.client_name);
+    // Resolve client ID from name
+    if (sale.client_name) {
+      const { data: foundClient } = await supabase.from('clients').select('id').eq('full_name', sale.client_name).eq('empresa_id', activeCompany?.id).limit(1).single();
+      if (foundClient) setSelectedClientId(foundClient.id);
+    }
     setSaleDate(sale.sale_date);
     const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
     setPaymentMethods(savedMethods.length > 0 ? savedMethods : []);
@@ -2116,6 +2122,7 @@ export default function NewSalePage() {
                             {allClients.map(c => (
                               <CommandItem key={c.id} value={c.full_name} onSelect={() => { 
                                 setClientName(c.full_name); 
+                                setSelectedClientId(c.id);
                                 setClientPopoverOpen(false); 
                                 setAskAddClientAsPassenger(c);
                               }}>
@@ -2127,6 +2134,11 @@ export default function NewSalePage() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {selectedClientId && (
+                    <Button type="button" size="icon" variant="outline" onClick={() => navigate('/clients', { state: { openEditId: selectedClientId, returnTo: '/sales/new', returnState: editSaleId ? { editSaleId } : undefined } })} title="Editar cliente">
+                      <UserPen className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
                     <Plus className="h-4 w-4" />
                   </Button>
