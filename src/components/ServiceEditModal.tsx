@@ -475,6 +475,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                           <SelectItem value="volta">Volta</SelectItem>
                         </SelectContent>
                       </Select>
+                      <OctagonAlert className="h-3.5 w-3.5 text-destructive" />
                       <span className="text-xs text-muted-foreground">Trecho {idx + 1}</span>
                     </div>
                     <Button size="icon" variant="ghost" onClick={() => removeLeg(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -504,6 +505,33 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     <div><Label className="text-xs">Hora Partida</Label><Input type="time" value={leg.departureTime} onChange={e => updateLeg(idx, 'departureTime', e.target.value)} /></div>
                     <div><Label className="text-xs">Data Chegada</Label><Input type="date" value={leg.arrivalDate} onChange={e => updateLeg(idx, 'arrivalDate', e.target.value)} /></div>
                     <div><Label className="text-xs">Hora Chegada</Label><Input type="time" value={leg.arrivalTime} onChange={e => updateLeg(idx, 'arrivalTime', e.target.value)} /></div>
+                  </div>
+                  {/* Stopover option */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`stopover-${idx}`}
+                        checked={!!leg.stopover}
+                        onCheckedChange={(checked) => {
+                          setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, stopover: !!checked, stopoverDays: checked ? (l.stopoverDays || 1) : 0 } : l));
+                        }}
+                      />
+                      <Label htmlFor={`stopover-${idx}`} className="text-xs font-medium text-destructive flex items-center gap-1 cursor-pointer">
+                        <OctagonAlert className="h-3 w-3" /> Stopover
+                      </Label>
+                    </div>
+                    {leg.stopover && (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs">Dias:</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={leg.stopoverDays || 1}
+                          onChange={e => setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, stopoverDays: parseInt(e.target.value) || 1 } : l))}
+                          className="w-20 h-7 text-xs"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
