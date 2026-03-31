@@ -754,7 +754,7 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
 
       data.proposalPaymentOptions.forEach((opt, idx) => {
         y = checkPageBreak(doc, y, 22, m);
-        const isHighlighted = opt.installments === maxInstallments;
+        const isHighlighted = opt.highlighted === true;
 
         const discount = opt.discountPercent || 0;
         const optTotalValue = (opt.fixedValue && opt.fixedValue > 0) ? opt.fixedValue : Math.round(data.totalTrip * (1 - discount / 100) * 100) / 100;

@@ -3172,6 +3172,18 @@ export default function NewSalePage() {
                               Mostrar valor por pessoa nesta opção
                             </Label>
                           </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Checkbox
+                              id={`highlighted_${idx}`}
+                              checked={opt.highlighted || false}
+                              onCheckedChange={(checked) => {
+                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, highlighted: !!checked } : o));
+                              }}
+                            />
+                            <Label htmlFor={`highlighted_${idx}`} className="text-xs text-muted-foreground cursor-pointer">
+                              Mais Popular (destaque na proposta)
+                            </Label>
+                          </div>
                         </>
                       )}
                     </div>

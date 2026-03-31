@@ -525,7 +525,7 @@ export default function PropostaPublicPage() {
               return (
               <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {proposalOptions.map((opt, idx) => {
-                  const isHighlighted = opt.installments === maxInstallments;
+                  const isHighlighted = opt.highlighted === true;
                   return (
                   <div key={idx} className="rounded-2xl overflow-hidden relative" style={{ background: '#fff', boxShadow: isHighlighted ? '0 8px 32px rgba(200,164,91,0.25)' : '0 4px 24px rgba(0,0,0,0.06)', border: isHighlighted ? '2px solid #C8A45B' : 'none' }}>
                     {isHighlighted && (

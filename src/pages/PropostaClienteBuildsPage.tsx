@@ -591,7 +591,7 @@ export default function PropostaClienteBuildsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {proposalOptions.map((opt, idx) => {
                     const maxInstallments = Math.max(...proposalOptions.map(o => o.installments));
-                    const isHighlighted = opt.installments === maxInstallments;
+                    const isHighlighted = opt.highlighted === true;
                     const optTotal = getOptTotal(opt);
                     const optInstallment = getOptInstallment(opt);
                     const optPerPerson = (opt.showPerPerson && passengersCount > 1) || showPerPassenger;
