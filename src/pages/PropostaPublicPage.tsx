@@ -31,6 +31,7 @@ interface ProposalPaymentOption {
   installments: number;
   discountPercent: number;
   enabled: boolean;
+  fixedValue?: number;
 }
 
 interface SaleItemData {
@@ -246,6 +247,7 @@ export default function PropostaPublicPage() {
 
   // Helper to compute option total/installment from discount
   const getOptTotal = (opt: ProposalPaymentOption) => {
+    if (opt.fixedValue && opt.fixedValue > 0) return opt.fixedValue;
     const discount = opt.discountPercent || 0;
     return Math.round(totalSale * (1 - discount / 100) * 100) / 100;
   };

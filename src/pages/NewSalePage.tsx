@@ -99,6 +99,7 @@ interface ProposalPaymentOption {
   installments: number;
   discountPercent: number;
   enabled: boolean;
+  fixedValue?: number;
 }
 interface InternalFile { id?: string; file_name: string; file_url: string; }
 
@@ -279,6 +280,7 @@ export default function NewSalePage() {
         installments: o.installments || 1,
         discountPercent: o.discountPercent ?? 0,
         enabled: o.enabled !== false,
+        fixedValue: o.fixedValue || undefined,
       })));
     }
     if ((sale as any).show_individual_values !== undefined) {
@@ -3072,7 +3074,7 @@ export default function NewSalePage() {
                     <div className="flex-1">
                       <Label className="font-medium">{opt.label}</Label>
                       {opt.enabled && (
-                        <div className="mt-2 grid grid-cols-2 gap-2">
+                        <div className="mt-2 grid grid-cols-3 gap-2">
                           <div>
                             <Label className="text-xs text-muted-foreground">Parcelas</Label>
                             <Input
@@ -3101,12 +3103,33 @@ export default function NewSalePage() {
                                 setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
                                   ...o,
                                   discountPercent: val,
+                                  fixedValue: undefined,
                                 } : o));
                               }}
-                              placeholder="Ex: 5 = 5% desconto, -3 = 3% acréscimo"
+                              placeholder="Ex: 5 = 5% desconto"
                               className="h-8"
                             />
                             <p className="text-[10px] text-muted-foreground mt-0.5">Positivo = desconto · Negativo = acréscimo</p>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={opt.fixedValue || ''}
+                              onChange={e => {
+                                const val = parseFloat(e.target.value) || 0;
+                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
+                                  ...o,
+                                  fixedValue: val > 0 ? val : undefined,
+                                  discountPercent: val > 0 ? 0 : o.discountPercent,
+                                } : o));
+                              }}
+                              placeholder="Ex: 3000"
+                              className="h-8"
+                            />
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Preencha para valor fixo (ignora %)</p>
                           </div>
                         </div>
                       )}
