@@ -2524,6 +2524,7 @@ export default function NewSalePage() {
                             value={maskCurrency(item.cost_price)}
                             onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))}
                             className="text-right h-7 text-xs"
+                            placeholder="R$ 0,00"
                           />
                         </TableCell>
                         <TableCell className="px-1">
