@@ -108,7 +108,8 @@ export default function VistosSalesPage() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
 
-  const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + (s.total_value || 0), 0), [filtered]);
+  const salesForTotal = useMemo(() => filtered.filter(s => (s.total_value || 0) > 0), [filtered]);
+  const totalFiltered = useMemo(() => salesForTotal.reduce((sum, s) => sum + (s.total_value || 0), 0), [salesForTotal]);
 
   const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto', cartao_credito: 'Cartão Crédito', cartao_debito: 'Cartão Débito', transferencia: 'Transferência' };
 
@@ -151,7 +152,7 @@ export default function VistosSalesPage() {
         <div className="flex flex-wrap items-center gap-3">
           <SalesDateFilter period={datePeriod} onPeriodChange={setDatePeriod} customStart={customStart} customEnd={customEnd} onCustomStartChange={setCustomStart} onCustomEndChange={setCustomEnd} />
           <div className="ml-auto text-sm font-semibold text-foreground whitespace-nowrap">
-            Total: <span className="text-primary">R$ {totalFiltered.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span> <span className="text-muted-foreground font-normal">({filtered.length} vendas)</span>
+            Total: <span className="text-primary">R$ {totalFiltered.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span> <span className="text-muted-foreground font-normal">({salesForTotal.length} vendas)</span>
           </div>
         </div>
 
