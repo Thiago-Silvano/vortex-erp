@@ -3,10 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Undo2, FileCheck, FileX } from 'lucide-react';
+import SalesDateFilter, { DateFilterPeriod, getDateRange } from '@/components/SalesDateFilter';
 
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,9 @@ export default function SalesPage() {
   const [isMaster, setIsMaster] = useState(false);
   const [sortKey, setSortKey] = useState<'client_name' | 'sale_date' | 'payment_method' | 'total_sale' | 'net_profit' | 'sale_workflow_status'>('sale_date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [datePeriod, setDatePeriod] = useState<DateFilterPeriod>('month');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
 
@@ -163,10 +167,17 @@ export default function SalesPage() {
   };
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const dateRange = useMemo(() => getDateRange(datePeriod, customStart, customEnd), [datePeriod, customStart, customEnd]);
+
   const filtered = sales
     .filter(s => {
       if (s.status !== 'active') return false;
-      return normalize(s.client_name).includes(normalize(search));
+      if (!normalize(s.client_name).includes(normalize(search))) return false;
+      if (dateRange && s.sale_date) {
+        const d = new Date(s.sale_date + 'T12:00:00');
+        if (d < dateRange.start || d > dateRange.end) return false;
+      }
+      return true;
     })
     .sort((a, b) => {
       let cmp = 0;
@@ -178,6 +189,8 @@ export default function SalesPage() {
       else if (sortKey === 'sale_workflow_status') cmp = (a.sale_workflow_status || '').localeCompare(b.sale_workflow_status || '');
       return sortDir === 'asc' ? cmp : -cmp;
     });
+
+  const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + Number(s.total_sale || 0), 0), [filtered]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -200,6 +213,10 @@ export default function SalesPage() {
           <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input className="pl-9" placeholder="Buscar por cliente..." value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <SalesDateFilter period={datePeriod} onPeriodChange={setDatePeriod} customStart={customStart} customEnd={customEnd} onCustomStartChange={setCustomStart} onCustomEndChange={setCustomEnd} />
+          <div className="ml-auto text-sm font-semibold text-foreground whitespace-nowrap">
+            Total: <span className="text-primary">{fmt(totalFiltered)}</span> <span className="text-muted-foreground font-normal">({filtered.length} vendas)</span>
           </div>
         </div>
 

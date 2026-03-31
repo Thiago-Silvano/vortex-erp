@@ -396,7 +396,13 @@ export default function ClientsPage() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => {
+                setDialogOpen(false);
+                if (returnTo) {
+                  navigate(returnTo.path, { state: returnTo.state });
+                  setReturnTo(null);
+                }
+              }}>Cancelar</Button>
               <Button onClick={handleSave}>{editingId ? 'Atualizar' : 'Cadastrar'}</Button>
             </DialogFooter>
           </DialogContent>

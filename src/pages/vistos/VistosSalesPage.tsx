@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Search, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import SalesDateFilter, { DateFilterPeriod, getDateRange } from '@/components/SalesDateFilter';
 
 interface VisaSale {
   id: string;
@@ -33,6 +34,9 @@ export default function VistosSalesPage() {
   const [deleting, setDeleting] = useState(false);
   const [sortKey, setSortKey] = useState<'client_name' | 'product_name' | 'sale_date' | 'total_value' | 'payment_method'>('sale_date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [datePeriod, setDatePeriod] = useState<DateFilterPeriod>('month');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
 
   const toggleSort = (key: typeof sortKey) => {
     if (sortKey === key) {
@@ -82,11 +86,18 @@ export default function VistosSalesPage() {
 
   useEffect(() => { fetchSales(); }, [activeCompany?.id]);
 
+  const dateRange = useMemo(() => getDateRange(datePeriod, customStart, customEnd), [datePeriod, customStart, customEnd]);
+
   const filtered = sales
-    .filter(s =>
-      s.client_name.toLowerCase().includes(filter.toLowerCase()) ||
-      (s.services_summary || '').toLowerCase().includes(filter.toLowerCase())
-    )
+    .filter(s => {
+      if (!s.client_name.toLowerCase().includes(filter.toLowerCase()) &&
+          !(s.services_summary || '').toLowerCase().includes(filter.toLowerCase())) return false;
+      if (dateRange && s.sale_date) {
+        const d = new Date(s.sale_date + 'T12:00:00');
+        if (d < dateRange.start || d > dateRange.end) return false;
+      }
+      return true;
+    })
     .sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'client_name') cmp = a.client_name.localeCompare(b.client_name);
@@ -96,6 +107,8 @@ export default function VistosSalesPage() {
       else if (sortKey === 'payment_method') cmp = (a.payment_method || '').localeCompare(b.payment_method || '');
       return sortDir === 'asc' ? cmp : -cmp;
     });
+
+  const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + (s.total_value || 0), 0), [filtered]);
 
   const paymentLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', boleto: 'Boleto', cartao_credito: 'Cartão Crédito', cartao_debito: 'Cartão Débito', transferencia: 'Transferência' };
 
@@ -132,6 +145,13 @@ export default function VistosSalesPage() {
               <Input placeholder="Pesquisar..." value={filter} onChange={e => setFilter(e.target.value)} className="pl-9 w-full sm:w-64" />
             </div>
             <Button onClick={() => navigate('/vistos/sales/new')}><Plus className="h-4 w-4 mr-1" /> Nova Venda</Button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <SalesDateFilter period={datePeriod} onPeriodChange={setDatePeriod} customStart={customStart} customEnd={customEnd} onCustomStartChange={setCustomStart} onCustomEndChange={setCustomEnd} />
+          <div className="ml-auto text-sm font-semibold text-foreground whitespace-nowrap">
+            Total: <span className="text-primary">R$ {totalFiltered.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span> <span className="text-muted-foreground font-normal">({filtered.length} vendas)</span>
           </div>
         </div>
 
