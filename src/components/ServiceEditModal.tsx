@@ -26,6 +26,7 @@ interface FlightLeg {
   airlineId?: string;
   stopover?: boolean;
   stopoverDays?: number;
+  stopoverMinutes?: number;
 }
 
 interface BaggageInfo {
@@ -333,11 +334,27 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
     if (type === 'aereo') {
       meta.airlineId = airlineId || undefined;
-      meta.flightLegs = flightLegs;
+      // Auto-compute stopover flags based on time between consecutive legs
+      const legsWithStopover = flightLegs.map((leg, idx) => {
+        const nextLeg = flightLegs[idx + 1];
+        if (!nextLeg) return { ...leg, stopover: false, stopoverDays: 0 };
+        const sameCity = leg.destination && nextLeg.origin && leg.destination.trim().toUpperCase() === nextLeg.origin.trim().toUpperCase();
+        if (!sameCity || !leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) return { ...leg, stopover: false, stopoverDays: 0 };
+        const arrival = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+        const departure = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}:00`);
+        if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return { ...leg, stopover: false, stopoverDays: 0 };
+        const diffMinutes = Math.round((departure.getTime() - arrival.getTime()) / 60000);
+        if (diffMinutes > 720) { // > 12h = stopover
+          const days = Math.floor(diffMinutes / 1440);
+          return { ...leg, stopover: true, stopoverDays: days || 1, stopoverMinutes: diffMinutes };
+        }
+        return { ...leg, stopover: false, stopoverDays: 0 };
+      });
+      meta.flightLegs = legsWithStopover;
       meta.baggage = baggage;
-      const outbound = flightLegs.filter(l => l.direction === 'ida');
-      const returnL = flightLegs.filter(l => l.direction === 'volta');
-      meta.totalTravelDurationOutbound = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
+      const outbound = legsWithStopover.filter(l => l.direction === 'ida');
+      const returnL = legsWithStopover.filter(l => l.direction === 'volta');
+      meta.totalTravelDurationOutbound = calcTotalTravelDuration(outbound.length > 0 ? outbound : legsWithStopover.filter(l => l.direction !== 'volta'));
       meta.totalTravelDurationReturn = calcTotalTravelDuration(returnL);
     }
     if (type === 'hotel') {
@@ -506,33 +523,40 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     <div><Label className="text-xs">Data Chegada</Label><Input type="date" value={leg.arrivalDate} onChange={e => updateLeg(idx, 'arrivalDate', e.target.value)} /></div>
                     <div><Label className="text-xs">Hora Chegada</Label><Input type="time" value={leg.arrivalTime} onChange={e => updateLeg(idx, 'arrivalTime', e.target.value)} /></div>
                   </div>
-                  {/* Stopover option */}
-                  <div className="flex items-center gap-3 pt-1">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id={`stopover-${idx}`}
-                        checked={!!leg.stopover}
-                        onCheckedChange={(checked) => {
-                          setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, stopover: !!checked, stopoverDays: checked ? (l.stopoverDays || 1) : 0 } : l));
-                        }}
-                      />
-                      <Label htmlFor={`stopover-${idx}`} className="text-xs font-medium text-destructive flex items-center gap-1 cursor-pointer">
-                        <OctagonAlert className="h-3 w-3" /> Stopover
-                      </Label>
-                    </div>
-                    {leg.stopover && (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs">Dias:</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={leg.stopoverDays || 1}
-                          onChange={e => setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, stopoverDays: parseInt(e.target.value) || 1 } : l))}
-                          className="w-20 h-7 text-xs"
-                        />
+                  {/* Stopover auto-detection */}
+                  {(() => {
+                    // Check if next leg departs from same city this leg arrives at
+                    const nextLeg = flightLegs[idx + 1];
+                    if (!nextLeg) return null;
+                    const sameCity = leg.destination && nextLeg.origin && leg.destination.trim().toUpperCase() === nextLeg.origin.trim().toUpperCase();
+                    if (!sameCity) return null;
+                    // Calculate time difference
+                    if (!leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) return null;
+                    const arrival = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+                    const departure = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}:00`);
+                    if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return null;
+                    const diffMs = departure.getTime() - arrival.getTime();
+                    if (diffMs <= 0) return null;
+                    const totalMinutes = Math.round(diffMs / 60000);
+                    const days = Math.floor(totalMinutes / 1440);
+                    const hours = Math.floor((totalMinutes % 1440) / 60);
+                    const mins = totalMinutes % 60;
+                    // Only show as stopover if > 12 hours (otherwise it's a regular connection)
+                    if (totalMinutes <= 720) return null;
+                    const parts: string[] = [];
+                    if (days > 0) parts.push(`${days} dia${days > 1 ? 's' : ''}`);
+                    if (hours > 0) parts.push(`${hours}h`);
+                    if (mins > 0) parts.push(`${mins}min`);
+                    const stopLabel = parts.join(' ');
+                    return (
+                      <div className="flex items-center gap-2 pt-1">
+                        <OctagonAlert className="h-3.5 w-3.5 text-destructive" />
+                        <span className="text-xs font-bold text-destructive">
+                          STOPOVER DE {stopLabel} em {leg.destination}
+                        </span>
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()}
                 </div>
               ))}
 
@@ -542,15 +566,34 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 const returnL = flightLegs.filter(l => l.direction === 'volta');
                 const durOut = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
                 const durRet = calcTotalTravelDuration(returnL);
-                const stopoverLegs = flightLegs.filter(l => l.stopover && (l.stopoverDays || 0) > 0);
-                const totalStopoverDays = stopoverLegs.reduce((sum, l) => sum + (l.stopoverDays || 0), 0);
-                return (durOut || durRet || totalStopoverDays > 0) ? (
+                // Auto-detect stopovers for summary
+                let totalStopoverMinutes = 0;
+                flightLegs.forEach((leg, idx) => {
+                  const nextLeg = flightLegs[idx + 1];
+                  if (!nextLeg) return;
+                  const sameCity = leg.destination && nextLeg.origin && leg.destination.trim().toUpperCase() === nextLeg.origin.trim().toUpperCase();
+                  if (!sameCity || !leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) return;
+                  const arrival = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+                  const departure = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}:00`);
+                  if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return;
+                  const diff = Math.round((departure.getTime() - arrival.getTime()) / 60000);
+                  if (diff > 720) totalStopoverMinutes += diff;
+                });
+                const stopDays = Math.floor(totalStopoverMinutes / 1440);
+                const stopHours = Math.floor((totalStopoverMinutes % 1440) / 60);
+                const stopMins = totalStopoverMinutes % 60;
+                const stopParts: string[] = [];
+                if (stopDays > 0) stopParts.push(`${stopDays} dia${stopDays > 1 ? 's' : ''}`);
+                if (stopHours > 0) stopParts.push(`${stopHours}h`);
+                if (stopMins > 0) stopParts.push(`${stopMins}min`);
+                const stopLabel = stopParts.join(' ');
+                return (durOut || durRet || totalStopoverMinutes > 0) ? (
                   <div className="border-t pt-3 flex flex-wrap gap-4 text-sm">
                     {durOut && <span className="text-muted-foreground">⏱ Tempo total IDA: <strong className="text-foreground">{durOut}</strong></span>}
                     {durRet && <span className="text-muted-foreground">⏱ Tempo total VOLTA: <strong className="text-foreground">{durRet}</strong></span>}
-                    {totalStopoverDays > 0 && (
+                    {totalStopoverMinutes > 0 && (
                       <span className="text-destructive font-semibold flex items-center gap-1">
-                        <OctagonAlert className="h-3.5 w-3.5" /> Stopover de {totalStopoverDays} dia{totalStopoverDays > 1 ? 's' : ''}
+                        <OctagonAlert className="h-3.5 w-3.5" /> Stopover de {stopLabel}
                       </span>
                     )}
                   </div>
