@@ -3,10 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Undo2, FileCheck, FileX } from 'lucide-react';
+import SalesDateFilter, { DateFilterPeriod, getDateRange } from '@/components/SalesDateFilter';
 
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
