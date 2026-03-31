@@ -61,6 +61,7 @@ export default function ClientsPage() {
   const [isDependent, setIsDependent] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
+  const filesRef = useRef<ClientFilesSectionRef>(null);
 
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
