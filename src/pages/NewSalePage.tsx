@@ -101,6 +101,7 @@ interface ProposalPaymentOption {
   enabled: boolean;
   fixedValue?: number;
   showPerPerson?: boolean;
+  highlighted?: boolean;
 }
 interface InternalFile { id?: string; file_name: string; file_url: string; }
 
