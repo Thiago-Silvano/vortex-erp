@@ -565,15 +565,34 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 const returnL = flightLegs.filter(l => l.direction === 'volta');
                 const durOut = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
                 const durRet = calcTotalTravelDuration(returnL);
-                const stopoverLegs = flightLegs.filter(l => l.stopover && (l.stopoverDays || 0) > 0);
-                const totalStopoverDays = stopoverLegs.reduce((sum, l) => sum + (l.stopoverDays || 0), 0);
-                return (durOut || durRet || totalStopoverDays > 0) ? (
+                // Auto-detect stopovers for summary
+                let totalStopoverMinutes = 0;
+                flightLegs.forEach((leg, idx) => {
+                  const nextLeg = flightLegs[idx + 1];
+                  if (!nextLeg) return;
+                  const sameCity = leg.destination && nextLeg.origin && leg.destination.trim().toUpperCase() === nextLeg.origin.trim().toUpperCase();
+                  if (!sameCity || !leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) return;
+                  const arrival = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+                  const departure = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}:00`);
+                  if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return;
+                  const diff = Math.round((departure.getTime() - arrival.getTime()) / 60000);
+                  if (diff > 720) totalStopoverMinutes += diff;
+                });
+                const stopDays = Math.floor(totalStopoverMinutes / 1440);
+                const stopHours = Math.floor((totalStopoverMinutes % 1440) / 60);
+                const stopMins = totalStopoverMinutes % 60;
+                const stopParts: string[] = [];
+                if (stopDays > 0) stopParts.push(`${stopDays} dia${stopDays > 1 ? 's' : ''}`);
+                if (stopHours > 0) stopParts.push(`${stopHours}h`);
+                if (stopMins > 0) stopParts.push(`${stopMins}min`);
+                const stopLabel = stopParts.join(' ');
+                return (durOut || durRet || totalStopoverMinutes > 0) ? (
                   <div className="border-t pt-3 flex flex-wrap gap-4 text-sm">
                     {durOut && <span className="text-muted-foreground">⏱ Tempo total IDA: <strong className="text-foreground">{durOut}</strong></span>}
                     {durRet && <span className="text-muted-foreground">⏱ Tempo total VOLTA: <strong className="text-foreground">{durRet}</strong></span>}
-                    {totalStopoverDays > 0 && (
+                    {totalStopoverMinutes > 0 && (
                       <span className="text-destructive font-semibold flex items-center gap-1">
-                        <OctagonAlert className="h-3.5 w-3.5" /> Stopover de {totalStopoverDays} dia{totalStopoverDays > 1 ? 's' : ''}
+                        <OctagonAlert className="h-3.5 w-3.5" /> Stopover de {stopLabel}
                       </span>
                     )}
                   </div>
