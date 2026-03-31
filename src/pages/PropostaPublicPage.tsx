@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getImageStyle, type ImagePositionConfig } from '@/components/ImagePositionEditor';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
