@@ -981,9 +981,32 @@ function drawFlightDirection(
     safeText(doc, `${routeOrigin}  >  ${routeDest}`, m + cw - 5, y + 7, { align: 'right' });
   }
 
-  // Duration & connections summary on right
-  const totalStopoverDays = legs.reduce((sum, l) => sum + ((l.stopover && l.stopoverDays) ? l.stopoverDays : 0), 0);
-  if (totalDurStr || totalStopoverDays > 0) {
+  // Duration & connections summary on right + auto-compute stopovers
+  let totalStopoverMinutes = 0;
+  legs.forEach((leg, idx) => {
+    const nextLeg = legs[idx + 1];
+    if (!nextLeg) return;
+    const sameCity = leg.destination && nextLeg.origin && leg.destination.trim().toUpperCase() === nextLeg.origin.trim().toUpperCase();
+    if (!sameCity || !leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) return;
+    const arr = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+    const dep = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}:00`);
+    if (isNaN(arr.getTime()) || isNaN(dep.getTime())) return;
+    const diff = Math.round((dep.getTime() - arr.getTime()) / 60000);
+    if (diff > 720) totalStopoverMinutes += diff;
+  });
+  // Fallback to stored flags
+  if (totalStopoverMinutes === 0) {
+    totalStopoverMinutes = legs.reduce((sum, l) => sum + ((l.stopover && l.stopoverDays) ? l.stopoverDays * 1440 : 0), 0);
+  }
+  const stopDays = Math.floor(totalStopoverMinutes / 1440);
+  const stopHrs = Math.floor((totalStopoverMinutes % 1440) / 60);
+  const stopMn = totalStopoverMinutes % 60;
+  const stopParts: string[] = [];
+  if (stopDays > 0) stopParts.push(`${stopDays} DIA${stopDays > 1 ? 'S' : ''}`);
+  if (stopHrs > 0) stopParts.push(`${stopHrs}H`);
+  if (stopMn > 0) stopParts.push(`${stopMn}MIN`);
+
+  if (totalDurStr || totalStopoverMinutes > 0) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
@@ -992,11 +1015,11 @@ function drawFlightDirection(
     if (connectionsCount > 0) summaryParts.push(`${connectionsCount} ${connectionsCount === 1 ? 'conexao' : 'conexoes'}`);
     const mainSummary = summaryParts.join('  |  ');
     safeText(doc, mainSummary, m + cw - 5, y + 13, { align: 'right' });
-    if (totalStopoverDays > 0) {
+    if (totalStopoverMinutes > 0) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7);
       doc.setTextColor(220, 38, 38);
-      const stopText = `STOPOVER DE ${totalStopoverDays} DIA${totalStopoverDays > 1 ? 'S' : ''}`;
+      const stopText = `STOPOVER DE ${stopParts.join(' ')}`;
       const mainWidth = doc.getTextWidth(mainSummary);
       safeText(doc, stopText, m + cw - 5 - mainWidth - 8, y + 13, { align: 'right' });
     }
