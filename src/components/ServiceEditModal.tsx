@@ -506,33 +506,40 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     <div><Label className="text-xs">Data Chegada</Label><Input type="date" value={leg.arrivalDate} onChange={e => updateLeg(idx, 'arrivalDate', e.target.value)} /></div>
                     <div><Label className="text-xs">Hora Chegada</Label><Input type="time" value={leg.arrivalTime} onChange={e => updateLeg(idx, 'arrivalTime', e.target.value)} /></div>
                   </div>
-                  {/* Stopover option */}
-                  <div className="flex items-center gap-3 pt-1">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id={`stopover-${idx}`}
-                        checked={!!leg.stopover}
-                        onCheckedChange={(checked) => {
-                          setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, stopover: !!checked, stopoverDays: checked ? (l.stopoverDays || 1) : 0 } : l));
-                        }}
-                      />
-                      <Label htmlFor={`stopover-${idx}`} className="text-xs font-medium text-destructive flex items-center gap-1 cursor-pointer">
-                        <OctagonAlert className="h-3 w-3" /> Stopover
-                      </Label>
-                    </div>
-                    {leg.stopover && (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs">Dias:</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={leg.stopoverDays || 1}
-                          onChange={e => setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, stopoverDays: parseInt(e.target.value) || 1 } : l))}
-                          className="w-20 h-7 text-xs"
-                        />
+                  {/* Stopover auto-detection */}
+                  {(() => {
+                    // Check if next leg departs from same city this leg arrives at
+                    const nextLeg = flightLegs[idx + 1];
+                    if (!nextLeg) return null;
+                    const sameCity = leg.destination && nextLeg.origin && leg.destination.trim().toUpperCase() === nextLeg.origin.trim().toUpperCase();
+                    if (!sameCity) return null;
+                    // Calculate time difference
+                    if (!leg.arrivalDate || !leg.arrivalTime || !nextLeg.departureDate || !nextLeg.departureTime) return null;
+                    const arrival = new Date(`${leg.arrivalDate}T${leg.arrivalTime}:00`);
+                    const departure = new Date(`${nextLeg.departureDate}T${nextLeg.departureTime}:00`);
+                    if (isNaN(arrival.getTime()) || isNaN(departure.getTime())) return null;
+                    const diffMs = departure.getTime() - arrival.getTime();
+                    if (diffMs <= 0) return null;
+                    const totalMinutes = Math.round(diffMs / 60000);
+                    const days = Math.floor(totalMinutes / 1440);
+                    const hours = Math.floor((totalMinutes % 1440) / 60);
+                    const mins = totalMinutes % 60;
+                    // Only show as stopover if > 12 hours (otherwise it's a regular connection)
+                    if (totalMinutes <= 720) return null;
+                    const parts: string[] = [];
+                    if (days > 0) parts.push(`${days} dia${days > 1 ? 's' : ''}`);
+                    if (hours > 0) parts.push(`${hours}h`);
+                    if (mins > 0) parts.push(`${mins}min`);
+                    const stopLabel = parts.join(' ');
+                    return (
+                      <div className="flex items-center gap-2 pt-1">
+                        <OctagonAlert className="h-3.5 w-3.5 text-destructive" />
+                        <span className="text-xs font-bold text-destructive">
+                          STOPOVER DE {stopLabel} em {leg.destination}
+                        </span>
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()}
                 </div>
               ))}
 
