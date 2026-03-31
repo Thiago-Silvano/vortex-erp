@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -798,6 +798,43 @@ export default function NewSalePage() {
       });
       return newImgs;
     });
+  };
+
+  const duplicateItem = (idx: number) => {
+    const original = items[idx];
+    const cloned: SaleItem = {
+      description: original.description,
+      cost_price: original.cost_price,
+      rav: original.rav,
+      markup_percent: original.markup_percent,
+      total_value: original.total_value,
+      service_catalog_id: original.service_catalog_id,
+      cost_center_id: original.cost_center_id,
+      metadata: original.metadata ? JSON.parse(JSON.stringify(original.metadata)) : {},
+      reservation_number: original.reservation_number,
+      purchase_number: original.purchase_number,
+      quote_option_id: original.quote_option_id,
+      quote_option_ids: original.quote_option_ids ? [...original.quote_option_ids] : undefined,
+    };
+    const newIdx = idx + 1;
+    setItems(prev => [...prev.slice(0, newIdx), cloned, ...prev.slice(newIdx)]);
+    // duplicate images too
+    setItemImages(prev => {
+      const newImgs: Record<number, string[]> = {};
+      Object.keys(prev).forEach(key => {
+        const k = parseInt(key);
+        if (k < newIdx) {
+          newImgs[k] = prev[k];
+        } else {
+          newImgs[k + 1] = prev[k];
+        }
+      });
+      if (prev[idx]) {
+        newImgs[newIdx] = [...prev[idx]];
+      }
+      return newImgs;
+    });
+    toast.success('Item duplicado!');
   };
 
   const addSupplier = () => {
@@ -2564,9 +2601,14 @@ export default function NewSalePage() {
                           />
                         </TableCell>
                         <TableCell className="px-0">
-                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(idx)}>
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
+                          <div className="flex items-center">
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => duplicateItem(idx)} title="Duplicar item">
+                              <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(idx)}>
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                       {/* Second row: reservation + images */}
@@ -2662,6 +2704,9 @@ export default function NewSalePage() {
                         {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => duplicateItem(idx)} title="Duplicar item">
+                      <Copy className="h-4 w-4 text-muted-foreground" />
+                    </Button>
                     <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => removeItem(idx)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
