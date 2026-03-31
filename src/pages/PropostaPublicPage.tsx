@@ -889,7 +889,8 @@ function ServiceCard({
                       </div>
                     ))}
                   </div>
-                ));
+                  );
+                });
               })()}
             </div>
             {/* Baggage info */}

@@ -542,10 +542,17 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 const returnL = flightLegs.filter(l => l.direction === 'volta');
                 const durOut = calcTotalTravelDuration(outbound.length > 0 ? outbound : flightLegs.filter(l => l.direction !== 'volta'));
                 const durRet = calcTotalTravelDuration(returnL);
-                return (durOut || durRet) ? (
+                const stopoverLegs = flightLegs.filter(l => l.stopover && (l.stopoverDays || 0) > 0);
+                const totalStopoverDays = stopoverLegs.reduce((sum, l) => sum + (l.stopoverDays || 0), 0);
+                return (durOut || durRet || totalStopoverDays > 0) ? (
                   <div className="border-t pt-3 flex flex-wrap gap-4 text-sm">
                     {durOut && <span className="text-muted-foreground">⏱ Tempo total IDA: <strong className="text-foreground">{durOut}</strong></span>}
                     {durRet && <span className="text-muted-foreground">⏱ Tempo total VOLTA: <strong className="text-foreground">{durRet}</strong></span>}
+                    {totalStopoverDays > 0 && (
+                      <span className="text-destructive font-semibold flex items-center gap-1">
+                        <OctagonAlert className="h-3.5 w-3.5" /> Stopover de {totalStopoverDays} dia{totalStopoverDays > 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
                 ) : null;
               })()}

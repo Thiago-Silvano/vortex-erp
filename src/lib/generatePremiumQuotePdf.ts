@@ -981,13 +981,24 @@ function drawFlightDirection(
   }
 
   // Duration & connections summary on right
-  if (totalDurStr) {
+  const totalStopoverDays = legs.reduce((sum, l) => sum + ((l.stopover && l.stopoverDays) ? l.stopoverDays : 0), 0);
+  if (totalDurStr || totalStopoverDays > 0) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
-    const summaryParts: string[] = [totalDurStr];
+    const summaryParts: string[] = [];
+    if (totalDurStr) summaryParts.push(totalDurStr);
     if (connectionsCount > 0) summaryParts.push(`${connectionsCount} ${connectionsCount === 1 ? 'conexao' : 'conexoes'}`);
-    safeText(doc, summaryParts.join('  |  '), m + cw - 5, y + 13, { align: 'right' });
+    const mainSummary = summaryParts.join('  |  ');
+    safeText(doc, mainSummary, m + cw - 5, y + 13, { align: 'right' });
+    if (totalStopoverDays > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(220, 38, 38);
+      const stopText = `STOPOVER DE ${totalStopoverDays} DIA${totalStopoverDays > 1 ? 'S' : ''}`;
+      const mainWidth = doc.getTextWidth(mainSummary);
+      safeText(doc, stopText, m + cw - 5 - mainWidth - 8, y + 13, { align: 'right' });
+    }
   }
 
   y += headerH + 4;
