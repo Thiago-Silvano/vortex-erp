@@ -231,6 +231,7 @@ export default function ClientsPage() {
 
             <div className="space-y-3">
               {editingId && <ClientPhotosSection clientId={editingId} />}
+              {editingId && <ClientFilesSection clientId={editingId} />}
               {editingId && activeCompany?.slug === 'vortex-vistos' && (
                 <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} isMaster={isMaster} />
               )}
