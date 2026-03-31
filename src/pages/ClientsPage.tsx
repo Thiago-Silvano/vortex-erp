@@ -50,6 +50,8 @@ const emptyClient = (): Omit<Client, 'id'> => ({
 export default function ClientsPage() {
   const { activeCompany, isMaster } = useCompany();
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as { openEditId?: string; returnTo?: string; returnState?: any } | null;
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -62,6 +64,7 @@ export default function ClientsPage() {
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
   const filesRef = useRef<ClientFilesSectionRef>(null);
+  const [returnTo, setReturnTo] = useState<{ path: string; state?: any } | null>(null);
 
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
@@ -71,6 +74,21 @@ export default function ClientsPage() {
   };
 
   useEffect(() => { fetchClients(); }, [activeCompany?.id]);
+
+  // Auto-open edit dialog when navigated with openEditId
+  useEffect(() => {
+    if (locationState?.openEditId && clients.length > 0) {
+      const client = clients.find(c => c.id === locationState.openEditId);
+      if (client) {
+        handleEdit(client);
+        if (locationState.returnTo) {
+          setReturnTo({ path: locationState.returnTo, state: locationState.returnState });
+        }
+        // Clear location state to prevent re-triggering
+        window.history.replaceState({}, '');
+      }
+    }
+  }, [locationState?.openEditId, clients]);
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
