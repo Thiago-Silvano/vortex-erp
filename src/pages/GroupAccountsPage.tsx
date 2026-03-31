@@ -54,27 +54,30 @@ export default function GroupAccountsPage() {
 
     const [pRes, rRes, sRes] = await Promise.all([
       supabase.from('accounts_payable').select('id, description, amount, due_date, status, supplier_id').eq('empresa_id', eid),
-      supabase.from('accounts_receivable').select('id, description, amount, due_date, status, client_name').eq('empresa_id', eid),
+      supabase.from('receivables').select('id, description, amount, due_date, status, client_name').eq('empresa_id', eid),
       supabase.from('suppliers').select('id, name').eq('empresa_id', eid),
     ]);
 
-    const suppMap = new Map((sRes.data || []).map(s => [s.id, s.name]));
+    const suppMap = new Map((sRes.data || []).map((s: any) => [s.id, s.name]));
     setSuppliers(sRes.data || []);
 
-    setPayables((pRes.data || []).map(p => ({
-      ...p,
-      amount: p.amount ?? 0,
+    setPayables((pRes.data || []).map((p: any) => ({
+      id: p.id,
       description: p.description ?? '',
+      amount: p.amount ?? 0,
+      due_date: p.due_date,
       status: p.status ?? 'Em aberto',
+      supplier_id: p.supplier_id,
       supplier_name: p.supplier_id ? suppMap.get(p.supplier_id) || '—' : '—',
     })));
 
-    setReceivables((rRes.data || []).map(r => ({
-      ...r,
-      amount: r.amount ?? 0,
+    setReceivables((rRes.data || []).map((r: any) => ({
+      id: r.id,
       description: r.description ?? '',
-      client_name: r.client_name ?? '—',
+      amount: r.amount ?? 0,
+      due_date: r.due_date,
       status: r.status ?? 'Em aberto',
+      client_name: r.client_name ?? '—',
     })));
   };
 
