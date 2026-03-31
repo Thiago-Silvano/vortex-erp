@@ -741,11 +741,11 @@ export default function NewSalePage() {
 
   // Auto-select Safra Pay supplier for machine fee
   useEffect(() => {
-    if (hasMachineFeeMethod && !machineFeeSupplierId && allSuppliers.length > 0) {
+    if (paymentMethods.length > 0 && !machineFeeSupplierId && allSuppliers.length > 0) {
       const safra = allSuppliers.find(s => s.name.toLowerCase().includes('safra pay') || s.name.toLowerCase().includes('safrapay'));
       if (safra) setMachineFeeSupplierId(safra.id);
     }
-  }, [hasMachineFeeMethod, allSuppliers, machineFeeSupplierId]);
+  }, [paymentMethods, allSuppliers, machineFeeSupplierId]);
 
   const updateItem = (idx: number, field: keyof SaleItem, value: any) => {
     setItems(prev => prev.map((item, i) => {
@@ -2859,7 +2859,7 @@ export default function NewSalePage() {
               </div>
             )}
 
-            {hasMachineFeeMethod && (
+            {paymentMethods.length > 0 && (
               <div className="space-y-3 pt-4 border-t">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                   <div>
