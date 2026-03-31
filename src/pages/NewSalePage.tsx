@@ -2134,6 +2134,11 @@ export default function NewSalePage() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {selectedClientId && (
+                    <Button type="button" size="icon" variant="outline" onClick={() => navigate('/clients', { state: { openEditId: selectedClientId, returnTo: editSaleId ? '/sales/edit' : '/sales/new', returnState: editSaleId ? { editSaleId } : undefined } })} title="Editar cliente">
+                      <UserPen className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
                     <Plus className="h-4 w-4" />
                   </Button>
