@@ -623,7 +623,7 @@ export default function PropostaClienteBuildsPage() {
                           ) : (
                             <span className="text-2xl font-bold" style={{ color: isHighlighted ? '#fff' : '#0D1B2A', fontFamily: "'Georgia', serif" }}>{fmt(displayTotal)}</span>
                           )}
-                          {showPerPassenger && passengersCount > 1 && <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.4)' : '#bbb' }}>por pessoa</p>}
+                          {optPerPerson && passengersCount > 1 && <p className="text-xs mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.4)' : '#bbb' }}>por pessoa</p>}
                         </div>
                       </div>
                     );

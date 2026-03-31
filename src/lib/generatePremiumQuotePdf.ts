@@ -787,28 +787,47 @@ export function generatePremiumQuotePdf(data: PremiumPdfData) {
         } else {
           setColor(doc, DEEP_BLUE);
         }
-        doc.text(labelText, m + 8, y + (isHighlighted ? 6 : 3));
+        const showPerPerson = data.showPerPassenger || opt.showPerPerson;
 
-        const installText = opt.installments > 1
-          ? `${opt.installments}x de ${fmt(optInstallmentValue)}`
-          : fmt(optTotalValue);
-        doc.setFont('times', 'bold');
-        doc.setFontSize(isHighlighted ? 15 : 13);
-        setColor(doc, GOLD);
-        doc.text(installText, m + cw - 4, y + (isHighlighted ? 6 : 3), { align: 'right' });
-
-        if (paxCount > 1) {
-          const perPerson = opt.installments > 1
-            ? fmt(optInstallmentValue / paxCount)
-            : fmt(optTotalValue / paxCount);
+        if (showPerPerson && paxCount > 1) {
+          // Show per-person as main value
+          const perPersonTotal = optTotalValue / paxCount;
+          const perPersonInstallment = optInstallmentValue / paxCount;
+          const installTextPP = opt.installments > 1
+            ? `${opt.installments}x de ${fmt(perPersonInstallment)}`
+            : fmt(perPersonTotal);
+          doc.setFont('times', 'bold');
+          doc.setFontSize(isHighlighted ? 15 : 13);
+          setColor(doc, GOLD);
+          doc.text(installTextPP, m + cw - 4, y + (isHighlighted ? 6 : 3), { align: 'right' });
           doc.setFont('helvetica', 'normal');
-          doc.setFontSize(8);
-          if (isHighlighted) {
-            doc.setTextColor(200, 200, 200);
-          } else {
-            setColor(doc, TEXT_MUTED);
+          doc.setFontSize(7);
+          if (isHighlighted) doc.setTextColor(200, 200, 200); else setColor(doc, TEXT_MUTED);
+          doc.text('por pessoa', m + cw - 4, y + (isHighlighted ? 10.5 : 7.5), { align: 'right' });
+          doc.setFontSize(7);
+          doc.text(`Total: ${fmt(optTotalValue)}`, m + cw - 4, y + (isHighlighted ? 14.5 : 11.5), { align: 'right' });
+        } else {
+          const installText = opt.installments > 1
+            ? `${opt.installments}x de ${fmt(optInstallmentValue)}`
+            : fmt(optTotalValue);
+          doc.setFont('times', 'bold');
+          doc.setFontSize(isHighlighted ? 15 : 13);
+          setColor(doc, GOLD);
+          doc.text(installText, m + cw - 4, y + (isHighlighted ? 6 : 3), { align: 'right' });
+
+          if (paxCount > 1) {
+            const perPerson = opt.installments > 1
+              ? fmt(optInstallmentValue / paxCount)
+              : fmt(optTotalValue / paxCount);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            if (isHighlighted) {
+              doc.setTextColor(200, 200, 200);
+            } else {
+              setColor(doc, TEXT_MUTED);
+            }
+            doc.text(`${perPerson} /pessoa`, m + cw - 4, y + (isHighlighted ? 13 : 10), { align: 'right' });
           }
-          doc.text(`${perPerson} /pessoa`, m + cw - 4, y + (isHighlighted ? 13 : 10), { align: 'right' });
         }
 
         y += optBoxH + 2;
