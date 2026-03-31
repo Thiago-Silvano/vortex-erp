@@ -198,6 +198,7 @@ export default function AccountsPayablePage() {
     const todayStr = format(today, 'yyyy-MM-dd');
     let overdue = 0, dueToday = 0, pending = 0, paid = 0;
     periodItems.forEach(r => {
+      if (r.status === 'agrupado') return;
       if (r.status === 'paid') { paid += r.amount; return; }
       if (r.due_date && r.due_date < todayStr && r.status !== 'paid') { overdue += r.amount; return; }
       if (r.due_date && r.due_date === todayStr && r.status !== 'paid') { dueToday += r.amount; return; }
