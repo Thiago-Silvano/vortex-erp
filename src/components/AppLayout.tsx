@@ -241,9 +241,7 @@ function TopMenuBar() {
           const filteredItems = group.items.filter((i) => hasPerm(i.permKey));
           if (filteredItems.length === 0) return null;
           const isOpen = openMenu === group.label;
-          const isActive = filteredItems.some(
-            (i) => location.pathname === i.url || location.pathname.startsWith(i.url + "/"),
-          );
+          const isActive = false;
 
           const isSingleItem = filteredItems.length === 1 && group.url;
 
