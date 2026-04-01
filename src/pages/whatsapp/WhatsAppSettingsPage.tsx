@@ -111,9 +111,16 @@ export default function WhatsAppSettingsPage() {
     }
     setDisconnecting(true);
     try {
-      await disconnectSession(settings.server_url, empresaId);
+      // Try to disconnect on the server — if endpoint not supported, proceed anyway
+      try {
+        await disconnectSession(settings.server_url, empresaId);
+      } catch (serverErr) {
+        console.warn('Servidor não suportou /disconnect, atualizando estado local:', serverErr);
+      }
+      // Always update local state regardless of server response
       await (supabase.from('whatsapp_settings').update({ is_connected: false, connected_phone: '', connected_name: '' }).eq('id', settings.id) as any);
       setSettings(prev => ({ ...prev, is_connected: false, connected_phone: '', connected_name: '' }));
+      setQrCode(null);
       toast.success('WhatsApp desconectado! Escaneie o QR Code para reconectar.');
       fetchQrCode();
     } catch (error) {
