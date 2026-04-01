@@ -2847,6 +2847,7 @@ export default function NewSalePage() {
 
             {hasCredito && (
               <div className="space-y-4 pt-4 border-t">
+                <p className="text-sm font-semibold text-primary mb-1">Cartão de Crédito</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Cartão de Crédito</Label>
@@ -2868,6 +2869,7 @@ export default function NewSalePage() {
 
             {hasBoleto && (
               <div className="space-y-4 pt-4 border-t">
+                <p className="text-sm font-semibold text-primary mb-1">Boleto Bancário</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Número de Parcelas</Label>
@@ -2896,6 +2898,7 @@ export default function NewSalePage() {
 
             {hasOperadora && (
               <div className="space-y-4 pt-4 border-t">
+                <p className="text-sm font-semibold text-primary mb-1">Pgto Operadora/Consolidadora</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Número de Parcelas</Label>
@@ -2998,12 +3001,12 @@ export default function NewSalePage() {
                     </div>
                     {hasMultipleMethods ? (
                       <Tabs defaultValue={uniqueMethods[0]} className="w-full">
-                        <TabsList className="w-full justify-start">
+                        <TabsList className="w-full justify-start bg-muted/60 p-1">
                           {uniqueMethods.map(m => {
                             const methodItems = receivables.filter(r => (r.payment_method || 'outros') === m);
                             const methodTotal = methodItems.reduce((s, r) => s + r.amount, 0);
                             return (
-                              <TabsTrigger key={m} value={m}>
+                              <TabsTrigger key={m} value={m} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium">
                                 {Object.values(methodLabels).find(l => l === m) || m} ({methodItems.length}x) - {fmt(methodTotal)}
                               </TabsTrigger>
                             );
