@@ -610,7 +610,7 @@ export default function NewSalePage() {
           for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
             const dueDate = new Date(baseDate);
             dueDate.setDate(dueDate.getDate() + i * 30);
-            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito', cost_center_id: defaultCostCenterId || undefined });
           }
         } else {
           const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
