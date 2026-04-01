@@ -601,7 +601,7 @@ export default function NewSalePage() {
             for (let i = 1; i <= numInst; i++) {
               const dueDate = new Date(baseDate);
               if (numInst > 1) dueDate.setMonth(dueDate.getMonth() + i);
-              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto' });
+              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto', cost_center_id: defaultCostCenterId || undefined });
             }
           }
         } else if (method === 'credito') {
