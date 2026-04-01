@@ -111,13 +111,17 @@ export default function WhatsAppSettingsPage() {
     }
     setDisconnecting(true);
     try {
-      // Try POST first, then GET — servers vary on disconnect method
+      // Try disconnect via proxy — try POST then GET
       let disconnected = false;
       for (const method of ['POST', 'GET']) {
         try {
-          await proxyRequestDirect(settings.server_url, `/disconnect?empresa_id=${encodeURIComponent(empresaId)}`, method);
-          disconnected = true;
-          break;
+          const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
+            body: { server_url: settings.server_url, endpoint: `/disconnect?empresa_id=${encodeURIComponent(empresaId)}`, method },
+          });
+          if (!error && !(data && data.error)) {
+            disconnected = true;
+            break;
+          }
         } catch {
           // try next method
         }
