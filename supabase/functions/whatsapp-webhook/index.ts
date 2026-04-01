@@ -55,7 +55,7 @@ function scorePhoneCandidate(raw: string, source: string) {
 
   let score = 0;
 
-  if (["number", "phone_number", "real_phone", "realPhone", "contact.number", "contact.phone", "contactNumber", "contactPhone", "sender.number", "sender.phone"].includes(source)) {
+  if (["real_phone", "realPhone", "number", "phone_number", "contact.number", "contact.phone", "contactNumber", "contactPhone", "sender.number", "sender.phone"].includes(source)) {
     score += 70;
   }
 
