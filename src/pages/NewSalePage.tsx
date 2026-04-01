@@ -2998,12 +2998,12 @@ export default function NewSalePage() {
                     </div>
                     {hasMultipleMethods ? (
                       <Tabs defaultValue={uniqueMethods[0]} className="w-full">
-                        <TabsList className="w-full justify-start">
+                        <TabsList className="w-full justify-start bg-muted/60 p-1">
                           {uniqueMethods.map(m => {
                             const methodItems = receivables.filter(r => (r.payment_method || 'outros') === m);
                             const methodTotal = methodItems.reduce((s, r) => s + r.amount, 0);
                             return (
-                              <TabsTrigger key={m} value={m}>
+                              <TabsTrigger key={m} value={m} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium">
                                 {Object.values(methodLabels).find(l => l === m) || m} ({methodItems.length}x) - {fmt(methodTotal)}
                               </TabsTrigger>
                             );
