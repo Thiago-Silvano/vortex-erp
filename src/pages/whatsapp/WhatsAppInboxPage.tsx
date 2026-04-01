@@ -4,10 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X } from 'lucide-react';
+import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -59,6 +58,8 @@ export default function WhatsAppInboxPage() {
   const [sendingFile, setSendingFile] = useState(false);
   const [agentName, setAgentName] = useState('');
   const [profilePics, setProfilePics] = useState<Record<string, string | null>>({});
+  const [showContactInfo, setShowContactInfo] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -80,7 +81,7 @@ export default function WhatsAppInboxPage() {
     loadConversations();
   }, [empresaId]);
 
-  // Fetch profile pictures for conversations
+  // Fetch profile pictures
   useEffect(() => {
     if (!serverUrl || !conversations.length || serverUrl.includes('localhost')) return;
     conversations.forEach((conv) => {
@@ -93,80 +94,39 @@ export default function WhatsAppInboxPage() {
     });
   }, [conversations, serverUrl, empresaId]);
 
-  // Supabase Realtime: listen for new incoming messages
+  // Realtime
   useEffect(() => {
     if (!empresaId) return;
-
     const channel = supabase
       .channel(`whatsapp-realtime-${empresaId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'whatsapp_messages',
-          filter: `empresa_id=eq.${empresaId}`,
-        },
-        (payload: any) => {
-          const newRow = payload.new;
-          // Only process incoming messages (from webhook)
-          if (newRow.sender !== 'them') return;
-
-          console.log('[WhatsApp Realtime] New incoming message:', newRow.id);
-
-          // If the active conversation matches, add message to the chat
-          if (activeConv?.id === newRow.conversation_id) {
-            setMessages(prev => {
-              if (prev.some(m => m.id === newRow.id)) return prev;
-              return [...prev, {
-                id: newRow.id,
-                sender: newRow.sender,
-                content: newRow.content || '',
-                message_type: newRow.message_type || 'chat',
-                media_url: newRow.media_url || '',
-                created_at: newRow.created_at,
-                whatsapp_msg_id: newRow.whatsapp_msg_id || '',
-              }];
-            });
-          }
-
-          toast.info('Nova mensagem recebida');
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'whatsapp_messages', filter: `empresa_id=eq.${empresaId}` }, (payload: any) => {
+        const newRow = payload.new;
+        if (newRow.sender !== 'them') return;
+        if (activeConv?.id === newRow.conversation_id) {
+          setMessages(prev => {
+            if (prev.some(m => m.id === newRow.id)) return prev;
+            return [...prev, {
+              id: newRow.id, sender: newRow.sender, content: newRow.content || '',
+              message_type: newRow.message_type || 'chat', media_url: newRow.media_url || '',
+              created_at: newRow.created_at, whatsapp_msg_id: newRow.whatsapp_msg_id || '',
+            }];
+          });
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'whatsapp_conversations',
-          filter: `empresa_id=eq.${empresaId}`,
-        },
-        (payload: any) => {
-          const eventType = payload.eventType;
-          const row = payload.new;
-
-          if (eventType === 'INSERT') {
-            setConversations(prev => {
-              if (prev.some(c => c.id === row.id)) return prev;
-              return [row, ...prev];
-            });
-          } else if (eventType === 'UPDATE') {
-            setConversations(prev =>
-              prev.map(c => c.id === row.id ? { ...c, ...row } : c)
-                .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
-            );
-          } else if (eventType === 'DELETE') {
-            setConversations(prev => prev.filter(c => c.id !== payload.old?.id));
-          }
+        toast.info('Nova mensagem recebida');
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_conversations', filter: `empresa_id=eq.${empresaId}` }, (payload: any) => {
+        const row = payload.new;
+        if (payload.eventType === 'INSERT') {
+          setConversations(prev => prev.some(c => c.id === row.id) ? prev : [row, ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+          setConversations(prev => prev.map(c => c.id === row.id ? { ...c, ...row } : c).sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()));
+        } else if (payload.eventType === 'DELETE') {
+          setConversations(prev => prev.filter(c => c.id !== payload.old?.id));
         }
-      )
+      })
       .subscribe();
-
     channelRef.current = channel;
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [empresaId, activeConv]);
 
   useEffect(() => {
@@ -198,44 +158,20 @@ export default function WhatsAppInboxPage() {
     try {
       const url = await getServerUrl(empresaId);
       setServerUrl(url);
-
-      const { data: dbConvs } = await (supabase
-        .from('whatsapp_conversations')
-        .select('*')
-        .eq('empresa_id', empresaId)
-        .order('last_message_at', { ascending: false }) as any);
-
-      if (dbConvs?.length) {
-        setConversations(dbConvs);
-      }
-
-      // Ensure session is connected on server
-      try {
-        await connectSession(url, empresaId);
-      } catch {
-        // Server offline, use DB data only
-      }
-    } catch (err) {
-      console.error('Error loading conversations:', err);
-    }
+      const { data: dbConvs } = await (supabase.from('whatsapp_conversations').select('*').eq('empresa_id', empresaId).order('last_message_at', { ascending: false }) as any);
+      if (dbConvs?.length) setConversations(dbConvs);
+      try { await connectSession(url, empresaId); } catch {}
+    } catch (err) { console.error('Error loading conversations:', err); }
   };
 
   const openConversation = async (conv: Conversation) => {
     setActiveConv(conv);
     setLoading(true);
     setReplyTo(null);
-
     await (supabase.from('whatsapp_conversations').update({ unread_count: 0 }).eq('id', conv.id) as any);
     setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c));
-
-    const { data: dbMsgs } = await (supabase
-      .from('whatsapp_messages')
-      .select('*')
-      .eq('conversation_id', conv.id)
-      .order('created_at', { ascending: true }) as any);
-
+    const { data: dbMsgs } = await (supabase.from('whatsapp_messages').select('*').eq('conversation_id', conv.id).order('created_at', { ascending: true }) as any);
     setMessages(dbMsgs || []);
-
     setLoading(false);
   };
 
@@ -243,229 +179,96 @@ export default function WhatsAppInboxPage() {
     if (!msgText.trim() || !activeConv) return;
     const text = msgText.trim();
     setMsgText('');
-
     const newMsg: Message = {
-      id: crypto.randomUUID(),
-      sender: 'me',
-      content: text,
-      message_type: 'chat',
-      media_url: '',
-      created_at: new Date().toISOString(),
-      reply_to_content: replyTo?.content || undefined,
-      reply_to_id: replyTo?.id || undefined,
+      id: crypto.randomUUID(), sender: 'me', content: text, message_type: 'chat',
+      media_url: '', created_at: new Date().toISOString(),
+      reply_to_content: replyTo?.content || undefined, reply_to_id: replyTo?.id || undefined,
     };
     setMessages(prev => [...prev, newMsg]);
-
     const quotedMsgId = replyTo?.whatsapp_msg_id;
     setReplyTo(null);
-
     try {
       const targetId = activeConv.whatsapp_id || activeConv.phone;
       const whatsappText = agentName ? `*${agentName}:*\n${text}` : text;
       await sendMessage(serverUrl, empresaId, targetId, whatsappText);
-
-      await (supabase.from('whatsapp_messages').insert({
-        conversation_id: activeConv.id,
-        empresa_id: empresaId,
-        sender: 'me',
-        content: text,
-        message_type: 'chat',
-        reply_to_content: newMsg.reply_to_content || null,
-        reply_to_id: newMsg.reply_to_id || null,
-      }) as any);
-
-      await (supabase.from('whatsapp_conversations').update({
-        last_message: text,
-        last_message_at: new Date().toISOString(),
-      }).eq('id', activeConv.id) as any);
-
-      setConversations(prev => prev.map(c =>
-        c.id === activeConv.id ? { ...c, last_message: text, last_message_at: new Date().toISOString() } : c
-      ));
+      await (supabase.from('whatsapp_messages').insert({ conversation_id: activeConv.id, empresa_id: empresaId, sender: 'me', content: text, message_type: 'chat', reply_to_content: newMsg.reply_to_content || null, reply_to_id: newMsg.reply_to_id || null }) as any);
+      await (supabase.from('whatsapp_conversations').update({ last_message: text, last_message_at: new Date().toISOString() }).eq('id', activeConv.id) as any);
+      setConversations(prev => prev.map(c => c.id === activeConv.id ? { ...c, last_message: text, last_message_at: new Date().toISOString() } : c));
     } catch (err) {
       console.error('Error sending message:', err);
-      toast.error('Erro ao enviar mensagem. Verifique a conexão com o servidor.');
+      toast.error('Erro ao enviar mensagem.');
     }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeConv) return;
-
     setSendingFile(true);
-
-    // Add optimistic message
     const newMsg: Message = {
-      id: crypto.randomUUID(),
-      sender: 'me',
-      content: file.name,
+      id: crypto.randomUUID(), sender: 'me', content: file.name,
       message_type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'document',
-      media_url: URL.createObjectURL(file),
-      created_at: new Date().toISOString(),
+      media_url: URL.createObjectURL(file), created_at: new Date().toISOString(),
     };
     setMessages(prev => [...prev, newMsg]);
-
     try {
       const targetId = activeConv.whatsapp_id || activeConv.phone;
       await sendMedia(serverUrl, empresaId, targetId, file);
-
-      // Upload to storage
       const reader = new FileReader();
       reader.onload = async () => {
         const base64 = (reader.result as string).split(',')[1];
         const ext = file.name.split('.').pop() || 'bin';
         const storagePath = `${empresaId}/${newMsg.id}.${ext}`;
-
         const binaryStr = atob(base64);
         const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) {
-          bytes[i] = binaryStr.charCodeAt(i);
-        }
-
-        const { error: uploadError } = await supabase.storage
-          .from('whatsapp-media')
-          .upload(storagePath, bytes, { contentType: file.type, upsert: true });
-
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(storagePath, bytes, { contentType: file.type, upsert: true });
         let finalUrl = '';
-        if (!uploadError) {
-          const { data } = supabase.storage.from('whatsapp-media').getPublicUrl(storagePath);
-          finalUrl = data.publicUrl;
-        }
-
-        await (supabase.from('whatsapp_messages').insert({
-          conversation_id: activeConv.id,
-          empresa_id: empresaId,
-          sender: 'me',
-          content: file.name,
-          message_type: newMsg.message_type,
-          media_url: finalUrl,
-          media_type: file.type,
-        }) as any);
+        if (!uploadError) { const { data } = supabase.storage.from('whatsapp-media').getPublicUrl(storagePath); finalUrl = data.publicUrl; }
+        await (supabase.from('whatsapp_messages').insert({ conversation_id: activeConv.id, empresa_id: empresaId, sender: 'me', content: file.name, message_type: newMsg.message_type, media_url: finalUrl, media_type: file.type }) as any);
       };
       reader.readAsDataURL(file);
-
       const label = getMsgTypeLabel(newMsg.message_type) || file.name;
-      await (supabase.from('whatsapp_conversations').update({
-        last_message: label,
-        last_message_at: new Date().toISOString(),
-      }).eq('id', activeConv.id) as any);
-
+      await (supabase.from('whatsapp_conversations').update({ last_message: label, last_message_at: new Date().toISOString() }).eq('id', activeConv.id) as any);
       toast.success('Arquivo enviado!');
     } catch (err) {
       console.error('Error sending file:', err);
       toast.error('Erro ao enviar arquivo.');
     }
-
     setSendingFile(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleNewMessage = async () => {
-    if (!newMsgForm.phone.trim() || !newMsgForm.message.trim()) {
-      toast.error('Telefone e mensagem são obrigatórios');
-      return;
-    }
-
+    if (!newMsgForm.phone.trim() || !newMsgForm.message.trim()) { toast.error('Telefone e mensagem são obrigatórios'); return; }
     const phone = normalizePhoneForSend(newMsgForm.phone);
-    if (phone.length < 8) {
-      toast.error('Número de telefone inválido');
-      return;
-    }
-
+    if (phone.length < 8) { toast.error('Número de telefone inválido'); return; }
     const messageText = newMsgForm.message.trim();
     const contactName = newMsgForm.name || phone;
-
     try {
-      const { data: convId, error: rpcError } = await (supabase.rpc('find_or_create_conversation', {
-        p_empresa_id: empresaId,
-        p_phone: phone,
-        p_client_name: contactName,
-        p_last_message: messageText,
-      }) as any);
-
-      if (convId) {
-        await (supabase.from('whatsapp_messages').insert({
-          conversation_id: convId,
-          empresa_id: empresaId,
-          sender: 'me',
-          content: messageText,
-          message_type: 'chat',
-        }) as any);
-      }
-
+      const { data: convId } = await (supabase.rpc('find_or_create_conversation', { p_empresa_id: empresaId, p_phone: phone, p_client_name: contactName, p_last_message: messageText }) as any);
+      if (convId) await (supabase.from('whatsapp_messages').insert({ conversation_id: convId, empresa_id: empresaId, sender: 'me', content: messageText, message_type: 'chat' }) as any);
       setShowNewMessage(false);
       setNewMsgForm({ phone: '', name: '', message: '' });
-
-      const { data: updated } = await (supabase
-        .from('whatsapp_conversations')
-        .select('*')
-        .eq('empresa_id', empresaId)
-        .order('last_message_at', { ascending: false }) as any);
-      if (updated) {
-        setConversations(updated);
-        const newConv = updated.find((c: any) => normalizePhone(c.phone) === phone);
-        if (newConv) openConversation(newConv);
-      }
-
-      try {
-        await sendMessage(serverUrl, empresaId, phone, messageText);
-        toast.success('Mensagem enviada!');
-      } catch (sendErr) {
-        console.error('Error sending via server:', sendErr);
-        toast.warning('Conversa criada, mas houve erro ao enviar pelo servidor. Tente reenviar.');
-      }
-    } catch (err) {
-      console.error('Error creating conversation:', err);
-      toast.error('Erro ao criar conversa.');
-    }
+      const { data: updated } = await (supabase.from('whatsapp_conversations').select('*').eq('empresa_id', empresaId).order('last_message_at', { ascending: false }) as any);
+      if (updated) { setConversations(updated); const newConv = updated.find((c: any) => normalizePhone(c.phone) === phone); if (newConv) openConversation(newConv); }
+      try { await sendMessage(serverUrl, empresaId, phone, messageText); toast.success('Mensagem enviada!'); } catch { toast.warning('Conversa criada, mas houve erro ao enviar.'); }
+    } catch (err) { console.error('Error:', err); toast.error('Erro ao criar conversa.'); }
   };
 
   const handleCreateClient = async () => {
-    if (!clientForm.full_name.trim()) {
-      toast.error('Nome é obrigatório');
-      return;
-    }
-
-    const { data, error } = await (supabase.from('clients').insert({
-      full_name: clientForm.full_name,
-      phone: clientForm.phone,
-      email: clientForm.email,
-      empresa_id: empresaId,
-    }).select().single() as any);
-
-    if (error) {
-      toast.error('Erro ao criar cliente');
-      return;
-    }
-
-    await (supabase.from('whatsapp_contacts').insert({
-      empresa_id: empresaId,
-      client_id: data.id,
-      name: clientForm.full_name,
-      phone: clientForm.phone,
-      email: clientForm.email,
-    }) as any);
-
+    if (!clientForm.full_name.trim()) { toast.error('Nome é obrigatório'); return; }
+    const { data, error } = await (supabase.from('clients').insert({ full_name: clientForm.full_name, phone: clientForm.phone, email: clientForm.email, empresa_id: empresaId }).select().single() as any);
+    if (error) { toast.error('Erro ao criar cliente'); return; }
+    await (supabase.from('whatsapp_contacts').insert({ empresa_id: empresaId, client_id: data.id, name: clientForm.full_name, phone: clientForm.phone, email: clientForm.email }) as any);
     if (activeConv) {
-      const { data: contact } = await (supabase.from('whatsapp_contacts')
-        .select('id')
-        .eq('client_id', data.id)
-        .eq('empresa_id', empresaId)
-        .single() as any);
-
+      const { data: contact } = await (supabase.from('whatsapp_contacts').select('id').eq('client_id', data.id).eq('empresa_id', empresaId).single() as any);
       if (contact) {
-        await (supabase.from('whatsapp_conversations')
-          .update({ contact_id: contact.id, contact_name: clientForm.full_name })
-          .eq('id', activeConv.id) as any);
-
+        await (supabase.from('whatsapp_conversations').update({ contact_id: contact.id, contact_name: clientForm.full_name }).eq('id', activeConv.id) as any);
         setActiveConv(prev => prev ? { ...prev, contact_name: clientForm.full_name, contact_id: contact.id } : null);
-        setConversations(prev => prev.map(c =>
-          c.id === activeConv.id ? { ...c, contact_name: clientForm.full_name, contact_id: contact.id } : c
-        ));
+        setConversations(prev => prev.map(c => c.id === activeConv.id ? { ...c, contact_name: clientForm.full_name, contact_id: contact.id } : c));
       }
     }
-
-    toast.success('Cliente criado com sucesso!');
+    toast.success('Cliente criado!');
     setShowCreateClient(false);
   };
 
@@ -474,8 +277,7 @@ export default function WhatsAppInboxPage() {
   const filteredConvs = conversations.filter(c => {
     if (!search) return true;
     const s = search.toLowerCase();
-    const name = getDisplayName(c).toLowerCase();
-    return name.includes(s) || c.phone?.includes(search);
+    return getDisplayName(c).toLowerCase().includes(s) || c.phone?.includes(search);
   });
 
   const formatTime = (dateStr: string) => {
@@ -484,71 +286,117 @@ export default function WhatsAppInboxPage() {
       const d = new Date(dateStr);
       const now = new Date();
       if (d.toDateString() === now.toDateString()) return format(d, 'HH:mm');
-      return format(d, 'dd/MM', { locale: ptBR });
+      const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+      if (d.toDateString() === yesterday.toDateString()) return 'Ontem';
+      return format(d, 'dd/MM/yyyy', { locale: ptBR });
     } catch { return ''; }
   };
 
-  const getLastMsgPreview = (conv: Conversation) => {
-    const msg = conv.last_message || '';
-    if (!msg) return 'Sem mensagens';
-    return msg;
-  };
+  const getLastMsgPreview = (conv: Conversation) => conv.last_message || 'Sem mensagens';
+
+  // Group messages by date
+  const groupedMessages = messages.reduce<{ date: string; msgs: Message[] }[]>((acc, msg) => {
+    const d = new Date(msg.created_at);
+    const today = new Date();
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    let dateLabel = format(d, 'dd/MM/yyyy', { locale: ptBR });
+    if (d.toDateString() === today.toDateString()) dateLabel = 'HOJE';
+    else if (d.toDateString() === yesterday.toDateString()) dateLabel = 'ONTEM';
+
+    const last = acc[acc.length - 1];
+    if (last && last.date === dateLabel) {
+      last.msgs.push(msg);
+    } else {
+      acc.push({ date: dateLabel, msgs: [msg] });
+    }
+    return acc;
+  }, []);
 
   return (
     <AppLayout>
-      <div className="flex h-[calc(100vh-3.5rem)] bg-background">
-        {/* Column 1: Conversations */}
-        <div className="w-[340px] border-r flex flex-col bg-card shrink-0">
-          <div className="p-3 border-b space-y-2">
+      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden" style={{ backgroundColor: '#eae6df' }}>
+        {/* ==================== LEFT PANEL ==================== */}
+        <div className="w-[400px] flex flex-col shrink-0 border-r" style={{ backgroundColor: '#ffffff', borderColor: '#e9edef' }}>
+          {/* Header */}
+          <div className="h-[59px] flex items-center justify-between px-4 shrink-0" style={{ backgroundColor: '#f0f2f5' }}>
+            <Avatar className="h-10 w-10 cursor-pointer">
+              <AvatarFallback style={{ backgroundColor: '#dfe5e7', color: '#54656f' }} className="text-sm font-medium">
+                {agentName?.slice(0, 2).toUpperCase() || 'EU'}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar conversa..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 h-9"
-                />
-              </div>
-              <Button
-                size="icon"
-                variant="outline"
-                className="shrink-0 h-9 w-9"
-                title="Nova mensagem"
+              <button
+                className="p-2 rounded-full hover:bg-black/5 transition-colors"
                 onClick={() => setShowNewMessage(true)}
+                title="Nova conversa"
               >
-                <MessageSquarePlus className="h-4 w-4" />
-              </Button>
+                <MessageSquarePlus className="h-5 w-5" style={{ color: '#54656f' }} />
+              </button>
+              <button className="p-2 rounded-full hover:bg-black/5 transition-colors">
+                <MoreVertical className="h-5 w-5" style={{ color: '#54656f' }} />
+              </button>
             </div>
           </div>
-          <ScrollArea className="flex-1">
-            {filteredConvs.map((conv) => {
+
+          {/* Search */}
+          <div className="px-2 py-[5px] shrink-0" style={{ backgroundColor: '#ffffff' }}>
+            <div
+              className="flex items-center gap-3 rounded-lg px-3 py-[6px] transition-all"
+              style={{ backgroundColor: searchFocused ? '#ffffff' : '#f0f2f5', border: searchFocused ? '1px solid #00a884' : '1px solid transparent' }}
+            >
+              <Search className="h-[18px] w-[18px] shrink-0" style={{ color: searchFocused ? '#00a884' : '#54656f' }} />
+              <input
+                type="text"
+                placeholder="Pesquisar ou começar uma nova conversa"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                className="flex-1 bg-transparent text-[14px] outline-none placeholder:text-[#667781]"
+                style={{ color: '#111b21' }}
+              />
+            </div>
+          </div>
+
+          {/* Conversation list */}
+          <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+            {filteredConvs.map(conv => {
               const displayName = getDisplayName(conv);
+              const phone = conv.phone?.replace(/\D/g, '') || '';
+              const isActive = activeConv?.id === conv.id;
               return (
                 <div
                   key={conv.id}
                   onClick={() => openConversation(conv)}
-                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/30 ${activeConv?.id === conv.id ? 'bg-muted' : ''}`}
+                  className="flex items-center gap-3 px-3 py-[10px] cursor-pointer transition-colors"
+                  style={{ backgroundColor: isActive ? '#f0f2f5' : 'transparent' }}
+                  onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = '#f5f6f6'; }}
+                  onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent'; }}
                 >
-                  <Avatar className="h-11 w-11 shrink-0">
-                    {profilePics[conv.phone?.replace(/\D/g, '')] && (
-                      <AvatarImage src={profilePics[conv.phone?.replace(/\D/g, '')]!} alt={displayName} />
-                    )}
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                  <Avatar className="h-[49px] w-[49px] shrink-0">
+                    {profilePics[phone] && <AvatarImage src={profilePics[phone]!} alt={displayName} />}
+                    <AvatarFallback style={{ backgroundColor: '#dfe5e7', color: '#ffffff' }} className="text-lg font-light">
                       {displayName.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm truncate">{displayName}</span>
-                      <span className="text-xs text-muted-foreground shrink-0">{formatTime(conv.last_message_at)}</span>
+                  <div className="flex-1 min-w-0 border-b py-[2px]" style={{ borderColor: '#e9edef' }}>
+                    <div className="flex items-center justify-between mb-[2px]">
+                      <span className="text-[17px] truncate" style={{ color: '#111b21' }}>{displayName}</span>
+                      <span className="text-[12px] shrink-0 ml-2" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
+                        {formatTime(conv.last_message_at)}
+                      </span>
                     </div>
-                    <div className="flex items-center justify-between mt-0.5">
-                      <p className="text-xs text-muted-foreground truncate pr-2">{getLastMsgPreview(conv)}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[14px] truncate pr-2" style={{ color: '#667781' }}>
+                        {getLastMsgPreview(conv)}
+                      </p>
                       {conv.unread_count > 0 && (
-                        <Badge className="h-5 min-w-5 flex items-center justify-center rounded-full text-[10px] bg-primary text-primary-foreground shrink-0">
+                        <span
+                          className="h-[20px] min-w-[20px] flex items-center justify-center rounded-full text-[11px] font-medium px-[6px] shrink-0"
+                          style={{ backgroundColor: '#25d366', color: '#ffffff' }}
+                        >
                           {conv.unread_count}
-                        </Badge>
+                        </span>
                       )}
                     </div>
                   </div>
@@ -556,75 +404,118 @@ export default function WhatsAppInboxPage() {
               );
             })}
             {filteredConvs.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground text-sm">
+              <div className="p-8 text-center text-[14px]" style={{ color: '#667781' }}>
                 Nenhuma conversa encontrada
               </div>
             )}
-          </ScrollArea>
+          </div>
         </div>
 
-        {/* Column 2: Chat */}
+        {/* ==================== RIGHT PANEL (CHAT) ==================== */}
         <div className="flex-1 flex flex-col min-w-0">
           {activeConv ? (
             <>
-              <div className="h-14 flex items-center gap-3 px-4 border-b bg-card shrink-0">
-                <Avatar className="h-9 w-9">
+              {/* Chat header */}
+              <div className="h-[59px] flex items-center gap-3 px-4 shrink-0" style={{ backgroundColor: '#f0f2f5', borderBottom: '1px solid #e9edef' }}>
+                <Avatar
+                  className="h-10 w-10 cursor-pointer"
+                  onClick={() => setShowContactInfo(!showContactInfo)}
+                >
                   {profilePics[activeConv.phone?.replace(/\D/g, '')] && (
                     <AvatarImage src={profilePics[activeConv.phone?.replace(/\D/g, '')]!} alt={getDisplayName(activeConv)} />
                   )}
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                  <AvatarFallback style={{ backgroundColor: '#dfe5e7', color: '#ffffff' }} className="text-sm font-light">
                     {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{getDisplayName(activeConv)}</p>
-                  <p className="text-xs text-muted-foreground">{activeConv.phone}</p>
+                <div
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => setShowContactInfo(!showContactInfo)}
+                >
+                  <p className="text-[16px] font-normal" style={{ color: '#111b21' }}>{getDisplayName(activeConv)}</p>
+                  <p className="text-[13px]" style={{ color: '#667781' }}>{activeConv.phone}</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button className="p-2 rounded-full hover:bg-black/5 transition-colors">
+                    <Search className="h-5 w-5" style={{ color: '#54656f' }} />
+                  </button>
+                  <button className="p-2 rounded-full hover:bg-black/5 transition-colors">
+                    <MoreVertical className="h-5 w-5" style={{ color: '#54656f' }} />
+                  </button>
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 p-4">
-                <div className="max-w-3xl mx-auto space-y-2">
-                  {loading && <p className="text-center text-muted-foreground text-sm py-8">Carregando...</p>}
-                  {messages.map((msg) => (
-                    <MessageBubble
-                      key={msg.id}
-                      msg={msg}
-                      serverUrl={serverUrl}
-                      empresaId={empresaId}
-                      onReply={(m) => setReplyTo(m as Message)}
-                    />
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
-
-              {/* Reply preview bar */}
-              {replyTo && (
-                <div className="px-3 pt-2 border-t bg-muted/50 flex items-center gap-2">
-                  <div className="flex-1 bg-card border-l-2 border-primary rounded px-3 py-1.5 min-w-0">
-                    <p className="text-[11px] font-medium text-primary">
-                      {replyTo.sender === 'me' ? 'Você' : getDisplayName(activeConv)}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {replyTo.content || getMsgTypeLabel(replyTo.message_type) || 'Mídia'}
-                    </p>
+              {/* Messages area with WhatsApp wallpaper */}
+              <div
+                className="flex-1 overflow-y-auto px-[63px] py-2 relative"
+                style={{
+                  backgroundColor: '#efeae2',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='300' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='p' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='10' cy='10' r='1.5' fill='%23d1cdc7' opacity='0.4'/%3E%3Ccircle cx='30' cy='30' r='1' fill='%23d1cdc7' opacity='0.3'/%3E%3Ccircle cx='50' cy='50' r='1.5' fill='%23d1cdc7' opacity='0.4'/%3E%3Ccircle cx='50' cy='10' r='1' fill='%23d1cdc7' opacity='0.3'/%3E%3Ccircle cx='10' cy='50' r='1' fill='%23d1cdc7' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='300' height='300' fill='url(%23p)'/%3E%3C/svg%3E")`,
+                }}
+              >
+                {loading && (
+                  <div className="flex justify-center py-8">
+                    <span className="text-[13px]" style={{ color: '#667781' }}>Carregando mensagens...</span>
                   </div>
-                  <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7" onClick={() => setReplyTo(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
+                )}
+
+                {groupedMessages.map((group) => (
+                  <div key={group.date}>
+                    {/* Date separator */}
+                    <div className="flex justify-center my-3">
+                      <span
+                        className="px-3 py-[5px] rounded-lg text-[12.5px] shadow-sm"
+                        style={{ backgroundColor: '#ffffff', color: '#54656f' }}
+                      >
+                        {group.date}
+                      </span>
+                    </div>
+                    {/* Messages */}
+                    {group.msgs.map(msg => (
+                      <MessageBubble
+                        key={msg.id}
+                        msg={msg}
+                        serverUrl={serverUrl}
+                        empresaId={empresaId}
+                        onReply={(m) => setReplyTo(m as Message)}
+                      />
+                    ))}
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Reply preview */}
+              {replyTo && (
+                <div className="px-[63px] pt-1 shrink-0" style={{ backgroundColor: '#f0f2f5' }}>
+                  <div className="flex items-center rounded-t-lg overflow-hidden" style={{ backgroundColor: '#f0f0f0' }}>
+                    <div className="flex-1 px-4 py-2 border-l-[4px] min-w-0" style={{ borderColor: '#06cf9c' }}>
+                      <p className="text-[12.8px] font-medium" style={{ color: '#06cf9c' }}>
+                        {replyTo.sender === 'me' ? 'Você' : getDisplayName(activeConv)}
+                      </p>
+                      <p className="text-[13px] truncate" style={{ color: '#667781' }}>
+                        {replyTo.content || getMsgTypeLabel(replyTo.message_type) || 'Mídia'}
+                      </p>
+                    </div>
+                    <button className="p-2 hover:bg-black/5 transition-colors" onClick={() => setReplyTo(null)}>
+                      <X className="h-5 w-5" style={{ color: '#8696a0' }} />
+                    </button>
+                  </div>
                 </div>
               )}
 
-              <div className="p-3 border-t bg-card flex items-center gap-2 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
+              {/* Input area */}
+              <div className="flex items-center gap-1 px-[10px] py-[5px] shrink-0" style={{ backgroundColor: '#f0f2f5' }}>
+                <button className="p-2 rounded-full hover:bg-black/5 transition-colors">
+                  <Smile className="h-[26px] w-[26px]" style={{ color: '#54656f' }} />
+                </button>
+                <button
+                  className="p-2 rounded-full hover:bg-black/5 transition-colors"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={sendingFile}
                 >
-                  <Paperclip className="h-5 w-5 text-muted-foreground" />
-                </Button>
+                  <Paperclip className="h-[26px] w-[26px] rotate-45" style={{ color: '#54656f' }} />
+                </button>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -632,78 +523,117 @@ export default function WhatsAppInboxPage() {
                   accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar"
                   onChange={handleFileUpload}
                 />
-                <Input
-                  placeholder="Digite uma mensagem..."
-                  value={msgText}
-                  onChange={(e) => setMsgText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                  className="flex-1"
-                />
-                <Button onClick={handleSend} size="icon" className="shrink-0">
-                  <Send className="h-4 w-4" />
-                </Button>
+                <div className="flex-1 mx-1">
+                  <input
+                    type="text"
+                    placeholder="Digite uma mensagem"
+                    value={msgText}
+                    onChange={e => setMsgText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                    className="w-full rounded-lg px-3 py-[9px] text-[15px] outline-none"
+                    style={{ backgroundColor: '#ffffff', color: '#111b21', border: '1px solid #e9edef' }}
+                  />
+                </div>
+                {msgText.trim() ? (
+                  <button onClick={handleSend} className="p-2 rounded-full hover:bg-black/5 transition-colors">
+                    <Send className="h-[26px] w-[26px]" style={{ color: '#54656f' }} />
+                  </button>
+                ) : (
+                  <button className="p-2 rounded-full hover:bg-black/5 transition-colors">
+                    <Mic className="h-[26px] w-[26px]" style={{ color: '#54656f' }} />
+                  </button>
+                )}
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                  <Send className="h-7 w-7" />
+            /* Empty state */
+            <div className="flex-1 flex flex-col items-center justify-center" style={{ backgroundColor: '#f0f2f5' }}>
+              <div className="text-center max-w-[560px]">
+                <div className="w-[250px] h-[250px] mx-auto mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#e8e8e8' }}>
+                  <svg viewBox="0 0 303 172" width="250" className="opacity-20">
+                    <path fill="#364147" d="M229.565 160.229c32.647-12.996 51.515-30.525 51.515-49.702C281.08 62.32 218.134 24.46 140.54 24.46S0 62.32 0 110.527c0 19.177 18.868 36.706 51.515 49.702A254.118 254.118 0 0 0 140.54 172a254.118 254.118 0 0 0 89.025-11.771z" />
+                    <path fill="#DCE3E5" d="M229.565 160.229c32.647-12.996 51.515-30.525 51.515-49.702C281.08 62.32 218.134 24.46 140.54 24.46S0 62.32 0 110.527c0 19.177 18.868 36.706 51.515 49.702" />
+                  </svg>
                 </div>
-                <p className="text-lg font-medium">WhatsApp Inbox</p>
-                <p className="text-sm mt-1">Selecione uma conversa ou inicie uma nova</p>
-                <Button className="mt-4 gap-2" onClick={() => setShowNewMessage(true)}>
-                  <MessageSquarePlus className="h-4 w-4" />
-                  Nova Mensagem
-                </Button>
+                <h1 className="text-[32px] font-light mb-3" style={{ color: '#41525d' }}>WhatsApp Web</h1>
+                <p className="text-[14px] leading-[20px]" style={{ color: '#667781' }}>
+                  Envie e receba mensagens sem precisar manter seu celular conectado.<br />
+                  Use o WhatsApp em até 4 aparelhos conectados e 1 celular ao mesmo tempo.
+                </p>
+                <div className="mt-10 pt-8" style={{ borderTop: '1px solid #e9edef' }}>
+                  <Button
+                    className="gap-2 rounded-full px-6"
+                    style={{ backgroundColor: '#008069', color: '#ffffff' }}
+                    onClick={() => setShowNewMessage(true)}
+                  >
+                    <MessageSquarePlus className="h-4 w-4" />
+                    Nova Mensagem
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Column 3: Contact info */}
-        {activeConv && (
-          <div className="w-[280px] border-l bg-card flex flex-col shrink-0">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold text-sm">Informações do Contato</h3>
+        {/* ==================== RIGHT PANEL (CONTACT INFO) ==================== */}
+        {showContactInfo && activeConv && (
+          <div className="w-[340px] flex flex-col shrink-0 border-l" style={{ backgroundColor: '#ffffff', borderColor: '#e9edef' }}>
+            {/* Header */}
+            <div className="h-[59px] flex items-center gap-6 px-6 shrink-0" style={{ backgroundColor: '#f0f2f5' }}>
+              <button onClick={() => setShowContactInfo(false)} className="p-1 hover:bg-black/5 rounded-full transition-colors">
+                <X className="h-5 w-5" style={{ color: '#54656f' }} />
+              </button>
+              <span className="text-[16px]" style={{ color: '#111b21' }}>Dados do contato</span>
             </div>
-            <div className="p-4 flex flex-col items-center">
-              <Avatar className="h-20 w-20 mb-3">
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
-                  {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <p className="font-semibold text-base">{getDisplayName(activeConv)}</p>
 
-              <div className="w-full mt-4 space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{activeConv.phone}</span>
+            {/* Contact details */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex flex-col items-center py-7" style={{ backgroundColor: '#ffffff' }}>
+                <Avatar className="h-[200px] w-[200px] mb-4">
+                  {profilePics[activeConv.phone?.replace(/\D/g, '')] && (
+                    <AvatarImage src={profilePics[activeConv.phone?.replace(/\D/g, '')]!} alt={getDisplayName(activeConv)} />
+                  )}
+                  <AvatarFallback style={{ backgroundColor: '#dfe5e7', color: '#ffffff' }} className="text-6xl font-light">
+                    {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="text-[22px]" style={{ color: '#111b21' }}>{getDisplayName(activeConv)}</p>
+                <p className="text-[14px] mt-1" style={{ color: '#667781' }}>{activeConv.phone}</p>
+              </div>
+
+              <div className="h-[8px]" style={{ backgroundColor: '#f0f2f5' }} />
+
+              <div className="px-[30px] py-4">
+                <p className="text-[14px] mb-3" style={{ color: '#008069' }}>Telefone</p>
+                <div className="flex items-center gap-3">
+                  <Phone className="h-5 w-5" style={{ color: '#54656f' }} />
+                  <span className="text-[14px]" style={{ color: '#111b21' }}>{activeConv.phone}</span>
                 </div>
               </div>
 
-              {!activeConv.contact_id && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-6 gap-2"
-                  onClick={() => {
-                    setClientForm({
-                      full_name: getDisplayName(activeConv),
-                      phone: activeConv.phone,
-                      email: '',
-                    });
-                    setShowCreateClient(true);
-                  }}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Criar Cliente
-                </Button>
-              )}
-              {activeConv.contact_id && (
-                <Badge variant="secondary" className="mt-4">
-                  Cliente vinculado
-                </Badge>
-              )}
+              <div className="h-[8px]" style={{ backgroundColor: '#f0f2f5' }} />
+
+              <div className="px-[30px] py-4">
+                {!activeConv.contact_id ? (
+                  <button
+                    className="flex items-center gap-3 w-full py-2 text-[14px] hover:bg-black/5 rounded transition-colors"
+                    style={{ color: '#008069' }}
+                    onClick={() => {
+                      setClientForm({ full_name: getDisplayName(activeConv), phone: activeConv.phone, email: '' });
+                      setShowCreateClient(true);
+                    }}
+                  >
+                    <UserPlus className="h-5 w-5" />
+                    <span>Criar Cliente no CRM</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] px-3 py-1 rounded-full" style={{ backgroundColor: '#e7f8e9', color: '#008069' }}>
+                      ✓ Cliente vinculado
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -721,29 +651,16 @@ export default function WhatsAppInboxPage() {
           <div className="space-y-4">
             <div>
               <Label>Telefone (com DDD e código do país)</Label>
-              <Input
-                value={newMsgForm.phone}
-                onChange={(e) => setNewMsgForm(prev => ({ ...prev, phone: e.target.value }))}
-                placeholder="5548991234567"
-              />
-              <p className="text-xs text-muted-foreground mt-1">Ex: 5548991234567 (55 = Brasil, 48 = DDD)</p>
+              <Input value={newMsgForm.phone} onChange={e => setNewMsgForm(prev => ({ ...prev, phone: e.target.value }))} placeholder="5548991234567" />
+              <p className="text-xs text-muted-foreground mt-1">Ex: 5548991234567</p>
             </div>
             <div>
               <Label>Nome do contato (opcional)</Label>
-              <Input
-                value={newMsgForm.name}
-                onChange={(e) => setNewMsgForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="João Silva"
-              />
+              <Input value={newMsgForm.name} onChange={e => setNewMsgForm(prev => ({ ...prev, name: e.target.value }))} placeholder="João Silva" />
             </div>
             <div>
               <Label>Mensagem</Label>
-              <Input
-                value={newMsgForm.message}
-                onChange={(e) => setNewMsgForm(prev => ({ ...prev, message: e.target.value }))}
-                placeholder="Olá! Tudo bem?"
-                onKeyDown={(e) => e.key === 'Enter' && handleNewMessage()}
-              />
+              <Input value={newMsgForm.message} onChange={e => setNewMsgForm(prev => ({ ...prev, message: e.target.value }))} placeholder="Olá!" onKeyDown={e => e.key === 'Enter' && handleNewMessage()} />
             </div>
             <Button onClick={handleNewMessage} className="w-full gap-2">
               <Send className="h-4 w-4" />
@@ -756,22 +673,11 @@ export default function WhatsAppInboxPage() {
       {/* Create Client Dialog */}
       <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Criar Cliente</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Criar Cliente</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Nome completo</Label>
-              <Input value={clientForm.full_name} onChange={(e) => setClientForm(prev => ({ ...prev, full_name: e.target.value }))} />
-            </div>
-            <div>
-              <Label>Telefone</Label>
-              <Input value={clientForm.phone} onChange={(e) => setClientForm(prev => ({ ...prev, phone: e.target.value }))} />
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input value={clientForm.email} onChange={(e) => setClientForm(prev => ({ ...prev, email: e.target.value }))} />
-            </div>
+            <div><Label>Nome completo</Label><Input value={clientForm.full_name} onChange={e => setClientForm(prev => ({ ...prev, full_name: e.target.value }))} /></div>
+            <div><Label>Telefone</Label><Input value={clientForm.phone} onChange={e => setClientForm(prev => ({ ...prev, phone: e.target.value }))} /></div>
+            <div><Label>Email</Label><Input value={clientForm.email} onChange={e => setClientForm(prev => ({ ...prev, email: e.target.value }))} /></div>
             <Button onClick={handleCreateClient} className="w-full">Salvar Cliente</Button>
           </div>
         </DialogContent>
