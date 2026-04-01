@@ -2,19 +2,18 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useRef } from "react";
 import React from "react";
-import { LogOut, Building, User, Camera, MessageCircle, Mail, Bell, ChevronDown, Plus } from "lucide-react";
+import {
+  LogOut, Building, User, Camera, MessageCircle, Mail, Bell,
+  ChevronDown, Plus, Users, ShoppingCart, Plane, DollarSign,
+  Megaphone, MessageSquare, FileText, BarChart3, Settings,
+  Star, StarOff
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import PhotoCaptureModal from "@/components/PhotoCaptureModal";
@@ -28,10 +27,32 @@ interface MenuItem {
 
 interface MenuGroup {
   label: string;
-  url?: string; // direct navigation URL for single-item menus
+  icon?: React.ReactNode;
+  url?: string;
   items: MenuItem[];
 }
 
+/* ─── Favoritos ────────────────────────────────────── */
+const FAVORITES_KEY = "vortex_menu_favorites";
+
+function loadFavorites(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
+  } catch { return []; }
+}
+
+function saveFavorites(favs: string[]) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+}
+
+/* ─── Último módulo ────────────────────────────────── */
+const LAST_MODULE_KEY = "vortex_last_module";
+
+function saveLastModule(url: string) {
+  localStorage.setItem(LAST_MODULE_KEY, url);
+}
+
+/* ─── Permissões ───────────────────────────────────── */
 function usePermissions() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -63,17 +84,18 @@ function usePermissions() {
   return { userEmail, isAdmin, hasPerm };
 }
 
+/* ─── Menu Principal ───────────────────────────────── */
 function TopMenuBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { activeCompany } = useCompany();
   const { hasPerm, isAdmin } = usePermissions();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<string[]>(loadFavorites);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isVistos = activeCompany?.slug === "vortex-vistos";
 
-  // Close menu on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -84,209 +106,300 @@ function TopMenuBar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Close menu on navigation
   useEffect(() => {
     setOpenMenu(null);
+    saveLastModule(location.pathname);
   }, [location.pathname]);
 
-  const menus: MenuGroup[] = isVistos
-    ? [
-        {
-          label: "Cadastros",
-          items: [
-            { title: "Clientes", url: "/clients", permKey: "clients_view" },
-            { title: "Fornecedores", url: "/suppliers", permKey: "suppliers_view" },
-            { title: "Serviços", url: "/vistos/products" },
-          ],
-        },
-        {
-          label: "Vendas",
-          items: [
-            { title: "Dashboard", url: "/vistos/dashboard" },
-            { title: "Vendas", url: "/vistos/sales", permKey: "sales_view" },
-            { title: "Produção", url: "/vistos/production" },
-            { title: "DS-160 Grupo", url: "/vistos/ds160" },
-          ],
-        },
-        {
-          label: "Financeiro",
-          items: [
-            { title: "Contas a Receber", url: "/financial/receivable", permKey: "financial_receivable" },
-            { title: "Contas a Pagar", url: "/financial/payable", permKey: "financial_payable" },
-            { title: "Agrupar Contas", url: "/financial/group-accounts", permKey: "financial_payable" },
-            { title: "Desagrupar Contas", url: "/financial/ungroup-accounts", permKey: "financial_payable" },
-            { title: "Contas Correntes", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
-            { title: "Conciliação Bancária", url: "/financial/reconciliation", permKey: "financial_reconciliation" },
-            { title: "Fluxo de Caixa", url: "/financial/cashflow", permKey: "financial_cashflow" },
-            { title: "Centros de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
-            { title: "Relatório de Conta", url: "/financial/bank-report", permKey: "financial_bank_report" },
-          ],
-        },
-        {
-          label: "Relatórios",
-          items: [{ title: "Relatórios", url: "/vistos/reports" }],
-        },
-        {
-          label: "Ferramentas",
-          items: [
-            { title: "Calendário", url: "/calendar" },
-            { title: "WhatsApp", url: "/whatsapp" },
-            { title: "Email", url: "/email" },
-          ],
-        },
-      ]
-    : [
-        {
-          label: "Cadastros",
-          items: [
-            { title: "Clientes", url: "/clients", permKey: "clients_view" },
-            { title: "Fornecedores", url: "/suppliers", permKey: "suppliers_view" },
-            { title: "Vendedores", url: "/sellers", permKey: "sellers_view" },
-            { title: "Serviços", url: "/services", permKey: "services_view" },
-            { title: "Cias Aéreas", url: "/airlines" },
-          ],
-        },
-        {
-          label: "Vendas",
-          items: [
-            { title: "Dashboard", url: "/dashboard" },
-            { title: "Vendas", url: "/sales", permKey: "sales_view" },
-            { title: "Vouchers", url: "/sales/vouchers", permKey: "sales_view" },
-            { title: "Roteiros", url: "/itineraries" },
-            { title: "Contratos", url: "/contracts/templates" },
-          ],
-        },
-        {
-          label: "Cotações",
-          url: "/cotacoes/lista",
-          items: [{ title: "Cotações", url: "/cotacoes/lista", permKey: "sales_view" }],
-        },
-        {
-          label: "Financeiro",
-          items: [
-            { title: "Contas a Receber", url: "/financial/receivable", permKey: "financial_receivable" },
-            { title: "Contas a Pagar", url: "/financial/payable", permKey: "financial_payable" },
-            { title: "Agrupar Contas", url: "/financial/group-accounts", permKey: "financial_payable" },
-            { title: "Desagrupar Contas", url: "/financial/ungroup-accounts", permKey: "financial_payable" },
-            { title: "Contas Correntes", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
-            { title: "Conciliação Bancária", url: "/financial/reconciliation", permKey: "financial_reconciliation" },
-            { title: "Fluxo de Caixa", url: "/financial/cashflow", permKey: "financial_cashflow" },
-            { title: "Comissões", url: "/financial/commissions", permKey: "financial_commissions" },
-            { title: "Centros de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
-            { title: "Relatório de Conta", url: "/financial/bank-report", permKey: "financial_bank_report" },
-          ],
-        },
-        {
-          label: "Reservas",
-          url: "/reservations",
-          items: [{ title: "Reservas", url: "/reservations", permKey: "reservations_view" }],
-        },
-        {
-          label: "Promo Maker",
-          url: "/promo-maker",
-          items: [{ title: "Promo Maker", url: "/promo-maker" }],
-        },
-        {
-          label: "NFS-e",
-          items: [
-            { title: "Dashboard Fiscal", url: "/nfse" },
-            { title: "Emitir NFS-e", url: "/nfse/emit" },
-            { title: "Notas Emitidas", url: "/nfse/list" },
-            { title: "Serviços Fiscais", url: "/nfse/services" },
-            { title: "Configurações", url: "/nfse/settings" },
-            { title: "Certificado Digital", url: "/nfse/certificate" },
-          ],
-        },
-        {
-          label: "WhatsApp",
-          items: [
-            { title: "Conversas", url: "/whatsapp" },
-            { title: "Contatos", url: "/whatsapp/contacts" },
-            { title: "Etiquetas", url: "/whatsapp/labels" },
-            { title: "Respostas Rápidas", url: "/whatsapp/quick-replies" },
-            { title: "Configurações", url: "/whatsapp/settings" },
-          ],
-        },
-        {
-          label: "Ferramentas",
-          items: [
-            { title: "Calendário", url: "/calendar" },
-            { title: "Email", url: "/email" },
-            { title: "Relatórios", url: "/reports/dashboard", permKey: "reports_dashboard" },
-            { title: "Rel. Vendas", url: "/reports/sales", permKey: "reports_sales" },
-            { title: "Rel. Financeiro", url: "/reports/financial", permKey: "reports_financial" },
-            { title: "Rel. Fluxo de Caixa", url: "/reports/cashflow", permKey: "reports_financial" },
-            { title: "Rel. Clientes", url: "/reports/clients", permKey: "reports_sales" },
-            { title: "Rel. Fornecedores", url: "/reports/suppliers", permKey: "reports_sales" },
-            { title: "Rel. Centro de Custo", url: "/reports/cost-centers", permKey: "reports_financial" },
-            { title: "Rel. Produtos", url: "/reports/products", permKey: "reports_sales" },
-            { title: "Rel. Check-ins", url: "/reports/checkins", permKey: "reports_sales" },
-            { title: "Rel. Lucro por Venda", url: "/reports/profit", permKey: "reports_financial" },
-            ...(isAdmin
-              ? [
-                  { title: "Configurações", url: "/settings", permKey: "settings_access" },
-                  { title: "Aparência", url: "/settings/appearance", permKey: "settings_access" },
-                  { title: "Usuários", url: "/users" },
-                ]
-              : []),
-          ],
-        },
-      ];
+  const toggleFavorite = (url: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = favorites.includes(url)
+      ? favorites.filter(f => f !== url)
+      : [...favorites, url];
+    setFavorites(next);
+    saveFavorites(next);
+  };
+
+  const handleNavigate = (url: string) => {
+    navigate(url);
+    setOpenMenu(null);
+  };
+
+  /* ─── Definição dos menus por fluxo operacional ─── */
+  const vistosMenus: MenuGroup[] = [
+    {
+      label: "Clientes",
+      icon: <Users className="h-3 w-3" />,
+      items: [
+        { title: "Clientes", url: "/clients", permKey: "clients_view" },
+        { title: "Contatos WhatsApp", url: "/whatsapp/contacts" },
+      ],
+    },
+    {
+      label: "Comercial",
+      icon: <ShoppingCart className="h-3 w-3" />,
+      items: [
+        { title: "Dashboard", url: "/vistos/dashboard" },
+        { title: "Vendas", url: "/vistos/sales", permKey: "sales_view" },
+        { title: "Produção", url: "/vistos/production" },
+        { title: "DS-160 Grupo", url: "/vistos/ds160" },
+        { title: "Serviços", url: "/vistos/products" },
+      ],
+    },
+    {
+      label: "Financeiro",
+      icon: <DollarSign className="h-3 w-3" />,
+      items: [
+        { title: "Contas a Receber", url: "/financial/receivable", permKey: "financial_receivable" },
+        { title: "Contas a Pagar", url: "/financial/payable", permKey: "financial_payable" },
+        { title: "Contas Correntes", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
+        { title: "Conciliação Bancária", url: "/financial/reconciliation", permKey: "financial_reconciliation" },
+        { title: "Fluxo de Caixa", url: "/financial/cashflow", permKey: "financial_cashflow" },
+        { title: "Centros de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
+        { title: "Relatório de Conta", url: "/financial/bank-report", permKey: "financial_bank_report" },
+      ],
+    },
+    {
+      label: "WhatsApp",
+      icon: <MessageSquare className="h-3 w-3" />,
+      url: "/whatsapp",
+      items: [
+        { title: "Conversas", url: "/whatsapp" },
+        { title: "Contatos", url: "/whatsapp/contacts" },
+        { title: "Etiquetas", url: "/whatsapp/labels" },
+        { title: "Respostas Rápidas", url: "/whatsapp/quick-replies" },
+        { title: "Configurações", url: "/whatsapp/settings" },
+      ],
+    },
+    {
+      label: "Relatórios",
+      icon: <BarChart3 className="h-3 w-3" />,
+      items: [{ title: "Relatórios", url: "/vistos/reports" }],
+    },
+    ...(isAdmin ? [{
+      label: "Sistema",
+      icon: <Settings className="h-3 w-3" />,
+      items: [
+        { title: "Usuários", url: "/users" },
+        { title: "Aparência", url: "/settings/appearance" },
+        { title: "Configurações", url: "/settings", permKey: "settings_access" },
+        { title: "Calendário", url: "/calendar" },
+        { title: "Email", url: "/email" },
+      ],
+    }] : []),
+  ];
+
+  const viagensMenus: MenuGroup[] = [
+    {
+      label: "Clientes",
+      icon: <Users className="h-3 w-3" />,
+      items: [
+        { title: "Clientes", url: "/clients", permKey: "clients_view" },
+        { title: "Contatos WhatsApp", url: "/whatsapp/contacts" },
+        { title: "Etiquetas", url: "/whatsapp/labels" },
+      ],
+    },
+    {
+      label: "Comercial",
+      icon: <ShoppingCart className="h-3 w-3" />,
+      items: [
+        { title: "Dashboard", url: "/dashboard" },
+        { title: "Cotações", url: "/cotacoes/lista", permKey: "sales_view" },
+        { title: "Vendas", url: "/sales", permKey: "sales_view" },
+        { title: "Contratos", url: "/contracts/templates" },
+        { title: "Vouchers", url: "/sales/vouchers", permKey: "sales_view" },
+      ],
+    },
+    {
+      label: "Operação",
+      icon: <Plane className="h-3 w-3" />,
+      items: [
+        { title: "Reservas", url: "/reservations", permKey: "reservations_view" },
+        { title: "Roteiros", url: "/itineraries" },
+        { title: "Fornecedores", url: "/suppliers", permKey: "suppliers_view" },
+        { title: "Serviços", url: "/services", permKey: "services_view" },
+        { title: "Cias Aéreas", url: "/airlines" },
+        { title: "Vendedores", url: "/sellers", permKey: "sellers_view" },
+      ],
+    },
+    {
+      label: "Financeiro",
+      icon: <DollarSign className="h-3 w-3" />,
+      items: [
+        { title: "Contas a Receber", url: "/financial/receivable", permKey: "financial_receivable" },
+        { title: "Contas a Pagar", url: "/financial/payable", permKey: "financial_payable" },
+        { title: "Contas Correntes", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
+        { title: "Conciliação Bancária", url: "/financial/reconciliation", permKey: "financial_reconciliation" },
+        { title: "Fluxo de Caixa", url: "/financial/cashflow", permKey: "financial_cashflow" },
+        { title: "Comissões", url: "/financial/commissions", permKey: "financial_commissions" },
+        { title: "Centros de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
+        { title: "Relatório de Conta", url: "/financial/bank-report", permKey: "financial_bank_report" },
+      ],
+    },
+    {
+      label: "Marketing",
+      icon: <Megaphone className="h-3 w-3" />,
+      url: "/promo-maker",
+      items: [
+        { title: "Promo Maker", url: "/promo-maker" },
+      ],
+    },
+    {
+      label: "WhatsApp",
+      icon: <MessageSquare className="h-3 w-3" />,
+      url: "/whatsapp",
+      items: [
+        { title: "Conversas", url: "/whatsapp" },
+        { title: "Contatos", url: "/whatsapp/contacts" },
+        { title: "Etiquetas", url: "/whatsapp/labels" },
+        { title: "Respostas Rápidas", url: "/whatsapp/quick-replies" },
+        { title: "Configurações", url: "/whatsapp/settings" },
+      ],
+    },
+    {
+      label: "Fiscal",
+      icon: <FileText className="h-3 w-3" />,
+      items: [
+        { title: "Dashboard Fiscal", url: "/nfse" },
+        { title: "Emitir NFS-e", url: "/nfse/emit" },
+        { title: "Notas Emitidas", url: "/nfse/list" },
+        { title: "Serviços Fiscais", url: "/nfse/services" },
+        { title: "Certificado Digital", url: "/nfse/certificate" },
+        { title: "Configurações", url: "/nfse/settings" },
+      ],
+    },
+    {
+      label: "Relatórios",
+      icon: <BarChart3 className="h-3 w-3" />,
+      items: [
+        { title: "Dashboard", url: "/reports/dashboard", permKey: "reports_dashboard" },
+        { title: "Vendas", url: "/reports/sales", permKey: "reports_sales" },
+        { title: "Financeiro", url: "/reports/financial", permKey: "reports_financial" },
+        { title: "Fluxo de Caixa", url: "/reports/cashflow", permKey: "reports_financial" },
+        { title: "Clientes", url: "/reports/clients", permKey: "reports_sales" },
+        { title: "Fornecedores", url: "/reports/suppliers", permKey: "reports_sales" },
+        { title: "Produtos", url: "/reports/products", permKey: "reports_sales" },
+        { title: "Check-ins", url: "/reports/checkins", permKey: "reports_sales" },
+        { title: "Lucro por Venda", url: "/reports/profit", permKey: "reports_financial" },
+        { title: "Centro de Custo", url: "/reports/cost-centers", permKey: "reports_financial" },
+      ],
+    },
+    {
+      label: "Sistema",
+      icon: <Settings className="h-3 w-3" />,
+      items: [
+        ...(isAdmin ? [
+          { title: "Usuários", url: "/users" },
+          { title: "Aparência", url: "/settings/appearance", permKey: "settings_access" },
+          { title: "Configurações", url: "/settings", permKey: "settings_access" },
+        ] : []),
+        { title: "Email", url: "/email" },
+        { title: "Calendário", url: "/calendar" },
+      ],
+    },
+  ];
+
+  const menus = isVistos ? vistosMenus : viagensMenus;
+
+  // Build flat map for favorites
+  const allItems: MenuItem[] = menus.flatMap(g => g.items);
+  const favItems = favorites
+    .map(url => allItems.find(i => i.url === url))
+    .filter((i): i is MenuItem => !!i && hasPerm(i.permKey));
 
   return (
     <div ref={menuRef} className="relative">
       {/* Main menu bar */}
-      <nav className="flex items-center bg-[hsl(220,60%,55%)] border-b h-8 px-1 gap-0">
+      <nav className="flex items-center bg-[hsl(220,60%,50%)] h-7 px-0.5 gap-0 select-none">
         {menus.map((group) => {
           const filteredItems = group.items.filter((i) => hasPerm(i.permKey));
           if (filteredItems.length === 0) return null;
           const isOpen = openMenu === group.label;
-          const isActive = false;
-
           const isSingleItem = filteredItems.length === 1 && group.url;
 
           return (
             <div
               key={group.label}
               className="relative"
-              onMouseEnter={() => !isSingleItem && setOpenMenu(group.label)}
+              onMouseEnter={() => {
+                if (!isSingleItem) setOpenMenu(group.label);
+              }}
               onMouseLeave={() => setOpenMenu(null)}
             >
               <button
                 onClick={() => {
                   if (isSingleItem && group.url) {
-                    navigate(group.url);
-                    setOpenMenu(null);
+                    handleNavigate(group.url);
+                  } else if (group.url) {
+                    handleNavigate(group.url);
                   } else {
                     setOpenMenu(isOpen ? null : group.label);
                   }
                 }}
-                className={`px-3 py-1 text-sm font-medium transition-colors hover:bg-[hsl(220,60%,45%)] text-white ${isActive ? "font-semibold underline underline-offset-4" : ""} ${isOpen ? "bg-[hsl(220,60%,45%)]" : ""}`}
+                className={`flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-white/90 hover:text-white hover:bg-white/15 transition-none ${isOpen ? "bg-white/15 text-white" : ""}`}
               >
+                {group.icon}
                 {group.label}
+                {!isSingleItem && filteredItems.length > 1 && (
+                  <ChevronDown className="h-2.5 w-2.5 opacity-60" />
+                )}
               </button>
+
               {/* Dropdown */}
-              {isOpen && !isSingleItem && (
-                <div className="absolute top-full left-0 z-50 min-w-[180px] bg-popover border shadow-md py-0.5">
-                  {filteredItems.map((item) => (
-                    <button
-                      key={item.url}
-                      onClick={() => navigate(item.url)}
-                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors ${location.pathname === item.url ? "bg-accent text-primary font-medium" : "text-foreground/80"}`}
-                    >
-                      {item.title}
-                    </button>
-                  ))}
+              {isOpen && !isSingleItem && filteredItems.length > 1 && (
+                <div className="absolute top-full left-0 z-50 min-w-[170px] bg-popover border border-border/60 shadow-lg py-0.5 rounded-sm">
+                  {filteredItems.map((item) => {
+                    const isFav = favorites.includes(item.url);
+                    const isItemActive = location.pathname === item.url;
+                    return (
+                      <button
+                        key={item.url}
+                        onClick={() => handleNavigate(item.url)}
+                        className={`group w-full text-left px-2.5 py-[5px] text-[11px] flex items-center justify-between hover:bg-accent transition-none ${isItemActive ? "bg-accent text-accent-foreground font-medium" : "text-foreground/80"}`}
+                      >
+                        <span>{item.title}</span>
+                        <span
+                          onClick={(e) => toggleFavorite(item.url, e)}
+                          className="opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-pointer ml-2"
+                          title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                        >
+                          {isFav
+                            ? <Star className="h-3 w-3 fill-yellow-400 text-yellow-500" />
+                            : <StarOff className="h-3 w-3" />
+                          }
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
           );
         })}
+
+        {/* Favoritos */}
+        {favItems.length > 0 && (
+          <>
+            <div className="w-px h-4 bg-white/20 mx-1" />
+            {favItems.map((item) => (
+              <button
+                key={`fav-${item.url}`}
+                onClick={() => handleNavigate(item.url)}
+                className={`flex items-center gap-1 px-2 py-1 text-[11px] font-medium transition-none ${location.pathname === item.url ? "text-yellow-300" : "text-white/70 hover:text-white hover:bg-white/10"}`}
+                title={item.title}
+              >
+                <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                {item.title}
+              </button>
+            ))}
+          </>
+        )}
       </nav>
     </div>
   );
 }
 
+/* ─── Layout Principal ─────────────────────────────── */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
   const { userEmail } = usePermissions();
@@ -324,39 +437,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col w-full bg-background">
       {/* Sticky top header + menu */}
       <div className="sticky top-0 z-50 bg-background">
-        <header className="h-8 flex items-center bg-card border-b px-2 shrink-0 gap-2">
+        <header className="h-7 flex items-center bg-card border-b px-2 shrink-0 gap-2">
           {/* Logo */}
-          <span className="text-xs font-bold text-primary tracking-wide mr-3">
-            {activeCompany?.slug === "vortex-vistos" ? "GRUPO VORTEX" : "GRUPO VORTEX"}
-          </span>
+          <span className="text-[11px] font-bold text-primary tracking-wide mr-2">GRUPO VORTEX</span>
 
           {/* Company selector */}
           {showSelector ? (
             <Select value={activeCompany?.id || ""} onValueChange={handleCompanyChange}>
-              <SelectTrigger className="w-[160px] h-6 text-xs border-border/50 bg-secondary/50">
+              <SelectTrigger className="w-[150px] h-5 text-[11px] border-border/50 bg-secondary/50">
                 <Building className="h-3 w-3 mr-1 shrink-0 text-primary" />
                 <SelectValue placeholder="Empresa" />
               </SelectTrigger>
               <SelectContent>
                 {accessibleCompanies.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           ) : activeCompany ? (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
               <Building className="h-3 w-3 text-primary" />
               {activeCompany.name}
             </span>
           ) : null}
 
-          {/* Nova Cotação button */}
+          {/* Nova Cotação */}
           <Button
             onClick={() => navigate("/sales/new")}
             size="sm"
-            className="h-6 text-[11px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 ml-2"
+            className="h-5 text-[10px] gap-1 bg-primary text-primary-foreground hover:bg-primary/90 ml-1 px-2"
           >
             <Plus className="h-3 w-3" />
             Nova Cotação
@@ -367,28 +476,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Button
               onClick={() => navigate("/whatsapp")}
               size="sm"
-              className="h-6 text-[11px] gap-1 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+              className="h-5 text-[10px] gap-1 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 px-2"
             >
               <MessageCircle className="h-3 w-3" />
               WhatsApp
             </Button>
-            <Button onClick={() => navigate("/email")} size="sm" className="h-6 text-[11px] gap-1">
+            <Button onClick={() => navigate("/email")} size="sm" className="h-5 text-[10px] gap-1 px-2">
               <Mail className="h-3 w-3" />
               Email
             </Button>
-            <Button onClick={() => setShowPhotoModal(true)} variant="ghost" size="sm" className="h-6 w-6 p-0">
+            <Button onClick={() => setShowPhotoModal(true)} variant="ghost" size="sm" className="h-5 w-5 p-0">
               <Camera className="h-3 w-3" />
             </Button>
             <NotificationBell />
             {userEmail && (
-              <span className="text-[11px] text-muted-foreground max-w-[120px] truncate hidden lg:inline">
+              <span className="text-[10px] text-muted-foreground max-w-[100px] truncate hidden lg:inline">
                 {userEmail}
               </span>
             )}
             <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+              variant="ghost" size="sm"
+              className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
               onClick={() => supabase.auth.signOut()}
               title="Sair"
             >
@@ -397,11 +505,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Horizontal menu */}
         <TopMenuBar />
       </div>
 
-      {/* Main content */}
       <main className="flex-1 overflow-auto">{children}</main>
 
       <PhotoCaptureModal open={showPhotoModal} onOpenChange={setShowPhotoModal} />
@@ -411,8 +517,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Trocar de empresa?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está prestes a mudar para <strong>{pendingCompany?.name}</strong>. Qualquer cadastro em andamento
-              será perdido. Deseja continuar?
+              Você está prestes a mudar para <strong>{pendingCompany?.name}</strong>. Qualquer cadastro em andamento será perdido. Deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
