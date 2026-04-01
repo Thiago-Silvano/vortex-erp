@@ -111,20 +111,31 @@ export default function WhatsAppSettingsPage() {
     }
     setDisconnecting(true);
     try {
-      // Try to disconnect on the server — if endpoint not supported, proceed anyway
-      try {
-        await disconnectSession(settings.server_url, empresaId);
-      } catch (serverErr) {
-        console.warn('Servidor não suportou /disconnect, atualizando estado local:', serverErr);
+      // Try disconnect via proxy — try POST then GET
+      let disconnected = false;
+      for (const method of ['POST', 'GET']) {
+        try {
+          const { data, error } = await supabase.functions.invoke('whatsapp-proxy', {
+            body: { server_url: settings.server_url, endpoint: `/disconnect?empresa_id=${encodeURIComponent(empresaId)}`, method },
+          });
+          if (!error && !(data && data.error)) {
+            disconnected = true;
+            break;
+          }
+        } catch {
+          // try next method
+        }
       }
-      // Always update local state regardless of server response
+      if (!disconnected) {
+        console.warn('Servidor não suportou /disconnect, atualizando apenas estado local');
+      }
+      // Always update local state
       await (supabase.from('whatsapp_settings').update({ is_connected: false, connected_phone: '', connected_name: '' }).eq('id', settings.id) as any);
       setSettings(prev => ({ ...prev, is_connected: false, connected_phone: '', connected_name: '' }));
       setQrCode(null);
-      toast.success('WhatsApp desconectado! Escaneie o QR Code para reconectar.');
-      fetchQrCode();
+      toast.success('WhatsApp desconectado!');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao desconectar. Verifique o servidor.');
+      toast.error(error instanceof Error ? error.message : 'Erro ao desconectar.');
     }
     setDisconnecting(false);
   };
@@ -138,12 +149,25 @@ export default function WhatsAppSettingsPage() {
     setQrCode(null);
     try {
       await connectSession(settings.server_url, empresaId);
-      const data = await getQrCode(settings.server_url, empresaId);
-      const qr = data?.qr || data?.qrcode || data?.qr_code || data?.base64 || data?.image || null;
+      // Wait a moment for QR generation on the server
+      await new Promise(r => setTimeout(r, 2000));
+      // Try up to 3 times with delay to get the QR
+      let qr: string | null = null;
+      for (let attempt = 0; attempt < 3 && !qr; attempt++) {
+        if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
+        const data = await getQrCode(settings.server_url, empresaId);
+        qr = data?.qr || data?.qrcode || data?.qr_code || data?.base64 || data?.image || null;
+        // If server says connected, no QR needed
+        if (data?.connected) {
+          toast.info('O servidor já está conectado ao WhatsApp.');
+          setLoadingQr(false);
+          return;
+        }
+      }
       if (qr) {
         setQrCode(typeof qr === 'string' && !qr.startsWith('data:') ? `data:image/png;base64,${qr}` : qr);
       } else {
-        toast.error('QR Code não disponível. O servidor pode já estar conectado ou ainda está gerando.');
+        toast.error('QR Code não disponível. O servidor ainda está gerando, tente novamente em alguns segundos.');
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Não foi possível obter o QR Code do servidor.');
