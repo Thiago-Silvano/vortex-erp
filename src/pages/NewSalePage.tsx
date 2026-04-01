@@ -148,6 +148,7 @@ export default function NewSalePage() {
   const [operatorTaxes, setOperatorTaxes] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
+  const [defaultCostCenterId, setDefaultCostCenterId] = useState<string>('');
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
   const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
 
@@ -582,7 +583,7 @@ export default function NewSalePage() {
           for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
             const dueDate = new Date(baseDate);
             dueDate.setMonth(dueDate.getMonth() + i);
-            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora', cost_center_id: defaultCostCenterId || undefined });
           }
         } else if (method === 'boleto') {
           const boletoInst = getInstallments('boleto');
@@ -592,7 +593,7 @@ export default function NewSalePage() {
             for (let i = 1; i <= boletoInst; i++) {
               const dueDate = new Date(baseDate);
               dueDate.setMonth(dueDate.getMonth() + i);
-              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto' });
+              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto', cost_center_id: defaultCostCenterId || undefined });
             }
           } else {
             const numInst = boletoInst > 0 ? boletoInst : 1;
@@ -600,7 +601,7 @@ export default function NewSalePage() {
             for (let i = 1; i <= numInst; i++) {
               const dueDate = new Date(baseDate);
               if (numInst > 1) dueDate.setMonth(dueDate.getMonth() + i);
-              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto' });
+              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Boleto', cost_center_id: defaultCostCenterId || undefined });
             }
           }
         } else if (method === 'credito') {
@@ -609,7 +610,7 @@ export default function NewSalePage() {
           for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
             const dueDate = new Date(baseDate);
             dueDate.setDate(dueDate.getDate() + i * 30);
-            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito' });
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Cartão de Crédito', cost_center_id: defaultCostCenterId || undefined });
           }
         } else {
           const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
@@ -621,13 +622,13 @@ export default function NewSalePage() {
             if (effInst > 1) {
               dueDate.setMonth(dueDate.getMonth() + i);
             }
-            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method });
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method, cost_center_id: defaultCostCenterId || undefined });
           }
         }
       }
 
       if (recs.length === 0) {
-        recs.push({ installment_number: 1, due_date: '', amount: baseAmount });
+        recs.push({ installment_number: 1, due_date: '', amount: baseAmount, cost_center_id: defaultCostCenterId || undefined });
       }
 
       // Preserve user-edited cost_center_id
@@ -639,7 +640,7 @@ export default function NewSalePage() {
         return r;
       });
     });
-  }, [installmentsMap, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
+  }, [installmentsMap, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora, defaultCostCenterId]);
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
@@ -2962,7 +2963,7 @@ export default function NewSalePage() {
 
                 return (
                   <>
-                    <div className="flex items-center gap-4 text-sm mb-2">
+                    <div className="flex items-center gap-4 text-sm mb-2 flex-wrap">
                       <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
                       <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
                       {Math.abs(diff) > 0.01 ? (
@@ -2972,6 +2973,22 @@ export default function NewSalePage() {
                       ) : (
                         <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
                       )}
+                      <div className="flex items-center gap-2 ml-auto">
+                        <Label className="text-xs whitespace-nowrap">Centro de Custo Padrão:</Label>
+                        <Select value={defaultCostCenterId || 'none'} onValueChange={v => {
+                          const newVal = v === 'none' ? '' : v;
+                          setDefaultCostCenterId(newVal);
+                          if (newVal) {
+                            setReceivables(prev => prev.map(rec => ({ ...rec, cost_center_id: newVal })));
+                          }
+                        }}>
+                          <SelectTrigger className="h-8 text-xs w-48"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     {hasMultipleMethods ? (
                       <Tabs defaultValue={uniqueMethods[0]} className="w-full">
