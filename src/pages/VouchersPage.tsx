@@ -177,23 +177,35 @@ export default function VouchersPage() {
       const flightGroups: any[][] = [];
 
       for (const item of items) {
-        if (item.metadata?.type === 'hotel' && item.metadata.hotel) {
+        if (item.metadata?.type === 'hotel') {
           const h = item.metadata.hotel;
-          let nights = 0;
-          if (h.checkInDate && h.checkOutDate) {
-            const ci = new Date(h.checkInDate + 'T12:00:00');
-            const co = new Date(h.checkOutDate + 'T12:00:00');
-            if (!isNaN(ci.getTime()) && !isNaN(co.getTime()) && co > ci) {
-              nights = Math.round((co.getTime() - ci.getTime()) / (1000 * 60 * 60 * 24));
+          if (h) {
+            let nights = 0;
+            if (h.checkInDate && h.checkOutDate) {
+              const ci = new Date(h.checkInDate + 'T12:00:00');
+              const co = new Date(h.checkOutDate + 'T12:00:00');
+              if (!isNaN(ci.getTime()) && !isNaN(co.getTime()) && co > ci) {
+                nights = Math.round((co.getTime() - ci.getTime()) / (1000 * 60 * 60 * 24));
+              }
             }
+            hotels.push({
+              name: h.hotelName || item.description || 'Hotel', description: h.observations || '',
+              detailedDescription: item.metadata?.detailedDescription || '',
+              checkIn: h.checkInDate,
+              checkOut: h.checkOutDate, nights, room: h.roomType || '', meal: '',
+              reservationNumber: item.reservation_number || '',
+            });
+          } else {
+            // Hotel item without structured metadata.hotel — still include it
+            const catName = item.service_catalog_id ? serviceCatalog.find((s: any) => s.id === item.service_catalog_id)?.name || '' : '';
+            hotels.push({
+              name: catName || item.description || 'Hotel',
+              description: '',
+              detailedDescription: item.metadata?.detailedDescription || '',
+              checkIn: '', checkOut: '', nights: 0, room: '', meal: '',
+              reservationNumber: item.reservation_number || '',
+            });
           }
-          hotels.push({
-            name: h.hotelName, description: h.observations || '',
-            detailedDescription: item.metadata?.detailedDescription || '',
-            checkIn: h.checkInDate,
-            checkOut: h.checkOutDate, nights, room: h.roomType || '', meal: '',
-            reservationNumber: item.reservation_number || '',
-          });
         }
         if (item.metadata?.type === 'aereo' && item.metadata.flightLegs?.length) {
           flightGroups.push([...item.metadata.flightLegs]);
