@@ -2847,6 +2847,7 @@ export default function NewSalePage() {
 
             {hasCredito && (
               <div className="space-y-4 pt-4 border-t">
+                <p className="text-sm font-semibold text-primary mb-1">Cartão de Crédito</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Cartão de Crédito</Label>
