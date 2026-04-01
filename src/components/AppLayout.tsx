@@ -329,7 +329,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <header className="h-8 flex items-center bg-card border-b px-2 shrink-0 gap-2">
           {/* Logo */}
           <span className="text-xs font-bold text-primary tracking-wide mr-3">
-            {activeCompany?.slug === "vortex-vistos" ? "VORTEX VISTOS" : "GRUPO VORTEX"}
+            {activeCompany?.slug === "vortex-vistos" ? "GRUPO VORTEX" : "GRUPO VORTEX"}
           </span>
 
           {/* Company selector */}
