@@ -593,7 +593,7 @@ export default function NewSalePage() {
             for (let i = 1; i <= boletoInst; i++) {
               const dueDate = new Date(baseDate);
               dueDate.setMonth(dueDate.getMonth() + i);
-              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto' });
+              recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(pmt * 100) / 100, payment_method: 'Boleto', cost_center_id: defaultCostCenterId || undefined });
             }
           } else {
             const numInst = boletoInst > 0 ? boletoInst : 1;
