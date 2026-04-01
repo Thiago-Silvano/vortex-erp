@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     console.log("[whatsapp-webhook] Received:", JSON.stringify(raw));
 
     // Support both flat payload and { event, data } wrapper from server.js
-    const body = (raw.data ? raw.data : raw) as Record<string, unknown>;
+    const body = (raw.data ? raw.data : raw) as Record<string, any>;
     const event = raw.event || "message_received";
     const whatsappMsgId = extractMessageId(body);
 
