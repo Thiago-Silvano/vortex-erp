@@ -86,10 +86,10 @@ function extractPhone(body: Record<string, unknown>) {
     : {};
 
   const candidates: Array<[string, unknown]> = [
-    ["number", body.number],
-    ["phone_number", body.phone_number],
     ["real_phone", body.real_phone],
     ["realPhone", body.realPhone],
+    ["number", body.number],
+    ["phone_number", body.phone_number],
     ["contact.number", contact.number],
     ["contact.phone", contact.phone],
     ["contactNumber", body.contactNumber],
