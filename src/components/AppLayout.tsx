@@ -261,7 +261,7 @@ function TopMenuBar() {
                     setOpenMenu(isOpen ? null : group.label);
                   }
                 }}
-                className={`px-3 py-1 text-sm font-medium transition-colors hover:bg-[hsl(220,60%,45%)] text-white ${isActive ? 'font-semibold bg-[hsl(220,60%,45%)]' : ''} ${isOpen ? 'bg-[hsl(220,60%,45%)]' : ''}`}
+                className={`px-3 py-1 text-sm font-medium transition-colors hover:bg-[hsl(220,60%,45%)] text-white ${isActive ? 'font-semibold underline underline-offset-4' : ''} ${isOpen ? 'bg-[hsl(220,60%,45%)]' : ''}`}
               >
                 {group.label}
               </button>
