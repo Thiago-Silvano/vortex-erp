@@ -236,7 +236,7 @@ function TopMenuBar() {
   return (
     <div ref={menuRef} className="relative">
       {/* Main menu bar */}
-      <nav className="flex items-center bg-secondary/60 border-b h-7 px-1 gap-0">
+      <nav className="flex items-center bg-[hsl(220,60%,55%)] border-b h-8 px-1 gap-0">
         {menus.map(group => {
           const filteredItems = group.items.filter(i => hasPerm(i.permKey));
           if (filteredItems.length === 0) return null;
@@ -261,7 +261,7 @@ function TopMenuBar() {
                     setOpenMenu(isOpen ? null : group.label);
                   }
                 }}
-                className={`px-3 py-1 text-xs font-medium transition-colors hover:bg-accent ${isActive ? 'text-primary font-semibold' : 'text-foreground/80'} ${isOpen ? 'bg-accent' : ''}`}
+                className={`px-3 py-1 text-sm font-medium transition-colors hover:bg-[hsl(220,60%,45%)] text-white ${isActive ? 'font-semibold bg-[hsl(220,60%,45%)]' : ''} ${isOpen ? 'bg-[hsl(220,60%,45%)]' : ''}`}
               >
                 {group.label}
               </button>
