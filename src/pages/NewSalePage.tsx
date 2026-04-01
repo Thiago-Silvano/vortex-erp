@@ -2913,32 +2913,6 @@ export default function NewSalePage() {
               </div>
             )}
 
-            {paymentMethods.length > 0 && (
-              <div className="space-y-3 pt-4 border-t">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                  <div>
-                    <Label>Taxa de Máquina (R$)</Label>
-                    <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
-                  </div>
-                  <div>
-                    <Label>Fornecedor da Taxa</Label>
-                    <Select value={machineFeeSupplierId || 'none'} onValueChange={v => setMachineFeeSupplierId(v === 'none' ? '' : v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Nenhum</SelectItem>
-                        {allSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {machineFee > 0 && (
-                    <>
-                      <div><p className="text-sm text-muted-foreground">Lucro antes da taxa</p><p className="text-sm font-medium">{fmt(grossProfit)}</p></div>
-                      <div><p className="text-sm text-muted-foreground">Lucro após taxa</p><p className="text-sm font-bold text-destructive">{fmt(grossProfit - machineFee)}</p></div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Receivables inline with tabs per payment method */}
             <div className="border-t pt-4">
