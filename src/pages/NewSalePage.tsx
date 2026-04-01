@@ -640,7 +640,7 @@ export default function NewSalePage() {
         return r;
       });
     });
-  }, [installmentsMap, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora]);
+  }, [installmentsMap, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora, defaultCostCenterId]);
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
