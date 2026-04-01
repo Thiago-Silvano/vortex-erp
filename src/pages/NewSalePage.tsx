@@ -3026,7 +3026,7 @@ export default function NewSalePage() {
                         {receivables.length > 0 && (receivables[0].payment_method === 'credito' || receivables[0].payment_method === 'debito' || receivables[0].payment_method === 'Cartão de Crédito' || receivables[0].payment_method === 'Cartão de Débito') && (
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mt-3 p-3 rounded-lg bg-muted/40 border border-border">
                             <div>
-                              <Label>Taxa de Máquina (R$)</Label>
+                              <Label className="text-destructive">Taxa de Máquina (R$)</Label>
                               <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
                             </div>
                             <div>
