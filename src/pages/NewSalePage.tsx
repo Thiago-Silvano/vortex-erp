@@ -2897,6 +2897,7 @@ export default function NewSalePage() {
 
             {hasOperadora && (
               <div className="space-y-4 pt-4 border-t">
+                <p className="text-sm font-semibold text-primary mb-1">Pgto Operadora/Consolidadora</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Número de Parcelas</Label>
