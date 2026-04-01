@@ -628,7 +628,7 @@ export default function NewSalePage() {
       }
 
       if (recs.length === 0) {
-        recs.push({ installment_number: 1, due_date: '', amount: baseAmount });
+        recs.push({ installment_number: 1, due_date: '', amount: baseAmount, cost_center_id: defaultCostCenterId || undefined });
       }
 
       // Preserve user-edited cost_center_id
