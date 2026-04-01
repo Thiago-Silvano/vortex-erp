@@ -583,7 +583,7 @@ export default function NewSalePage() {
           for (let i = 1; i <= (numInst > 0 ? numInst : 1); i++) {
             const dueDate = new Date(baseDate);
             dueDate.setMonth(dueDate.getMonth() + i);
-            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora' });
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: 'Pgto Operadora/Consolidadora', cost_center_id: defaultCostCenterId || undefined });
           }
         } else if (method === 'boleto') {
           const boletoInst = getInstallments('boleto');
