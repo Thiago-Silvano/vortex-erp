@@ -2963,7 +2963,7 @@ export default function NewSalePage() {
 
                 return (
                   <>
-                    <div className="flex items-center gap-4 text-sm mb-2">
+                    <div className="flex items-center gap-4 text-sm mb-2 flex-wrap">
                       <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
                       <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
                       {Math.abs(diff) > 0.01 ? (
@@ -2973,6 +2973,22 @@ export default function NewSalePage() {
                       ) : (
                         <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
                       )}
+                      <div className="flex items-center gap-2 ml-auto">
+                        <Label className="text-xs whitespace-nowrap">Centro de Custo Padrão:</Label>
+                        <Select value={defaultCostCenterId || 'none'} onValueChange={v => {
+                          const newVal = v === 'none' ? '' : v;
+                          setDefaultCostCenterId(newVal);
+                          if (newVal) {
+                            setReceivables(prev => prev.map(rec => ({ ...rec, cost_center_id: newVal })));
+                          }
+                        }}>
+                          <SelectTrigger className="h-8 text-xs w-48"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     {hasMultipleMethods ? (
                       <Tabs defaultValue={uniqueMethods[0]} className="w-full">
