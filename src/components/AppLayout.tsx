@@ -236,7 +236,7 @@ function TopMenuBar() {
   return (
     <div ref={menuRef} className="relative">
       {/* Main menu bar */}
-      <nav className="flex items-center bg-secondary/60 border-b h-7 px-1 gap-0">
+      <nav className="flex items-center bg-[hsl(220,60%,55%)] border-b h-8 px-1 gap-0">
         {menus.map(group => {
           const filteredItems = group.items.filter(i => hasPerm(i.permKey));
           if (filteredItems.length === 0) return null;
