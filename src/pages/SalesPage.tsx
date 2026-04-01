@@ -66,7 +66,7 @@ export default function SalesPage() {
   };
 
   const fetchSales = () => {
-    let query = supabase.from('sales').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('sales').select('*').order('sale_date', { ascending: false });
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     query.then(({ data }) => { if (data) setSales(data as SaleRow[]); });
   };
