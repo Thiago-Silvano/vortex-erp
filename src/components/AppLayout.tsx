@@ -140,7 +140,6 @@ function TopMenuBar() {
         { title: 'Vendedores', url: '/sellers', permKey: 'sellers_view' },
         { title: 'Serviços', url: '/services', permKey: 'services_view' },
         { title: 'Cias Aéreas', url: '/airlines' },
-        { title: 'Centros de Custo', url: '/financial/cost-centers', permKey: 'financial_cashflow' },
       ],
     },
     {
@@ -155,9 +154,24 @@ function TopMenuBar() {
     },
     {
       label: 'Cotações',
+      url: '/cotacoes/lista',
       items: [
-        { title: 'Kanban', url: '/cotacoes', permKey: 'sales_view' },
-        { title: 'Lista', url: '/cotacoes/lista', permKey: 'sales_view' },
+        { title: 'Cotações', url: '/cotacoes/lista', permKey: 'sales_view' },
+      ],
+    },
+    {
+      label: 'Financeiro',
+      items: [
+        { title: 'Contas a Receber', url: '/financial/receivable', permKey: 'financial_receivable' },
+        { title: 'Contas a Pagar', url: '/financial/payable', permKey: 'financial_payable' },
+        { title: 'Agrupar Contas', url: '/financial/group-accounts', permKey: 'financial_payable' },
+        { title: 'Desagrupar Contas', url: '/financial/ungroup-accounts', permKey: 'financial_payable' },
+        { title: 'Contas Correntes', url: '/financial/bank-accounts', permKey: 'financial_bank_accounts' },
+        { title: 'Conciliação Bancária', url: '/financial/reconciliation', permKey: 'financial_reconciliation' },
+        { title: 'Fluxo de Caixa', url: '/financial/cashflow', permKey: 'financial_cashflow' },
+        { title: 'Comissões', url: '/financial/commissions', permKey: 'financial_commissions' },
+        { title: 'Centros de Custo', url: '/financial/cost-centers', permKey: 'financial_cashflow' },
+        { title: 'Relatório de Conta', url: '/financial/bank-report', permKey: 'financial_bank_report' },
       ],
     },
     {
@@ -172,35 +186,6 @@ function TopMenuBar() {
       url: '/promo-maker',
       items: [
         { title: 'Promo Maker', url: '/promo-maker' },
-      ],
-    },
-    {
-      label: 'Financeiro',
-      items: [
-        { title: 'Contas a Receber', url: '/financial/receivable', permKey: 'financial_receivable' },
-        { title: 'Contas a Pagar', url: '/financial/payable', permKey: 'financial_payable' },
-        { title: 'Agrupar Contas', url: '/financial/group-accounts', permKey: 'financial_payable' },
-        { title: 'Desagrupar Contas', url: '/financial/ungroup-accounts', permKey: 'financial_payable' },
-        { title: 'Contas Correntes', url: '/financial/bank-accounts', permKey: 'financial_bank_accounts' },
-        { title: 'Conciliação Bancária', url: '/financial/reconciliation', permKey: 'financial_reconciliation' },
-        { title: 'Fluxo de Caixa', url: '/financial/cashflow', permKey: 'financial_cashflow' },
-        { title: 'Comissões', url: '/financial/commissions', permKey: 'financial_commissions' },
-        { title: 'Relatório de Conta', url: '/financial/bank-report', permKey: 'financial_bank_report' },
-      ],
-    },
-    {
-      label: 'Relatórios',
-      items: [
-        { title: 'Dashboard Geral', url: '/reports/dashboard', permKey: 'reports_dashboard' },
-        { title: 'Vendas', url: '/reports/sales', permKey: 'reports_sales' },
-        { title: 'Financeiro', url: '/reports/financial', permKey: 'reports_financial' },
-        { title: 'Fluxo de Caixa', url: '/reports/cashflow', permKey: 'reports_financial' },
-        { title: 'Clientes', url: '/reports/clients', permKey: 'reports_sales' },
-        { title: 'Fornecedores', url: '/reports/suppliers', permKey: 'reports_sales' },
-        { title: 'Centro de Custo', url: '/reports/cost-centers', permKey: 'reports_financial' },
-        { title: 'Produtos', url: '/reports/products', permKey: 'reports_sales' },
-        { title: 'Check-ins', url: '/reports/checkins', permKey: 'reports_sales' },
-        { title: 'Lucro por Venda', url: '/reports/profit', permKey: 'reports_financial' },
       ],
     },
     {
@@ -229,6 +214,16 @@ function TopMenuBar() {
       items: [
         { title: 'Calendário', url: '/calendar' },
         { title: 'Email', url: '/email' },
+        { title: 'Relatórios', url: '/reports/dashboard', permKey: 'reports_dashboard' },
+        { title: 'Rel. Vendas', url: '/reports/sales', permKey: 'reports_sales' },
+        { title: 'Rel. Financeiro', url: '/reports/financial', permKey: 'reports_financial' },
+        { title: 'Rel. Fluxo de Caixa', url: '/reports/cashflow', permKey: 'reports_financial' },
+        { title: 'Rel. Clientes', url: '/reports/clients', permKey: 'reports_sales' },
+        { title: 'Rel. Fornecedores', url: '/reports/suppliers', permKey: 'reports_sales' },
+        { title: 'Rel. Centro de Custo', url: '/reports/cost-centers', permKey: 'reports_financial' },
+        { title: 'Rel. Produtos', url: '/reports/products', permKey: 'reports_sales' },
+        { title: 'Rel. Check-ins', url: '/reports/checkins', permKey: 'reports_sales' },
+        { title: 'Rel. Lucro por Venda', url: '/reports/profit', permKey: 'reports_financial' },
         ...(isAdmin ? [
           { title: 'Configurações', url: '/settings', permKey: 'settings_access' },
           { title: 'Aparência', url: '/settings/appearance', permKey: 'settings_access' },
