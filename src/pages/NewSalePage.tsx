@@ -622,7 +622,7 @@ export default function NewSalePage() {
             if (effInst > 1) {
               dueDate.setMonth(dueDate.getMonth() + i);
             }
-            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method });
+            recs.push({ installment_number: recIndex++, due_date: dueDate.toISOString().split('T')[0], amount: Math.round(perInstallment * 100) / 100, payment_method: labelMap[method] || method, cost_center_id: defaultCostCenterId || undefined });
           }
         }
       }
