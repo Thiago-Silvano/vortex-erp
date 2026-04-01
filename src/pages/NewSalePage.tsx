@@ -148,6 +148,7 @@ export default function NewSalePage() {
   const [operatorTaxes, setOperatorTaxes] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
+  const [defaultCostCenterId, setDefaultCostCenterId] = useState<string>('');
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
   const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
 
