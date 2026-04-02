@@ -337,7 +337,7 @@ export default function WhatsAppInboxPage() {
       .select('id')
       .eq('empresa_id', empresaId)
       .eq('client_id', client.id)
-      .maybeSingle());
+      .maybeSingle()) as any;
 
     let contactId: string;
     if (existingContact?.id) {
@@ -351,7 +351,7 @@ export default function WhatsAppInboxPage() {
           phone: crmConv.phone || '',
         })
         .select('id')
-        .single());
+        .single()) as any;
       if (createErr || !newContact) {
         console.error('Error creating whatsapp contact:', createErr);
         toast.error('Erro ao vincular cliente.');
