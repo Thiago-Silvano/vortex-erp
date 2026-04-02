@@ -668,9 +668,10 @@ export default function WhatsAppInboxPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors hover:opacity-90"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ backgroundColor: '#25d366', color: '#ffffff' }}
-                    title="Criar lead no Kanban CRM"
+                    title={activeConv.supplier_id ? 'Contato vinculado a fornecedor' : 'Criar lead no Kanban CRM'}
+                    disabled={!!activeConv.supplier_id}
                     onClick={async () => {
                       if (!empresaId || !activeConv) return;
                       try {
