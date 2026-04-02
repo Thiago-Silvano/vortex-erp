@@ -297,7 +297,12 @@ export default function CrmKanbanPage() {
   };
 
   const handleEdit = (lead: CrmLead) => {
-    navigate('/sales/new', { state: { editSaleId: lead.id } });
+    if (lead.short_id) {
+      const link = `${window.location.origin}/proposta/${lead.short_id}`;
+      window.open(link, '_blank');
+    } else {
+      toast.error('Esta venda não possui um link de proposta.');
+    }
   };
 
   const handleConvert = async (lead: CrmLead) => {
