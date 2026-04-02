@@ -310,6 +310,19 @@ export default function UserAdmin() {
               </div>
             )}
 
+            <div>
+              <Label>Tela inicial ao logar</Label>
+              <Select value={permHomeRoute} onValueChange={setPermHomeRoute}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="/reservations">Reservas</SelectItem>
+                  <SelectItem value="/crm-kanban">Kanban CRM</SelectItem>
+                  <SelectItem value="/dashboard">Dashboard</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Página exibida ao usuário após fazer login</p>
+            </div>
+
             <div className="border rounded-lg p-4">
               <h3 className="font-medium text-sm mb-3">Empresas com acesso</h3>
               <div className="flex flex-col gap-2">
