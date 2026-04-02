@@ -207,6 +207,7 @@ export default function WhatsAppInboxPage() {
     const { data: dbMsgs } = await (supabase.from('whatsapp_messages').select('*').eq('conversation_id', conv.id).order('created_at', { ascending: true }) as any);
     setMessages(dbMsgs || []);
     setLoading(false);
+    setTimeout(() => msgInputRef.current?.focus(), 300);
   };
 
   const handleSend = async () => {
