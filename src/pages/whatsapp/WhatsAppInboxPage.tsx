@@ -1039,6 +1039,7 @@ export default function WhatsAppInboxPage() {
                 <p className="text-[22px] flex items-center gap-2" style={{ color: '#111b21' }}>
                   {getDisplayName(activeConv)}
                   {activeConv.contact_id && <Star className="h-5 w-5 shrink-0 fill-amber-400 text-amber-400" />}
+                  {activeConv.supplier_id && <Handshake className="h-5 w-5 shrink-0 text-[#00a884]" />}
                 </p>
                 <p className="text-[14px] mt-1" style={{ color: '#667781' }}>{activeConv.phone}</p>
               </div>
