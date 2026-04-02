@@ -65,7 +65,7 @@ export default function CrmWhatsAppDrawer({ open, onClose, lead, empresaId, onSe
 
   // Load messages when lead changes
   useEffect(() => {
-    if (!open || !lead?.client_phone || !empresaId) {
+    if (!open || !lead || !empresaId) {
       setMessages([]);
       return;
     }
@@ -118,24 +118,41 @@ export default function CrmWhatsAppDrawer({ open, onClose, lead, empresaId, onSe
   }, [open]);
 
   const loadMessages = async () => {
-    if (!lead?.client_phone || !empresaId) return;
+    if (!lead || !empresaId) return;
     setLoading(true);
-    const phone = lead.client_phone.replace(/\D/g, '');
+    const phone = (lead.client_phone || '').replace(/\D/g, '');
 
-    // Find conversation by phone
-    const { data: convs } = await (supabase
-      .from('whatsapp_conversations')
-      .select('id')
-      .eq('empresa_id', empresaId)
-      .or(`phone.eq.${phone},phone.ilike.%${phone.slice(-8)}%`)
-      .order('last_message_at', { ascending: false })
-      .limit(1) as any);
+    let convId: string | null = null;
 
-    if (convs?.[0]) {
+    // Try matching by phone first
+    if (phone && phone.length >= 8) {
+      const { data: convs } = await (supabase
+        .from('whatsapp_conversations')
+        .select('id')
+        .eq('empresa_id', empresaId)
+        .or(`phone.eq.${phone},phone.ilike.%${phone.slice(-8)}%`)
+        .order('last_message_at', { ascending: false })
+        .limit(1) as any);
+      if (convs?.[0]) convId = convs[0].id;
+    }
+
+    // Fallback: match by contact_name
+    if (!convId && lead.client_name) {
+      const { data: convs } = await (supabase
+        .from('whatsapp_conversations')
+        .select('id')
+        .eq('empresa_id', empresaId)
+        .ilike('contact_name', lead.client_name)
+        .order('last_message_at', { ascending: false })
+        .limit(1) as any);
+      if (convs?.[0]) convId = convs[0].id;
+    }
+
+    if (convId) {
       const { data: msgs } = await (supabase
         .from('whatsapp_messages')
         .select('*')
-        .eq('conversation_id', convs[0].id)
+        .eq('conversation_id', convId)
         .order('created_at', { ascending: true })
         .limit(100) as any);
       setMessages(msgs || []);
