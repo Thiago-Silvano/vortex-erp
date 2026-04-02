@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical, Archive, BellOff, Pin, MailOpen, Heart, Tag, Trash2, LogOut, ChevronDown, Check, Link2 } from 'lucide-react';
+import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical, Archive, BellOff, Pin, MailOpen, Heart, Tag, Trash2, LogOut, ChevronDown, Check, Link2, Star, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -463,7 +463,10 @@ export default function WhatsAppInboxPage() {
                       </Avatar>
                       <div className="flex-1 min-w-0 border-b py-[2px]" style={{ borderColor: '#e9edef' }}>
                         <div className="flex items-center justify-between mb-[2px]">
-                          <span className="text-[17px] truncate" style={{ color: '#111b21' }}>{displayName}</span>
+                          <span className="flex items-center gap-1 text-[17px] truncate" style={{ color: '#111b21' }}>
+                            {displayName}
+                            {conv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
+                          </span>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
                             <span className="text-[12px]" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
                               {formatTime(conv.last_message_at)}
@@ -595,7 +598,10 @@ export default function WhatsAppInboxPage() {
                   className="flex-1 min-w-0 cursor-pointer"
                   onClick={() => setShowContactInfo(!showContactInfo)}
                 >
-                  <p className="text-[16px] font-normal" style={{ color: '#111b21' }}>{getDisplayName(activeConv)}</p>
+                  <p className="text-[16px] font-normal flex items-center gap-1.5" style={{ color: '#111b21' }}>
+                    {getDisplayName(activeConv)}
+                    {activeConv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
+                  </p>
                   <p className="text-[13px]" style={{ color: '#667781' }}>{activeConv.phone}</p>
                 </div>
                 <div className="flex items-center gap-1">
@@ -760,7 +766,10 @@ export default function WhatsAppInboxPage() {
                     {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <p className="text-[22px]" style={{ color: '#111b21' }}>{getDisplayName(activeConv)}</p>
+                <p className="text-[22px] flex items-center gap-2" style={{ color: '#111b21' }}>
+                  {getDisplayName(activeConv)}
+                  {activeConv.contact_id && <Star className="h-5 w-5 shrink-0 fill-amber-400 text-amber-400" />}
+                </p>
                 <p className="text-[14px] mt-1" style={{ color: '#667781' }}>{activeConv.phone}</p>
               </div>
 
@@ -787,10 +796,28 @@ export default function WhatsAppInboxPage() {
                     <span>Vincular ao CRM</span>
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13px] px-3 py-1 rounded-full" style={{ backgroundColor: '#e7f8e9', color: '#008069' }}>
-                      ✓ Cliente vinculado
-                    </span>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] px-3 py-1 rounded-full" style={{ backgroundColor: '#e7f8e9', color: '#008069' }}>
+                        ✓ Cliente vinculado
+                      </span>
+                    </div>
+                    <button
+                      className="flex items-center gap-3 w-full py-2 text-[14px] hover:bg-black/5 rounded transition-colors"
+                      style={{ color: '#008069' }}
+                      onClick={() => {
+                        navigate('/sales/new', {
+                          state: {
+                            prefillClientId: activeConv.contact_id,
+                            prefillClientName: activeConv.contact_name,
+                            returnTo: '/whatsapp',
+                          }
+                        });
+                      }}
+                    >
+                      <FileText className="h-5 w-5" />
+                      <span>Criar Cotação</span>
+                    </button>
                   </div>
                 )}
               </div>
