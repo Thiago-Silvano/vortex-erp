@@ -288,21 +288,69 @@ export default function WhatsAppInboxPage() {
     } catch (err) { console.error('Error:', err); toast.error('Erro ao criar conversa.'); }
   };
 
-  const handleCreateClient = async () => {
-    if (!clientForm.full_name.trim()) { toast.error('Nome é obrigatório'); return; }
-    const { data, error } = await (supabase.from('clients').insert({ full_name: clientForm.full_name, phone: clientForm.phone, email: clientForm.email, empresa_id: empresaId }).select().single() as any);
-    if (error) { toast.error('Erro ao criar cliente'); return; }
-    await (supabase.from('whatsapp_contacts').insert({ empresa_id: empresaId, client_id: data.id, name: clientForm.full_name, phone: clientForm.phone, email: clientForm.email }) as any);
-    if (activeConv) {
-      const { data: contact } = await (supabase.from('whatsapp_contacts').select('id').eq('client_id', data.id).eq('empresa_id', empresaId).single() as any);
-      if (contact) {
-        await (supabase.from('whatsapp_conversations').update({ contact_id: contact.id, contact_name: clientForm.full_name }).eq('id', activeConv.id) as any);
-        setActiveConv(prev => prev ? { ...prev, contact_name: clientForm.full_name, contact_id: contact.id } : null);
-        setConversations(prev => prev.map(c => c.id === activeConv.id ? { ...c, contact_name: clientForm.full_name, contact_id: contact.id } : c));
-      }
+  const openCrmLinkDialog = async (conv: Conversation) => {
+    setCrmConv(conv);
+    setCrmStep('ask');
+    setCrmSearch('');
+    setCrmSelectedClient(null);
+    setShowCrmLink(true);
+    // Pre-load clients
+    const { data } = await (supabase.from('clients').select('id, full_name, phone, email, cpf').eq('empresa_id', empresaId).order('full_name') as any);
+    setCrmClients(data || []);
+  };
+
+  const filteredCrmClients = useMemo(() => {
+    if (!crmSearch.trim()) return crmClients;
+    const s = crmSearch.toLowerCase();
+    return crmClients.filter((c: any) => c.full_name?.toLowerCase().includes(s) || c.phone?.includes(crmSearch) || c.cpf?.includes(crmSearch));
+  }, [crmClients, crmSearch]);
+
+  const handleLinkClient = async (client: any) => {
+    if (!crmConv) return;
+    const convPhone = crmConv.phone?.replace(/\D/g, '') || '';
+    const clientPhone = (client.phone || '').replace(/\D/g, '');
+
+    // Check phone match
+    if (clientPhone && convPhone && clientPhone !== convPhone && !convPhone.endsWith(clientPhone) && !clientPhone.endsWith(convPhone)) {
+      // Phones differ — ask to update
+      setCrmSelectedClient(client);
+      setCrmStep('confirm_phone');
+      return;
     }
-    toast.success('Cliente criado!');
-    setShowCreateClient(false);
+
+    // If client has no phone, update automatically
+    if (!clientPhone && convPhone) {
+      await (supabase.from('clients').update({ phone: crmConv.phone }).eq('id', client.id) as any);
+    }
+
+    await finalizeLinkClient(client);
+  };
+
+  const finalizeLinkClient = async (client: any, updatePhone = false) => {
+    if (!crmConv) return;
+    if (updatePhone) {
+      await (supabase.from('clients').update({ phone: crmConv.phone }).eq('id', client.id) as any);
+    }
+
+    // Update conversation with client link
+    await (supabase.from('whatsapp_conversations').update({ contact_id: client.id, contact_name: client.full_name }).eq('id', crmConv.id) as any);
+    setActiveConv(prev => prev?.id === crmConv.id ? { ...prev!, contact_name: client.full_name, contact_id: client.id } : prev);
+    setConversations(prev => prev.map(c => c.id === crmConv.id ? { ...c, contact_name: client.full_name, contact_id: client.id } : c));
+
+    toast.success('Cliente vinculado com sucesso!');
+    setShowCrmLink(false);
+  };
+
+  const handleGoToNewClient = () => {
+    setShowCrmLink(false);
+    // Navigate to clients page with return info
+    navigate('/clients', {
+      state: {
+        returnTo: '/whatsapp',
+        prefill: { full_name: crmConv?.contact_name || '', phone: crmConv?.phone || '' },
+        linkConversationId: crmConv?.id,
+      }
+    });
   };
 
   const getDisplayName = (conv: Conversation) => conv.contact_name || conv.phone;
