@@ -1,12 +1,13 @@
 import AppLayout from '@/components/AppLayout';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical, Archive, BellOff, Pin, MailOpen, Heart, Tag, Trash2, LogOut, ChevronDown } from 'lucide-react';
+import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical, Archive, BellOff, Pin, MailOpen, Heart, Tag, Trash2, LogOut, ChevronDown, Check, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -49,6 +50,7 @@ interface Message {
 export default function WhatsAppInboxPage() {
   const { activeCompany } = useCompany();
   const empresaId = activeCompany?.id || '';
+  const navigate = useNavigate();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
@@ -57,10 +59,14 @@ export default function WhatsAppInboxPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [serverUrl, setServerUrl] = useState('');
-  const [showCreateClient, setShowCreateClient] = useState(false);
+  const [showCrmLink, setShowCrmLink] = useState(false);
+  const [crmStep, setCrmStep] = useState<'ask' | 'select' | 'confirm_phone'>('ask');
+  const [crmClients, setCrmClients] = useState<any[]>([]);
+  const [crmSearch, setCrmSearch] = useState('');
+  const [crmSelectedClient, setCrmSelectedClient] = useState<any>(null);
+  const [crmConv, setCrmConv] = useState<Conversation | null>(null);
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [newMsgForm, setNewMsgForm] = useState({ phone: '', name: '', message: '' });
-  const [clientForm, setClientForm] = useState({ full_name: '', phone: '', email: '' });
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [sendingFile, setSendingFile] = useState(false);
   const [initialScroll, setInitialScroll] = useState(false);
@@ -282,21 +288,69 @@ export default function WhatsAppInboxPage() {
     } catch (err) { console.error('Error:', err); toast.error('Erro ao criar conversa.'); }
   };
 
-  const handleCreateClient = async () => {
-    if (!clientForm.full_name.trim()) { toast.error('Nome é obrigatório'); return; }
-    const { data, error } = await (supabase.from('clients').insert({ full_name: clientForm.full_name, phone: clientForm.phone, email: clientForm.email, empresa_id: empresaId }).select().single() as any);
-    if (error) { toast.error('Erro ao criar cliente'); return; }
-    await (supabase.from('whatsapp_contacts').insert({ empresa_id: empresaId, client_id: data.id, name: clientForm.full_name, phone: clientForm.phone, email: clientForm.email }) as any);
-    if (activeConv) {
-      const { data: contact } = await (supabase.from('whatsapp_contacts').select('id').eq('client_id', data.id).eq('empresa_id', empresaId).single() as any);
-      if (contact) {
-        await (supabase.from('whatsapp_conversations').update({ contact_id: contact.id, contact_name: clientForm.full_name }).eq('id', activeConv.id) as any);
-        setActiveConv(prev => prev ? { ...prev, contact_name: clientForm.full_name, contact_id: contact.id } : null);
-        setConversations(prev => prev.map(c => c.id === activeConv.id ? { ...c, contact_name: clientForm.full_name, contact_id: contact.id } : c));
-      }
+  const openCrmLinkDialog = async (conv: Conversation) => {
+    setCrmConv(conv);
+    setCrmStep('ask');
+    setCrmSearch('');
+    setCrmSelectedClient(null);
+    setShowCrmLink(true);
+    // Pre-load clients
+    const { data } = await (supabase.from('clients').select('id, full_name, phone, email, cpf').eq('empresa_id', empresaId).order('full_name') as any);
+    setCrmClients(data || []);
+  };
+
+  const filteredCrmClients = useMemo(() => {
+    if (!crmSearch.trim()) return crmClients;
+    const s = crmSearch.toLowerCase();
+    return crmClients.filter((c: any) => c.full_name?.toLowerCase().includes(s) || c.phone?.includes(crmSearch) || c.cpf?.includes(crmSearch));
+  }, [crmClients, crmSearch]);
+
+  const handleLinkClient = async (client: any) => {
+    if (!crmConv) return;
+    const convPhone = crmConv.phone?.replace(/\D/g, '') || '';
+    const clientPhone = (client.phone || '').replace(/\D/g, '');
+
+    // Check phone match
+    if (clientPhone && convPhone && clientPhone !== convPhone && !convPhone.endsWith(clientPhone) && !clientPhone.endsWith(convPhone)) {
+      // Phones differ — ask to update
+      setCrmSelectedClient(client);
+      setCrmStep('confirm_phone');
+      return;
     }
-    toast.success('Cliente criado!');
-    setShowCreateClient(false);
+
+    // If client has no phone, update automatically
+    if (!clientPhone && convPhone) {
+      await (supabase.from('clients').update({ phone: crmConv.phone }).eq('id', client.id) as any);
+    }
+
+    await finalizeLinkClient(client);
+  };
+
+  const finalizeLinkClient = async (client: any, updatePhone = false) => {
+    if (!crmConv) return;
+    if (updatePhone) {
+      await (supabase.from('clients').update({ phone: crmConv.phone }).eq('id', client.id) as any);
+    }
+
+    // Update conversation with client link
+    await (supabase.from('whatsapp_conversations').update({ contact_id: client.id, contact_name: client.full_name }).eq('id', crmConv.id) as any);
+    setActiveConv(prev => prev?.id === crmConv.id ? { ...prev!, contact_name: client.full_name, contact_id: client.id } : prev);
+    setConversations(prev => prev.map(c => c.id === crmConv.id ? { ...c, contact_name: client.full_name, contact_id: client.id } : c));
+
+    toast.success('Cliente vinculado com sucesso!');
+    setShowCrmLink(false);
+  };
+
+  const handleGoToNewClient = () => {
+    setShowCrmLink(false);
+    // Navigate to clients page with return info
+    navigate('/clients', {
+      state: {
+        returnTo: '/whatsapp',
+        prefill: { full_name: crmConv?.contact_name || '', phone: crmConv?.phone || '' },
+        linkConversationId: crmConv?.id,
+      }
+    });
   };
 
   const getDisplayName = (conv: Conversation) => conv.contact_name || conv.phone;
@@ -474,14 +528,10 @@ export default function WhatsAppInboxPage() {
                     <ContextMenuItem
                       className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
                       style={{ color: '#3b4a54' }}
-                      onClick={() => {
-                        setClientForm({ full_name: conv.contact_name || '', phone: conv.phone || '', email: '' });
-                        setActiveConv(conv);
-                        setShowCreateClient(true);
-                      }}
+                      onClick={() => openCrmLinkDialog(conv)}
                     >
                       <UserPlus className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
-                      {conv.contact_id ? 'Ver cliente' : 'Criar cliente'}
+                      {conv.contact_id ? 'Ver cliente' : 'Vincular ao CRM'}
                     </ContextMenuItem>
                     <ContextMenuSeparator className="my-1" style={{ backgroundColor: '#e9edef' }} />
                     <ContextMenuItem
@@ -731,13 +781,10 @@ export default function WhatsAppInboxPage() {
                   <button
                     className="flex items-center gap-3 w-full py-2 text-[14px] hover:bg-black/5 rounded transition-colors"
                     style={{ color: '#008069' }}
-                    onClick={() => {
-                      setClientForm({ full_name: getDisplayName(activeConv), phone: activeConv.phone, email: '' });
-                      setShowCreateClient(true);
-                    }}
+                    onClick={() => openCrmLinkDialog(activeConv)}
                   >
                     <UserPlus className="h-5 w-5" />
-                    <span>Criar Cliente no CRM</span>
+                    <span>Vincular ao CRM</span>
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -783,16 +830,87 @@ export default function WhatsAppInboxPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Client Dialog */}
-      <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Criar Cliente</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label>Nome completo</Label><Input value={clientForm.full_name} onChange={e => setClientForm(prev => ({ ...prev, full_name: e.target.value }))} /></div>
-            <div><Label>Telefone</Label><Input value={clientForm.phone} onChange={e => setClientForm(prev => ({ ...prev, phone: e.target.value }))} /></div>
-            <div><Label>Email</Label><Input value={clientForm.email} onChange={e => setClientForm(prev => ({ ...prev, email: e.target.value }))} /></div>
-            <Button onClick={handleCreateClient} className="w-full">Salvar Cliente</Button>
-          </div>
+      {/* CRM Link Dialog */}
+      <Dialog open={showCrmLink} onOpenChange={setShowCrmLink}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5" />
+              Vincular ao CRM
+            </DialogTitle>
+          </DialogHeader>
+
+          {crmStep === 'ask' && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                O contato <strong>{crmConv?.contact_name || crmConv?.phone}</strong> já é um cliente cadastrado?
+              </p>
+              <div className="flex gap-3">
+                <Button className="flex-1" onClick={() => setCrmStep('select')}>
+                  <Check className="h-4 w-4 mr-2" /> Sim, vincular existente
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={handleGoToNewClient}>
+                  <UserPlus className="h-4 w-4 mr-2" /> Não, cadastrar novo
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {crmStep === 'select' && (
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, telefone ou CPF..."
+                  value={crmSearch}
+                  onChange={e => setCrmSearch(e.target.value)}
+                  className="pl-9"
+                  autoFocus
+                />
+              </div>
+              <div className="max-h-[300px] overflow-y-auto border rounded-md">
+                {filteredCrmClients.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">Nenhum cliente encontrado</p>
+                ) : (
+                  filteredCrmClients.map((client: any) => (
+                    <button
+                      key={client.id}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent text-left border-b last:border-b-0 transition-colors"
+                      onClick={() => handleLinkClient(client)}
+                    >
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarFallback className="text-xs">{(client.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{client.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{client.phone || 'Sem telefone'} {client.cpf ? `· ${client.cpf}` : ''}</p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+              <Button variant="ghost" className="w-full" onClick={() => setCrmStep('ask')}>
+                <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+              </Button>
+            </div>
+          )}
+
+          {crmStep === 'confirm_phone' && crmSelectedClient && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                O telefone do contato WhatsApp (<strong>{crmConv?.phone}</strong>) é diferente do cadastrado no cliente (<strong>{crmSelectedClient.phone || 'vazio'}</strong>).
+              </p>
+              <p className="text-sm font-medium">Deseja atualizar o telefone do cliente?</p>
+              <div className="flex gap-3">
+                <Button className="flex-1" onClick={() => finalizeLinkClient(crmSelectedClient, true)}>
+                  Sim, atualizar
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={() => finalizeLinkClient(crmSelectedClient, false)}>
+                  Não, manter
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </AppLayout>
