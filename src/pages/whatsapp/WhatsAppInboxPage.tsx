@@ -63,6 +63,7 @@ export default function WhatsAppInboxPage() {
   const [clientForm, setClientForm] = useState({ full_name: '', phone: '', email: '' });
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [sendingFile, setSendingFile] = useState(false);
+  const [initialScroll, setInitialScroll] = useState(false);
   const [agentName, setAgentName] = useState('');
   const [profilePics, setProfilePics] = useState<Record<string, string | null>>({});
   const [showContactInfo, setShowContactInfo] = useState(false);
