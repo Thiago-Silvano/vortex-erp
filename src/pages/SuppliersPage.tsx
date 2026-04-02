@@ -46,6 +46,9 @@ const emptySupplier = (): Omit<Supplier, 'id'> => ({
 
 export default function SuppliersPage() {
   const { activeCompany } = useCompany();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const locationState = location.state as any;
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -55,6 +58,7 @@ export default function SuppliersPage() {
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [isPF, setIsPF] = useState(false);
+  const prefillApplied = useRef(false);
 
   const fetchSuppliers = async () => {
     let query = supabase.from('suppliers').select('*').order('name');
