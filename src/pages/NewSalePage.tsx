@@ -2024,11 +2024,12 @@ export default function NewSalePage() {
     if (error || !data?.short_id) { toast.error('Erro ao buscar código da proposta.'); return; }
     const baseUrl = window.location.origin;
     const link = `${baseUrl}/proposta/${data.short_id}`;
+    window.open(link, '_blank');
     try {
       await navigator.clipboard.writeText(link);
-      toast.success('Link da proposta copiado!');
+      toast.success('Link da proposta copiado e aberto em nova aba!');
     } catch {
-      window.prompt('Copie o link da proposta:', link);
+      toast.success('Proposta aberta em nova aba!');
     }
   };
 
