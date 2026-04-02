@@ -238,7 +238,7 @@ export default function WhatsAppInboxPage() {
     try {
       const targetId = activeConv.whatsapp_id || activeConv.phone;
       const whatsappText = agentName ? `*${agentName}:*\n${text}` : text;
-      await sendMessage(serverUrl, empresaId, targetId, whatsappText);
+      await sendMessage(serverUrl, empresaId, targetId, whatsappText, quotedMsgId || undefined);
       await (supabase.from('whatsapp_messages').insert({ conversation_id: activeConv.id, empresa_id: empresaId, sender: 'me', content: text, message_type: 'chat', reply_to_content: newMsg.reply_to_content || null, reply_to_id: newMsg.reply_to_id || null }) as any);
       await (supabase.from('whatsapp_conversations').update({ last_message: text, last_message_at: new Date().toISOString() }).eq('id', activeConv.id) as any);
       setConversations(prev => prev.map(c => c.id === activeConv.id ? { ...c, last_message: text, last_message_at: new Date().toISOString() } : c));
