@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import AppLayout from '@/components/AppLayout';
@@ -217,7 +218,8 @@ interface SavedTemplate {
 }
 
 export default function PromoMakerPage() {
-  const [format, setFormat] = useState<FormatKey>('1:1');
+  const [searchParams] = useSearchParams();
+  const [format, setFormat] = useState<FormatKey>((searchParams.get('format') as FormatKey) || '1:1');
   const [bgColor, setBgColor] = useState('#0d1b2a');
   const [bgGradient, setBgGradient] = useState('');
   const [elements, setElements] = useState<CanvasElement[]>(TEMPLATES[0].elements);
@@ -239,6 +241,50 @@ export default function PromoMakerPage() {
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const [saveTemplateName, setSaveTemplateName] = useState('');
   const { activeCompany } = useCompany();
+
+  // Load promotion data from URL params
+  useEffect(() => {
+    const promoId = searchParams.get('promotion');
+    if (!promoId || promoId === 'new') return;
+    supabase
+      .from('promotions')
+      .select('*')
+      .eq('id', promoId)
+      .single()
+      .then(({ data }: any) => {
+        if (!data) return;
+        const style = searchParams.get('style') || 'premium';
+        const accentColor = style === 'premium' ? '#d4af37' : style === 'oferta' ? '#ff4444' : style === 'emocional' ? '#ff6b9d' : style === 'minimalista' ? '#333333' : style === 'familia' ? '#4ecdc4' : '#00b4d8';
+        
+        const services: string[] = [];
+        if (data.included_tickets) services.push('Ingressos');
+        if (data.included_tours) services.push('Passeios');
+        if (data.included_guide) services.push('Guia');
+        if (data.included_transfer) services.push('Transfer');
+        if (data.included_train) services.push('Trem');
+
+        const promoElements: CanvasElement[] = [
+          { id: genId(), type: 'text', content: data.destination_name?.toUpperCase() || 'DESTINO', x: 50, y: 15, fontSize: 72, fontFamily: 'Playfair Display', fontWeight: '700', ...defaultTextProps, color: '#ffffff', textAlign: 'center', letterSpacing: 2, lineHeight: 1, textTransform: 'uppercase', opacity: 1, textShadow: '0 2px 8px rgba(0,0,0,0.5)', stroke: '', strokeWidth: 0, locked: false, width: 85 },
+          { id: genId(), type: 'text', content: `${data.nights} noites + café da manhã`, x: 50, y: 30, fontSize: 24, fontFamily: 'Inter', fontWeight: '300', ...defaultTextProps, color: '#e0e0e0', textAlign: 'center', letterSpacing: 1, lineHeight: 1.4, textTransform: 'none', opacity: 0.9, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+          { id: genId(), type: 'text', content: `R$ ${Number(data.installment_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`, x: 50, y: 52, fontSize: 64, fontFamily: 'Montserrat', fontWeight: '800', ...defaultTextProps, color: accentColor, textAlign: 'center', letterSpacing: 0, lineHeight: 1, textTransform: 'none', opacity: 1, textShadow: `0 2px 12px ${accentColor}40`, stroke: '', strokeWidth: 0, locked: false, width: 80 },
+          { id: genId(), type: 'text', content: `${data.installments}x sem juros`, x: 50, y: 64, fontSize: 20, fontFamily: 'Inter', fontWeight: '400', ...defaultTextProps, color: '#ccc', textAlign: 'center', letterSpacing: 0, lineHeight: 1.4, textTransform: 'none', opacity: 0.8, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+          { id: genId(), type: 'text', content: `✈️ ${data.airport_origin || 'SAO'} → ${data.airport_destination || 'DST'}`, x: 50, y: 76, fontSize: 18, fontFamily: 'Inter', fontWeight: '500', ...defaultTextProps, color: '#ffffff', textAlign: 'center', letterSpacing: 0, lineHeight: 1.4, textTransform: 'none', opacity: 0.9, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+          { id: genId(), type: 'text', content: `🏨 ${data.accommodation_type || 'Hotel'}`, x: 50, y: 82, fontSize: 18, fontFamily: 'Inter', fontWeight: '500', ...defaultTextProps, color: '#ffffff', textAlign: 'center', letterSpacing: 0, lineHeight: 1.4, textTransform: 'none', opacity: 0.9, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 },
+        ];
+
+        if (services.length > 0) {
+          promoElements.push({ id: genId(), type: 'text', content: `🎟️ ${services.join(' + ')}`, x: 50, y: 88, fontSize: 16, fontFamily: 'Inter', fontWeight: '500', ...defaultTextProps, color: '#ffffff', textAlign: 'center', letterSpacing: 0, lineHeight: 1.4, textTransform: 'none', opacity: 0.85, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 80 });
+        }
+
+        promoElements.push({ id: genId(), type: 'text', content: 'SAIBA MAIS', x: 50, y: 94, fontSize: 16, fontFamily: 'Inter', fontWeight: '700', ...defaultTextProps, color: accentColor, textAlign: 'center', letterSpacing: 2, lineHeight: 1, textTransform: 'uppercase', opacity: 1, textShadow: 'none', stroke: '', strokeWidth: 0, locked: false, width: 40 });
+
+        setElements(promoElements);
+        
+        if (data.main_image_url) {
+          setImage(prev => ({ ...prev, url: data.main_image_url }));
+        }
+      });
+  }, [searchParams]);
 
   // Load saved templates from database
   useEffect(() => {

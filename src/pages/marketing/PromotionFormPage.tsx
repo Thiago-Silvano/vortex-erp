@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/contexts/CompanyContext";
@@ -9,9 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ArrowLeft, Save, MapPin, Building2, CalendarDays, Plane, Ticket, DollarSign, ImageIcon } from "lucide-react";
+import { ArrowLeft, Save, MapPin, Building2, CalendarDays, Plane, Ticket, DollarSign, ImageIcon, Upload, X, Wand2 } from "lucide-react";
+import GenerateCreativesModal from "@/components/marketing/GenerateCreativesModal";
 
 interface PromotionForm {
   destination_name: string;
@@ -32,6 +32,7 @@ interface PromotionForm {
   installment_value: number;
   total_value: number;
   main_image_url: string;
+  gallery_urls: string[];
   status: string;
 }
 
@@ -54,6 +55,7 @@ const defaultForm: PromotionForm = {
   installment_value: 0,
   total_value: 0,
   main_image_url: "",
+  gallery_urls: [],
   status: "active",
 };
 
@@ -63,6 +65,10 @@ export default function PromotionFormPage() {
   const { activeCompany } = useCompany();
   const [form, setForm] = useState<PromotionForm>(defaultForm);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [showCreatives, setShowCreatives] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const isEdit = !!id && id !== "new";
 
   useEffect(() => {
@@ -90,9 +96,10 @@ export default function PromotionFormPage() {
               included_transfer: data.included_transfer || false,
               included_train: data.included_train || false,
               installments: data.installments || 1,
-              installment_value: data.installment_value || 0,
-              total_value: data.total_value || 0,
+              installment_value: Number(data.installment_value) || 0,
+              total_value: Number(data.total_value) || 0,
               main_image_url: data.main_image_url || "",
+              gallery_urls: (data.gallery_urls as string[]) || [],
               status: data.status || "active",
             });
           }
@@ -103,6 +110,38 @@ export default function PromotionFormPage() {
 
   const set = (key: keyof PromotionForm, value: any) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const uploadImage = async (file: File, target: "main" | "gallery") => {
+    if (!activeCompany) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${activeCompany.id}/${crypto.randomUUID()}.${ext}`;
+
+    const { error } = await supabase.storage.from("promotion-images").upload(path, file);
+    if (error) {
+      toast.error("Erro ao fazer upload");
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("promotion-images").getPublicUrl(path);
+    const url = urlData.publicUrl;
+
+    if (target === "main") {
+      set("main_image_url", url);
+    } else {
+      setForm((prev) => ({ ...prev, gallery_urls: [...prev.gallery_urls, url] }));
+    }
+    setUploading(false);
+    toast.success("Imagem enviada!");
+  };
+
+  const removeGalleryImage = (idx: number) => {
+    setForm((prev) => ({
+      ...prev,
+      gallery_urls: prev.gallery_urls.filter((_, i) => i !== idx),
+    }));
+  };
 
   const handleSave = async () => {
     if (!activeCompany) return;
@@ -118,6 +157,7 @@ export default function PromotionFormPage() {
       departure_date: form.departure_date || null,
       return_date: form.return_date || null,
       main_image_url: form.main_image_url || null,
+      gallery_urls: form.gallery_urls,
     };
 
     let error: any;
@@ -143,6 +183,8 @@ export default function PromotionFormPage() {
     </div>
   );
 
+  const promotionData = isEdit ? { id, ...form } : null;
+
   return (
     <AppLayout>
       <div className="p-4 max-w-[900px] mx-auto space-y-4">
@@ -161,6 +203,14 @@ export default function PromotionFormPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            {isEdit && (
+              <Button variant="outline" size="sm" onClick={() => setShowCreatives(true)}>
+                <Wand2 className="h-3.5 w-3.5 mr-1" /> Gerar Criativos
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={() => navigate(`/promo-maker?promotion=${id || "new"}`)}>
+              Abrir no Editor
+            </Button>
             <Select value={form.status} onValueChange={(v) => set("status", v)}>
               <SelectTrigger className="w-[110px] h-7 text-xs">
                 <SelectValue />
@@ -184,21 +234,11 @@ export default function PromotionFormPage() {
             <div className="space-y-3">
               <div>
                 <Label className="text-xs">Nome do destino *</Label>
-                <Input
-                  className="h-7 text-xs"
-                  value={form.destination_name}
-                  onChange={(e) => set("destination_name", e.target.value)}
-                  placeholder="Ex: João Pessoa"
-                />
+                <Input className="h-7 text-xs" value={form.destination_name} onChange={(e) => set("destination_name", e.target.value)} placeholder="Ex: João Pessoa" />
               </div>
               <div>
                 <Label className="text-xs">País</Label>
-                <Input
-                  className="h-7 text-xs"
-                  value={form.destination_country}
-                  onChange={(e) => set("destination_country", e.target.value)}
-                  placeholder="Ex: Brasil"
-                />
+                <Input className="h-7 text-xs" value={form.destination_country} onChange={(e) => set("destination_country", e.target.value)} placeholder="Ex: Brasil" />
               </div>
             </div>
           </Card>
@@ -209,22 +249,11 @@ export default function PromotionFormPage() {
             <div className="space-y-3">
               <div>
                 <Label className="text-xs">Tipo de acomodação</Label>
-                <Input
-                  className="h-7 text-xs"
-                  value={form.accommodation_type}
-                  onChange={(e) => set("accommodation_type", e.target.value)}
-                  placeholder="Ex: Resort All Inclusive"
-                />
+                <Input className="h-7 text-xs" value={form.accommodation_type} onChange={(e) => set("accommodation_type", e.target.value)} placeholder="Ex: Resort All Inclusive" />
               </div>
               <div>
                 <Label className="text-xs">Noites</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  className="h-7 text-xs w-24"
-                  value={form.nights}
-                  onChange={(e) => set("nights", parseInt(e.target.value) || 1)}
-                />
+                <Input type="number" min={1} className="h-7 text-xs w-24" value={form.nights} onChange={(e) => set("nights", parseInt(e.target.value) || 1)} />
               </div>
             </div>
           </Card>
@@ -235,31 +264,16 @@ export default function PromotionFormPage() {
             <div className="space-y-3">
               <div>
                 <Label className="text-xs">Período (texto livre)</Label>
-                <Input
-                  className="h-7 text-xs"
-                  value={form.period_text}
-                  onChange={(e) => set("period_text", e.target.value)}
-                  placeholder="Ex: Março a Junho 2026"
-                />
+                <Input className="h-7 text-xs" value={form.period_text} onChange={(e) => set("period_text", e.target.value)} placeholder="Ex: Março a Junho 2026" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs">Data de partida</Label>
-                  <Input
-                    type="date"
-                    className="h-7 text-xs"
-                    value={form.departure_date}
-                    onChange={(e) => set("departure_date", e.target.value)}
-                  />
+                  <Input type="date" className="h-7 text-xs" value={form.departure_date} onChange={(e) => set("departure_date", e.target.value)} />
                 </div>
                 <div>
                   <Label className="text-xs">Data de retorno</Label>
-                  <Input
-                    type="date"
-                    className="h-7 text-xs"
-                    value={form.return_date}
-                    onChange={(e) => set("return_date", e.target.value)}
-                  />
+                  <Input type="date" className="h-7 text-xs" value={form.return_date} onChange={(e) => set("return_date", e.target.value)} />
                 </div>
               </div>
             </div>
@@ -271,23 +285,11 @@ export default function PromotionFormPage() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Aeroporto de saída</Label>
-                <Input
-                  className="h-7 text-xs"
-                  value={form.airport_origin}
-                  onChange={(e) => set("airport_origin", e.target.value.toUpperCase())}
-                  placeholder="FLN"
-                  maxLength={5}
-                />
+                <Input className="h-7 text-xs" value={form.airport_origin} onChange={(e) => set("airport_origin", e.target.value.toUpperCase())} placeholder="FLN" maxLength={5} />
               </div>
               <div>
                 <Label className="text-xs">Aeroporto de chegada</Label>
-                <Input
-                  className="h-7 text-xs"
-                  value={form.airport_destination}
-                  onChange={(e) => set("airport_destination", e.target.value.toUpperCase())}
-                  placeholder="JPA"
-                  maxLength={5}
-                />
+                <Input className="h-7 text-xs" value={form.airport_destination} onChange={(e) => set("airport_destination", e.target.value.toUpperCase())} placeholder="JPA" maxLength={5} />
               </div>
             </div>
           </Card>
@@ -304,10 +306,7 @@ export default function PromotionFormPage() {
                 { key: "included_train", label: "Trem" },
               ].map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-2 text-xs cursor-pointer">
-                  <Checkbox
-                    checked={(form as any)[key]}
-                    onCheckedChange={(v) => set(key as keyof PromotionForm, !!v)}
-                  />
+                  <Checkbox checked={(form as any)[key]} onCheckedChange={(v) => set(key as keyof PromotionForm, !!v)} />
                   {label}
                 </label>
               ))}
@@ -320,33 +319,15 @@ export default function PromotionFormPage() {
             <div className="space-y-3">
               <div>
                 <Label className="text-xs">Número de parcelas</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  className="h-7 text-xs w-24"
-                  value={form.installments}
-                  onChange={(e) => set("installments", parseInt(e.target.value) || 1)}
-                />
+                <Input type="number" min={1} className="h-7 text-xs w-24" value={form.installments} onChange={(e) => set("installments", parseInt(e.target.value) || 1)} />
               </div>
               <div>
                 <Label className="text-xs">Valor da parcela (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  className="h-7 text-xs w-40"
-                  value={form.installment_value || ""}
-                  onChange={(e) => set("installment_value", parseFloat(e.target.value) || 0)}
-                />
+                <Input type="number" step="0.01" className="h-7 text-xs w-40" value={form.installment_value || ""} onChange={(e) => set("installment_value", parseFloat(e.target.value) || 0)} />
               </div>
               <div>
                 <Label className="text-xs">Valor total (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  className="h-7 text-xs w-40"
-                  value={form.total_value || ""}
-                  onChange={(e) => set("total_value", parseFloat(e.target.value) || 0)}
-                />
+                <Input type="number" step="0.01" className="h-7 text-xs w-40" value={form.total_value || ""} onChange={(e) => set("total_value", parseFloat(e.target.value) || 0)} />
               </div>
             </div>
           </Card>
@@ -355,24 +336,56 @@ export default function PromotionFormPage() {
         {/* Mídia */}
         <Card className="p-4">
           <SectionTitle icon={ImageIcon} title="Mídia" />
-          <div>
-            <Label className="text-xs">URL da imagem principal</Label>
-            <Input
-              className="h-7 text-xs"
-              value={form.main_image_url}
-              onChange={(e) => set("main_image_url", e.target.value)}
-              placeholder="https://..."
-            />
-            {form.main_image_url && (
-              <img
-                src={form.main_image_url}
-                alt="Preview"
-                className="mt-2 h-32 rounded-md object-cover"
-              />
-            )}
+          <div className="space-y-4">
+            {/* Imagem principal */}
+            <div>
+              <Label className="text-xs font-medium">Imagem principal</Label>
+              <div className="mt-1 flex items-start gap-3">
+                {form.main_image_url ? (
+                  <div className="relative">
+                    <img src={form.main_image_url} alt="Principal" className="h-32 rounded-md object-cover" />
+                    <button onClick={() => set("main_image_url", "")} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <Button variant="outline" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
+                    <Upload className="h-3.5 w-3.5 mr-1" /> {uploading ? "Enviando..." : "Upload"}
+                  </Button>
+                )}
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, "main"); e.target.value = ""; }} />
+              </div>
+            </div>
+
+            {/* Galeria */}
+            <div>
+              <Label className="text-xs font-medium">Galeria</Label>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {form.gallery_urls.map((url, i) => (
+                  <div key={i} className="relative">
+                    <img src={url} alt={`Galeria ${i + 1}`} className="h-20 w-20 rounded-md object-cover" />
+                    <button onClick={() => removeGalleryImage(i)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" className="h-20 w-20" disabled={uploading} onClick={() => galleryRef.current?.click()}>
+                  <Upload className="h-4 w-4" />
+                </Button>
+                <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f, "gallery"); e.target.value = ""; }} />
+              </div>
+            </div>
           </div>
         </Card>
       </div>
+
+      {isEdit && promotionData && (
+        <GenerateCreativesModal
+          open={showCreatives}
+          onClose={() => setShowCreatives(false)}
+          promotion={promotionData}
+        />
+      )}
     </AppLayout>
   );
 }
