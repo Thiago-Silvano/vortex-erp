@@ -90,6 +90,26 @@ export default function ClientsPage() {
     }
   }, [locationState?.openEditId, clients]);
 
+  // Auto-open new client dialog when navigated with prefill data (e.g. from WhatsApp vCard)
+  const prefillHandled = useRef(false);
+  useEffect(() => {
+    if (locationState?.prefill && !prefillHandled.current) {
+      prefillHandled.current = true;
+      const prefill = locationState.prefill;
+      setEditingId(null);
+      setForm({
+        ...emptyClient(),
+        full_name: (prefill.full_name || '').toUpperCase(),
+        phone: prefill.phone || '',
+      });
+      if (locationState.returnTo) {
+        setReturnTo({ path: locationState.returnTo, state: locationState.returnState });
+      }
+      setDialogOpen(true);
+      window.history.replaceState({}, '');
+    }
+  }, [locationState?.prefill]);
+
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
   const filtered = clients.filter(c =>
