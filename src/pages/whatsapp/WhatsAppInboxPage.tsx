@@ -484,10 +484,11 @@ export default function WhatsAppInboxPage() {
         stream.getTracks().forEach(t => t.stop());
         if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
         const blob = new Blob(recordingChunksRef.current, { type: 'audio/webm' });
-        if (blob.size > 0 && !mediaRecorderRef.current?.cancelled) {
+        if (blob.size > 0 && !recordingCancelledRef.current) {
           const file = new File([blob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
           await sendVoiceMessage(file);
         }
+        recordingCancelledRef.current = false;
         setIsRecording(false);
         setRecordingDuration(0);
       };
