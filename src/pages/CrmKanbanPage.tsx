@@ -159,11 +159,12 @@ export default function CrmKanbanPage() {
 
     const mappedLeads: CrmLead[] = salesData.map((s: any) => {
       const cleanPhone = (s.client_phone || '').replace(/\D/g, '');
-      const wa = whatsappMap[cleanPhone];
+      const wa = whatsappMap[cleanPhone] || whatsappMap[`name:${s.client_name}`];
+      const effectivePhone = cleanPhone || wa?.phone || '';
       return {
         id: s.id,
         client_name: s.client_name,
-        client_phone: s.client_phone,
+        client_phone: s.client_phone || (wa?.phone ? wa.phone : undefined),
         destination_name: s.destination_name,
         total_sale: s.total_sale,
         passengers_count: s.passengers_count,
@@ -177,7 +178,7 @@ export default function CrmKanbanPage() {
         last_whatsapp_message: wa?.last_message,
         last_whatsapp_at: wa?.last_message_at,
         whatsapp_unread: wa?.unread_count,
-        profile_pic: profilePics[cleanPhone] || null,
+        profile_pic: profilePics[effectivePhone] || null,
         has_quote: true,
         quote_status: s.sale_workflow_status === 'proposta_enviada' ? 'sent' : s.sale_workflow_status === 'negociacao' ? 'viewed' : 'not_sent',
       };
