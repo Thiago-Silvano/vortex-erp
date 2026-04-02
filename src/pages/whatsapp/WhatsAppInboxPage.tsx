@@ -333,7 +333,12 @@ export default function WhatsAppInboxPage() {
     }
 
     // Update conversation with client link
-    await (supabase.from('whatsapp_conversations').update({ contact_id: client.id, contact_name: client.full_name }).eq('id', crmConv.id) as any);
+    const { error: linkError } = await (supabase.from('whatsapp_conversations' as any).update({ contact_id: client.id, contact_name: client.full_name }).eq('id', crmConv.id));
+    if (linkError) {
+      console.error('Error linking client:', linkError);
+      toast.error('Erro ao vincular cliente.');
+      return;
+    }
     setActiveConv(prev => prev?.id === crmConv.id ? { ...prev!, contact_name: client.full_name, contact_id: client.id } : prev);
     setConversations(prev => prev.map(c => c.id === crmConv.id ? { ...c, contact_name: client.full_name, contact_id: client.id } : c));
 
