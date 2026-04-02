@@ -59,6 +59,7 @@ export default function UserAdmin() {
   const [permChecks, setPermChecks] = useState<Record<string, boolean>>({});
   const [permEmpresaIds, setPermEmpresaIds] = useState<string[]>([]);
   const [permDefaultCompany, setPermDefaultCompany] = useState('none');
+  const [permHomeRoute, setPermHomeRoute] = useState('/reservations');
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -129,6 +130,7 @@ export default function UserAdmin() {
       setPermChecks(perm.permissions);
       setPermEmpresaIds(perm.empresa_ids || []);
       setPermDefaultCompany((perm as any).default_empresa_id || 'none');
+      setPermHomeRoute((perm as any).default_home_route || '/reservations');
     } else {
       // Default for master email
       if (user.email === 'thiago@vortexviagens.com.br') {
@@ -148,7 +150,7 @@ export default function UserAdmin() {
   const handleSavePermissions = async () => {
     if (!permUser) return;
     setSaving(true);
-    const payload: any = { user_id: permUser.id, user_role: permRole, permissions: permChecks, empresa_ids: permEmpresaIds, updated_at: new Date().toISOString() };
+    const payload: any = { user_id: permUser.id, user_role: permRole, permissions: permChecks, empresa_ids: permEmpresaIds, default_home_route: permHomeRoute, updated_at: new Date().toISOString() };
     if (permRole === 'master' && permDefaultCompany !== 'none') {
       payload.default_empresa_id = permDefaultCompany;
     } else {
@@ -307,6 +309,19 @@ export default function UserAdmin() {
                 <p className="text-xs text-muted-foreground mt-1">Empresa que será selecionada automaticamente ao fazer login</p>
               </div>
             )}
+
+            <div>
+              <Label>Tela inicial ao logar</Label>
+              <Select value={permHomeRoute} onValueChange={setPermHomeRoute}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="/reservations">Reservas</SelectItem>
+                  <SelectItem value="/crm-kanban">Kanban CRM</SelectItem>
+                  <SelectItem value="/dashboard">Dashboard</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Página exibida ao usuário após fazer login</p>
+            </div>
 
             <div className="border rounded-lg p-4">
               <h3 className="font-medium text-sm mb-3">Empresas com acesso</h3>

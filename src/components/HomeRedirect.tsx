@@ -10,9 +10,9 @@ export default function HomeRedirect() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTarget('/dashboard'); return; }
 
-      const { data } = await (supabase.from('user_permissions').select('user_role').eq('user_id', user.id).single() as any);
-      const role = data?.user_role;
-      setTarget(role === 'master' ? '/dashboard' : '/reservations');
+      const { data } = await (supabase.from('user_permissions').select('user_role, default_home_route').eq('user_id', user.id).single() as any);
+      const route = data?.default_home_route || '/reservations';
+      setTarget(route);
     })();
   }, []);
 

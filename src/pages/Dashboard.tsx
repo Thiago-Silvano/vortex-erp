@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3, Lock } from 'lucide-react';
+import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useCompany } from '@/contexts/CompanyContext';
 import PipelineDashboard from '@/components/PipelineDashboard';
@@ -74,18 +74,6 @@ export default function Dashboard() {
     { label: 'Clientes', value: stats.clientsCount.toString(), icon: Users, color: 'text-violet-600' },
   ];
 
-  if (!isMaster) {
-    return (
-      <AppLayout>
-        <div className="p-4 flex flex-col items-center justify-center min-h-[40vh] text-center gap-2">
-          <Lock className="h-6 w-6 text-muted-foreground" />
-          <p className="text-sm font-medium">Acesso Restrito</p>
-          <p className="text-xs text-muted-foreground">Dashboard restrito a usuários Master.</p>
-          <Button variant="outline" size="sm" onClick={() => navigate('/sales')}>Ir para Vendas</Button>
-        </div>
-      </AppLayout>
-    );
-  }
 
   return (
     <AppLayout>
