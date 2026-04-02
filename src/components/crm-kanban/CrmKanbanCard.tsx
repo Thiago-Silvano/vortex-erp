@@ -156,7 +156,7 @@ export default function CrmKanbanCard({ lead, columnColor, onOpenChat, onOpenQuo
                   <FileText className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{lead.has_quote ? 'Ver Cotação' : 'Criar Cotação'}</TooltipContent>
+              <TooltipContent>{lead.has_quote ? 'Editar Cotação' : 'Criar Cotação'}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
