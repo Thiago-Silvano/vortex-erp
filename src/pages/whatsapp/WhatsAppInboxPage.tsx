@@ -463,7 +463,10 @@ export default function WhatsAppInboxPage() {
                       </Avatar>
                       <div className="flex-1 min-w-0 border-b py-[2px]" style={{ borderColor: '#e9edef' }}>
                         <div className="flex items-center justify-between mb-[2px]">
-                          <span className="text-[17px] truncate" style={{ color: '#111b21' }}>{displayName}</span>
+                          <span className="flex items-center gap-1 text-[17px] truncate" style={{ color: '#111b21' }}>
+                            {displayName}
+                            {conv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
+                          </span>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
                             <span className="text-[12px]" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
                               {formatTime(conv.last_message_at)}
