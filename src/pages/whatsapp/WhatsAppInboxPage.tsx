@@ -63,6 +63,7 @@ export default function WhatsAppInboxPage() {
   const [clientForm, setClientForm] = useState({ full_name: '', phone: '', email: '' });
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [sendingFile, setSendingFile] = useState(false);
+  const [initialScroll, setInitialScroll] = useState(false);
   const [agentName, setAgentName] = useState('');
   const [profilePics, setProfilePics] = useState<Record<string, string | null>>({});
   const [showContactInfo, setShowContactInfo] = useState(false);
@@ -148,7 +149,14 @@ export default function WhatsAppInboxPage() {
   }, [empresaId, activeConv]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!messages.length) return;
+    // On initial load (opening conversation), scroll instantly without animation
+    if (!initialScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
+      setInitialScroll(true);
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   const normalizePhone = (phone: string) => phone?.replace(/\D/g, '') || '';
@@ -184,6 +192,7 @@ export default function WhatsAppInboxPage() {
 
   const openConversation = async (conv: Conversation) => {
     setActiveConv(conv);
+    setInitialScroll(false);
     setLoading(true);
     setReplyTo(null);
     await (supabase.from('whatsapp_conversations').update({ unread_count: 0 }).eq('id', conv.id) as any);
