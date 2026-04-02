@@ -294,7 +294,7 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDe
       <div
         className="relative max-w-[65%] min-w-[80px]"
         onMouseEnter={() => setShowMenu(true)}
-        onMouseLeave={() => setShowMenu(false)}
+        onMouseLeave={() => { if (!menuOpen) setShowMenu(false); }}
       >
         {/* Bubble tail */}
         <div className={`absolute top-0 ${isMe ? '-right-2' : '-left-2'}`}>
