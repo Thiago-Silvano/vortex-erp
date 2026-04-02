@@ -158,6 +158,37 @@ export default function ClientsPage() {
       if (newClient && filesRef.current?.hasPendingFiles()) {
         await filesRef.current.uploadPendingFiles(newClient.id);
       }
+      // Auto-link WhatsApp conversation if came from vCard save
+      if (newClient && locationState?.linkConversationPhone && activeCompany?.id) {
+        try {
+          const linkPhone = locationState.linkConversationPhone.replace(/\D/g, '');
+          // Find conversation by phone
+          const { data: convs } = await (supabase.from('whatsapp_conversations' as any)
+            .select('id')
+            .eq('empresa_id', activeCompany.id)
+            .or(`phone.eq.${linkPhone},phone.ilike.%${linkPhone.slice(-8)}%`)
+            .limit(1));
+          if (convs?.[0]) {
+            // Create or find whatsapp_contacts record
+            const { data: existingContact } = await (supabase.from('whatsapp_contacts' as any)
+              .select('id').eq('empresa_id', activeCompany.id).eq('client_id', newClient.id).maybeSingle()) as any;
+            let contactId = existingContact?.id;
+            if (!contactId) {
+              const { data: newContact } = await (supabase.from('whatsapp_contacts' as any)
+                .insert({ empresa_id: activeCompany.id, client_id: newClient.id, name: nameUpper, phone: linkPhone })
+                .select('id').single()) as any;
+              contactId = newContact?.id;
+            }
+            if (contactId) {
+              await (supabase.from('whatsapp_conversations' as any)
+                .update({ contact_id: contactId, contact_name: nameUpper })
+                .eq('id', (convs[0] as any).id));
+            }
+          }
+        } catch (err) {
+          console.error('Error auto-linking WhatsApp conversation:', err);
+        }
+      }
       toast.success('Cliente cadastrado!');
     }
     filesRef.current?.clearPending();
