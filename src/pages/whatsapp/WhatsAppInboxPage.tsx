@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical, Archive, BellOff, Pin, MailOpen, Heart, Tag, Trash2, LogOut, ChevronDown, Check, Link2, Star, FileText } from 'lucide-react';
+import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical, Archive, BellOff, Pin, MailOpen, Heart, Tag, Trash2, LogOut, ChevronDown, Check, Link2, Star, FileText, Handshake } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -39,6 +39,7 @@ interface Conversation {
   last_message_at: string;
   unread_count: number;
   contact_id: string | null;
+  supplier_id: string | null;
   whatsapp_id?: string;
 }
 
@@ -525,6 +526,7 @@ export default function WhatsAppInboxPage() {
                           <span className="flex items-center gap-1 text-[17px] truncate" style={{ color: '#111b21' }}>
                             {displayName}
                             {conv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
+                            {conv.supplier_id && <Handshake className="h-3.5 w-3.5 shrink-0 text-[#00a884]" />}
                           </span>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
                             <span className="text-[12px]" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
@@ -660,6 +662,7 @@ export default function WhatsAppInboxPage() {
                   <p className="text-[16px] font-normal flex items-center gap-1.5" style={{ color: '#111b21' }}>
                     {getDisplayName(activeConv)}
                     {activeConv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
+                    {activeConv.supplier_id && <Handshake className="h-3.5 w-3.5 shrink-0 text-[#00a884]" />}
                   </p>
                   <p className="text-[13px]" style={{ color: '#667781' }}>{activeConv.phone}</p>
                 </div>
@@ -749,6 +752,37 @@ export default function WhatsAppInboxPage() {
                         >
                           <FileText className="h-4 w-4" style={{ color: '#54656f' }} />
                           Ver cadastro
+                        </DropdownMenuItem>
+                      )}
+                      {!activeConv?.supplier_id && (
+                        <DropdownMenuItem
+                          className="flex items-center gap-3 px-4 py-2 text-[14px] cursor-pointer"
+                          style={{ color: '#3b4a54' }}
+                          onClick={() => {
+                            if (!activeConv) return;
+                            const phone = activeConv.phone?.replace(/\D/g, '') || '';
+                            const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                            navigate('/suppliers', {
+                              state: {
+                                returnTo: '/whatsapp',
+                                prefill: { name: getDisplayName(activeConv) || '', phone: normalizedPhone },
+                                linkConversationPhone: normalizedPhone,
+                              }
+                            });
+                          }}
+                        >
+                          <Handshake className="h-4 w-4" style={{ color: '#54656f' }} />
+                          Cadastrar fornecedor
+                        </DropdownMenuItem>
+                      )}
+                      {activeConv?.supplier_id && (
+                        <DropdownMenuItem
+                          className="flex items-center gap-3 px-4 py-2 text-[14px] cursor-pointer"
+                          style={{ color: '#3b4a54' }}
+                          onClick={() => setShowContactInfo(!showContactInfo)}
+                        >
+                          <Handshake className="h-4 w-4" style={{ color: '#54656f' }} />
+                          Ver fornecedor
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
@@ -1005,6 +1039,7 @@ export default function WhatsAppInboxPage() {
                 <p className="text-[22px] flex items-center gap-2" style={{ color: '#111b21' }}>
                   {getDisplayName(activeConv)}
                   {activeConv.contact_id && <Star className="h-5 w-5 shrink-0 fill-amber-400 text-amber-400" />}
+                  {activeConv.supplier_id && <Handshake className="h-5 w-5 shrink-0 text-[#00a884]" />}
                 </p>
                 <p className="text-[14px] mt-1" style={{ color: '#667781' }}>{activeConv.phone}</p>
               </div>
@@ -1054,6 +1089,37 @@ export default function WhatsAppInboxPage() {
                       <FileText className="h-5 w-5" />
                       <span>Criar Cotação</span>
                     </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="h-[8px]" style={{ backgroundColor: '#f0f2f5' }} />
+
+              <div className="px-[30px] py-4">
+                {!activeConv.supplier_id ? (
+                  <button
+                    className="flex items-center gap-3 w-full py-2 text-[14px] hover:bg-black/5 rounded transition-colors"
+                    style={{ color: '#008069' }}
+                    onClick={() => {
+                      const phone = activeConv.phone?.replace(/\D/g, '') || '';
+                      const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                      navigate('/suppliers', {
+                        state: {
+                          returnTo: '/whatsapp',
+                          prefill: { name: getDisplayName(activeConv) || '', phone: normalizedPhone },
+                          linkConversationPhone: normalizedPhone,
+                        }
+                      });
+                    }}
+                  >
+                    <Handshake className="h-5 w-5" />
+                    <span>Vincular a Fornecedor</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] px-3 py-1 rounded-full" style={{ backgroundColor: '#e7f8e9', color: '#008069' }}>
+                      🤝 Fornecedor vinculado
+                    </span>
                   </div>
                 )}
               </div>

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -45,6 +46,9 @@ const emptySupplier = (): Omit<Supplier, 'id'> => ({
 
 export default function SuppliersPage() {
   const { activeCompany } = useCompany();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const locationState = location.state as any;
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -54,6 +58,7 @@ export default function SuppliersPage() {
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [isPF, setIsPF] = useState(false);
+  const prefillApplied = useRef(false);
 
   const fetchSuppliers = async () => {
     let query = supabase.from('suppliers').select('*').order('name');
@@ -63,6 +68,21 @@ export default function SuppliersPage() {
   };
 
   useEffect(() => { fetchSuppliers(); }, [activeCompany?.id]);
+
+  // Auto-open form with prefill from WhatsApp
+  useEffect(() => {
+    if (locationState?.prefill && !prefillApplied.current) {
+      prefillApplied.current = true;
+      const pf = locationState.prefill;
+      setForm(prev => ({
+        ...prev,
+        name: (pf.name || '').toUpperCase(),
+        phone: pf.phone || '',
+      }));
+      setIsPF(true);
+      setDialogOpen(true);
+    }
+  }, [locationState]);
 
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const filtered = suppliers.filter(s =>
@@ -117,9 +137,27 @@ export default function SuppliersPage() {
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Fornecedor atualizado!');
     } else {
-      const { error } = await supabase.from('suppliers').insert({ ...form, empresa_id: activeCompany?.id } as any);
+      const { data: newSupplier, error } = await supabase.from('suppliers').insert({ ...form, empresa_id: activeCompany?.id } as any).select('id, name').single();
       if (error) { toast.error('Erro ao cadastrar'); return; }
       toast.success('Fornecedor cadastrado!');
+
+      // Link to WhatsApp conversation if coming from WhatsApp
+      if (newSupplier && locationState?.linkConversationPhone && activeCompany?.id) {
+        const linkPhone = locationState.linkConversationPhone.replace(/\D/g, '');
+        const { data: convs } = await (supabase.from('whatsapp_conversations')
+          .select('id')
+          .eq('empresa_id', activeCompany.id)
+          .or(`phone.eq.${linkPhone},phone.ilike.%${linkPhone.slice(-8)}%`)
+          .limit(1) as any);
+        if (convs?.[0]) {
+          await (supabase.from('whatsapp_conversations' as any)
+            .update({ supplier_id: newSupplier.id, contact_name: newSupplier.name })
+            .eq('id', convs[0].id));
+        }
+        // Navigate back to WhatsApp
+        navigate('/whatsapp');
+        return;
+      }
     }
     setDialogOpen(false);
     setEditingId(null);
