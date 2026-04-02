@@ -1,13 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -20,10 +18,13 @@ serve(async (req) => {
     }
 
     // Fetch the image server-side (no CORS restrictions)
-    const resp = await fetch(url, { redirect: 'follow' });
+    const resp = await fetch(url, {
+      redirect: 'follow',
+      signal: AbortSignal.timeout(10000),
+    });
     if (!resp.ok) {
       return new Response(JSON.stringify({ error: `Failed to fetch image: ${resp.status}` }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -31,7 +32,7 @@ serve(async (req) => {
     const contentType = resp.headers.get('content-type') || 'image/jpeg';
     const arrayBuffer = await resp.arrayBuffer();
     const uint8 = new Uint8Array(arrayBuffer);
-    
+
     // Convert to base64
     let binary = '';
     const chunkSize = 8192;
@@ -45,10 +46,11 @@ serve(async (req) => {
     return new Response(JSON.stringify({ success: true, dataUrl }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error: any) {
-    console.error('proxy-image error:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Internal error' }), {
-      status: 500,
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Internal error';
+    console.error('proxy-image error:', msg);
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

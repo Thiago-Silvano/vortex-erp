@@ -100,21 +100,33 @@ export default function WhatsAppInboxPage() {
     if (!serverUrl || !conversations.length || serverUrl.includes('localhost')) return;
     conversations.forEach((conv) => {
       const phone = conv.phone?.replace(/\D/g, '') || '';
-      if (!phone || profilePics[phone] !== undefined) return;
+      if (!phone || phone.length < 8 || phone.length > 15 || profilePics[phone] !== undefined) return;
       setProfilePics(prev => ({ ...prev, [phone]: null }));
       getProfilePic(serverUrl, empresaId, phone).then(async (url) => {
-        if (!url) return;
+        if (!url) {
+          console.log(`[ProfilePic] No pic URL for ${phone}`);
+          return;
+        }
+        console.log(`[ProfilePic] Got URL for ${phone}, proxying...`);
         try {
-          // Proxy the WhatsApp profile pic URL to get a data URL (avoids CORS)
-          const { data } = await supabase.functions.invoke('proxy-image', { body: { url } });
+          const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url } });
+          if (error) {
+            console.warn(`[ProfilePic] proxy-image error for ${phone}:`, error);
+            setProfilePics(prev => ({ ...prev, [phone]: url }));
+            return;
+          }
           if (data?.dataUrl) {
             setProfilePics(prev => ({ ...prev, [phone]: data.dataUrl }));
           } else {
+            console.warn(`[ProfilePic] No dataUrl in response for ${phone}, using direct URL`);
             setProfilePics(prev => ({ ...prev, [phone]: url }));
           }
-        } catch {
+        } catch (err) {
+          console.warn(`[ProfilePic] Exception for ${phone}:`, err);
           setProfilePics(prev => ({ ...prev, [phone]: url }));
         }
+      }).catch(err => {
+        console.warn(`[ProfilePic] getProfilePic failed for ${phone}:`, err);
       });
     });
   }, [conversations, serverUrl, empresaId]);
