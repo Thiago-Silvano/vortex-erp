@@ -862,7 +862,7 @@ export default function WhatsAppInboxPage() {
                             // Delete on WhatsApp server if possible
                             if (m.whatsapp_msg_id && activeConv) {
                               const targetId = activeConv.whatsapp_id || activeConv.phone;
-                              await supabase.functions.invoke('whatsapp-proxy', {
+                              const { data: delResult } = await supabase.functions.invoke('whatsapp-proxy', {
                                 body: {
                                   server_url: serverUrl,
                                   endpoint: '/delete-message',
@@ -874,6 +874,9 @@ export default function WhatsAppInboxPage() {
                                   },
                                 },
                               });
+                              if (delResult?.error) {
+                                throw new Error(delResult.error);
+                              }
                             }
                             // Remove from local state and DB
                             setMessages(prev => prev.filter(p => p.id !== m.id));

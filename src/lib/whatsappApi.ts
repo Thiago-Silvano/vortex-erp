@@ -114,13 +114,17 @@ export async function disconnectSession(serverUrl: string, empresaId: string) {
 /**
  * Send a text message via /send-message (POST)
  */
-export async function sendMessage(serverUrl: string, empresaId: string, number: string, message: string) {
+export async function sendMessage(serverUrl: string, empresaId: string, number: string, message: string, quotedMsgId?: string) {
   const phone = formatChatId(number);
-  return proxyRequest(serverUrl, '/send-message', 'POST', {
+  const payload: Record<string, unknown> = {
     empresa_id: empresaId,
     phone,
     message,
-  });
+  };
+  if (quotedMsgId) {
+    payload.quoted_message_id = quotedMsgId;
+  }
+  return proxyRequest(serverUrl, '/send-message', 'POST', payload);
 }
 
 /**
