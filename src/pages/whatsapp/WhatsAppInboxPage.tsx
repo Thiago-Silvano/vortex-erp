@@ -700,14 +700,86 @@ export default function WhatsAppInboxPage() {
                     <UserPlus className="h-3.5 w-3.5" />
                     Novo Lead
                   </button>
-                  <button className="p-2 rounded-full hover:bg-black/5 transition-colors">
+                  <button
+                    className="p-2 rounded-full hover:bg-black/5 transition-colors"
+                    onClick={() => {
+                      setShowMsgSearch(prev => !prev);
+                      setMsgSearch('');
+                      setTimeout(() => msgSearchRef.current?.focus(), 100);
+                    }}
+                    title="Buscar mensagens"
+                  >
                     <Search className="h-5 w-5" style={{ color: '#54656f' }} />
                   </button>
-                  <button className="p-2 rounded-full hover:bg-black/5 transition-colors">
-                    <MoreVertical className="h-5 w-5" style={{ color: '#54656f' }} />
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-2 rounded-full hover:bg-black/5 transition-colors">
+                        <MoreVertical className="h-5 w-5" style={{ color: '#54656f' }} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[200px] rounded-lg shadow-lg border-0 py-1" style={{ backgroundColor: '#ffffff' }}>
+                      {!activeConv?.contact_id && (
+                        <DropdownMenuItem
+                          className="flex items-center gap-3 px-4 py-2 text-[14px] cursor-pointer"
+                          style={{ color: '#3b4a54' }}
+                          onClick={() => {
+                            if (!activeConv) return;
+                            const phone = activeConv.phone?.replace(/\D/g, '') || '';
+                            const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                            navigate('/clients', {
+                              state: {
+                                returnTo: '/whatsapp',
+                                prefill: { full_name: getDisplayName(activeConv) || '', phone: normalizedPhone },
+                                linkConversationPhone: normalizedPhone,
+                              }
+                            });
+                          }}
+                        >
+                          <UserPlus className="h-4 w-4" style={{ color: '#54656f' }} />
+                          Cadastrar cliente
+                        </DropdownMenuItem>
+                      )}
+                      {activeConv?.contact_id && (
+                        <DropdownMenuItem
+                          className="flex items-center gap-3 px-4 py-2 text-[14px] cursor-pointer"
+                          style={{ color: '#3b4a54' }}
+                          onClick={() => setShowContactInfo(!showContactInfo)}
+                        >
+                          <FileText className="h-4 w-4" style={{ color: '#54656f' }} />
+                          Ver cadastro
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
+
+              {/* Message search bar */}
+              {showMsgSearch && (
+                <div className="flex items-center gap-2 px-4 py-2 shrink-0" style={{ backgroundColor: '#f0f2f5', borderBottom: '1px solid #e9edef' }}>
+                  <Search className="h-4 w-4 shrink-0" style={{ color: '#54656f' }} />
+                  <input
+                    ref={msgSearchRef}
+                    type="text"
+                    placeholder="Buscar mensagens nesta conversa..."
+                    value={msgSearch}
+                    onChange={e => setMsgSearch(e.target.value)}
+                    className="flex-1 text-[14px] outline-none bg-transparent"
+                    style={{ color: '#111b21' }}
+                  />
+                  {msgSearch && (
+                    <span className="text-[12px] shrink-0" style={{ color: '#667781' }}>
+                      {filteredMessages.length} resultado(s)
+                    </span>
+                  )}
+                  <button
+                    className="p-1 rounded-full hover:bg-black/5"
+                    onClick={() => { setShowMsgSearch(false); setMsgSearch(''); }}
+                  >
+                    <X className="h-4 w-4" style={{ color: '#54656f' }} />
+                  </button>
+                </div>
+              )}
 
               {/* Messages area with WhatsApp wallpaper */}
               <div
