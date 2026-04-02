@@ -408,7 +408,14 @@ export default function WhatsAppInboxPage() {
     } catch { return ''; }
   };
 
-  const getLastMsgPreview = (conv: Conversation) => conv.last_message || 'Sem mensagens';
+  const getLastMsgPreview = (conv: Conversation) => {
+    const msg = conv.last_message || '';
+    if (msg.includes('BEGIN:VCARD')) {
+      const fnMatch = msg.match(/FN:(.+)/);
+      return `👤 Contato: ${fnMatch?.[1]?.trim() || 'Contato'}`;
+    }
+    return msg || 'Sem mensagens';
+  };
 
   // Group messages by date
   const groupedMessages = messages.reduce<{ date: string; msgs: Message[] }[]>((acc, msg) => {
