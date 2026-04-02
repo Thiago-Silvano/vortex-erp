@@ -50,6 +50,7 @@ interface Message {
 export default function WhatsAppInboxPage() {
   const { activeCompany } = useCompany();
   const empresaId = activeCompany?.id || '';
+  const navigate = useNavigate();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
@@ -58,10 +59,14 @@ export default function WhatsAppInboxPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [serverUrl, setServerUrl] = useState('');
-  const [showCreateClient, setShowCreateClient] = useState(false);
+  const [showCrmLink, setShowCrmLink] = useState(false);
+  const [crmStep, setCrmStep] = useState<'ask' | 'select' | 'confirm_phone'>('ask');
+  const [crmClients, setCrmClients] = useState<any[]>([]);
+  const [crmSearch, setCrmSearch] = useState('');
+  const [crmSelectedClient, setCrmSelectedClient] = useState<any>(null);
+  const [crmConv, setCrmConv] = useState<Conversation | null>(null);
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [newMsgForm, setNewMsgForm] = useState({ phone: '', name: '', message: '' });
-  const [clientForm, setClientForm] = useState({ full_name: '', phone: '', email: '' });
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [sendingFile, setSendingFile] = useState(false);
   const [initialScroll, setInitialScroll] = useState(false);
