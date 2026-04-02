@@ -884,7 +884,11 @@ export default function WhatsAppInboxPage() {
     );
   }
 
-  // ===================== DESKTOP LAYOUT (unchanged) =====================
+  return (
+    <AppLayout>
+      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden" style={{ backgroundColor: '#eae6df' }}>
+        {/* ==================== LEFT PANEL ==================== */}
+        <div className="w-[400px] flex flex-col shrink-0 border-r" style={{ backgroundColor: '#ffffff', borderColor: '#e9edef' }}>
           {/* Header */}
           <div className="h-[59px] flex items-center justify-between px-4 shrink-0" style={{ backgroundColor: '#f0f2f5' }}>
             <Avatar className="h-10 w-10 cursor-pointer">
