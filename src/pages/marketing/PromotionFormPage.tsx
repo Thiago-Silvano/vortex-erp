@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Save, MapPin, Building2, CalendarDays, Plane, Ticket, DollarSign, ImageIcon, Upload, X, Wand2 } from "lucide-react";
+import { maskCurrencyInput, parseCurrency } from "@/lib/masks";
 import GenerateCreativesModal from "@/components/marketing/GenerateCreativesModal";
 
 interface PromotionForm {
