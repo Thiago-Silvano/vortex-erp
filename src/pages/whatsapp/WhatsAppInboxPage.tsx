@@ -81,6 +81,9 @@ export default function WhatsAppInboxPage() {
   const [profilePics, setProfilePics] = useState<Record<string, string | null>>({});
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [msgSearch, setMsgSearch] = useState('');
+  const [showMsgSearch, setShowMsgSearch] = useState(false);
+  const msgSearchRef = useRef<HTMLInputElement>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
