@@ -766,7 +766,10 @@ export default function WhatsAppInboxPage() {
                     {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <p className="text-[22px]" style={{ color: '#111b21' }}>{getDisplayName(activeConv)}</p>
+                <p className="text-[22px] flex items-center gap-2" style={{ color: '#111b21' }}>
+                  {getDisplayName(activeConv)}
+                  {activeConv.contact_id && <Star className="h-5 w-5 shrink-0 fill-amber-400 text-amber-400" />}
+                </p>
                 <p className="text-[14px] mt-1" style={{ color: '#667781' }}>{activeConv.phone}</p>
               </div>
 
