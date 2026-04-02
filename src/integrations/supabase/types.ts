@@ -2962,6 +2962,62 @@ export type Database = {
           },
         ]
       }
+      promotion_pages: {
+        Row: {
+          background_color: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          layout_style: string
+          legal_text: string | null
+          promotion_ids: string[]
+          show_legal_text: boolean
+          show_logo: boolean
+          title: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          layout_style?: string
+          legal_text?: string | null
+          promotion_ids?: string[]
+          show_legal_text?: boolean
+          show_logo?: boolean
+          title?: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          layout_style?: string
+          legal_text?: string | null
+          promotion_ids?: string[]
+          show_legal_text?: boolean
+          show_logo?: boolean
+          title?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_pages_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promotions: {
         Row: {
           accommodation_type: string
