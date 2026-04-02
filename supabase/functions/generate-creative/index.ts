@@ -113,7 +113,7 @@ REGRAS:
 - Distribua verticalmente os elementos de forma harmônica`;
 
     // Use Lovable AI proxy
-    const aiResponse = await fetch("https://lovable.dev/api/ai/proxy", {
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
