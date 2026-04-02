@@ -59,6 +59,7 @@ export default function UserAdmin() {
   const [permChecks, setPermChecks] = useState<Record<string, boolean>>({});
   const [permEmpresaIds, setPermEmpresaIds] = useState<string[]>([]);
   const [permDefaultCompany, setPermDefaultCompany] = useState('none');
+  const [permHomeRoute, setPermHomeRoute] = useState('/reservations');
   const fetchUsers = async () => {
     setLoading(true);
     try {
