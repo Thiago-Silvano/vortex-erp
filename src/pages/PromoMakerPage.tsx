@@ -253,10 +253,52 @@ export default function PromoMakerPage() {
   const [savingMktTemplate, setSavingMktTemplate] = useState(false);
   const { activeCompany } = useCompany();
 
-  // Load promotion data from URL params
+  // Load AI-generated layout from sessionStorage
+  useEffect(() => {
+    const isAiGenerated = searchParams.get('aiGenerated') === 'true';
+    if (!isAiGenerated) return;
+    const stored = sessionStorage.getItem('ai_creative_layout');
+    if (!stored) return;
+    sessionStorage.removeItem('ai_creative_layout');
+    try {
+      const layout = JSON.parse(stored);
+      if (layout.bgColor) setBgColor(layout.bgColor);
+      if (layout.elements?.length) {
+        const aiElements: CanvasElement[] = layout.elements.map((el: any) => ({
+          id: genId(),
+          type: 'text',
+          content: el.content || '',
+          x: el.x ?? 50,
+          y: el.y ?? 50,
+          fontSize: el.fontSize ?? 24,
+          fontFamily: el.fontFamily || 'Inter',
+          fontWeight: el.fontWeight || '400',
+          ...defaultTextProps,
+          color: el.color || '#ffffff',
+          textAlign: (el.textAlign as any) || 'center',
+          letterSpacing: el.letterSpacing ?? 0,
+          lineHeight: el.lineHeight ?? 1.2,
+          textTransform: (el.textTransform as any) || 'none',
+          opacity: el.opacity ?? 1,
+          textShadow: 'none',
+          stroke: '',
+          strokeWidth: 0,
+          locked: false,
+          width: el.width ?? 80,
+        }));
+        setElements(aiElements);
+      }
+      if (layout.mainImageUrl) {
+        setImage(prev => ({ ...prev, url: layout.mainImageUrl }));
+      }
+    } catch { /* ignore parse errors */ }
+  }, [searchParams]);
+
+  // Load promotion data from URL params (fallback when not AI-generated)
   useEffect(() => {
     const promoId = searchParams.get('promotion');
-    if (!promoId || promoId === 'new') return;
+    const isAiGenerated = searchParams.get('aiGenerated') === 'true';
+    if (!promoId || promoId === 'new' || isAiGenerated) return;
     supabase
       .from('promotions')
       .select('*')
