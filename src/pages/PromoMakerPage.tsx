@@ -1579,6 +1579,30 @@ export default function PromoMakerPage() {
                         ))}
                       </>
                     )}
+
+                    <Separator />
+                    <div className="p-2 border border-dashed border-primary/30 rounded-md space-y-1.5 bg-primary/5">
+                      <Label className="text-xs font-semibold text-primary">Salvar como Template de Marketing</Label>
+                      <Input
+                        value={mktTemplateName}
+                        onChange={e => setMktTemplateName(e.target.value)}
+                        placeholder="Nome do template"
+                        className="h-7 text-xs"
+                      />
+                      <Select value={mktTemplateCategory} onValueChange={setMktTemplateCategory}>
+                        <SelectTrigger className="h-7 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MARKETING_CATEGORIES.map(c => (
+                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" className="h-7 w-full gap-1 text-xs" onClick={saveAsMarketingTemplate} disabled={savingMktTemplate}>
+                        <Save className="h-3 w-3" /> {savingMktTemplate ? 'Salvando...' : 'Salvar Template'}
+                      </Button>
+                    </div>
                   </div>
                 </ScrollArea>
               </TabsContent>
