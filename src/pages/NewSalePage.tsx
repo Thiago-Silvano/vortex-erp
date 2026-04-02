@@ -111,11 +111,13 @@ export default function NewSalePage() {
   const { activeCompany } = useCompany();
   const quoteData = (location.state as any)?.quoteData;
   const initialEditSaleId = (location.state as any)?.editSaleId;
+  const prefillClientId = (location.state as any)?.prefillClientId;
+  const prefillClientName = (location.state as any)?.prefillClientName;
   const [editSaleId, setEditSaleId] = useState<string | undefined>(initialEditSaleId);
 
   const [quoteId, setQuoteId] = useState(quoteData?.id || '');
-  const [clientName, setClientName] = useState(quoteData?.clientName || '');
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [clientName, setClientName] = useState(quoteData?.clientName || prefillClientName || '');
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(prefillClientId || null);
   const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [notes, setNotes] = useState('');
   const [passengersCount, setPassengersCount] = useState(1);
