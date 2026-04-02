@@ -78,6 +78,7 @@ export default function WhatsAppInboxPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const msgInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch current user display name
   useEffect(() => {
@@ -206,6 +207,7 @@ export default function WhatsAppInboxPage() {
     const { data: dbMsgs } = await (supabase.from('whatsapp_messages').select('*').eq('conversation_id', conv.id).order('created_at', { ascending: true }) as any);
     setMessages(dbMsgs || []);
     setLoading(false);
+    setTimeout(() => msgInputRef.current?.focus(), 300);
   };
 
   const handleSend = async () => {
@@ -764,15 +766,16 @@ export default function WhatsAppInboxPage() {
                   onChange={handleFileUpload}
                 />
                 <div className="flex-1 mx-1">
-                  <input
-                    type="text"
-                    placeholder="Digite uma mensagem"
-                    value={msgText}
-                    onChange={e => setMsgText(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                    className="w-full rounded-lg px-3 py-[9px] text-[15px] outline-none"
-                    style={{ backgroundColor: '#ffffff', color: '#111b21', border: '1px solid #e9edef' }}
-                  />
+                   <input
+                     type="text"
+                     ref={msgInputRef}
+                     placeholder="Digite uma mensagem"
+                     value={msgText}
+                     onChange={e => setMsgText(e.target.value)}
+                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                     className="w-full rounded-lg px-3 py-[9px] text-[15px] outline-none"
+                     style={{ backgroundColor: '#ffffff', color: '#111b21', border: '1px solid #e9edef' }}
+                   />
                 </div>
                 {msgText.trim() ? (
                   <button onClick={handleSend} className="p-2 rounded-full hover:bg-black/5 transition-colors">

@@ -194,7 +194,14 @@ export default function CrmKanbanPage() {
         table: 'whatsapp_messages',
         filter: `empresa_id=eq.${empresaId}`,
       }, () => {
-        // Refresh leads to update WhatsApp data
+        fetchLeads();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'whatsapp_conversations',
+        filter: `empresa_id=eq.${empresaId}`,
+      }, () => {
         fetchLeads();
       })
       .subscribe();
