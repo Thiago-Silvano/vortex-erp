@@ -149,7 +149,14 @@ export default function WhatsAppInboxPage() {
   }, [empresaId, activeConv]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!messages.length) return;
+    // On initial load (opening conversation), scroll instantly without animation
+    if (!initialScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
+      setInitialScroll(true);
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   const normalizePhone = (phone: string) => phone?.replace(/\D/g, '') || '';
