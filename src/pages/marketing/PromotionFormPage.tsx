@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Save, MapPin, Building2, CalendarDays, Plane, Ticket, DollarSign, ImageIcon, Upload, X, Wand2 } from "lucide-react";
+import { maskCurrencyInput, parseCurrency } from "@/lib/masks";
 import GenerateCreativesModal from "@/components/marketing/GenerateCreativesModal";
 
 interface PromotionForm {
@@ -253,7 +254,7 @@ export default function PromotionFormPage() {
               </div>
               <div>
                 <Label className="text-xs">Noites</Label>
-                <Input type="number" min={1} className="h-7 text-xs w-24" value={form.nights} onChange={(e) => set("nights", parseInt(e.target.value) || 1)} />
+                <Input className="h-7 text-xs w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" type="number" min={1} value={form.nights} onChange={(e) => set("nights", parseInt(e.target.value) || 1)} />
               </div>
             </div>
           </Card>
@@ -319,15 +320,32 @@ export default function PromotionFormPage() {
             <div className="space-y-3">
               <div>
                 <Label className="text-xs">Número de parcelas</Label>
-                <Input type="number" min={1} className="h-7 text-xs w-24" value={form.installments} onChange={(e) => set("installments", parseInt(e.target.value) || 1)} />
+                <Input
+                  className="h-7 text-xs w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  type="number"
+                  min={1}
+                  value={form.installments || ""}
+                  onChange={(e) => set("installments", parseInt(e.target.value) || 0)}
+                  placeholder="0"
+                />
               </div>
               <div>
                 <Label className="text-xs">Valor da parcela (R$)</Label>
-                <Input type="number" step="0.01" className="h-7 text-xs w-40" value={form.installment_value || ""} onChange={(e) => set("installment_value", parseFloat(e.target.value) || 0)} />
+                <Input
+                  className="h-7 text-xs w-40"
+                  value={form.installment_value ? maskCurrencyInput(form.installment_value) : ""}
+                  onChange={(e) => set("installment_value", parseCurrency(e.target.value))}
+                  placeholder="R$ 0,00"
+                />
               </div>
               <div>
                 <Label className="text-xs">Valor total (R$)</Label>
-                <Input type="number" step="0.01" className="h-7 text-xs w-40" value={form.total_value || ""} onChange={(e) => set("total_value", parseFloat(e.target.value) || 0)} />
+                <Input
+                  className="h-7 text-xs w-40"
+                  value={form.total_value ? maskCurrencyInput(form.total_value) : ""}
+                  onChange={(e) => set("total_value", parseCurrency(e.target.value))}
+                  placeholder="R$ 0,00"
+                />
               </div>
             </div>
           </Card>
