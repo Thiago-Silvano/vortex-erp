@@ -503,8 +503,8 @@ export default function WhatsAppInboxPage() {
   };
 
   const stopRecording = (cancel = false) => {
+    recordingCancelledRef.current = cancel;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      (mediaRecorderRef.current as any).cancelled = cancel;
       mediaRecorderRef.current.stop();
     }
     if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
