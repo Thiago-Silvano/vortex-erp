@@ -528,14 +528,10 @@ export default function WhatsAppInboxPage() {
                     <ContextMenuItem
                       className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
                       style={{ color: '#3b4a54' }}
-                      onClick={() => {
-                        setClientForm({ full_name: conv.contact_name || '', phone: conv.phone || '', email: '' });
-                        setActiveConv(conv);
-                        setShowCreateClient(true);
-                      }}
+                      onClick={() => openCrmLinkDialog(conv)}
                     >
                       <UserPlus className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
-                      {conv.contact_id ? 'Ver cliente' : 'Criar cliente'}
+                      {conv.contact_id ? 'Ver cliente' : 'Vincular ao CRM'}
                     </ContextMenuItem>
                     <ContextMenuSeparator className="my-1" style={{ backgroundColor: '#e9edef' }} />
                     <ContextMenuItem
