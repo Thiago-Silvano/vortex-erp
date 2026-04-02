@@ -117,6 +117,7 @@ const App = () => (
           <Route path="/sales" element={<ProtectedRoute><SalesPage /></ProtectedRoute>} />
           <Route path="/sales/vouchers" element={<ProtectedRoute><VouchersPage /></ProtectedRoute>} />
           <Route path="/cotacoes" element={<ProtectedRoute><CotacoesKanbanPage /></ProtectedRoute>} />
+          <Route path="/crm-kanban" element={<ProtectedRoute><CrmKanbanPage /></ProtectedRoute>} />
           <Route path="/cotacoes/lista" element={<ProtectedRoute><CotacoesKanbanPage /></ProtectedRoute>} />
           <Route path="/sales/new" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
           <Route path="/sales/:id" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
