@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Download, FileText, Mic, Image as ImageIcon, Video, ChevronDown } from 'lucide-react';
+import { Download, FileText, Mic, Image as ImageIcon, Video, ChevronDown, Trash2, Reply, User, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface MessageBubbleProps {
   msg: {
@@ -19,12 +26,54 @@ interface MessageBubbleProps {
   serverUrl: string;
   empresaId: string;
   onReply: (msg: MessageBubbleProps['msg']) => void;
+  onDeleteForMe?: (msg: MessageBubbleProps['msg']) => void;
+  onDeleteForAll?: (msg: MessageBubbleProps['msg']) => void;
   replyTarget?: { content: string; sender: string } | null;
 }
 
 const mediaCache = new Map<string, string>();
 
-export default function MessageBubble({ msg, serverUrl, empresaId, onReply }: MessageBubbleProps) {
+// ========== vCard parser ==========
+interface VCardData {
+  fullName: string;
+  phones: string[];
+  bizName?: string;
+  bizDescription?: string;
+}
+
+function parseVCard(text: string): VCardData | null {
+  if (!text || !text.includes('BEGIN:VCARD')) return null;
+  const lines = text.split(/\r?\n/);
+  let fullName = '';
+  const phones: string[] = [];
+  let bizName = '';
+  let bizDescription = '';
+
+  for (const line of lines) {
+    if (line.startsWith('FN:')) {
+      fullName = line.slice(3).trim();
+    } else if (line.startsWith('TEL')) {
+      // TEL;waid=554891388665:+55 48 99138-8665
+      const colonIdx = line.indexOf(':');
+      if (colonIdx !== -1) {
+        phones.push(line.slice(colonIdx + 1).trim());
+      }
+    } else if (line.startsWith('X-WA-BIZ-NAME:')) {
+      bizName = line.slice('X-WA-BIZ-NAME:'.length).trim();
+    } else if (line.startsWith('X-WA-BIZ-DESCRIPTION:')) {
+      bizDescription = line.slice('X-WA-BIZ-DESCRIPTION:'.length).trim();
+    }
+  }
+
+  if (!fullName && !phones.length) return null;
+  return { fullName, phones, bizName: bizName || undefined, bizDescription: bizDescription || undefined };
+}
+
+function isVCard(content: string): boolean {
+  return !!content && content.includes('BEGIN:VCARD') && content.includes('END:VCARD');
+}
+
+export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDeleteForMe, onDeleteForAll }: MessageBubbleProps) {
   const [mediaUrl, setMediaUrl] = useState<string>(msg.media_url || '');
   const [loadingMedia, setLoadingMedia] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -32,6 +81,7 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply }: Me
   const isMe = msg.sender === 'me';
   const hasMedia = ['image', 'video', 'audio', 'ptt', 'document', 'sticker'].includes(msg.message_type);
   const needsMediaFetch = hasMedia && !mediaUrl && (msg.whatsapp_msg_id || msg.id);
+  const vcard = isVCard(msg.content) ? parseVCard(msg.content) : null;
 
   useEffect(() => {
     if (!needsMediaFetch || loadingMedia) return;
@@ -66,6 +116,66 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply }: Me
       const d = new Date(dateStr);
       return format(d, 'HH:mm');
     } catch { return ''; }
+  };
+
+  const renderVCard = (vc: VCardData) => {
+    return (
+      <div className="min-w-[260px] max-w-[300px]">
+        {/* Contact card header */}
+        <div className="flex items-center gap-3 px-3 py-3">
+          <div
+            className="h-[50px] w-[50px] rounded-full flex items-center justify-center shrink-0"
+            style={{ backgroundColor: '#dfe5e7' }}
+          >
+            <User className="h-6 w-6" style={{ color: '#ffffff' }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[14.5px] font-medium truncate" style={{ color: '#111b21' }}>
+              {vc.fullName}
+            </p>
+            {vc.bizName && (
+              <p className="text-[12px] truncate" style={{ color: '#667781' }}>
+                {vc.bizName}
+              </p>
+            )}
+            {vc.bizDescription && (
+              <p className="text-[11px] truncate" style={{ color: '#8696a0' }}>
+                {vc.bizDescription}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Phone numbers */}
+        {vc.phones.length > 0 && (
+          <div className="border-t px-3 py-2" style={{ borderColor: '#e9edef' }}>
+            {vc.phones.map((phone, i) => (
+              <div key={i} className="flex items-center gap-2 py-0.5">
+                <Phone className="h-3.5 w-3.5 shrink-0" style={{ color: '#667781' }} />
+                <span className="text-[13px]" style={{ color: '#111b21' }}>{phone}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Action button */}
+        <div className="border-t" style={{ borderColor: '#e9edef' }}>
+          <button
+            className="w-full py-2 text-[14px] font-medium text-center transition-colors hover:bg-black/5"
+            style={{ color: '#00a884' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (vc.phones[0]) {
+                const digits = vc.phones[0].replace(/\D/g, '');
+                window.open(`https://wa.me/${digits}`, '_blank');
+              }
+            }}
+          >
+            Conversar
+          </button>
+        </div>
+      </div>
+    );
   };
 
   const renderMediaContent = () => {
@@ -155,14 +265,45 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply }: Me
 
         {/* Menu dropdown trigger */}
         {showMenu && (
-          <button
-            onClick={() => onReply(msg)}
-            className={`absolute top-1 ${isMe ? 'right-2' : 'right-2'} z-10 p-0.5 rounded-full transition-all`}
-            style={{ background: isMe ? 'rgba(217, 253, 211, 0.9)' : 'rgba(255,255,255,0.9)' }}
-            title="Responder"
-          >
-            <ChevronDown className="h-4 w-4 text-[#8696a0]" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={`absolute top-1 right-2 z-10 p-0.5 rounded-full transition-all`}
+                style={{ background: isMe ? 'rgba(217, 253, 211, 0.9)' : 'rgba(255,255,255,0.9)' }}
+              >
+                <ChevronDown className="h-4 w-4 text-[#8696a0]" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[180px] rounded-lg shadow-lg border-0 py-1" style={{ backgroundColor: '#ffffff' }}>
+              <DropdownMenuItem
+                className="flex items-center gap-3 px-4 py-2 text-[14px] cursor-pointer"
+                style={{ color: '#3b4a54' }}
+                onClick={() => onReply(msg)}
+              >
+                <Reply className="h-4 w-4" style={{ color: '#54656f' }} />
+                Responder
+              </DropdownMenuItem>
+              <DropdownMenuSeparator style={{ backgroundColor: '#e9edef' }} />
+              <DropdownMenuItem
+                className="flex items-center gap-3 px-4 py-2 text-[14px] cursor-pointer"
+                style={{ color: '#3b4a54' }}
+                onClick={() => onDeleteForMe?.(msg)}
+              >
+                <Trash2 className="h-4 w-4" style={{ color: '#54656f' }} />
+                Apagar para mim
+              </DropdownMenuItem>
+              {isMe && (
+                <DropdownMenuItem
+                  className="flex items-center gap-3 px-4 py-2 text-[14px] cursor-pointer"
+                  style={{ color: '#e53935' }}
+                  onClick={() => onDeleteForAll?.(msg)}
+                >
+                  <Trash2 className="h-4 w-4" style={{ color: '#e53935' }} />
+                  Apagar para todos
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
         <div
@@ -186,31 +327,53 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply }: Me
             </div>
           )}
 
-          {/* Media content */}
-          {hasMedia && <div className="mb-1">{renderMediaContent()}</div>}
-
-          {/* Text + timestamp in same line */}
-          <div className="flex items-end gap-1">
-            <div className="flex-1 min-w-0">
-              {msg.content && !(msg.message_type === 'document' && mediaUrl) && msg.message_type !== 'ptt' && msg.message_type !== 'audio' && (
-                <span className="whitespace-pre-wrap break-words">{msg.content}</span>
-              )}
-              {msg.content && msg.message_type === 'document' && mediaUrl && !msg.content.match(/\.(pdf|doc|docx|xls|xlsx|zip|rar)$/i) && (
-                <span className="whitespace-pre-wrap break-words">{msg.content}</span>
-              )}
-            </div>
-            <span className="text-[11px] text-[#667781] whitespace-nowrap shrink-0 leading-none pb-[2px] ml-1">
-              {formatTime(msg.created_at)}
-              {isMe && (
-                <span className="inline-block ml-[3px]">
-                  <svg viewBox="0 0 16 11" height="11" width="16" className="inline text-[#53bdeb]">
-                    <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.46.46 0 0 0-.327-.14.462.462 0 0 0-.346.149.403.403 0 0 0-.122.323c.004.121.06.238.156.323l2.357 2.433a.515.515 0 0 0 .361.174.468.468 0 0 0 .383-.19l6.555-8.039a.45.45 0 0 0 .069-.42.414.414 0 0 0-.2-.23z" fill="currentColor" />
-                    <path d="M15.764.638a.46.46 0 0 0-.631.057l-6.19 7.636-0.7-.73a.265.265 0 0 0-.063.166c.004.121.06.238.156.323l.54.558a.515.515 0 0 0 .361.174.468.468 0 0 0 .383-.19l6.555-8.039a.423.423 0 0 0-.411-.955z" fill="currentColor" />
-                  </svg>
+          {/* vCard rendering */}
+          {vcard ? (
+            <>
+              {renderVCard(vcard)}
+              <div className="flex justify-end mt-1">
+                <span className="text-[11px] text-[#667781] whitespace-nowrap shrink-0 leading-none pb-[2px]">
+                  {formatTime(msg.created_at)}
+                  {isMe && (
+                    <span className="inline-block ml-[3px]">
+                      <svg viewBox="0 0 16 11" height="11" width="16" className="inline text-[#53bdeb]">
+                        <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.46.46 0 0 0-.327-.14.462.462 0 0 0-.346.149.403.403 0 0 0-.122.323c.004.121.06.238.156.323l2.357 2.433a.515.515 0 0 0 .361.174.468.468 0 0 0 .383-.19l6.555-8.039a.45.45 0 0 0 .069-.42.414.414 0 0 0-.2-.23z" fill="currentColor" />
+                        <path d="M15.764.638a.46.46 0 0 0-.631.057l-6.19 7.636-0.7-.73a.265.265 0 0 0-.063.166c.004.121.06.238.156.323l.54.558a.515.515 0 0 0 .361.174.468.468 0 0 0 .383-.19l6.555-8.039a.423.423 0 0 0-.411-.955z" fill="currentColor" />
+                      </svg>
+                    </span>
+                  )}
                 </span>
-              )}
-            </span>
-          </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Media content */}
+              {hasMedia && <div className="mb-1">{renderMediaContent()}</div>}
+
+              {/* Text + timestamp in same line */}
+              <div className="flex items-end gap-1">
+                <div className="flex-1 min-w-0">
+                  {msg.content && !(msg.message_type === 'document' && mediaUrl) && msg.message_type !== 'ptt' && msg.message_type !== 'audio' && (
+                    <span className="whitespace-pre-wrap break-words">{msg.content}</span>
+                  )}
+                  {msg.content && msg.message_type === 'document' && mediaUrl && !msg.content.match(/\.(pdf|doc|docx|xls|xlsx|zip|rar)$/i) && (
+                    <span className="whitespace-pre-wrap break-words">{msg.content}</span>
+                  )}
+                </div>
+                <span className="text-[11px] text-[#667781] whitespace-nowrap shrink-0 leading-none pb-[2px] ml-1">
+                  {formatTime(msg.created_at)}
+                  {isMe && (
+                    <span className="inline-block ml-[3px]">
+                      <svg viewBox="0 0 16 11" height="11" width="16" className="inline text-[#53bdeb]">
+                        <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.46.46 0 0 0-.327-.14.462.462 0 0 0-.346.149.403.403 0 0 0-.122.323c.004.121.06.238.156.323l2.357 2.433a.515.515 0 0 0 .361.174.468.468 0 0 0 .383-.19l6.555-8.039a.45.45 0 0 0 .069-.42.414.414 0 0 0-.2-.23z" fill="currentColor" />
+                        <path d="M15.764.638a.46.46 0 0 0-.631.057l-6.19 7.636-0.7-.73a.265.265 0 0 0-.063.166c.004.121.06.238.156.323l.54.558a.515.515 0 0 0 .361.174.468.468 0 0 0 .383-.19l6.555-8.039a.423.423 0 0 0-.411-.955z" fill="currentColor" />
+                      </svg>
+                    </span>
+                  )}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
