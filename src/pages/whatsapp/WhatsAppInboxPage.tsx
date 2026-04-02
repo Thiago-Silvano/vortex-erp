@@ -643,7 +643,7 @@ export default function WhatsAppInboxPage() {
 
           {/* MOBILE: Chat View */}
           <div
-            className="flex flex-col h-full absolute inset-0 z-20 transition-transform duration-300 ease-in-out"
+            className="flex flex-col h-full fixed inset-0 z-[42] transition-transform duration-300 ease-in-out"
             style={{
               backgroundColor: '#efeae2',
               transform: mobileView === 'chat' ? 'translateX(0)' : 'translateX(100%)',
