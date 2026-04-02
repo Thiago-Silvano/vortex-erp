@@ -850,7 +850,7 @@ export default function WhatsAppInboxPage() {
                         msg={msg}
                         serverUrl={serverUrl}
                         empresaId={empresaId}
-                        onReply={(m) => setReplyTo(m as Message)}
+                        onReply={(m) => { setReplyTo(m as Message); setTimeout(() => msgInputRef.current?.focus(), 50); }}
                         onDeleteForMe={async (m) => {
                           // Remove from local state
                           setMessages(prev => prev.filter(p => p.id !== m.id));
