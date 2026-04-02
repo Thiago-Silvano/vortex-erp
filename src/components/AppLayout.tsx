@@ -204,6 +204,7 @@ function TopMenuBar() {
       icon: <ShoppingCart className="h-3 w-3" />,
       items: [
         { title: "Dashboard", url: "/dashboard" },
+        { title: "Kanban CRM", url: "/crm-kanban", permKey: "sales_view" },
         { title: "Cotações", url: "/cotacoes/lista", permKey: "sales_view" },
         { title: "Vendas", url: "/sales", permKey: "sales_view" },
         { title: "Contratos", url: "/contracts/templates" },
