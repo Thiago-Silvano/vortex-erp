@@ -796,10 +796,28 @@ export default function WhatsAppInboxPage() {
                     <span>Vincular ao CRM</span>
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13px] px-3 py-1 rounded-full" style={{ backgroundColor: '#e7f8e9', color: '#008069' }}>
-                      ✓ Cliente vinculado
-                    </span>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] px-3 py-1 rounded-full" style={{ backgroundColor: '#e7f8e9', color: '#008069' }}>
+                        ✓ Cliente vinculado
+                      </span>
+                    </div>
+                    <button
+                      className="flex items-center gap-3 w-full py-2 text-[14px] hover:bg-black/5 rounded transition-colors"
+                      style={{ color: '#008069' }}
+                      onClick={() => {
+                        navigate('/sales/new', {
+                          state: {
+                            prefillClientId: activeConv.contact_id,
+                            prefillClientName: activeConv.contact_name,
+                            returnTo: '/whatsapp',
+                          }
+                        });
+                      }}
+                    >
+                      <FileText className="h-5 w-5" />
+                      <span>Criar Cotação</span>
+                    </button>
                   </div>
                 )}
               </div>
