@@ -645,6 +645,50 @@ export default function PromoMakerPage() {
     toast.success(`Template "${tpl.name}" atualizado!`);
   };
 
+  const saveAsMarketingTemplate = async () => {
+    const name = mktTemplateName.trim();
+    if (!name) { toast.error('Digite um nome para o template'); return; }
+    if (!activeCompany?.id) { toast.error('Selecione uma empresa'); return; }
+    setSavingMktTemplate(true);
+    try {
+      let imageUrl = image.url || '';
+      try { imageUrl = await persistTemplateImage(imageUrl); } catch {}
+      const templateData = buildTemplateData(imageUrl);
+
+      // Generate preview image
+      let previewUrl: string | null = null;
+      const canvasEl = canvasRef.current;
+      if (canvasEl) {
+        try {
+          const dataUrl = await toPng(canvasEl, { pixelRatio: 0.5 });
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          const path = `mkt-templates/${activeCompany.id}/${crypto.randomUUID()}.png`;
+          await supabase.storage.from('promotion-images').upload(path, blob, { contentType: 'image/png' });
+          const { data: pub } = supabase.storage.from('promotion-images').getPublicUrl(path);
+          previewUrl = pub.publicUrl;
+        } catch { /* preview optional */ }
+      }
+
+      const { error } = await supabase.from('marketing_templates').insert({
+        empresa_id: activeCompany.id,
+        name,
+        category: mktTemplateCategory,
+        template_data: templateData as any,
+        preview_url: previewUrl,
+        tags: [],
+      } as any);
+
+      if (error) throw error;
+      setMktTemplateName('');
+      toast.success(`Template de marketing "${name}" salvo!`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao salvar template de marketing');
+    }
+    setSavingMktTemplate(false);
+  };
+
   const shapeElements = elements.filter(el => el.type === 'shape') as ShapeElement[];
 
   const getMultiSelectedElements = () => {
