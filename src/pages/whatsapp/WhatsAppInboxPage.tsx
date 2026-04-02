@@ -1092,6 +1092,37 @@ export default function WhatsAppInboxPage() {
                   </div>
                 )}
               </div>
+
+              <div className="h-[8px]" style={{ backgroundColor: '#f0f2f5' }} />
+
+              <div className="px-[30px] py-4">
+                {!activeConv.supplier_id ? (
+                  <button
+                    className="flex items-center gap-3 w-full py-2 text-[14px] hover:bg-black/5 rounded transition-colors"
+                    style={{ color: '#008069' }}
+                    onClick={() => {
+                      const phone = activeConv.phone?.replace(/\D/g, '') || '';
+                      const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                      navigate('/suppliers', {
+                        state: {
+                          returnTo: '/whatsapp',
+                          prefill: { name: getDisplayName(activeConv) || '', phone: normalizedPhone },
+                          linkConversationPhone: normalizedPhone,
+                        }
+                      });
+                    }}
+                  >
+                    <Handshake className="h-5 w-5" />
+                    <span>Vincular a Fornecedor</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] px-3 py-1 rounded-full" style={{ backgroundColor: '#e7f8e9', color: '#008069' }}>
+                      🤝 Fornecedor vinculado
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
