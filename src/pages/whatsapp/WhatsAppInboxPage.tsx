@@ -663,7 +663,7 @@ export default function WhatsAppInboxPage() {
                           client_phone: activeConv.phone,
                           status: 'draft',
                           sale_workflow_status: 'em_aberto',
-                          total_price: 0,
+                          total_sale: 0,
                         } as any);
                         if (error) throw error;
                         toast.success('Lead criado no Kanban CRM!');
