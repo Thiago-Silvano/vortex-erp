@@ -427,8 +427,13 @@ export default function WhatsAppInboxPage() {
     return msg || 'Sem mensagens';
   };
 
+  // Filter messages by search term
+  const filteredMessages = msgSearch.trim()
+    ? messages.filter(m => m.content?.toLowerCase().includes(msgSearch.toLowerCase()))
+    : messages;
+
   // Group messages by date
-  const groupedMessages = messages.reduce<{ date: string; msgs: Message[] }[]>((acc, msg) => {
+  const groupedMessages = filteredMessages.reduce<{ date: string; msgs: Message[] }[]>((acc, msg) => {
     const d = new Date(msg.created_at);
     const today = new Date();
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
