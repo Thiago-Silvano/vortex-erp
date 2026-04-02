@@ -39,6 +39,7 @@ interface Conversation {
   last_message_at: string;
   unread_count: number;
   contact_id: string | null;
+  supplier_id: string | null;
   whatsapp_id?: string;
 }
 
