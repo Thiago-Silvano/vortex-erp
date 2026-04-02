@@ -526,6 +526,7 @@ export default function WhatsAppInboxPage() {
                           <span className="flex items-center gap-1 text-[17px] truncate" style={{ color: '#111b21' }}>
                             {displayName}
                             {conv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
+                            {conv.supplier_id && <Handshake className="h-3.5 w-3.5 shrink-0 text-[#00a884]" />}
                           </span>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
                             <span className="text-[12px]" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
