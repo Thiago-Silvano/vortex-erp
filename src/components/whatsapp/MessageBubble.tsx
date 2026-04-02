@@ -381,10 +381,10 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDe
               <div className="flex items-end gap-1">
                 <div className="flex-1 min-w-0">
                   {msg.content && !(msg.message_type === 'document' && mediaUrl) && msg.message_type !== 'ptt' && msg.message_type !== 'audio' && (
-                    <span className="whitespace-pre-wrap break-words">{msg.content}</span>
+                    <span className="whitespace-pre-wrap break-words">{linkifyText(msg.content)}</span>
                   )}
                   {msg.content && msg.message_type === 'document' && mediaUrl && !msg.content.match(/\.(pdf|doc|docx|xls|xlsx|zip|rar)$/i) && (
-                    <span className="whitespace-pre-wrap break-words">{msg.content}</span>
+                    <span className="whitespace-pre-wrap break-words">{linkifyText(msg.content)}</span>
                   )}
                 </div>
                 <span className="text-[11px] text-[#667781] whitespace-nowrap shrink-0 leading-none pb-[2px] ml-1">
