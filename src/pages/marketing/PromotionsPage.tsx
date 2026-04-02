@@ -48,6 +48,7 @@ export default function PromotionsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [creativePromo, setCreativePromo] = useState<Promotion | null>(null);
 
   const fetchPromotions = async () => {
     if (!activeCompany) return;
