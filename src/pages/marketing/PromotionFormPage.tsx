@@ -254,7 +254,7 @@ export default function PromotionFormPage() {
               </div>
               <div>
                 <Label className="text-xs">Noites</Label>
-                <Input type="number" min={1} className="h-7 text-xs w-24" value={form.nights} onChange={(e) => set("nights", parseInt(e.target.value) || 1)} />
+                <Input className="h-7 text-xs w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" type="number" min={1} value={form.nights} onChange={(e) => set("nights", parseInt(e.target.value) || 1)} />
               </div>
             </div>
           </Card>
