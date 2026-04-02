@@ -73,6 +73,33 @@ function isVCard(content: string): boolean {
   return !!content && content.includes('BEGIN:VCARD') && content.includes('END:VCARD');
 }
 
+// ========== Linkify helper ==========
+const URL_REGEX = /(https?:\/\/[^\s<]+|(?:www\.)[^\s<]+\.[^\s<]{2,})/gi;
+
+function linkifyText(text: string): React.ReactNode[] {
+  const parts = text.split(URL_REGEX);
+  return parts.map((part, i) => {
+    if (URL_REGEX.test(part)) {
+      URL_REGEX.lastIndex = 0; // reset regex state
+      const href = part.startsWith('http') ? part : `https://${part}`;
+      return (
+        <a
+          key={i}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline break-all"
+          style={{ color: '#027eb5' }}
+          onClick={e => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDeleteForMe, onDeleteForAll }: MessageBubbleProps) {
   const [mediaUrl, setMediaUrl] = useState<string>(msg.media_url || '');
   const [loadingMedia, setLoadingMedia] = useState(false);
