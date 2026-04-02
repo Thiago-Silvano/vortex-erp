@@ -69,6 +69,21 @@ export default function SuppliersPage() {
 
   useEffect(() => { fetchSuppliers(); }, [activeCompany?.id]);
 
+  // Auto-open form with prefill from WhatsApp
+  useEffect(() => {
+    if (locationState?.prefill && !prefillApplied.current) {
+      prefillApplied.current = true;
+      const pf = locationState.prefill;
+      setForm(prev => ({
+        ...prev,
+        name: (pf.name || '').toUpperCase(),
+        phone: pf.phone || '',
+      }));
+      setIsPF(true);
+      setDialogOpen(true);
+    }
+  }, [locationState]);
+
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const filtered = suppliers.filter(s =>
     normalize(s.name).includes(normalize(search)) ||
