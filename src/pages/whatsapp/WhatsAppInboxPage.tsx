@@ -812,30 +812,60 @@ export default function WhatsAppInboxPage() {
 
                 {/* Input mobile */}
                 <div className="flex items-center gap-1 px-2 py-[5px] shrink-0" style={{ backgroundColor: '#f0f2f5' }}>
-                  <button className="p-1.5 rounded-full hover:bg-black/5" onClick={() => fileInputRef.current?.click()} disabled={sendingFile}>
-                    <Paperclip className="h-[22px] w-[22px] rotate-45" style={{ color: '#54656f' }} />
-                  </button>
-                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onChange={handleFileUpload} />
-                  <div className="flex-1 mx-1">
-                    <input
-                      type="text"
-                      ref={msgInputRef}
-                      placeholder="Mensagem"
-                      value={msgText}
-                      onChange={e => setMsgText(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                      className="w-full rounded-full px-4 py-[8px] text-[15px] outline-none"
-                      style={{ backgroundColor: '#ffffff', color: '#111b21', border: '1px solid #e9edef' }}
-                    />
-                  </div>
-                  {msgText.trim() ? (
-                    <button onClick={handleSend} className="p-2 rounded-full" style={{ backgroundColor: '#008069' }}>
-                      <Send className="h-[20px] w-[20px] text-white" />
-                    </button>
+                  {isRecording ? (
+                    <>
+                      <button
+                        className="p-2 rounded-full"
+                        style={{ backgroundColor: '#ea4335' }}
+                        onClick={() => stopRecording(true)}
+                      >
+                        <Trash2 className="h-[20px] w-[20px] text-white" />
+                      </button>
+                      <div className="flex-1 flex items-center justify-center gap-2 mx-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
+                        <span className="text-[15px] font-medium tabular-nums" style={{ color: '#111b21' }}>
+                          {formatRecordingTime(recordingDuration)}
+                        </span>
+                      </div>
+                      <button
+                        className="p-2 rounded-full"
+                        style={{ backgroundColor: '#008069' }}
+                        onClick={() => stopRecording(false)}
+                      >
+                        <Send className="h-[20px] w-[20px] text-white" />
+                      </button>
+                    </>
                   ) : (
-                    <button className="p-2 rounded-full hover:bg-black/5">
-                      <Mic className="h-[22px] w-[22px]" style={{ color: '#54656f' }} />
-                    </button>
+                    <>
+                      <button className="p-1.5 rounded-full hover:bg-black/5" onClick={() => fileInputRef.current?.click()} disabled={sendingFile}>
+                        <Paperclip className="h-[22px] w-[22px] rotate-45" style={{ color: '#54656f' }} />
+                      </button>
+                      <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onChange={handleFileUpload} />
+                      <div className="flex-1 mx-1">
+                        <input
+                          type="text"
+                          ref={msgInputRef}
+                          placeholder="Mensagem"
+                          value={msgText}
+                          onChange={e => setMsgText(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                          className="w-full rounded-full px-4 py-[8px] text-[15px] outline-none"
+                          style={{ backgroundColor: '#ffffff', color: '#111b21', border: '1px solid #e9edef' }}
+                        />
+                      </div>
+                      {msgText.trim() ? (
+                        <button onClick={handleSend} className="p-2 rounded-full" style={{ backgroundColor: '#008069' }}>
+                          <Send className="h-[20px] w-[20px] text-white" />
+                        </button>
+                      ) : (
+                        <button
+                          className="p-2 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
+                          onClick={startRecording}
+                        >
+                          <Mic className="h-[22px] w-[22px]" style={{ color: '#54656f' }} />
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </>
