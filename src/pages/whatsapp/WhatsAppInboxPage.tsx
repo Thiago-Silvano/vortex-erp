@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical, Archive, BellOff, Pin, MailOpen, Heart, Tag, Trash2, LogOut, ChevronDown, Check, Link2, Star, FileText, Handshake } from 'lucide-react';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { sendMessage, sendMedia, getServerUrl, connectSession, getProfilePic } from '@/lib/whatsappApi';
@@ -59,6 +60,8 @@ export default function WhatsAppInboxPage() {
   const { activeCompany } = useCompany();
   const empresaId = activeCompany?.id || '';
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
@@ -215,6 +218,7 @@ export default function WhatsAppInboxPage() {
     setReplyTo(null);
     setShowMsgSearch(false);
     setMsgSearch('');
+    if (isMobile) setMobileView('chat');
     await (supabase.from('whatsapp_conversations').update({ unread_count: 0 }).eq('id', conv.id) as any);
     setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c));
     const { data: dbMsgs } = await (supabase.from('whatsapp_messages').select('*').eq('conversation_id', conv.id).order('created_at', { ascending: true }) as any);
@@ -456,6 +460,429 @@ export default function WhatsAppInboxPage() {
     }
     return acc;
   }, []);
+
+  const handleMobileBack = () => {
+    setMobileView('list');
+    setActiveConv(null);
+    setShowContactInfo(false);
+  };
+
+  // ===================== MOBILE LAYOUT =====================
+  if (isMobile) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden" style={{ backgroundColor: '#eae6df' }}>
+          {/* MOBILE: Conversation List */}
+          <div
+            className="flex flex-col h-full absolute inset-0 z-10 transition-transform duration-300 ease-in-out"
+            style={{
+              backgroundColor: '#ffffff',
+              transform: mobileView === 'list' ? 'translateX(0)' : 'translateX(-100%)',
+              top: '3.5rem',
+            }}
+          >
+            {/* Header */}
+            <div className="h-[56px] flex items-center justify-between px-4 shrink-0" style={{ backgroundColor: '#008069' }}>
+              <span className="text-[20px] font-semibold text-white">WhatsApp</span>
+              <div className="flex items-center gap-1">
+                <button className="p-2 rounded-full hover:bg-white/10 transition-colors" onClick={() => setShowNewMessage(true)}>
+                  <MessageSquarePlus className="h-5 w-5 text-white" />
+                </button>
+                <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                  <MoreVertical className="h-5 w-5 text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="px-2 py-[6px] shrink-0" style={{ backgroundColor: '#ffffff' }}>
+              <div className="flex items-center gap-3 rounded-lg px-3 py-[8px]" style={{ backgroundColor: '#f0f2f5' }}>
+                <Search className="h-[16px] w-[16px] shrink-0" style={{ color: '#54656f' }} />
+                <input
+                  type="text"
+                  placeholder="Pesquisar..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="flex-1 bg-transparent text-[14px] outline-none placeholder:text-[#667781]"
+                  style={{ color: '#111b21' }}
+                />
+                {search && (
+                  <button onClick={() => setSearch('')}>
+                    <X className="h-4 w-4" style={{ color: '#54656f' }} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Conversation list */}
+            <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+              {filteredConvs.map(conv => {
+                const displayName = getDisplayName(conv);
+                const phone = conv.phone?.replace(/\D/g, '') || '';
+                return (
+                  <div
+                    key={conv.id}
+                    onClick={() => openConversation(conv)}
+                    className="flex items-center gap-3 px-4 py-[12px] cursor-pointer active:bg-[#f0f2f5] transition-colors"
+                  >
+                    <Avatar className="h-[50px] w-[50px] shrink-0">
+                      {profilePics[phone] && <AvatarImage src={profilePics[phone]!} alt={displayName} />}
+                      <AvatarFallback style={{ backgroundColor: '#dfe5e7', color: '#ffffff' }} className="text-lg font-light">
+                        {displayName.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0 border-b py-[2px]" style={{ borderColor: '#e9edef' }}>
+                      <div className="flex items-center justify-between mb-[2px]">
+                        <span className="text-[16px] truncate font-normal" style={{ color: '#111b21' }}>
+                          {displayName}
+                        </span>
+                        <span className="text-[12px] shrink-0 ml-2" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
+                          {formatTime(conv.last_message_at)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-[13px] truncate pr-2" style={{ color: '#667781' }}>
+                          {getLastMsgPreview(conv)}
+                        </p>
+                        {conv.unread_count > 0 && (
+                          <span className="h-[20px] min-w-[20px] flex items-center justify-center rounded-full text-[11px] font-medium px-[6px] shrink-0" style={{ backgroundColor: '#25d366', color: '#ffffff' }}>
+                            {conv.unread_count}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredConvs.length === 0 && (
+                <div className="p-8 text-center text-[14px]" style={{ color: '#667781' }}>
+                  Nenhuma conversa encontrada
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* MOBILE: Chat View */}
+          <div
+            className="flex flex-col h-full absolute inset-0 z-20 transition-transform duration-300 ease-in-out"
+            style={{
+              backgroundColor: '#efeae2',
+              transform: mobileView === 'chat' ? 'translateX(0)' : 'translateX(100%)',
+              top: '3.5rem',
+            }}
+          >
+            {activeConv && (
+              <>
+                {/* Chat header */}
+                <div className="h-[56px] flex items-center gap-2 px-2 shrink-0" style={{ backgroundColor: '#008069' }}>
+                  <button className="p-2 rounded-full hover:bg-white/10" onClick={handleMobileBack}>
+                    <ArrowLeft className="h-5 w-5 text-white" />
+                  </button>
+                  <Avatar className="h-[38px] w-[38px] shrink-0" onClick={() => setShowContactInfo(true)}>
+                    {profilePics[activeConv.phone?.replace(/\D/g, '')] && (
+                      <AvatarImage src={profilePics[activeConv.phone?.replace(/\D/g, '')]!} />
+                    )}
+                    <AvatarFallback style={{ backgroundColor: '#dfe5e7', color: '#ffffff' }} className="text-sm">
+                      {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 ml-1" onClick={() => setShowContactInfo(true)}>
+                    <p className="text-[16px] font-normal text-white truncate">{getDisplayName(activeConv)}</p>
+                    <p className="text-[12px] text-white/70 truncate">{activeConv.phone}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <button className="p-2 rounded-full hover:bg-white/10" onClick={() => { setShowMsgSearch(prev => !prev); setMsgSearch(''); }}>
+                      <Search className="h-5 w-5 text-white" />
+                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-2 rounded-full hover:bg-white/10">
+                          <MoreVertical className="h-5 w-5 text-white" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[200px]">
+                        {!activeConv.contact_id && (
+                          <DropdownMenuItem onClick={() => {
+                            const phone = activeConv.phone?.replace(/\D/g, '') || '';
+                            const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                            navigate('/clients', { state: { returnTo: '/whatsapp', prefill: { full_name: getDisplayName(activeConv), phone: normalizedPhone }, linkConversationPhone: normalizedPhone } });
+                          }}>
+                            <UserPlus className="h-4 w-4 mr-2" /> Cadastrar cliente
+                          </DropdownMenuItem>
+                        )}
+                        {!activeConv.supplier_id && (
+                          <DropdownMenuItem onClick={() => {
+                            const phone = activeConv.phone?.replace(/\D/g, '') || '';
+                            const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                            navigate('/suppliers', { state: { returnTo: '/whatsapp', prefill: { name: getDisplayName(activeConv), phone: normalizedPhone }, linkConversationPhone: normalizedPhone } });
+                          }}>
+                            <Handshake className="h-4 w-4 mr-2" /> Cadastrar fornecedor
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => setShowContactInfo(true)}>
+                          <Phone className="h-4 w-4 mr-2" /> Dados do contato
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                {/* Msg search mobile */}
+                {showMsgSearch && (
+                  <div className="flex items-center gap-2 px-3 py-2 shrink-0" style={{ backgroundColor: '#f0f2f5', borderBottom: '1px solid #e9edef' }}>
+                    <Search className="h-4 w-4 shrink-0" style={{ color: '#54656f' }} />
+                    <input
+                      ref={msgSearchRef}
+                      type="text"
+                      placeholder="Buscar..."
+                      value={msgSearch}
+                      onChange={e => setMsgSearch(e.target.value)}
+                      className="flex-1 text-[14px] outline-none bg-transparent"
+                      style={{ color: '#111b21' }}
+                      autoFocus
+                    />
+                    {msgSearch && <span className="text-[11px] shrink-0" style={{ color: '#667781' }}>{filteredMessages.length}</span>}
+                    <button onClick={() => { setShowMsgSearch(false); setMsgSearch(''); }}>
+                      <X className="h-4 w-4" style={{ color: '#54656f' }} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Messages */}
+                <div
+                  className="flex-1 overflow-y-auto px-3 py-2"
+                  style={{
+                    backgroundColor: '#efeae2',
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='300' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='p' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='10' cy='10' r='1.5' fill='%23d1cdc7' opacity='0.4'/%3E%3Ccircle cx='30' cy='30' r='1' fill='%23d1cdc7' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='300' height='300' fill='url(%23p)'/%3E%3C/svg%3E")`,
+                  }}
+                >
+                  {loading && (
+                    <div className="flex justify-center py-8">
+                      <span className="text-[13px]" style={{ color: '#667781' }}>Carregando...</span>
+                    </div>
+                  )}
+                  {groupedMessages.map((group) => (
+                    <div key={group.date}>
+                      <div className="flex justify-center my-2">
+                        <span className="px-3 py-[4px] rounded-lg text-[11px] shadow-sm" style={{ backgroundColor: '#ffffff', color: '#54656f' }}>
+                          {group.date}
+                        </span>
+                      </div>
+                      {group.msgs.map(msg => (
+                        <MessageBubble
+                          key={msg.id}
+                          msg={msg}
+                          serverUrl={serverUrl}
+                          empresaId={empresaId}
+                          onReply={(m) => { setReplyTo(m as Message); setTimeout(() => msgInputRef.current?.focus(), 50); }}
+                          onDeleteForMe={async (m) => {
+                            setMessages(prev => prev.filter(p => p.id !== m.id));
+                            await (supabase.from('whatsapp_messages').delete().eq('id', m.id) as any);
+                            toast.success('Mensagem apagada');
+                          }}
+                          onDeleteForAll={async (m) => {
+                            try {
+                              if (m.whatsapp_msg_id && activeConv) {
+                                const targetId = activeConv.whatsapp_id || activeConv.phone;
+                                await supabase.functions.invoke('whatsapp-proxy', {
+                                  body: { server_url: serverUrl, endpoint: '/delete-message', method: 'POST', payload: { empresa_id: empresaId, phone: targetId, message_id: m.whatsapp_msg_id } },
+                                });
+                              }
+                              setMessages(prev => prev.filter(p => p.id !== m.id));
+                              await (supabase.from('whatsapp_messages').delete().eq('id', m.id) as any);
+                              toast.success('Mensagem apagada para todos');
+                            } catch { toast.error('Erro ao apagar'); }
+                          }}
+                          onStartChat={async (phone, name) => {
+                            const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                            try {
+                              const { data: convId } = await (supabase.rpc('find_or_create_conversation', { p_empresa_id: empresaId, p_phone: normalizedPhone, p_client_name: name || normalizedPhone, p_last_message: '' }) as any);
+                              const { data: updated } = await (supabase.from('whatsapp_conversations').select('*').eq('empresa_id', empresaId).order('last_message_at', { ascending: false }) as any);
+                              if (updated) { setConversations(updated); const newConv = updated.find((c: any) => c.id === convId); if (newConv) openConversation(newConv); }
+                            } catch { toast.error('Erro ao iniciar conversa'); }
+                          }}
+                          onSaveContact={(phone, name) => {
+                            const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                            navigate('/clients', { state: { returnTo: '/whatsapp', prefill: { full_name: name || '', phone: normalizedPhone }, linkConversationPhone: normalizedPhone } });
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Reply preview mobile */}
+                {replyTo && (
+                  <div className="px-3 pt-1 shrink-0" style={{ backgroundColor: '#f0f2f5' }}>
+                    <div className="flex items-center rounded-t-lg overflow-hidden" style={{ backgroundColor: '#f0f0f0' }}>
+                      <div className="flex-1 px-3 py-2 border-l-[4px] min-w-0" style={{ borderColor: '#06cf9c' }}>
+                        <p className="text-[12px] font-medium" style={{ color: '#06cf9c' }}>
+                          {replyTo.sender === 'me' ? 'Você' : getDisplayName(activeConv)}
+                        </p>
+                        <p className="text-[12px] truncate" style={{ color: '#667781' }}>
+                          {replyTo.content || getMsgTypeLabel(replyTo.message_type) || 'Mídia'}
+                        </p>
+                      </div>
+                      <button className="p-2" onClick={() => setReplyTo(null)}>
+                        <X className="h-4 w-4" style={{ color: '#8696a0' }} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Input mobile */}
+                <div className="flex items-center gap-1 px-2 py-[5px] shrink-0" style={{ backgroundColor: '#f0f2f5' }}>
+                  <button className="p-1.5 rounded-full hover:bg-black/5" onClick={() => fileInputRef.current?.click()} disabled={sendingFile}>
+                    <Paperclip className="h-[22px] w-[22px] rotate-45" style={{ color: '#54656f' }} />
+                  </button>
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onChange={handleFileUpload} />
+                  <div className="flex-1 mx-1">
+                    <input
+                      type="text"
+                      ref={msgInputRef}
+                      placeholder="Mensagem"
+                      value={msgText}
+                      onChange={e => setMsgText(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                      className="w-full rounded-full px-4 py-[8px] text-[15px] outline-none"
+                      style={{ backgroundColor: '#ffffff', color: '#111b21', border: '1px solid #e9edef' }}
+                    />
+                  </div>
+                  {msgText.trim() ? (
+                    <button onClick={handleSend} className="p-2 rounded-full" style={{ backgroundColor: '#008069' }}>
+                      <Send className="h-[20px] w-[20px] text-white" />
+                    </button>
+                  ) : (
+                    <button className="p-2 rounded-full hover:bg-black/5">
+                      <Mic className="h-[22px] w-[22px]" style={{ color: '#54656f' }} />
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Contact info dialog for mobile */}
+        {showContactInfo && activeConv && (
+          <Dialog open={showContactInfo} onOpenChange={setShowContactInfo}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Dados do contato</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center gap-3 py-4">
+                <Avatar className="h-[80px] w-[80px]">
+                  {profilePics[activeConv.phone?.replace(/\D/g, '')] && (
+                    <AvatarImage src={profilePics[activeConv.phone?.replace(/\D/g, '')]!} />
+                  )}
+                  <AvatarFallback style={{ backgroundColor: '#dfe5e7', color: '#ffffff' }} className="text-2xl">
+                    {getDisplayName(activeConv).slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="text-lg font-medium">{getDisplayName(activeConv)}</p>
+                <p className="text-sm text-muted-foreground">{activeConv.phone}</p>
+              </div>
+              <div className="space-y-2">
+                {!activeConv.contact_id && (
+                  <Button variant="outline" className="w-full gap-2" onClick={() => { setShowContactInfo(false); openCrmLinkDialog(activeConv); }}>
+                    <UserPlus className="h-4 w-4" /> Vincular ao CRM
+                  </Button>
+                )}
+                {activeConv.contact_id && (
+                  <span className="text-[13px] px-3 py-1 rounded-full inline-block" style={{ backgroundColor: '#e7f8e9', color: '#008069' }}>
+                    ✓ Cliente vinculado
+                  </span>
+                )}
+                {activeConv.supplier_id && (
+                  <span className="text-[13px] px-3 py-1 rounded-full inline-block" style={{ backgroundColor: '#e7f8e9', color: '#008069' }}>
+                    🤝 Fornecedor vinculado
+                  </span>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* New Message Dialog */}
+        <Dialog open={showNewMessage} onOpenChange={setShowNewMessage}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageSquarePlus className="h-5 w-5" /> Nova Mensagem
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Telefone</Label>
+                <Input value={newMsgForm.phone} onChange={e => setNewMsgForm(prev => ({ ...prev, phone: e.target.value }))} placeholder="5548991234567" />
+              </div>
+              <div>
+                <Label>Nome (opcional)</Label>
+                <Input value={newMsgForm.name} onChange={e => setNewMsgForm(prev => ({ ...prev, name: e.target.value }))} placeholder="João Silva" />
+              </div>
+              <div>
+                <Label>Mensagem</Label>
+                <Input value={newMsgForm.message} onChange={e => setNewMsgForm(prev => ({ ...prev, message: e.target.value }))} placeholder="Olá!" onKeyDown={e => e.key === 'Enter' && handleNewMessage()} />
+              </div>
+              <Button onClick={handleNewMessage} className="w-full gap-2">
+                <Send className="h-4 w-4" /> Enviar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* CRM Link Dialog */}
+        <Dialog open={showCrmLink} onOpenChange={setShowCrmLink}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><Link2 className="h-5 w-5" /> Vincular ao CRM</DialogTitle>
+            </DialogHeader>
+            {crmStep === 'ask' && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">O contato <strong>{crmConv?.contact_name || crmConv?.phone}</strong> já é um cliente cadastrado?</p>
+                <div className="flex gap-3">
+                  <Button className="flex-1" onClick={() => setCrmStep('select')}><Check className="h-4 w-4 mr-2" /> Sim</Button>
+                  <Button variant="outline" className="flex-1" onClick={handleGoToNewClient}><UserPlus className="h-4 w-4 mr-2" /> Não</Button>
+                </div>
+              </div>
+            )}
+            {crmStep === 'select' && (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Buscar..." value={crmSearch} onChange={e => setCrmSearch(e.target.value)} className="pl-9" autoFocus />
+                </div>
+                <div className="max-h-[250px] overflow-y-auto border rounded-md">
+                  {filteredCrmClients.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-6">Nenhum cliente encontrado</p>
+                  ) : filteredCrmClients.map((client: any) => (
+                    <button key={client.id} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent text-left border-b last:border-b-0" onClick={() => handleLinkClient(client)}>
+                      <Avatar className="h-8 w-8 shrink-0"><AvatarFallback className="text-xs">{(client.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{client.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{client.phone || 'Sem telefone'}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <Button variant="ghost" className="w-full" onClick={() => setCrmStep('ask')}><ArrowLeft className="h-4 w-4 mr-2" /> Voltar</Button>
+              </div>
+            )}
+            {crmStep === 'confirm_phone' && crmSelectedClient && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Telefone diferente. Atualizar?</p>
+                <div className="flex gap-3">
+                  <Button className="flex-1" onClick={() => finalizeLinkClient(crmSelectedClient, true)}>Sim</Button>
+                  <Button variant="outline" className="flex-1" onClick={() => finalizeLinkClient(crmSelectedClient, false)}>Não</Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
