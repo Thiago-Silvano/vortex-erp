@@ -217,6 +217,14 @@ interface SavedTemplate {
   logoY: number;
 }
 
+const MARKETING_CATEGORIES = [
+  { value: 'feed', label: 'Feed' },
+  { value: 'story', label: 'Story' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'banner', label: 'Banner' },
+  { value: 'promotion', label: 'Promoção' },
+];
+
 export default function PromoMakerPage() {
   const [searchParams] = useSearchParams();
   const [format, setFormat] = useState<FormatKey>((searchParams.get('format') as FormatKey) || '1:1');
