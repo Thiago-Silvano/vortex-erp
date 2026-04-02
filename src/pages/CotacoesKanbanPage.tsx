@@ -427,6 +427,7 @@ export default function CotacoesKanbanPage() {
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleViewSale(s.id); }}><Eye className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); if (s.short_id) { window.open(`${window.location.origin}/proposta/${s.short_id}`, '_blank'); } else { toast.error('Sem link de proposta'); } }} title="Orçamento Interativo"><Link2 className="h-4 w-4 text-primary" /></Button>
                               <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleDuplicate(s); }} title="Duplicar"><Copy className="h-4 w-4 text-muted-foreground" /></Button>
                               <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                             </div>
