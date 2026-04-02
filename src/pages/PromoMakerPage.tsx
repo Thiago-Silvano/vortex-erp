@@ -297,6 +297,34 @@ export default function PromoMakerPage() {
       });
   }, [searchParams]);
 
+  // Load marketing template from URL param
+  useEffect(() => {
+    const templateId = searchParams.get('template');
+    if (!templateId) return;
+    supabase
+      .from('marketing_templates')
+      .select('*')
+      .eq('id', templateId)
+      .single()
+      .then(({ data }: any) => {
+        if (!data?.template_data) return;
+        const td = data.template_data;
+        if (td.format) setFormat(td.format);
+        if (td.bg) setBgColor(td.bg);
+        if (td.bgGradient) setBgGradient(td.bgGradient);
+        if (td.elements) setElements(td.elements);
+        if (td.imageConfig) setImage({ ...defaultImage, ...td.imageConfig });
+        if (td.imageInShape !== undefined) setImageInShape(td.imageInShape);
+        if (td.imageShapeId) setImageShapeId(td.imageShapeId);
+        if (td.logoSize !== undefined) setLogoSize(td.logoSize);
+        if (td.logoOpacity !== undefined) setLogoOpacity(td.logoOpacity);
+        if (td.logoColor) setLogoColor(td.logoColor);
+        if (td.showLogo !== undefined) setShowLogo(td.showLogo);
+        if (td.logoX !== undefined) setLogoX(td.logoX);
+        if (td.logoY !== undefined) setLogoY(td.logoY);
+      });
+  }, [searchParams]);
+
   // Load saved templates from database
   useEffect(() => {
     if (!activeCompany?.id) return;
