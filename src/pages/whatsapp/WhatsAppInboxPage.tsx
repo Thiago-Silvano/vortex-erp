@@ -1061,7 +1061,7 @@ export default function WhatsAppInboxPage() {
               <div className="h-[8px]" style={{ backgroundColor: '#f0f2f5' }} />
 
               <div className="px-[30px] py-4">
-                {!activeConv.contact_id && !activeConv.supplier_id ? (
+                {activeConv.supplier_id ? null : !activeConv.contact_id ? (
                   <button
                     className="flex items-center gap-3 w-full py-2 text-[14px] hover:bg-black/5 rounded transition-colors"
                     style={{ color: '#008069' }}
