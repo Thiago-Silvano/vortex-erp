@@ -638,6 +638,44 @@ export default function WhatsAppInboxPage() {
                   <p className="text-[13px]" style={{ color: '#667781' }}>{activeConv.phone}</p>
                 </div>
                 <div className="flex items-center gap-1">
+                  <button
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors hover:opacity-90"
+                    style={{ backgroundColor: '#25d366', color: '#ffffff' }}
+                    title="Criar lead no Kanban CRM"
+                    onClick={async () => {
+                      if (!empresaId || !activeConv) return;
+                      try {
+                        const { data: existing } = await supabase
+                          .from('sales')
+                          .select('id')
+                          .eq('empresa_id', empresaId)
+                          .eq('status', 'draft')
+                          .eq('sale_workflow_status', 'em_aberto')
+                          .ilike('client_name', getDisplayName(activeConv))
+                          .limit(1) as any;
+                        if (existing && existing.length > 0) {
+                          toast.info('Este contato já possui um lead no Kanban');
+                          return;
+                        }
+                        const { error } = await supabase.from('sales').insert({
+                          empresa_id: empresaId,
+                          client_name: getDisplayName(activeConv),
+                          client_phone: activeConv.phone,
+                          status: 'draft',
+                          sale_workflow_status: 'em_aberto',
+                          total_price: 0,
+                        } as any);
+                        if (error) throw error;
+                        toast.success('Lead criado no Kanban CRM!');
+                      } catch (err) {
+                        console.error(err);
+                        toast.error('Erro ao criar lead');
+                      }
+                    }}
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Novo Lead
+                  </button>
                   <button className="p-2 rounded-full hover:bg-black/5 transition-colors">
                     <Search className="h-5 w-5" style={{ color: '#54656f' }} />
                   </button>
