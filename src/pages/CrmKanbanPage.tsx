@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   Plus, Search, Filter, X, AlertTriangle, TrendingUp,
   Users, DollarSign, Clock, Target,
@@ -305,20 +306,29 @@ export default function CrmKanbanPage() {
     }
   };
 
-  const handleConvert = async (lead: CrmLead) => {
+  const [convertTarget, setConvertTarget] = useState<CrmLead | null>(null);
+
+  const handleConvert = (lead: CrmLead) => {
+    setConvertTarget(lead);
+  };
+
+  const confirmConvert = async () => {
+    if (!convertTarget) return;
     const { error } = await supabase.from('sales').update({
       status: 'confirmed',
       sale_workflow_status: 'emitido',
       updated_at: new Date().toISOString(),
-    } as any).eq('id', lead.id);
+    } as any).eq('id', convertTarget.id);
 
     if (error) {
       toast.error('Erro ao converter');
+      setConvertTarget(null);
       return;
     }
 
-    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: 'confirmed', sale_workflow_status: 'emitido' } : l));
+    setLeads(prev => prev.map(l => l.id === convertTarget.id ? { ...l, status: 'confirmed', sale_workflow_status: 'emitido' } : l));
     toast.success('Convertido em venda!');
+    setConvertTarget(null);
   };
 
   const handleSendQuoteFromDrawer = (lead: CrmLead) => {
@@ -460,6 +470,22 @@ export default function CrmKanbanPage() {
         onConvert={handleConvert}
         onFollowUp={handleFollowUp}
       />
+
+      {/* Convert Confirmation Dialog */}
+      <AlertDialog open={!!convertTarget} onOpenChange={(open) => { if (!open) setConvertTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Converter em Venda</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja realmente converter a cotação de "{convertTarget?.client_name}" em venda?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmConvert}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
