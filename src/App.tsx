@@ -88,6 +88,7 @@ import WhatsAppContactsPage from "./pages/whatsapp/WhatsAppContactsPage";
 import WhatsAppLabelsPage from "./pages/whatsapp/WhatsAppLabelsPage";
 import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage";
 import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
+import WhatsAppNotificationListener from "./components/WhatsAppNotificationListener";
 
 const queryClient = new QueryClient();
 
