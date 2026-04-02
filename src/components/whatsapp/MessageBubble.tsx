@@ -28,6 +28,8 @@ interface MessageBubbleProps {
   onReply: (msg: MessageBubbleProps['msg']) => void;
   onDeleteForMe?: (msg: MessageBubbleProps['msg']) => void;
   onDeleteForAll?: (msg: MessageBubbleProps['msg']) => void;
+  onStartChat?: (phone: string, name: string) => void;
+  onSaveContact?: (phone: string, name: string) => void;
   replyTarget?: { content: string; sender: string } | null;
 }
 
