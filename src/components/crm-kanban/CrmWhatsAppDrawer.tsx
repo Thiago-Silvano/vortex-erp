@@ -210,7 +210,7 @@ export default function CrmWhatsAppDrawer({ open, onClose, lead, empresaId, onSe
     <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <SheetContent className="w-[420px] sm:w-[460px] p-0 flex flex-col" side="right">
         {/* Header */}
-        <div className="flex items-center gap-3 p-3 border-b bg-card shrink-0">
+        <div className="flex items-center gap-3 p-3 border-b bg-card shrink-0 pr-12">
           <Avatar className="h-9 w-9">
             {lead.profile_pic && <AvatarImage src={lead.profile_pic} />}
             <AvatarFallback className="text-xs font-bold">{initials}</AvatarFallback>
@@ -219,22 +219,20 @@ export default function CrmWhatsAppDrawer({ open, onClose, lead, empresaId, onSe
             <h3 className="font-semibold text-sm text-foreground truncate">{lead.client_name}</h3>
             <p className="text-[10px] text-muted-foreground">{lead.client_phone}</p>
           </div>
-          <div className="flex items-center gap-1">
-            <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={() => onSendQuote(lead)}>
-              <FileText className="h-3 w-3" />
-              {lead.has_quote ? 'Ver Cotação' : 'Criar Cotação'}
-            </Button>
-            {lead.status === 'draft' && (
-              <Button size="sm" variant="default" className="h-7 text-[10px] gap-1" onClick={() => onConvert(lead)}>
-                <DollarSign className="h-3 w-3" />
-                Converter
-              </Button>
-            )}
-          </div>
         </div>
 
-        {/* Quick action buttons */}
-        <div className="flex items-center gap-1.5 p-2 border-b bg-muted/30 shrink-0">
+        {/* Action buttons */}
+        <div className="flex items-center gap-1.5 p-2 border-b bg-muted/30 shrink-0 flex-wrap">
+          <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => onSendQuote(lead)}>
+            <FileText className="h-3 w-3" />
+            {lead.has_quote ? 'Ver Cotação' : 'Criar Cotação'}
+          </Button>
+          {lead.status === 'draft' && (
+            <Button size="sm" variant="default" className="h-6 text-[10px] gap-1" onClick={() => onConvert(lead)}>
+              <DollarSign className="h-3 w-3" />
+              Converter
+            </Button>
+          )}
           <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => lead && onFollowUp(lead)}>
             <RefreshCw className="h-3 w-3" />
             Follow-up
