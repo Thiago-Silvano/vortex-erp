@@ -598,7 +598,10 @@ export default function WhatsAppInboxPage() {
                   className="flex-1 min-w-0 cursor-pointer"
                   onClick={() => setShowContactInfo(!showContactInfo)}
                 >
-                  <p className="text-[16px] font-normal" style={{ color: '#111b21' }}>{getDisplayName(activeConv)}</p>
+                  <p className="text-[16px] font-normal flex items-center gap-1.5" style={{ color: '#111b21' }}>
+                    {getDisplayName(activeConv)}
+                    {activeConv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
+                  </p>
                   <p className="text-[13px]" style={{ color: '#667781' }}>{activeConv.phone}</p>
                 </div>
                 <div className="flex items-center gap-1">
