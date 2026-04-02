@@ -2275,6 +2275,53 @@ export type Database = {
           },
         ]
       }
+      marketing_templates: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          name: string
+          preview_url: string | null
+          tags: string[] | null
+          template_data: Json
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          name?: string
+          preview_url?: string | null
+          tags?: string[] | null
+          template_data?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          name?: string
+          preview_url?: string | null
+          tags?: string[] | null
+          template_data?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_templates_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nfse_api_logs: {
         Row: {
           ambiente: string | null
@@ -2908,6 +2955,98 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "promo_templates_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          accommodation_type: string
+          airport_destination: string
+          airport_origin: string
+          created_at: string
+          created_by: string | null
+          departure_date: string | null
+          destination_country: string
+          destination_name: string
+          empresa_id: string
+          gallery_urls: Json | null
+          id: string
+          included_guide: boolean
+          included_tickets: boolean
+          included_tours: boolean
+          included_train: boolean
+          included_transfer: boolean
+          installment_value: number
+          installments: number
+          main_image_url: string | null
+          nights: number
+          period_text: string
+          return_date: string | null
+          status: string
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          accommodation_type?: string
+          airport_destination?: string
+          airport_origin?: string
+          created_at?: string
+          created_by?: string | null
+          departure_date?: string | null
+          destination_country?: string
+          destination_name?: string
+          empresa_id: string
+          gallery_urls?: Json | null
+          id?: string
+          included_guide?: boolean
+          included_tickets?: boolean
+          included_tours?: boolean
+          included_train?: boolean
+          included_transfer?: boolean
+          installment_value?: number
+          installments?: number
+          main_image_url?: string | null
+          nights?: number
+          period_text?: string
+          return_date?: string | null
+          status?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Update: {
+          accommodation_type?: string
+          airport_destination?: string
+          airport_origin?: string
+          created_at?: string
+          created_by?: string | null
+          departure_date?: string | null
+          destination_country?: string
+          destination_name?: string
+          empresa_id?: string
+          gallery_urls?: Json | null
+          id?: string
+          included_guide?: boolean
+          included_tickets?: boolean
+          included_tours?: boolean
+          included_train?: boolean
+          included_transfer?: boolean
+          installment_value?: number
+          installments?: number
+          main_image_url?: string | null
+          nights?: number
+          period_text?: string
+          return_date?: string | null
+          status?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
