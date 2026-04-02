@@ -51,7 +51,7 @@ export default function ClientsPage() {
   const { activeCompany, isMaster } = useCompany();
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { openEditId?: string; returnTo?: string; returnState?: any } | null;
+  const locationState = location.state as { openEditId?: string; returnTo?: string; returnState?: any; prefill?: { full_name?: string; phone?: string }; linkConversationPhone?: string } | null;
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
