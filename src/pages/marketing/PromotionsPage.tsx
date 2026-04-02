@@ -228,6 +228,9 @@ export default function PromotionsPage() {
                           <DropdownMenuItem onClick={() => navigate(`/promo-maker?promotion=${p.id}`)}>
                             <Palette className="h-3.5 w-3.5 mr-2" /> Abrir no Editor
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setCreativePromo(p)}>
+                            <Wand2 className="h-3.5 w-3.5 mr-2" /> Gerar Criativos
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => setDeleteId(p.id)}
