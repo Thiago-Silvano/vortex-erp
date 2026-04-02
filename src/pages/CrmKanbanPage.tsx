@@ -470,6 +470,22 @@ export default function CrmKanbanPage() {
         onConvert={handleConvert}
         onFollowUp={handleFollowUp}
       />
+
+      {/* Convert Confirmation Dialog */}
+      <AlertDialog open={!!convertTarget} onOpenChange={(open) => { if (!open) setConvertTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Converter em Venda</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja realmente converter a cotação de "{convertTarget?.client_name}" em venda?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmConvert}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
