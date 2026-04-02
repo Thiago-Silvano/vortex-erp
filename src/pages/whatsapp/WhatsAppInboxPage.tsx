@@ -754,6 +754,37 @@ export default function WhatsAppInboxPage() {
                             toast.error('Erro ao apagar mensagem para todos');
                           }
                         }}
+                        onStartChat={async (phone, name) => {
+                          // Find or create conversation with this phone
+                          const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                          try {
+                            const { data: convId } = await (supabase.rpc('find_or_create_conversation', {
+                              p_empresa_id: empresaId,
+                              p_phone: normalizedPhone,
+                              p_client_name: name || normalizedPhone,
+                              p_last_message: '',
+                            }) as any);
+                            // Reload conversations and open the new one
+                            const { data: updated } = await (supabase.from('whatsapp_conversations').select('*').eq('empresa_id', empresaId).order('last_message_at', { ascending: false }) as any);
+                            if (updated) {
+                              setConversations(updated);
+                              const newConv = updated.find((c: any) => c.id === convId);
+                              if (newConv) openConversation(newConv);
+                            }
+                          } catch (err) {
+                            console.error('Error starting chat from vCard:', err);
+                            toast.error('Erro ao iniciar conversa');
+                          }
+                        }}
+                        onSaveContact={(phone, name) => {
+                          const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                          navigate('/clients', {
+                            state: {
+                              returnTo: '/whatsapp',
+                              prefill: { full_name: name || '', phone: normalizedPhone },
+                            }
+                          });
+                        }}
                       />
                     ))}
                   </div>
