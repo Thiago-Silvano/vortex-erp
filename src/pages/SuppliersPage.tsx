@@ -137,9 +137,27 @@ export default function SuppliersPage() {
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Fornecedor atualizado!');
     } else {
-      const { error } = await supabase.from('suppliers').insert({ ...form, empresa_id: activeCompany?.id } as any);
+      const { data: newSupplier, error } = await supabase.from('suppliers').insert({ ...form, empresa_id: activeCompany?.id } as any).select('id, name').single();
       if (error) { toast.error('Erro ao cadastrar'); return; }
       toast.success('Fornecedor cadastrado!');
+
+      // Link to WhatsApp conversation if coming from WhatsApp
+      if (newSupplier && locationState?.linkConversationPhone && activeCompany?.id) {
+        const linkPhone = locationState.linkConversationPhone.replace(/\D/g, '');
+        const { data: convs } = await (supabase.from('whatsapp_conversations')
+          .select('id')
+          .eq('empresa_id', activeCompany.id)
+          .or(`phone.eq.${linkPhone},phone.ilike.%${linkPhone.slice(-8)}%`)
+          .limit(1) as any);
+        if (convs?.[0]) {
+          await (supabase.from('whatsapp_conversations' as any)
+            .update({ supplier_id: newSupplier.id, contact_name: newSupplier.name })
+            .eq('id', convs[0].id));
+        }
+        // Navigate back to WhatsApp
+        navigate('/whatsapp');
+        return;
+      }
     }
     setDialogOpen(false);
     setEditingId(null);
