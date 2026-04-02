@@ -130,6 +130,7 @@ export default function UserAdmin() {
       setPermChecks(perm.permissions);
       setPermEmpresaIds(perm.empresa_ids || []);
       setPermDefaultCompany((perm as any).default_empresa_id || 'none');
+      setPermHomeRoute((perm as any).default_home_route || '/reservations');
     } else {
       // Default for master email
       if (user.email === 'thiago@vortexviagens.com.br') {
