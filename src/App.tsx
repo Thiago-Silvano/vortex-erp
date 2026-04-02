@@ -19,6 +19,7 @@ import ClientsPage from "./pages/ClientsPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import SalesPage from "./pages/SalesPage";
 import CotacoesKanbanPage from "./pages/CotacoesKanbanPage";
+import CrmKanbanPage from "./pages/CrmKanbanPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import NewSalePage from "./pages/NewSalePage";
 import AccountsReceivablePage from "./pages/AccountsReceivablePage";
@@ -116,6 +117,7 @@ const App = () => (
           <Route path="/sales" element={<ProtectedRoute><SalesPage /></ProtectedRoute>} />
           <Route path="/sales/vouchers" element={<ProtectedRoute><VouchersPage /></ProtectedRoute>} />
           <Route path="/cotacoes" element={<ProtectedRoute><CotacoesKanbanPage /></ProtectedRoute>} />
+          <Route path="/crm-kanban" element={<ProtectedRoute><CrmKanbanPage /></ProtectedRoute>} />
           <Route path="/cotacoes/lista" element={<ProtectedRoute><CotacoesKanbanPage /></ProtectedRoute>} />
           <Route path="/sales/new" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
           <Route path="/sales/:id" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
