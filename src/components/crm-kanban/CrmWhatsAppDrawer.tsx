@@ -65,7 +65,7 @@ export default function CrmWhatsAppDrawer({ open, onClose, lead, empresaId, onSe
 
   // Load messages when lead changes
   useEffect(() => {
-    if (!open || !lead?.client_phone || !empresaId) {
+    if (!open || !lead || !empresaId) {
       setMessages([]);
       return;
     }
