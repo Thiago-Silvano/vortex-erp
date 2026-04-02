@@ -150,7 +150,7 @@ export default function CrmKanbanCard({ lead, columnColor, onOpenChat, onOpenQuo
               </TooltipTrigger>
               <TooltipContent>WhatsApp</TooltipContent>
             </Tooltip>
-            <^Tooltip>
+            <Tooltip>
               <TooltipTrigger asChild>
                 <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onOpenQuote(lead); }}>
                   <FileText className="h-3.5 w-3.5" />
