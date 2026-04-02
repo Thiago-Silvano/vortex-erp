@@ -212,6 +212,8 @@ export default function WhatsAppInboxPage() {
     setInitialScroll(false);
     setLoading(true);
     setReplyTo(null);
+    setShowMsgSearch(false);
+    setMsgSearch('');
     await (supabase.from('whatsapp_conversations').update({ unread_count: 0 }).eq('id', conv.id) as any);
     setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c));
     const { data: dbMsgs } = await (supabase.from('whatsapp_messages').select('*').eq('conversation_id', conv.id).order('created_at', { ascending: true }) as any);
