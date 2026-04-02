@@ -789,6 +789,7 @@ export default function WhatsAppInboxPage() {
                             state: {
                               returnTo: '/whatsapp',
                               prefill: { full_name: name || '', phone: normalizedPhone },
+                              linkConversationPhone: normalizedPhone,
                             }
                           });
                         }}
