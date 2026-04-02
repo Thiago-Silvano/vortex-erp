@@ -470,6 +470,78 @@ export default function WhatsAppInboxPage() {
     setMobileView('list');
     setActiveConv(null);
     setShowContactInfo(false);
+    stopRecording(true);
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm' });
+      recordingChunksRef.current = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordingChunksRef.current.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+        const blob = new Blob(recordingChunksRef.current, { type: 'audio/webm' });
+        if (blob.size > 0 && !mediaRecorderRef.current?.cancelled) {
+          const file = new File([blob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
+          await sendVoiceMessage(file);
+        }
+        setIsRecording(false);
+        setRecordingDuration(0);
+      };
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder as any;
+      setIsRecording(true);
+      setRecordingDuration(0);
+      recordingTimerRef.current = setInterval(() => setRecordingDuration(prev => prev + 1), 1000);
+    } catch {
+      toast.error('Não foi possível acessar o microfone');
+    }
+  };
+
+  const stopRecording = (cancel = false) => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      (mediaRecorderRef.current as any).cancelled = cancel;
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+  };
+
+  const sendVoiceMessage = async (file: File) => {
+    if (!activeConv) return;
+    const newMsg: Message = {
+      id: crypto.randomUUID(), sender: 'me', content: '🎤 Áudio',
+      message_type: 'audio', media_url: URL.createObjectURL(file), created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, newMsg]);
+    try {
+      const targetId = activeConv.whatsapp_id || activeConv.phone;
+      await sendMedia(serverUrl, empresaId, targetId, file);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        const storagePath = `${empresaId}/${newMsg.id}.webm`;
+        const binaryStr = atob(base64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(storagePath, bytes, { contentType: 'audio/webm', upsert: true });
+        let finalUrl = '';
+        if (!uploadError) { const { data } = supabase.storage.from('whatsapp-media').getPublicUrl(storagePath); finalUrl = data.publicUrl; }
+        await (supabase.from('whatsapp_messages').insert({ conversation_id: activeConv.id, empresa_id: empresaId, sender: 'me', content: '🎤 Áudio', message_type: 'audio', media_url: finalUrl, media_type: 'audio/webm' }) as any);
+      };
+      reader.readAsDataURL(file);
+      await (supabase.from('whatsapp_conversations').update({ last_message: '🎤 Áudio', last_message_at: new Date().toISOString() }).eq('id', activeConv.id) as any);
+      toast.success('Áudio enviado!');
+    } catch {
+      toast.error('Erro ao enviar áudio');
+    }
+  };
+
+  const formatRecordingTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   // ===================== MOBILE LAYOUT =====================
