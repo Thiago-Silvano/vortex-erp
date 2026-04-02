@@ -4453,6 +4453,7 @@ export type Database = {
         Row: {
           created_at: string
           default_empresa_id: string | null
+          default_home_route: string
           empresa_ids: string[] | null
           id: string
           permissions: Json
@@ -4463,6 +4464,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_empresa_id?: string | null
+          default_home_route?: string
           empresa_ids?: string[] | null
           id?: string
           permissions?: Json
@@ -4473,6 +4475,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_empresa_id?: string | null
+          default_home_route?: string
           empresa_ids?: string[] | null
           id?: string
           permissions?: Json

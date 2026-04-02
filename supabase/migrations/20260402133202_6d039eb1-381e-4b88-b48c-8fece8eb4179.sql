@@ -1,0 +1,1 @@
+ALTER TABLE public.user_permissions ADD COLUMN IF NOT EXISTS default_home_route text NOT NULL DEFAULT '/reservations';
