@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical, Archive, BellOff, Pin, MailOpen, Heart, Tag, Trash2, LogOut, ChevronDown, Check, Link2, Star, FileText } from 'lucide-react';
+import { Search, Send, Paperclip, UserPlus, Phone, MessageSquarePlus, X, Smile, Mic, ArrowLeft, MoreVertical, Archive, BellOff, Pin, MailOpen, Heart, Tag, Trash2, LogOut, ChevronDown, Check, Link2, Star, FileText, Handshake } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
