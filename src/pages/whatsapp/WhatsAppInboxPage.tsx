@@ -830,16 +830,87 @@ export default function WhatsAppInboxPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Client Dialog */}
-      <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Criar Cliente</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label>Nome completo</Label><Input value={clientForm.full_name} onChange={e => setClientForm(prev => ({ ...prev, full_name: e.target.value }))} /></div>
-            <div><Label>Telefone</Label><Input value={clientForm.phone} onChange={e => setClientForm(prev => ({ ...prev, phone: e.target.value }))} /></div>
-            <div><Label>Email</Label><Input value={clientForm.email} onChange={e => setClientForm(prev => ({ ...prev, email: e.target.value }))} /></div>
-            <Button onClick={handleCreateClient} className="w-full">Salvar Cliente</Button>
-          </div>
+      {/* CRM Link Dialog */}
+      <Dialog open={showCrmLink} onOpenChange={setShowCrmLink}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5" />
+              Vincular ao CRM
+            </DialogTitle>
+          </DialogHeader>
+
+          {crmStep === 'ask' && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                O contato <strong>{crmConv?.contact_name || crmConv?.phone}</strong> já é um cliente cadastrado?
+              </p>
+              <div className="flex gap-3">
+                <Button className="flex-1" onClick={() => setCrmStep('select')}>
+                  <Check className="h-4 w-4 mr-2" /> Sim, vincular existente
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={handleGoToNewClient}>
+                  <UserPlus className="h-4 w-4 mr-2" /> Não, cadastrar novo
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {crmStep === 'select' && (
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, telefone ou CPF..."
+                  value={crmSearch}
+                  onChange={e => setCrmSearch(e.target.value)}
+                  className="pl-9"
+                  autoFocus
+                />
+              </div>
+              <div className="max-h-[300px] overflow-y-auto border rounded-md">
+                {filteredCrmClients.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">Nenhum cliente encontrado</p>
+                ) : (
+                  filteredCrmClients.map((client: any) => (
+                    <button
+                      key={client.id}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent text-left border-b last:border-b-0 transition-colors"
+                      onClick={() => handleLinkClient(client)}
+                    >
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarFallback className="text-xs">{(client.full_name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{client.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{client.phone || 'Sem telefone'} {client.cpf ? `· ${client.cpf}` : ''}</p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+              <Button variant="ghost" className="w-full" onClick={() => setCrmStep('ask')}>
+                <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+              </Button>
+            </div>
+          )}
+
+          {crmStep === 'confirm_phone' && crmSelectedClient && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                O telefone do contato WhatsApp (<strong>{crmConv?.phone}</strong>) é diferente do cadastrado no cliente (<strong>{crmSelectedClient.phone || 'vazio'}</strong>).
+              </p>
+              <p className="text-sm font-medium">Deseja atualizar o telefone do cliente?</p>
+              <div className="flex gap-3">
+                <Button className="flex-1" onClick={() => finalizeLinkClient(crmSelectedClient, true)}>
+                  Sim, atualizar
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={() => finalizeLinkClient(crmSelectedClient, false)}>
+                  Não, manter
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </AppLayout>
