@@ -28,6 +28,8 @@ interface MessageBubbleProps {
   onReply: (msg: MessageBubbleProps['msg']) => void;
   onDeleteForMe?: (msg: MessageBubbleProps['msg']) => void;
   onDeleteForAll?: (msg: MessageBubbleProps['msg']) => void;
+  onStartChat?: (phone: string, name: string) => void;
+  onSaveContact?: (phone: string, name: string) => void;
   replyTarget?: { content: string; sender: string } | null;
 }
 
@@ -100,7 +102,7 @@ function linkifyText(text: string): React.ReactNode[] {
   });
 }
 
-export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDeleteForMe, onDeleteForAll }: MessageBubbleProps) {
+export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDeleteForMe, onDeleteForAll, onStartChat, onSaveContact }: MessageBubbleProps) {
   const [mediaUrl, setMediaUrl] = useState<string>(msg.media_url || '');
   const [loadingMedia, setLoadingMedia] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -185,20 +187,34 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDe
           </div>
         )}
 
-        {/* Action button */}
-        <div className="border-t" style={{ borderColor: '#e9edef' }}>
+        {/* Action buttons */}
+        <div className="border-t flex" style={{ borderColor: '#e9edef' }}>
           <button
-            className="w-full py-2 text-[14px] font-medium text-center transition-colors hover:bg-black/5"
+            className="flex-1 py-2 text-[14px] font-medium text-center transition-colors hover:bg-black/5"
             style={{ color: '#00a884' }}
             onClick={(e) => {
               e.stopPropagation();
               if (vc.phones[0]) {
                 const digits = vc.phones[0].replace(/\D/g, '');
-                window.open(`https://wa.me/${digits}`, '_blank');
+                onStartChat?.(digits, vc.fullName);
               }
             }}
           >
             Conversar
+          </button>
+          <div className="w-px" style={{ backgroundColor: '#e9edef' }} />
+          <button
+            className="flex-1 py-2 text-[14px] font-medium text-center transition-colors hover:bg-black/5"
+            style={{ color: '#00a884' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (vc.phones[0]) {
+                const digits = vc.phones[0].replace(/\D/g, '');
+                onSaveContact?.(digits, vc.fullName);
+              }
+            }}
+          >
+            Salvar contato
           </button>
         </div>
       </div>
