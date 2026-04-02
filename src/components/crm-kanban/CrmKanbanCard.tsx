@@ -164,7 +164,7 @@ export default function CrmKanbanCard({ lead, columnColor, onOpenChat, onOpenQuo
                   <Eye className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Editar</TooltipContent>
+              <TooltipContent>Visualizar Cotação</TooltipContent>
             </Tooltip>
             {lead.status === 'draft' && (
               <Tooltip>
