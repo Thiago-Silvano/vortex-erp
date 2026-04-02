@@ -106,6 +106,7 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDe
   const [mediaUrl, setMediaUrl] = useState<string>(msg.media_url || '');
   const [loadingMedia, setLoadingMedia] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isMe = msg.sender === 'me';
   const hasMedia = ['image', 'video', 'audio', 'ptt', 'document', 'sticker'].includes(msg.message_type);
@@ -293,7 +294,7 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDe
       <div
         className="relative max-w-[65%] min-w-[80px]"
         onMouseEnter={() => setShowMenu(true)}
-        onMouseLeave={() => setShowMenu(false)}
+        onMouseLeave={() => { if (!menuOpen) setShowMenu(false); }}
       >
         {/* Bubble tail */}
         <div className={`absolute top-0 ${isMe ? '-right-2' : '-left-2'}`}>
@@ -307,8 +308,8 @@ export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDe
         </div>
 
         {/* Menu dropdown trigger */}
-        {showMenu && (
-          <DropdownMenu>
+        {(showMenu || menuOpen) && (
+          <DropdownMenu open={menuOpen} onOpenChange={(open) => { setMenuOpen(open); if (!open) setShowMenu(false); }}>
             <DropdownMenuTrigger asChild>
               <button
                 className={`absolute top-1 right-2 z-10 p-0.5 rounded-full transition-all`}
