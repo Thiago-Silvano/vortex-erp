@@ -82,6 +82,12 @@ export default function WhatsAppInboxPage() {
   const [sendingFile, setSendingFile] = useState(false);
   const [initialScroll, setInitialScroll] = useState(false);
   const [agentName, setAgentName] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingCancelledRef = useRef(false);
   const [profilePics, setProfilePics] = useState<Record<string, string | null>>({});
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -465,13 +471,86 @@ export default function WhatsAppInboxPage() {
     setMobileView('list');
     setActiveConv(null);
     setShowContactInfo(false);
+    stopRecording(true);
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm' });
+      recordingChunksRef.current = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordingChunksRef.current.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+        const blob = new Blob(recordingChunksRef.current, { type: 'audio/webm' });
+        if (blob.size > 0 && !recordingCancelledRef.current) {
+          const file = new File([blob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
+          await sendVoiceMessage(file);
+        }
+        recordingCancelledRef.current = false;
+        setIsRecording(false);
+        setRecordingDuration(0);
+      };
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder as any;
+      setIsRecording(true);
+      setRecordingDuration(0);
+      recordingTimerRef.current = setInterval(() => setRecordingDuration(prev => prev + 1), 1000);
+    } catch {
+      toast.error('Não foi possível acessar o microfone');
+    }
+  };
+
+  const stopRecording = (cancel = false) => {
+    recordingCancelledRef.current = cancel;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+  };
+
+  const sendVoiceMessage = async (file: File) => {
+    if (!activeConv) return;
+    const newMsg: Message = {
+      id: crypto.randomUUID(), sender: 'me', content: '🎤 Áudio',
+      message_type: 'audio', media_url: URL.createObjectURL(file), created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, newMsg]);
+    try {
+      const targetId = activeConv.whatsapp_id || activeConv.phone;
+      await sendMedia(serverUrl, empresaId, targetId, file);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        const storagePath = `${empresaId}/${newMsg.id}.webm`;
+        const binaryStr = atob(base64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        const { error: uploadError } = await supabase.storage.from('whatsapp-media').upload(storagePath, bytes, { contentType: 'audio/webm', upsert: true });
+        let finalUrl = '';
+        if (!uploadError) { const { data } = supabase.storage.from('whatsapp-media').getPublicUrl(storagePath); finalUrl = data.publicUrl; }
+        await (supabase.from('whatsapp_messages').insert({ conversation_id: activeConv.id, empresa_id: empresaId, sender: 'me', content: '🎤 Áudio', message_type: 'audio', media_url: finalUrl, media_type: 'audio/webm' }) as any);
+      };
+      reader.readAsDataURL(file);
+      await (supabase.from('whatsapp_conversations').update({ last_message: '🎤 Áudio', last_message_at: new Date().toISOString() }).eq('id', activeConv.id) as any);
+      toast.success('Áudio enviado!');
+    } catch {
+      toast.error('Erro ao enviar áudio');
+    }
+  };
+
+  const formatRecordingTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   // ===================== MOBILE LAYOUT =====================
   if (isMobile) {
     return (
       <AppLayout>
-        <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden" style={{ backgroundColor: '#eae6df' }}>
+        <div className="flex flex-col h-[calc(100dvh-3.5rem)] overflow-hidden" style={{ backgroundColor: '#eae6df' }}>
           {/* MOBILE: Conversation List */}
           <div
             className="flex flex-col h-full absolute inset-0 z-10 transition-transform duration-300 ease-in-out"
@@ -733,30 +812,60 @@ export default function WhatsAppInboxPage() {
 
                 {/* Input mobile */}
                 <div className="flex items-center gap-1 px-2 py-[5px] shrink-0" style={{ backgroundColor: '#f0f2f5' }}>
-                  <button className="p-1.5 rounded-full hover:bg-black/5" onClick={() => fileInputRef.current?.click()} disabled={sendingFile}>
-                    <Paperclip className="h-[22px] w-[22px] rotate-45" style={{ color: '#54656f' }} />
-                  </button>
-                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onChange={handleFileUpload} />
-                  <div className="flex-1 mx-1">
-                    <input
-                      type="text"
-                      ref={msgInputRef}
-                      placeholder="Mensagem"
-                      value={msgText}
-                      onChange={e => setMsgText(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                      className="w-full rounded-full px-4 py-[8px] text-[15px] outline-none"
-                      style={{ backgroundColor: '#ffffff', color: '#111b21', border: '1px solid #e9edef' }}
-                    />
-                  </div>
-                  {msgText.trim() ? (
-                    <button onClick={handleSend} className="p-2 rounded-full" style={{ backgroundColor: '#008069' }}>
-                      <Send className="h-[20px] w-[20px] text-white" />
-                    </button>
+                  {isRecording ? (
+                    <>
+                      <button
+                        className="p-2 rounded-full"
+                        style={{ backgroundColor: '#ea4335' }}
+                        onClick={() => stopRecording(true)}
+                      >
+                        <Trash2 className="h-[20px] w-[20px] text-white" />
+                      </button>
+                      <div className="flex-1 flex items-center justify-center gap-2 mx-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
+                        <span className="text-[15px] font-medium tabular-nums" style={{ color: '#111b21' }}>
+                          {formatRecordingTime(recordingDuration)}
+                        </span>
+                      </div>
+                      <button
+                        className="p-2 rounded-full"
+                        style={{ backgroundColor: '#008069' }}
+                        onClick={() => stopRecording(false)}
+                      >
+                        <Send className="h-[20px] w-[20px] text-white" />
+                      </button>
+                    </>
                   ) : (
-                    <button className="p-2 rounded-full hover:bg-black/5">
-                      <Mic className="h-[22px] w-[22px]" style={{ color: '#54656f' }} />
-                    </button>
+                    <>
+                      <button className="p-1.5 rounded-full hover:bg-black/5" onClick={() => fileInputRef.current?.click()} disabled={sendingFile}>
+                        <Paperclip className="h-[22px] w-[22px] rotate-45" style={{ color: '#54656f' }} />
+                      </button>
+                      <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onChange={handleFileUpload} />
+                      <div className="flex-1 mx-1">
+                        <input
+                          type="text"
+                          ref={msgInputRef}
+                          placeholder="Mensagem"
+                          value={msgText}
+                          onChange={e => setMsgText(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                          className="w-full rounded-full px-4 py-[8px] text-[15px] outline-none"
+                          style={{ backgroundColor: '#ffffff', color: '#111b21', border: '1px solid #e9edef' }}
+                        />
+                      </div>
+                      {msgText.trim() ? (
+                        <button onClick={handleSend} className="p-2 rounded-full" style={{ backgroundColor: '#008069' }}>
+                          <Send className="h-[20px] w-[20px] text-white" />
+                        </button>
+                      ) : (
+                        <button
+                          className="p-2 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
+                          onClick={startRecording}
+                        >
+                          <Mic className="h-[22px] w-[22px]" style={{ color: '#54656f' }} />
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </>
