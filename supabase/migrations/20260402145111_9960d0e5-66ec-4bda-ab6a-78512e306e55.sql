@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_conversations ADD COLUMN supplier_id uuid REFERENCES public.suppliers(id) ON DELETE SET NULL;

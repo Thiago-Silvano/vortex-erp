@@ -4952,6 +4952,7 @@ export type Database = {
           last_message_at: string | null
           phone: string
           status: string
+          supplier_id: string | null
           unread_count: number | null
           updated_at: string
         }
@@ -4966,6 +4967,7 @@ export type Database = {
           last_message_at?: string | null
           phone?: string
           status?: string
+          supplier_id?: string | null
           unread_count?: number | null
           updated_at?: string
         }
@@ -4980,6 +4982,7 @@ export type Database = {
           last_message_at?: string | null
           phone?: string
           status?: string
+          supplier_id?: string | null
           unread_count?: number | null
           updated_at?: string
         }
@@ -4996,6 +4999,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_conversations_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
