@@ -102,7 +102,7 @@ function linkifyText(text: string): React.ReactNode[] {
   });
 }
 
-export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDeleteForMe, onDeleteForAll }: MessageBubbleProps) {
+export default function MessageBubble({ msg, serverUrl, empresaId, onReply, onDeleteForMe, onDeleteForAll, onStartChat, onSaveContact }: MessageBubbleProps) {
   const [mediaUrl, setMediaUrl] = useState<string>(msg.media_url || '');
   const [loadingMedia, setLoadingMedia] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
