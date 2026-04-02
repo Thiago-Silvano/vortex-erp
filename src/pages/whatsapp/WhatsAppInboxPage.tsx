@@ -781,13 +781,10 @@ export default function WhatsAppInboxPage() {
                   <button
                     className="flex items-center gap-3 w-full py-2 text-[14px] hover:bg-black/5 rounded transition-colors"
                     style={{ color: '#008069' }}
-                    onClick={() => {
-                      setClientForm({ full_name: getDisplayName(activeConv), phone: activeConv.phone, email: '' });
-                      setShowCreateClient(true);
-                    }}
+                    onClick={() => openCrmLinkDialog(activeConv)}
                   >
                     <UserPlus className="h-5 w-5" />
-                    <span>Criar Cliente no CRM</span>
+                    <span>Vincular ao CRM</span>
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
