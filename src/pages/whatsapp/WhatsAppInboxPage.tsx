@@ -550,7 +550,7 @@ export default function WhatsAppInboxPage() {
   if (isMobile) {
     return (
       <AppLayout>
-        <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden" style={{ backgroundColor: '#eae6df' }}>
+        <div className="flex flex-col h-[calc(100dvh-3.5rem)] overflow-hidden" style={{ backgroundColor: '#eae6df' }}>
           {/* MOBILE: Conversation List */}
           <div
             className="flex flex-col h-full absolute inset-0 z-10 transition-transform duration-300 ease-in-out"
