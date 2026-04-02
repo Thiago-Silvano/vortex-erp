@@ -332,15 +332,43 @@ export default function WhatsAppInboxPage() {
       await (supabase.from('clients' as any).update({ phone: crmConv.phone }).eq('id', client.id));
     }
 
-    // Update conversation with client link
-    const { error: linkError } = await (supabase.from('whatsapp_conversations' as any).update({ contact_id: client.id, contact_name: client.full_name }).eq('id', crmConv.id));
+    // Find or create a whatsapp_contacts record linked to this CRM client
+    const { data: existingContact } = await (supabase.from('whatsapp_contacts' as any)
+      .select('id')
+      .eq('empresa_id', empresaId)
+      .eq('client_id', client.id)
+      .maybeSingle()) as any;
+
+    let contactId: string;
+    if (existingContact?.id) {
+      contactId = existingContact.id;
+    } else {
+      const { data: newContact, error: createErr } = await (supabase.from('whatsapp_contacts' as any)
+        .insert({
+          empresa_id: empresaId,
+          client_id: client.id,
+          name: client.full_name,
+          phone: crmConv.phone || '',
+        })
+        .select('id')
+        .single()) as any;
+      if (createErr || !newContact) {
+        console.error('Error creating whatsapp contact:', createErr);
+        toast.error('Erro ao vincular cliente.');
+        return;
+      }
+      contactId = newContact.id;
+    }
+
+    // Update conversation with the whatsapp_contacts id
+    const { error: linkError } = await (supabase.from('whatsapp_conversations' as any).update({ contact_id: contactId, contact_name: client.full_name }).eq('id', crmConv.id));
     if (linkError) {
       console.error('Error linking client:', linkError);
       toast.error('Erro ao vincular cliente.');
       return;
     }
-    setActiveConv(prev => prev?.id === crmConv.id ? { ...prev!, contact_name: client.full_name, contact_id: client.id } : prev);
-    setConversations(prev => prev.map(c => c.id === crmConv.id ? { ...c, contact_name: client.full_name, contact_id: client.id } : c));
+    setActiveConv(prev => prev?.id === crmConv.id ? { ...prev!, contact_name: client.full_name, contact_id: contactId } : prev);
+    setConversations(prev => prev.map(c => c.id === crmConv.id ? { ...c, contact_name: client.full_name, contact_id: contactId } : c));
 
     toast.success('Cliente vinculado com sucesso!');
     setShowCrmLink(false);
