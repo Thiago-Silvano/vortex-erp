@@ -192,6 +192,7 @@ export default function WhatsAppInboxPage() {
 
   const openConversation = async (conv: Conversation) => {
     setActiveConv(conv);
+    setInitialScroll(false);
     setLoading(true);
     setReplyTo(null);
     await (supabase.from('whatsapp_conversations').update({ unread_count: 0 }).eq('id', conv.id) as any);
