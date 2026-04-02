@@ -248,6 +248,9 @@ export default function PromoMakerPage() {
   const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const [saveTemplateName, setSaveTemplateName] = useState('');
+  const [mktTemplateName, setMktTemplateName] = useState('');
+  const [mktTemplateCategory, setMktTemplateCategory] = useState('feed');
+  const [savingMktTemplate, setSavingMktTemplate] = useState(false);
   const { activeCompany } = useCompany();
 
   // Load promotion data from URL params
