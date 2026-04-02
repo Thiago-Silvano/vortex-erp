@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3, Lock } from 'lucide-react';
+import { ShoppingCart, DollarSign, TrendingUp, TrendingDown, Users, BarChart3 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { useCompany } from '@/contexts/CompanyContext';
 import PipelineDashboard from '@/components/PipelineDashboard';
