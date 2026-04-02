@@ -100,6 +100,7 @@ const App = () => (
       <BrowserRouter>
         <CompanyProvider>
         <ThemeProvider>
+        <WhatsAppNotificationListener />
         <Routes>
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
