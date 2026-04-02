@@ -21,6 +21,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import GenerateCreativesModal from "@/components/marketing/GenerateCreativesModal";
 
 interface Promotion {
   id: string;
@@ -47,6 +48,7 @@ export default function PromotionsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [creativePromo, setCreativePromo] = useState<Promotion | null>(null);
 
   const fetchPromotions = async () => {
     if (!activeCompany) return;
@@ -226,6 +228,9 @@ export default function PromotionsPage() {
                           <DropdownMenuItem onClick={() => navigate(`/promo-maker?promotion=${p.id}`)}>
                             <Palette className="h-3.5 w-3.5 mr-2" /> Abrir no Editor
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setCreativePromo(p)}>
+                            <Wand2 className="h-3.5 w-3.5 mr-2" /> Gerar Criativos
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => setDeleteId(p.id)}
@@ -257,6 +262,14 @@ export default function PromotionsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {creativePromo && (
+        <GenerateCreativesModal
+          open={!!creativePromo}
+          onClose={() => setCreativePromo(null)}
+          promotion={creativePromo as any}
+        />
+      )}
     </AppLayout>
   );
 }

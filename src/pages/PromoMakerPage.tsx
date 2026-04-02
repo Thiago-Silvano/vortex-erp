@@ -217,6 +217,14 @@ interface SavedTemplate {
   logoY: number;
 }
 
+const MARKETING_CATEGORIES = [
+  { value: 'feed', label: 'Feed' },
+  { value: 'story', label: 'Story' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'banner', label: 'Banner' },
+  { value: 'promotion', label: 'Promoção' },
+];
+
 export default function PromoMakerPage() {
   const [searchParams] = useSearchParams();
   const [format, setFormat] = useState<FormatKey>((searchParams.get('format') as FormatKey) || '1:1');
@@ -240,12 +248,57 @@ export default function PromoMakerPage() {
   const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const [saveTemplateName, setSaveTemplateName] = useState('');
+  const [mktTemplateName, setMktTemplateName] = useState('');
+  const [mktTemplateCategory, setMktTemplateCategory] = useState('feed');
+  const [savingMktTemplate, setSavingMktTemplate] = useState(false);
   const { activeCompany } = useCompany();
 
-  // Load promotion data from URL params
+  // Load AI-generated layout from sessionStorage
+  useEffect(() => {
+    const isAiGenerated = searchParams.get('aiGenerated') === 'true';
+    if (!isAiGenerated) return;
+    const stored = sessionStorage.getItem('ai_creative_layout');
+    if (!stored) return;
+    sessionStorage.removeItem('ai_creative_layout');
+    try {
+      const layout = JSON.parse(stored);
+      if (layout.bgColor) setBgColor(layout.bgColor);
+      if (layout.elements?.length) {
+        const aiElements: CanvasElement[] = layout.elements.map((el: any) => ({
+          id: genId(),
+          type: 'text',
+          content: el.content || '',
+          x: el.x ?? 50,
+          y: el.y ?? 50,
+          fontSize: el.fontSize ?? 24,
+          fontFamily: el.fontFamily || 'Inter',
+          fontWeight: el.fontWeight || '400',
+          ...defaultTextProps,
+          color: el.color || '#ffffff',
+          textAlign: (el.textAlign as any) || 'center',
+          letterSpacing: el.letterSpacing ?? 0,
+          lineHeight: el.lineHeight ?? 1.2,
+          textTransform: (el.textTransform as any) || 'none',
+          opacity: el.opacity ?? 1,
+          textShadow: 'none',
+          stroke: '',
+          strokeWidth: 0,
+          locked: false,
+          width: el.width ?? 80,
+        }));
+        setElements(aiElements);
+      }
+      if (layout.mainImageUrl) {
+        setImage(prev => ({ ...prev, url: layout.mainImageUrl }));
+      }
+    } catch { /* ignore parse errors */ }
+  }, [searchParams]);
+
+  // Load promotion data from URL params (fallback when not AI-generated)
   useEffect(() => {
     const promoId = searchParams.get('promotion');
-    if (!promoId || promoId === 'new') return;
+    const isAiGenerated = searchParams.get('aiGenerated') === 'true';
+    if (!promoId || promoId === 'new' || isAiGenerated) return;
     supabase
       .from('promotions')
       .select('*')
@@ -283,6 +336,34 @@ export default function PromoMakerPage() {
         if (data.main_image_url) {
           setImage(prev => ({ ...prev, url: data.main_image_url }));
         }
+      });
+  }, [searchParams]);
+
+  // Load marketing template from URL param
+  useEffect(() => {
+    const templateId = searchParams.get('template');
+    if (!templateId) return;
+    supabase
+      .from('marketing_templates')
+      .select('*')
+      .eq('id', templateId)
+      .single()
+      .then(({ data }: any) => {
+        if (!data?.template_data) return;
+        const td = data.template_data;
+        if (td.format) setFormat(td.format);
+        if (td.bg) setBgColor(td.bg);
+        if (td.bgGradient) setBgGradient(td.bgGradient);
+        if (td.elements) setElements(td.elements);
+        if (td.imageConfig) setImage({ ...defaultImage, ...td.imageConfig });
+        if (td.imageInShape !== undefined) setImageInShape(td.imageInShape);
+        if (td.imageShapeId) setImageShapeId(td.imageShapeId);
+        if (td.logoSize !== undefined) setLogoSize(td.logoSize);
+        if (td.logoOpacity !== undefined) setLogoOpacity(td.logoOpacity);
+        if (td.logoColor) setLogoColor(td.logoColor);
+        if (td.showLogo !== undefined) setShowLogo(td.showLogo);
+        if (td.logoX !== undefined) setLogoX(td.logoX);
+        if (td.logoY !== undefined) setLogoY(td.logoY);
       });
   }, [searchParams]);
 
@@ -604,6 +685,50 @@ export default function PromoMakerPage() {
     }
     setSavedTemplates(prev => prev.map((t, i) => i === idx ? { ...t, ...templateData } : t));
     toast.success(`Template "${tpl.name}" atualizado!`);
+  };
+
+  const saveAsMarketingTemplate = async () => {
+    const name = mktTemplateName.trim();
+    if (!name) { toast.error('Digite um nome para o template'); return; }
+    if (!activeCompany?.id) { toast.error('Selecione uma empresa'); return; }
+    setSavingMktTemplate(true);
+    try {
+      let imageUrl = image.url || '';
+      try { imageUrl = await persistTemplateImage(imageUrl); } catch {}
+      const templateData = buildTemplateData(imageUrl);
+
+      // Generate preview image
+      let previewUrl: string | null = null;
+      const canvasEl = canvasRef.current;
+      if (canvasEl) {
+        try {
+          const dataUrl = await toPng(canvasEl, { pixelRatio: 0.5 });
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          const path = `mkt-templates/${activeCompany.id}/${crypto.randomUUID()}.png`;
+          await supabase.storage.from('promotion-images').upload(path, blob, { contentType: 'image/png' });
+          const { data: pub } = supabase.storage.from('promotion-images').getPublicUrl(path);
+          previewUrl = pub.publicUrl;
+        } catch { /* preview optional */ }
+      }
+
+      const { error } = await supabase.from('marketing_templates').insert({
+        empresa_id: activeCompany.id,
+        name,
+        category: mktTemplateCategory,
+        template_data: templateData as any,
+        preview_url: previewUrl,
+        tags: [],
+      } as any);
+
+      if (error) throw error;
+      setMktTemplateName('');
+      toast.success(`Template de marketing "${name}" salvo!`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao salvar template de marketing');
+    }
+    setSavingMktTemplate(false);
   };
 
   const shapeElements = elements.filter(el => el.type === 'shape') as ShapeElement[];
@@ -1496,6 +1621,30 @@ export default function PromoMakerPage() {
                         ))}
                       </>
                     )}
+
+                    <Separator />
+                    <div className="p-2 border border-dashed border-primary/30 rounded-md space-y-1.5 bg-primary/5">
+                      <Label className="text-xs font-semibold text-primary">Salvar como Template de Marketing</Label>
+                      <Input
+                        value={mktTemplateName}
+                        onChange={e => setMktTemplateName(e.target.value)}
+                        placeholder="Nome do template"
+                        className="h-7 text-xs"
+                      />
+                      <Select value={mktTemplateCategory} onValueChange={setMktTemplateCategory}>
+                        <SelectTrigger className="h-7 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MARKETING_CATEGORIES.map(c => (
+                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" className="h-7 w-full gap-1 text-xs" onClick={saveAsMarketingTemplate} disabled={savingMktTemplate}>
+                        <Save className="h-3 w-3" /> {savingMktTemplate ? 'Salvando...' : 'Salvar Template'}
+                      </Button>
+                    </div>
                   </div>
                 </ScrollArea>
               </TabsContent>
