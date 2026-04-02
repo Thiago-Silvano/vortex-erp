@@ -262,6 +262,14 @@ export default function PromotionsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {creativePromo && (
+        <GenerateCreativesModal
+          open={!!creativePromo}
+          onClose={() => setCreativePromo(null)}
+          promotion={creativePromo as any}
+        />
+      )}
     </AppLayout>
   );
 }
