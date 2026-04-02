@@ -2039,11 +2039,12 @@ export default function NewSalePage() {
     if (error || !data?.short_id) { toast.error('Erro ao buscar código da proposta.'); return; }
     const baseUrl = window.location.origin;
     const link = `${baseUrl}/montar-proposta/${data.short_id}`;
+    window.open(link, '_blank');
     try {
       await navigator.clipboard.writeText(link);
-      toast.success('Link "Cliente monta proposta" copiado!');
+      toast.success('Link "Cliente monta proposta" copiado e aberto em nova aba!');
     } catch {
-      window.prompt('Copie o link:', link);
+      toast.success('Proposta aberta em nova aba!');
     }
   };
 
