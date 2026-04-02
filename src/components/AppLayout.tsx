@@ -240,8 +240,9 @@ function TopMenuBar() {
     {
       label: "Marketing",
       icon: <Megaphone className="h-3 w-3" />,
-      url: "/promo-maker",
       items: [
+        { title: "Promoções", url: "/marketing/promotions" },
+        { title: "Templates", url: "/marketing/templates" },
         { title: "Promo Maker", url: "/promo-maker" },
       ],
     },

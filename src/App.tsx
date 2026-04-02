@@ -150,6 +150,10 @@ const App = () => (
           <Route path="/itineraries" element={<ProtectedRoute><ItinerariesPage /></ProtectedRoute>} />
           <Route path="/itineraries/:id" element={<ProtectedRoute><ItineraryEditorPage /></ProtectedRoute>} />
           <Route path="/promo-maker" element={<ProtectedRoute><PromoMakerPage /></ProtectedRoute>} />
+          <Route path="/marketing/promotions" element={<ProtectedRoute><PromotionsPage /></ProtectedRoute>} />
+          <Route path="/marketing/promotions/new" element={<ProtectedRoute><PromotionFormPage /></ProtectedRoute>} />
+          <Route path="/marketing/promotions/:id" element={<ProtectedRoute><PromotionFormPage /></ProtectedRoute>} />
+          <Route path="/marketing/templates" element={<ProtectedRoute><MarketingTemplatesPage /></ProtectedRoute>} />
           <Route path="/airlines" element={<ProtectedRoute><AirlinesPage /></ProtectedRoute>} />
 
           {/* Vistos routes */}
