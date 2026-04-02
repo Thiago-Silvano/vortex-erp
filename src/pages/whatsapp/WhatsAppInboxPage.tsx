@@ -372,42 +372,128 @@ export default function WhatsAppInboxPage() {
               const phone = conv.phone?.replace(/\D/g, '') || '';
               const isActive = activeConv?.id === conv.id;
               return (
-                <div
-                  key={conv.id}
-                  onClick={() => openConversation(conv)}
-                  className="flex items-center gap-3 px-3 py-[10px] cursor-pointer transition-colors"
-                  style={{ backgroundColor: isActive ? '#f0f2f5' : 'transparent' }}
-                  onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = '#f5f6f6'; }}
-                  onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent'; }}
-                >
-                  <Avatar className="h-[49px] w-[49px] shrink-0">
-                    {profilePics[phone] && <AvatarImage src={profilePics[phone]!} alt={displayName} />}
-                    <AvatarFallback style={{ backgroundColor: '#dfe5e7', color: '#ffffff' }} className="text-lg font-light">
-                      {displayName.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0 border-b py-[2px]" style={{ borderColor: '#e9edef' }}>
-                    <div className="flex items-center justify-between mb-[2px]">
-                      <span className="text-[17px] truncate" style={{ color: '#111b21' }}>{displayName}</span>
-                      <span className="text-[12px] shrink-0 ml-2" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
-                        {formatTime(conv.last_message_at)}
-                      </span>
+                <ContextMenu key={conv.id}>
+                  <ContextMenuTrigger asChild>
+                    <div
+                      onClick={() => openConversation(conv)}
+                      className="group flex items-center gap-3 px-3 py-[10px] cursor-pointer transition-colors relative"
+                      style={{ backgroundColor: isActive ? '#f0f2f5' : 'transparent' }}
+                      onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = '#f5f6f6'; }}
+                      onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent'; }}
+                    >
+                      <Avatar className="h-[49px] w-[49px] shrink-0">
+                        {profilePics[phone] && <AvatarImage src={profilePics[phone]!} alt={displayName} />}
+                        <AvatarFallback style={{ backgroundColor: '#dfe5e7', color: '#ffffff' }} className="text-lg font-light">
+                          {displayName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0 border-b py-[2px]" style={{ borderColor: '#e9edef' }}>
+                        <div className="flex items-center justify-between mb-[2px]">
+                          <span className="text-[17px] truncate" style={{ color: '#111b21' }}>{displayName}</span>
+                          <div className="flex items-center gap-1 shrink-0 ml-2">
+                            <span className="text-[12px]" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
+                              {formatTime(conv.last_message_at)}
+                            </span>
+                            <ChevronDown className="h-[18px] w-[18px] opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: '#54656f' }} />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-[14px] truncate pr-2" style={{ color: '#667781' }}>
+                            {getLastMsgPreview(conv)}
+                          </p>
+                          {conv.unread_count > 0 && (
+                            <span
+                              className="h-[20px] min-w-[20px] flex items-center justify-center rounded-full text-[11px] font-medium px-[6px] shrink-0"
+                              style={{ backgroundColor: '#25d366', color: '#ffffff' }}
+                            >
+                              {conv.unread_count}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-[14px] truncate pr-2" style={{ color: '#667781' }}>
-                        {getLastMsgPreview(conv)}
-                      </p>
-                      {conv.unread_count > 0 && (
-                        <span
-                          className="h-[20px] min-w-[20px] flex items-center justify-center rounded-full text-[11px] font-medium px-[6px] shrink-0"
-                          style={{ backgroundColor: '#25d366', color: '#ffffff' }}
-                        >
-                          {conv.unread_count}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent className="w-[220px] rounded-lg shadow-lg border-0 py-2" style={{ backgroundColor: '#ffffff' }}>
+                    <ContextMenuItem
+                      className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
+                      style={{ color: '#3b4a54' }}
+                      onClick={() => toast.info('Conversa arquivada')}
+                    >
+                      <Archive className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
+                      Arquivar conversa
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
+                      style={{ color: '#3b4a54' }}
+                      onClick={() => toast.info('Notificações silenciadas')}
+                    >
+                      <BellOff className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
+                      Silenciar notificações
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
+                      style={{ color: '#3b4a54' }}
+                      onClick={() => toast.info('Conversa fixada')}
+                    >
+                      <Pin className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
+                      Fixar conversa
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
+                      style={{ color: '#3b4a54' }}
+                      onClick={async () => {
+                        await (supabase.from('whatsapp_conversations').update({ unread_count: 1 }).eq('id', conv.id) as any);
+                        setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread_count: 1 } : c));
+                        toast.info('Marcada como não lida');
+                      }}
+                    >
+                      <MailOpen className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
+                      Marcar como não lida
+                    </ContextMenuItem>
+                    <ContextMenuSeparator className="my-1" style={{ backgroundColor: '#e9edef' }} />
+                    <ContextMenuItem
+                      className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
+                      style={{ color: '#3b4a54' }}
+                      onClick={() => {
+                        setClientForm({ full_name: conv.contact_name || '', phone: conv.phone || '', email: '' });
+                        setActiveConv(conv);
+                        setShowCreateClient(true);
+                      }}
+                    >
+                      <UserPlus className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
+                      {conv.contact_id ? 'Ver cliente' : 'Criar cliente'}
+                    </ContextMenuItem>
+                    <ContextMenuSeparator className="my-1" style={{ backgroundColor: '#e9edef' }} />
+                    <ContextMenuItem
+                      className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
+                      style={{ color: '#3b4a54' }}
+                      onClick={async () => {
+                        await (supabase.from('whatsapp_messages').delete().eq('conversation_id', conv.id) as any);
+                        await (supabase.from('whatsapp_conversations').update({ last_message: '' }).eq('id', conv.id) as any);
+                        if (activeConv?.id === conv.id) setMessages([]);
+                        setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, last_message: '' } : c));
+                        toast.info('Conversa limpa');
+                      }}
+                    >
+                      <Trash2 className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
+                      Limpar conversa
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
+                      style={{ color: '#e53935' }}
+                      onClick={async () => {
+                        await (supabase.from('whatsapp_messages').delete().eq('conversation_id', conv.id) as any);
+                        await (supabase.from('whatsapp_conversations').delete().eq('id', conv.id) as any);
+                        if (activeConv?.id === conv.id) { setActiveConv(null); setMessages([]); }
+                        setConversations(prev => prev.filter(c => c.id !== conv.id));
+                        toast.info('Conversa excluída');
+                      }}
+                    >
+                      <LogOut className="h-[18px] w-[18px]" style={{ color: '#e53935' }} />
+                      Excluir conversa
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               );
             })}
             {filteredConvs.length === 0 && (
