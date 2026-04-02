@@ -329,7 +329,7 @@ export default function WhatsAppInboxPage() {
   const finalizeLinkClient = async (client: any, updatePhone = false) => {
     if (!crmConv) return;
     if (updatePhone) {
-      await (supabase.from('clients').update({ phone: crmConv.phone }).eq('id', client.id) as any);
+      await (supabase.from('clients' as any).update({ phone: crmConv.phone }).eq('id', client.id));
     }
 
     // Update conversation with client link
