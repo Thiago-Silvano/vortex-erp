@@ -78,6 +78,7 @@ export default function WhatsAppInboxPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const msgInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch current user display name
   useEffect(() => {
