@@ -305,20 +305,29 @@ export default function CrmKanbanPage() {
     }
   };
 
-  const handleConvert = async (lead: CrmLead) => {
+  const [convertTarget, setConvertTarget] = useState<CrmLead | null>(null);
+
+  const handleConvert = (lead: CrmLead) => {
+    setConvertTarget(lead);
+  };
+
+  const confirmConvert = async () => {
+    if (!convertTarget) return;
     const { error } = await supabase.from('sales').update({
       status: 'confirmed',
       sale_workflow_status: 'emitido',
       updated_at: new Date().toISOString(),
-    } as any).eq('id', lead.id);
+    } as any).eq('id', convertTarget.id);
 
     if (error) {
       toast.error('Erro ao converter');
+      setConvertTarget(null);
       return;
     }
 
-    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: 'confirmed', sale_workflow_status: 'emitido' } : l));
+    setLeads(prev => prev.map(l => l.id === convertTarget.id ? { ...l, status: 'confirmed', sale_workflow_status: 'emitido' } : l));
     toast.success('Convertido em venda!');
+    setConvertTarget(null);
   };
 
   const handleSendQuoteFromDrawer = (lead: CrmLead) => {
