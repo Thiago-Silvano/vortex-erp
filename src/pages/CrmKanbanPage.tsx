@@ -103,10 +103,11 @@ export default function CrmKanbanPage() {
       if (sellersData) sellerMap = Object.fromEntries(sellersData.map(s => [s.id, s.full_name]));
     }
 
-    // Get WhatsApp data for each client phone
-    const phones = [...new Set(salesData.map(s => (s as any).client_phone).filter(Boolean))] as string[];
-    let whatsappMap: Record<string, { last_message: string; last_message_at: string; unread_count: number }> = {};
+    // Get WhatsApp data - match by phone OR contact_name
+    let whatsappMap: Record<string, { last_message: string; last_message_at: string; unread_count: number; phone: string }> = {};
     
+    // First pass: match by phone
+    const phones = [...new Set(salesData.map(s => (s as any).client_phone).filter(Boolean))] as string[];
     if (phones.length > 0) {
       for (const phone of phones) {
         const cleanPhone = phone.replace(/\D/g, '');
@@ -123,6 +124,34 @@ export default function CrmKanbanPage() {
             last_message: convs[0].last_message,
             last_message_at: convs[0].last_message_at,
             unread_count: convs[0].unread_count || 0,
+            phone: convs[0].phone || cleanPhone,
+          };
+        }
+      }
+    }
+
+    // Second pass: for sales without phone or without a match, try matching by contact_name
+    const unmatchedSales = salesData.filter((s: any) => {
+      const cp = (s.client_phone || '').replace(/\D/g, '');
+      return !cp || cp.length < 8 || !whatsappMap[cp];
+    });
+    if (unmatchedSales.length > 0) {
+      const names = [...new Set(unmatchedSales.map((s: any) => s.client_name).filter(Boolean))];
+      for (const name of names) {
+        const { data: convs } = await (supabase
+          .from('whatsapp_conversations')
+          .select('last_message, last_message_at, unread_count, phone, contact_name')
+          .eq('empresa_id', empresaId)
+          .ilike('contact_name', name)
+          .order('last_message_at', { ascending: false })
+          .limit(1) as any);
+        if (convs?.[0]) {
+          // Use name as key prefixed to avoid collision
+          whatsappMap[`name:${name}`] = {
+            last_message: convs[0].last_message,
+            last_message_at: convs[0].last_message_at,
+            unread_count: convs[0].unread_count || 0,
+            phone: convs[0].phone || '',
           };
         }
       }
