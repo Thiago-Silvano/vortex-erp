@@ -720,6 +720,40 @@ export default function WhatsAppInboxPage() {
                         serverUrl={serverUrl}
                         empresaId={empresaId}
                         onReply={(m) => setReplyTo(m as Message)}
+                        onDeleteForMe={async (m) => {
+                          // Remove from local state
+                          setMessages(prev => prev.filter(p => p.id !== m.id));
+                          // Remove from database
+                          await (supabase.from('whatsapp_messages').delete().eq('id', m.id) as any);
+                          toast.success('Mensagem apagada para você');
+                        }}
+                        onDeleteForAll={async (m) => {
+                          try {
+                            // Delete on WhatsApp server if possible
+                            if (m.whatsapp_msg_id && activeConv) {
+                              const targetId = activeConv.whatsapp_id || activeConv.phone;
+                              await supabase.functions.invoke('whatsapp-proxy', {
+                                body: {
+                                  server_url: serverUrl,
+                                  endpoint: '/delete-message',
+                                  method: 'POST',
+                                  payload: {
+                                    empresa_id: empresaId,
+                                    phone: targetId,
+                                    message_id: m.whatsapp_msg_id,
+                                  },
+                                },
+                              });
+                            }
+                            // Remove from local state and DB
+                            setMessages(prev => prev.filter(p => p.id !== m.id));
+                            await (supabase.from('whatsapp_messages').delete().eq('id', m.id) as any);
+                            toast.success('Mensagem apagada para todos');
+                          } catch (err) {
+                            console.error('Error deleting for all:', err);
+                            toast.error('Erro ao apagar mensagem para todos');
+                          }
+                        }}
                       />
                     ))}
                   </div>
