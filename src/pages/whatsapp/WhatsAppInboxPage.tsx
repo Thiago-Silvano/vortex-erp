@@ -88,15 +88,26 @@ export default function WhatsAppInboxPage() {
     loadConversations();
   }, [empresaId]);
 
-  // Fetch profile pictures
+  // Fetch profile pictures via proxy to avoid CORS
   useEffect(() => {
     if (!serverUrl || !conversations.length || serverUrl.includes('localhost')) return;
     conversations.forEach((conv) => {
       const phone = conv.phone?.replace(/\D/g, '') || '';
       if (!phone || profilePics[phone] !== undefined) return;
       setProfilePics(prev => ({ ...prev, [phone]: null }));
-      getProfilePic(serverUrl, empresaId, phone).then(url => {
-        if (url) setProfilePics(prev => ({ ...prev, [phone]: url }));
+      getProfilePic(serverUrl, empresaId, phone).then(async (url) => {
+        if (!url) return;
+        try {
+          // Proxy the WhatsApp profile pic URL to get a data URL (avoids CORS)
+          const { data } = await supabase.functions.invoke('proxy-image', { body: { url } });
+          if (data?.dataUrl) {
+            setProfilePics(prev => ({ ...prev, [phone]: data.dataUrl }));
+          } else {
+            setProfilePics(prev => ({ ...prev, [phone]: url }));
+          }
+        } catch {
+          setProfilePics(prev => ({ ...prev, [phone]: url }));
+        }
       });
     });
   }, [conversations, serverUrl, empresaId]);
