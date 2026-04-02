@@ -84,10 +84,10 @@ export default function WhatsAppInboxPage() {
   const [agentName, setAgentName] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [recordingCancelled, setRecordingCancelled] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingCancelledRef = useRef(false);
   const [profilePics, setProfilePics] = useState<Record<string, string | null>>({});
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
