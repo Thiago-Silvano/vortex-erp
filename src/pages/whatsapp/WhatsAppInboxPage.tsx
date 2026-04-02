@@ -754,6 +754,37 @@ export default function WhatsAppInboxPage() {
                           Ver cadastro
                         </DropdownMenuItem>
                       )}
+                      {!activeConv?.supplier_id && (
+                        <DropdownMenuItem
+                          className="flex items-center gap-3 px-4 py-2 text-[14px] cursor-pointer"
+                          style={{ color: '#3b4a54' }}
+                          onClick={() => {
+                            if (!activeConv) return;
+                            const phone = activeConv.phone?.replace(/\D/g, '') || '';
+                            const normalizedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                            navigate('/suppliers', {
+                              state: {
+                                returnTo: '/whatsapp',
+                                prefill: { name: getDisplayName(activeConv) || '', phone: normalizedPhone },
+                                linkConversationPhone: normalizedPhone,
+                              }
+                            });
+                          }}
+                        >
+                          <Handshake className="h-4 w-4" style={{ color: '#54656f' }} />
+                          Cadastrar fornecedor
+                        </DropdownMenuItem>
+                      )}
+                      {activeConv?.supplier_id && (
+                        <DropdownMenuItem
+                          className="flex items-center gap-3 px-4 py-2 text-[14px] cursor-pointer"
+                          style={{ color: '#3b4a54' }}
+                          onClick={() => setShowContactInfo(!showContactInfo)}
+                        >
+                          <Handshake className="h-4 w-4" style={{ color: '#54656f' }} />
+                          Ver fornecedor
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
