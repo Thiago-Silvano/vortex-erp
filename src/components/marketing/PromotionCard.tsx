@@ -150,7 +150,7 @@ function CtaButton({ promo, s, onClickCta, variant = "default", className = "", 
   const text = s?.ctaText || "Quero esse pacote";
   if (variant === "gold") {
     return (
-      <button onClick={() => onClickCta(promo)} className={className} style={ctaStyle}>
+      <button onClick={() => onClickCta?.(promo)} className={className} style={ctaStyle}>
         {text.toUpperCase()}
       </button>
     );
