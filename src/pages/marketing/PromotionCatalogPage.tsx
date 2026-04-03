@@ -178,7 +178,7 @@ export default function PromotionCatalogPage() {
       show_legal_text: showLegalText,
       legal_text: showLegalText ? legalText : null,
       background_color: bgColor,
-      card_style: cardStyle || {},
+      card_style: { ...(cardStyle || {}), _cardLayout: cardLayout },
     };
 
     let error: any;
