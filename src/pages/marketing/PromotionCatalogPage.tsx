@@ -31,7 +31,7 @@ import {
 import PromotionCard, { type PromotionCardData } from "@/components/marketing/PromotionCard";
 import { toPng } from "html-to-image";
 
-type LayoutStyle = "lateral" | "overlay" | "catalog" | "minimal";
+type LayoutStyle = "lateral" | "overlay" | "catalog" | "minimal" | "premium_gold" | "premium_overlay" | "premium_dark";
 
 interface CatalogPage {
   id: string;
@@ -47,10 +47,13 @@ interface CatalogPage {
 }
 
 const LAYOUT_LABELS: Record<LayoutStyle, string> = {
+  catalog: "Catálogo Editorial",
   lateral: "Imagem Lateral",
   overlay: "Texto Sobreposto",
-  catalog: "Catálogo Editorial",
   minimal: "Minimalista",
+  premium_gold: "Premium Gold",
+  premium_overlay: "Premium Overlay",
+  premium_dark: "Premium Dark",
 };
 
 export default function PromotionCatalogPage() {
@@ -218,6 +221,8 @@ export default function PromotionCatalogPage() {
 
   const gridCols = layoutStyle === "lateral" || layoutStyle === "minimal"
     ? "grid-cols-1 md:grid-cols-1 lg:grid-cols-2"
+    : layoutStyle === "premium_gold" || layoutStyle === "premium_overlay" || layoutStyle === "premium_dark"
+    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
 
   return (
@@ -393,7 +398,7 @@ export default function PromotionCatalogPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Preview / Export Dialog */}
+      {/* Preview / Export Dialog - shows only cards */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -410,19 +415,23 @@ export default function PromotionCatalogPage() {
               <ImageIcon className="h-3.5 w-3.5 mr-1" /> JPG
             </Button>
           </div>
-          <div ref={previewRef} className="p-6 rounded-lg" style={{ backgroundColor: bgColor }}>
-            {showLogo && agencyLogo && (
-              <div className="flex justify-center mb-6">
-                <img src={agencyLogo} alt="Logo" className="h-12 object-contain" />
+          <div className={`grid gap-6 ${gridCols}`}>
+            {selectedPromos.map(p => (
+              <div key={p.id} ref={selectedPromos.length === 1 ? previewRef : undefined}>
+                <PromotionCard promo={p} layout={layoutStyle} />
               </div>
-            )}
-            <h2 className="text-xl font-bold text-center mb-6">{title}</h2>
-            <div className={`grid gap-4 ${gridCols}`}>
-              {selectedPromos.map(p => (
-                <PromotionCard key={p.id} promo={p} layout={layoutStyle} />
-              ))}
-            </div>
+            ))}
           </div>
+          {/* Hidden render target for multi-card export */}
+          {selectedPromos.length > 1 && (
+            <div ref={previewRef} className="absolute -left-[9999px] top-0" style={{ width: 1200 }}>
+              <div className={`grid gap-6 ${gridCols}`}>
+                {selectedPromos.map(p => (
+                  <PromotionCard key={p.id} promo={p} layout={layoutStyle} />
+                ))}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
