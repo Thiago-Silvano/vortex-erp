@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PromotionCard, { type PromotionCardData } from "@/components/marketing/PromotionCard";
-import CardStyleEditor, { type CardStyleOverrides } from "@/components/marketing/CardStyleEditor";
+import CardCanvasEditor from "@/components/marketing/canvas/CardCanvasEditor";
+import { type CardStyleOverrides } from "@/components/marketing/CardStyleEditor";
 import { toPng } from "html-to-image";
 
 type LayoutStyle = "lateral" | "overlay" | "catalog" | "minimal" | "premium_gold" | "premium_overlay" | "premium_dark";
@@ -242,9 +243,8 @@ export default function PromotionCatalogPage() {
   // Show style editor full-screen
   if (showStyleEditor && styleEditorPromo) {
     return (
-      <CardStyleEditor
+      <CardCanvasEditor
         promo={styleEditorPromo}
-        layout={layoutStyle}
         initialStyle={cardStyle || undefined}
         onSave={handleStyleSave}
         onClose={() => setShowStyleEditor(false)}
