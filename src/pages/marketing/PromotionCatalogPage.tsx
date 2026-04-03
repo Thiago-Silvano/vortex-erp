@@ -248,12 +248,29 @@ export default function PromotionCatalogPage() {
     ? "grid-cols-1 md:grid-cols-1 lg:grid-cols-2"
     : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
 
+  // Edit promotion handler
+  const openEditPromo = (promo: PromotionCardData) => {
+    setEditPromoId(promo.id);
+    setEditPromoData({ ...promo });
+  };
+
+  const saveEditPromo = async () => {
+    if (!editPromoId) return;
+    const { id, status, ...rest } = editPromoData as any;
+    const { error } = await supabase.from("promotions").update(rest).eq("id", editPromoId);
+    if (error) { toast.error("Erro ao salvar promoção"); return; }
+    toast.success("Promoção atualizada!");
+    setEditPromoId(null);
+    fetchPromotions();
+  };
+
   // Show style editor full-screen
   if (showStyleEditor && styleEditorPromo) {
     return (
       <CardCanvasEditor
         promo={styleEditorPromo}
         initialStyle={cardStyle || undefined}
+        layoutId={cardLayout}
         onSave={handleStyleSave}
         onClose={() => setShowStyleEditor(false)}
       />
