@@ -12,7 +12,8 @@ import { useCanvasUndo } from "@/hooks/useCanvasUndo";
 import CanvasElement from "./CanvasElement";
 import ElementPropertiesPanel from "./ElementPropertiesPanel";
 import type { CanvasState, CanvasElementId, ElementStyle } from "./types";
-import { buildInitialState, CANVAS_ELEMENTS } from "./types";
+import { CANVAS_ELEMENTS } from "./types";
+import { LAYOUT_PRESETS } from "./layouts";
 import type { PromotionCardData } from "../PromotionCard";
 import type { CardStyleOverrides } from "../CardStyleEditor";
 import { Plane, Hotel, Bus, Ticket, Map, Users, Train } from "lucide-react";
@@ -82,9 +83,10 @@ function getElementContent(id: CanvasElementId, promo: PromotionCardData, canvas
 }
 
 export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose }: Props) {
-  const { state, push, undo, redo, canUndo, canRedo } = useCanvasUndo<CanvasState>(buildInitialState(), 20);
+  const { state, push, undo, redo, canUndo, canRedo } = useCanvasUndo<CanvasState>(LAYOUT_PRESETS[0].build(), 20);
   const [selected, setSelected] = useState<CanvasElementId | null>(null);
   const [tab, setTab] = useState("element");
+  const [activeLayout, setActiveLayout] = useState("default");
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Image panning state
@@ -138,6 +140,14 @@ export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose 
   const updateText = useCallback((key: "ctaText" | "badgeText", value: string) => {
     push({ ...state, [key]: value });
   }, [state, push]);
+
+  const applyLayout = useCallback((layoutId: string) => {
+    const preset = LAYOUT_PRESETS.find(l => l.id === layoutId);
+    if (!preset) return;
+    setActiveLayout(layoutId);
+    setSelected(null);
+    push(preset.build());
+  }, [push]);
 
   // Image panning handlers
   const handleImagePointerDown = useCallback((e: React.PointerEvent) => {
@@ -314,6 +324,23 @@ export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose 
 
             {/* CARD TAB */}
             <TabsContent value="card" className="p-3 space-y-3 mt-0">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Layout</p>
+              <div className="grid grid-cols-2 gap-2">
+                {LAYOUT_PRESETS.map(preset => (
+                  <button
+                    key={preset.id}
+                    onClick={() => applyLayout(preset.id)}
+                    className={`text-left text-xs px-3 py-2 rounded-md border transition-colors ${
+                      activeLayout === preset.id
+                        ? "border-primary bg-primary/10 text-primary font-semibold"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <Separator />
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Dimensões</p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
