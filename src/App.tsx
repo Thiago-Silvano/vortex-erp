@@ -70,6 +70,8 @@ import PromoMakerPage from "./pages/PromoMakerPage";
 import PromotionsPage from "./pages/marketing/PromotionsPage";
 import PromotionFormPage from "./pages/marketing/PromotionFormPage";
 import MarketingTemplatesPage from "./pages/marketing/MarketingTemplatesPage";
+import PromotionCatalogPage from "./pages/marketing/PromotionCatalogPage";
+import PromotionCatalogPublicPage from "./pages/marketing/PromotionCatalogPublicPage";
 import AirlinesPage from "./pages/AirlinesPage";
 import VouchersPage from "./pages/VouchersPage";
 import ContractTemplatesPage from "./pages/ContractTemplatesPage";
@@ -154,6 +156,7 @@ const App = () => (
           <Route path="/marketing/promotions/new" element={<ProtectedRoute><PromotionFormPage /></ProtectedRoute>} />
           <Route path="/marketing/promotions/:id" element={<ProtectedRoute><PromotionFormPage /></ProtectedRoute>} />
           <Route path="/marketing/templates" element={<ProtectedRoute><MarketingTemplatesPage /></ProtectedRoute>} />
+          <Route path="/marketing/catalog" element={<ProtectedRoute><PromotionCatalogPage /></ProtectedRoute>} />
           <Route path="/airlines" element={<ProtectedRoute><AirlinesPage /></ProtectedRoute>} />
 
           {/* Vistos routes */}
@@ -184,6 +187,7 @@ const App = () => (
           <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
           <Route path="/roteiro/:token" element={<ItineraryPublicPage />} />
+          <Route path="/catalogo/:token" element={<PromotionCatalogPublicPage />} />
           <Route path="/contrato/:token" element={<ContractSignPage />} />
           <Route path="/contratos/:token" element={<BundleSignPage />} />
           
