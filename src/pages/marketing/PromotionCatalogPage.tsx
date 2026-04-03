@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   ArrowLeft, Eye, Save, Link2, ImageIcon,
-  Trash2, MoreHorizontal, Plus, LayoutGrid, Paintbrush
+  Trash2, MoreHorizontal, Plus, LayoutGrid, Paintbrush, Pencil
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
