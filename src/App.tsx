@@ -187,6 +187,7 @@ const App = () => (
           <Route path="/ds160/group/:token" element={<DS160GroupPublicPage />} />
           <Route path="/ds160/:token" element={<DS160PublicPage />} />
           <Route path="/roteiro/:token" element={<ItineraryPublicPage />} />
+          <Route path="/catalogo/:token" element={<PromotionCatalogPublicPage />} />
           <Route path="/contrato/:token" element={<ContractSignPage />} />
           <Route path="/contratos/:token" element={<BundleSignPage />} />
           
