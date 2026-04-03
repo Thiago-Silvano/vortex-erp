@@ -70,6 +70,8 @@ import PromoMakerPage from "./pages/PromoMakerPage";
 import PromotionsPage from "./pages/marketing/PromotionsPage";
 import PromotionFormPage from "./pages/marketing/PromotionFormPage";
 import MarketingTemplatesPage from "./pages/marketing/MarketingTemplatesPage";
+import PromotionCatalogPage from "./pages/marketing/PromotionCatalogPage";
+import PromotionCatalogPublicPage from "./pages/marketing/PromotionCatalogPublicPage";
 import AirlinesPage from "./pages/AirlinesPage";
 import VouchersPage from "./pages/VouchersPage";
 import ContractTemplatesPage from "./pages/ContractTemplatesPage";
