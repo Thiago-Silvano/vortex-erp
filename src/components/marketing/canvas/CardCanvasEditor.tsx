@@ -83,9 +83,10 @@ function getElementContent(id: CanvasElementId, promo: PromotionCardData, canvas
 }
 
 export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose }: Props) {
-  const { state, push, undo, redo, canUndo, canRedo } = useCanvasUndo<CanvasState>(buildInitialState(), 20);
+  const { state, push, undo, redo, canUndo, canRedo } = useCanvasUndo<CanvasState>(LAYOUT_PRESETS[0].build(), 20);
   const [selected, setSelected] = useState<CanvasElementId | null>(null);
   const [tab, setTab] = useState("element");
+  const [activeLayout, setActiveLayout] = useState("default");
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Image panning state
