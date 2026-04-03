@@ -88,6 +88,11 @@ export default function PromotionCatalogPage() {
   // Style editor
   const [showStyleEditor, setShowStyleEditor] = useState(false);
   const [styleEditorPromo, setStyleEditorPromo] = useState<PromotionCardData | null>(null);
+  const [cardLayout, setCardLayout] = useState("default");
+
+  // Edit promotion
+  const [editPromoId, setEditPromoId] = useState<string | null>(null);
+  const [editPromoData, setEditPromoData] = useState<Partial<PromotionCardData>>({});
 
   const fetchPages = async () => {
     if (!activeCompany) return;
