@@ -30,6 +30,7 @@ import {
 import { Card } from "@/components/ui/card";
 import PromotionCard, { type PromotionCardData } from "@/components/marketing/PromotionCard";
 import CardCanvasEditor from "@/components/marketing/canvas/CardCanvasEditor";
+import { LAYOUT_PRESETS } from "@/components/marketing/canvas/layouts";
 import { type CardStyleOverrides } from "@/components/marketing/CardStyleEditor";
 import { toPng } from "html-to-image";
 
