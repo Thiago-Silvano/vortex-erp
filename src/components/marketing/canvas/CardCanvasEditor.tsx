@@ -141,6 +141,14 @@ export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose 
     push({ ...state, [key]: value });
   }, [state, push]);
 
+  const applyLayout = useCallback((layoutId: string) => {
+    const preset = LAYOUT_PRESETS.find(l => l.id === layoutId);
+    if (!preset) return;
+    setActiveLayout(layoutId);
+    setSelected(null);
+    push(preset.build());
+  }, [push]);
+
   // Image panning handlers
   const handleImagePointerDown = useCallback((e: React.PointerEvent) => {
     if (selected !== null) return; // only pan when no element is selected
