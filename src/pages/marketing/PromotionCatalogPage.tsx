@@ -548,6 +548,83 @@ export default function PromotionCatalogPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Promotion Dialog */}
+      <Dialog open={!!editPromoId} onOpenChange={open => { if (!open) setEditPromoId(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar Promoção</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Destino</Label>
+              <Input className="h-8 text-xs" value={editPromoData.destination_name || ""} onChange={e => setEditPromoData(d => ({ ...d, destination_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">País</Label>
+              <Input className="h-8 text-xs" value={editPromoData.destination_country || ""} onChange={e => setEditPromoData(d => ({ ...d, destination_country: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Hospedagem</Label>
+                <Input className="h-8 text-xs" value={editPromoData.accommodation_type || ""} onChange={e => setEditPromoData(d => ({ ...d, accommodation_type: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Noites</Label>
+                <Input type="number" className="h-8 text-xs" value={editPromoData.nights || 0} onChange={e => setEditPromoData(d => ({ ...d, nights: Number(e.target.value) }))} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Período</Label>
+              <Input className="h-8 text-xs" value={editPromoData.period_text || ""} onChange={e => setEditPromoData(d => ({ ...d, period_text: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Aeroporto Origem</Label>
+                <Input className="h-8 text-xs" value={editPromoData.airport_origin || ""} onChange={e => setEditPromoData(d => ({ ...d, airport_origin: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Aeroporto Destino</Label>
+                <Input className="h-8 text-xs" value={editPromoData.airport_destination || ""} onChange={e => setEditPromoData(d => ({ ...d, airport_destination: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label className="text-xs">Parcelas</Label>
+                <Input type="number" className="h-8 text-xs" value={editPromoData.installments || 1} onChange={e => setEditPromoData(d => ({ ...d, installments: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Valor Parcela</Label>
+                <Input type="number" step="0.01" className="h-8 text-xs" value={editPromoData.installment_value || 0} onChange={e => setEditPromoData(d => ({ ...d, installment_value: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Valor Total</Label>
+                <Input type="number" step="0.01" className="h-8 text-xs" value={editPromoData.total_value || 0} onChange={e => setEditPromoData(d => ({ ...d, total_value: Number(e.target.value) }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+              {[
+                { key: "included_transfer", label: "Transfer" },
+                { key: "included_tickets", label: "Ingressos" },
+                { key: "included_tours", label: "Passeios" },
+                { key: "included_guide", label: "Guia" },
+                { key: "included_train", label: "Trem" },
+              ].map(({ key, label }) => (
+                <div key={key} className="flex items-center gap-2">
+                  <Checkbox checked={!!(editPromoData as any)[key]} onCheckedChange={v => setEditPromoData(d => ({ ...d, [key]: !!v }))} />
+                  <Label className="text-xs">{label}</Label>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setEditPromoId(null)}>Cancelar</Button>
+              <Button size="sm" onClick={saveEditPromo}>
+                <Save className="h-3.5 w-3.5 mr-1" /> Salvar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
