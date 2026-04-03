@@ -67,6 +67,10 @@ export default function CanvasElement({ id, style, selected, onSelect, onMove, c
     touchAction: "none",
   };
 
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
   return (
     <div
       ref={ref}
@@ -74,6 +78,7 @@ export default function CanvasElement({ id, style, selected, onSelect, onMove, c
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onClick={handleClick}
       data-element-id={id}
     >
       {children}
