@@ -91,7 +91,20 @@ export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose 
   const imgDragging = useRef(false);
   const imgStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
 
-  const updateElement = useCallback((id: CanvasElementId, key: keyof ElementStyle, value: any) => {
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+      }
+      if (e.key === "Escape") setSelected(null);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [undo, redo]);
+
     const next = {
       ...state,
       elements: {
