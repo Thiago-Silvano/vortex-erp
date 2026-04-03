@@ -31,7 +31,7 @@ import {
 import PromotionCard, { type PromotionCardData } from "@/components/marketing/PromotionCard";
 import { toPng } from "html-to-image";
 
-type LayoutStyle = "lateral" | "overlay" | "catalog" | "minimal";
+type LayoutStyle = "lateral" | "overlay" | "catalog" | "minimal" | "premium_gold" | "premium_overlay" | "premium_dark";
 
 interface CatalogPage {
   id: string;
@@ -47,10 +47,13 @@ interface CatalogPage {
 }
 
 const LAYOUT_LABELS: Record<LayoutStyle, string> = {
+  catalog: "Catálogo Editorial",
   lateral: "Imagem Lateral",
   overlay: "Texto Sobreposto",
-  catalog: "Catálogo Editorial",
   minimal: "Minimalista",
+  premium_gold: "Premium Gold",
+  premium_overlay: "Premium Overlay",
+  premium_dark: "Premium Dark",
 };
 
 export default function PromotionCatalogPage() {
