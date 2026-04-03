@@ -95,7 +95,7 @@ const DEFAULT_STYLE: CardStyleOverrides = {
 };
 
 const FONT_OPTIONS = [
-  { value: "", label: "Padrão do layout" },
+  { value: "__default__", label: "Padrão do layout" },
   { value: "Georgia, serif", label: "Georgia (Serif)" },
   { value: "'Playfair Display', serif", label: "Playfair Display" },
   { value: "'Inter', sans-serif", label: "Inter" },
@@ -106,7 +106,7 @@ const FONT_OPTIONS = [
 ];
 
 const WEIGHT_OPTIONS = [
-  { value: "", label: "Padrão" },
+  { value: "__default__", label: "Padrão" },
   { value: "400", label: "Normal" },
   { value: "500", label: "Medium" },
   { value: "600", label: "Semibold" },
@@ -246,7 +246,7 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
             <TabsContent value="typography" className="p-3 space-y-3 mt-0">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Fonte do título</Label>
-                <Select value={style.titleFont || ""} onValueChange={v => update("titleFont", v)}>
+                <Select value={style.titleFont || "__default__"} onValueChange={v => update("titleFont", v === "__default__" ? "" : v)}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Padrão" /></SelectTrigger>
                   <SelectContent>
                     {FONT_OPTIONS.map(f => (
@@ -259,7 +259,7 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Peso do título</Label>
-                <Select value={style.titleWeight || ""} onValueChange={v => update("titleWeight", v)}>
+                <Select value={style.titleWeight || "__default__"} onValueChange={v => update("titleWeight", v === "__default__" ? "" : v)}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Padrão" /></SelectTrigger>
                   <SelectContent>
                     {WEIGHT_OPTIONS.map(w => (
