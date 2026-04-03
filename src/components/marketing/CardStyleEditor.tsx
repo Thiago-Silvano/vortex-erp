@@ -6,9 +6,8 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Save, X, RotateCcw, Download, Palette, Type, Eye, Sliders } from "lucide-react";
+import { Save, X, RotateCcw, Download, Palette, Type, Eye, Sliders, Maximize } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
 import PromotionCard, { type PromotionCardData, type LayoutStyle } from "./PromotionCard";
@@ -43,8 +42,12 @@ export interface CardStyleOverrides {
   showInstallments?: boolean;
   showTotalValue?: boolean;
   showCountry?: boolean;
+  showAccommodation?: boolean;
+  showNights?: boolean;
 
   // Layout tweaks
+  cardWidth?: number;
+  cardHeight?: number;
   imageHeight?: number;
   borderRadius?: number;
   cardPadding?: number;
@@ -56,6 +59,9 @@ export interface CardStyleOverrides {
   // CTA text
   ctaText?: string;
   badgeText?: string;
+
+  // Size preset
+  sizePreset?: string;
 }
 
 const DEFAULT_STYLE: CardStyleOverrides = {
@@ -83,6 +89,10 @@ const DEFAULT_STYLE: CardStyleOverrides = {
   showInstallments: true,
   showTotalValue: true,
   showCountry: true,
+  showAccommodation: true,
+  showNights: true,
+  cardWidth: 0,
+  cardHeight: 0,
   imageHeight: 0,
   borderRadius: 0,
   cardPadding: 0,
@@ -92,7 +102,17 @@ const DEFAULT_STYLE: CardStyleOverrides = {
   ctaBorderRadius: 8,
   ctaText: "Quero esse pacote",
   badgeText: "Promoção",
+  sizePreset: "auto",
 };
+
+const SIZE_PRESETS: { value: string; label: string; w: number; h: number }[] = [
+  { value: "auto", label: "Automático", w: 0, h: 0 },
+  { value: "feed", label: "Feed (1:1)", w: 400, h: 400 },
+  { value: "story", label: "Story (9:16)", w: 360, h: 640 },
+  { value: "landscape", label: "Paisagem (16:9)", w: 640, h: 360 },
+  { value: "a4", label: "A4 Retrato", w: 420, h: 594 },
+  { value: "banner", label: "Banner (3:1)", w: 600, h: 200 },
+];
 
 const FONT_OPTIONS = [
   { value: "__default__", label: "Padrão do layout" },
@@ -133,6 +153,18 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
 
   const resetStyle = () => setStyle({ ...DEFAULT_STYLE });
 
+  const applySizePreset = (preset: string) => {
+    const found = SIZE_PRESETS.find(p => p.value === preset);
+    if (found) {
+      setStyle(prev => ({
+        ...prev,
+        sizePreset: preset,
+        cardWidth: found.w,
+        cardHeight: found.h,
+      }));
+    }
+  };
+
   const exportCard = async (format: "png" | "jpg") => {
     if (!cardRef.current) return;
     try {
@@ -170,7 +202,7 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
   const SliderInput = ({ label, propKey, min, max, step = 1, suffix = "" }: {
     label: string; propKey: keyof CardStyleOverrides; min: number; max: number; step?: number; suffix?: string;
   }) => (
-    <div className="space-y-1">
+    <div className="space-y-1" onPointerDownCapture={e => e.stopPropagation()}>
       <div className="flex items-center justify-between">
         <Label className="text-xs text-muted-foreground">{label}</Label>
         <span className="text-xs font-mono text-muted-foreground">{style[propKey]}{suffix}</span>
@@ -186,10 +218,21 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
     </div>
   );
 
+  // Card container dimensions
+  const cardContainerStyle: React.CSSProperties = {};
+  if (style.cardWidth && style.cardWidth > 0) {
+    cardContainerStyle.width = style.cardWidth;
+    cardContainerStyle.maxWidth = "100%";
+  }
+  if (style.cardHeight && style.cardHeight > 0) {
+    cardContainerStyle.height = style.cardHeight;
+    cardContainerStyle.overflow = "hidden";
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex bg-background">
       {/* Left panel - Controls */}
-      <div className="w-80 border-r flex flex-col bg-card">
+      <div className="w-80 border-r flex flex-col bg-card shrink-0">
         {/* Header */}
         <div className="p-3 border-b flex items-center justify-between">
           <h2 className="text-sm font-bold">Editor de Card</h2>
@@ -203,9 +246,9 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - use overflow div instead of ScrollArea to avoid slider drag issues */}
         <Tabs defaultValue="colors" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid grid-cols-4 mx-2 mt-2">
+          <TabsList className="grid grid-cols-4 mx-2 mt-2 shrink-0">
             <TabsTrigger value="colors" className="text-xs px-1 gap-1">
               <Palette className="h-3 w-3" /> Cores
             </TabsTrigger>
@@ -220,7 +263,7 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
             </TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             {/* COLORS TAB */}
             <TabsContent value="colors" className="p-3 space-y-3 mt-0">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Card</p>
@@ -250,7 +293,7 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Padrão" /></SelectTrigger>
                   <SelectContent>
                     {FONT_OPTIONS.map(f => (
-                      <SelectItem key={f.value} value={f.value} style={{ fontFamily: f.value || undefined }}>
+                      <SelectItem key={f.value} value={f.value} style={{ fontFamily: f.value !== "__default__" ? f.value : undefined }}>
                         {f.label}
                       </SelectItem>
                     ))}
@@ -303,6 +346,8 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
                 ["showInstallments", "Parcelas"],
                 ["showTotalValue", "Valor total"],
                 ["showCountry", "País"],
+                ["showAccommodation", "Tipo de hospedagem"],
+                ["showNights", "Número de noites"],
               ] as [keyof CardStyleOverrides, string][]).map(([key, label]) => (
                 <div key={key} className="flex items-center justify-between">
                   <Label className="text-xs">{label}</Label>
@@ -316,21 +361,44 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
 
             {/* LAYOUT TAB */}
             <TabsContent value="layout" className="p-3 space-y-3 mt-0">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Tamanho do card</p>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Preset de tamanho</Label>
+                <Select value={style.sizePreset || "auto"} onValueChange={applySizePreset}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SIZE_PRESETS.map(p => (
+                      <SelectItem key={p.value} value={p.value}>
+                        <div className="flex items-center gap-2">
+                          <Maximize className="h-3 w-3" />
+                          <span>{p.label}</span>
+                          {p.w > 0 && <span className="text-muted-foreground text-[10px]">({p.w}×{p.h})</span>}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <SliderInput label="Largura manual" propKey="cardWidth" min={0} max={800} suffix="px" />
+              <SliderInput label="Altura manual" propKey="cardHeight" min={0} max={1200} suffix="px" />
+              <Separator className="my-2" />
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Imagem e forma</p>
               <SliderInput label="Altura da imagem" propKey="imageHeight" min={0} max={500} suffix="px" />
               <SliderInput label="Borda arredondada" propKey="borderRadius" min={0} max={32} suffix="px" />
               <SliderInput label="Padding" propKey="cardPadding" min={0} max={40} suffix="px" />
               <Separator className="my-2" />
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Efeitos</p>
               <SliderInput label="Brilho da imagem" propKey="imageBrightness" min={30} max={150} suffix="%" />
               <SliderInput label="Opacidade overlay" propKey="overlayOpacity" min={0} max={100} suffix="%" />
               <SliderInput label="Intensidade sombra" propKey="shadowIntensity" min={0} max={100} suffix="%" />
               <Separator className="my-2" />
               <SliderInput label="Borda do botão" propKey="ctaBorderRadius" min={0} max={24} suffix="px" />
             </TabsContent>
-          </ScrollArea>
+          </div>
         </Tabs>
 
         {/* Footer */}
-        <div className="p-3 border-t flex gap-2">
+        <div className="p-3 border-t flex gap-2 shrink-0">
           <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => exportCard("png")}>
             <Download className="h-3 w-3 mr-1" /> PNG
           </Button>
@@ -342,7 +410,7 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
 
       {/* Right panel - Card Preview */}
       <div className="flex-1 flex items-center justify-center bg-muted/30 p-8 overflow-auto">
-        <div className="w-full max-w-md" ref={cardRef}>
+        <div ref={cardRef} style={cardContainerStyle}>
           <PromotionCard promo={promo} layout={layout} styleOverrides={style} />
         </div>
       </div>
