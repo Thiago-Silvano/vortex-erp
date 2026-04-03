@@ -246,7 +246,7 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
             <TabsContent value="typography" className="p-3 space-y-3 mt-0">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Fonte do título</Label>
-                <Select value={style.titleFont || ""} onValueChange={v => update("titleFont", v)}>
+                <Select value={style.titleFont || "__default__"} onValueChange={v => update("titleFont", v === "__default__" ? "" : v)}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Padrão" /></SelectTrigger>
                   <SelectContent>
                     {FONT_OPTIONS.map(f => (
