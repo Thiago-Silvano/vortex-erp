@@ -402,6 +402,24 @@ export default function PromotionCatalogPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label className="text-xs">Layout do Card</Label>
+                  <div className="grid grid-cols-2 gap-1.5 mt-1">
+                    {LAYOUT_PRESETS.map(preset => (
+                      <button
+                        key={preset.id}
+                        onClick={() => setCardLayout(preset.id)}
+                        className={`text-left text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+                          cardLayout === preset.id
+                            ? "border-primary bg-primary/10 text-primary font-semibold"
+                            : "border-border hover:bg-muted"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <Switch checked={showLogo} onCheckedChange={setShowLogo} />
                   <Label className="text-xs">Exibir logo da agência</Label>
