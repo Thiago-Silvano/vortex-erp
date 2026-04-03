@@ -324,6 +324,23 @@ export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose 
 
             {/* CARD TAB */}
             <TabsContent value="card" className="p-3 space-y-3 mt-0">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Layout</p>
+              <div className="grid grid-cols-2 gap-2">
+                {LAYOUT_PRESETS.map(preset => (
+                  <button
+                    key={preset.id}
+                    onClick={() => applyLayout(preset.id)}
+                    className={`text-left text-xs px-3 py-2 rounded-md border transition-colors ${
+                      activeLayout === preset.id
+                        ? "border-primary bg-primary/10 text-primary font-semibold"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <Separator />
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Dimensões</p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
