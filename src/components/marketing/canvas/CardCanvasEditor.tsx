@@ -24,6 +24,7 @@ const formatCurrency = (v: number) =>
 interface Props {
   promo: PromotionCardData;
   initialStyle?: CardStyleOverrides;
+  layoutId?: string;
   onSave: (style: CardStyleOverrides) => void;
   onClose: () => void;
 }
