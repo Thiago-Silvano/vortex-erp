@@ -202,7 +202,7 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
   const SliderInput = ({ label, propKey, min, max, step = 1, suffix = "" }: {
     label: string; propKey: keyof CardStyleOverrides; min: number; max: number; step?: number; suffix?: string;
   }) => (
-    <div className="space-y-1" onPointerDownCapture={e => e.stopPropagation()}>
+    <div className="space-y-1">
       <div className="flex items-center justify-between">
         <Label className="text-xs text-muted-foreground">{label}</Label>
         <span className="text-xs font-mono text-muted-foreground">{style[propKey]}{suffix}</span>
