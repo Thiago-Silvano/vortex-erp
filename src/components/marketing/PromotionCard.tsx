@@ -142,7 +142,7 @@ function CtaButton({ promo, s, onClickCta, variant = "default", className = "", 
   promo: PromotionCardData; s?: CardStyleOverrides; onClickCta?: (p: PromotionCardData) => void;
   variant?: "default" | "gold"; className?: string; style?: React.CSSProperties;
 }) {
-  if (!vis(s, "showCta") || !onClickCta) return null;
+  if (!vis(s, "showCta")) return null;
   const ctaStyle: React.CSSProperties = { ...baseStyle };
   if (s?.ctaBgColor) ctaStyle.background = s.ctaBgColor;
   if (s?.ctaTextColor) ctaStyle.color = s.ctaTextColor;
