@@ -79,29 +79,4 @@ export interface CanvasState {
   badgeText: string;
 }
 
-export function buildInitialState(): CanvasState {
-  const elements: any = {};
-  CANVAS_ELEMENTS.forEach(def => {
-    elements[def.id] = { ...DEFAULT_ELEMENT_STYLE, ...def.defaultStyle };
-  });
-
-  // Default positions (overlay-like layout)
-  elements.badge.x = 16; elements.badge.y = 16;
-  elements.title.x = 20; elements.title.y = 280;
-  elements.subtitle.x = 20; elements.subtitle.y = 310;
-  elements.country.x = 20; elements.country.y = 330;
-  elements.period.x = 20; elements.period.y = 352;
-  elements.airports.x = 20; elements.airports.y = 372;
-  elements.services.x = 20; elements.services.y = 396;
-  elements.price.x = 20; elements.price.y = 430;
-  elements.totalValue.x = 20; elements.totalValue.y = 456;
-  elements.cta.x = 250; elements.cta.y = 428;
-
-  return {
-    elements,
-    image: { offsetX: 0, offsetY: 0, brightness: 100, scale: 100 },
-    card: { width: 400, height: 500, bgColor: "#1a1a2e", overlayColor: "#000000", overlayOpacity: 50, borderRadius: 16 },
-    ctaText: "Quero esse pacote",
-    badgeText: "Promoção",
-  };
-}
+// buildInitialState moved to layouts.ts
