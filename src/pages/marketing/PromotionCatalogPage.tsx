@@ -249,9 +249,6 @@ export default function PromotionCatalogPage() {
         onSave={handleStyleSave}
         onClose={() => setShowStyleEditor(false)}
       />
-        onSave={handleStyleSave}
-        onClose={() => setShowStyleEditor(false)}
-      />
     );
   }
 
