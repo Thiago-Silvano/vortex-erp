@@ -24,6 +24,7 @@ const formatCurrency = (v: number) =>
 interface Props {
   promo: PromotionCardData;
   initialStyle?: CardStyleOverrides;
+  layoutId?: string;
   onSave: (style: CardStyleOverrides) => void;
   onClose: () => void;
 }
@@ -82,11 +83,11 @@ function getElementContent(id: CanvasElementId, promo: PromotionCardData, canvas
   }
 }
 
-export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose }: Props) {
-  const { state, push, undo, redo, canUndo, canRedo } = useCanvasUndo<CanvasState>(LAYOUT_PRESETS[0].build(), 20);
+export default function CardCanvasEditor({ promo, initialStyle, layoutId = "default", onSave, onClose }: Props) {
+  const initialLayout = LAYOUT_PRESETS.find(l => l.id === layoutId) || LAYOUT_PRESETS[0];
+  const { state, push, undo, redo, canUndo, canRedo } = useCanvasUndo<CanvasState>(initialLayout.build(), 20);
   const [selected, setSelected] = useState<CanvasElementId | null>(null);
   const [tab, setTab] = useState("element");
-  const [activeLayout, setActiveLayout] = useState("default");
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Image panning state
@@ -141,13 +142,7 @@ export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose 
     push({ ...state, [key]: value });
   }, [state, push]);
 
-  const applyLayout = useCallback((layoutId: string) => {
-    const preset = LAYOUT_PRESETS.find(l => l.id === layoutId);
-    if (!preset) return;
-    setActiveLayout(layoutId);
-    setSelected(null);
-    push(preset.build());
-  }, [push]);
+  // applyLayout removed — layout is now chosen in page editor
 
   // Image panning handlers
   const handleImagePointerDown = useCallback((e: React.PointerEvent) => {
@@ -324,23 +319,6 @@ export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose 
 
             {/* CARD TAB */}
             <TabsContent value="card" className="p-3 space-y-3 mt-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Layout</p>
-              <div className="grid grid-cols-2 gap-2">
-                {LAYOUT_PRESETS.map(preset => (
-                  <button
-                    key={preset.id}
-                    onClick={() => applyLayout(preset.id)}
-                    className={`text-left text-xs px-3 py-2 rounded-md border transition-colors ${
-                      activeLayout === preset.id
-                        ? "border-primary bg-primary/10 text-primary font-semibold"
-                        : "border-border hover:bg-muted"
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-              <Separator />
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Dimensões</p>
               <div className="grid grid-cols-2 gap-2">
                 <div>

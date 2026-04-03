@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   ArrowLeft, Eye, Save, Link2, ImageIcon,
-  Trash2, MoreHorizontal, Plus, LayoutGrid, Paintbrush
+  Trash2, MoreHorizontal, Plus, LayoutGrid, Paintbrush, Pencil
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -30,6 +30,7 @@ import {
 import { Card } from "@/components/ui/card";
 import PromotionCard, { type PromotionCardData } from "@/components/marketing/PromotionCard";
 import CardCanvasEditor from "@/components/marketing/canvas/CardCanvasEditor";
+import { LAYOUT_PRESETS } from "@/components/marketing/canvas/layouts";
 import { type CardStyleOverrides } from "@/components/marketing/CardStyleEditor";
 import { toPng } from "html-to-image";
 
@@ -87,6 +88,11 @@ export default function PromotionCatalogPage() {
   // Style editor
   const [showStyleEditor, setShowStyleEditor] = useState(false);
   const [styleEditorPromo, setStyleEditorPromo] = useState<PromotionCardData | null>(null);
+  const [cardLayout, setCardLayout] = useState("default");
+
+  // Edit promotion
+  const [editPromoId, setEditPromoId] = useState<string | null>(null);
+  const [editPromoData, setEditPromoData] = useState<Partial<PromotionCardData>>({});
 
   const fetchPages = async () => {
     if (!activeCompany) return;
@@ -142,6 +148,7 @@ export default function PromotionCatalogPage() {
       setLegalText(page.legal_text || "");
       setBgColor(page.background_color || "#ffffff");
       setCardStyle(page.card_style || null);
+      setCardLayout((page.card_style as any)?._cardLayout || "default");
     } else {
       setEditingPage(null);
       setTitle("Catálogo de Promoções");
@@ -152,6 +159,7 @@ export default function PromotionCatalogPage() {
       setLegalText("");
       setBgColor("#ffffff");
       setCardStyle(null);
+      setCardLayout("default");
     }
     setShowBuilder(true);
   };
@@ -170,7 +178,7 @@ export default function PromotionCatalogPage() {
       show_legal_text: showLegalText,
       legal_text: showLegalText ? legalText : null,
       background_color: bgColor,
-      card_style: cardStyle || {},
+      card_style: { ...(cardStyle || {}), _cardLayout: cardLayout },
     };
 
     let error: any;
@@ -240,12 +248,29 @@ export default function PromotionCatalogPage() {
     ? "grid-cols-1 md:grid-cols-1 lg:grid-cols-2"
     : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
 
+  // Edit promotion handler
+  const openEditPromo = (promo: PromotionCardData) => {
+    setEditPromoId(promo.id);
+    setEditPromoData({ ...promo });
+  };
+
+  const saveEditPromo = async () => {
+    if (!editPromoId) return;
+    const { id, status, ...rest } = editPromoData as any;
+    const { error } = await supabase.from("promotions").update(rest).eq("id", editPromoId);
+    if (error) { toast.error("Erro ao salvar promoção"); return; }
+    toast.success("Promoção atualizada!");
+    setEditPromoId(null);
+    fetchPromotions();
+  };
+
   // Show style editor full-screen
   if (showStyleEditor && styleEditorPromo) {
     return (
       <CardCanvasEditor
         promo={styleEditorPromo}
         initialStyle={cardStyle || undefined}
+        layoutId={cardLayout}
         onSave={handleStyleSave}
         onClose={() => setShowStyleEditor(false)}
       />
@@ -313,6 +338,7 @@ export default function PromotionCatalogPage() {
                             setLayoutStyle(page.layout_style as LayoutStyle);
                             setSelectedIds(page.promotion_ids);
                             setCardStyle(page.card_style || null);
+                            setCardLayout((page.card_style as any)?._cardLayout || "default");
                             setStyleEditorPromo(firstPromo);
                             setShowStyleEditor(true);
                           } else {
@@ -377,6 +403,24 @@ export default function PromotionCatalogPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label className="text-xs">Layout do Card</Label>
+                  <div className="grid grid-cols-2 gap-1.5 mt-1">
+                    {LAYOUT_PRESETS.map(preset => (
+                      <button
+                        key={preset.id}
+                        onClick={() => setCardLayout(preset.id)}
+                        className={`text-left text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+                          cardLayout === preset.id
+                            ? "border-primary bg-primary/10 text-primary font-semibold"
+                            : "border-border hover:bg-muted"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <Switch checked={showLogo} onCheckedChange={setShowLogo} />
                   <Label className="text-xs">Exibir logo da agência</Label>
@@ -413,17 +457,20 @@ export default function PromotionCatalogPage() {
                   {promotions.length === 0 ? (
                     <p className="p-4 text-xs text-muted-foreground text-center">Nenhuma promoção ativa</p>
                   ) : promotions.map(p => (
-                    <label key={p.id} className="flex items-center gap-3 p-2 hover:bg-muted/50 cursor-pointer">
+                    <div key={p.id} className="flex items-center gap-3 p-2 hover:bg-muted/50">
                       <Checkbox checked={selectedIds.includes(p.id)} onCheckedChange={() => toggleSelection(p.id)} />
                       {p.main_image_url && <img src={p.main_image_url} className="h-8 w-8 rounded object-cover" />}
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleSelection(p.id)}>
                         <p className="text-xs font-medium truncate">{p.destination_name}</p>
                         <p className="text-[10px] text-muted-foreground">{p.accommodation_type} • {p.nights}N</p>
                       </div>
                       <span className="text-xs text-muted-foreground shrink-0">
                         {p.total_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                       </span>
-                    </label>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => openEditPromo(p)} title="Editar promoção">
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -502,6 +549,83 @@ export default function PromotionCatalogPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Promotion Dialog */}
+      <Dialog open={!!editPromoId} onOpenChange={open => { if (!open) setEditPromoId(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar Promoção</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Destino</Label>
+              <Input className="h-8 text-xs" value={editPromoData.destination_name || ""} onChange={e => setEditPromoData(d => ({ ...d, destination_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">País</Label>
+              <Input className="h-8 text-xs" value={editPromoData.destination_country || ""} onChange={e => setEditPromoData(d => ({ ...d, destination_country: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Hospedagem</Label>
+                <Input className="h-8 text-xs" value={editPromoData.accommodation_type || ""} onChange={e => setEditPromoData(d => ({ ...d, accommodation_type: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Noites</Label>
+                <Input type="number" className="h-8 text-xs" value={editPromoData.nights || 0} onChange={e => setEditPromoData(d => ({ ...d, nights: Number(e.target.value) }))} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Período</Label>
+              <Input className="h-8 text-xs" value={editPromoData.period_text || ""} onChange={e => setEditPromoData(d => ({ ...d, period_text: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Aeroporto Origem</Label>
+                <Input className="h-8 text-xs" value={editPromoData.airport_origin || ""} onChange={e => setEditPromoData(d => ({ ...d, airport_origin: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Aeroporto Destino</Label>
+                <Input className="h-8 text-xs" value={editPromoData.airport_destination || ""} onChange={e => setEditPromoData(d => ({ ...d, airport_destination: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label className="text-xs">Parcelas</Label>
+                <Input type="number" className="h-8 text-xs" value={editPromoData.installments || 1} onChange={e => setEditPromoData(d => ({ ...d, installments: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Valor Parcela</Label>
+                <Input type="number" step="0.01" className="h-8 text-xs" value={editPromoData.installment_value || 0} onChange={e => setEditPromoData(d => ({ ...d, installment_value: Number(e.target.value) }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Valor Total</Label>
+                <Input type="number" step="0.01" className="h-8 text-xs" value={editPromoData.total_value || 0} onChange={e => setEditPromoData(d => ({ ...d, total_value: Number(e.target.value) }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+              {[
+                { key: "included_transfer", label: "Transfer" },
+                { key: "included_tickets", label: "Ingressos" },
+                { key: "included_tours", label: "Passeios" },
+                { key: "included_guide", label: "Guia" },
+                { key: "included_train", label: "Trem" },
+              ].map(({ key, label }) => (
+                <div key={key} className="flex items-center gap-2">
+                  <Checkbox checked={!!(editPromoData as any)[key]} onCheckedChange={v => setEditPromoData(d => ({ ...d, [key]: !!v }))} />
+                  <Label className="text-xs">{label}</Label>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setEditPromoId(null)}>Cancelar</Button>
+              <Button size="sm" onClick={saveEditPromo}>
+                <Save className="h-3.5 w-3.5 mr-1" /> Salvar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
