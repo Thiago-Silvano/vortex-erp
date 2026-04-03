@@ -80,6 +80,7 @@ export default function PromotionCatalogPublicPage() {
   }
 
   const layout = (page?.layout_style || "catalog") as LayoutStyle;
+  const cardStyle = page?.card_style || undefined;
   const gridCols = layout === "lateral" || layout === "minimal"
     ? "grid-cols-1 md:grid-cols-1 lg:grid-cols-2"
     : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
@@ -115,6 +116,7 @@ export default function PromotionCatalogPublicPage() {
               key={p.id}
               promo={p}
               layout={layout}
+              styleOverrides={cardStyle}
               onClickCta={(promo) => setSelectedPromo(promo)}
             />
           ))}

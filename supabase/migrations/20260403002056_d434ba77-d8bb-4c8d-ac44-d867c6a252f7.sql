@@ -1,0 +1,1 @@
+ALTER TABLE public.promotion_pages ADD COLUMN card_style jsonb DEFAULT '{}'::jsonb;

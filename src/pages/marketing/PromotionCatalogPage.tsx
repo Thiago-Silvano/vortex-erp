@@ -8,15 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Eye, Save, Link2, FileText, ImageIcon,
-  Copy, Trash2, MoreHorizontal, Plus, LayoutGrid
+  ArrowLeft, Eye, Save, Link2, ImageIcon,
+  Trash2, MoreHorizontal, Plus, LayoutGrid, Paintbrush
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -28,7 +27,9 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
 } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
 import PromotionCard, { type PromotionCardData } from "@/components/marketing/PromotionCard";
+import CardStyleEditor, { type CardStyleOverrides } from "@/components/marketing/CardStyleEditor";
 import { toPng } from "html-to-image";
 
 type LayoutStyle = "lateral" | "overlay" | "catalog" | "minimal" | "premium_gold" | "premium_overlay" | "premium_dark";
@@ -43,6 +44,7 @@ interface CatalogPage {
   show_legal_text: boolean;
   legal_text: string | null;
   background_color: string | null;
+  card_style: CardStyleOverrides | null;
   created_at: string;
 }
 
@@ -73,13 +75,17 @@ export default function PromotionCatalogPage() {
   const [showLegalText, setShowLegalText] = useState(false);
   const [legalText, setLegalText] = useState("");
   const [bgColor, setBgColor] = useState("#ffffff");
+  const [cardStyle, setCardStyle] = useState<CardStyleOverrides | null>(null);
   const [promotions, setPromotions] = useState<PromotionCardData[]>([]);
   const [saving, setSaving] = useState(false);
 
   // Preview
   const [showPreview, setShowPreview] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
-  const [agencyLogo, setAgencyLogo] = useState<string | null>(null);
+
+  // Style editor
+  const [showStyleEditor, setShowStyleEditor] = useState(false);
+  const [styleEditorPromo, setStyleEditorPromo] = useState<PromotionCardData | null>(null);
 
   const fetchPages = async () => {
     if (!activeCompany) return;
@@ -92,6 +98,7 @@ export default function PromotionCatalogPage() {
     setPages((data as any[])?.map(d => ({
       ...d,
       promotion_ids: d.promotion_ids || [],
+      card_style: d.card_style || null,
     })) || []);
     setLoading(false);
   };
@@ -107,17 +114,7 @@ export default function PromotionCatalogPage() {
     setPromotions((data as any[]) || []);
   };
 
-  const fetchLogo = async () => {
-    if (!activeCompany) return;
-    const { data } = await supabase
-      .from("agency_settings")
-      .select("logo_url")
-      .eq("empresa_id", activeCompany.id)
-      .single();
-    if (data) setAgencyLogo((data as any).logo_url);
-  };
-
-  useEffect(() => { fetchPages(); fetchPromotions(); fetchLogo(); }, [activeCompany]);
+  useEffect(() => { fetchPages(); fetchPromotions(); }, [activeCompany]);
 
   const toggleSelection = (id: string) => {
     setSelectedIds(prev =>
@@ -143,6 +140,7 @@ export default function PromotionCatalogPage() {
       setShowLegalText(page.show_legal_text);
       setLegalText(page.legal_text || "");
       setBgColor(page.background_color || "#ffffff");
+      setCardStyle(page.card_style || null);
     } else {
       setEditingPage(null);
       setTitle("Catálogo de Promoções");
@@ -152,6 +150,7 @@ export default function PromotionCatalogPage() {
       setShowLegalText(false);
       setLegalText("");
       setBgColor("#ffffff");
+      setCardStyle(null);
     }
     setShowBuilder(true);
   };
@@ -170,6 +169,7 @@ export default function PromotionCatalogPage() {
       show_legal_text: showLegalText,
       legal_text: showLegalText ? legalText : null,
       background_color: bgColor,
+      card_style: cardStyle || {},
     };
 
     let error: any;
@@ -217,13 +217,40 @@ export default function PromotionCatalogPage() {
     }
   };
 
+  const openStyleEditor = () => {
+    const firstPromo = promotions.find(p => selectedIds.includes(p.id));
+    if (!firstPromo) {
+      toast.error("Selecione ao menos uma promoção primeiro");
+      return;
+    }
+    setStyleEditorPromo(firstPromo);
+    setShowStyleEditor(true);
+  };
+
+  const handleStyleSave = async (style: CardStyleOverrides) => {
+    setCardStyle(style);
+    setShowStyleEditor(false);
+    toast.success("Estilo aplicado! Salve a página para persistir.");
+  };
+
   const selectedPromos = promotions.filter(p => selectedIds.includes(p.id));
 
   const gridCols = layoutStyle === "lateral" || layoutStyle === "minimal"
     ? "grid-cols-1 md:grid-cols-1 lg:grid-cols-2"
-    : layoutStyle === "premium_gold" || layoutStyle === "premium_overlay" || layoutStyle === "premium_dark"
-    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
+
+  // Show style editor full-screen
+  if (showStyleEditor && styleEditorPromo) {
+    return (
+      <CardStyleEditor
+        promo={styleEditorPromo}
+        layout={layoutStyle}
+        initialStyle={cardStyle || undefined}
+        onSave={handleStyleSave}
+        onClose={() => setShowStyleEditor(false)}
+      />
+    );
+  }
 
   return (
     <AppLayout>
@@ -275,8 +302,24 @@ export default function PromotionCatalogPage() {
                         <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-3.5 w-3.5" /></Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { openBuilder(page); }}>
+                        <DropdownMenuItem onClick={() => openBuilder(page)}>
                           <LayoutGrid className="h-3.5 w-3.5 mr-2" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          // Open style editor directly for this page
+                          const firstPromo = promotions.find(p => page.promotion_ids.includes(p.id));
+                          if (firstPromo) {
+                            setEditingPage(page);
+                            setLayoutStyle(page.layout_style as LayoutStyle);
+                            setSelectedIds(page.promotion_ids);
+                            setCardStyle(page.card_style || null);
+                            setStyleEditorPromo(firstPromo);
+                            setShowStyleEditor(true);
+                          } else {
+                            toast.error("Nenhuma promoção encontrada para editar o estilo");
+                          }
+                        }}>
+                          <Paintbrush className="h-3.5 w-3.5 mr-2" /> Editar Visual
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => {
                           setEditingPage(page);
@@ -285,6 +328,7 @@ export default function PromotionCatalogPage() {
                           setSelectedIds(page.promotion_ids);
                           setShowLogo(page.show_logo);
                           setBgColor(page.background_color || "#ffffff");
+                          setCardStyle(page.card_style || null);
                           setShowPreview(true);
                         }}>
                           <Eye className="h-3.5 w-3.5 mr-2" /> Visualizar
@@ -344,6 +388,17 @@ export default function PromotionCatalogPage() {
                 {showLegalText && (
                   <Textarea className="text-xs" rows={3} value={legalText} onChange={e => setLegalText(e.target.value)} placeholder="Condições gerais..." />
                 )}
+
+                {/* Style editor button */}
+                <Button variant="outline" size="sm" className="w-full text-xs gap-2" onClick={openStyleEditor}>
+                  <Paintbrush className="h-3.5 w-3.5" />
+                  {cardStyle ? "Editar Visual do Card" : "Personalizar Visual do Card"}
+                </Button>
+                {cardStyle && (
+                  <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={() => setCardStyle(null)}>
+                    Resetar estilo customizado
+                  </Button>
+                )}
               </div>
 
               {/* Promo selection */}
@@ -381,7 +436,7 @@ export default function PromotionCatalogPage() {
                 <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto" style={{ backgroundColor: bgColor }}>
                   <div className={`grid gap-4 ${gridCols}`}>
                     {selectedPromos.map(p => (
-                      <PromotionCard key={p.id} promo={p} layout={layoutStyle} />
+                      <PromotionCard key={p.id} promo={p} layout={layoutStyle} styleOverrides={cardStyle || undefined} />
                     ))}
                   </div>
                 </div>
@@ -398,7 +453,7 @@ export default function PromotionCatalogPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Preview / Export Dialog - shows only cards */}
+      {/* Preview / Export Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -418,16 +473,15 @@ export default function PromotionCatalogPage() {
           <div className={`grid gap-6 ${gridCols}`}>
             {selectedPromos.map(p => (
               <div key={p.id} ref={selectedPromos.length === 1 ? previewRef : undefined}>
-                <PromotionCard promo={p} layout={layoutStyle} />
+                <PromotionCard promo={p} layout={layoutStyle} styleOverrides={cardStyle || undefined} />
               </div>
             ))}
           </div>
-          {/* Hidden render target for multi-card export */}
           {selectedPromos.length > 1 && (
             <div ref={previewRef} className="absolute -left-[9999px] top-0" style={{ width: 1200 }}>
               <div className={`grid gap-6 ${gridCols}`}>
                 {selectedPromos.map(p => (
-                  <PromotionCard key={p.id} promo={p} layout={layoutStyle} />
+                  <PromotionCard key={p.id} promo={p} layout={layoutStyle} styleOverrides={cardStyle || undefined} />
                 ))}
               </div>
             </div>
