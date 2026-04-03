@@ -142,13 +142,7 @@ export default function CardCanvasEditor({ promo, initialStyle, layoutId = "defa
     push({ ...state, [key]: value });
   }, [state, push]);
 
-  const applyLayout = useCallback((layoutId: string) => {
-    const preset = LAYOUT_PRESETS.find(l => l.id === layoutId);
-    if (!preset) return;
-    setActiveLayout(layoutId);
-    setSelected(null);
-    push(preset.build());
-  }, [push]);
+  // applyLayout removed — layout is now chosen in page editor
 
   // Image panning handlers
   const handleImagePointerDown = useCallback((e: React.PointerEvent) => {
