@@ -15,8 +15,6 @@ export default function CanvasElement({ id, style, selected, onSelect, onMove, c
   const dragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
 
-  if (!style.visible) return null;
-
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
     e.preventDefault();
