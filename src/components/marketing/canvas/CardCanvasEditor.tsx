@@ -105,6 +105,7 @@ export default function CardCanvasEditor({ promo, initialStyle, onSave, onClose 
     return () => window.removeEventListener("keydown", handler);
   }, [undo, redo]);
 
+  const updateElement = useCallback((id: CanvasElementId, key: keyof ElementStyle, value: any) => {
     const next = {
       ...state,
       elements: {
