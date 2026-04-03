@@ -398,7 +398,7 @@ export default function PromotionCatalogPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Preview / Export Dialog */}
+      {/* Preview / Export Dialog - shows only cards */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -415,19 +415,23 @@ export default function PromotionCatalogPage() {
               <ImageIcon className="h-3.5 w-3.5 mr-1" /> JPG
             </Button>
           </div>
-          <div ref={previewRef} className="p-6 rounded-lg" style={{ backgroundColor: bgColor }}>
-            {showLogo && agencyLogo && (
-              <div className="flex justify-center mb-6">
-                <img src={agencyLogo} alt="Logo" className="h-12 object-contain" />
+          <div className={`grid gap-6 ${gridCols}`}>
+            {selectedPromos.map(p => (
+              <div key={p.id} ref={selectedPromos.length === 1 ? previewRef : undefined}>
+                <PromotionCard promo={p} layout={layoutStyle} />
               </div>
-            )}
-            <h2 className="text-xl font-bold text-center mb-6">{title}</h2>
-            <div className={`grid gap-4 ${gridCols}`}>
-              {selectedPromos.map(p => (
-                <PromotionCard key={p.id} promo={p} layout={layoutStyle} />
-              ))}
-            </div>
+            ))}
           </div>
+          {/* Hidden render target for multi-card export */}
+          {selectedPromos.length > 1 && (
+            <div ref={previewRef} className="absolute -left-[9999px] top-0" style={{ width: 1200 }}>
+              <div className={`grid gap-6 ${gridCols}`}>
+                {selectedPromos.map(p => (
+                  <PromotionCard key={p.id} promo={p} layout={layoutStyle} />
+                ))}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
