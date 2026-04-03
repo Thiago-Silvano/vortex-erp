@@ -156,7 +156,7 @@ function CtaButton({ promo, s, onClickCta, variant = "default", className = "", 
     );
   }
   return (
-    <Button size="sm" className={`text-xs ${className}`} onClick={() => onClickCta(promo)} style={ctaStyle}>
+    <Button size="sm" className={`text-xs ${className}`} onClick={() => onClickCta?.(promo)} style={ctaStyle}>
       {text}
     </Button>
   );
