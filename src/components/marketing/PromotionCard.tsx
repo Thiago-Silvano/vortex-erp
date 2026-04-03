@@ -142,7 +142,7 @@ function CtaButton({ promo, s, onClickCta, variant = "default", className = "", 
   promo: PromotionCardData; s?: CardStyleOverrides; onClickCta?: (p: PromotionCardData) => void;
   variant?: "default" | "gold"; className?: string; style?: React.CSSProperties;
 }) {
-  if (!vis(s, "showCta") || !onClickCta) return null;
+  if (!vis(s, "showCta")) return null;
   const ctaStyle: React.CSSProperties = { ...baseStyle };
   if (s?.ctaBgColor) ctaStyle.background = s.ctaBgColor;
   if (s?.ctaTextColor) ctaStyle.color = s.ctaTextColor;
@@ -150,13 +150,13 @@ function CtaButton({ promo, s, onClickCta, variant = "default", className = "", 
   const text = s?.ctaText || "Quero esse pacote";
   if (variant === "gold") {
     return (
-      <button onClick={() => onClickCta(promo)} className={className} style={ctaStyle}>
+      <button onClick={() => onClickCta?.(promo)} className={className} style={ctaStyle}>
         {text.toUpperCase()}
       </button>
     );
   }
   return (
-    <Button size="sm" className={`text-xs ${className}`} onClick={() => onClickCta(promo)} style={ctaStyle}>
+    <Button size="sm" className={`text-xs ${className}`} onClick={() => onClickCta?.(promo)} style={ctaStyle}>
       {text}
     </Button>
   );
