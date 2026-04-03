@@ -42,8 +42,9 @@ export default function PromotionCatalogPublicPage() {
         .select("*")
         .in("id", promoIds);
       // Keep original order
-      const map = new Map((promos as any[] || []).map(p => [p.id, p]));
-      setPromotions(promoIds.map(id => map.get(id)).filter(Boolean) as PromotionCardData[]);
+      const promoMap: Record<string, any> = {};
+      (promos as any[] || []).forEach(p => { promoMap[p.id] = p; });
+      setPromotions(promoIds.map(id => promoMap[id]).filter(Boolean) as PromotionCardData[]);
     }
 
     // Load logo
