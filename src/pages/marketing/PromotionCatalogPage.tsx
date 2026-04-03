@@ -148,6 +148,7 @@ export default function PromotionCatalogPage() {
       setLegalText(page.legal_text || "");
       setBgColor(page.background_color || "#ffffff");
       setCardStyle(page.card_style || null);
+      setCardLayout((page.card_style as any)?._cardLayout || "default");
     } else {
       setEditingPage(null);
       setTitle("Catálogo de Promoções");
@@ -158,6 +159,7 @@ export default function PromotionCatalogPage() {
       setLegalText("");
       setBgColor("#ffffff");
       setCardStyle(null);
+      setCardLayout("default");
     }
     setShowBuilder(true);
   };
