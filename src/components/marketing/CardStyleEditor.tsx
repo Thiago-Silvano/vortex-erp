@@ -95,7 +95,7 @@ const DEFAULT_STYLE: CardStyleOverrides = {
 };
 
 const FONT_OPTIONS = [
-  { value: "", label: "Padrão do layout" },
+  { value: "__default__", label: "Padrão do layout" },
   { value: "Georgia, serif", label: "Georgia (Serif)" },
   { value: "'Playfair Display', serif", label: "Playfair Display" },
   { value: "'Inter', sans-serif", label: "Inter" },
@@ -106,7 +106,7 @@ const FONT_OPTIONS = [
 ];
 
 const WEIGHT_OPTIONS = [
-  { value: "", label: "Padrão" },
+  { value: "__default__", label: "Padrão" },
   { value: "400", label: "Normal" },
   { value: "500", label: "Medium" },
   { value: "600", label: "Semibold" },
