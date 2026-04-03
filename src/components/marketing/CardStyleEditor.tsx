@@ -259,7 +259,7 @@ export default function CardStyleEditor({ promo, layout, initialStyle, onSave, o
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Peso do título</Label>
-                <Select value={style.titleWeight || ""} onValueChange={v => update("titleWeight", v)}>
+                <Select value={style.titleWeight || "__default__"} onValueChange={v => update("titleWeight", v === "__default__" ? "" : v)}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Padrão" /></SelectTrigger>
                   <SelectContent>
                     {WEIGHT_OPTIONS.map(w => (
