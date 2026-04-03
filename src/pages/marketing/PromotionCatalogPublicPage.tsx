@@ -116,6 +116,7 @@ export default function PromotionCatalogPublicPage() {
               key={p.id}
               promo={p}
               layout={layout}
+              styleOverrides={cardStyle}
               onClickCta={(promo) => setSelectedPromo(promo)}
             />
           ))}
