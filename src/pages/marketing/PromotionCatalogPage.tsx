@@ -243,10 +243,12 @@ export default function PromotionCatalogPage() {
   // Show style editor full-screen
   if (showStyleEditor && styleEditorPromo) {
     return (
-      <CardStyleEditor
+      <CardCanvasEditor
         promo={styleEditorPromo}
-        layout={layoutStyle}
         initialStyle={cardStyle || undefined}
+        onSave={handleStyleSave}
+        onClose={() => setShowStyleEditor(false)}
+      />
         onSave={handleStyleSave}
         onClose={() => setShowStyleEditor(false)}
       />
