@@ -2965,6 +2965,7 @@ export type Database = {
       promotion_pages: {
         Row: {
           background_color: string | null
+          card_style: Json | null
           created_at: string
           created_by: string | null
           empresa_id: string
@@ -2980,6 +2981,7 @@ export type Database = {
         }
         Insert: {
           background_color?: string | null
+          card_style?: Json | null
           created_at?: string
           created_by?: string | null
           empresa_id: string
@@ -2995,6 +2997,7 @@ export type Database = {
         }
         Update: {
           background_color?: string | null
+          card_style?: Json | null
           created_at?: string
           created_by?: string | null
           empresa_id?: string
