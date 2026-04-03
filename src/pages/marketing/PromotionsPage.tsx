@@ -126,9 +126,14 @@ export default function PromotionsPage() {
               Cadastre e gerencie promoções de viagem
             </p>
           </div>
-          <Button size="sm" onClick={() => navigate("/marketing/promotions/new")}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Nova Promoção
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => navigate("/marketing/catalog")}>
+              <Palette className="h-3.5 w-3.5 mr-1" /> Página de Promoções
+            </Button>
+            <Button size="sm" onClick={() => navigate("/marketing/promotions/new")}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Nova Promoção
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
