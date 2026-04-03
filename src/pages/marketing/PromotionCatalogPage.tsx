@@ -221,6 +221,8 @@ export default function PromotionCatalogPage() {
 
   const gridCols = layoutStyle === "lateral" || layoutStyle === "minimal"
     ? "grid-cols-1 md:grid-cols-1 lg:grid-cols-2"
+    : layoutStyle === "premium_gold" || layoutStyle === "premium_overlay" || layoutStyle === "premium_dark"
+    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
 
   return (
