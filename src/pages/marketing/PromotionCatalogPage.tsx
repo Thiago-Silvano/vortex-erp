@@ -338,6 +338,7 @@ export default function PromotionCatalogPage() {
                             setLayoutStyle(page.layout_style as LayoutStyle);
                             setSelectedIds(page.promotion_ids);
                             setCardStyle(page.card_style || null);
+                            setCardLayout((page.card_style as any)?._cardLayout || "default");
                             setStyleEditorPromo(firstPromo);
                             setShowStyleEditor(true);
                           } else {
