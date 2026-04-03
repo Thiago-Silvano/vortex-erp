@@ -43,6 +43,10 @@ export default function CanvasElement({ id, style, selected, onSelect, onMove, c
     onMove(Math.round(nx), Math.round(ny));
   }, [onMove]);
 
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
   if (!style.visible) return null;
 
   const elStyle: React.CSSProperties = {
@@ -66,10 +70,6 @@ export default function CanvasElement({ id, style, selected, onSelect, onMove, c
     outlineOffset: selected ? "2px" : undefined,
     touchAction: "none",
   };
-
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-  }, []);
 
   return (
     <div
