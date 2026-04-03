@@ -456,17 +456,20 @@ export default function PromotionCatalogPage() {
                   {promotions.length === 0 ? (
                     <p className="p-4 text-xs text-muted-foreground text-center">Nenhuma promoção ativa</p>
                   ) : promotions.map(p => (
-                    <label key={p.id} className="flex items-center gap-3 p-2 hover:bg-muted/50 cursor-pointer">
+                    <div key={p.id} className="flex items-center gap-3 p-2 hover:bg-muted/50">
                       <Checkbox checked={selectedIds.includes(p.id)} onCheckedChange={() => toggleSelection(p.id)} />
                       {p.main_image_url && <img src={p.main_image_url} className="h-8 w-8 rounded object-cover" />}
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleSelection(p.id)}>
                         <p className="text-xs font-medium truncate">{p.destination_name}</p>
                         <p className="text-[10px] text-muted-foreground">{p.accommodation_type} • {p.nights}N</p>
                       </div>
                       <span className="text-xs text-muted-foreground shrink-0">
                         {p.total_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                       </span>
-                    </label>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => openEditPromo(p)} title="Editar promoção">
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
               </div>
