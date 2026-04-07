@@ -157,6 +157,8 @@ function TopMenuBar() {
         { title: "Fluxo de Caixa", url: "/financial/cashflow", permKey: "financial_cashflow" },
         { title: "Centros de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
         { title: "Relatório de Conta", url: "/financial/bank-report", permKey: "financial_bank_report" },
+        { title: "Agrupar Contas", url: "/financial/group-accounts", permKey: "financial_payable" },
+        { title: "Desagrupar Contas", url: "/financial/ungroup-accounts", permKey: "financial_payable" },
       ],
     },
     {
@@ -235,6 +237,8 @@ function TopMenuBar() {
         { title: "Comissões", url: "/financial/commissions", permKey: "financial_commissions" },
         { title: "Centros de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
         { title: "Relatório de Conta", url: "/financial/bank-report", permKey: "financial_bank_report" },
+        { title: "Agrupar Contas", url: "/financial/group-accounts", permKey: "financial_payable" },
+        { title: "Desagrupar Contas", url: "/financial/ungroup-accounts", permKey: "financial_payable" },
       ],
     },
     {
