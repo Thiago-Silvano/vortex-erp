@@ -1671,12 +1671,15 @@ export default function NewSalePage() {
       }
     }
 
-    // Get sale short_id
-    let shortId = '';
+    // Get sale short_id and prefer the purchase number informed on the items for services vouchers
+    let saleShortId = '';
     if (editSaleId) {
       const { data: saleData } = await (supabase.from('sales').select('short_id').eq('id', editSaleId).single() as any);
-      if (saleData) shortId = saleData.short_id;
+      if (saleData) saleShortId = saleData.short_id;
     }
+
+    const firstPurchaseNumber = items.find(item => (item.purchase_number || '').trim())?.purchase_number?.trim();
+    const voucherReference = firstPurchaseNumber || saleShortId;
 
     const voucherData: VoucherPdfData = {
       agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
@@ -1723,10 +1726,10 @@ export default function NewSalePage() {
       },
       notes: notes || undefined,
       saleDate,
-      shortId,
+      shortId: voucherReference,
     };
 
-    return { voucherData, logoBase64, shortId };
+    return { voucherData, logoBase64, shortId: saleShortId };
   };
 
   const handleExportServicesVoucher = async () => {
