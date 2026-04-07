@@ -253,7 +253,7 @@ export default function VouchersPage() {
         },
         notes: sale.notes || undefined,
         saleDate: sale.sale_date,
-        shortId: sale.short_id,
+        shortId: items.find((i: any) => i.purchase_number)?.purchase_number || sale.short_id,
       };
 
       const doc = generateVoucherPdf(voucherData);
