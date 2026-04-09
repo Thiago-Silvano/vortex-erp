@@ -1,0 +1,1 @@
+ALTER TABLE public.sale_passengers ADD COLUMN seat TEXT DEFAULT '';

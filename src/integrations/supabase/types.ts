@@ -3740,6 +3740,7 @@ export type Database = {
           last_name: string
           phone: string | null
           sale_id: string
+          seat: string | null
           sort_order: number
         }
         Insert: {
@@ -3756,6 +3757,7 @@ export type Database = {
           last_name?: string
           phone?: string | null
           sale_id: string
+          seat?: string | null
           sort_order?: number
         }
         Update: {
@@ -3772,6 +3774,7 @@ export type Database = {
           last_name?: string
           phone?: string | null
           sale_id?: string
+          seat?: string | null
           sort_order?: number
         }
         Relationships: [
