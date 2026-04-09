@@ -96,6 +96,8 @@ export default function WhatsAppInboxPage() {
   const [showMsgSearch, setShowMsgSearch] = useState(false);
   const msgSearchRef = useRef<HTMLInputElement>(null);
   const [labelConvId, setLabelConvId] = useState<string | null>(null);
+  const [convLabelsMap, setConvLabelsMap] = useState<Record<string, { name: string; color: string }[]>>({});
+  const [allLabels, setAllLabels] = useState<{ id: string; name: string; color: string }[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -116,7 +118,26 @@ export default function WhatsAppInboxPage() {
   useEffect(() => {
     if (!empresaId) return;
     loadConversations();
+    loadAllLabelsAndMappings();
   }, [empresaId]);
+
+  const loadAllLabelsAndMappings = async () => {
+    const [{ data: lbls }, { data: mappings }] = await Promise.all([
+      supabase.from('whatsapp_labels').select('*').eq('empresa_id', empresaId).order('name') as any,
+      supabase.from('whatsapp_conversation_labels').select('conversation_id, label_id').eq('empresa_id', empresaId) as any,
+    ]);
+    const labelsById: Record<string, { name: string; color: string }> = {};
+    (lbls || []).forEach((l: any) => { labelsById[l.id] = { name: l.name, color: l.color }; });
+    setAllLabels(lbls || []);
+    const map: Record<string, { name: string; color: string }[]> = {};
+    (mappings || []).forEach((m: any) => {
+      if (labelsById[m.label_id]) {
+        if (!map[m.conversation_id]) map[m.conversation_id] = [];
+        map[m.conversation_id].push(labelsById[m.label_id]);
+      }
+    });
+    setConvLabelsMap(map);
+  };
 
   // Fetch profile pictures via proxy to avoid CORS
   useEffect(() => {
@@ -1069,6 +1090,9 @@ export default function WhatsAppInboxPage() {
                             {displayName}
                             {conv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
                             {conv.supplier_id && <Handshake className="h-3.5 w-3.5 shrink-0 text-[#00a884]" />}
+                            {(convLabelsMap[conv.id] || []).map((lbl, i) => (
+                              <span key={i} className="inline-block h-[10px] w-[10px] rounded-full shrink-0" style={{ backgroundColor: lbl.color }} title={lbl.name} />
+                            ))}
                           </span>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
                             <span className="text-[12px]" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
@@ -1799,7 +1823,7 @@ export default function WhatsAppInboxPage() {
 
       <LabelPickerModal
         open={!!labelConvId}
-        onOpenChange={(v) => { if (!v) setLabelConvId(null); }}
+        onOpenChange={(v) => { if (!v) { setLabelConvId(null); loadAllLabelsAndMappings(); } }}
         conversationId={labelConvId || ''}
         empresaId={empresaId}
       />
