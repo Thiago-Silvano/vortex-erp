@@ -95,6 +95,7 @@ export default function WhatsAppInboxPage() {
   const [msgSearch, setMsgSearch] = useState('');
   const [showMsgSearch, setShowMsgSearch] = useState(false);
   const msgSearchRef = useRef<HTMLInputElement>(null);
+  const [labelConvId, setLabelConvId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
