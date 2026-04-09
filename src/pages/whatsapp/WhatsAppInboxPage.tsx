@@ -1130,6 +1130,14 @@ export default function WhatsAppInboxPage() {
                       <MailOpen className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
                       Marcar como não lida
                     </ContextMenuItem>
+                    <ContextMenuItem
+                      className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
+                      style={{ color: '#3b4a54' }}
+                      onClick={() => setLabelConvId(conv.id)}
+                    >
+                      <Tag className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
+                      Etiquetar conversa
+                    </ContextMenuItem>
                     <ContextMenuSeparator className="my-1" style={{ backgroundColor: '#e9edef' }} />
                     <ContextMenuItem
                       className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
