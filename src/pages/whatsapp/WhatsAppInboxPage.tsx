@@ -17,6 +17,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import MessageBubble from '@/components/whatsapp/MessageBubble';
+import LabelPickerModal from '@/components/whatsapp/LabelPickerModal';
 import {
   ContextMenu,
   ContextMenuContent,
