@@ -1796,6 +1796,13 @@ export default function WhatsAppInboxPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <LabelPickerModal
+        open={!!labelConvId}
+        onOpenChange={(v) => { if (!v) setLabelConvId(null); }}
+        conversationId={labelConvId || ''}
+        empresaId={empresaId}
+      />
     </AppLayout>
   );
 }
