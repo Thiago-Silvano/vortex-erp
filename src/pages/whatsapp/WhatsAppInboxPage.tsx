@@ -118,7 +118,26 @@ export default function WhatsAppInboxPage() {
   useEffect(() => {
     if (!empresaId) return;
     loadConversations();
+    loadAllLabelsAndMappings();
   }, [empresaId]);
+
+  const loadAllLabelsAndMappings = async () => {
+    const [{ data: lbls }, { data: mappings }] = await Promise.all([
+      supabase.from('whatsapp_labels').select('*').eq('empresa_id', empresaId).order('name') as any,
+      supabase.from('whatsapp_conversation_labels').select('conversation_id, label_id').eq('empresa_id', empresaId) as any,
+    ]);
+    const labelsById: Record<string, { name: string; color: string }> = {};
+    (lbls || []).forEach((l: any) => { labelsById[l.id] = { name: l.name, color: l.color }; });
+    setAllLabels(lbls || []);
+    const map: Record<string, { name: string; color: string }[]> = {};
+    (mappings || []).forEach((m: any) => {
+      if (labelsById[m.label_id]) {
+        if (!map[m.conversation_id]) map[m.conversation_id] = [];
+        map[m.conversation_id].push(labelsById[m.label_id]);
+      }
+    });
+    setConvLabelsMap(map);
+  };
 
   // Fetch profile pictures via proxy to avoid CORS
   useEffect(() => {
