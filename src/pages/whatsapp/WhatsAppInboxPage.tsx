@@ -1090,6 +1090,9 @@ export default function WhatsAppInboxPage() {
                             {displayName}
                             {conv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
                             {conv.supplier_id && <Handshake className="h-3.5 w-3.5 shrink-0 text-[#00a884]" />}
+                            {(convLabelsMap[conv.id] || []).map((lbl, i) => (
+                              <span key={i} className="inline-block h-[10px] w-[10px] rounded-full shrink-0" style={{ backgroundColor: lbl.color }} title={lbl.name} />
+                            ))}
                           </span>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
                             <span className="text-[12px]" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
@@ -1820,7 +1823,7 @@ export default function WhatsAppInboxPage() {
 
       <LabelPickerModal
         open={!!labelConvId}
-        onOpenChange={(v) => { if (!v) setLabelConvId(null); }}
+        onOpenChange={(v) => { if (!v) { setLabelConvId(null); loadAllLabelsAndMappings(); } }}
         conversationId={labelConvId || ''}
         empresaId={empresaId}
       />
