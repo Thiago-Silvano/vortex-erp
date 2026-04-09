@@ -17,6 +17,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import MessageBubble from '@/components/whatsapp/MessageBubble';
+import LabelPickerModal from '@/components/whatsapp/LabelPickerModal';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -94,6 +95,7 @@ export default function WhatsAppInboxPage() {
   const [msgSearch, setMsgSearch] = useState('');
   const [showMsgSearch, setShowMsgSearch] = useState(false);
   const msgSearchRef = useRef<HTMLInputElement>(null);
+  const [labelConvId, setLabelConvId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -1128,6 +1130,14 @@ export default function WhatsAppInboxPage() {
                       <MailOpen className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
                       Marcar como não lida
                     </ContextMenuItem>
+                    <ContextMenuItem
+                      className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
+                      style={{ color: '#3b4a54' }}
+                      onClick={() => setLabelConvId(conv.id)}
+                    >
+                      <Tag className="h-[18px] w-[18px]" style={{ color: '#54656f' }} />
+                      Etiquetar conversa
+                    </ContextMenuItem>
                     <ContextMenuSeparator className="my-1" style={{ backgroundColor: '#e9edef' }} />
                     <ContextMenuItem
                       className="flex items-center gap-3 px-6 py-2.5 text-[14px] cursor-pointer hover:bg-[#f5f6f6] focus:bg-[#f5f6f6]"
@@ -1786,6 +1796,13 @@ export default function WhatsAppInboxPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <LabelPickerModal
+        open={!!labelConvId}
+        onOpenChange={(v) => { if (!v) setLabelConvId(null); }}
+        conversationId={labelConvId || ''}
+        empresaId={empresaId}
+      />
     </AppLayout>
   );
 }
