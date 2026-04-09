@@ -1090,9 +1090,6 @@ export default function WhatsAppInboxPage() {
                             {displayName}
                             {conv.contact_id && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
                             {conv.supplier_id && <Handshake className="h-3.5 w-3.5 shrink-0 text-[#00a884]" />}
-                            {(convLabelsMap[conv.id] || []).map((lbl, i) => (
-                              <span key={i} className="inline-block h-[10px] w-[10px] rounded-full shrink-0" style={{ backgroundColor: lbl.color }} title={lbl.name} />
-                            ))}
                           </span>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
                             <span className="text-[12px]" style={{ color: conv.unread_count > 0 ? '#25d366' : '#667781' }}>
@@ -1101,6 +1098,19 @@ export default function WhatsAppInboxPage() {
                             <ChevronDown className="h-[18px] w-[18px] opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: '#54656f' }} />
                           </div>
                         </div>
+                        {(convLabelsMap[conv.id] || []).length > 0 && (
+                          <div className="flex items-center gap-1 mb-[2px] overflow-hidden">
+                            {(convLabelsMap[conv.id] || []).map((lbl, i) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center px-[6px] py-[1px] rounded text-[11px] font-medium truncate shrink-0"
+                                style={{ backgroundColor: lbl.color, color: '#ffffff' }}
+                              >
+                                {lbl.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         <div className="flex items-center justify-between">
                           <p className="text-[14px] truncate pr-2" style={{ color: '#667781' }}>
                             {getLastMsgPreview(conv)}
