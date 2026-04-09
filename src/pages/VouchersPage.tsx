@@ -307,6 +307,7 @@ export default function VouchersPage() {
         const airPax: AirlineVoucherPassenger[] = passengers.map((p: any, i: number) => ({
           name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
           eticketNumber: p.eticket_number || undefined,
+          seat: p.seat || undefined,
           baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
         }));
 
