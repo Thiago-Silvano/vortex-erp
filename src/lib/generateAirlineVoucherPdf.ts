@@ -31,6 +31,7 @@ export interface AirlineVoucherLeg {
 export interface AirlineVoucherPassenger {
   name: string;
   eticketNumber?: string;
+  seat?: string;
   baggage?: {
     personalItem: number;
     carryOn: number;
@@ -509,11 +510,14 @@ function drawPassengerCard(
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
   doc.text(s(pax.name.toUpperCase()), innerLeft, row1Y);
 
-  if (pax.eticketNumber) {
+  const rightParts: string[] = [];
+  if (pax.eticketNumber) rightParts.push(`E-ticket: ${s(pax.eticketNumber)}`);
+  if (pax.seat) rightParts.push(`Assento: ${s(pax.seat)}`);
+  if (rightParts.length > 0) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-    doc.text(`E-ticket: ${s(pax.eticketNumber)}`, innerRight, row1Y, { align: "right" });
+    doc.text(rightParts.join("  |  "), innerRight, row1Y, { align: "right" });
   }
 
   // Separator line

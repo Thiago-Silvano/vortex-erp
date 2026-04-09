@@ -73,6 +73,7 @@ interface Passenger {
   phone: string;
   is_main: boolean;
   eticket_number: string;
+  seat: string;
 }
 
 interface SupplierOption { id: string; name: string; }
@@ -388,7 +389,7 @@ export default function NewSalePage() {
       id: p.id, first_name: p.first_name, last_name: p.last_name, birth_date: p.birth_date || '',
       document_type: p.document_type || 'cpf', document_number: p.document_number || '',
       document_expiry: p.document_expiry || '', email: p.email || '', phone: p.phone || '', is_main: p.is_main || false,
-      eticket_number: p.eticket_number || '',
+      eticket_number: p.eticket_number || '', seat: p.seat || '',
     })));
 
     // Load internal files
@@ -855,7 +856,7 @@ export default function NewSalePage() {
     setPassengers(prev => [...prev, {
       first_name: '', last_name: '', birth_date: '', document_type: 'cpf',
       document_number: '', document_expiry: '', email: '', phone: '', is_main: prev.length === 0,
-      eticket_number: '',
+      eticket_number: '', seat: '',
     }]);
   };
 
@@ -879,7 +880,7 @@ export default function NewSalePage() {
         email: client.email || '',
         phone: client.phone || '',
         is_main: prev.length === 0,
-        eticket_number: '',
+        eticket_number: '', seat: '',
       }];
     });
   };
@@ -1265,7 +1266,7 @@ export default function NewSalePage() {
         birth_date: p.birth_date || null, document_type: p.document_type,
         document_number: p.document_number, document_expiry: p.document_expiry || null,
         email: p.email, phone: p.phone, is_main: p.is_main, sort_order: idx,
-        eticket_number: p.eticket_number || '',
+        eticket_number: p.eticket_number || '', seat: p.seat || '',
       })));
     }
 
@@ -1811,6 +1812,7 @@ export default function NewSalePage() {
       const airPax: AirlineVoucherPassenger[] = passengers.map((p, i) => ({
         name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
         eticketNumber: p.eticket_number || undefined,
+        seat: p.seat || undefined,
         baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
       }));
 
@@ -2416,6 +2418,7 @@ export default function NewSalePage() {
                   <div><Label className="text-xs">E-mail</Label><Input value={pax.email} onChange={e => updatePassenger(idx, 'email', maskEmail(e.target.value))} placeholder="email@exemplo.com" type="email" /></div>
                   <div><Label className="text-xs">Telefone</Label><Input value={pax.phone} onChange={e => updatePassenger(idx, 'phone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
                   <div><Label className="text-xs">Nº Bilhete Eletrônico</Label><Input value={pax.eticket_number} onChange={e => updatePassenger(idx, 'eticket_number', e.target.value)} placeholder="Ex: 957-1234567890" /></div>
+                  <div><Label className="text-xs">Assento</Label><Input value={pax.seat} onChange={e => updatePassenger(idx, 'seat', e.target.value)} placeholder="Ex: 12A" /></div>
                 </div>
               </div>
             ))}
