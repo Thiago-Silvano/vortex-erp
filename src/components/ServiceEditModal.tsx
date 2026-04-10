@@ -92,6 +92,7 @@ export interface ServiceMetadata {
   hotel?: HotelInfo;
   experience?: ExperienceInfo;
   detailedDescription?: string;
+  isAirService?: boolean;
   totalTravelDurationOutbound?: string;
   totalTravelDurationReturn?: string;
 }
@@ -148,6 +149,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
+  const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
   const [airlineId, setAirlineId] = useState(metadata.airlineId || '');
   const [airlinesList, setAirlinesList] = useState<any[]>([]);
 
@@ -157,6 +159,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setType(metadata.type || 'adicional');
       setDesc(description);
       setDetailedDesc(metadata.detailedDescription || '');
+      setIsAirService(metadata.isAirService || false);
       // Sync main airlineId to legs that don't have their own
       const legs = (metadata.flightLegs || []).map(l => ({
         ...l,
@@ -331,7 +334,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
 
   const handleSave = () => {
     const selectedImages = hotelImages.filter((_, i) => selectedImageIndices.has(i));
-    const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
+    const meta: ServiceMetadata = { type, detailedDescription: detailedDesc, isAirService: type === 'adicional' ? isAirService : undefined };
     if (type === 'aereo') {
       meta.airlineId = airlineId || undefined;
       // Auto-compute stopover flags based on time between consecutive legs
@@ -454,6 +457,13 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             <Label>Descrição detalhada (aparece na proposta)</Label>
             <RichTextEditor value={detailedDesc} onChange={setDetailedDesc} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
           </div>
+
+          {type === 'adicional' && (
+            <div className="flex items-center gap-2 py-1">
+              <Checkbox id="isAirService" checked={isAirService} onCheckedChange={(v) => setIsAirService(!!v)} />
+              <Label htmlFor="isAirService" className="text-sm cursor-pointer">Serviço aéreo? (aparecerá no voucher aéreo)</Label>
+            </div>
+          )}
 
           {/* ── AÉREO ── */}
           {type === 'aereo' && (
