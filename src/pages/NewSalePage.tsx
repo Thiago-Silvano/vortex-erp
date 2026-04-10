@@ -1761,10 +1761,18 @@ export default function NewSalePage() {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o voucher'); return; }
 
     const airlineItems = items.filter(i => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
-    if (airlineItems.length === 0) {
+    const additionalAirItems = items.filter(i => i.metadata?.type === 'adicional' && i.metadata?.isAirService);
+    if (airlineItems.length === 0 && additionalAirItems.length === 0) {
       toast.error('Nenhum serviço aéreo encontrado nesta venda');
       return;
     }
+
+    // Build additional air services
+    const additionalServices: AdditionalAirService[] = additionalAirItems.map(ai => ({
+      title: ai.description || 'Serviço Adicional',
+      description: ai.metadata?.detailedDescription ? ai.metadata.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : undefined,
+      reservationNumber: ai.reservation_number || undefined,
+    }));
 
     const result = await prepareVoucherCommonData();
     if (!result) return;
