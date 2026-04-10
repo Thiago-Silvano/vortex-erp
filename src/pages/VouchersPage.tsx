@@ -276,64 +276,99 @@ export default function VouchersPage() {
         loadVortexWhiteLogo(),
       ]);
 
-      const airlineItems = items.filter((i: any) => (i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length) || (i.metadata?.type === 'adicional' && i.metadata?.isAirService));
-      if (airlineItems.length === 0) {
+      const airlineItems = items.filter((i: any) => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
+      const additionalAirItems = items.filter((i: any) => i.metadata?.type === 'adicional' && i.metadata?.isAirService);
+
+      if (airlineItems.length === 0 && additionalAirItems.length === 0) {
         toast.error('Nenhum serviço aéreo encontrado nesta venda');
         setGeneratingId(null);
         return;
       }
 
-      for (const airItem of airlineItems) {
-        const meta = airItem.metadata!;
-        const legs = meta.flightLegs || [];
+      // Collect additional air service notes
+      const additionalNotes = additionalAirItems.map((ai: any) => {
+        const title = ai.description || ai.catalog_item_name || '';
+        const detail = ai.metadata?.detailedDescription ? ai.metadata.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : '';
+        return [title, detail].filter(Boolean).join(': ');
+      }).filter(Boolean);
 
-        let airlineName = '';
-        if (meta.airlineId) {
-          const { data: airlineData } = await (supabase.from('airlines' as any).select('name').eq('id', meta.airlineId).maybeSingle() as any);
-          if (airlineData) airlineName = airlineData.name || '';
-        }
-
-        const legAirlineIds = [...new Set(legs.map((l: any) => l.airlineId).filter(Boolean))];
-        const airlineCache: Record<string, { name: string; logoBase64?: string }> = {};
-        for (const aid of legAirlineIds) {
-          const aidStr = String(aid);
-          const { data: aData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', aidStr).maybeSingle() as any);
-          if (aData) {
-            const legLogo = await loadLogoBase64(aData.logo_url);
-            airlineCache[aidStr] = { name: aData.name || '', logoBase64: legLogo };
-          }
-        }
-
-        const airPax: AirlineVoucherPassenger[] = passengers.map((p: any, i: number) => ({
-          name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
-          eticketNumber: p.eticket_number || undefined,
-          seat: p.seat || undefined,
-          baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
-        }));
-
+      if (airlineItems.length === 0) {
+        // Only additional air items, no flight legs — generate a simple voucher with notes
         const airVoucherData: AirlineVoucherData = {
           agencyLogoBase64: vortexLogo,
-          airlineName,
-          shortId: airItem.purchase_number || sale.short_id || undefined,
-          localizador: airItem.reservation_number || '',
-          passengers: airPax,
-          flightLegs: legs.map((l: any) => ({
-            origin: l.origin || '', destination: l.destination || '',
-            originFull: l.originFull || '', destinationFull: l.destinationFull || '',
-            departureDate: l.departureDate || '', departureTime: l.departureTime || '',
-            arrivalDate: l.arrivalDate || '', arrivalTime: l.arrivalTime || '',
-            flightCode: l.flightCode || '', connectionDuration: l.connectionDuration || '',
-            direction: l.direction || 'ida',
-            airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
-            airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
+          airlineName: '',
+          shortId: sale.short_id || undefined,
+          localizador: '',
+          passengers: passengers.map((p: any, i: number) => ({
+            name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
+            eticketNumber: p.eticket_number || undefined,
+            seat: p.seat || undefined,
+            baggage: { personalItem: 1, carryOn: 1, checkedBag: 1 },
           })),
-          notes: meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : undefined,
+          flightLegs: [],
+          notes: additionalNotes.join('\n'),
           agencyName: agency.name, agencyWhatsapp: agency.whatsapp || '',
           agencyEmail: agency.email || '', agencyWebsite: agency.website || '',
         };
-
         const airDoc = generateAirlineVoucherPdf(airVoucherData);
-        airDoc.save(`voucher-aereo-${airlineName ? airlineName.replace(/\s+/g, '-').toLowerCase() + '-' : ''}${sale.client_name.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+        airDoc.save(`voucher-aereo-${sale.client_name.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+      } else {
+        for (const airItem of airlineItems) {
+          const meta = airItem.metadata!;
+          const legs = meta.flightLegs || [];
+
+          let airlineName = '';
+          if (meta.airlineId) {
+            const { data: airlineData } = await (supabase.from('airlines' as any).select('name').eq('id', meta.airlineId).maybeSingle() as any);
+            if (airlineData) airlineName = airlineData.name || '';
+          }
+
+          const legAirlineIds = [...new Set(legs.map((l: any) => l.airlineId).filter(Boolean))];
+          const airlineCache: Record<string, { name: string; logoBase64?: string }> = {};
+          for (const aid of legAirlineIds) {
+            const aidStr = String(aid);
+            const { data: aData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', aidStr).maybeSingle() as any);
+            if (aData) {
+              const legLogo = await loadLogoBase64(aData.logo_url);
+              airlineCache[aidStr] = { name: aData.name || '', logoBase64: legLogo };
+            }
+          }
+
+          const airPax: AirlineVoucherPassenger[] = passengers.map((p: any, i: number) => ({
+            name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
+            eticketNumber: p.eticket_number || undefined,
+            seat: p.seat || undefined,
+            baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
+          }));
+
+          // Combine original notes with additional air service notes
+          const baseNotes = meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : '';
+          const allNotes = [baseNotes, ...additionalNotes].filter(Boolean).join('\n');
+
+          const airVoucherData: AirlineVoucherData = {
+            agencyLogoBase64: vortexLogo,
+            airlineName,
+            shortId: airItem.purchase_number || sale.short_id || undefined,
+            localizador: airItem.reservation_number || '',
+            passengers: airPax,
+            flightLegs: legs.map((l: any) => ({
+              origin: l.origin || '', destination: l.destination || '',
+              originFull: l.originFull || '', destinationFull: l.destinationFull || '',
+              departureDate: l.departureDate || '', departureTime: l.departureTime || '',
+              arrivalDate: l.arrivalDate || '', arrivalTime: l.arrivalTime || '',
+              flightCode: l.flightCode || '', connectionDuration: l.connectionDuration || '',
+              direction: l.direction || 'ida',
+              airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
+              airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
+            })),
+            notes: allNotes || undefined,
+            agencyName: agency.name, agencyWhatsapp: agency.whatsapp || '',
+            agencyEmail: agency.email || '', agencyWebsite: agency.website || '',
+          };
+
+          const airDoc = generateAirlineVoucherPdf(airVoucherData);
+          airDoc.save(`voucher-aereo-${airlineName ? airlineName.replace(/\s+/g, '-').toLowerCase() + '-' : ''}${sale.client_name.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+        }
       }
       toast.success('Voucher(s) aéreo(s) gerado(s)!');
     } catch (err) {
