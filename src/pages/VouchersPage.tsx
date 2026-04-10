@@ -359,7 +359,8 @@ export default function VouchersPage() {
               airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
               airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
             })),
-            notes: allNotes || undefined,
+            notes: baseNotes || undefined,
+            additionalServices,
             agencyName: agency.name, agencyWhatsapp: agency.whatsapp || '',
             agencyEmail: agency.email || '', agencyWebsite: agency.website || '',
           };
