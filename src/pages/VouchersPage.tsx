@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { Search, Plane, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
-import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger } from '@/lib/generateAirlineVoucherPdf';
+import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger, AdditionalAirService } from '@/lib/generateAirlineVoucherPdf';
 
 interface SaleRow {
   id: string;
