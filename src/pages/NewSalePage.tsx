@@ -1857,6 +1857,7 @@ export default function NewSalePage() {
           airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
         })),
         notes: meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim() : undefined,
+        additionalServices,
         agencyName: agency.name,
         agencyWhatsapp: agency.whatsapp || '',
         agencyEmail: agency.email || '',
