@@ -562,7 +562,6 @@ function drawPassengerCard(
 
   const rightParts: string[] = [];
   if (pax.eticketNumber) rightParts.push(`E-ticket: ${s(pax.eticketNumber)}`);
-  if (pax.seat) rightParts.push(`Assento: ${s(pax.seat)}`);
   if (rightParts.length > 0) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -588,7 +587,7 @@ function drawPassengerCard(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-  doc.text("Nao informado", innerLeft, row2ValueY);
+  doc.text(pax.seat ? s(pax.seat) : "Nao informado", innerLeft, row2ValueY);
 
   // Baggage header
   const bagCol = innerLeft + 35;
