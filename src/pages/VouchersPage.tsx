@@ -285,12 +285,12 @@ export default function VouchersPage() {
         return;
       }
 
-      // Collect additional air service notes
-      const additionalNotes = additionalAirItems.map((ai: any) => {
-        const title = ai.description || ai.catalog_item_name || '';
-        const detail = ai.metadata?.detailedDescription ? ai.metadata.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : '';
-        return [title, detail].filter(Boolean).join(': ');
-      }).filter(Boolean);
+      // Build additional air services as structured objects
+      const additionalServices: AdditionalAirService[] = additionalAirItems.map((ai: any) => ({
+        title: ai.description || ai.catalog_item_name || 'Serviço Adicional',
+        description: ai.metadata?.detailedDescription ? ai.metadata.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : undefined,
+        reservationNumber: ai.reservation_number || undefined,
+      }));
 
       if (airlineItems.length === 0) {
         // Only additional air items, no flight legs — generate a simple voucher with notes
