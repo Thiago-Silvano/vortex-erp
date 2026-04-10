@@ -306,7 +306,7 @@ export default function VouchersPage() {
             baggage: { personalItem: 1, carryOn: 1, checkedBag: 1 },
           })),
           flightLegs: [],
-          notes: additionalNotes.join('\n'),
+          additionalServices,
           agencyName: agency.name, agencyWhatsapp: agency.whatsapp || '',
           agencyEmail: agency.email || '', agencyWebsite: agency.website || '',
         };
@@ -341,9 +341,7 @@ export default function VouchersPage() {
             baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
           }));
 
-          // Combine original notes with additional air service notes
           const baseNotes = meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : '';
-          const allNotes = [baseNotes, ...additionalNotes].filter(Boolean).join('\n');
 
           const airVoucherData: AirlineVoucherData = {
             agencyLogoBase64: vortexLogo,
