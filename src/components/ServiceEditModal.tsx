@@ -458,6 +458,13 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             <RichTextEditor value={detailedDesc} onChange={setDetailedDesc} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
           </div>
 
+          {type === 'adicional' && (
+            <div className="flex items-center gap-2 py-1">
+              <Checkbox id="isAirService" checked={isAirService} onCheckedChange={(v) => setIsAirService(!!v)} />
+              <Label htmlFor="isAirService" className="text-sm cursor-pointer">Serviço aéreo? (aparecerá no voucher aéreo)</Label>
+            </div>
+          )}
+
           {/* ── AÉREO ── */}
           {type === 'aereo' && (
             <div className="space-y-4 border-t pt-4">
