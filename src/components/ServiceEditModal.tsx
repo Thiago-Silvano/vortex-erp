@@ -149,6 +149,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
+  const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
   const [airlineId, setAirlineId] = useState(metadata.airlineId || '');
   const [airlinesList, setAirlinesList] = useState<any[]>([]);
 
@@ -158,6 +159,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setType(metadata.type || 'adicional');
       setDesc(description);
       setDetailedDesc(metadata.detailedDescription || '');
+      setIsAirService(metadata.isAirService || false);
       // Sync main airlineId to legs that don't have their own
       const legs = (metadata.flightLegs || []).map(l => ({
         ...l,
@@ -332,7 +334,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
 
   const handleSave = () => {
     const selectedImages = hotelImages.filter((_, i) => selectedImageIndices.has(i));
-    const meta: ServiceMetadata = { type, detailedDescription: detailedDesc };
+    const meta: ServiceMetadata = { type, detailedDescription: detailedDesc, isAirService: type === 'adicional' ? isAirService : undefined };
     if (type === 'aereo') {
       meta.airlineId = airlineId || undefined;
       // Auto-compute stopover flags based on time between consecutive legs
