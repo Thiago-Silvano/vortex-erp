@@ -39,6 +39,12 @@ export interface AirlineVoucherPassenger {
   };
 }
 
+export interface AdditionalAirService {
+  title: string;
+  description?: string;
+  reservationNumber?: string;
+}
+
 export interface AirlineVoucherData {
   agencyLogoBase64?: string;
   airlineName?: string;
@@ -47,6 +53,7 @@ export interface AirlineVoucherData {
   passengers: AirlineVoucherPassenger[];
   flightLegs: AirlineVoucherLeg[];
   notes?: string;
+  additionalServices?: AdditionalAirService[];
   agencyName?: string;
   agencyWhatsapp?: string;
   agencyEmail?: string;
@@ -207,6 +214,49 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
         doc.text(line, m, y);
         y += 4;
       });
+    }
+  }
+
+  // ─── ADDITIONAL AIR SERVICES (separate section) ───────────
+  if (data.additionalServices && data.additionalServices.length > 0) {
+    y = checkPage(doc, y, 20);
+    // Section header bar
+    doc.setFillColor(SECTION_HEADER_BG[0], SECTION_HEADER_BG[1], SECTION_HEADER_BG[2]);
+    doc.rect(m, y, cw, 7, "F");
+    doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+    doc.rect(m, y + 7, cw, 0.6, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    doc.text("SERVICOS ADICIONAIS", m + 4, y + 5);
+    y += 11;
+
+    for (const svc of data.additionalServices) {
+      y = checkPage(doc, y, 15);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      doc.text(s(svc.title), m, y);
+      y += 5;
+      if (svc.reservationNumber) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+        doc.text(s(`Reserva: ${svc.reservationNumber}`), m, y);
+        y += 5;
+      }
+      if (svc.description) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+        const descLines = doc.splitTextToSize(s(svc.description), cw);
+        descLines.forEach((line: string) => {
+          y = checkPage(doc, y, 5);
+          doc.text(line, m, y);
+          y += 4;
+        });
+      }
+      y += 3;
     }
   }
 

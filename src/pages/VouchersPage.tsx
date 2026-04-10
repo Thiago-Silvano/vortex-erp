@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { Search, Plane, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
-import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger } from '@/lib/generateAirlineVoucherPdf';
+import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger, AdditionalAirService } from '@/lib/generateAirlineVoucherPdf';
 
 interface SaleRow {
   id: string;
@@ -285,12 +285,12 @@ export default function VouchersPage() {
         return;
       }
 
-      // Collect additional air service notes
-      const additionalNotes = additionalAirItems.map((ai: any) => {
-        const title = ai.description || ai.catalog_item_name || '';
-        const detail = ai.metadata?.detailedDescription ? ai.metadata.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : '';
-        return [title, detail].filter(Boolean).join(': ');
-      }).filter(Boolean);
+      // Build additional air services as structured objects
+      const additionalServices: AdditionalAirService[] = additionalAirItems.map((ai: any) => ({
+        title: ai.description || ai.catalog_item_name || 'Serviço Adicional',
+        description: ai.metadata?.detailedDescription ? ai.metadata.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : undefined,
+        reservationNumber: ai.reservation_number || undefined,
+      }));
 
       if (airlineItems.length === 0) {
         // Only additional air items, no flight legs — generate a simple voucher with notes
@@ -306,7 +306,7 @@ export default function VouchersPage() {
             baggage: { personalItem: 1, carryOn: 1, checkedBag: 1 },
           })),
           flightLegs: [],
-          notes: additionalNotes.join('\n'),
+          additionalServices,
           agencyName: agency.name, agencyWhatsapp: agency.whatsapp || '',
           agencyEmail: agency.email || '', agencyWebsite: agency.website || '',
         };
@@ -341,9 +341,7 @@ export default function VouchersPage() {
             baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
           }));
 
-          // Combine original notes with additional air service notes
           const baseNotes = meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : '';
-          const allNotes = [baseNotes, ...additionalNotes].filter(Boolean).join('\n');
 
           const airVoucherData: AirlineVoucherData = {
             agencyLogoBase64: vortexLogo,
@@ -361,7 +359,8 @@ export default function VouchersPage() {
               airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
               airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
             })),
-            notes: allNotes || undefined,
+            notes: baseNotes || undefined,
+            additionalServices,
             agencyName: agency.name, agencyWhatsapp: agency.whatsapp || '',
             agencyEmail: agency.email || '', agencyWebsite: agency.website || '',
           };
