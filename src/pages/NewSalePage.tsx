@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
-import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger } from '@/lib/generateAirlineVoucherPdf';
+import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger, AdditionalAirService } from '@/lib/generateAirlineVoucherPdf';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
@@ -1761,10 +1761,18 @@ export default function NewSalePage() {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o voucher'); return; }
 
     const airlineItems = items.filter(i => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
-    if (airlineItems.length === 0) {
+    const additionalAirItems = items.filter(i => i.metadata?.type === 'adicional' && i.metadata?.isAirService);
+    if (airlineItems.length === 0 && additionalAirItems.length === 0) {
       toast.error('Nenhum serviço aéreo encontrado nesta venda');
       return;
     }
+
+    // Build additional air services
+    const additionalServices: AdditionalAirService[] = additionalAirItems.map(ai => ({
+      title: ai.description || 'Serviço Adicional',
+      description: ai.metadata?.detailedDescription ? ai.metadata.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim() : undefined,
+      reservationNumber: ai.reservation_number || undefined,
+    }));
 
     const result = await prepareVoucherCommonData();
     if (!result) return;
@@ -1849,6 +1857,7 @@ export default function NewSalePage() {
           airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
         })),
         notes: meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim() : undefined,
+        additionalServices,
         agencyName: agency.name,
         agencyWhatsapp: agency.whatsapp || '',
         agencyEmail: agency.email || '',
