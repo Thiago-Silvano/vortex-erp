@@ -39,6 +39,12 @@ export interface AirlineVoucherPassenger {
   };
 }
 
+export interface AdditionalAirService {
+  title: string;
+  description?: string;
+  reservationNumber?: string;
+}
+
 export interface AirlineVoucherData {
   agencyLogoBase64?: string;
   airlineName?: string;
@@ -47,6 +53,7 @@ export interface AirlineVoucherData {
   passengers: AirlineVoucherPassenger[];
   flightLegs: AirlineVoucherLeg[];
   notes?: string;
+  additionalServices?: AdditionalAirService[];
   agencyName?: string;
   agencyWhatsapp?: string;
   agencyEmail?: string;
