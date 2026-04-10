@@ -92,6 +92,7 @@ export interface ServiceMetadata {
   hotel?: HotelInfo;
   experience?: ExperienceInfo;
   detailedDescription?: string;
+  isAirService?: boolean;
   totalTravelDurationOutbound?: string;
   totalTravelDurationReturn?: string;
 }
