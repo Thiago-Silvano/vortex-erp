@@ -276,7 +276,7 @@ export default function VouchersPage() {
         loadVortexWhiteLogo(),
       ]);
 
-      const airlineItems = items.filter((i: any) => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
+      const airlineItems = items.filter((i: any) => (i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length) || (i.metadata?.type === 'adicional' && i.metadata?.isAirService));
       if (airlineItems.length === 0) {
         toast.error('Nenhum serviço aéreo encontrado nesta venda');
         setGeneratingId(null);
