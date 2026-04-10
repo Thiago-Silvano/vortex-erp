@@ -1541,7 +1541,7 @@ export default function NewSalePage() {
         } else if (sellerData.commission_type === 'profit_percentage') {
           commValue = grossProfit * (pct / 100);
         } else if (sellerData.commission_type === 'company_profit_percentage') {
-          commValue = commissionValue * (pct / 100);
+          commValue = grossProfit * (pct / 100);
         } else {
           commValue = grossProfit * (pct / 100);
         }
@@ -3337,7 +3337,7 @@ export default function NewSalePage() {
                   } else if (seller.commission_type === 'profit_percentage') {
                     return grossProfit * (pct / 100);
                   } else if (seller.commission_type === 'company_profit_percentage') {
-                    return commissionValue * (pct / 100);
+                    return grossProfit * (pct / 100);
                   }
                   return grossProfit * (pct / 100);
                 })();
