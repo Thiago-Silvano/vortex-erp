@@ -20,7 +20,7 @@ import {
   ChevronUp, ChevronDown, Copy, Lock, Unlock, Save,
   Minus, Plane, Building2, Bus, Ticket, ShieldPlus, Sticker,
   AlignHorizontalDistributeCenter, AlignVerticalDistributeCenter,
-  Camera, Undo2, Redo2, Compass, MessageCircle, CalendarDays,
+  Camera, Undo2, Redo2, Compass, MessageCircle, CalendarDays, BedDouble,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -206,6 +206,10 @@ const STICKER_DEFS = [
   {
     id: 'calendar', name: 'Calendário', Icon: CalendarDays,
     svg: 'M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5zm2 4h5v5H7v-5z',
+  },
+  {
+    id: 'bed', name: 'Cama', Icon: BedDouble,
+    svg: 'M7 14a2 2 0 01-2-2V7a1 1 0 011-1h4a1 1 0 011 1v1h2V7a1 1 0 011-1h4a1 1 0 011 1v5a2 2 0 01-2 2H7zM3 18v-4a2 2 0 012-2h14a2 2 0 012 2v4M5 18v2M19 18v2',
   },
 ];
 
