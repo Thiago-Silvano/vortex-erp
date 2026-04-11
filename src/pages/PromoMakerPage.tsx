@@ -969,11 +969,18 @@ export default function PromoMakerPage() {
               userSelect: 'none',
               ...(el.gradientFade !== 'none' ? (() => {
                 const intensity = el.gradientFadeIntensity ?? 1;
-                const endAlpha = 1 - intensity; // 1 = fully transparent end, 0 = no fade
+                const startColor = el.gradientColorStart || '#000000';
+                const endColor = el.gradientColorEnd || '#000000';
                 const dir = el.gradientFade === 'left-right' ? 'to right'
                   : el.gradientFade === 'right-left' ? 'to left'
                   : el.gradientFade === 'top-bottom' ? 'to bottom' : 'to top';
-                const grad = `linear-gradient(${dir}, rgba(0,0,0,1), rgba(0,0,0,${endAlpha}))`;
+                // Parse hex to rgb for rgba
+                const hexToRgb = (hex: string) => {
+                  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+                  return `${r},${g},${b}`;
+                };
+                const endAlpha = 1 - intensity;
+                const grad = `linear-gradient(${dir}, rgba(${hexToRgb(startColor)},1), rgba(${hexToRgb(endColor)},${endAlpha}))`;
                 return { WebkitMaskImage: grad, maskImage: grad };
               })() : {}),
             }}
