@@ -82,7 +82,7 @@ interface StickerElement {
   size: number;
   color: string;
   iconColor: string;
-  bgShape: 'circle' | 'rounded-rect';
+  bgShape: 'circle' | 'rounded-rect' | 'none';
   opacity: number;
   rotation: number;
   locked: boolean;
@@ -1019,11 +1019,11 @@ export default function PromoMakerPage() {
             <svg viewBox="0 0 80 80" className="w-full h-full" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
               {bgShape === 'circle' ? (
                 <circle cx="40" cy="40" r="38" fill={el.color} />
-              ) : (
+              ) : bgShape === 'rounded-rect' ? (
                 <rect x="2" y="2" width="76" height="76" rx="16" ry="16" fill={el.color} />
-              )}
-              <g transform="translate(20, 20) scale(1.5)">
-                <path d={def.svg} fill={iconColor} />
+              ) : null}
+              <g transform={bgShape === 'none' ? 'translate(4, 4) scale(3)' : 'translate(20, 20) scale(1.5)'}>
+                <path d={def.svg} fill={bgShape === 'none' ? el.color : iconColor} />
               </g>
             </svg>
           </div>
@@ -1280,6 +1280,10 @@ export default function PromoMakerPage() {
           <Button size="sm" variant={sel.bgShape === 'circle' ? 'default' : 'outline'} className="h-8 gap-1 text-xs flex-1"
             onClick={() => updateEl(sel.id, { bgShape: 'circle' })}>
             <Circle className="h-3 w-3" /> Círculo
+          </Button>
+          <Button size="sm" variant={(sel.bgShape === 'none' || !sel.bgShape) ? 'default' : 'outline'} className="h-8 gap-1 text-xs flex-1"
+            onClick={() => updateEl(sel.id, { bgShape: 'none' })}>
+            <Minus className="h-3 w-3" /> Sem
           </Button>
         </div>
       </div>
