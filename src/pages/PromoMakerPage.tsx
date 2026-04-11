@@ -80,6 +80,8 @@ interface StickerElement {
   y: number;
   size: number;
   color: string;
+  iconColor: string;
+  bgShape: 'circle' | 'rounded-rect';
   opacity: number;
   rotation: number;
   locked: boolean;
@@ -945,7 +947,8 @@ export default function PromoMakerPage() {
               left: `${el.x}%`, top: `${el.y}%`,
               transform: `translate(-50%, -50%) rotate(${el.rotation || 0}deg)`,
               width: `${el.width}%`,
-              height: isLine ? `${Math.max(el.height, 0.3)}%` : `${el.height}%`,
+              height: isLine ? `${Math.max(el.height, 0.3)}%` : el.shape === 'circle' ? 'auto' : `${el.height}%`,
+              aspectRatio: el.shape === 'circle' ? '1 / 1' : undefined,
               backgroundColor: isImageTarget ? undefined : el.color,
               borderRadius: el.shape === 'circle' ? '50%' : isLine ? '0' : `${el.borderRadius}px`,
               border: el.borderWidth > 0 ? `${el.borderWidth}px solid ${el.borderColor}` : undefined,
