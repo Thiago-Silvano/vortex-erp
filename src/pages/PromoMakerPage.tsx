@@ -495,6 +495,8 @@ export default function PromoMakerPage() {
       opacity: shape === 'line' ? 1 : 0.8, locked: false,
       gradientFade: 'none' as GradientFade,
       gradientFadeIntensity: 1,
+      gradientColorStart: '#000000',
+      gradientColorEnd: '#000000',
       rotation: 0,
       shadow: 'none',
     };
