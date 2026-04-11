@@ -1261,15 +1261,41 @@ export default function PromoMakerPage() {
         <p className="text-sm font-medium mt-1">{STICKER_DEFS.find(s => s.id === sel.sticker)?.name}</p>
       </div>
       <div>
-        <Label className="text-xs">Cor</Label>
+        <Label className="text-xs">Formato do fundo</Label>
+        <div className="flex gap-1 mt-1">
+          <Button size="sm" variant={sel.bgShape === 'rounded-rect' ? 'default' : 'outline'} className="h-8 gap-1 text-xs flex-1"
+            onClick={() => updateEl(sel.id, { bgShape: 'rounded-rect' })}>
+            <Square className="h-3 w-3" /> Quadrado
+          </Button>
+          <Button size="sm" variant={sel.bgShape === 'circle' ? 'default' : 'outline'} className="h-8 gap-1 text-xs flex-1"
+            onClick={() => updateEl(sel.id, { bgShape: 'circle' })}>
+            <Circle className="h-3 w-3" /> Círculo
+          </Button>
+        </div>
+      </div>
+      <div>
+        <Label className="text-xs">Cor do fundo</Label>
         <div className="flex items-center gap-2 mt-1">
           <input type="color" value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
           <Input value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="h-8 text-xs flex-1" />
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
-          {['#ffffff', '#000000', '#d4af37', '#00b4d8', '#e63946', '#25d366', '#ff6b35', '#7209b7'].map(c => (
+          {['#ff6b35', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c', '#f39c12', '#1abc9c', '#34495e'].map(c => (
             <div key={c} className="w-6 h-6 rounded cursor-pointer border border-border hover:scale-110 transition-transform"
               style={{ background: c }} onClick={() => updateEl(sel.id, { color: c })} />
+          ))}
+        </div>
+      </div>
+      <div>
+        <Label className="text-xs">Cor do ícone</Label>
+        <div className="flex items-center gap-2 mt-1">
+          <input type="color" value={sel.iconColor || '#ffffff'} onChange={e => updateEl(sel.id, { iconColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+          <Input value={sel.iconColor || '#ffffff'} onChange={e => updateEl(sel.id, { iconColor: e.target.value })} className="h-8 text-xs flex-1" />
+        </div>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {['#ffffff', '#000000', '#f5f5f5', '#1a1a2e'].map(c => (
+            <div key={c} className="w-6 h-6 rounded cursor-pointer border border-border hover:scale-110 transition-transform"
+              style={{ background: c }} onClick={() => updateEl(sel.id, { iconColor: c })} />
           ))}
         </div>
       </div>
