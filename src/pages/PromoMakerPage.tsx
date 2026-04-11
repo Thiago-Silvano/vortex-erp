@@ -974,14 +974,13 @@ export default function PromoMakerPage() {
                 const dir = el.gradientFade === 'left-right' ? 'to right'
                   : el.gradientFade === 'right-left' ? 'to left'
                   : el.gradientFade === 'top-bottom' ? 'to bottom' : 'to top';
-                // Parse hex to rgb for rgba
-                const hexToRgb = (hex: string) => {
+                const hexToRgba = (hex: string, a: number) => {
                   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-                  return `${r},${g},${b}`;
+                  return `rgba(${r},${g},${b},${a})`;
                 };
                 const endAlpha = 1 - intensity;
-                const grad = `linear-gradient(${dir}, rgba(${hexToRgb(startColor)},1), rgba(${hexToRgb(endColor)},${endAlpha}))`;
-                return { WebkitMaskImage: grad, maskImage: grad };
+                const grad = `linear-gradient(${dir}, ${hexToRgba(startColor, 1)}, ${hexToRgba(endColor, endAlpha)})`;
+                return { background: grad };
               })() : {}),
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
