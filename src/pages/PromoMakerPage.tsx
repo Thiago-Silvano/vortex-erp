@@ -48,6 +48,7 @@ interface TextElement {
   strokeWidth: number;
   locked: boolean;
   width: number;
+  rotation: number;
 }
 
 type GradientFade = 'none' | 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top';
