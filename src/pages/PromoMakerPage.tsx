@@ -80,6 +80,8 @@ interface StickerElement {
   y: number;
   size: number;
   color: string;
+  iconColor: string;
+  bgShape: 'circle' | 'rounded-rect';
   opacity: number;
   rotation: number;
   locked: boolean;
@@ -496,7 +498,8 @@ export default function PromoMakerPage() {
   const addStickerElement = (stickerId: string) => {
     const newEl: StickerElement = {
       id: genId(), type: 'sticker', sticker: stickerId,
-      x: 50, y: 50, size: 10, color: '#ffffff',
+      x: 50, y: 50, size: 10, color: '#ff6b35',
+      iconColor: '#ffffff', bgShape: 'rounded-rect',
       opacity: 1, rotation: 0, locked: false,
     };
     setElements(prev => [...prev, newEl]);
@@ -945,7 +948,8 @@ export default function PromoMakerPage() {
               left: `${el.x}%`, top: `${el.y}%`,
               transform: `translate(-50%, -50%) rotate(${el.rotation || 0}deg)`,
               width: `${el.width}%`,
-              height: isLine ? `${Math.max(el.height, 0.3)}%` : `${el.height}%`,
+              height: isLine ? `${Math.max(el.height, 0.3)}%` : el.shape === 'circle' ? 'auto' : `${el.height}%`,
+              aspectRatio: el.shape === 'circle' ? '1 / 1' : undefined,
               backgroundColor: isImageTarget ? undefined : el.color,
               borderRadius: el.shape === 'circle' ? '50%' : isLine ? '0' : `${el.borderRadius}px`,
               border: el.borderWidth > 0 ? `${el.borderWidth}px solid ${el.borderColor}` : undefined,
@@ -988,6 +992,8 @@ export default function PromoMakerPage() {
       {elements.filter(el => el.type === 'sticker').map(el => {
         const def = STICKER_DEFS.find(s => s.id === el.sticker);
         if (!def) return null;
+        const bgShape = el.bgShape || 'rounded-rect';
+        const iconColor = el.iconColor || '#ffffff';
         return (
           <div
             key={el.id}
@@ -995,7 +1001,8 @@ export default function PromoMakerPage() {
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
               transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`,
-              width: `${el.size}%`, height: `${el.size}%`,
+              width: `${el.size}%`,
+              aspectRatio: '1 / 1',
               opacity: el.opacity,
               pointerEvents: el.locked ? 'none' : 'auto',
               userSelect: 'none',
@@ -1003,10 +1010,15 @@ export default function PromoMakerPage() {
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
             onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
           >
-            <svg viewBox="-2 -2 28 28" className="w-full h-full">
-              <circle cx="12" cy="12" r="13.5" fill="none" stroke={el.color} strokeWidth="1.5" opacity="0.5" />
-              <circle cx="12" cy="12" r="11.5" fill={el.color} opacity="0.15" />
-              <path d={def.svg} fill={el.color} />
+            <svg viewBox="0 0 80 80" className="w-full h-full" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
+              {bgShape === 'circle' ? (
+                <circle cx="40" cy="40" r="38" fill={el.color} />
+              ) : (
+                <rect x="2" y="2" width="76" height="76" rx="16" ry="16" fill={el.color} />
+              )}
+              <g transform="translate(20, 20) scale(1.5)">
+                <path d={def.svg} fill={iconColor} />
+              </g>
             </svg>
           </div>
         );
@@ -1249,15 +1261,41 @@ export default function PromoMakerPage() {
         <p className="text-sm font-medium mt-1">{STICKER_DEFS.find(s => s.id === sel.sticker)?.name}</p>
       </div>
       <div>
-        <Label className="text-xs">Cor</Label>
+        <Label className="text-xs">Formato do fundo</Label>
+        <div className="flex gap-1 mt-1">
+          <Button size="sm" variant={sel.bgShape === 'rounded-rect' ? 'default' : 'outline'} className="h-8 gap-1 text-xs flex-1"
+            onClick={() => updateEl(sel.id, { bgShape: 'rounded-rect' })}>
+            <Square className="h-3 w-3" /> Quadrado
+          </Button>
+          <Button size="sm" variant={sel.bgShape === 'circle' ? 'default' : 'outline'} className="h-8 gap-1 text-xs flex-1"
+            onClick={() => updateEl(sel.id, { bgShape: 'circle' })}>
+            <Circle className="h-3 w-3" /> Círculo
+          </Button>
+        </div>
+      </div>
+      <div>
+        <Label className="text-xs">Cor do fundo</Label>
         <div className="flex items-center gap-2 mt-1">
           <input type="color" value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
           <Input value={sel.color} onChange={e => updateEl(sel.id, { color: e.target.value })} className="h-8 text-xs flex-1" />
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
-          {['#ffffff', '#000000', '#d4af37', '#00b4d8', '#e63946', '#25d366', '#ff6b35', '#7209b7'].map(c => (
+          {['#ff6b35', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c', '#f39c12', '#1abc9c', '#34495e'].map(c => (
             <div key={c} className="w-6 h-6 rounded cursor-pointer border border-border hover:scale-110 transition-transform"
               style={{ background: c }} onClick={() => updateEl(sel.id, { color: c })} />
+          ))}
+        </div>
+      </div>
+      <div>
+        <Label className="text-xs">Cor do ícone</Label>
+        <div className="flex items-center gap-2 mt-1">
+          <input type="color" value={sel.iconColor || '#ffffff'} onChange={e => updateEl(sel.id, { iconColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+          <Input value={sel.iconColor || '#ffffff'} onChange={e => updateEl(sel.id, { iconColor: e.target.value })} className="h-8 text-xs flex-1" />
+        </div>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {['#ffffff', '#000000', '#f5f5f5', '#1a1a2e'].map(c => (
+            <div key={c} className="w-6 h-6 rounded cursor-pointer border border-border hover:scale-110 transition-transform"
+              style={{ background: c }} onClick={() => updateEl(sel.id, { iconColor: c })} />
           ))}
         </div>
       </div>
