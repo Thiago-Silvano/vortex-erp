@@ -119,6 +119,7 @@ const GOOGLE_FONTS = [
 const defaultTextProps = {
   fontStyle: 'normal' as const,
   textDecoration: 'none' as const,
+  rotation: 0,
 };
 
 const TEMPLATES = [
