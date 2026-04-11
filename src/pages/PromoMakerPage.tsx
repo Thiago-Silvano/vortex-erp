@@ -992,6 +992,8 @@ export default function PromoMakerPage() {
       {elements.filter(el => el.type === 'sticker').map(el => {
         const def = STICKER_DEFS.find(s => s.id === el.sticker);
         if (!def) return null;
+        const bgShape = el.bgShape || 'rounded-rect';
+        const iconColor = el.iconColor || '#ffffff';
         return (
           <div
             key={el.id}
@@ -999,7 +1001,8 @@ export default function PromoMakerPage() {
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
               transform: `translate(-50%, -50%) rotate(${el.rotation}deg)`,
-              width: `${el.size}%`, height: `${el.size}%`,
+              width: `${el.size}%`,
+              aspectRatio: '1 / 1',
               opacity: el.opacity,
               pointerEvents: el.locked ? 'none' : 'auto',
               userSelect: 'none',
@@ -1007,10 +1010,15 @@ export default function PromoMakerPage() {
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
             onClick={(e) => { e.stopPropagation(); if (!e.ctrlKey && !e.metaKey) { setSelectedId(el.id); setSelectedIds([]); } }}
           >
-            <svg viewBox="-2 -2 28 28" className="w-full h-full">
-              <circle cx="12" cy="12" r="13.5" fill="none" stroke={el.color} strokeWidth="1.5" opacity="0.5" />
-              <circle cx="12" cy="12" r="11.5" fill={el.color} opacity="0.15" />
-              <path d={def.svg} fill={el.color} />
+            <svg viewBox="0 0 80 80" className="w-full h-full" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
+              {bgShape === 'circle' ? (
+                <circle cx="40" cy="40" r="38" fill={el.color} />
+              ) : (
+                <rect x="2" y="2" width="76" height="76" rx="16" ry="16" fill={el.color} />
+              )}
+              <g transform="translate(20, 20) scale(1.5)">
+                <path d={def.svg} fill={iconColor} />
+              </g>
             </svg>
           </div>
         );
