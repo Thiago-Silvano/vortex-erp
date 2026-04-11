@@ -69,6 +69,8 @@ interface ShapeElement {
   locked: boolean;
   gradientFade: GradientFade;
   gradientFadeIntensity: number; // 0 to 1, default 1
+  gradientColorStart: string;
+  gradientColorEnd: string;
   rotation: number;
   shadow: string;
 }
@@ -493,6 +495,8 @@ export default function PromoMakerPage() {
       opacity: shape === 'line' ? 1 : 0.8, locked: false,
       gradientFade: 'none' as GradientFade,
       gradientFadeIntensity: 1,
+      gradientColorStart: '#000000',
+      gradientColorEnd: '#000000',
       rotation: 0,
       shadow: 'none',
     };
@@ -965,12 +969,18 @@ export default function PromoMakerPage() {
               userSelect: 'none',
               ...(el.gradientFade !== 'none' ? (() => {
                 const intensity = el.gradientFadeIntensity ?? 1;
-                const endAlpha = 1 - intensity; // 1 = fully transparent end, 0 = no fade
+                const startColor = el.gradientColorStart || '#000000';
+                const endColor = el.gradientColorEnd || '#000000';
                 const dir = el.gradientFade === 'left-right' ? 'to right'
                   : el.gradientFade === 'right-left' ? 'to left'
                   : el.gradientFade === 'top-bottom' ? 'to bottom' : 'to top';
-                const grad = `linear-gradient(${dir}, rgba(0,0,0,1), rgba(0,0,0,${endAlpha}))`;
-                return { WebkitMaskImage: grad, maskImage: grad };
+                const hexToRgba = (hex: string, a: number) => {
+                  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+                  return `rgba(${r},${g},${b},${a})`;
+                };
+                const endAlpha = 1 - intensity;
+                const grad = `linear-gradient(${dir}, ${hexToRgba(startColor, 1)}, ${hexToRgba(endColor, endAlpha)})`;
+                return { background: grad };
               })() : {}),
             }}
             onMouseDown={(e) => handleCanvasMouseDown(e, el.id)}
@@ -1425,10 +1435,28 @@ export default function PromoMakerPage() {
             </SelectContent>
           </Select>
           {sel.gradientFade !== 'none' && (
-            <div className="mt-2">
-              <Label className="text-xs flex justify-between">Intensidade <span className="text-muted-foreground">{Math.round((sel.gradientFadeIntensity ?? 1) * 100)}%</span></Label>
-              <Slider value={[sel.gradientFadeIntensity ?? 1]} onValueChange={([v]) => updateEl(sel.id, { gradientFadeIntensity: v })} min={0.1} max={1} step={0.05} />
-            </div>
+            <>
+              <div className="mt-2">
+                <Label className="text-xs flex justify-between">Intensidade <span className="text-muted-foreground">{Math.round((sel.gradientFadeIntensity ?? 1) * 100)}%</span></Label>
+                <Slider value={[sel.gradientFadeIntensity ?? 1]} onValueChange={([v]) => updateEl(sel.id, { gradientFadeIntensity: v })} min={0.1} max={1} step={0.05} />
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px]">Cor início</Label>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <input type="color" value={sel.gradientColorStart || '#000000'} onChange={e => updateEl(sel.id, { gradientColorStart: e.target.value })} className="w-6 h-6 rounded border cursor-pointer" />
+                    <Input className="h-6 w-full text-[10px] font-mono" value={sel.gradientColorStart || '#000000'} onChange={e => updateEl(sel.id, { gradientColorStart: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px]">Cor fim</Label>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <input type="color" value={sel.gradientColorEnd || '#000000'} onChange={e => updateEl(sel.id, { gradientColorEnd: e.target.value })} className="w-6 h-6 rounded border cursor-pointer" />
+                    <Input className="h-6 w-full text-[10px] font-mono" value={sel.gradientColorEnd || '#000000'} onChange={e => updateEl(sel.id, { gradientColorEnd: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}
