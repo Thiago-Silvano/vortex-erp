@@ -1436,26 +1436,28 @@ export default function PromoMakerPage() {
             </SelectContent>
           </Select>
           {sel.gradientFade !== 'none' && (
-            <div className="mt-2">
-              <Label className="text-xs flex justify-between">Intensidade <span className="text-muted-foreground">{Math.round((sel.gradientFadeIntensity ?? 1) * 100)}%</span></Label>
-              <Slider value={[sel.gradientFadeIntensity ?? 1]} onValueChange={([v]) => updateEl(sel.id, { gradientFadeIntensity: v })} min={0.1} max={1} step={0.05} />
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-[10px]">Cor início</Label>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <input type="color" value={sel.gradientColorStart || '#000000'} onChange={e => updateEl(sel.id, { gradientColorStart: e.target.value })} className="w-6 h-6 rounded border cursor-pointer" />
-                  <Input className="h-6 w-full text-[10px] font-mono" value={sel.gradientColorStart || '#000000'} onChange={e => updateEl(sel.id, { gradientColorStart: e.target.value })} />
+            <>
+              <div className="mt-2">
+                <Label className="text-xs flex justify-between">Intensidade <span className="text-muted-foreground">{Math.round((sel.gradientFadeIntensity ?? 1) * 100)}%</span></Label>
+                <Slider value={[sel.gradientFadeIntensity ?? 1]} onValueChange={([v]) => updateEl(sel.id, { gradientFadeIntensity: v })} min={0.1} max={1} step={0.05} />
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px]">Cor início</Label>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <input type="color" value={sel.gradientColorStart || '#000000'} onChange={e => updateEl(sel.id, { gradientColorStart: e.target.value })} className="w-6 h-6 rounded border cursor-pointer" />
+                    <Input className="h-6 w-full text-[10px] font-mono" value={sel.gradientColorStart || '#000000'} onChange={e => updateEl(sel.id, { gradientColorStart: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px]">Cor fim</Label>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <input type="color" value={sel.gradientColorEnd || '#000000'} onChange={e => updateEl(sel.id, { gradientColorEnd: e.target.value })} className="w-6 h-6 rounded border cursor-pointer" />
+                    <Input className="h-6 w-full text-[10px] font-mono" value={sel.gradientColorEnd || '#000000'} onChange={e => updateEl(sel.id, { gradientColorEnd: e.target.value })} />
+                  </div>
                 </div>
               </div>
-              <div>
-                <Label className="text-[10px]">Cor fim</Label>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <input type="color" value={sel.gradientColorEnd || '#000000'} onChange={e => updateEl(sel.id, { gradientColorEnd: e.target.value })} className="w-6 h-6 rounded border cursor-pointer" />
-                  <Input className="h-6 w-full text-[10px] font-mono" value={sel.gradientColorEnd || '#000000'} onChange={e => updateEl(sel.id, { gradientColorEnd: e.target.value })} />
-                </div>
-              </div>
-            </div>
+            </>
           )}
         </div>
       )}
