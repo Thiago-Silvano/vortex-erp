@@ -209,7 +209,7 @@ const STICKER_DEFS = [
   },
   {
     id: 'bed', name: 'Cama', Icon: BedDouble,
-    svg: 'M7 14a2 2 0 01-2-2V7a1 1 0 011-1h4a1 1 0 011 1v1h2V7a1 1 0 011-1h4a1 1 0 011 1v5a2 2 0 01-2 2H7zM3 18v-4a2 2 0 012-2h14a2 2 0 012 2v4M5 18v2M19 18v2',
+    svg: 'M2 20h20v-2H2v2zm0-4h20v-2c0-1.1-.9-2-2-2h-1V8c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v4H4c-1.1 0-2 .9-2 2v2zm5-6h10v4H7v-4zm-3 4h2v-2h14v2h2',
   },
 ];
 
