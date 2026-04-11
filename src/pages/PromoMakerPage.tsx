@@ -498,7 +498,8 @@ export default function PromoMakerPage() {
   const addStickerElement = (stickerId: string) => {
     const newEl: StickerElement = {
       id: genId(), type: 'sticker', sticker: stickerId,
-      x: 50, y: 50, size: 10, color: '#ffffff',
+      x: 50, y: 50, size: 10, color: '#ff6b35',
+      iconColor: '#ffffff', bgShape: 'rounded-rect',
       opacity: 1, rotation: 0, locked: false,
     };
     setElements(prev => [...prev, newEl]);
