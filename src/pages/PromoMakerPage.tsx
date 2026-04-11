@@ -48,6 +48,7 @@ interface TextElement {
   strokeWidth: number;
   locked: boolean;
   width: number;
+  rotation: number;
 }
 
 type GradientFade = 'none' | 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top';
@@ -118,6 +119,7 @@ const GOOGLE_FONTS = [
 const defaultTextProps = {
   fontStyle: 'normal' as const,
   textDecoration: 'none' as const,
+  rotation: 0,
 };
 
 const TEMPLATES = [
@@ -468,7 +470,7 @@ export default function PromoMakerPage() {
       textDecoration: 'none', color: '#ffffff',
       textAlign: 'center', letterSpacing: 0, lineHeight: 1.3,
       textTransform: 'none', opacity: 1, textShadow: 'none',
-      stroke: '', strokeWidth: 0, locked: false, width: 80,
+      stroke: '', strokeWidth: 0, locked: false, width: 80, rotation: 0,
     };
     setElements(prev => [...prev, newEl]);
     setSelectedId(newEl.id);
@@ -1031,7 +1033,7 @@ export default function PromoMakerPage() {
             className={`absolute cursor-move ${selectedId === el.id || selectedIds.includes(el.id) ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
             style={{
               left: `${el.x}%`, top: `${el.y}%`,
-              transform: 'translate(-50%, -50%)',
+              transform: `translate(-50%, -50%) rotate(${el.rotation || 0}deg)`,
               width: 'max-content',
               whiteSpace: 'nowrap',
               fontFamily: `'${el.fontFamily}', sans-serif`,
@@ -1207,6 +1209,10 @@ export default function PromoMakerPage() {
         <div>
           <Label className="text-xs flex justify-between">Largura <span className="text-muted-foreground">{sel.width}%</span></Label>
           <Slider value={[sel.width]} onValueChange={([v]) => updateEl(sel.id, { width: v })} min={10} max={100} step={1} />
+        </div>
+        <div>
+          <Label className="text-xs flex justify-between">Rotação <span className="text-muted-foreground">{sel.rotation || 0}°</span></Label>
+          <Slider value={[sel.rotation || 0]} onValueChange={([v]) => updateEl(sel.id, { rotation: v })} min={0} max={360} step={1} />
         </div>
       </div>
 
