@@ -154,7 +154,7 @@ const TEMPLATES = [
 
 const defaultImage: ImageConfig = {
   url: '', zoom: 1, brightness: 1, contrast: 1, saturate: 1, blur: 0,
-  offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0.4,
+  offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0,
 };
 
 const DEFAULT_LOGO_SETTINGS = {
