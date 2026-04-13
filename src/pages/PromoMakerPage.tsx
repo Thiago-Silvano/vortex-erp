@@ -819,7 +819,7 @@ export default function PromoMakerPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const objectUrl = URL.createObjectURL(file);
-    setImage(prev => ({ ...prev, url: objectUrl }));
+    setImage({ ...defaultImage, url: objectUrl });
   };
 
   const handleCanvasMouseDown = (e: React.MouseEvent, elId: string) => {
