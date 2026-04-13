@@ -927,7 +927,7 @@ export default function PromoMakerPage() {
       style={{
         width: canvasSize.w, height: canvasSize.h,
         transform: `scale(${scale})`, transformOrigin: 'top left',
-        background: bgGradient || bgColor,
+        background: (image.url && !imageInShape) ? 'transparent' : (bgGradient || bgColor),
       }}
       onMouseMove={handleCanvasMouseMove}
       onMouseUp={handleCanvasMouseUp}
