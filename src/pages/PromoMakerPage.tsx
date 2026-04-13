@@ -2007,7 +2007,7 @@ export default function PromoMakerPage() {
                       </div>
                       <div className="mt-1">
                         <Label className="text-xs">Ou cole a URL</Label>
-                        <Input placeholder="https://..." className="h-8 text-xs mt-1" onBlur={e => { if (e.target.value) setImage(prev => ({ ...prev, url: e.target.value })); }} />
+                        <Input placeholder="https://..." className="h-8 text-xs mt-1" onBlur={e => { if (e.target.value) setImage({ ...defaultImage, url: e.target.value }); }} />
                       </div>
                     </div>
                     {image.url && (
