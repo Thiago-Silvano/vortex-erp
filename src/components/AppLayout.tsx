@@ -6,7 +6,7 @@ import {
   LogOut, Building, User, Camera, MessageCircle, Mail, Bell,
   ChevronDown, Plus, Users, ShoppingCart, Plane, DollarSign,
   Megaphone, MessageSquare, FileText, BarChart3, Settings,
-  Star, StarOff
+  Star, StarOff, ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCompany } from "@/contexts/CompanyContext";
