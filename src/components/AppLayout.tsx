@@ -514,6 +514,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <TopMenuBar />
       </div>
 
+      <BackButton />
+
       <main className="flex-1 overflow-auto">{children}</main>
 
       <PhotoCaptureModal open={showPhotoModal} onOpenChange={setShowPhotoModal} />
