@@ -6,7 +6,7 @@ import {
   LogOut, Building, User, Camera, MessageCircle, Mail, Bell,
   ChevronDown, Plus, Users, ShoppingCart, Plane, DollarSign,
   Megaphone, MessageSquare, FileText, BarChart3, Settings,
-  Star, StarOff
+  Star, StarOff, ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCompany } from "@/contexts/CompanyContext";
@@ -405,6 +405,27 @@ function TopMenuBar() {
   );
 }
 
+/* ─── Botão Voltar Global ───────────────────────────── */
+function BackButton() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const hiddenPaths = ["/", "/dashboard", "/vistos/dashboard"];
+  if (hiddenPaths.includes(location.pathname)) return null;
+  return (
+    <div className="px-3 pt-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
+        onClick={() => navigate(-1)}
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Voltar
+      </Button>
+    </div>
+  );
+}
+
 /* ─── Layout Principal ─────────────────────────────── */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { companies, activeCompany, setActiveCompany, userCompanyIds, isMaster } = useCompany();
@@ -513,6 +534,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         <TopMenuBar />
       </div>
+
+      <BackButton />
 
       <main className="flex-1 overflow-auto">{children}</main>
 
