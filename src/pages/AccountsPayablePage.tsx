@@ -223,7 +223,7 @@ export default function AccountsPayablePage() {
       return true;
     }).sort((a, b) => {
       let cmp = 0;
-      if (sortKey === 'supplier') cmp = (supplierName(a.supplier_id)).localeCompare(supplierName(b.supplier_id));
+      if (sortKey === 'supplier') cmp = entityName(a).localeCompare(entityName(b));
       else if (sortKey === 'description') cmp = (a.description || '').localeCompare(b.description || '');
       else if (sortKey === 'installment_number') cmp = a.installment_number - b.installment_number;
       else if (sortKey === 'amount') cmp = a.amount - b.amount;
