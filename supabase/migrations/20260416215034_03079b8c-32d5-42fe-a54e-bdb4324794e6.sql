@@ -1,0 +1,1 @@
+ALTER TABLE public.accounts_payable ADD COLUMN IF NOT EXISTS seller_id uuid REFERENCES public.sellers(id) ON DELETE SET NULL;

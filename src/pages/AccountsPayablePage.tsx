@@ -34,6 +34,7 @@ interface Payable {
 }
 
 interface SupplierOpt { id: string; name: string; }
+interface SellerOpt { id: string; full_name: string; }
 interface CostCenter { id: string; name: string; }
 interface InstallmentRow { due_date: string; amount: number; }
 
@@ -45,6 +46,7 @@ export default function AccountsPayablePage() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Payable[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
+  const [sellers, setSellers] = useState<SellerOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSupplier, setFilterSupplier] = useState('all');
@@ -129,7 +131,9 @@ export default function AccountsPayablePage() {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, activeCompany?.id, setSearchParams]);
+  const [manualEntityType, setManualEntityType] = useState<'supplier' | 'seller'>('supplier');
   const [manualSupplierId, setManualSupplierId] = useState('');
+  const [manualSellerId, setManualSellerId] = useState('');
   const [manualDescription, setManualDescription] = useState('');
   const [manualCostCenter, setManualCostCenter] = useState('');
   const [manualAmount, setManualAmount] = useState(0);
@@ -156,6 +160,9 @@ export default function AccountsPayablePage() {
   useEffect(() => {
     fetch_();
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setSuppliers(data); });
+    if (activeCompany?.id) {
+      supabase.from('sellers').select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }) => { if (data) setSellers(data as any); });
+    }
     supabase.from('cost_centers').select('id, name').eq('status', 'active').or(`empresa_id.eq.${activeCompany?.id},empresa_id.is.null`).order('name').then(({ data }) => { if (data) setCostCenters(data); });
   }, [activeCompany?.id]);
 
@@ -247,32 +254,40 @@ export default function AccountsPayablePage() {
 
   const handleManualSave = async () => {
     if (!activeCompany?.id) { toast.error('Aguarde a empresa carregar antes de salvar'); return; }
-    if (!manualSupplierId) { toast.error('Fornecedor é obrigatório'); return; }
+    if (manualEntityType === 'supplier' && !manualSupplierId) { toast.error('Fornecedor é obrigatório'); return; }
+    if (manualEntityType === 'seller' && !manualSellerId) { toast.error('Vendedor é obrigatório'); return; }
     if (!manualCostCenter) { toast.error('Centro de custo é obrigatório'); return; }
     if (manualAmount <= 0) { toast.error('Valor deve ser maior que zero'); return; }
+    const baseRecord: any = {
+      supplier_id: manualEntityType === 'supplier' ? manualSupplierId : null,
+      seller_id: manualEntityType === 'seller' ? manualSellerId : null,
+      description: manualDescription,
+      cost_center_id: manualCostCenter,
+      status: 'open',
+      origin_type: 'manual',
+      ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
+    };
     const records = [];
     if (manualIsInstallment && installmentRows.length >= 2) {
       for (let i = 0; i < installmentRows.length; i++) {
         records.push({
-          supplier_id: manualSupplierId, description: manualDescription, cost_center_id: manualCostCenter,
-          amount: installmentRows[i].amount, due_date: installmentRows[i].due_date, installment_number: i + 1,
-          total_installments: installmentRows.length, status: 'open', origin_type: 'manual',
-          ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
+          ...baseRecord,
+          amount: installmentRows[i].amount, due_date: installmentRows[i].due_date,
+          installment_number: i + 1, total_installments: installmentRows.length,
         });
       }
     } else {
       records.push({
-        supplier_id: manualSupplierId, description: manualDescription, cost_center_id: manualCostCenter,
-        amount: manualAmount, due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'), installment_number: 1,
-        total_installments: 1, status: 'open', origin_type: 'manual',
-        ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
+        ...baseRecord,
+        amount: manualAmount, due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'),
+        installment_number: 1, total_installments: 1,
       });
     }
     const { error } = await supabase.from('accounts_payable').insert(records);
     if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
     toast.success(`${records.length} parcela(s) criada(s)!`);
     setManualDialog(false);
-    setManualSupplierId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
+    setManualEntityType('supplier'); setManualSupplierId(''); setManualSellerId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
     if (cameFromReconciliation) {
       const accountId = new URLSearchParams(window.location.search).get('account') || '';
       navigate(`/financial/reconciliation${accountId ? `?account=${accountId}` : ''}`);
@@ -443,13 +458,33 @@ export default function AccountsPayablePage() {
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Novo Lançamento Manual</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div>
-                <Label>Fornecedor *</Label>
-                <Select value={manualSupplierId} onValueChange={setManualSupplierId}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                </Select>
+              <div className="flex items-center gap-4 p-2 rounded-md bg-muted/40">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="entityType" checked={manualEntityType === 'supplier'} onChange={() => { setManualEntityType('supplier'); setManualSellerId(''); }} />
+                  Fornecedor
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="entityType" checked={manualEntityType === 'seller'} onChange={() => { setManualEntityType('seller'); setManualSupplierId(''); }} />
+                  Vendedor
+                </label>
               </div>
+              {manualEntityType === 'supplier' ? (
+                <div>
+                  <Label>Fornecedor *</Label>
+                  <Select value={manualSupplierId} onValueChange={setManualSupplierId}>
+                    <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                    <SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div>
+                  <Label>Vendedor *</Label>
+                  <Select value={manualSellerId} onValueChange={setManualSellerId}>
+                    <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                    <SelectContent>{sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              )}
               <div><Label>Descrição</Label><Input value={manualDescription} onChange={e => setManualDescription(e.target.value)} /></div>
               <div>
                 <Label>Centro de Custo *</Label>
