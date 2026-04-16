@@ -383,7 +383,7 @@ export default function AccountsPayablePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('supplier')}><span className="inline-flex items-center">Fornecedor <SortIcon col="supplier" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('supplier')}><span className="inline-flex items-center">Fornecedor/Vendedor <SortIcon col="supplier" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('description')}><span className="inline-flex items-center">Descrição <SortIcon col="description" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('installment_number')}><span className="inline-flex items-center">Parcela <SortIcon col="installment_number" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('amount')}><span className="inline-flex items-center">Valor <SortIcon col="amount" /></span></TableHead>
