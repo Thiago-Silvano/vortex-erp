@@ -67,10 +67,30 @@ export default function SalesPage() {
     return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
   };
 
-  const fetchSales = () => {
+  const fetchSales = async () => {
     let query = supabase.from('sales').select('*').order('sale_date', { ascending: false });
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
-    query.then(({ data }) => { if (data) setSales(data as SaleRow[]); });
+    const { data } = await query;
+    if (!data) return;
+
+    const saleIds = data.map((s: any) => s.id);
+    const suppliersMap: Record<string, string[]> = {};
+    if (saleIds.length > 0) {
+      const { data: links } = await supabase
+        .from('sale_suppliers')
+        .select('sale_id, suppliers(name)')
+        .in('sale_id', saleIds);
+      if (links) {
+        links.forEach((l: any) => {
+          const name = l.suppliers?.name;
+          if (!name) return;
+          if (!suppliersMap[l.sale_id]) suppliersMap[l.sale_id] = [];
+          if (!suppliersMap[l.sale_id].includes(name)) suppliersMap[l.sale_id].push(name);
+        });
+      }
+    }
+
+    setSales(data.map((s: any) => ({ ...s, suppliers_summary: suppliersMap[s.id]?.join(', ') || '' })) as SaleRow[]);
   };
 
   useEffect(() => {
