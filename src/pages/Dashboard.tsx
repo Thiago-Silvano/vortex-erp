@@ -345,11 +345,11 @@ export default function Dashboard() {
     const today = format(new Date(), 'yyyy-MM-dd');
     const list: AlertItem[] = [];
 
-    // Receivables overdue
+    // Receivables overdue (somente vencidas e ainda não recebidas)
     const { data: rec } = await supabase.from('receivables')
       .select('amount, due_date, status')
       .eq('empresa_id', empresaId)
-      .neq('status', 'paid')
+      .not('status', 'in', '(received,paid)')
       .lt('due_date', today);
     if (rec && rec.length > 0) {
       const total = rec.reduce((s, v) => s + Number(v.amount || 0), 0);
