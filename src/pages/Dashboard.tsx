@@ -187,9 +187,9 @@ export default function Dashboard() {
     // Categories: serviços
     const saleIds = curr.map(s => s.id);
     if (saleIds.length > 0) {
-      const { data: services } = await supabase
+      const { data: services } = await (supabase as any)
         .from('services')
-        .select('category, total_value')
+        .select('category, description, total_value')
         .in('sale_id', saleIds);
       const byCat: Record<string, number> = {};
       (services || []).forEach((s: any) => {
@@ -202,13 +202,9 @@ export default function Dashboard() {
         value, color: COLORS[i % COLORS.length],
       })));
 
-      // Top products
-      const { data: allServices } = await supabase
-        .from('services')
-        .select('description, total_value')
-        .in('sale_id', saleIds);
+      // Top products (reuse services query)
       const byProd: Record<string, { qtd: number; receita: number }> = {};
-      (allServices || []).forEach((s: any) => {
+      (services || []).forEach((s: any) => {
         const name = (s.description || 'Sem nome').slice(0, 40);
         if (!byProd[name]) byProd[name] = { qtd: 0, receita: 0 };
         byProd[name].qtd += 1;
