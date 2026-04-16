@@ -465,8 +465,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Sticky top header + menu */}
       <div className="sticky top-0 z-50 bg-background">
         <header className="h-7 flex items-center bg-card border-b px-2 shrink-0 gap-2">
-          {/* Logo */}
-          <span className="text-[11px] font-bold text-primary tracking-wide mr-2">GRUPO VORTEX</span>
+          {/* Logo - clicável volta à home (dashboard da empresa ativa) */}
+          <button
+            onClick={() => {
+              const target = activeCompany?.slug === 'vortex-vistos' ? '/vistos/dashboard' : '/dashboard';
+              navigate(target);
+            }}
+            className="text-[11px] font-bold text-primary tracking-wide mr-2 hover:opacity-80 transition-opacity cursor-pointer"
+            title="Ir para o Dashboard"
+          >
+            GRUPO VORTEX
+          </button>
 
           {/* Company selector */}
           {showSelector ? (
@@ -524,7 +533,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Button
               variant="ghost" size="sm"
               className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
-              onClick={() => supabase.auth.signOut()}
+              onClick={async () => {
+                await supabase.auth.signOut();
+                // Limpa cache local (preserva apenas chaves do supabase auth — já removidas pelo signOut)
+                try {
+                  const preserve = ['theme'];
+                  const keys = Object.keys(localStorage);
+                  keys.forEach(k => {
+                    if (!preserve.includes(k) && !k.startsWith('sb-')) {
+                      localStorage.removeItem(k);
+                    }
+                  });
+                  sessionStorage.clear();
+                } catch {}
+                window.location.href = '/';
+              }}
               title="Sair"
             >
               <LogOut className="h-3 w-3" />
