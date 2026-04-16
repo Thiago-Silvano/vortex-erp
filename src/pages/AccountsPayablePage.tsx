@@ -131,7 +131,9 @@ export default function AccountsPayablePage() {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, activeCompany?.id, setSearchParams]);
+  const [manualEntityType, setManualEntityType] = useState<'supplier' | 'seller'>('supplier');
   const [manualSupplierId, setManualSupplierId] = useState('');
+  const [manualSellerId, setManualSellerId] = useState('');
   const [manualDescription, setManualDescription] = useState('');
   const [manualCostCenter, setManualCostCenter] = useState('');
   const [manualAmount, setManualAmount] = useState(0);
