@@ -254,32 +254,40 @@ export default function AccountsPayablePage() {
 
   const handleManualSave = async () => {
     if (!activeCompany?.id) { toast.error('Aguarde a empresa carregar antes de salvar'); return; }
-    if (!manualSupplierId) { toast.error('Fornecedor é obrigatório'); return; }
+    if (manualEntityType === 'supplier' && !manualSupplierId) { toast.error('Fornecedor é obrigatório'); return; }
+    if (manualEntityType === 'seller' && !manualSellerId) { toast.error('Vendedor é obrigatório'); return; }
     if (!manualCostCenter) { toast.error('Centro de custo é obrigatório'); return; }
     if (manualAmount <= 0) { toast.error('Valor deve ser maior que zero'); return; }
+    const baseRecord: any = {
+      supplier_id: manualEntityType === 'supplier' ? manualSupplierId : null,
+      seller_id: manualEntityType === 'seller' ? manualSellerId : null,
+      description: manualDescription,
+      cost_center_id: manualCostCenter,
+      status: 'open',
+      origin_type: 'manual',
+      ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
+    };
     const records = [];
     if (manualIsInstallment && installmentRows.length >= 2) {
       for (let i = 0; i < installmentRows.length; i++) {
         records.push({
-          supplier_id: manualSupplierId, description: manualDescription, cost_center_id: manualCostCenter,
-          amount: installmentRows[i].amount, due_date: installmentRows[i].due_date, installment_number: i + 1,
-          total_installments: installmentRows.length, status: 'open', origin_type: 'manual',
-          ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
+          ...baseRecord,
+          amount: installmentRows[i].amount, due_date: installmentRows[i].due_date,
+          installment_number: i + 1, total_installments: installmentRows.length,
         });
       }
     } else {
       records.push({
-        supplier_id: manualSupplierId, description: manualDescription, cost_center_id: manualCostCenter,
-        amount: manualAmount, due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'), installment_number: 1,
-        total_installments: 1, status: 'open', origin_type: 'manual',
-        ...(activeCompany?.id ? { empresa_id: activeCompany.id } : {}),
+        ...baseRecord,
+        amount: manualAmount, due_date: manualDueDate || format(new Date(), 'yyyy-MM-dd'),
+        installment_number: 1, total_installments: 1,
       });
     }
     const { error } = await supabase.from('accounts_payable').insert(records);
     if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
     toast.success(`${records.length} parcela(s) criada(s)!`);
     setManualDialog(false);
-    setManualSupplierId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
+    setManualEntityType('supplier'); setManualSupplierId(''); setManualSellerId(''); setManualDescription(''); setManualAmount(0); setManualDueDate(''); setManualInstallments(1); setManualIsInstallment(false); setManualCostCenter(''); setInstallmentRows([]);
     if (cameFromReconciliation) {
       const accountId = new URLSearchParams(window.location.search).get('account') || '';
       navigate(`/financial/reconciliation${accountId ? `?account=${accountId}` : ''}`);
