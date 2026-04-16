@@ -20,6 +20,7 @@ import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, en
 interface Payable {
   id: string;
   supplier_id: string | null;
+  seller_id: string | null;
   sale_id: string | null;
   cost_center_id: string | null;
   description: string;
@@ -222,7 +223,7 @@ export default function AccountsPayablePage() {
       return true;
     }).sort((a, b) => {
       let cmp = 0;
-      if (sortKey === 'supplier') cmp = (supplierName(a.supplier_id)).localeCompare(supplierName(b.supplier_id));
+      if (sortKey === 'supplier') cmp = entityName(a).localeCompare(entityName(b));
       else if (sortKey === 'description') cmp = (a.description || '').localeCompare(b.description || '');
       else if (sortKey === 'installment_number') cmp = a.installment_number - b.installment_number;
       else if (sortKey === 'amount') cmp = a.amount - b.amount;
@@ -236,6 +237,12 @@ export default function AccountsPayablePage() {
   const statusClasses = (s: string) => s === 'paid' ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' : s === 'overdue' ? 'bg-red-500/15 text-red-700 border-red-500/30' : s === 'partial' ? 'bg-blue-500/15 text-blue-700 border-blue-500/30' : s === 'agrupado' ? 'bg-blue-500/15 text-blue-700 border-blue-500/30' : 'bg-yellow-500/15 text-yellow-700 border-yellow-500/30';
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const supplierName = (id: string | null) => suppliers.find(s => s.id === id)?.name || '-';
+  const sellerName = (id: string | null) => sellers.find(s => s.id === id)?.full_name || '';
+  const entityName = (r: { supplier_id: string | null; seller_id: string | null }) => {
+    if (r.supplier_id) return supplierName(r.supplier_id);
+    if (r.seller_id) return sellerName(r.seller_id);
+    return '-';
+  };
 
   const openMark = (id: string) => {
     setMarkId(id);
@@ -376,7 +383,7 @@ export default function AccountsPayablePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('supplier')}><span className="inline-flex items-center">Fornecedor <SortIcon col="supplier" /></span></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('supplier')}><span className="inline-flex items-center">Fornecedor/Vendedor <SortIcon col="supplier" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('description')}><span className="inline-flex items-center">Descrição <SortIcon col="description" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('installment_number')}><span className="inline-flex items-center">Parcela <SortIcon col="installment_number" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('amount')}><span className="inline-flex items-center">Valor <SortIcon col="amount" /></span></TableHead>
@@ -390,7 +397,7 @@ export default function AccountsPayablePage() {
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
                   <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(r)}>
-                    <TableCell className="font-medium">{supplierName(r.supplier_id)}</TableCell>
+                    <TableCell className="font-medium">{entityName(r)}</TableCell>
                     <TableCell>{r.description || '-'}</TableCell>
                     <TableCell>{r.installment_number}/{r.total_installments}</TableCell>
                     <TableCell>{fmt(r.amount)}</TableCell>
