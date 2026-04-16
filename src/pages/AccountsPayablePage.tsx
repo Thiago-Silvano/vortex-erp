@@ -34,6 +34,7 @@ interface Payable {
 }
 
 interface SupplierOpt { id: string; name: string; }
+interface SellerOpt { id: string; full_name: string; }
 interface CostCenter { id: string; name: string; }
 interface InstallmentRow { due_date: string; amount: number; }
 
