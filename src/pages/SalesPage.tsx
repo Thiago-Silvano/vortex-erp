@@ -267,8 +267,9 @@ export default function SalesPage() {
                     <span className="inline-flex items-center">Status Venda <SortIcon col="sale_workflow_status" /></span>
                   </TableHead>
                    <TableHead>Status</TableHead>
-                   <TableHead>Nota Fiscal</TableHead>
-                   <TableHead className="w-24">Ações</TableHead>
+                  <TableHead>Nota Fiscal</TableHead>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
