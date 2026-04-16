@@ -20,6 +20,7 @@ import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfYear, en
 interface Payable {
   id: string;
   supplier_id: string | null;
+  seller_id: string | null;
   sale_id: string | null;
   cost_center_id: string | null;
   description: string;
