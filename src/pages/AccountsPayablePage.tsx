@@ -46,6 +46,7 @@ export default function AccountsPayablePage() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Payable[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
+  const [sellers, setSellers] = useState<SellerOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSupplier, setFilterSupplier] = useState('all');
