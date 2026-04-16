@@ -160,6 +160,9 @@ export default function AccountsPayablePage() {
   useEffect(() => {
     fetch_();
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setSuppliers(data); });
+    if (activeCompany?.id) {
+      supabase.from('sellers').select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }) => { if (data) setSellers(data as any); });
+    }
     supabase.from('cost_centers').select('id, name').eq('status', 'active').or(`empresa_id.eq.${activeCompany?.id},empresa_id.is.null`).order('name').then(({ data }) => { if (data) setCostCenters(data); });
   }, [activeCompany?.id]);
 
