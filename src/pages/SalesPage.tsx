@@ -312,6 +312,9 @@ export default function SalesPage() {
                          )}
                        </div>
                      </TableCell>
+                     <TableCell className="max-w-[180px] truncate text-muted-foreground text-sm" title={s.suppliers_summary || ''}>
+                       {s.suppliers_summary || '—'}
+                     </TableCell>
                      <TableCell>
                        <div className="flex items-center gap-1">
                          <Button size="icon" variant="ghost" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}><Eye className="h-4 w-4" /></Button>
