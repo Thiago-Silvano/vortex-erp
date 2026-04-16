@@ -458,13 +458,33 @@ export default function AccountsPayablePage() {
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Novo Lançamento Manual</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div>
-                <Label>Fornecedor *</Label>
-                <Select value={manualSupplierId} onValueChange={setManualSupplierId}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                  <SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                </Select>
+              <div className="flex items-center gap-4 p-2 rounded-md bg-muted/40">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="entityType" checked={manualEntityType === 'supplier'} onChange={() => { setManualEntityType('supplier'); setManualSellerId(''); }} />
+                  Fornecedor
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="entityType" checked={manualEntityType === 'seller'} onChange={() => { setManualEntityType('seller'); setManualSupplierId(''); }} />
+                  Vendedor
+                </label>
               </div>
+              {manualEntityType === 'supplier' ? (
+                <div>
+                  <Label>Fornecedor *</Label>
+                  <Select value={manualSupplierId} onValueChange={setManualSupplierId}>
+                    <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                    <SelectContent>{suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div>
+                  <Label>Vendedor *</Label>
+                  <Select value={manualSellerId} onValueChange={setManualSellerId}>
+                    <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                    <SelectContent>{sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              )}
               <div><Label>Descrição</Label><Input value={manualDescription} onChange={e => setManualDescription(e.target.value)} /></div>
               <div>
                 <Label>Centro de Custo *</Label>
