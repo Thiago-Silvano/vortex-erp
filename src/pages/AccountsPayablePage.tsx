@@ -397,7 +397,7 @@ export default function AccountsPayablePage() {
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
                   <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(r)}>
-                    <TableCell className="font-medium">{supplierName(r.supplier_id)}</TableCell>
+                    <TableCell className="font-medium">{entityName(r)}</TableCell>
                     <TableCell>{r.description || '-'}</TableCell>
                     <TableCell>{r.installment_number}/{r.total_installments}</TableCell>
                     <TableCell>{fmt(r.amount)}</TableCell>
