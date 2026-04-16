@@ -36,6 +36,7 @@ interface SaleRow {
   sale_workflow_status: string;
   invoice_url: string | null;
   commission_invoice_status: string | null;
+  suppliers_summary?: string;
 }
 
 export default function SalesPage() {
