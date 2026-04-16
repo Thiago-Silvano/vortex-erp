@@ -237,6 +237,12 @@ export default function AccountsPayablePage() {
   const statusClasses = (s: string) => s === 'paid' ? 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' : s === 'overdue' ? 'bg-red-500/15 text-red-700 border-red-500/30' : s === 'partial' ? 'bg-blue-500/15 text-blue-700 border-blue-500/30' : s === 'agrupado' ? 'bg-blue-500/15 text-blue-700 border-blue-500/30' : 'bg-yellow-500/15 text-yellow-700 border-yellow-500/30';
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const supplierName = (id: string | null) => suppliers.find(s => s.id === id)?.name || '-';
+  const sellerName = (id: string | null) => sellers.find(s => s.id === id)?.full_name || '';
+  const entityName = (r: { supplier_id: string | null; seller_id: string | null }) => {
+    if (r.supplier_id) return supplierName(r.supplier_id);
+    if (r.seller_id) return sellerName(r.seller_id);
+    return '-';
+  };
 
   const openMark = (id: string) => {
     setMarkId(id);
