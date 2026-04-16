@@ -160,6 +160,7 @@ export default function NewSalePage() {
   const [invoiceUrl, setInvoiceUrl] = useState('');
   const [invoiceFileName, setInvoiceFileName] = useState('');
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
+  const [commissionInvoiceStatus, setCommissionInvoiceStatus] = useState<string | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
@@ -275,6 +276,7 @@ export default function NewSalePage() {
     setDestinationName((sale as any).destination_name || '');
     setQuoteTitle((sale as any).quote_title || '');
     setInvoiceUrl((sale as any).invoice_url || '');
+    setCommissionInvoiceStatus((sale as any).commission_invoice_status || null);
     setDestinationImageUrl((sale as any).destination_image_url || '');
     setDestinationImageConfig((sale as any).destination_image_config || null);
     // Load proposal payment options
@@ -1151,6 +1153,7 @@ export default function NewSalePage() {
         empresa_id: activeCompany?.id || null,
         seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
         invoice_url: invoiceUrl || null,
+        commission_invoice_status: commissionInvoiceStatus,
         destination_image_url: destinationImageUrl || null,
         destination_image_config: destinationImageConfig || null,
         sale_interest: saleInterest,
