@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Undo2, FileCheck, FileX } from 'lucide-react';
+import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Undo2, FileCheck, FileX, Clock } from 'lucide-react';
 import SalesDateFilter, { DateFilterPeriod, getDateRange } from '@/components/SalesDateFilter';
 
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ interface SaleRow {
   created_at: string;
   sale_workflow_status: string;
   invoice_url: string | null;
+  commission_invoice_status: string | null;
 }
 
 export default function SalesPage() {
@@ -267,15 +268,27 @@ export default function SalesPage() {
                     </TableCell>
                      <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Venda' : s.status === 'draft' ? 'Cotação' : s.status}</Badge></TableCell>
                      <TableCell>
-                       {s.invoice_url ? (
-                         <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border gap-1" variant="outline">
-                           <FileCheck className="h-3 w-3" /> Emitida
-                         </Badge>
-                       ) : (
-                         <Badge className="bg-red-100 text-red-800 border-red-300 border gap-1" variant="outline">
-                           <FileX className="h-3 w-3" /> Emitir
-                         </Badge>
-                       )}
+                       <div className="flex items-center gap-1.5 flex-wrap">
+                         {s.invoice_url ? (
+                           <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border gap-1" variant="outline">
+                             <FileCheck className="h-3 w-3" /> Emitida
+                           </Badge>
+                         ) : (
+                           <Badge className="bg-red-100 text-red-800 border-red-300 border gap-1" variant="outline">
+                             <FileX className="h-3 w-3" /> Emitir
+                           </Badge>
+                         )}
+                         {s.invoice_url && s.commission_invoice_status === 'pending' && (
+                           <Badge className="bg-amber-100 text-amber-800 border-amber-300 border gap-1" variant="outline" title="Aguardando pagamento de comissão pelo fornecedor">
+                             <Clock className="h-3 w-3" /> Aguard. comissão
+                           </Badge>
+                         )}
+                         {s.invoice_url && s.commission_invoice_status === 'received' && (
+                           <Badge className="bg-blue-100 text-blue-800 border-blue-300 border gap-1" variant="outline" title="Comissão recebida do fornecedor">
+                             <FileCheck className="h-3 w-3" /> Comissão recebida
+                           </Badge>
+                         )}
+                       </div>
                      </TableCell>
                      <TableCell>
                        <div className="flex items-center gap-1">
@@ -331,6 +344,16 @@ export default function SalesPage() {
                   ) : (
                     <Badge className="bg-red-100 text-red-800 border-red-300 border gap-1 text-xs" variant="outline">
                       <FileX className="h-3 w-3" /> Emitir NF
+                    </Badge>
+                  )}
+                  {s.invoice_url && s.commission_invoice_status === 'pending' && (
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-300 border gap-1 text-xs" variant="outline">
+                      <Clock className="h-3 w-3" /> Aguard. comissão
+                    </Badge>
+                  )}
+                  {s.invoice_url && s.commission_invoice_status === 'received' && (
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-300 border gap-1 text-xs" variant="outline">
+                      <FileCheck className="h-3 w-3" /> Comissão recebida
                     </Badge>
                   )}
                 </div>

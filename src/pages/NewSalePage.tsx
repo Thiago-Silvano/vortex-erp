@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -160,6 +160,7 @@ export default function NewSalePage() {
   const [invoiceUrl, setInvoiceUrl] = useState('');
   const [invoiceFileName, setInvoiceFileName] = useState('');
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
+  const [commissionInvoiceStatus, setCommissionInvoiceStatus] = useState<string | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
@@ -275,6 +276,7 @@ export default function NewSalePage() {
     setDestinationName((sale as any).destination_name || '');
     setQuoteTitle((sale as any).quote_title || '');
     setInvoiceUrl((sale as any).invoice_url || '');
+    setCommissionInvoiceStatus((sale as any).commission_invoice_status || null);
     setDestinationImageUrl((sale as any).destination_image_url || '');
     setDestinationImageConfig((sale as any).destination_image_config || null);
     // Load proposal payment options
@@ -1151,6 +1153,7 @@ export default function NewSalePage() {
         empresa_id: activeCompany?.id || null,
         seller_id: sellerId && sellerId !== 'none' ? sellerId : null,
         invoice_url: invoiceUrl || null,
+        commission_invoice_status: commissionInvoiceStatus,
         destination_image_url: destinationImageUrl || null,
         destination_image_config: destinationImageConfig || null,
         sale_interest: saleInterest,
@@ -3589,6 +3592,53 @@ export default function NewSalePage() {
                 <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 ml-auto" onClick={() => { setInvoiceUrl(''); setInvoiceFileName(''); }}>
                   <Trash2 className="h-3 w-3 text-destructive" />
                 </Button>
+              </div>
+            )}
+            {invoiceUrl && editSaleId && (
+              <div className="pt-2 border-t">
+                {commissionInvoiceStatus === 'received' ? (
+                  <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-emerald-50 border border-emerald-200">
+                    <div className="flex items-center gap-2">
+                      <FileCheck className="h-4 w-4 text-emerald-700" />
+                      <span className="text-sm font-medium text-emerald-800">Comissão recebida</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs text-muted-foreground"
+                      onClick={async () => {
+                        setCommissionInvoiceStatus(null);
+                        await supabase.from('sales').update({ commission_invoice_status: null } as any).eq('id', editSaleId);
+                        toast.success('Status de comissão limpo');
+                      }}
+                    >
+                      Limpar
+                    </Button>
+                  </div>
+                ) : commissionInvoiceStatus === 'pending' ? (
+                  <Button
+                    className="w-full justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={async () => {
+                      setCommissionInvoiceStatus('received');
+                      await supabase.from('sales').update({ commission_invoice_status: 'received' } as any).eq('id', editSaleId);
+                      toast.success('Comissão marcada como recebida!');
+                    }}
+                  >
+                    <FileCheck className="h-4 w-4" /> Marcar como Comissão recebida
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-center gap-2 border-amber-300 text-amber-800 hover:bg-amber-50"
+                    onClick={async () => {
+                      setCommissionInvoiceStatus('pending');
+                      await supabase.from('sales').update({ commission_invoice_status: 'pending' } as any).eq('id', editSaleId);
+                      toast.success('Marcado: aguardando pagamento de comissão');
+                    }}
+                  >
+                    <Clock className="h-4 w-4" /> Aguardando pagamento comissão
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>

@@ -1,0 +1,2 @@
+ALTER TABLE public.sales ADD COLUMN IF NOT EXISTS commission_invoice_status TEXT DEFAULT NULL;
+COMMENT ON COLUMN public.sales.commission_invoice_status IS 'Status do pagamento de comissão pelo fornecedor após emissão de NF: NULL (n/a), pending (aguardando), received (recebida)';

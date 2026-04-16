@@ -3863,6 +3863,7 @@ export type Database = {
           card_payment_type: string | null
           client_name: string
           client_phone: string | null
+          commission_invoice_status: string | null
           commission_rate: number | null
           commission_value: number | null
           created_at: string
@@ -3913,6 +3914,7 @@ export type Database = {
           card_payment_type?: string | null
           client_name?: string
           client_phone?: string | null
+          commission_invoice_status?: string | null
           commission_rate?: number | null
           commission_value?: number | null
           created_at?: string
@@ -3963,6 +3965,7 @@ export type Database = {
           card_payment_type?: string | null
           client_name?: string
           client_phone?: string | null
+          commission_invoice_status?: string | null
           commission_rate?: number | null
           commission_value?: number | null
           created_at?: string
