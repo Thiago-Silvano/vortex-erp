@@ -29,6 +29,7 @@ export type Database = {
           origin_type: string | null
           payment_date: string | null
           sale_id: string | null
+          seller_id: string | null
           status: string
           supplier_id: string | null
           total_installments: number | null
@@ -47,6 +48,7 @@ export type Database = {
           origin_type?: string | null
           payment_date?: string | null
           sale_id?: string | null
+          seller_id?: string | null
           status?: string
           supplier_id?: string | null
           total_installments?: number | null
@@ -65,6 +67,7 @@ export type Database = {
           origin_type?: string | null
           payment_date?: string | null
           sale_id?: string | null
+          seller_id?: string | null
           status?: string
           supplier_id?: string | null
           total_installments?: number | null
@@ -82,6 +85,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_payable_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
           {
