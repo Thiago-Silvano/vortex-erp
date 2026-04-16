@@ -36,6 +36,7 @@ interface SaleRow {
   sale_workflow_status: string;
   invoice_url: string | null;
   commission_invoice_status: string | null;
+  suppliers_summary?: string;
 }
 
 export default function SalesPage() {
@@ -66,10 +67,30 @@ export default function SalesPage() {
     return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
   };
 
-  const fetchSales = () => {
+  const fetchSales = async () => {
     let query = supabase.from('sales').select('*').order('sale_date', { ascending: false });
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
-    query.then(({ data }) => { if (data) setSales(data as SaleRow[]); });
+    const { data } = await query;
+    if (!data) return;
+
+    const saleIds = data.map((s: any) => s.id);
+    const suppliersMap: Record<string, string[]> = {};
+    if (saleIds.length > 0) {
+      const { data: links } = await supabase
+        .from('sale_suppliers')
+        .select('sale_id, suppliers(name)')
+        .in('sale_id', saleIds);
+      if (links) {
+        links.forEach((l: any) => {
+          const name = l.suppliers?.name;
+          if (!name) return;
+          if (!suppliersMap[l.sale_id]) suppliersMap[l.sale_id] = [];
+          if (!suppliersMap[l.sale_id].includes(name)) suppliersMap[l.sale_id].push(name);
+        });
+      }
+    }
+
+    setSales(data.map((s: any) => ({ ...s, suppliers_summary: suppliersMap[s.id]?.join(', ') || '' })) as SaleRow[]);
   };
 
   useEffect(() => {
@@ -246,13 +267,14 @@ export default function SalesPage() {
                     <span className="inline-flex items-center">Status Venda <SortIcon col="sale_workflow_status" /></span>
                   </TableHead>
                    <TableHead>Status</TableHead>
-                   <TableHead>Nota Fiscal</TableHead>
-                   <TableHead className="w-24">Ações</TableHead>
+                  <TableHead>Nota Fiscal</TableHead>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
@@ -289,6 +311,9 @@ export default function SalesPage() {
                            </Badge>
                          )}
                        </div>
+                     </TableCell>
+                     <TableCell className="max-w-[180px] truncate text-muted-foreground text-sm" title={s.suppliers_summary || ''}>
+                       {s.suppliers_summary || '—'}
                      </TableCell>
                      <TableCell>
                        <div className="flex items-center gap-1">
