@@ -184,17 +184,18 @@ export default function Dashboard() {
       };
     }));
 
-    // Categories: serviços
+    // Categories: serviços (vinculados via quote_id = sale.id)
     const saleIds = curr.map(s => s.id);
     if (saleIds.length > 0) {
       const { data: services } = await (supabase as any)
         .from('services')
-        .select('category, description, total_value')
-        .in('sale_id', saleIds);
+        .select('type, title, value, quantity')
+        .in('quote_id', saleIds);
       const byCat: Record<string, number> = {};
       (services || []).forEach((s: any) => {
-        const cat = s.category || 'Outros';
-        byCat[cat] = (byCat[cat] || 0) + Number(s.total_value || 0);
+        const cat = s.type || 'Outros';
+        const total = Number(s.value || 0) * Number(s.quantity || 1);
+        byCat[cat] = (byCat[cat] || 0) + total;
       });
       const totalCat = Object.values(byCat).reduce((a, b) => a + b, 0) || 1;
       setCategories(Object.entries(byCat).map(([name, value], i) => ({
@@ -205,10 +206,10 @@ export default function Dashboard() {
       // Top products (reuse services query)
       const byProd: Record<string, { qtd: number; receita: number }> = {};
       (services || []).forEach((s: any) => {
-        const name = (s.description || 'Sem nome').slice(0, 40);
+        const name = (s.title || s.type || 'Sem nome').slice(0, 40);
         if (!byProd[name]) byProd[name] = { qtd: 0, receita: 0 };
-        byProd[name].qtd += 1;
-        byProd[name].receita += Number(s.total_value || 0);
+        byProd[name].qtd += Number(s.quantity || 1);
+        byProd[name].receita += Number(s.value || 0) * Number(s.quantity || 1);
       });
       setTopProducts(
         Object.entries(byProd)
