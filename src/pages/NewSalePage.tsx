@@ -2811,7 +2811,17 @@ export default function NewSalePage() {
               <div>
                 <Label>Adicionar forma de recebimento</Label>
                 <Select value="" onValueChange={v => {
-                  if (v && !paymentMethods.includes(v)) {
+                  if (!v) return;
+                  if (v === 'faturado_cartao') {
+                    // Atalho: adiciona automaticamente "Pgto Operadora" + "Cartão de Crédito"
+                    setPaymentMethods(prev => {
+                      const next = [...prev];
+                      if (!next.includes('operadora')) next.push('operadora');
+                      if (!next.includes('credito')) next.push('credito');
+                      return next;
+                    });
+                    setInstallmentsMap(prev => ({ ...prev, operadora: prev.operadora || 1, credito: prev.credito || 1 }));
+                  } else if (!paymentMethods.includes(v)) {
                     setInstallmentsMap(prev => ({ ...prev, [v]: 1 }));
                     setPaymentMethods(prev => [...prev, v]);
                   }
