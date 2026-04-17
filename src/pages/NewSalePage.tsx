@@ -3296,8 +3296,16 @@ export default function NewSalePage() {
               {(() => {
                 const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
                 const isMixedOp = hasOperadora && paymentMethods.length > 1;
-                const operadoraPortion = isMixedOp ? totalSaleWithInterest / paymentMethods.length : 0;
-                const expectedCost = isOperadoraOnly ? 0 : (isMixedOp ? Math.max(0, Math.round((totalCost - operadoraPortion) * 100) / 100) : totalCost);
+                // Soma dos recebíveis NÃO-operadora (valor que efetivamente entra na agência)
+                const nonOperadoraReceived = receivables
+                  .filter(r => r.payment_method !== 'Pgto Operadora/Consolidadora')
+                  .reduce((s, r) => s + (r.amount || 0), 0);
+                // Custo a repassar = recebido do cliente − RAV (lucro bruto)
+                const expectedCost = isOperadoraOnly
+                  ? 0
+                  : (isMixedOp
+                    ? Math.max(0, Math.round((nonOperadoraReceived - grossProfit) * 100) / 100)
+                    : totalCost);
                 const totalPayments = supplierPayments.reduce((s, sp) => s + sp.amount, 0);
                 const diff = expectedCost - totalPayments;
                 return (
