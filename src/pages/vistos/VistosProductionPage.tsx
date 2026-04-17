@@ -57,6 +57,8 @@ export default function VistosProductionPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [interviewOpen, setInterviewOpen] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [search, setSearch] = useState('');
 
   // Interview form
   const [intConsulate, setIntConsulate] = useState('');
