@@ -349,12 +349,12 @@ export default function VistosProductionPage() {
                       key={proc.id}
                       draggable
                       onDragStart={() => handleDragStart(proc.id)}
-                      className="bg-card border rounded-lg p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
+                      className="group relative bg-card border rounded-lg p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
                       onClick={() => openDetail(proc)}
                     >
                       <div className="flex items-start gap-2">
                         <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm text-foreground truncate">{proc.applicant_name}</p>
                           <p className="text-xs text-muted-foreground truncate">{proc.client_name}</p>
                           <p className="text-xs text-muted-foreground">{proc.product_name}</p>
@@ -362,6 +362,17 @@ export default function VistosProductionPage() {
                             {format(new Date(proc.created_at), 'dd/MM/yyyy')}
                           </p>
                         </div>
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget(proc); }}
+                            title="Excluir processo"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
