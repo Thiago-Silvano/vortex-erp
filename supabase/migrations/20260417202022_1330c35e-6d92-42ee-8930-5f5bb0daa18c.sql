@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN IF NOT EXISTS default_cost_center_id uuid REFERENCES public.cost_centers(id);
