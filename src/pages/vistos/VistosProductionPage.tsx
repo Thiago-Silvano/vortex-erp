@@ -59,6 +59,16 @@ export default function VistosProductionPage() {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [search, setSearch] = useState('');
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [deleteTarget, setDeleteTarget] = useState<Process | null>(null);
+
+  const canDelete = userEmail === 'thiago@vortexviagens.com.br';
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email || '');
+    });
+  }, []);
 
   // Interview form
   const [intConsulate, setIntConsulate] = useState('');
