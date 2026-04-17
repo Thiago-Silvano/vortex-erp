@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, User, GripVertical, Send, Plus, Trash2, LayoutGrid, List, Search } from 'lucide-react';
@@ -59,6 +60,16 @@ export default function VistosProductionPage() {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [search, setSearch] = useState('');
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [deleteTarget, setDeleteTarget] = useState<Process | null>(null);
+
+  const canDelete = userEmail === 'thiago@vortexviagens.com.br';
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email || '');
+    });
+  }, []);
 
   // Interview form
   const [intConsulate, setIntConsulate] = useState('');
@@ -256,6 +267,18 @@ export default function VistosProductionPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from('visa_processes').delete().eq('id', deleteTarget.id);
+    if (error) {
+      toast.error('Erro ao excluir processo.');
+      return;
+    }
+    toast.success('Processo excluído.');
+    setDeleteTarget(null);
+    fetchProcesses();
+  };
+
   const filteredProcesses = processes.filter(p => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
@@ -327,12 +350,12 @@ export default function VistosProductionPage() {
                       key={proc.id}
                       draggable
                       onDragStart={() => handleDragStart(proc.id)}
-                      className="bg-card border rounded-lg p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
+                      className="group relative bg-card border rounded-lg p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
                       onClick={() => openDetail(proc)}
                     >
                       <div className="flex items-start gap-2">
                         <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm text-foreground truncate">{proc.applicant_name}</p>
                           <p className="text-xs text-muted-foreground truncate">{proc.client_name}</p>
                           <p className="text-xs text-muted-foreground">{proc.product_name}</p>
@@ -340,6 +363,17 @@ export default function VistosProductionPage() {
                             {format(new Date(proc.created_at), 'dd/MM/yyyy')}
                           </p>
                         </div>
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget(proc); }}
+                            title="Excluir processo"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -360,12 +394,13 @@ export default function VistosProductionPage() {
                     <TableHead>Consulado</TableHead>
                     <TableHead>Entrevista</TableHead>
                     <TableHead>Criado em</TableHead>
+                    {canDelete && <TableHead className="w-10"></TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProcesses.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-6 text-xs">
+                      <TableCell colSpan={canDelete ? 8 : 7} className="text-center text-muted-foreground py-6 text-xs">
                         Nenhum processo encontrado
                       </TableCell>
                     </TableRow>
@@ -386,6 +421,19 @@ export default function VistosProductionPage() {
                             : '—'}
                         </TableCell>
                         <TableCell className="text-xs">{format(new Date(proc.created_at), 'dd/MM/yyyy')}</TableCell>
+                        {canDelete && (
+                          <TableCell className="text-xs">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={(e) => { e.stopPropagation(); setDeleteTarget(proc); }}
+                              title="Excluir processo"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
@@ -580,6 +628,28 @@ export default function VistosProductionPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir processo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o processo de <strong>{deleteTarget?.applicant_name}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </AppLayout>
   );
