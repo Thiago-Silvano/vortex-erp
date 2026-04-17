@@ -3878,6 +3878,7 @@ export type Database = {
           commission_value: number | null
           created_at: string
           created_by: string | null
+          default_cost_center_id: string | null
           destination_image_config: Json | null
           destination_image_url: string | null
           destination_name: string | null
@@ -3929,6 +3930,7 @@ export type Database = {
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
+          default_cost_center_id?: string | null
           destination_image_config?: Json | null
           destination_image_url?: string | null
           destination_name?: string | null
@@ -3980,6 +3982,7 @@ export type Database = {
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
+          default_cost_center_id?: string | null
           destination_image_config?: Json | null
           destination_image_url?: string | null
           destination_name?: string | null
@@ -4020,6 +4023,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_default_cost_center_id_fkey"
+            columns: ["default_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_empresa_id_fkey"
             columns: ["empresa_id"]
