@@ -279,6 +279,7 @@ export default function NewSalePage() {
     setCommissionInvoiceStatus((sale as any).commission_invoice_status || null);
     setDestinationImageUrl((sale as any).destination_image_url || '');
     setDestinationImageConfig((sale as any).destination_image_config || null);
+    setDefaultCostCenterId((sale as any).default_cost_center_id || '');
     // Load proposal payment options
     if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
       setProposalPaymentOptions((sale as any).proposal_payment_options.map((o: any) => ({
@@ -1170,6 +1171,7 @@ export default function NewSalePage() {
         destination_name: destinationName || '',
         quote_title: quoteTitle || '',
         sale_workflow_status: saleWorkflowStatus,
+        default_cost_center_id: defaultCostCenterId || null,
       } as any,
       userEmail,
     };
