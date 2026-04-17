@@ -663,8 +663,11 @@ export default function NewSalePage() {
       if (isOperadoraOnly) {
         effectiveCost = 0;
       } else if (isMixedWithOp) {
-        const operadoraPortionOfSale = totalSaleWithInterest / paymentMethods.length;
-        effectiveCost = Math.max(0, Math.round((totalCost - operadoraPortionOfSale) * 100) / 100);
+        // Custo a repassar = recebido do cliente (não-operadora) − RAV
+        const nonOperadoraReceived = receivables
+          .filter(r => r.payment_method !== 'Pgto Operadora/Consolidadora')
+          .reduce((s, r) => s + (r.amount || 0), 0);
+        effectiveCost = Math.max(0, Math.round((nonOperadoraReceived - grossProfit) * 100) / 100);
       }
       const costPerSupplier = selectedSupplierIds.length > 0 ? effectiveCost / selectedSupplierIds.length : 0;
       return selectedSupplierIds.map(sid => {
@@ -684,7 +687,7 @@ export default function NewSalePage() {
         };
       });
     });
-  }, [selectedSupplierIds, totalCost, paymentMethods, totalSaleWithInterest]);
+  }, [selectedSupplierIds, totalCost, paymentMethods, totalSaleWithInterest, grossProfit, receivables]);
 
   // Auto-set commission rate from seller config
   useEffect(() => {
@@ -1314,13 +1317,13 @@ export default function NewSalePage() {
     const isMixedWithOperadora = hasOperadora && paymentMethods.length > 1;
 
     if (!isOperadoraOnly) {
-      // Calculate the operadora portion of the total sale for mixed payments
+      // Calcula o ratio do payable: usar valores reais dos receivables (não-operadora) − RAV
       let mixedPayableAdjustmentRatio = 1;
       if (isMixedWithOperadora) {
-        // The operadora portion covers part of the cost directly, so the agency only pays the rest
-        // Formula: payable = total_cost - operadora_amount = non_operadora_amount - gross_profit
-        const operadoraPortionOfSale = totalSaleWithInterest / paymentMethods.length; // equal split
-        const adjustedPayableTotal = totalCost - operadoraPortionOfSale;
+        const nonOperadoraReceived = receivables
+          .filter(r => r.payment_method !== 'Pgto Operadora/Consolidadora')
+          .reduce((s, r) => s + (r.amount || 0), 0);
+        const adjustedPayableTotal = Math.max(0, nonOperadoraReceived - grossProfit);
         mixedPayableAdjustmentRatio = totalCost > 0 ? Math.max(0, adjustedPayableTotal / totalCost) : 1;
       }
 
@@ -2811,7 +2814,17 @@ export default function NewSalePage() {
               <div>
                 <Label>Adicionar forma de recebimento</Label>
                 <Select value="" onValueChange={v => {
-                  if (v && !paymentMethods.includes(v)) {
+                  if (!v) return;
+                  if (v === 'faturado_cartao') {
+                    // Atalho: adiciona automaticamente "Pgto Operadora" + "Cartão de Crédito"
+                    setPaymentMethods(prev => {
+                      const next = [...prev];
+                      if (!next.includes('operadora')) next.push('operadora');
+                      if (!next.includes('credito')) next.push('credito');
+                      return next;
+                    });
+                    setInstallmentsMap(prev => ({ ...prev, operadora: prev.operadora || 1, credito: prev.credito || 1 }));
+                  } else if (!paymentMethods.includes(v)) {
                     setInstallmentsMap(prev => ({ ...prev, [v]: 1 }));
                     setPaymentMethods(prev => [...prev, v]);
                   }
@@ -2826,6 +2839,7 @@ export default function NewSalePage() {
                       { value: 'debito', label: 'Cartão de Débito' },
                       { value: 'transferencia', label: 'Transferência' },
                       { value: 'operadora', label: 'Pgto Operadora/Consolidadora' },
+                      { value: 'faturado_cartao', label: 'Faturado + Cartão' },
                     ].filter(opt => !paymentMethods.includes(opt.value)).map(opt => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
@@ -2835,7 +2849,7 @@ export default function NewSalePage() {
               <div className="md:col-span-2">
                 <div className="flex flex-wrap gap-1.5">
                   {paymentMethods.map(m => {
-                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora' };
+                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora', faturado_cartao: 'Faturado + Cartão' };
                     return (
                       <Badge key={m} variant="secondary" className="gap-1 pr-1">
                         {labels[m] || m}
@@ -3285,8 +3299,16 @@ export default function NewSalePage() {
               {(() => {
                 const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
                 const isMixedOp = hasOperadora && paymentMethods.length > 1;
-                const operadoraPortion = isMixedOp ? totalSaleWithInterest / paymentMethods.length : 0;
-                const expectedCost = isOperadoraOnly ? 0 : (isMixedOp ? Math.max(0, Math.round((totalCost - operadoraPortion) * 100) / 100) : totalCost);
+                // Soma dos recebíveis NÃO-operadora (valor que efetivamente entra na agência)
+                const nonOperadoraReceived = receivables
+                  .filter(r => r.payment_method !== 'Pgto Operadora/Consolidadora')
+                  .reduce((s, r) => s + (r.amount || 0), 0);
+                // Custo a repassar = recebido do cliente − RAV (lucro bruto)
+                const expectedCost = isOperadoraOnly
+                  ? 0
+                  : (isMixedOp
+                    ? Math.max(0, Math.round((nonOperadoraReceived - grossProfit) * 100) / 100)
+                    : totalCost);
                 const totalPayments = supplierPayments.reduce((s, sp) => s + sp.amount, 0);
                 const diff = expectedCost - totalPayments;
                 return (
