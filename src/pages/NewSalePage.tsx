@@ -2826,6 +2826,7 @@ export default function NewSalePage() {
                       { value: 'debito', label: 'Cartão de Débito' },
                       { value: 'transferencia', label: 'Transferência' },
                       { value: 'operadora', label: 'Pgto Operadora/Consolidadora' },
+                      { value: 'faturado_cartao', label: 'Faturado + Cartão' },
                     ].filter(opt => !paymentMethods.includes(opt.value)).map(opt => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
@@ -2835,7 +2836,7 @@ export default function NewSalePage() {
               <div className="md:col-span-2">
                 <div className="flex flex-wrap gap-1.5">
                   {paymentMethods.map(m => {
-                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora' };
+                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora', faturado_cartao: 'Faturado + Cartão' };
                     return (
                       <Badge key={m} variant="secondary" className="gap-1 pr-1">
                         {labels[m] || m}
