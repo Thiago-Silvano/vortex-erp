@@ -3594,7 +3594,7 @@ export default function NewSalePage() {
                 </Button>
               </div>
             )}
-            {invoiceUrl && editSaleId && (
+            {editSaleId && (
               <div className="pt-2 border-t">
                 {commissionInvoiceStatus === 'received' ? (
                   <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-emerald-50 border border-emerald-200">
