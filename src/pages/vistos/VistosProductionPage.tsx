@@ -266,6 +266,18 @@ export default function VistosProductionPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from('visa_processes').delete().eq('id', deleteTarget.id);
+    if (error) {
+      toast.error('Erro ao excluir processo.');
+      return;
+    }
+    toast.success('Processo excluído.');
+    setDeleteTarget(null);
+    fetchProcesses();
+  };
+
   const filteredProcesses = processes.filter(p => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
