@@ -393,12 +393,13 @@ export default function VistosProductionPage() {
                     <TableHead>Consulado</TableHead>
                     <TableHead>Entrevista</TableHead>
                     <TableHead>Criado em</TableHead>
+                    {canDelete && <TableHead className="w-10"></TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProcesses.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-6 text-xs">
+                      <TableCell colSpan={canDelete ? 8 : 7} className="text-center text-muted-foreground py-6 text-xs">
                         Nenhum processo encontrado
                       </TableCell>
                     </TableRow>
@@ -419,6 +420,19 @@ export default function VistosProductionPage() {
                             : '—'}
                         </TableCell>
                         <TableCell className="text-xs">{format(new Date(proc.created_at), 'dd/MM/yyyy')}</TableCell>
+                        {canDelete && (
+                          <TableCell className="text-xs">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={(e) => { e.stopPropagation(); setDeleteTarget(proc); }}
+                              title="Excluir processo"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
