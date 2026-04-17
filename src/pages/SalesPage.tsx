@@ -371,12 +371,12 @@ export default function SalesPage() {
                       <FileX className="h-3 w-3" /> Emitir NF
                     </Badge>
                   )}
-                  {s.invoice_url && s.commission_invoice_status === 'pending' && (
+                  {s.commission_invoice_status === 'pending' && (
                     <Badge className="bg-amber-100 text-amber-800 border-amber-300 border gap-1 text-xs" variant="outline">
                       <Clock className="h-3 w-3" /> Aguard. comissão
                     </Badge>
                   )}
-                  {s.invoice_url && s.commission_invoice_status === 'received' && (
+                  {s.commission_invoice_status === 'received' && (
                     <Badge className="bg-blue-100 text-blue-800 border-blue-300 border gap-1 text-xs" variant="outline">
                       <FileCheck className="h-3 w-3" /> Comissão recebida
                     </Badge>
