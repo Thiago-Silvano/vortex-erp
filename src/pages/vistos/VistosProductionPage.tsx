@@ -10,8 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Upload, FileText, User, GripVertical, Send, Plus, Trash2 } from 'lucide-react';
+import { Upload, FileText, User, GripVertical, Send, Plus, Trash2, LayoutGrid, List, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -56,6 +57,8 @@ export default function VistosProductionPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [interviewOpen, setInterviewOpen] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [search, setSearch] = useState('');
 
   // Interview form
   const [intConsulate, setIntConsulate] = useState('');
@@ -253,57 +256,144 @@ export default function VistosProductionPage() {
     }
   };
 
+  const filteredProcesses = processes.filter(p => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      p.applicant_name?.toLowerCase().includes(q) ||
+      p.client_name?.toLowerCase().includes(q) ||
+      p.product_name?.toLowerCase().includes(q)
+    );
+  });
+
   const groupedByStatus = STATUSES.map(s => ({
     ...s,
-    items: processes.filter(p => p.status === s.key),
+    items: filteredProcesses.filter(p => p.status === s.key),
   }));
 
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Produção — Kanban</h1>
-          <Button onClick={() => setAddOpen(true)}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h1 className="text-2xl font-bold text-foreground">Produção — {viewMode === 'kanban' ? 'Kanban' : 'Lista'}</h1>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-7 w-56"
+              />
+            </div>
+            <div className="flex items-center border rounded-md overflow-hidden">
+              <Button
+                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-none h-7 px-2"
+                onClick={() => setViewMode('kanban')}
+              >
+                <LayoutGrid className="h-3.5 w-3.5 mr-1" /> Kanban
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-none h-7 px-2"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-3.5 w-3.5 mr-1" /> Lista
+              </Button>
+            </div>
+            <Button onClick={() => setAddOpen(true)}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>
+          </div>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-4">
-          {groupedByStatus.map(col => (
-            <div
-              key={col.key}
-              className="min-w-[280px] w-[280px] flex-shrink-0 flex flex-col bg-muted/50 rounded-lg"
-              onDragOver={handleDragOver}
-              onDrop={() => handleDrop(col.key)}
-            >
-              <div className={`${col.color} text-white px-3 py-2 rounded-t-lg flex items-center justify-between`}>
-                <span className="font-semibold text-sm">{col.label}</span>
-                <Badge variant="secondary" className="bg-white/20 text-white text-xs">{col.items.length}</Badge>
-              </div>
-              <div className="p-2 space-y-2 min-h-[200px] flex-1">
-                {col.items.map(proc => (
-                  <div
-                    key={proc.id}
-                    draggable
-                    onDragStart={() => handleDragStart(proc.id)}
-                    className="bg-card border rounded-lg p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
-                    onClick={() => openDetail(proc)}
-                  >
-                    <div className="flex items-start gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm text-foreground truncate">{proc.applicant_name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{proc.client_name}</p>
-                        <p className="text-xs text-muted-foreground">{proc.product_name}</p>
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">
-                          {format(new Date(proc.created_at), 'dd/MM/yyyy')}
-                        </p>
+        {viewMode === 'kanban' ? (
+          <div className="flex gap-3 overflow-x-auto pb-4">
+            {groupedByStatus.map(col => (
+              <div
+                key={col.key}
+                className="min-w-[280px] w-[280px] flex-shrink-0 flex flex-col bg-muted/50 rounded-lg"
+                onDragOver={handleDragOver}
+                onDrop={() => handleDrop(col.key)}
+              >
+                <div className={`${col.color} text-white px-3 py-2 rounded-t-lg flex items-center justify-between`}>
+                  <span className="font-semibold text-sm">{col.label}</span>
+                  <Badge variant="secondary" className="bg-white/20 text-white text-xs">{col.items.length}</Badge>
+                </div>
+                <div className="p-2 space-y-2 min-h-[200px] flex-1">
+                  {col.items.map(proc => (
+                    <div
+                      key={proc.id}
+                      draggable
+                      onDragStart={() => handleDragStart(proc.id)}
+                      className="bg-card border rounded-lg p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
+                      onClick={() => openDetail(proc)}
+                    >
+                      <div className="flex items-start gap-2">
+                        <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm text-foreground truncate">{proc.applicant_name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{proc.client_name}</p>
+                          <p className="text-xs text-muted-foreground">{proc.product_name}</p>
+                          <p className="text-[10px] text-muted-foreground/60 mt-1">
+                            {format(new Date(proc.created_at), 'dd/MM/yyyy')}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Requerente</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Produto</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Consulado</TableHead>
+                    <TableHead>Entrevista</TableHead>
+                    <TableHead>Criado em</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProcesses.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-6 text-xs">
+                        Nenhum processo encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredProcesses.map(proc => {
+                    const st = STATUSES.find(s => s.key === proc.status);
+                    return (
+                      <TableRow key={proc.id} className="cursor-pointer" onClick={() => openDetail(proc)}>
+                        <TableCell className="font-medium text-xs">{proc.applicant_name}</TableCell>
+                        <TableCell className="text-xs">{proc.client_name}</TableCell>
+                        <TableCell className="text-xs">{proc.product_name}</TableCell>
+                        <TableCell>
+                          <Badge className={`${st?.color} text-white text-[10px]`}>{st?.label}</Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">{proc.consulate || '—'}</TableCell>
+                        <TableCell className="text-xs">
+                          {proc.interview_date
+                            ? `${format(new Date(proc.interview_date), 'dd/MM/yyyy')}${proc.interview_time ? ' ' + proc.interview_time.slice(0, 5) : ''}`
+                            : '—'}
+                        </TableCell>
+                        <TableCell className="text-xs">{format(new Date(proc.created_at), 'dd/MM/yyyy')}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Add Manual Process Dialog */}
