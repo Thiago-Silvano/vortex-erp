@@ -577,6 +577,7 @@ export default function PromoMakerPage() {
     setShowLogo(tpl.showLogo ?? DEFAULT_LOGO_SETTINGS.showLogo);
     setLogoX(tpl.logoX ?? DEFAULT_LOGO_SETTINGS.logoX);
     setLogoY(tpl.logoY ?? DEFAULT_LOGO_SETTINGS.logoY);
+    setLogoShadow(tpl.logoShadow ?? DEFAULT_LOGO_SETTINGS.logoShadow);
     setSelectedId(null);
     setSelectedIds([]);
     toast.success(`Template "${tpl.name}" aplicado!`);
