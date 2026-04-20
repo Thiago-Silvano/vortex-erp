@@ -164,6 +164,7 @@ const DEFAULT_LOGO_SETTINGS = {
   showLogo: true,
   logoX: 92,
   logoY: 92,
+  logoShadow: 0,
 };
 
 const QUOTE_IMAGES_PUBLIC_PATH = '/storage/v1/object/public/quote-images/';
