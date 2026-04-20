@@ -1093,6 +1093,9 @@ export default function PromoMakerPage() {
             transform: 'translate(-50%, -50%)',
             height: `${logoSize}%`, opacity: logoOpacity,
             zIndex: 9999,
+            filter: logoShadow > 0
+              ? `drop-shadow(0 ${logoShadow * 0.5}px ${logoShadow * 1.2}px rgba(0,0,0,${Math.min(0.15 + logoShadow * 0.06, 0.85)}))`
+              : undefined,
           }}
           onMouseDown={(e) => {
             e.stopPropagation();
