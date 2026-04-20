@@ -1971,6 +1971,10 @@ export default function PromoMakerPage() {
                               <Slider min={0.1} max={1} step={0.05} value={[logoOpacity]} onValueChange={([v]) => setLogoOpacity(v)} className="mt-1" />
                             </div>
                             <div>
+                              <Label className="text-xs">Sombra ({logoShadow === 0 ? 'Nenhuma' : `Nível ${logoShadow}`})</Label>
+                              <Slider min={0} max={5} step={1} value={[logoShadow]} onValueChange={([v]) => setLogoShadow(v)} className="mt-1" />
+                            </div>
+                            <div>
                               <Label className="text-xs">Cor da logo</Label>
                               <div className="flex items-center gap-2 mt-1">
                                 <Select value={logoColor || 'original'} onValueChange={v => setLogoColor(v === 'original' ? '' : v)}>
