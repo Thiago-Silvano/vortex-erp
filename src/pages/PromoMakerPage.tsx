@@ -157,7 +157,7 @@ const TEMPLATES = [
 ];
 
 const defaultImage: ImageConfig = {
-  url: '', zoom: 1, brightness: 1, contrast: 1, saturate: 1, blur: 0,
+  url: '', zoom: 1, scaleX: 1, scaleY: 1, brightness: 1, contrast: 1, saturate: 1, blur: 0,
   offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0,
 };
 
