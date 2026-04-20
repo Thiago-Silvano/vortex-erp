@@ -95,6 +95,8 @@ type CanvasElement = TextElement | ShapeElement | StickerElement;
 interface ImageConfig {
   url: string;
   zoom: number;
+  scaleX: number;
+  scaleY: number;
   brightness: number;
   contrast: number;
   saturate: number;
