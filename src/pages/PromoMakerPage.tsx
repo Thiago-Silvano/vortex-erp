@@ -381,6 +381,7 @@ export default function PromoMakerPage() {
         if (td.showLogo !== undefined) setShowLogo(td.showLogo);
         if (td.logoX !== undefined) setLogoX(td.logoX);
         if (td.logoY !== undefined) setLogoY(td.logoY);
+        if (td.logoShadow !== undefined) setLogoShadow(td.logoShadow);
       });
   }, [searchParams]);
 
