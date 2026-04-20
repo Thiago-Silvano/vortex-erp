@@ -647,6 +647,7 @@ export default function PromoMakerPage() {
     showLogo,
     logoX,
     logoY,
+    logoShadow,
   });
 
   const saveCurrentAsTemplate = async () => {
