@@ -230,6 +230,7 @@ interface SavedTemplate {
   showLogo: boolean;
   logoX: number;
   logoY: number;
+  logoShadow?: number;
 }
 
 const MARKETING_CATEGORIES = [
