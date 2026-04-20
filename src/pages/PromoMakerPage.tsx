@@ -103,6 +103,8 @@ interface ImageConfig {
   offsetY: number;
   overlayColor: string;
   overlayOpacity: number;
+  naturalWidth?: number;
+  naturalHeight?: number;
 }
 
 type FormatKey = '1:1' | '9:16';
@@ -825,7 +827,7 @@ export default function PromoMakerPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const objectUrl = URL.createObjectURL(file);
-    setImage({ ...defaultImage, url: objectUrl });
+    setImage({ ...defaultImage, url: objectUrl, naturalWidth: undefined, naturalHeight: undefined });
   };
 
   const handleCanvasMouseDown = (e: React.MouseEvent, elId: string) => {
@@ -945,10 +947,21 @@ export default function PromoMakerPage() {
         <>
           <img
             src={image.url} alt="" className="absolute inset-0 w-full h-full pointer-events-none" draggable={false}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth && (image.naturalWidth !== img.naturalWidth || image.naturalHeight !== img.naturalHeight)) {
+                setImage(p => ({ ...p, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight }));
+              }
+            }}
             style={{
               objectFit: 'cover',
               objectPosition: `${50 + image.offsetX}% ${50 + image.offsetY}%`,
-              transform: `scale(${image.zoom})`,
+              transform: (() => {
+                if (!image.naturalWidth || !image.naturalHeight) return `scale(${image.zoom})`;
+                // 'cover' already scales image by coverScale; divide it out so zoom=1 means original resolution px.
+                const coverScale = Math.max(canvasSize.w / image.naturalWidth, canvasSize.h / image.naturalHeight);
+                return `scale(${image.zoom / coverScale})`;
+              })(),
               filter: `brightness(${image.brightness}) contrast(${image.contrast}) saturate(${image.saturate}) blur(${image.blur}px)`,
             }}
           />
@@ -1000,10 +1013,22 @@ export default function PromoMakerPage() {
               <>
                 <img
                   src={image.url} alt="" className="absolute inset-0 w-full h-full pointer-events-none" draggable={false}
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    if (img.naturalWidth && (image.naturalWidth !== img.naturalWidth || image.naturalHeight !== img.naturalHeight)) {
+                      setImage(p => ({ ...p, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight }));
+                    }
+                  }}
                   style={{
                     objectFit: 'cover',
                     objectPosition: `${50 + image.offsetX}% ${50 + image.offsetY}%`,
-                    transform: `scale(${image.zoom})`,
+                    transform: (() => {
+                      if (!image.naturalWidth || !image.naturalHeight) return `scale(${image.zoom})`;
+                      const shapeW = (el.width / 100) * canvasSize.w;
+                      const shapeH = (el.shape === 'circle' ? (el.width / 100) * canvasSize.w : (el.height / 100) * canvasSize.h);
+                      const coverScale = Math.max(shapeW / image.naturalWidth, shapeH / image.naturalHeight);
+                      return `scale(${image.zoom / coverScale})`;
+                    })(),
                     filter: `brightness(${image.brightness}) contrast(${image.contrast}) saturate(${image.saturate}) blur(${image.blur}px)`,
                   }}
                 />
