@@ -164,6 +164,7 @@ const DEFAULT_LOGO_SETTINGS = {
   showLogo: true,
   logoX: 92,
   logoY: 92,
+  logoShadow: 0,
 };
 
 const QUOTE_IMAGES_PUBLIC_PATH = '/storage/v1/object/public/quote-images/';
@@ -229,6 +230,7 @@ interface SavedTemplate {
   showLogo: boolean;
   logoX: number;
   logoY: number;
+  logoShadow?: number;
 }
 
 const MARKETING_CATEGORIES = [
@@ -259,6 +261,7 @@ export default function PromoMakerPage() {
   const [showLogo, setShowLogo] = useState(DEFAULT_LOGO_SETTINGS.showLogo);
   const [logoX, setLogoX] = useState(DEFAULT_LOGO_SETTINGS.logoX);
   const [logoY, setLogoY] = useState(DEFAULT_LOGO_SETTINGS.logoY);
+  const [logoShadow, setLogoShadow] = useState(DEFAULT_LOGO_SETTINGS.logoShadow);
   const [logoDrag, setLogoDrag] = useState<{ startX: number; startY: number; elX: number; elY: number } | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const [saveTemplateName, setSaveTemplateName] = useState('');
@@ -378,6 +381,7 @@ export default function PromoMakerPage() {
         if (td.showLogo !== undefined) setShowLogo(td.showLogo);
         if (td.logoX !== undefined) setLogoX(td.logoX);
         if (td.logoY !== undefined) setLogoY(td.logoY);
+        if (td.logoShadow !== undefined) setLogoShadow(td.logoShadow);
       });
   }, [searchParams]);
 
@@ -573,6 +577,7 @@ export default function PromoMakerPage() {
     setShowLogo(tpl.showLogo ?? DEFAULT_LOGO_SETTINGS.showLogo);
     setLogoX(tpl.logoX ?? DEFAULT_LOGO_SETTINGS.logoX);
     setLogoY(tpl.logoY ?? DEFAULT_LOGO_SETTINGS.logoY);
+    setLogoShadow(tpl.logoShadow ?? DEFAULT_LOGO_SETTINGS.logoShadow);
     setSelectedId(null);
     setSelectedIds([]);
     toast.success(`Template "${tpl.name}" aplicado!`);
@@ -642,6 +647,7 @@ export default function PromoMakerPage() {
     showLogo,
     logoX,
     logoY,
+    logoShadow,
   });
 
   const saveCurrentAsTemplate = async () => {
@@ -1087,6 +1093,9 @@ export default function PromoMakerPage() {
             transform: 'translate(-50%, -50%)',
             height: `${logoSize}%`, opacity: logoOpacity,
             zIndex: 9999,
+            filter: logoShadow > 0
+              ? `drop-shadow(0 ${logoShadow * 0.5}px ${logoShadow * 1.2}px rgba(0,0,0,${Math.min(0.15 + logoShadow * 0.06, 0.85)}))`
+              : undefined,
           }}
           onMouseDown={(e) => {
             e.stopPropagation();
@@ -1962,6 +1971,10 @@ export default function PromoMakerPage() {
                               <Slider min={0.1} max={1} step={0.05} value={[logoOpacity]} onValueChange={([v]) => setLogoOpacity(v)} className="mt-1" />
                             </div>
                             <div>
+                              <Label className="text-xs">Sombra ({logoShadow === 0 ? 'Nenhuma' : `Nível ${logoShadow}`})</Label>
+                              <Slider min={0} max={5} step={1} value={[logoShadow]} onValueChange={([v]) => setLogoShadow(v)} className="mt-1" />
+                            </div>
+                            <div>
                               <Label className="text-xs">Cor da logo</Label>
                               <div className="flex items-center gap-2 mt-1">
                                 <Select value={logoColor || 'original'} onValueChange={v => setLogoColor(v === 'original' ? '' : v)}>
@@ -2050,7 +2063,7 @@ export default function PromoMakerPage() {
                         <div className="space-y-2">
                           <div>
                             <Label className="text-xs flex justify-between">Zoom <span className="text-muted-foreground">{Math.round(image.zoom * 100)}%</span></Label>
-                            <Slider value={[image.zoom]} onValueChange={([v]) => setImage(p => ({ ...p, zoom: v }))} min={1} max={3} step={0.05} />
+                            <Slider value={[image.zoom]} onValueChange={([v]) => setImage(p => ({ ...p, zoom: v }))} min={0.3} max={3} step={0.05} />
                           </div>
                           <div>
                             <Label className="text-xs flex justify-between">Brilho <span className="text-muted-foreground">{Math.round(image.brightness * 100)}%</span></Label>
