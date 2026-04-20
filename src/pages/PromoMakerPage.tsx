@@ -2103,6 +2103,14 @@ export default function PromoMakerPage() {
                             <Slider value={[image.zoom]} onValueChange={([v]) => setImage(p => ({ ...p, zoom: v }))} min={0.3} max={3} step={0.05} />
                           </div>
                           <div>
+                            <Label className="text-xs flex justify-between">Esticar X <span className="text-muted-foreground">{Math.round((image.scaleX ?? 1) * 100)}%</span></Label>
+                            <Slider value={[image.scaleX ?? 1]} onValueChange={([v]) => setImage(p => ({ ...p, scaleX: v }))} min={0.2} max={3} step={0.05} />
+                          </div>
+                          <div>
+                            <Label className="text-xs flex justify-between">Esticar Y <span className="text-muted-foreground">{Math.round((image.scaleY ?? 1) * 100)}%</span></Label>
+                            <Slider value={[image.scaleY ?? 1]} onValueChange={([v]) => setImage(p => ({ ...p, scaleY: v }))} min={0.2} max={3} step={0.05} />
+                          </div>
+                          <div>
                             <Label className="text-xs flex justify-between">Brilho <span className="text-muted-foreground">{Math.round(image.brightness * 100)}%</span></Label>
                             <Slider value={[image.brightness]} onValueChange={([v]) => setImage(p => ({ ...p, brightness: v }))} min={0.2} max={2} step={0.05} />
                           </div>
