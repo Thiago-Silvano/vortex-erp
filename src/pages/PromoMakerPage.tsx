@@ -2059,7 +2059,7 @@ export default function PromoMakerPage() {
                         <div className="space-y-2">
                           <div>
                             <Label className="text-xs flex justify-between">Zoom <span className="text-muted-foreground">{Math.round(image.zoom * 100)}%</span></Label>
-                            <Slider value={[image.zoom]} onValueChange={([v]) => setImage(p => ({ ...p, zoom: v }))} min={1} max={3} step={0.05} />
+                            <Slider value={[image.zoom]} onValueChange={([v]) => setImage(p => ({ ...p, zoom: v }))} min={0.3} max={3} step={0.05} />
                           </div>
                           <div>
                             <Label className="text-xs flex justify-between">Brilho <span className="text-muted-foreground">{Math.round(image.brightness * 100)}%</span></Label>
