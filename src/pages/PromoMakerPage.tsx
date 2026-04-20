@@ -1017,25 +1017,30 @@ export default function PromoMakerPage() {
             {isImageTarget && (
               <>
                 <img
-                  src={image.url} alt="" className="absolute inset-0 w-full h-full pointer-events-none" draggable={false}
+                  src={image.url} alt="" className="absolute pointer-events-none max-w-none" draggable={false}
                   onLoad={(e) => {
                     const img = e.currentTarget;
                     if (img.naturalWidth && (image.naturalWidth !== img.naturalWidth || image.naturalHeight !== img.naturalHeight)) {
                       setImage(p => ({ ...p, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight }));
                     }
                   }}
-                  style={{
-                    objectFit: 'cover',
-                    objectPosition: `${50 + image.offsetX}% ${50 + image.offsetY}%`,
-                    transform: (() => {
-                      if (!image.naturalWidth || !image.naturalHeight) return `scale(${image.zoom})`;
-                      const shapeW = (el.width / 100) * canvasSize.w;
-                      const shapeH = (el.shape === 'circle' ? (el.width / 100) * canvasSize.w : (el.height / 100) * canvasSize.h);
-                      const coverScale = Math.max(shapeW / image.naturalWidth, shapeH / image.naturalHeight);
-                      return `scale(${image.zoom / coverScale})`;
-                    })(),
-                    filter: `brightness(${image.brightness}) contrast(${image.contrast}) saturate(${image.saturate}) blur(${image.blur}px)`,
-                  }}
+                  style={(() => {
+                    const shapeW = (el.width / 100) * canvasSize.w;
+                    const shapeH = (el.shape === 'circle' ? (el.width / 100) * canvasSize.w : (el.height / 100) * canvasSize.h);
+                    const nw = image.naturalWidth || shapeW;
+                    const nh = image.naturalHeight || shapeH;
+                    const w = nw * image.zoom;
+                    const h = nh * image.zoom;
+                    const left = (shapeW - w) / 2 + (image.offsetX / 100) * shapeW;
+                    const top = (shapeH - h) / 2 + (image.offsetY / 100) * shapeH;
+                    return {
+                      width: w,
+                      height: h,
+                      left,
+                      top,
+                      filter: `brightness(${image.brightness}) contrast(${image.contrast}) saturate(${image.saturate}) blur(${image.blur}px)`,
+                    };
+                  })()}
                 />
                 <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: image.overlayColor, opacity: image.overlayOpacity }} />
               </>
