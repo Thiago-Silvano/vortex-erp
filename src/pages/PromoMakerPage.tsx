@@ -95,6 +95,8 @@ type CanvasElement = TextElement | ShapeElement | StickerElement;
 interface ImageConfig {
   url: string;
   zoom: number;
+  scaleX: number;
+  scaleY: number;
   brightness: number;
   contrast: number;
   saturate: number;
@@ -155,7 +157,7 @@ const TEMPLATES = [
 ];
 
 const defaultImage: ImageConfig = {
-  url: '', zoom: 1, brightness: 1, contrast: 1, saturate: 1, blur: 0,
+  url: '', zoom: 1, scaleX: 1, scaleY: 1, brightness: 1, contrast: 1, saturate: 1, blur: 0,
   offsetX: 0, offsetY: 0, overlayColor: '#000000', overlayOpacity: 0,
 };
 
@@ -956,8 +958,8 @@ export default function PromoMakerPage() {
             style={(() => {
               const nw = image.naturalWidth || canvasSize.w;
               const nh = image.naturalHeight || canvasSize.h;
-              const w = nw * image.zoom;
-              const h = nh * image.zoom;
+              const w = nw * image.zoom * (image.scaleX ?? 1);
+              const h = nh * image.zoom * (image.scaleY ?? 1);
               // offsetX/Y in % of canvas, allowing free positioning (0,0 = centered)
               const left = (canvasSize.w - w) / 2 + (image.offsetX / 100) * canvasSize.w;
               const top = (canvasSize.h - h) / 2 + (image.offsetY / 100) * canvasSize.h;
@@ -1029,8 +1031,8 @@ export default function PromoMakerPage() {
                     const shapeH = (el.shape === 'circle' ? (el.width / 100) * canvasSize.w : (el.height / 100) * canvasSize.h);
                     const nw = image.naturalWidth || shapeW;
                     const nh = image.naturalHeight || shapeH;
-                    const w = nw * image.zoom;
-                    const h = nh * image.zoom;
+                    const w = nw * image.zoom * (image.scaleX ?? 1);
+                    const h = nh * image.zoom * (image.scaleY ?? 1);
                     const left = (shapeW - w) / 2 + (image.offsetX / 100) * shapeW;
                     const top = (shapeH - h) / 2 + (image.offsetY / 100) * shapeH;
                     return {
@@ -2099,6 +2101,14 @@ export default function PromoMakerPage() {
                           <div>
                             <Label className="text-xs flex justify-between">Zoom <span className="text-muted-foreground">{Math.round(image.zoom * 100)}%</span></Label>
                             <Slider value={[image.zoom]} onValueChange={([v]) => setImage(p => ({ ...p, zoom: v }))} min={0.3} max={3} step={0.05} />
+                          </div>
+                          <div>
+                            <Label className="text-xs flex justify-between">Esticar X <span className="text-muted-foreground">{Math.round((image.scaleX ?? 1) * 100)}%</span></Label>
+                            <Slider value={[image.scaleX ?? 1]} onValueChange={([v]) => setImage(p => ({ ...p, scaleX: v }))} min={0.2} max={3} step={0.05} />
+                          </div>
+                          <div>
+                            <Label className="text-xs flex justify-between">Esticar Y <span className="text-muted-foreground">{Math.round((image.scaleY ?? 1) * 100)}%</span></Label>
+                            <Slider value={[image.scaleY ?? 1]} onValueChange={([v]) => setImage(p => ({ ...p, scaleY: v }))} min={0.2} max={3} step={0.05} />
                           </div>
                           <div>
                             <Label className="text-xs flex justify-between">Brilho <span className="text-muted-foreground">{Math.round(image.brightness * 100)}%</span></Label>
