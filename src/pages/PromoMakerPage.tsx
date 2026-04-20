@@ -958,8 +958,8 @@ export default function PromoMakerPage() {
             style={(() => {
               const nw = image.naturalWidth || canvasSize.w;
               const nh = image.naturalHeight || canvasSize.h;
-              const w = nw * image.zoom;
-              const h = nh * image.zoom;
+              const w = nw * image.zoom * (image.scaleX ?? 1);
+              const h = nh * image.zoom * (image.scaleY ?? 1);
               // offsetX/Y in % of canvas, allowing free positioning (0,0 = centered)
               const left = (canvasSize.w - w) / 2 + (image.offsetX / 100) * canvasSize.w;
               const top = (canvasSize.h - h) / 2 + (image.offsetY / 100) * canvasSize.h;
