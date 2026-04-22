@@ -9,10 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Layers, ArrowRight } from 'lucide-react';
+import { Layers, ArrowRight, ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 
 interface PayableRow {
   id: string;
@@ -35,18 +36,23 @@ interface ReceivableRow {
 
 interface SupplierOpt { id: string; name: string; }
 
+type SortKey = 'name' | 'description' | 'amount' | 'due_date';
+type SortDir = 'asc' | 'desc';
+
 export default function GroupAccountsPage() {
   const { activeCompany } = useCompany();
   const [payables, setPayables] = useState<PayableRow[]>([]);
   const [receivables, setReceivables] = useState<ReceivableRow[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
-  const [filterPayable, setFilterPayable] = useState<'pending' | 'paid'>('pending');
-  const [filterReceivable, setFilterReceivable] = useState<'pending' | 'paid'>('pending');
   const [selectedPayables, setSelectedPayables] = useState<Set<string>>(new Set());
   const [selectedReceivables, setSelectedReceivables] = useState<Set<string>>(new Set());
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [targetSupplierId, setTargetSupplierId] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [searchPayable, setSearchPayable] = useState('');
+  const [searchReceivable, setSearchReceivable] = useState('');
+  const [sortPayable, setSortPayable] = useState<{ key: SortKey; dir: SortDir }>({ key: 'due_date', dir: 'asc' });
+  const [sortReceivable, setSortReceivable] = useState<{ key: SortKey; dir: SortDir }>({ key: 'due_date', dir: 'asc' });
 
   const load = async () => {
     if (!activeCompany) return;
@@ -83,15 +89,47 @@ export default function GroupAccountsPage() {
 
   useEffect(() => { load(); }, [activeCompany]);
 
+  const sortRows = <T extends Record<string, any>>(rows: T[], key: SortKey, dir: SortDir, nameField: 'supplier_name' | 'client_name'): T[] => {
+    const mult = dir === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      let av: any; let bv: any;
+      if (key === 'name') { av = (a[nameField] || '').toString().toLowerCase(); bv = (b[nameField] || '').toString().toLowerCase(); }
+      else if (key === 'description') { av = (a.description || '').toString().toLowerCase(); bv = (b.description || '').toString().toLowerCase(); }
+      else if (key === 'amount') { av = a.amount || 0; bv = b.amount || 0; }
+      else { av = a.due_date || ''; bv = b.due_date || ''; }
+      if (av < bv) return -1 * mult;
+      if (av > bv) return 1 * mult;
+      return 0;
+    });
+  };
+
   const filteredPayables = useMemo(() => {
-    if (filterPayable === 'pending') return payables.filter(p => p.status !== 'Pago' && p.status !== 'agrupado');
-    return payables.filter(p => p.status === 'Pago');
-  }, [payables, filterPayable]);
+    const base = payables.filter(p => p.status !== 'Pago' && p.status !== 'agrupado');
+    const q = searchPayable.trim().toLowerCase();
+    const filtered = q
+      ? base.filter(p => (p.supplier_name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q))
+      : base;
+    return sortRows(filtered, sortPayable.key, sortPayable.dir, 'supplier_name');
+  }, [payables, searchPayable, sortPayable]);
 
   const filteredReceivables = useMemo(() => {
-    if (filterReceivable === 'pending') return receivables.filter(r => r.status !== 'Pago' && r.status !== 'agrupado');
-    return receivables.filter(r => r.status === 'Pago');
-  }, [receivables, filterReceivable]);
+    const base = receivables.filter(r => r.status !== 'Pago' && r.status !== 'agrupado');
+    const q = searchReceivable.trim().toLowerCase();
+    const filtered = q
+      ? base.filter(r => (r.client_name || '').toLowerCase().includes(q) || (r.description || '').toLowerCase().includes(q))
+      : base;
+    return sortRows(filtered, sortReceivable.key, sortReceivable.dir, 'client_name');
+  }, [receivables, searchReceivable, sortReceivable]);
+
+  const toggleSort = (current: { key: SortKey; dir: SortDir }, key: SortKey): { key: SortKey; dir: SortDir } => {
+    if (current.key === key) return { key, dir: current.dir === 'asc' ? 'desc' : 'asc' };
+    return { key, dir: 'asc' };
+  };
+
+  const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
+    if (!active) return <ArrowUpDown className="h-3 w-3 inline ml-1 opacity-40" />;
+    return dir === 'asc' ? <ArrowUp className="h-3 w-3 inline ml-1" /> : <ArrowDown className="h-3 w-3 inline ml-1" />;
+  };
 
   const totalPayable = useMemo(() => {
     return [...selectedPayables].reduce((sum, id) => {
@@ -237,25 +275,35 @@ export default function GroupAccountsPage() {
           {/* LEFT: Contas a Pagar */}
           <Card>
             <CardContent className="p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-sm">Contas a Pagar</h2>
-                <Select value={filterPayable} onValueChange={(v: any) => { setFilterPayable(v); setSelectedPayables(new Set()); }}>
-                  <SelectTrigger className="w-32 h-7 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Em aberto</SelectItem>
-                    <SelectItem value="paid">Pagos</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold text-sm whitespace-nowrap">Contas a Pagar</h2>
+                <div className="relative flex-1 max-w-[260px]">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar fornecedor ou descrição..."
+                    value={searchPayable}
+                    onChange={(e) => setSearchPayable(e.target.value)}
+                    className="h-7 text-xs pl-7"
+                  />
+                </div>
               </div>
               <div className="max-h-[60vh] overflow-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-8"></TableHead>
-                      <TableHead>Fornecedor</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead>Vencimento</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortPayable(s => toggleSort(s, 'name'))}>
+                        Fornecedor<SortIcon active={sortPayable.key === 'name'} dir={sortPayable.dir} />
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortPayable(s => toggleSort(s, 'description'))}>
+                        Descrição<SortIcon active={sortPayable.key === 'description'} dir={sortPayable.dir} />
+                      </TableHead>
+                      <TableHead className="text-right cursor-pointer select-none" onClick={() => setSortPayable(s => toggleSort(s, 'amount'))}>
+                        Valor<SortIcon active={sortPayable.key === 'amount'} dir={sortPayable.dir} />
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortPayable(s => toggleSort(s, 'due_date'))}>
+                        Vencimento<SortIcon active={sortPayable.key === 'due_date'} dir={sortPayable.dir} />
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -287,25 +335,35 @@ export default function GroupAccountsPage() {
           {/* RIGHT: Contas a Receber */}
           <Card>
             <CardContent className="p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-sm">Contas a Receber</h2>
-                <Select value={filterReceivable} onValueChange={(v: any) => { setFilterReceivable(v); setSelectedReceivables(new Set()); }}>
-                  <SelectTrigger className="w-32 h-7 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Em aberto</SelectItem>
-                    <SelectItem value="paid">Pagos</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold text-sm whitespace-nowrap">Contas a Receber</h2>
+                <div className="relative flex-1 max-w-[260px]">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar cliente ou descrição..."
+                    value={searchReceivable}
+                    onChange={(e) => setSearchReceivable(e.target.value)}
+                    className="h-7 text-xs pl-7"
+                  />
+                </div>
               </div>
               <div className="max-h-[60vh] overflow-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-8"></TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead>Vencimento</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortReceivable(s => toggleSort(s, 'name'))}>
+                        Cliente<SortIcon active={sortReceivable.key === 'name'} dir={sortReceivable.dir} />
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortReceivable(s => toggleSort(s, 'description'))}>
+                        Descrição<SortIcon active={sortReceivable.key === 'description'} dir={sortReceivable.dir} />
+                      </TableHead>
+                      <TableHead className="text-right cursor-pointer select-none" onClick={() => setSortReceivable(s => toggleSort(s, 'amount'))}>
+                        Valor<SortIcon active={sortReceivable.key === 'amount'} dir={sortReceivable.dir} />
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortReceivable(s => toggleSort(s, 'due_date'))}>
+                        Vencimento<SortIcon active={sortReceivable.key === 'due_date'} dir={sortReceivable.dir} />
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
