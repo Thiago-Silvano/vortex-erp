@@ -335,25 +335,35 @@ export default function GroupAccountsPage() {
           {/* RIGHT: Contas a Receber */}
           <Card>
             <CardContent className="p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-sm">Contas a Receber</h2>
-                <Select value={filterReceivable} onValueChange={(v: any) => { setFilterReceivable(v); setSelectedReceivables(new Set()); }}>
-                  <SelectTrigger className="w-32 h-7 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Em aberto</SelectItem>
-                    <SelectItem value="paid">Pagos</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold text-sm whitespace-nowrap">Contas a Receber</h2>
+                <div className="relative flex-1 max-w-[260px]">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar cliente ou descrição..."
+                    value={searchReceivable}
+                    onChange={(e) => setSearchReceivable(e.target.value)}
+                    className="h-7 text-xs pl-7"
+                  />
+                </div>
               </div>
               <div className="max-h-[60vh] overflow-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-8"></TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead>Vencimento</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortReceivable(s => toggleSort(s, 'name'))}>
+                        Cliente<SortIcon active={sortReceivable.key === 'name'} dir={sortReceivable.dir} />
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortReceivable(s => toggleSort(s, 'description'))}>
+                        Descrição<SortIcon active={sortReceivable.key === 'description'} dir={sortReceivable.dir} />
+                      </TableHead>
+                      <TableHead className="text-right cursor-pointer select-none" onClick={() => setSortReceivable(s => toggleSort(s, 'amount'))}>
+                        Valor<SortIcon active={sortReceivable.key === 'amount'} dir={sortReceivable.dir} />
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortReceivable(s => toggleSort(s, 'due_date'))}>
+                        Vencimento<SortIcon active={sortReceivable.key === 'due_date'} dir={sortReceivable.dir} />
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
