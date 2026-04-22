@@ -89,15 +89,47 @@ export default function GroupAccountsPage() {
 
   useEffect(() => { load(); }, [activeCompany]);
 
+  const sortRows = <T extends Record<string, any>>(rows: T[], key: SortKey, dir: SortDir, nameField: 'supplier_name' | 'client_name'): T[] => {
+    const mult = dir === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      let av: any; let bv: any;
+      if (key === 'name') { av = (a[nameField] || '').toString().toLowerCase(); bv = (b[nameField] || '').toString().toLowerCase(); }
+      else if (key === 'description') { av = (a.description || '').toString().toLowerCase(); bv = (b.description || '').toString().toLowerCase(); }
+      else if (key === 'amount') { av = a.amount || 0; bv = b.amount || 0; }
+      else { av = a.due_date || ''; bv = b.due_date || ''; }
+      if (av < bv) return -1 * mult;
+      if (av > bv) return 1 * mult;
+      return 0;
+    });
+  };
+
   const filteredPayables = useMemo(() => {
-    if (filterPayable === 'pending') return payables.filter(p => p.status !== 'Pago' && p.status !== 'agrupado');
-    return payables.filter(p => p.status === 'Pago');
-  }, [payables, filterPayable]);
+    const base = payables.filter(p => p.status !== 'Pago' && p.status !== 'agrupado');
+    const q = searchPayable.trim().toLowerCase();
+    const filtered = q
+      ? base.filter(p => (p.supplier_name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q))
+      : base;
+    return sortRows(filtered, sortPayable.key, sortPayable.dir, 'supplier_name');
+  }, [payables, searchPayable, sortPayable]);
 
   const filteredReceivables = useMemo(() => {
-    if (filterReceivable === 'pending') return receivables.filter(r => r.status !== 'Pago' && r.status !== 'agrupado');
-    return receivables.filter(r => r.status === 'Pago');
-  }, [receivables, filterReceivable]);
+    const base = receivables.filter(r => r.status !== 'Pago' && r.status !== 'agrupado');
+    const q = searchReceivable.trim().toLowerCase();
+    const filtered = q
+      ? base.filter(r => (r.client_name || '').toLowerCase().includes(q) || (r.description || '').toLowerCase().includes(q))
+      : base;
+    return sortRows(filtered, sortReceivable.key, sortReceivable.dir, 'client_name');
+  }, [receivables, searchReceivable, sortReceivable]);
+
+  const toggleSort = (current: { key: SortKey; dir: SortDir }, key: SortKey): { key: SortKey; dir: SortDir } => {
+    if (current.key === key) return { key, dir: current.dir === 'asc' ? 'desc' : 'asc' };
+    return { key, dir: 'asc' };
+  };
+
+  const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
+    if (!active) return <ArrowUpDown className="h-3 w-3 inline ml-1 opacity-40" />;
+    return dir === 'asc' ? <ArrowUp className="h-3 w-3 inline ml-1" /> : <ArrowDown className="h-3 w-3 inline ml-1" />;
+  };
 
   const totalPayable = useMemo(() => {
     return [...selectedPayables].reduce((sum, id) => {
