@@ -1319,21 +1319,13 @@ export default function NewSalePage() {
     const isMixedWithOperadora = hasOperadora && paymentMethods.length > 1;
 
     if (!isOperadoraOnly) {
-      // Calcula o ratio do payable: usar valores reais dos receivables (não-operadora) − RAV
-      let mixedPayableAdjustmentRatio = 1;
-      if (isMixedWithOperadora) {
-        const nonOperadoraReceived = receivables
-          .filter(r => r.payment_method !== 'Pgto Operadora/Consolidadora')
-          .reduce((s, r) => s + (r.amount || 0), 0);
-        const adjustedPayableTotal = Math.max(0, nonOperadoraReceived - grossProfit);
-        mixedPayableAdjustmentRatio = totalCost > 0 ? Math.max(0, adjustedPayableTotal / totalCost) : 1;
-      }
-
       if (supplierPayments.length > 0) {
         const payables: any[] = [];
         for (const sp of supplierPayments) {
           if (sp.amount <= 0) continue;
-            const adjustedAmount = isMixedWithOperadora ? Math.round(sp.amount * mixedPayableAdjustmentRatio * 100) / 100 : sp.amount;
+            // sp.amount is already the value the user entered/sees (Custo Ajustado for mixed-operadora is auto-applied in the sync effect).
+            // Persist exactly what's on screen — do NOT re-apply the mixed ratio here.
+            const adjustedAmount = Math.round(sp.amount * 100) / 100;
             if (adjustedAmount <= 0) continue;
             const desc = sp.description || 'Pagamento de operadoras';
             if (sp.payment_method === 'pix') {
@@ -1368,8 +1360,7 @@ export default function NewSalePage() {
           if (error) console.error('Erro ao gerar contas a pagar:', error);
         }
       } else if (totalCost > 0 && selectedSupplierIds.length > 0) {
-        const adjustedCost = isMixedWithOperadora ? totalCost * mixedPayableAdjustmentRatio : totalCost;
-        const costPerSupplier = adjustedCost / selectedSupplierIds.length;
+        const costPerSupplier = totalCost / selectedSupplierIds.length;
         const { error } = await supabase.from('accounts_payable').insert(selectedSupplierIds.map(sid => ({
           sale_id: saleId, supplier_id: sid, amount: Math.round(costPerSupplier * 100) / 100,
           due_date: saleDate, description: `Venda - ${clientName}`, status: 'open', origin_type: 'sale',
