@@ -275,25 +275,35 @@ export default function GroupAccountsPage() {
           {/* LEFT: Contas a Pagar */}
           <Card>
             <CardContent className="p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-sm">Contas a Pagar</h2>
-                <Select value={filterPayable} onValueChange={(v: any) => { setFilterPayable(v); setSelectedPayables(new Set()); }}>
-                  <SelectTrigger className="w-32 h-7 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Em aberto</SelectItem>
-                    <SelectItem value="paid">Pagos</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold text-sm whitespace-nowrap">Contas a Pagar</h2>
+                <div className="relative flex-1 max-w-[260px]">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar fornecedor ou descrição..."
+                    value={searchPayable}
+                    onChange={(e) => setSearchPayable(e.target.value)}
+                    className="h-7 text-xs pl-7"
+                  />
+                </div>
               </div>
               <div className="max-h-[60vh] overflow-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-8"></TableHead>
-                      <TableHead>Fornecedor</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead>Vencimento</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortPayable(s => toggleSort(s, 'name'))}>
+                        Fornecedor<SortIcon active={sortPayable.key === 'name'} dir={sortPayable.dir} />
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortPayable(s => toggleSort(s, 'description'))}>
+                        Descrição<SortIcon active={sortPayable.key === 'description'} dir={sortPayable.dir} />
+                      </TableHead>
+                      <TableHead className="text-right cursor-pointer select-none" onClick={() => setSortPayable(s => toggleSort(s, 'amount'))}>
+                        Valor<SortIcon active={sortPayable.key === 'amount'} dir={sortPayable.dir} />
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => setSortPayable(s => toggleSort(s, 'due_date'))}>
+                        Vencimento<SortIcon active={sortPayable.key === 'due_date'} dir={sortPayable.dir} />
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
