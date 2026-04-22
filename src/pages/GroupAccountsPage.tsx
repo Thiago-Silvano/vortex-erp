@@ -9,10 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Layers, ArrowRight } from 'lucide-react';
+import { Layers, ArrowRight, ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 
 interface PayableRow {
   id: string;
@@ -35,18 +36,23 @@ interface ReceivableRow {
 
 interface SupplierOpt { id: string; name: string; }
 
+type SortKey = 'name' | 'description' | 'amount' | 'due_date';
+type SortDir = 'asc' | 'desc';
+
 export default function GroupAccountsPage() {
   const { activeCompany } = useCompany();
   const [payables, setPayables] = useState<PayableRow[]>([]);
   const [receivables, setReceivables] = useState<ReceivableRow[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
-  const [filterPayable, setFilterPayable] = useState<'pending' | 'paid'>('pending');
-  const [filterReceivable, setFilterReceivable] = useState<'pending' | 'paid'>('pending');
   const [selectedPayables, setSelectedPayables] = useState<Set<string>>(new Set());
   const [selectedReceivables, setSelectedReceivables] = useState<Set<string>>(new Set());
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [targetSupplierId, setTargetSupplierId] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [searchPayable, setSearchPayable] = useState('');
+  const [searchReceivable, setSearchReceivable] = useState('');
+  const [sortPayable, setSortPayable] = useState<{ key: SortKey; dir: SortDir }>({ key: 'due_date', dir: 'asc' });
+  const [sortReceivable, setSortReceivable] = useState<{ key: SortKey; dir: SortDir }>({ key: 'due_date', dir: 'asc' });
 
   const load = async () => {
     if (!activeCompany) return;
