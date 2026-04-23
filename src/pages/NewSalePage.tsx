@@ -2103,36 +2103,6 @@ export default function NewSalePage() {
         </div>
       )}
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
-        {/* Compact Progress Bar */}
-        {editSaleId && (() => {
-          const needsContract = saleWorkflowStatus !== 'sem_contrato';
-          const steps = [
-            { key: 'created', label: 'Cotação', done: true },
-            { key: 'sale', label: 'Venda', done: saleStatus === 'active' },
-            ...(needsContract ? [{ key: 'contract', label: 'Contrato', done: !!contractInfo.signedAt }] : []),
-            { key: 'payment', label: 'Pagamento', done: saleWorkflowStatus === 'aguardando_pagamento' || saleWorkflowStatus === 'processo_concluido' },
-            { key: 'done', label: 'Concluído', done: saleWorkflowStatus === 'processo_concluido' },
-          ];
-          const completed = steps.filter(s => s.done).length;
-          const pct = Math.round((completed / steps.length) * 100);
-          const currentStep = steps.find(s => !s.done) || steps[steps.length - 1];
-          const statusLabels: Record<string, string> = {
-            em_aberto: 'Em aberto', contatando: 'Contatando', reservado: 'Reservado',
-            emitido: 'Emitido', aguardando_assinatura: 'Aguard. Assinatura',
-            aguardando_pagamento: 'Aguard. Pagamento', processo_concluido: 'Concluído',
-            sem_contrato: 'Sem Contrato', perdido: 'Perdido',
-          };
-          return (
-            <div className="flex items-center gap-3 px-1">
-              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500 transition-all rounded-full" style={{ width: `${pct}%` }} />
-              </div>
-              <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">{pct}%</span>
-              <Badge variant="outline" className="text-xs shrink-0">{statusLabels[saleWorkflowStatus] || saleWorkflowStatus}</Badge>
-            </div>
-          );
-        })()}
-
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">
             {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Editar Cotação' : 'Nova Cotação'}
