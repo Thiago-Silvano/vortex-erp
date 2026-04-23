@@ -263,9 +263,6 @@ export default function SalesPage() {
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('net_profit')}>
                     <span className="inline-flex items-center">Lucro Líq. <SortIcon col="net_profit" /></span>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_workflow_status')}>
-                    <span className="inline-flex items-center">Status Venda <SortIcon col="sale_workflow_status" /></span>
-                  </TableHead>
                    <TableHead>Status</TableHead>
                   <TableHead>Nota Fiscal</TableHead>
                   <TableHead>Fornecedor</TableHead>
@@ -274,7 +271,7 @@ export default function SalesPage() {
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
@@ -282,12 +279,6 @@ export default function SalesPage() {
                     <TableCell className="capitalize">{s.payment_method}</TableCell>
                     <TableCell>{fmt(Number(s.total_sale))}</TableCell>
                     <TableCell>{fmt(Number(s.net_profit))}</TableCell>
-                    <TableCell>
-                      {(() => {
-                        const ws = workflowStatusMap[s.sale_workflow_status || 'em_aberto'] || workflowStatusMap.em_aberto;
-                        return <Badge className={`${ws.color} border`} variant="outline">{ws.label}</Badge>;
-                      })()}
-                    </TableCell>
                      <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Venda' : s.status === 'draft' ? 'Cotação' : s.status}</Badge></TableCell>
                      <TableCell>
                        <div className="flex items-center gap-1.5 flex-wrap">
