@@ -22,8 +22,7 @@ import CotacoesKanbanPage from "./pages/CotacoesKanbanPage";
 import CrmKanbanPage from "./pages/CrmKanbanPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import NewSalePage from "./pages/NewSalePage";
-import AccountsReceivablePage from "./pages/AccountsReceivablePage";
-import AccountsPayablePage from "./pages/AccountsPayablePage";
+import FinancialAccountsPage from "./pages/FinancialAccountsPage";
 import GroupAccountsPage from "./pages/GroupAccountsPage";
 import UngroupAccountsPage from "./pages/UngroupAccountsPage";
 import CashFlowPage from "./pages/CashFlowPage";
@@ -127,8 +126,8 @@ const App = () => (
           <Route path="/sales/new" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
           <Route path="/sales/:id" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
           <Route path="/reservations" element={<ProtectedRoute><ReservationsPage /></ProtectedRoute>} />
-          <Route path="/financial/receivable" element={<ProtectedRoute><AccountsReceivablePage /></ProtectedRoute>} />
-          <Route path="/financial/payable" element={<ProtectedRoute><AccountsPayablePage /></ProtectedRoute>} />
+          <Route path="/financial/receivable" element={<ProtectedRoute><FinancialAccountsPage /></ProtectedRoute>} />
+          <Route path="/financial/payable" element={<ProtectedRoute><FinancialAccountsPage /></ProtectedRoute>} />
           <Route path="/financial/group-accounts" element={<ProtectedRoute><GroupAccountsPage /></ProtectedRoute>} />
           <Route path="/financial/ungroup-accounts" element={<ProtectedRoute><UngroupAccountsPage /></ProtectedRoute>} />
           <Route path="/financial/cashflow" element={<ProtectedRoute><CashFlowPage /></ProtectedRoute>} />
