@@ -503,9 +503,31 @@ export default function AccountsPayablePage() {
 
         <Dialog open={markDialog} onOpenChange={setMarkDialog}>
           <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Marcar como Pago</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>
+                {markBulkIds.length > 1 ? `Baixar ${markBulkIds.length} Lançamentos` : 'Marcar como Pago'}
+              </DialogTitle>
+            </DialogHeader>
             <div className="space-y-4">
+              {markBulkIds.length > 1 && (
+                <div className="rounded-md bg-primary/10 border border-primary/30 p-3 text-sm">
+                  <div className="font-medium text-foreground">Total selecionado: {fmt(items.filter(i => markBulkIds.includes(i.id)).reduce((s, i) => s + (i.amount || 0), 0))}</div>
+                  <div className="text-muted-foreground text-xs">{markBulkIds.length} parcela(s) serão marcadas como pagas com os mesmos dados.</div>
+                </div>
+              )}
               <div><Label>Data do Pagamento</Label><Input type="date" value={markPaymentDate} onChange={e => setMarkPaymentDate(e.target.value)} /></div>
+              <div>
+                <Label>Conta Corrente</Label>
+                <Select value={markBankAccountId} onValueChange={setMarkBankAccountId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.length === 0 && <SelectItem value="__none" disabled>Nenhuma conta cadastrada</SelectItem>}
+                    {bankAccounts.map(b => (
+                      <SelectItem key={b.id} value={b.id}>{b.bank_name}{b.account_number ? ` - ${b.account_number}` : ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label>Forma de Pagamento</Label>
                 <Select value={markPaymentMethod} onValueChange={setMarkPaymentMethod}>
