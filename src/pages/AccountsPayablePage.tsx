@@ -144,10 +144,13 @@ export default function AccountsPayablePage() {
   const [installmentRows, setInstallmentRows] = useState<InstallmentRow[]>([]);
 
   const fetch_ = async () => {
+    if (!activeCompany?.id) { setItems([]); return; }
     // Fetch payables, then filter out any linked to draft sales
-    let query = supabase.from('accounts_payable').select('*').order('due_date');
-    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
-    const { data } = await query;
+    const { data } = await supabase
+      .from('accounts_payable')
+      .select('*')
+      .eq('empresa_id', activeCompany.id)
+      .order('due_date');
     if (!data) { setItems([]); return; }
     const saleIds = [...new Set((data as any[]).map(r => r.sale_id).filter(Boolean))];
     let draftIds: string[] = [];
