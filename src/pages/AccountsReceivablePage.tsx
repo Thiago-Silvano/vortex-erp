@@ -247,18 +247,47 @@ export default function AccountsReceivablePage() {
 
   const openMark = (id: string) => {
     setMarkId(id);
+    setMarkBulkIds([]);
     setMarkPaymentDate(format(new Date(), 'yyyy-MM-dd'));
     setMarkPaymentMethod('');
     setMarkNotes('');
+    setMarkBankAccountId('');
     setMarkDialog(true);
   };
 
+  const openBulkMark = () => {
+    if (selectedIds.length === 0) { toast.error('Selecione ao menos um lançamento'); return; }
+    setMarkId('');
+    setMarkBulkIds(selectedIds);
+    setMarkPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+    setMarkPaymentMethod('');
+    setMarkNotes('');
+    setMarkBankAccountId('');
+    setMarkDialog(true);
+  };
+
+  const buildPaymentNotes = () => {
+    const bankName = bankAccounts.find(b => b.id === markBankAccountId)?.bank_name;
+    const parts: string[] = [];
+    if (bankName) parts.push(`Conta: ${bankName}`);
+    if (markNotes) parts.push(markNotes);
+    return parts.join(' - ');
+  };
+
   const handleMark = async () => {
-    await supabase.from('receivables').update({
-      status: 'received', payment_date: markPaymentDate || null, payment_method: markPaymentMethod, notes: markNotes,
-    } as any).eq('id', markId);
-    toast.success('Marcado como recebido!');
+    const ids = markBulkIds.length > 0 ? markBulkIds : (markId ? [markId] : []);
+    if (ids.length === 0) return;
+    const { error } = await supabase.from('receivables').update({
+      status: 'received',
+      payment_date: markPaymentDate || null,
+      payment_method: markPaymentMethod,
+      notes: buildPaymentNotes(),
+    } as any).in('id', ids);
+    if (error) { toast.error('Erro ao marcar: ' + error.message); return; }
+    toast.success(ids.length > 1 ? `${ids.length} lançamentos marcados como recebidos!` : 'Marcado como recebido!');
     setMarkDialog(false);
+    setSelectedIds([]);
+    setMarkBulkIds([]);
     fetch_();
   };
 
