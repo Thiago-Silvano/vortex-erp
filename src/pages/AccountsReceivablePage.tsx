@@ -169,6 +169,10 @@ export default function AccountsReceivablePage() {
     supabase.from('cost_centers').select('id, name').eq('status', 'active')
       .or(`empresa_id.eq.${activeCompany?.id},empresa_id.is.null`).order('name')
       .then(({ data }) => { if (data) setCostCenters(data); });
+    if (activeCompany?.id) {
+      supabase.from('bank_accounts').select('id, bank_name, account_number').eq('empresa_id', activeCompany.id).eq('status', 'active').order('bank_name')
+        .then(({ data }) => { if (data) setBankAccounts(data as any); });
+    }
   }, [activeCompany?.id]);
 
   const generateInstallmentRows = (count: number, total: number, baseDate: string) => {
