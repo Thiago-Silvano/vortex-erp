@@ -49,7 +49,7 @@ export default function AccountsPayablePage() {
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
   const [sellers, setSellers] = useState<SellerOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('open');
   const [filterSupplier, setFilterSupplier] = useState('all');
   const [filterCostCenter, setFilterCostCenter] = useState('all');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
