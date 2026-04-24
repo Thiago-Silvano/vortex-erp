@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown, Pencil, Undo2, Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -38,6 +39,7 @@ interface SupplierOpt { id: string; name: string; }
 interface SellerOpt { id: string; full_name: string; }
 interface CostCenter { id: string; name: string; }
 interface InstallmentRow { due_date: string; amount: number; }
+interface BankAccountOpt { id: string; bank_name: string; account_number: string | null; }
 
 type PeriodFilter = 'day' | 'month' | 'year';
 
@@ -70,6 +72,10 @@ export default function AccountsPayablePage() {
   const [markPaymentDate, setMarkPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [markPaymentMethod, setMarkPaymentMethod] = useState('pix');
   const [markNotes, setMarkNotes] = useState('');
+  const [markBankAccountId, setMarkBankAccountId] = useState<string>('');
+  const [markBulkIds, setMarkBulkIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountOpt[]>([]);
 
   const [editDialog, setEditDialog] = useState(false);
   const [editItem, setEditItem] = useState<Payable | null>(null);
@@ -163,6 +169,7 @@ export default function AccountsPayablePage() {
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setSuppliers(data); });
     if (activeCompany?.id) {
       supabase.from('sellers').select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }) => { if (data) setSellers(data as any); });
+      supabase.from('bank_accounts').select('id, bank_name, account_number').eq('empresa_id', activeCompany.id).eq('status', 'active').order('bank_name').then(({ data }) => { if (data) setBankAccounts(data as any); });
     }
     supabase.from('cost_centers').select('id, name').eq('status', 'active').or(`empresa_id.eq.${activeCompany?.id},empresa_id.is.null`).order('name').then(({ data }) => { if (data) setCostCenters(data); });
   }, [activeCompany?.id]);
@@ -246,16 +253,47 @@ export default function AccountsPayablePage() {
 
   const openMark = (id: string) => {
     setMarkId(id);
+    setMarkBulkIds([]);
     setMarkPaymentDate(format(new Date(), 'yyyy-MM-dd'));
     setMarkPaymentMethod('pix');
     setMarkNotes('');
+    setMarkBankAccountId('');
     setMarkDialog(true);
   };
 
+  const openBulkMark = () => {
+    if (selectedIds.length === 0) { toast.error('Selecione ao menos um lançamento'); return; }
+    setMarkId('');
+    setMarkBulkIds(selectedIds);
+    setMarkPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+    setMarkPaymentMethod('pix');
+    setMarkNotes('');
+    setMarkBankAccountId('');
+    setMarkDialog(true);
+  };
+
+  const buildPaymentNotes = () => {
+    const bankName = bankAccounts.find(b => b.id === markBankAccountId)?.bank_name;
+    const parts: string[] = [];
+    if (markPaymentMethod) parts.push(markPaymentMethod);
+    if (bankName) parts.push(`Conta: ${bankName}`);
+    if (markNotes) parts.push(markNotes);
+    return parts.join(' - ');
+  };
+
   const handleMark = async () => {
-    await supabase.from('accounts_payable').update({ status: 'paid', payment_date: markPaymentDate || null, notes: markPaymentMethod ? `${markPaymentMethod}${markNotes ? ' - ' + markNotes : ''}` : markNotes }).eq('id', markId);
-    toast.success('Marcado como pago!');
+    const ids = markBulkIds.length > 0 ? markBulkIds : (markId ? [markId] : []);
+    if (ids.length === 0) return;
+    const { error } = await supabase.from('accounts_payable').update({
+      status: 'paid',
+      payment_date: markPaymentDate || null,
+      notes: buildPaymentNotes(),
+    }).in('id', ids);
+    if (error) { toast.error('Erro ao marcar: ' + error.message); return; }
+    toast.success(ids.length > 1 ? `${ids.length} lançamentos marcados como pagos!` : 'Marcado como pago!');
     setMarkDialog(false);
+    setSelectedIds([]);
+    setMarkBulkIds([]);
     fetch_();
   };
 
@@ -376,6 +414,15 @@ export default function AccountsPayablePage() {
               {costCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          {selectedIds.length > 0 && (
+            <div className="ml-auto flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 border border-primary/30">
+              <span className="text-sm font-medium text-foreground">{selectedIds.length} selecionado(s)</span>
+              <Button size="sm" onClick={openBulkMark}>
+                <Check className="h-4 w-4 mr-1" /> Baixar selecionados
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>Limpar</Button>
+            </div>
+          )}
         </div>
 
         <Card>
@@ -383,6 +430,19 @@ export default function AccountsPayablePage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={
+                        filtered.filter(r => r.status === 'open' || r.status === 'partial').length > 0 &&
+                        filtered.filter(r => r.status === 'open' || r.status === 'partial').every(r => selectedIds.includes(r.id))
+                      }
+                      onCheckedChange={(checked) => {
+                        const eligible = filtered.filter(r => r.status === 'open' || r.status === 'partial').map(r => r.id);
+                        if (checked) setSelectedIds(prev => Array.from(new Set([...prev, ...eligible])));
+                        else setSelectedIds(prev => prev.filter(id => !eligible.includes(id)));
+                      }}
+                    />
+                  </TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('supplier')}><span className="inline-flex items-center">Fornecedor/Vendedor <SortIcon col="supplier" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('description')}><span className="inline-flex items-center">Descrição <SortIcon col="description" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('installment_number')}><span className="inline-flex items-center">Parcela <SortIcon col="installment_number" /></span></TableHead>
@@ -394,9 +454,20 @@ export default function AccountsPayablePage() {
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
                   <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(r)}>
+                    <TableCell onClick={e => e.stopPropagation()}>
+                      {(r.status === 'open' || r.status === 'partial') && (
+                        <Checkbox
+                          checked={selectedIds.includes(r.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSelectedIds(prev => [...prev, r.id]);
+                            else setSelectedIds(prev => prev.filter(id => id !== r.id));
+                          }}
+                        />
+                      )}
+                    </TableCell>
                     <TableCell className="font-medium">{entityName(r)}</TableCell>
                     <TableCell>{r.description || '-'}</TableCell>
                     <TableCell>{r.installment_number}/{r.total_installments}</TableCell>
@@ -432,9 +503,31 @@ export default function AccountsPayablePage() {
 
         <Dialog open={markDialog} onOpenChange={setMarkDialog}>
           <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Marcar como Pago</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>
+                {markBulkIds.length > 1 ? `Baixar ${markBulkIds.length} Lançamentos` : 'Marcar como Pago'}
+              </DialogTitle>
+            </DialogHeader>
             <div className="space-y-4">
+              {markBulkIds.length > 1 && (
+                <div className="rounded-md bg-primary/10 border border-primary/30 p-3 text-sm">
+                  <div className="font-medium text-foreground">Total selecionado: {fmt(items.filter(i => markBulkIds.includes(i.id)).reduce((s, i) => s + (i.amount || 0), 0))}</div>
+                  <div className="text-muted-foreground text-xs">{markBulkIds.length} parcela(s) serão marcadas como pagas com os mesmos dados.</div>
+                </div>
+              )}
               <div><Label>Data do Pagamento</Label><Input type="date" value={markPaymentDate} onChange={e => setMarkPaymentDate(e.target.value)} /></div>
+              <div>
+                <Label>Conta Corrente</Label>
+                <Select value={markBankAccountId} onValueChange={setMarkBankAccountId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.length === 0 && <SelectItem value="__none" disabled>Nenhuma conta cadastrada</SelectItem>}
+                    {bankAccounts.map(b => (
+                      <SelectItem key={b.id} value={b.id}>{b.bank_name}{b.account_number ? ` - ${b.account_number}` : ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label>Forma de Pagamento</Label>
                 <Select value={markPaymentMethod} onValueChange={setMarkPaymentMethod}>
