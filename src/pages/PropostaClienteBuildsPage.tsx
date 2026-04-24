@@ -513,20 +513,90 @@ export default function PropostaClienteBuildsPage() {
                         </div>
 
                         {/* Flight legs */}
-                        {isAereo && meta.flightLegs && meta.flightLegs.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {meta.flightLegs.map((leg: any, i: number) => (
-                              <div key={i} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg" style={{ background: '#f5f0e8', color: '#555' }}>
-                                <Plane className="h-3 w-3" style={{ color: '#C8A45B' }} />
-                                <span className="font-medium">{leg.origin}</span>
-                                <span style={{ color: '#C8A45B' }}>→</span>
-                                <span className="font-medium">{leg.destination}</span>
-                                {leg.departureDate && <span className="text-[10px] ml-1" style={{ color: '#999' }}>({formatDateBR(leg.departureDate)}{leg.departureTime ? ` ${leg.departureTime}` : ''})</span>}
-                                {leg.flightCode && <span className="text-[10px] ml-1 font-semibold" style={{ color: '#C8A45B' }}>{leg.flightCode}</span>}
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        {isAereo && meta.flightLegs && meta.flightLegs.length > 0 && (() => {
+                          const legs = meta.flightLegs as any[];
+                          const outbound = legs.filter((l: any) => l.direction === 'ida' || l.direction !== 'volta');
+                          const returnLegs = legs.filter((l: any) => l.direction === 'volta');
+                          const groups: { label: string; color: string; legs: any[] }[] = [];
+                          if (outbound.length > 0) groups.push({ label: 'IDA', color: '#0D1B2A', legs: outbound });
+                          if (returnLegs.length > 0) groups.push({ label: 'VOLTA', color: '#C8A45B', legs: returnLegs });
+                          if (groups.length === 0) groups.push({ label: 'IDA', color: '#0D1B2A', legs });
+
+                          const extractCode = (s: string) => {
+                            if (!s) return { code: '', name: '' };
+                            const m = s.match(/^\s*([A-Z]{3})\b\s*[-–]?\s*(.*)$/);
+                            if (m) return { code: m[1], name: m[2].trim() };
+                            return { code: s.trim().slice(0, 3).toUpperCase(), name: s.trim() };
+                          };
+
+                          return (
+                            <div className="mt-4 rounded-xl p-3 space-y-3" style={{ background: '#faf8f3', border: '1px solid #f0ebe0' }}>
+                              {groups.map((group, gIdx) => (
+                                <div key={gIdx} className="space-y-1.5">
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <span
+                                      className="text-[9px] font-bold tracking-[1.5px] uppercase px-2 py-0.5 rounded"
+                                      style={{ background: group.color, color: '#fff' }}
+                                    >
+                                      {group.label}
+                                    </span>
+                                    <div className="flex-1 h-px" style={{ background: '#ece5d4' }} />
+                                  </div>
+                                  {group.legs.map((leg: any, i: number) => {
+                                    const o = extractCode(leg.origin || '');
+                                    const d = extractCode(leg.destination || '');
+                                    return (
+                                      <div
+                                        key={i}
+                                        className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                                        style={{ background: '#fff', border: '1px solid #f3ecdc' }}
+                                      >
+                                        <Plane className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#C8A45B' }} />
+
+                                        {/* Origin */}
+                                        <div className="flex flex-col items-start min-w-[58px]">
+                                          <span className="text-sm font-bold leading-none" style={{ color: '#0D1B2A' }}>{o.code}</span>
+                                          {leg.departureTime && (
+                                            <span className="text-[10px] mt-0.5" style={{ color: '#888' }}>{leg.departureTime}</span>
+                                          )}
+                                        </div>
+
+                                        {/* Route line */}
+                                        <div className="flex-1 flex items-center gap-1 min-w-[40px]">
+                                          <span className="h-px flex-1" style={{ background: '#e5dcc4' }} />
+                                          <span className="text-[10px]" style={{ color: '#C8A45B' }}>→</span>
+                                          <span className="h-px flex-1" style={{ background: '#e5dcc4' }} />
+                                        </div>
+
+                                        {/* Destination */}
+                                        <div className="flex flex-col items-end min-w-[58px]">
+                                          <span className="text-sm font-bold leading-none" style={{ color: '#0D1B2A' }}>{d.code}</span>
+                                          {leg.arrivalTime && (
+                                            <span className="text-[10px] mt-0.5" style={{ color: '#888' }}>{leg.arrivalTime}</span>
+                                          )}
+                                        </div>
+
+                                        {/* Date */}
+                                        {leg.departureDate && (
+                                          <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: '#f5f0e8', color: '#7a6a4a' }}>
+                                            {formatDateBR(leg.departureDate)}
+                                          </span>
+                                        )}
+
+                                        {/* Flight code */}
+                                        {leg.flightCode && (
+                                          <span className="text-[10px] px-2 py-0.5 rounded font-bold tracking-wide" style={{ background: '#0D1B2A', color: '#E8D5A3' }}>
+                                            {leg.flightCode}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
 
                         {/* Baggage info */}
                         {baggageInfo && (
