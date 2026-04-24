@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown, Pencil, Undo2, Trash2 } from 'lucide-react';
+import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown, Pencil, Undo2, Trash2, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -361,7 +361,16 @@ export default function AccountsPayablePage() {
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Contas a Pagar</h1>
+          <div className="flex items-center gap-1 bg-card border rounded-md p-1 shadow-sm">
+            <Button size="sm" variant="default" className="gap-1.5">
+              <ArrowUpCircle className="h-4 w-4" />
+              Contas a Pagar
+            </Button>
+            <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => navigate(`/financial/receivable${window.location.search}`)}>
+              <ArrowDownCircle className="h-4 w-4" />
+              Contas a Receber
+            </Button>
+          </div>
           <Button onClick={() => setManualDialog(true)}><Plus className="h-4 w-4 mr-2" />Novo Lançamento</Button>
         </div>
 
