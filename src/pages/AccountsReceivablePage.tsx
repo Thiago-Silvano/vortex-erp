@@ -46,7 +46,7 @@ export default function AccountsReceivablePage() {
   const [items, setItems] = useState<Receivable[]>([]);
   const [clients, setClients] = useState<ClientOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('pending');
   const [filterClient, setFilterClient] = useState('');
   const [filterCostCenter, setFilterCostCenter] = useState('all');
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month');
