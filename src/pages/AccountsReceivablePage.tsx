@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown, Pencil, Undo2, Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -36,6 +37,7 @@ interface Receivable {
 interface ClientOpt { id: string; full_name: string; }
 interface CostCenter { id: string; name: string; }
 interface InstallmentRow { due_date: string; amount: number; }
+interface BankAccountOpt { id: string; bank_name: string; account_number: string | null; }
 
 type PeriodFilter = 'day' | 'month' | 'year';
 
@@ -67,6 +69,10 @@ export default function AccountsReceivablePage() {
   const [markPaymentDate, setMarkPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [markPaymentMethod, setMarkPaymentMethod] = useState('');
   const [markNotes, setMarkNotes] = useState('');
+  const [markBankAccountId, setMarkBankAccountId] = useState<string>('');
+  const [markBulkIds, setMarkBulkIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountOpt[]>([]);
 
   const [editDialog, setEditDialog] = useState(false);
   const [editItem, setEditItem] = useState<Receivable | null>(null);
