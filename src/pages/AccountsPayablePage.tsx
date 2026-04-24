@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Check, AlertTriangle, Clock, DollarSign, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown, Pencil, Undo2, Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -38,6 +39,7 @@ interface SupplierOpt { id: string; name: string; }
 interface SellerOpt { id: string; full_name: string; }
 interface CostCenter { id: string; name: string; }
 interface InstallmentRow { due_date: string; amount: number; }
+interface BankAccountOpt { id: string; bank_name: string; account_number: string | null; }
 
 type PeriodFilter = 'day' | 'month' | 'year';
 
@@ -70,6 +72,10 @@ export default function AccountsPayablePage() {
   const [markPaymentDate, setMarkPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [markPaymentMethod, setMarkPaymentMethod] = useState('pix');
   const [markNotes, setMarkNotes] = useState('');
+  const [markBankAccountId, setMarkBankAccountId] = useState<string>('');
+  const [markBulkIds, setMarkBulkIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountOpt[]>([]);
 
   const [editDialog, setEditDialog] = useState(false);
   const [editItem, setEditItem] = useState<Payable | null>(null);
@@ -163,6 +169,7 @@ export default function AccountsPayablePage() {
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setSuppliers(data); });
     if (activeCompany?.id) {
       supabase.from('sellers').select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }) => { if (data) setSellers(data as any); });
+      supabase.from('bank_accounts').select('id, bank_name, account_number').eq('empresa_id', activeCompany.id).eq('status', 'active').order('bank_name').then(({ data }) => { if (data) setBankAccounts(data as any); });
     }
     supabase.from('cost_centers').select('id, name').eq('status', 'active').or(`empresa_id.eq.${activeCompany?.id},empresa_id.is.null`).order('name').then(({ data }) => { if (data) setCostCenters(data); });
   }, [activeCompany?.id]);
@@ -246,16 +253,47 @@ export default function AccountsPayablePage() {
 
   const openMark = (id: string) => {
     setMarkId(id);
+    setMarkBulkIds([]);
     setMarkPaymentDate(format(new Date(), 'yyyy-MM-dd'));
     setMarkPaymentMethod('pix');
     setMarkNotes('');
+    setMarkBankAccountId('');
     setMarkDialog(true);
   };
 
+  const openBulkMark = () => {
+    if (selectedIds.length === 0) { toast.error('Selecione ao menos um lançamento'); return; }
+    setMarkId('');
+    setMarkBulkIds(selectedIds);
+    setMarkPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+    setMarkPaymentMethod('pix');
+    setMarkNotes('');
+    setMarkBankAccountId('');
+    setMarkDialog(true);
+  };
+
+  const buildPaymentNotes = () => {
+    const bankName = bankAccounts.find(b => b.id === markBankAccountId)?.bank_name;
+    const parts: string[] = [];
+    if (markPaymentMethod) parts.push(markPaymentMethod);
+    if (bankName) parts.push(`Conta: ${bankName}`);
+    if (markNotes) parts.push(markNotes);
+    return parts.join(' - ');
+  };
+
   const handleMark = async () => {
-    await supabase.from('accounts_payable').update({ status: 'paid', payment_date: markPaymentDate || null, notes: markPaymentMethod ? `${markPaymentMethod}${markNotes ? ' - ' + markNotes : ''}` : markNotes }).eq('id', markId);
-    toast.success('Marcado como pago!');
+    const ids = markBulkIds.length > 0 ? markBulkIds : (markId ? [markId] : []);
+    if (ids.length === 0) return;
+    const { error } = await supabase.from('accounts_payable').update({
+      status: 'paid',
+      payment_date: markPaymentDate || null,
+      notes: buildPaymentNotes(),
+    }).in('id', ids);
+    if (error) { toast.error('Erro ao marcar: ' + error.message); return; }
+    toast.success(ids.length > 1 ? `${ids.length} lançamentos marcados como pagos!` : 'Marcado como pago!');
     setMarkDialog(false);
+    setSelectedIds([]);
+    setMarkBulkIds([]);
     fetch_();
   };
 
