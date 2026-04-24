@@ -414,6 +414,15 @@ export default function AccountsPayablePage() {
               {costCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          {selectedIds.length > 0 && (
+            <div className="ml-auto flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 border border-primary/30">
+              <span className="text-sm font-medium text-foreground">{selectedIds.length} selecionado(s)</span>
+              <Button size="sm" onClick={openBulkMark}>
+                <Check className="h-4 w-4 mr-1" /> Baixar selecionados
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>Limpar</Button>
+            </div>
+          )}
         </div>
 
         <Card>
@@ -421,6 +430,19 @@ export default function AccountsPayablePage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={
+                        filtered.filter(r => r.status === 'open' || r.status === 'partial').length > 0 &&
+                        filtered.filter(r => r.status === 'open' || r.status === 'partial').every(r => selectedIds.includes(r.id))
+                      }
+                      onCheckedChange={(checked) => {
+                        const eligible = filtered.filter(r => r.status === 'open' || r.status === 'partial').map(r => r.id);
+                        if (checked) setSelectedIds(prev => Array.from(new Set([...prev, ...eligible])));
+                        else setSelectedIds(prev => prev.filter(id => !eligible.includes(id)));
+                      }}
+                    />
+                  </TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('supplier')}><span className="inline-flex items-center">Fornecedor/Vendedor <SortIcon col="supplier" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('description')}><span className="inline-flex items-center">Descrição <SortIcon col="description" /></span></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('installment_number')}><span className="inline-flex items-center">Parcela <SortIcon col="installment_number" /></span></TableHead>
@@ -432,9 +454,20 @@ export default function AccountsPayablePage() {
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
                   <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(r)}>
+                    <TableCell onClick={e => e.stopPropagation()}>
+                      {(r.status === 'open' || r.status === 'partial') && (
+                        <Checkbox
+                          checked={selectedIds.includes(r.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSelectedIds(prev => [...prev, r.id]);
+                            else setSelectedIds(prev => prev.filter(id => id !== r.id));
+                          }}
+                        />
+                      )}
+                    </TableCell>
                     <TableCell className="font-medium">{entityName(r)}</TableCell>
                     <TableCell>{r.description || '-'}</TableCell>
                     <TableCell>{r.installment_number}/{r.total_installments}</TableCell>
