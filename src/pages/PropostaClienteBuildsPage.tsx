@@ -568,27 +568,31 @@ export default function PropostaClienteBuildsPage() {
                                           <span className="h-px flex-1" style={{ background: '#e5dcc4' }} />
                                         </div>
 
-                                        {/* Destination */}
-                                        <div className="flex flex-col items-end min-w-[58px]">
+                                        {/* Destination — fixed width */}
+                                        <div className="flex flex-col items-end flex-shrink-0" style={{ width: 58 }}>
                                           <span className="text-sm font-bold leading-none" style={{ color: '#0D1B2A' }}>{d.code}</span>
                                           {leg.arrivalTime && (
                                             <span className="text-[10px] mt-0.5" style={{ color: '#888' }}>{leg.arrivalTime}</span>
                                           )}
                                         </div>
 
-                                        {/* Date */}
-                                        {leg.departureDate && (
-                                          <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: '#f5f0e8', color: '#7a6a4a' }}>
-                                            {formatDateBR(leg.departureDate)}
-                                          </span>
-                                        )}
+                                        {/* Date — fixed width */}
+                                        <div className="flex-shrink-0 flex justify-center" style={{ width: 76 }}>
+                                          {leg.departureDate && (
+                                            <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap" style={{ background: '#f5f0e8', color: '#7a6a4a' }}>
+                                              {formatDateBR(leg.departureDate)}
+                                            </span>
+                                          )}
+                                        </div>
 
-                                        {/* Flight code */}
-                                        {leg.flightCode && (
-                                          <span className="text-[10px] px-2 py-0.5 rounded font-bold tracking-wide" style={{ background: '#0D1B2A', color: '#E8D5A3' }}>
-                                            {leg.flightCode}
-                                          </span>
-                                        )}
+                                        {/* Flight code — fixed right column */}
+                                        <div className="flex-shrink-0 flex justify-end" style={{ width: 150 }}>
+                                          {leg.flightCode && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded font-bold tracking-wide whitespace-nowrap truncate max-w-full" style={{ background: '#0D1B2A', color: '#E8D5A3' }}>
+                                              {leg.flightCode}
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
                                     );
                                   })}
