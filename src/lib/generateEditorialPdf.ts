@@ -124,16 +124,17 @@ export interface PremiumPdfData {
 }
 
 // ─── Editorial Theme — Carol Fonseca style ──────────────────
-// Palette: white + bege + ocean blue
+// Paleta espelhada no template HTML
 const WHITE = [255, 255, 255] as const;
-const CREAM = [245, 239, 227] as const; // page bege
-const CREAM_SOFT = [250, 246, 238] as const;
-const SAND = [231, 218, 196] as const; // chip bege
-const OCEAN = [31, 58, 95] as const; // dark navy
-const OCEAN_SOFT = [122, 149, 176] as const; // muted blue
-const TEXT_MAIN = [40, 40, 50] as const;
-const TEXT_MUTED = [120, 120, 130] as const;
-const BORDER = [220, 212, 196] as const;
+const CREAM = [236, 233, 223] as const;       // #ece9df — fundo das células de voo / cards
+const CREAM_SOFT = [245, 242, 233] as const;  // versão mais clara
+const SAND = [211, 204, 191] as const;        // #d3ccbf — barra de data dos voos
+const OCEAN = [34, 34, 34] as const;          // #222 — títulos
+const OCEAN_BANNER = [105, 132, 155] as const;// #69849b — banner azul oceano da capa / estrelas
+const TEXT_MAIN = [51, 51, 51] as const;      // #333
+const TEXT_MUTED = [102, 102, 102] as const;  // #666
+const TEXT_SOFT = [136, 136, 136] as const;   // #888 — rodapé
+const BORDER = [221, 221, 221] as const;      // #ddd
 
 // ─── Helpers ───────────────────────────────────────────────
 const sanitize = (text: string = ""): string =>
