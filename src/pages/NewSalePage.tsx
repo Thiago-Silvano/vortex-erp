@@ -15,13 +15,12 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, Crown } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
-import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
-import { generateBlackLuxoPdf } from '@/lib/generateBlackLuxoPdf';
+import { generateEditorialPdf, PremiumPdfData } from '@/lib/generateEditorialPdf';
 import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger, AdditionalAirService } from '@/lib/generateAirlineVoucherPdf';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
@@ -2033,17 +2032,9 @@ export default function NewSalePage() {
   const handleExportDraftPdf = async () => {
     const pdfData = await buildPremiumPdfData();
     if (!pdfData) return;
-    const doc = generatePremiumQuotePdf(pdfData);
-    doc.save(`rascunho-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('PDF do rascunho gerado com sucesso!');
-  };
-
-  const handleExportBlackLuxoPdf = async () => {
-    const pdfData = await buildPremiumPdfData();
-    if (!pdfData) return;
-    const doc = generateBlackLuxoPdf(pdfData);
-    doc.save(`proposta-luxo-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('PDF Premium Black Luxo gerado!');
+    const doc = generateEditorialPdf(pdfData);
+    doc.save(`proposta-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+    toast.success('PDF da proposta gerado com sucesso!');
   };
 
   const handleGenerateLink = async () => {
@@ -3766,12 +3757,11 @@ export default function NewSalePage() {
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
               <Button
-                onClick={handleExportBlackLuxoPdf}
-                className="w-full sm:w-auto bg-gradient-to-r from-zinc-900 to-zinc-700 text-amber-300 hover:from-black hover:to-zinc-800 border border-amber-500/40"
+                onClick={handleExportDraftPdf}
+                className="w-full sm:w-auto bg-[#1F3A5F] hover:bg-[#16304F] text-white"
               >
-                <Crown className="h-4 w-4 mr-1" /> Gerar PDF Premium
+                <Download className="h-4 w-4 mr-1" /> Gerar PDF da Proposta (F8)
               </Button>
             </>
           )}
