@@ -402,7 +402,7 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   drawPageHeader(doc, pw, agencyName);
 
   let y = 35;
-  y = drawSectionTitle(doc, pw, y, "Aereo");
+  y = drawSectionTitle(doc, pw, y, "Aéreo");
   y += 6;
 
   const ida = data.flightLegs.filter((l) => l.direction !== "volta");
