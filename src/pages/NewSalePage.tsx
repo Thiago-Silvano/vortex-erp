@@ -2032,7 +2032,7 @@ export default function NewSalePage() {
   const handleExportDraftPdf = async () => {
     const pdfData = await buildPremiumPdfData();
     if (!pdfData) return;
-    const doc = generateEditorialPdf(pdfData);
+    const doc = await generateEditorialPdfAsync(pdfData);
     doc.save(`proposta-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
     toast.success('PDF da proposta gerado com sucesso!');
   };
