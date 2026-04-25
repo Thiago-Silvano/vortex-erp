@@ -590,25 +590,32 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   // Título "INVESTIMENTO"
   drawSectionTitle(doc, pw, blockStart + titleH, "Investimento");
 
-  // Card com valor total
+  // Card com valor total — banner azul com bordas douradas (estilo capa)
   const cardY = blockStart + titleH + titleGap;
-  setFill(doc, CREAM);
-  doc.roundedRect(m, cardY, w, cardH, 4, 4, "F");
+  const goldH = 1.2;
+  // Bordas douradas (topo e fundo)
+  setFill(doc, GOLD);
+  doc.rect(m, cardY - goldH, w, goldH, "F");
+  doc.rect(m, cardY + cardH, w, goldH, "F");
+  // Banner azul oceano
+  setFill(doc, OCEAN_BANNER);
+  doc.rect(m, cardY, w, cardH, "F");
+
   doc.setFont("helvetica", "italic");
   doc.setFontSize(11);
-  setText(doc, OCEAN);
-  safeText(doc, "Valor total da viagem", pw / 2, cardY + 11, { align: "center" });
+  setText(doc, [255, 255, 255]);
+  safeText(doc, "Valor total da viagem", pw / 2, cardY + 12, { align: "center" });
   doc.setFont("helvetica", "bold");
   doc.setFontSize(26);
-  setText(doc, OCEAN);
-  safeText(doc, fmtBRL(data.totalTrip || 0), pw / 2, cardY + 25, { align: "center" });
+  setText(doc, [255, 255, 255]);
+  safeText(doc, fmtBRL(data.totalTrip || 0), pw / 2, cardY + 27, { align: "center" });
 
   if (data.payment?.installments && data.payment.installments > 1) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    setText(doc, TEXT_MUTED);
+    setText(doc, [235, 235, 235]);
     const inst = (data.totalTrip || 0) / data.payment.installments;
-    safeText(doc, `ou ${data.payment.installments}x de ${fmtBRL(inst)}`, pw / 2, cardY + 33, { align: "center" });
+    safeText(doc, `ou ${data.payment.installments}x de ${fmtBRL(inst)}`, pw / 2, cardY + 35, { align: "center" });
   }
 
   let y = heroBottom + 5;
