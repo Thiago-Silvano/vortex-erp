@@ -258,7 +258,7 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   doc.setFont("helvetica", "bold");
   doc.setFontSize(40);
   setText(doc, OCEAN);
-  safeText(doc, "ORÇAMENTO", pw / 2, topY + 10, { align: "center", charSpace: 4 });
+  safeText(doc, "ORÇAMENTO", 20, topY + 28, { align: "center", charSpace: 4 });
 
   // Destination subtitle
   if (data.destination) {
