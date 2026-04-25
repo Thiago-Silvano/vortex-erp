@@ -222,15 +222,12 @@ function drawPageHeader(_doc: jsPDF, _pw: number, _agencyName: string) {
 }
 
 function drawPageFooter(doc: jsPDF, pw: number, ph: number, agencyName: string) {
-  // Linha cinza-clara + texto centralizado uppercase com letter-spacing
+  // Rodapé limpo (sem nome da agência) — mantém apenas a linha divisória
   const m = 20;
   setStroke(doc, BORDER);
   doc.setLineWidth(0.3);
   doc.line(m, ph - 18, pw - m, ph - 18);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setText(doc, TEXT_SOFT);
-  safeText(doc, agencyName.toUpperCase(), pw / 2, ph - 12, { align: "center", charSpace: 1.2 });
+  void agencyName;
 }
 
 // ─── Section title (serif, centered) ──────────────────────
@@ -331,23 +328,17 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   doc.rect(0, bandY - goldH, pw, goldH, "F");           // topo
   doc.rect(0, bandY + bandH, pw, goldH, "F");           // base
 
-  // Período da viagem
+  // Período da viagem — centralizado vertical e horizontalmente, fonte maior
   const dateRange = formatRangeLong(data.departureDate, data.returnDate);
   if (dateRange) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
+    doc.setFontSize(20);
     setText(doc, WHITE);
-    safeText(doc, dateRange, pw / 2, bandY + 14, { align: "center" });
+    safeText(doc, dateRange, pw / 2, bandY + bandH / 2 + 2, {
+      align: "center",
+      charSpace: 1.2,
+    });
   }
-
-  // Nome do cliente — uppercase, letter-spacing
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(20);
-  setText(doc, WHITE);
-  safeText(doc, (data.client.name || "").toUpperCase(), pw / 2, bandY + 26, {
-    align: "center",
-    charSpace: 1.5,
-  });
 
   // === Rodapé da capa (.cover-footer) — nome da agência centralizado verticalmente
   // na faixa branca abaixo do banner. ===
