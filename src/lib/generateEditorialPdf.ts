@@ -197,21 +197,21 @@ function drawPageFooter(doc: jsPDF, pw: number, ph: number, agencyName: string) 
 
 // ─── Section title (serif, centered) ──────────────────────
 function drawSectionTitle(doc: jsPDF, pw: number, y: number, title: string): number {
-  doc.setFont('times', 'bold');
-  doc.setFontSize(30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(26);
   setText(doc, OCEAN);
-  safeText(doc, title.toUpperCase(), pw / 2, y, { align: 'center' });
+  safeText(doc, title.toUpperCase(), pw / 2, y, { align: 'center', charSpace: 3 });
   // small underline
   setFill(doc, OCEAN_SOFT);
-  doc.rect(pw / 2 - 15, y + 3, 30, 0.6, 'F');
+  doc.rect(pw / 2 - 18, y + 3, 36, 0.6, 'F');
   return y + 14;
 }
 
 function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number {
-  doc.setFont('times', 'bold');
-  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
   setText(doc, OCEAN);
-  safeText(doc, label.toUpperCase(), pw / 2, y, { align: 'center' });
+  safeText(doc, label.toUpperCase(), pw / 2, y, { align: 'center', charSpace: 4 });
   return y + 8;
 }
 
@@ -239,10 +239,10 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   safeText(doc, 'Proposta de', pw / 2, topY + 12, { align: 'center' });
 
   // ORÇAMENTO — huge serif
-  doc.setFont('times', 'bold');
-  doc.setFontSize(48);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(40);
   setText(doc, OCEAN);
-  safeText(doc, 'ORCAMENTO', pw / 2, topY + 28, { align: 'center' });
+  safeText(doc, 'ORCAMENTO', pw / 2, topY + 28, { align: 'center', charSpace: 4 });
 
   // Destination subtitle
   if (data.destination) {
@@ -513,8 +513,8 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   doc.setFontSize(11);
   setText(doc, OCEAN);
   safeText(doc, 'Valor total da viagem', pw / 2, y + 11, { align: 'center' });
-  doc.setFont('times', 'bold');
-  doc.setFontSize(28);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(26);
   setText(doc, OCEAN);
   safeText(doc, fmtBRL(data.totalTrip || 0), pw / 2, y + 25, { align: 'center' });
 
