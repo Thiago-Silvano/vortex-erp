@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
+import { generateBlackLuxoPdf } from '@/lib/generateBlackLuxoPdf';
 import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger, AdditionalAirService } from '@/lib/generateAirlineVoucherPdf';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
