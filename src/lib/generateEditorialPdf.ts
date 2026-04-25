@@ -582,7 +582,7 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     setText(doc, OCEAN);
-    safeText(doc, "Observacoes", m, y);
+    safeText(doc, "Observações", m, y);
     y += 7;
     setStroke(doc, OCEAN_SOFT);
     doc.line(m, y, m + 30, y);
