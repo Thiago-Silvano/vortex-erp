@@ -124,16 +124,17 @@ export interface PremiumPdfData {
 }
 
 // ─── Editorial Theme — Carol Fonseca style ──────────────────
-// Palette: white + bege + ocean blue
+// Paleta espelhada no template HTML
 const WHITE = [255, 255, 255] as const;
-const CREAM = [245, 239, 227] as const; // page bege
-const CREAM_SOFT = [250, 246, 238] as const;
-const SAND = [231, 218, 196] as const; // chip bege
-const OCEAN = [31, 58, 95] as const; // dark navy
-const OCEAN_SOFT = [122, 149, 176] as const; // muted blue
-const TEXT_MAIN = [40, 40, 50] as const;
-const TEXT_MUTED = [120, 120, 130] as const;
-const BORDER = [220, 212, 196] as const;
+const CREAM = [236, 233, 223] as const;       // #ece9df — fundo das células de voo / cards
+const CREAM_SOFT = [245, 242, 233] as const;  // versão mais clara
+const SAND = [211, 204, 191] as const;        // #d3ccbf — barra de data dos voos
+const OCEAN = [34, 34, 34] as const;          // #222 — títulos
+const OCEAN_BANNER = [105, 132, 155] as const;// #69849b — banner azul oceano da capa / estrelas
+const TEXT_MAIN = [51, 51, 51] as const;      // #333
+const TEXT_MUTED = [102, 102, 102] as const;  // #666
+const TEXT_SOFT = [136, 136, 136] as const;   // #888 — rodapé
+const BORDER = [221, 221, 221] as const;      // #ddd
 
 // ─── Helpers ───────────────────────────────────────────────
 const sanitize = (text: string = ""): string =>
@@ -215,39 +216,36 @@ function drawPageBg(doc: jsPDF, pw: number, ph: number) {
   doc.rect(0, 0, pw, ph, "F");
 }
 
-function drawPageHeader(doc: jsPDF, pw: number, agencyName: string) {
-  // top thin ocean line
-  setFill(doc, OCEAN_SOFT);
-  doc.rect(0, 0, pw, 1.5, "F");
+function drawPageHeader(_doc: jsPDF, _pw: number, _agencyName: string) {
+  // Páginas internas no template não têm faixa de topo — manter limpo.
 }
 
 function drawPageFooter(doc: jsPDF, pw: number, ph: number, agencyName: string) {
+  // Linha cinza-clara + texto centralizado uppercase com letter-spacing
+  const m = 20;
   setStroke(doc, BORDER);
   doc.setLineWidth(0.3);
-  doc.line(20, ph - 18, pw - 20, ph - 18);
+  doc.line(m, ph - 18, pw - m, ph - 18);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  setText(doc, TEXT_MUTED);
+  setText(doc, TEXT_SOFT);
   safeText(doc, agencyName.toUpperCase(), pw / 2, ph - 12, { align: "center", charSpace: 1.2 });
 }
 
 // ─── Section title (serif, centered) ──────────────────────
 function drawSectionTitle(doc: jsPDF, pw: number, y: number, title: string): number {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
+  doc.setFontSize(24);
   setText(doc, OCEAN);
-  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center", charSpace: 3 });
-  // small underline
-  setFill(doc, OCEAN_SOFT);
-  doc.rect(pw / 2 - 18, y + 3, 36, 0.6, "F");
-  return y + 14;
+  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center", charSpace: 2 });
+  return y + 12;
 }
 
 function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
+  doc.setFontSize(13);
   setText(doc, OCEAN);
-  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center" });
+  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center", charSpace: 2 });
   return y + 10;
 }
 
@@ -255,56 +253,51 @@ function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number 
 function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, agencyName: string) {
   drawPageBg(doc, pw, ph);
 
-  // Top thin line
-  setFill(doc, OCEAN_SOFT);
-  doc.rect(0, 0, pw, 2, "F");
-
-  // Logo top-left/center
-  let topY = 22;
-  const logoToUse = data.agency.logoBase64 || vortexLogoBase64Cache || null;
-  if (logoToUse) {
+  // Logo opcional bem no topo (somente se a agência cadastrou).
+  // O template HTML não tem logo na capa — só usamos logo da agência (não a Vortex padrão).
+  let headerOffset = 0;
+  if (data.agency.logoBase64) {
     try {
-      // Logo Vortex é quadrada — usar caixa maior e proporcional
-      const isVortex = !data.agency.logoBase64;
-      const w = isVortex ? 32 : 44;
-      const h = isVortex ? 32 : 18;
-      doc.addImage(logoToUse, "PNG", pw / 2 - w / 2, 12, w, h);
-      topY = 14 + h + 4;
+      const w = 36;
+      const h = 16;
+      doc.addImage(data.agency.logoBase64, "PNG", pw / 2 - w / 2, 12, w, h);
+      headerOffset = h + 4;
     } catch {
       /* ignore */
     }
   }
 
-  // "Proposta de" — italic small
-  //doc.setFont("helvetica", "italic");
-  //doc.setFontSize(18);
-  //setText(doc, OCEAN);
-  //safeText(doc, "Proposta de", 70, topY + 12, { align: "center" });
+  // === Cabeçalho da capa (espelha .cover-header do template) ===
+  // Pré-título italic "Proposta de"
+  const preTitleY = 30 + headerOffset;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(16);
+  setText(doc, TEXT_MUTED);
+  safeText(doc, "Proposta de", pw / 2, preTitleY, { align: "center" });
 
-  //ORÇAMENTO — huge serif
-  doc.setFont("helvetica", "bold");
+  // Título gigante "ORÇAMENTO"
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(40);
   setText(doc, OCEAN);
-  safeText(doc, "ORÇAMENTO", pw / 2, topY + 28, { align: "center", charSpace: 4 });
+  safeText(doc, "ORCAMENTO", pw / 2, preTitleY + 14, { align: "center", charSpace: 1 });
 
-  // Destination subtitle
+  // Subtítulo "VIAGEM PARA ..." (uppercase, letter-spacing 3px)
   if (data.destination) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     setText(doc, TEXT_MUTED);
-    safeText(doc, `VIAGEM PARA ${data.destination.toUpperCase()}`, pw / 2, topY + 36, {
+    safeText(doc, `VIAGEM PARA ${data.destination.toUpperCase()}`, pw / 2, preTitleY + 22, {
       align: "center",
-      charSpace: 2,
+      charSpace: 2.5,
     });
   }
 
-  // Hero image area
-  const imgX = 18;
-  const imgY = topY + 44;
-  const imgW = pw - 36;
-  const imgH = 150;
+  // === Imagem hero (espelha .cover-image: width 100%, height 120mm) ===
+  const imgX = 0;
+  const imgY = preTitleY + 32;
+  const imgW = pw;
+  const imgH = 110;
 
-  // Image or placeholder
   let drawnImage = false;
   if (data.destinationImageBase64) {
     try {
@@ -315,110 +308,131 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
     }
   }
   if (!drawnImage) {
-    setFill(doc, CREAM);
+    // Placeholder cinza-claro (#d8d8d8 do template)
+    setFill(doc, [216, 216, 216] as const);
     doc.rect(imgX, imgY, imgW, imgH, "F");
     doc.setFont("helvetica", "italic");
-    doc.setFontSize(16);
-    setText(doc, OCEAN_SOFT);
-    safeText(doc, data.destination ? data.destination : "Destino", pw / 2, imgY + imgH / 2, { align: "center" });
+    doc.setFontSize(14);
+    setText(doc, TEXT_SOFT);
+    safeText(doc, data.destination || "Destino", pw / 2, imgY + imgH / 2, { align: "center" });
   }
 
-  // Bottom band — ocean soft
-  const bandY = imgY + imgH + 8;
-  const bandH = 26;
-  setFill(doc, OCEAN_SOFT);
-  doc.rect(imgX, bandY, imgW, bandH, "F");
+  // === Banner azul oceano (.cover-banner) — período + cliente ===
+  // No template está absoluto, bottom: 35mm. width 100%, padding vertical generoso.
+  const bandH = 36;
+  const bandY = ph - 35 - bandH;
+  setFill(doc, OCEAN_BANNER);
+  doc.rect(0, bandY, pw, bandH, "F");
 
-  // Dates
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(11);
-  setText(doc, WHITE);
+  // Período da viagem
   const dateRange = formatRangeLong(data.departureDate, data.returnDate);
-  if (dateRange) safeText(doc, dateRange, pw / 2, bandY + 9, { align: "center" });
+  if (dateRange) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    setText(doc, WHITE);
+    safeText(doc, dateRange, pw / 2, bandY + 14, { align: "center" });
+  }
 
-  // Client name
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  setText(doc, WHITE);
-  safeText(doc, (data.client.name || "").toUpperCase(), pw / 2, bandY + 18, { align: "center", charSpace: 1.5 });
-
-  // Footer agency
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(12);
-  setText(doc, OCEAN);
-  safeText(doc, agencyName, pw / 2, ph - 22, { align: "center" });
+  // Nome do cliente — uppercase, letter-spacing
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(20);
+  setText(doc, WHITE);
+  safeText(doc, (data.client.name || "").toUpperCase(), pw / 2, bandY + 26, {
+    align: "center",
+    charSpace: 1.5,
+  });
+
+  // === Rodapé da capa (.cover-footer) — nome da agência uppercase ===
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
   setText(doc, TEXT_MUTED);
-  safeText(doc, "VIAGENS", pw / 2, ph - 16, { align: "center", charSpace: 2 });
+  safeText(doc, agencyName.toUpperCase(), pw / 2, ph - 15, {
+    align: "center",
+    charSpace: 1.2,
+  });
 }
 
 // ─── Flight Section ────────────────────────────────────────
 type Leg = NonNullable<PremiumPdfData["flightLegs"]>[number];
 
 function drawFlightLegCard(doc: jsPDF, x: number, y: number, w: number, leg: Leg): number {
-  // Date header — bege strip
+  // === Layout do template HTML (.flight-table) ===
+  // 1) Faixa bege escuro com a DATA (e código do voo opcional à direita)
+  // 2) Linha de localizações: ORIGEM (45%)  ✈ (10%)  DESTINO (45%) — fundo bege claro
+  // 3) Linha de horários abaixo: SAÍDA / CHEGADA — fundo bege claro com linha branca separadora
+
   const dateStr = formatWeekday(leg.departureDate) || formatDateBR(leg.departureDate);
+
+  // (1) DATA — barra bege #d3ccbf
+  const dateH = 7;
   setFill(doc, SAND);
-  doc.rect(x, y, w, 7, "F");
+  doc.rect(x, y, w, dateH, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setText(doc, OCEAN);
-  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.7, { align: "center" });
-  let yy = y + 7;
+  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.8, { align: "center", charSpace: 0.5 });
 
-  // Two side-by-side boxes (origin / destination) with plane icon between
-  const gap = 6;
-  const planeW = 8;
-  const boxW = (w - planeW - gap * 2) / 2;
-
-  // Origin box
-  setFill(doc, CREAM_SOFT);
-  doc.rect(x, yy + 2, boxW, 14, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  setText(doc, OCEAN);
-  const oCode = extractCode(leg.origin);
-  const oLabel = sanitize(leg.origin || "");
-  // Format like "GRU | São Paulo, BR" if we have a comma; else just code
-  const oDisplay = oLabel.includes("|") || oLabel.includes(",") ? oLabel : `${oCode}`;
-  safeText(doc, oDisplay, x + boxW / 2, yy + 8, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  setText(doc, TEXT_MUTED);
-  safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + boxW / 2, yy + 13, { align: "center", charSpace: 0.5 });
-
-  // Plane symbol
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  setText(doc, OCEAN_SOFT);
-  safeText(doc, ">", x + boxW + gap + planeW / 2, yy + 10, { align: "center" });
-
-  // Destination box
-  const dx = x + boxW + gap + planeW + gap;
-  setFill(doc, CREAM_SOFT);
-  doc.rect(dx, yy + 2, boxW, 14, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  setText(doc, OCEAN);
-  const dCode = extractCode(leg.destination);
-  const dLabel = sanitize(leg.destination || "");
-  const dDisplay = dLabel.includes("|") || dLabel.includes(",") ? dLabel : `${dCode}`;
-  safeText(doc, dDisplay, dx + boxW / 2, yy + 8, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  setText(doc, TEXT_MUTED);
-  safeText(doc, `CHEGADA: ${leg.arrivalTime || "--:--"}`, dx + boxW / 2, yy + 13, { align: "center", charSpace: 0.5 });
-
-  // Flight code small (right-aligned tiny)
+  // Código do voo discreto à direita
   if (leg.flightCode) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
+    doc.setFontSize(7);
     setText(doc, TEXT_MUTED);
-    safeText(doc, sanitize(leg.flightCode), x + w - 1, yy + 1.5, { align: "right" });
+    safeText(doc, sanitize(leg.flightCode), x + w - 3, y + 4.8, { align: "right" });
   }
 
-  return yy + 19; // total height used
+  // (2) Linha de localizações
+  const locY = y + dateH;
+  const locH = 18;
+  const sideW = w * 0.45;
+  const planeW = w * 0.10;
+
+  // Origem (esquerda)
+  setFill(doc, CREAM);
+  doc.rect(x, locY, sideW, locH, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  setText(doc, OCEAN);
+  const oCode = extractCode(leg.origin);
+  safeText(doc, oCode, x + sideW / 2, locY + locH / 2 + 3, { align: "center" });
+
+  // Plane icon (centro)
+  // ✈ não está nas glyphs Helvetica padrão; usamos ">" como o código já fazia
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  setText(doc, TEXT_MUTED);
+  safeText(doc, ">", x + sideW + planeW / 2, locY + locH / 2 + 2, { align: "center" });
+
+  // Destino (direita)
+  setFill(doc, CREAM);
+  doc.rect(x + sideW + planeW, locY, sideW, locH, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  setText(doc, OCEAN);
+  const dCode = extractCode(leg.destination);
+  safeText(doc, dCode, x + sideW + planeW + sideW / 2, locY + locH / 2 + 3, { align: "center" });
+
+  // (3) Linha de horários — fundo bege claro com linha branca separadora central
+  const timeY = locY + locH;
+  const timeH = 8;
+  setFill(doc, CREAM);
+  doc.rect(x, timeY, w, timeH, "F");
+  // separador branco vertical no meio (.border-top: 2px solid #ffffff equivalente)
+  setFill(doc, WHITE);
+  doc.rect(x + w / 2 - 0.4, timeY, 0.8, timeH, "F");
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  setText(doc, TEXT_MUTED);
+  safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + w / 4, timeY + 5.5, {
+    align: "center",
+    charSpace: 0.5,
+  });
+  safeText(doc, `CHEGADA: ${leg.arrivalTime || "--:--"}`, x + (3 * w) / 4, timeY + 5.5, {
+    align: "center",
+    charSpace: 0.5,
+  });
+
+  return timeY + timeH; // altura total usada
 }
 
 function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, agencyName: string) {
@@ -489,12 +503,12 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
       y = 35;
     }
 
-    // Image placeholder (rounded look via cream block)
-    setFill(doc, CREAM);
-    doc.roundedRect(m, y, imgW, cardH, 4, 4, "F");
+    // Imagem placeholder (cinza-claro #d8d8d8 do template) com cantos arredondados
+    setFill(doc, [216, 216, 216] as const);
+    doc.roundedRect(m, y, imgW, cardH, 3, 3, "F");
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
-    setText(doc, OCEAN_SOFT);
+    setText(doc, TEXT_SOFT);
     safeText(doc, "HOTEL", m + imgW / 2, y + cardH / 2 + 2, { align: "center" });
 
     // Right side text
@@ -506,10 +520,10 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
     setText(doc, OCEAN);
     safeText(doc, `OPCAO ${idx + 1}: ${(h.name || "").toUpperCase()}`, tx, y + 5);
 
-    // Stars (★★★★) ascii
+    // Estrelas no tom oceano (#69849b)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    setText(doc, OCEAN_SOFT);
+    setText(doc, OCEAN_BANNER);
     safeText(doc, "* * * * *", tx, y + 11);
 
     // Description
@@ -584,7 +598,7 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   setText(doc, OCEAN);
   safeText(doc, "Inclui", m, y);
   y += 7;
-  setStroke(doc, OCEAN_SOFT);
+  setStroke(doc, OCEAN_BANNER);
   doc.setLineWidth(0.4);
   doc.line(m, y, m + 18, y);
   y += 8;
@@ -611,7 +625,7 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
     setText(doc, OCEAN);
     safeText(doc, "Observações", m, y);
     y += 7;
-    setStroke(doc, OCEAN_SOFT);
+    setStroke(doc, OCEAN_BANNER);
     doc.line(m, y, m + 30, y);
     y += 6;
     doc.setFont("helvetica", "normal");
