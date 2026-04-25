@@ -3765,7 +3765,15 @@ export default function NewSalePage() {
               <Button variant="outline" onClick={handleExportAirlineVoucher} className="w-full sm:w-auto"><Plane className="h-4 w-4 mr-1" /> Voucher Aereo</Button>
             </>
           ) : (
-            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
+            <>
+              <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
+              <Button
+                onClick={handleExportBlackLuxoPdf}
+                className="w-full sm:w-auto bg-gradient-to-r from-zinc-900 to-zinc-700 text-amber-300 hover:from-black hover:to-zinc-800 border border-amber-500/40"
+              >
+                <Crown className="h-4 w-4 mr-1" /> Gerar PDF Premium
+              </Button>
+            </>
           )}
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta (F9)</Button>
