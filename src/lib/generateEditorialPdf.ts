@@ -252,13 +252,13 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   doc.setFont("helvetica", "italic");
   doc.setFontSize(18);
   setText(doc, OCEAN);
-  safeText(doc, "Proposta de", pw / 2, topY + 12, { align: "center" });
+  safeText(doc, "Proposta de", 70, topY + 12, { align: "center" });
 
   // ORÇAMENTO — huge serif
   doc.setFont("helvetica", "bold");
   doc.setFontSize(40);
   setText(doc, OCEAN);
-  safeText(doc, "ORÇAMENTO", 40, topY + 28, { align: "center", charSpace: 4 });
+  safeText(doc, "ORÇAMENTO", pw / 2, topY + 28, { align: "center", charSpace: 4 });
 
   // Destination subtitle
   if (data.destination) {
