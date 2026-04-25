@@ -216,39 +216,36 @@ function drawPageBg(doc: jsPDF, pw: number, ph: number) {
   doc.rect(0, 0, pw, ph, "F");
 }
 
-function drawPageHeader(doc: jsPDF, pw: number, agencyName: string) {
-  // top thin ocean line
-  setFill(doc, OCEAN_SOFT);
-  doc.rect(0, 0, pw, 1.5, "F");
+function drawPageHeader(_doc: jsPDF, _pw: number, _agencyName: string) {
+  // Páginas internas no template não têm faixa de topo — manter limpo.
 }
 
 function drawPageFooter(doc: jsPDF, pw: number, ph: number, agencyName: string) {
+  // Linha cinza-clara + texto centralizado uppercase com letter-spacing
+  const m = 20;
   setStroke(doc, BORDER);
   doc.setLineWidth(0.3);
-  doc.line(20, ph - 18, pw - 20, ph - 18);
+  doc.line(m, ph - 18, pw - m, ph - 18);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  setText(doc, TEXT_MUTED);
+  setText(doc, TEXT_SOFT);
   safeText(doc, agencyName.toUpperCase(), pw / 2, ph - 12, { align: "center", charSpace: 1.2 });
 }
 
 // ─── Section title (serif, centered) ──────────────────────
 function drawSectionTitle(doc: jsPDF, pw: number, y: number, title: string): number {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
+  doc.setFontSize(24);
   setText(doc, OCEAN);
-  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center", charSpace: 3 });
-  // small underline
-  setFill(doc, OCEAN_SOFT);
-  doc.rect(pw / 2 - 18, y + 3, 36, 0.6, "F");
-  return y + 14;
+  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center", charSpace: 2 });
+  return y + 12;
 }
 
 function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
+  doc.setFontSize(13);
   setText(doc, OCEAN);
-  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center" });
+  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center", charSpace: 2 });
   return y + 10;
 }
 
