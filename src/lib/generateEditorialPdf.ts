@@ -356,68 +356,83 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
 type Leg = NonNullable<PremiumPdfData["flightLegs"]>[number];
 
 function drawFlightLegCard(doc: jsPDF, x: number, y: number, w: number, leg: Leg): number {
-  // Date header — bege strip
+  // === Layout do template HTML (.flight-table) ===
+  // 1) Faixa bege escuro com a DATA (e código do voo opcional à direita)
+  // 2) Linha de localizações: ORIGEM (45%)  ✈ (10%)  DESTINO (45%) — fundo bege claro
+  // 3) Linha de horários abaixo: SAÍDA / CHEGADA — fundo bege claro com linha branca separadora
+
   const dateStr = formatWeekday(leg.departureDate) || formatDateBR(leg.departureDate);
+
+  // (1) DATA — barra bege #d3ccbf
+  const dateH = 7;
   setFill(doc, SAND);
-  doc.rect(x, y, w, 7, "F");
+  doc.rect(x, y, w, dateH, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setText(doc, OCEAN);
-  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.7, { align: "center" });
-  let yy = y + 7;
+  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.8, { align: "center", charSpace: 0.5 });
 
-  // Two side-by-side boxes (origin / destination) with plane icon between
-  const gap = 6;
-  const planeW = 8;
-  const boxW = (w - planeW - gap * 2) / 2;
-
-  // Origin box
-  setFill(doc, CREAM_SOFT);
-  doc.rect(x, yy + 2, boxW, 14, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  setText(doc, OCEAN);
-  const oCode = extractCode(leg.origin);
-  const oLabel = sanitize(leg.origin || "");
-  // Format like "GRU | São Paulo, BR" if we have a comma; else just code
-  const oDisplay = oLabel.includes("|") || oLabel.includes(",") ? oLabel : `${oCode}`;
-  safeText(doc, oDisplay, x + boxW / 2, yy + 8, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  setText(doc, TEXT_MUTED);
-  safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + boxW / 2, yy + 13, { align: "center", charSpace: 0.5 });
-
-  // Plane symbol
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  setText(doc, OCEAN_SOFT);
-  safeText(doc, ">", x + boxW + gap + planeW / 2, yy + 10, { align: "center" });
-
-  // Destination box
-  const dx = x + boxW + gap + planeW + gap;
-  setFill(doc, CREAM_SOFT);
-  doc.rect(dx, yy + 2, boxW, 14, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  setText(doc, OCEAN);
-  const dCode = extractCode(leg.destination);
-  const dLabel = sanitize(leg.destination || "");
-  const dDisplay = dLabel.includes("|") || dLabel.includes(",") ? dLabel : `${dCode}`;
-  safeText(doc, dDisplay, dx + boxW / 2, yy + 8, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  setText(doc, TEXT_MUTED);
-  safeText(doc, `CHEGADA: ${leg.arrivalTime || "--:--"}`, dx + boxW / 2, yy + 13, { align: "center", charSpace: 0.5 });
-
-  // Flight code small (right-aligned tiny)
+  // Código do voo discreto à direita
   if (leg.flightCode) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
+    doc.setFontSize(7);
     setText(doc, TEXT_MUTED);
-    safeText(doc, sanitize(leg.flightCode), x + w - 1, yy + 1.5, { align: "right" });
+    safeText(doc, sanitize(leg.flightCode), x + w - 3, y + 4.8, { align: "right" });
   }
 
-  return yy + 19; // total height used
+  // (2) Linha de localizações
+  const locY = y + dateH;
+  const locH = 18;
+  const sideW = w * 0.45;
+  const planeW = w * 0.10;
+
+  // Origem (esquerda)
+  setFill(doc, CREAM);
+  doc.rect(x, locY, sideW, locH, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  setText(doc, OCEAN);
+  const oCode = extractCode(leg.origin);
+  safeText(doc, oCode, x + sideW / 2, locY + locH / 2 + 3, { align: "center" });
+
+  // Plane icon (centro)
+  // ✈ não está nas glyphs Helvetica padrão; usamos ">" como o código já fazia
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  setText(doc, TEXT_MUTED);
+  safeText(doc, ">", x + sideW + planeW / 2, locY + locH / 2 + 2, { align: "center" });
+
+  // Destino (direita)
+  setFill(doc, CREAM);
+  doc.rect(x + sideW + planeW, locY, sideW, locH, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  setText(doc, OCEAN);
+  const dCode = extractCode(leg.destination);
+  safeText(doc, dCode, x + sideW + planeW + sideW / 2, locY + locH / 2 + 3, { align: "center" });
+
+  // (3) Linha de horários — fundo bege claro com linha branca separadora central
+  const timeY = locY + locH;
+  const timeH = 8;
+  setFill(doc, CREAM);
+  doc.rect(x, timeY, w, timeH, "F");
+  // separador branco vertical no meio (.border-top: 2px solid #ffffff equivalente)
+  setFill(doc, WHITE);
+  doc.rect(x + w / 2 - 0.4, timeY, 0.8, timeH, "F");
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  setText(doc, TEXT_MUTED);
+  safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + w / 4, timeY + 5.5, {
+    align: "center",
+    charSpace: 0.5,
+  });
+  safeText(doc, `CHEGADA: ${leg.arrivalTime || "--:--"}`, x + (3 * w) / 4, timeY + 5.5, {
+    align: "center",
+    charSpace: 0.5,
+  });
+
+  return timeY + timeH; // altura total usada
 }
 
 function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, agencyName: string) {
