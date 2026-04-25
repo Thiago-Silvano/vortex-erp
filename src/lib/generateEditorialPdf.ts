@@ -247,34 +247,18 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
       /* ignore */
     }
   }
-  const y = topY + 20;
 
-  // mede largura do primeiro texto
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(18);
-
-  const text1 = "Proposta de";
-  const width1 = doc.getTextWidth(text1);
-
-  // desenha primeiro
-  safeText(doc, text1, 60, y);
-
-  // desenha o segundo logo após
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(40);
-
-  safeText(doc, "ORÇAMENTO", 60 + width1 + 5, y);
   // "Proposta de" — italic small
   //doc.setFont("helvetica", "italic");
   //doc.setFontSize(18);
   //setText(doc, OCEAN);
   //safeText(doc, "Proposta de", 70, topY + 12, { align: "center" });
 
-  // ORÇAMENTO — huge serif
-  //doc.setFont("helvetica", "bold");
-  //doc.setFontSize(40);
-  //setText(doc, OCEAN);
-  //safeText(doc, "ORÇAMENTO", pw / 2, topY + 28, { align: "center", charSpace: 4 });
+  //ORÇAMENTO — huge serif
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(40);
+  setText(doc, OCEAN);
+  safeText(doc, "ORÇAMENTO", pw / 2, topY + 28, { align: "center", charSpace: 4 });
 
   // Destination subtitle
   if (data.destination) {
