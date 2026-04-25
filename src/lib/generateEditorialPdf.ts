@@ -430,7 +430,7 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
     y += 4;
     legs.forEach((leg) => {
       // page break check
-      if (y + 30 > ph - 30) {
+      if (y + 36 > ph - 30) {
         drawPageFooter(doc, pw, ph, agencyName);
         doc.addPage();
         drawPageBg(doc, pw, ph);
@@ -438,9 +438,9 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
         y = 35;
       }
       y = drawFlightLegCard(doc, m, y, cardW, leg);
-      y += 4;
+      y += 6;
     });
-    y += 4;
+    y += 6;
   };
 
   drawGroup("Ida", ida);
