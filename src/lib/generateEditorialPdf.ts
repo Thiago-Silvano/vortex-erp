@@ -253,56 +253,51 @@ function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number 
 function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, agencyName: string) {
   drawPageBg(doc, pw, ph);
 
-  // Top thin line
-  setFill(doc, OCEAN_SOFT);
-  doc.rect(0, 0, pw, 2, "F");
-
-  // Logo top-left/center
-  let topY = 22;
-  const logoToUse = data.agency.logoBase64 || vortexLogoBase64Cache || null;
-  if (logoToUse) {
+  // Logo opcional bem no topo (somente se a agência cadastrou).
+  // O template HTML não tem logo na capa — só usamos logo da agência (não a Vortex padrão).
+  let headerOffset = 0;
+  if (data.agency.logoBase64) {
     try {
-      // Logo Vortex é quadrada — usar caixa maior e proporcional
-      const isVortex = !data.agency.logoBase64;
-      const w = isVortex ? 32 : 44;
-      const h = isVortex ? 32 : 18;
-      doc.addImage(logoToUse, "PNG", pw / 2 - w / 2, 12, w, h);
-      topY = 14 + h + 4;
+      const w = 36;
+      const h = 16;
+      doc.addImage(data.agency.logoBase64, "PNG", pw / 2 - w / 2, 12, w, h);
+      headerOffset = h + 4;
     } catch {
       /* ignore */
     }
   }
 
-  // "Proposta de" — italic small
-  //doc.setFont("helvetica", "italic");
-  //doc.setFontSize(18);
-  //setText(doc, OCEAN);
-  //safeText(doc, "Proposta de", 70, topY + 12, { align: "center" });
+  // === Cabeçalho da capa (espelha .cover-header do template) ===
+  // Pré-título italic "Proposta de"
+  const preTitleY = 30 + headerOffset;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(16);
+  setText(doc, TEXT_MUTED);
+  safeText(doc, "Proposta de", pw / 2, preTitleY, { align: "center" });
 
-  //ORÇAMENTO — huge serif
-  doc.setFont("helvetica", "bold");
+  // Título gigante "ORÇAMENTO"
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(40);
   setText(doc, OCEAN);
-  safeText(doc, "ORÇAMENTO", pw / 2, topY + 28, { align: "center", charSpace: 4 });
+  safeText(doc, "ORCAMENTO", pw / 2, preTitleY + 14, { align: "center", charSpace: 1 });
 
-  // Destination subtitle
+  // Subtítulo "VIAGEM PARA ..." (uppercase, letter-spacing 3px)
   if (data.destination) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     setText(doc, TEXT_MUTED);
-    safeText(doc, `VIAGEM PARA ${data.destination.toUpperCase()}`, pw / 2, topY + 36, {
+    safeText(doc, `VIAGEM PARA ${data.destination.toUpperCase()}`, pw / 2, preTitleY + 22, {
       align: "center",
-      charSpace: 2,
+      charSpace: 2.5,
     });
   }
 
-  // Hero image area
-  const imgX = 18;
-  const imgY = topY + 44;
-  const imgW = pw - 36;
-  const imgH = 150;
+  // === Imagem hero (espelha .cover-image: width 100%, height 120mm) ===
+  const imgX = 0;
+  const imgY = preTitleY + 32;
+  const imgW = pw;
+  const imgH = 110;
 
-  // Image or placeholder
   let drawnImage = false;
   if (data.destinationImageBase64) {
     try {
@@ -313,42 +308,48 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
     }
   }
   if (!drawnImage) {
-    setFill(doc, CREAM);
+    // Placeholder cinza-claro (#d8d8d8 do template)
+    setFill(doc, [216, 216, 216] as const);
     doc.rect(imgX, imgY, imgW, imgH, "F");
     doc.setFont("helvetica", "italic");
-    doc.setFontSize(16);
-    setText(doc, OCEAN_SOFT);
-    safeText(doc, data.destination ? data.destination : "Destino", pw / 2, imgY + imgH / 2, { align: "center" });
+    doc.setFontSize(14);
+    setText(doc, TEXT_SOFT);
+    safeText(doc, data.destination || "Destino", pw / 2, imgY + imgH / 2, { align: "center" });
   }
 
-  // Bottom band — ocean soft
-  const bandY = imgY + imgH + 8;
-  const bandH = 26;
-  setFill(doc, OCEAN_SOFT);
-  doc.rect(imgX, bandY, imgW, bandH, "F");
+  // === Banner azul oceano (.cover-banner) — período + cliente ===
+  // No template está absoluto, bottom: 35mm. width 100%, padding vertical generoso.
+  const bandH = 36;
+  const bandY = ph - 35 - bandH;
+  setFill(doc, OCEAN_BANNER);
+  doc.rect(0, bandY, pw, bandH, "F");
 
-  // Dates
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(11);
-  setText(doc, WHITE);
+  // Período da viagem
   const dateRange = formatRangeLong(data.departureDate, data.returnDate);
-  if (dateRange) safeText(doc, dateRange, pw / 2, bandY + 9, { align: "center" });
+  if (dateRange) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    setText(doc, WHITE);
+    safeText(doc, dateRange, pw / 2, bandY + 14, { align: "center" });
+  }
 
-  // Client name
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  setText(doc, WHITE);
-  safeText(doc, (data.client.name || "").toUpperCase(), pw / 2, bandY + 18, { align: "center", charSpace: 1.5 });
-
-  // Footer agency
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(12);
-  setText(doc, OCEAN);
-  safeText(doc, agencyName, pw / 2, ph - 22, { align: "center" });
+  // Nome do cliente — uppercase, letter-spacing
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(20);
+  setText(doc, WHITE);
+  safeText(doc, (data.client.name || "").toUpperCase(), pw / 2, bandY + 26, {
+    align: "center",
+    charSpace: 1.5,
+  });
+
+  // === Rodapé da capa (.cover-footer) — nome da agência uppercase ===
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
   setText(doc, TEXT_MUTED);
-  safeText(doc, "VIAGENS", pw / 2, ph - 16, { align: "center", charSpace: 2 });
+  safeText(doc, agencyName.toUpperCase(), pw / 2, ph - 15, {
+    align: "center",
+    charSpace: 1.2,
+  });
 }
 
 // ─── Flight Section ────────────────────────────────────────
