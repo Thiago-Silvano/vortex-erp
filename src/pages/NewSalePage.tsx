@@ -2032,17 +2032,9 @@ export default function NewSalePage() {
   const handleExportDraftPdf = async () => {
     const pdfData = await buildPremiumPdfData();
     if (!pdfData) return;
-    const doc = generatePremiumQuotePdf(pdfData);
-    doc.save(`rascunho-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('PDF do rascunho gerado com sucesso!');
-  };
-
-  const handleExportBlackLuxoPdf = async () => {
-    const pdfData = await buildPremiumPdfData();
-    if (!pdfData) return;
-    const doc = generateBlackLuxoPdf(pdfData);
-    doc.save(`proposta-luxo-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('PDF Premium Black Luxo gerado!');
+    const doc = generateEditorialPdf(pdfData);
+    doc.save(`proposta-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+    toast.success('PDF da proposta gerado com sucesso!');
   };
 
   const handleGenerateLink = async () => {
@@ -3765,12 +3757,11 @@ export default function NewSalePage() {
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
               <Button
-                onClick={handleExportBlackLuxoPdf}
-                className="w-full sm:w-auto bg-gradient-to-r from-zinc-900 to-zinc-700 text-amber-300 hover:from-black hover:to-zinc-800 border border-amber-500/40"
+                onClick={handleExportDraftPdf}
+                className="w-full sm:w-auto bg-[#1F3A5F] hover:bg-[#16304F] text-white"
               >
-                <Crown className="h-4 w-4 mr-1" /> Gerar PDF Premium
+                <Download className="h-4 w-4 mr-1" /> Gerar PDF da Proposta (F8)
               </Button>
             </>
           )}
