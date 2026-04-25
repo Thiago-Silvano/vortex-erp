@@ -261,10 +261,15 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
 
   // Logo top-left/center
   let topY = 22;
-  if (data.agency.logoBase64) {
+  const logoToUse = data.agency.logoBase64 || vortexLogoBase64Cache || null;
+  if (logoToUse) {
     try {
-      doc.addImage(data.agency.logoBase64, "PNG", pw / 2 - 22, 14, 44, 18);
-      topY = 38;
+      // Logo Vortex é quadrada — usar caixa maior e proporcional
+      const isVortex = !data.agency.logoBase64;
+      const w = isVortex ? 32 : 44;
+      const h = isVortex ? 32 : 18;
+      doc.addImage(logoToUse, "PNG", pw / 2 - w / 2, 12, w, h);
+      topY = 14 + h + 4;
     } catch {
       /* ignore */
     }
@@ -632,4 +637,12 @@ export function generateEditorialPdf(data: PremiumPdfData) {
   drawInvestmentPage(doc, data, pw, ph, agencyName);
 
   return doc;
+}
+
+// Versão async — pré-carrega a logo Vortex (fallback) antes de renderizar
+export async function generateEditorialPdfAsync(data: PremiumPdfData) {
+  if (!data.agency?.logoBase64) {
+    await getVortexLogoBase64();
+  }
+  return generateEditorialPdf(data);
 }
