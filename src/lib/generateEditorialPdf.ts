@@ -325,6 +325,12 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   setFill(doc, OCEAN_BANNER);
   doc.rect(0, bandY, pw, bandH, "F");
 
+  // Bordas douradas no topo e no fundo do banner
+  const goldH = 1.2;
+  setFill(doc, GOLD);
+  doc.rect(0, bandY - goldH, pw, goldH, "F");           // topo
+  doc.rect(0, bandY + bandH, pw, goldH, "F");           // base
+
   // Período da viagem
   const dateRange = formatRangeLong(data.departureDate, data.returnDate);
   if (dateRange) {
@@ -343,11 +349,15 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
     charSpace: 1.5,
   });
 
-  // === Rodapé da capa (.cover-footer) — nome da agência uppercase ===
+  // === Rodapé da capa (.cover-footer) — nome da agência centralizado verticalmente
+  // na faixa branca abaixo do banner. ===
+  const footerAreaTop = bandY + bandH + goldH;
+  const footerAreaBottom = ph;
+  const footerCenterY = (footerAreaTop + footerAreaBottom) / 2 + 1.5; // +1.5 ajuste óptico do baseline
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   setText(doc, TEXT_MUTED);
-  safeText(doc, agencyName.toUpperCase(), pw / 2, ph - 15, {
+  safeText(doc, agencyName.toUpperCase(), pw / 2, footerCenterY, {
     align: "center",
     charSpace: 1.2,
   });
