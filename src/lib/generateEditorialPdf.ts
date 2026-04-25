@@ -503,12 +503,12 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
       y = 35;
     }
 
-    // Image placeholder (rounded look via cream block)
-    setFill(doc, CREAM);
-    doc.roundedRect(m, y, imgW, cardH, 4, 4, "F");
+    // Imagem placeholder (cinza-claro #d8d8d8 do template) com cantos arredondados
+    setFill(doc, [216, 216, 216] as const);
+    doc.roundedRect(m, y, imgW, cardH, 3, 3, "F");
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
-    setText(doc, OCEAN_SOFT);
+    setText(doc, TEXT_SOFT);
     safeText(doc, "HOTEL", m + imgW / 2, y + cardH / 2 + 2, { align: "center" });
 
     // Right side text
@@ -520,10 +520,10 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
     setText(doc, OCEAN);
     safeText(doc, `OPCAO ${idx + 1}: ${(h.name || "").toUpperCase()}`, tx, y + 5);
 
-    // Stars (★★★★) ascii
+    // Estrelas no tom oceano (#69849b)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    setText(doc, OCEAN_SOFT);
+    setText(doc, OCEAN_BANNER);
     safeText(doc, "* * * * *", tx, y + 11);
 
     // Description
@@ -598,7 +598,7 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   setText(doc, OCEAN);
   safeText(doc, "Inclui", m, y);
   y += 7;
-  setStroke(doc, OCEAN_SOFT);
+  setStroke(doc, OCEAN_BANNER);
   doc.setLineWidth(0.4);
   doc.line(m, y, m + 18, y);
   y += 8;
@@ -625,7 +625,7 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
     setText(doc, OCEAN);
     safeText(doc, "Observações", m, y);
     y += 7;
-    setStroke(doc, OCEAN_SOFT);
+    setStroke(doc, OCEAN_BANNER);
     doc.line(m, y, m + 30, y);
     y += 6;
     doc.setFont("helvetica", "normal");
