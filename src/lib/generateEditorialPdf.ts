@@ -135,6 +135,7 @@ const TEXT_MAIN = [51, 51, 51] as const;      // #333
 const TEXT_MUTED = [102, 102, 102] as const;  // #666
 const TEXT_SOFT = [136, 136, 136] as const;   // #888 — rodapé
 const BORDER = [221, 221, 221] as const;      // #ddd
+const GOLD = [191, 158, 92] as const;         // dourado para bordas decorativas
 
 // ─── Helpers ───────────────────────────────────────────────
 const sanitize = (text: string = ""): string =>
