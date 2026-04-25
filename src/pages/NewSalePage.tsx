@@ -15,12 +15,13 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import { generatePremiumQuotePdf, PremiumPdfData } from '@/lib/generatePremiumQuotePdf';
+import { generateBlackLuxoPdf } from '@/lib/generateBlackLuxoPdf';
 import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger, AdditionalAirService } from '@/lib/generateAirlineVoucherPdf';
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
@@ -1870,8 +1871,8 @@ export default function NewSalePage() {
     toast.success('Voucher(s) aereo(s) gerado(s)!');
   };
 
-  const handleExportDraftPdf = async () => {
-    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o PDF'); return; }
+  const buildPremiumPdfData = async (): Promise<PremiumPdfData | null> => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o PDF'); return null; }
     let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
     const agQuery = activeCompany?.id
       ? supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1)
@@ -2026,9 +2027,23 @@ export default function NewSalePage() {
       }) : undefined,
     };
 
+    return pdfData;
+  };
+
+  const handleExportDraftPdf = async () => {
+    const pdfData = await buildPremiumPdfData();
+    if (!pdfData) return;
     const doc = generatePremiumQuotePdf(pdfData);
     doc.save(`rascunho-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
     toast.success('PDF do rascunho gerado com sucesso!');
+  };
+
+  const handleExportBlackLuxoPdf = async () => {
+    const pdfData = await buildPremiumPdfData();
+    if (!pdfData) return;
+    const doc = generateBlackLuxoPdf(pdfData);
+    doc.save(`proposta-luxo-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+    toast.success('PDF Premium Black Luxo gerado!');
   };
 
   const handleGenerateLink = async () => {
@@ -3750,7 +3765,15 @@ export default function NewSalePage() {
               <Button variant="outline" onClick={handleExportAirlineVoucher} className="w-full sm:w-auto"><Plane className="h-4 w-4 mr-1" /> Voucher Aereo</Button>
             </>
           ) : (
-            <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
+            <>
+              <Button variant="outline" onClick={handleExportDraftPdf} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Gerar PDF Cotação (F8)</Button>
+              <Button
+                onClick={handleExportBlackLuxoPdf}
+                className="w-full sm:w-auto bg-gradient-to-r from-zinc-900 to-zinc-700 text-amber-300 hover:from-black hover:to-zinc-800 border border-amber-500/40"
+              >
+                <Crown className="h-4 w-4 mr-1" /> Gerar PDF Premium
+              </Button>
+            </>
           )}
           {editSaleId && (
             <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta (F9)</Button>
