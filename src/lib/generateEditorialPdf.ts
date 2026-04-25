@@ -209,10 +209,10 @@ function drawSectionTitle(doc: jsPDF, pw: number, y: number, title: string): num
 
 function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number {
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
+  doc.setFontSize(15);
   setText(doc, OCEAN);
-  safeText(doc, label.toUpperCase(), pw / 2, y, { align: 'center', charSpace: 4 });
-  return y + 8;
+  safeText(doc, label.toUpperCase(), pw / 2, y, { align: 'center' });
+  return y + 10;
 }
 
 // ─── Cover Page ────────────────────────────────────────────
