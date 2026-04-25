@@ -1871,8 +1871,8 @@ export default function NewSalePage() {
     toast.success('Voucher(s) aereo(s) gerado(s)!');
   };
 
-  const handleExportDraftPdf = async () => {
-    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o PDF'); return; }
+  const buildPremiumPdfData = async (): Promise<PremiumPdfData | null> => {
+    if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o PDF'); return null; }
     let agency = { name: 'Agência de Viagens', whatsapp: '', email: '', website: '', logo_url: '' };
     const agQuery = activeCompany?.id
       ? supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1)
