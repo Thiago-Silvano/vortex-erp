@@ -198,9 +198,9 @@ function drawPageFooter(doc: jsPDF, pw: number, ph: number, agencyName: string) 
 // ─── Section title (serif, centered) ──────────────────────
 function drawSectionTitle(doc: jsPDF, pw: number, y: number, title: string): number {
   doc.setFont('times', 'bold');
-  doc.setFontSize(28);
+  doc.setFontSize(30);
   setText(doc, OCEAN);
-  safeText(doc, title.toUpperCase(), pw / 2, y, { align: 'center', charSpace: 2 });
+  safeText(doc, title.toUpperCase(), pw / 2, y, { align: 'center' });
   // small underline
   setFill(doc, OCEAN_SOFT);
   doc.rect(pw / 2 - 15, y + 3, 30, 0.6, 'F');
@@ -209,9 +209,9 @@ function drawSectionTitle(doc: jsPDF, pw: number, y: number, title: string): num
 
 function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number {
   doc.setFont('times', 'bold');
-  doc.setFontSize(16);
+  doc.setFontSize(18);
   setText(doc, OCEAN);
-  safeText(doc, label.toUpperCase(), pw / 2, y, { align: 'center', charSpace: 3 });
+  safeText(doc, label.toUpperCase(), pw / 2, y, { align: 'center' });
   return y + 8;
 }
 
@@ -233,23 +233,23 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   }
 
   // "Proposta de" — italic small
-  doc.setFont('times', 'italic');
+  doc.setFont('helvetica', 'italic');
   doc.setFontSize(18);
   setText(doc, OCEAN);
   safeText(doc, 'Proposta de', pw / 2, topY + 12, { align: 'center' });
 
   // ORÇAMENTO — huge serif
   doc.setFont('times', 'bold');
-  doc.setFontSize(46);
+  doc.setFontSize(48);
   setText(doc, OCEAN);
-  safeText(doc, 'ORCAMENTO', pw / 2, topY + 28, { align: 'center', charSpace: 2 });
+  safeText(doc, 'ORCAMENTO', pw / 2, topY + 28, { align: 'center' });
 
   // Destination subtitle
   if (data.destination) {
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     setText(doc, TEXT_MUTED);
-    safeText(doc, `VIAGEM PARA ${data.destination.toUpperCase()}`, pw / 2, topY + 36, { align: 'center', charSpace: 3 });
+    safeText(doc, `VIAGEM PARA ${data.destination.toUpperCase()}`, pw / 2, topY + 36, { align: 'center', charSpace: 2 });
   }
 
   // Hero image area
@@ -269,8 +269,8 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   if (!drawnImage) {
     setFill(doc, CREAM);
     doc.rect(imgX, imgY, imgW, imgH, 'F');
-    doc.setFont('times', 'italic');
-    doc.setFontSize(14);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(16);
     setText(doc, OCEAN_SOFT);
     safeText(doc, data.destination ? data.destination : 'Destino', pw / 2, imgY + imgH / 2, { align: 'center' });
   }
@@ -282,7 +282,7 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   doc.rect(imgX, bandY, imgW, bandH, 'F');
 
   // Dates
-  doc.setFont('times', 'italic');
+  doc.setFont('helvetica', 'italic');
   doc.setFontSize(11);
   setText(doc, WHITE);
   const dateRange = formatRangeLong(data.departureDate, data.returnDate);
@@ -292,17 +292,17 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   setText(doc, WHITE);
-  safeText(doc, (data.client.name || '').toUpperCase(), pw / 2, bandY + 18, { align: 'center', charSpace: 2 });
+  safeText(doc, (data.client.name || '').toUpperCase(), pw / 2, bandY + 18, { align: 'center', charSpace: 1.5 });
 
   // Footer agency
-  doc.setFont('times', 'italic');
-  doc.setFontSize(11);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(12);
   setText(doc, OCEAN);
   safeText(doc, agencyName, pw / 2, ph - 22, { align: 'center' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   setText(doc, TEXT_MUTED);
-  safeText(doc, 'VIAGENS', pw / 2, ph - 16, { align: 'center', charSpace: 3 });
+  safeText(doc, 'VIAGENS', pw / 2, ph - 16, { align: 'center', charSpace: 2 });
 }
 
 // ─── Flight Section ────────────────────────────────────────
@@ -316,7 +316,7 @@ function drawFlightLegCard(doc: jsPDF, x: number, y: number, w: number, leg: Leg
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   setText(doc, OCEAN);
-  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.7, { align: 'center', charSpace: 1 });
+  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.7, { align: 'center' });
   let yy = y + 7;
 
   // Two side-by-side boxes (origin / destination) with plane icon between
@@ -444,7 +444,7 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
     // Image placeholder (rounded look via cream block)
     setFill(doc, CREAM);
     doc.roundedRect(m, y, imgW, cardH, 4, 4, 'F');
-    doc.setFont('times', 'italic');
+    doc.setFont('helvetica', 'italic');
     doc.setFontSize(9);
     setText(doc, OCEAN_SOFT);
     safeText(doc, 'HOTEL', m + imgW / 2, y + cardH / 2 + 2, { align: 'center' });
@@ -459,10 +459,10 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
     safeText(doc, `OPCAO ${idx + 1}: ${(h.name || '').toUpperCase()}`, tx, y + 5);
 
     // Stars (★★★★) ascii
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
     setText(doc, OCEAN_SOFT);
-    safeText(doc, '****', tx, y + 11);
+    safeText(doc, '* * * * *', tx, y + 11);
 
     // Description
     doc.setFont('helvetica', 'normal');
@@ -509,7 +509,7 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   // Card for total
   setFill(doc, CREAM);
   doc.roundedRect(m, y, w, 38, 4, 4, 'F');
-  doc.setFont('times', 'italic');
+  doc.setFont('helvetica', 'italic');
   doc.setFontSize(11);
   setText(doc, OCEAN);
   safeText(doc, 'Valor total da viagem', pw / 2, y + 11, { align: 'center' });
@@ -529,8 +529,8 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   y += 50;
 
   // Includes list
-  doc.setFont('times', 'bold');
-  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
   setText(doc, OCEAN);
   safeText(doc, 'Inclui', m, y);
   y += 7;
@@ -555,8 +555,8 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   y += 6;
   // Notes
   if (data.notes) {
-    doc.setFont('times', 'bold');
-    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
     setText(doc, OCEAN);
     safeText(doc, 'Observacoes', m, y);
     y += 7;
