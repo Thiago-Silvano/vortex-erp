@@ -1,5 +1,105 @@
 import jsPDF from 'jspdf';
-import type { PremiumPdfData } from './generatePremiumQuotePdf';
+
+// ─── Types ─────────────────────────────────────────────────
+export interface FlightLegPdf {
+  origin: string;
+  destination: string;
+  departureDate?: string;
+  departureTime?: string;
+  arrivalDate?: string;
+  arrivalTime?: string;
+  connectionDuration?: string;
+  direction?: 'ida' | 'volta';
+  flightCode?: string;
+  stopover?: boolean;
+  stopoverDays?: number;
+  stopoverMinutes?: number;
+}
+
+export interface HotelPdf {
+  name: string;
+  room?: string;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  meal?: string;
+  description?: string;
+  address?: string;
+}
+
+export interface ServicePdf {
+  name: string;
+  description?: string;
+  date?: string;
+  quantity?: number;
+  value: number;
+  type?: string;
+}
+
+export interface ProposalPaymentOptionPdf {
+  method: string;
+  label: string;
+  installments: number;
+  discountPercent: number;
+  enabled: boolean;
+  fixedValue?: number;
+  showPerPerson?: boolean;
+  highlighted?: boolean;
+}
+
+export interface QuoteOptionPdf {
+  name: string;
+  items: Array<{ name: string; value: number; description?: string }>;
+  hotels: HotelPdf[];
+  flightLegs: FlightLegPdf[];
+  flightGroups?: FlightLegPdf[][];
+  services: ServicePdf[];
+  totalProducts: number;
+  totalTrip: number;
+}
+
+export interface PremiumPdfData {
+  agency: {
+    name: string;
+    whatsapp: string;
+    email: string;
+    website: string;
+    logoBase64?: string;
+  };
+  client: { name: string };
+  seller?: string;
+  destination?: string;
+  origin?: string;
+  departureDate?: string;
+  returnDate?: string;
+  nights?: number;
+  passengersCount?: number;
+  passengers: Array<{
+    name: string;
+    document?: string;
+    birthDate?: string;
+    isMain?: boolean;
+  }>;
+  flightLegs: FlightLegPdf[];
+  flightGroups?: FlightLegPdf[][];
+  hotels: HotelPdf[];
+  services: ServicePdf[];
+  allItems: Array<{ name: string; value: number; description?: string }>;
+  showIndividualValues?: boolean;
+  totalProducts: number;
+  totalTaxes: number;
+  totalTrip: number;
+  payment: {
+    method: string;
+    installments: number;
+    receivables: Array<{ number: number; amount: number; dueDate?: string }>;
+  };
+  proposalPaymentOptions?: ProposalPaymentOptionPdf[];
+  showPerPassenger?: boolean;
+  notes?: string;
+  destinationImageBase64?: string;
+  quoteOptions?: QuoteOptionPdf[];
+}
 
 // ─── Editorial Theme — Carol Fonseca style ──────────────────
 // Palette: white + bege + ocean blue
