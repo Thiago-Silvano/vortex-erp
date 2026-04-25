@@ -138,7 +138,7 @@ const MONTHS_SHORT = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "S
 const MONTHS_LONG = [
   "Janeiro",
   "Fevereiro",
-  "Marco",
+  "Março",
   "Abril",
   "Maio",
   "Junho",
@@ -212,21 +212,21 @@ function drawPageFooter(doc: jsPDF, pw: number, ph: number, agencyName: string) 
 // ─── Section title (serif, centered) ──────────────────────
 function drawSectionTitle(doc: jsPDF, pw: number, y: number, title: string): number {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(34);
+  doc.setFontSize(26);
   setText(doc, OCEAN);
-  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center", charSpace: 5 });
+  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center", charSpace: 3 });
   // small underline
   setFill(doc, OCEAN_SOFT);
-  doc.rect(pw / 2 - 24, y + 4, 48, 0.8, "F");
-  return y + 18;
+  doc.rect(pw / 2 - 18, y + 3, 36, 0.6, "F");
+  return y + 14;
 }
 
 function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
+  doc.setFontSize(15);
   setText(doc, OCEAN);
-  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center", charSpace: 2 });
-  return y + 14;
+  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center" });
+  return y + 10;
 }
 
 // ─── Cover Page ────────────────────────────────────────────
@@ -330,81 +330,68 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
 type Leg = NonNullable<PremiumPdfData["flightLegs"]>[number];
 
 function drawFlightLegCard(doc: jsPDF, x: number, y: number, w: number, leg: Leg): number {
-  // Date header — bege strip (taller for breathing room)
+  // Date header — bege strip
   const dateStr = formatWeekday(leg.departureDate) || formatDateBR(leg.departureDate);
-  const headerH = 9;
   setFill(doc, SAND);
-  doc.rect(x, y, w, headerH, "F");
-
-  // Date centered in header
+  doc.rect(x, y, w, 7, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(8);
   setText(doc, OCEAN);
-  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + headerH / 2 + 1.2, { align: "center", charSpace: 1 });
+  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.7, { align: "center" });
+  let yy = y + 7;
 
-  // Airline code top-right, on the same band but bigger and aligned
-  if (leg.flightCode) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    setText(doc, OCEAN);
-    safeText(doc, sanitize(leg.flightCode).toUpperCase(), x + w - 3, y + headerH / 2 + 1.2, {
-      align: "right",
-      charSpace: 0.5,
-    });
-  }
-
-  // Body section
-  const bodyY = y + headerH + 3;
-  const bodyH = 22;
-
-  const gap = 4;
-  const arrowW = 10;
-  const boxW = (w - arrowW - gap * 2) / 2;
-
-  // Common baselines inside body
-  const codeBaseline = bodyY + 11; // big airport code
-  const timeBaseline = bodyY + 18; // departure / arrival time
+  // Two side-by-side boxes (origin / destination) with plane icon between
+  const gap = 6;
+  const planeW = 8;
+  const boxW = (w - planeW - gap * 2) / 2;
 
   // Origin box
   setFill(doc, CREAM_SOFT);
-  doc.rect(x, bodyY, boxW, bodyH, "F");
+  doc.rect(x, yy + 2, boxW, 14, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
+  doc.setFontSize(9);
   setText(doc, OCEAN);
   const oCode = extractCode(leg.origin);
-  safeText(doc, oCode, x + boxW / 2, codeBaseline, { align: "center", charSpace: 1.5 });
+  const oLabel = sanitize(leg.origin || "");
+  // Format like "GRU | São Paulo, BR" if we have a comma; else just code
+  const oDisplay = oLabel.includes("|") || oLabel.includes(",") ? oLabel : `${oCode}`;
+  safeText(doc, oDisplay, x + boxW / 2, yy + 8, { align: "center" });
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   setText(doc, TEXT_MUTED);
-  safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + boxW / 2, timeBaseline, {
-    align: "center",
-    charSpace: 0.6,
-  });
+  safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + boxW / 2, yy + 13, { align: "center", charSpace: 0.5 });
 
-  // Arrow between boxes — centered vertically against airport codes
+  // Plane symbol
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(10);
   setText(doc, OCEAN_SOFT);
-  safeText(doc, ">", x + boxW + gap + arrowW / 2, codeBaseline, { align: "center" });
+  safeText(doc, ">", x + boxW + gap + planeW / 2, yy + 10, { align: "center" });
 
   // Destination box
-  const dx = x + boxW + gap + arrowW + gap;
+  const dx = x + boxW + gap + planeW + gap;
   setFill(doc, CREAM_SOFT);
-  doc.rect(dx, bodyY, boxW, bodyH, "F");
+  doc.rect(dx, yy + 2, boxW, 14, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
+  doc.setFontSize(9);
   setText(doc, OCEAN);
   const dCode = extractCode(leg.destination);
-  safeText(doc, dCode, dx + boxW / 2, codeBaseline, { align: "center", charSpace: 1.5 });
+  const dLabel = sanitize(leg.destination || "");
+  const dDisplay = dLabel.includes("|") || dLabel.includes(",") ? dLabel : `${dCode}`;
+  safeText(doc, dDisplay, dx + boxW / 2, yy + 8, { align: "center" });
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   setText(doc, TEXT_MUTED);
-  safeText(doc, `CHEGADA: ${leg.arrivalTime || "--:--"}`, dx + boxW / 2, timeBaseline, {
-    align: "center",
-    charSpace: 0.6,
-  });
+  safeText(doc, `CHEGADA: ${leg.arrivalTime || "--:--"}`, dx + boxW / 2, yy + 13, { align: "center", charSpace: 0.5 });
 
-  return bodyY + bodyH; // total bottom Y of card
+  // Flight code small (right-aligned tiny)
+  if (leg.flightCode) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    setText(doc, TEXT_MUTED);
+    safeText(doc, sanitize(leg.flightCode), x + w - 1, yy + 1.5, { align: "right" });
+  }
+
+  return yy + 19; // total height used
 }
 
 function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, agencyName: string) {
@@ -430,7 +417,7 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
     y += 4;
     legs.forEach((leg) => {
       // page break check
-      if (y + 36 > ph - 30) {
+      if (y + 30 > ph - 30) {
         drawPageFooter(doc, pw, ph, agencyName);
         doc.addPage();
         drawPageBg(doc, pw, ph);
@@ -438,9 +425,9 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
         y = 35;
       }
       y = drawFlightLegCard(doc, m, y, cardW, leg);
-      y += 6;
+      y += 4;
     });
-    y += 6;
+    y += 4;
   };
 
   drawGroup("Ida", ida);
@@ -458,7 +445,7 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   drawPageHeader(doc, pw, agencyName);
 
   let y = 35;
-  y = drawSectionTitle(doc, pw, y, "Acomodacoes");
+  y = drawSectionTitle(doc, pw, y, "Acomodações");
   y += 8;
 
   const m = 22;
@@ -510,7 +497,7 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
 
     // Amenity chips
     const chipY = y + cardH - 8;
-    const amenities = [h.meal || "Cafe da manha", "Wi-Fi", "Piscina"];
+    const amenities = [h.meal || "Café da manha", "Wi-Fi", "Piscina"];
     let cx = tx;
     amenities.forEach((a) => {
       const text = sanitize(a);
@@ -576,9 +563,9 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   y += 8;
 
   const items: string[] = [];
-  if (data.flightLegs?.length) items.push("Passagens aereas com taxas");
+  if (data.flightLegs?.length) items.push("Passagens aéreas com taxas");
   if (data.hotels?.length) items.push("Hospedagem conforme escolha");
-  if (data.services?.length) items.push("Servicos e experiencias selecionados");
+  if (data.services?.length) items.push("Serviços e experiências selecionados");
   items.push("Suporte premium durante a viagem");
 
   doc.setFont("helvetica", "normal");
