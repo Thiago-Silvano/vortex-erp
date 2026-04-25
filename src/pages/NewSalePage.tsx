@@ -2027,9 +2027,23 @@ export default function NewSalePage() {
       }) : undefined,
     };
 
+    return pdfData;
+  };
+
+  const handleExportDraftPdf = async () => {
+    const pdfData = await buildPremiumPdfData();
+    if (!pdfData) return;
     const doc = generatePremiumQuotePdf(pdfData);
     doc.save(`rascunho-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
     toast.success('PDF do rascunho gerado com sucesso!');
+  };
+
+  const handleExportBlackLuxoPdf = async () => {
+    const pdfData = await buildPremiumPdfData();
+    if (!pdfData) return;
+    const doc = generateBlackLuxoPdf(pdfData);
+    doc.save(`proposta-luxo-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+    toast.success('PDF Premium Black Luxo gerado!');
   };
 
   const handleGenerateLink = async () => {
