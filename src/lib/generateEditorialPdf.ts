@@ -212,21 +212,21 @@ function drawPageFooter(doc: jsPDF, pw: number, ph: number, agencyName: string) 
 // ─── Section title (serif, centered) ──────────────────────
 function drawSectionTitle(doc: jsPDF, pw: number, y: number, title: string): number {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
+  doc.setFontSize(34);
   setText(doc, OCEAN);
-  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center", charSpace: 3 });
+  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center", charSpace: 5 });
   // small underline
   setFill(doc, OCEAN_SOFT);
-  doc.rect(pw / 2 - 18, y + 3, 36, 0.6, "F");
-  return y + 14;
+  doc.rect(pw / 2 - 24, y + 4, 48, 0.8, "F");
+  return y + 18;
 }
 
 function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
+  doc.setFontSize(22);
   setText(doc, OCEAN);
-  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center" });
-  return y + 10;
+  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center", charSpace: 2 });
+  return y + 14;
 }
 
 // ─── Cover Page ────────────────────────────────────────────
