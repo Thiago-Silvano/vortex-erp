@@ -1,4 +1,26 @@
 import jsPDF from "jspdf";
+import vortexLogoUrl from "@/assets/vortex-logo.png";
+
+// Lazy-loaded base64 da logo Vortex (fallback quando a agência não cadastrou logo)
+let vortexLogoBase64Cache: string | null = null;
+export async function getVortexLogoBase64(): Promise<string | null> {
+  if (vortexLogoBase64Cache !== null) return vortexLogoBase64Cache || null;
+  try {
+    const res = await fetch(vortexLogoUrl);
+    const blob = await res.blob();
+    const b64: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    vortexLogoBase64Cache = b64;
+    return b64;
+  } catch {
+    vortexLogoBase64Cache = "";
+    return null;
+  }
+}
 
 // ─── Types ─────────────────────────────────────────────────
 export interface FlightLegPdf {
