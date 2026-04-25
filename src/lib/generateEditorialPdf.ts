@@ -574,34 +574,44 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   drawPageBg(doc, pw, ph);
   drawPageHeader(doc, pw, agencyName);
 
-  let y = 35;
-  y = drawSectionTitle(doc, pw, y, "Investimento");
-  y += 10;
-
   const m = 26;
   const w = pw - m * 2;
 
-  // Card for total
+  // === Bloco título + card centralizados verticalmente na área superior ===
+  // Área disponível: do topo (y=20) até onde a lista "Inclui" começa (y≈155).
+  const heroTop = 20;
+  const heroBottom = 155;
+  const cardH = 38;
+  const titleH = 12;          // altura visual do título
+  const titleGap = 14;        // gap entre título e card
+  const blockH = titleH + titleGap + cardH;
+  const blockStart = heroTop + (heroBottom - heroTop - blockH) / 2;
+
+  // Título "INVESTIMENTO"
+  drawSectionTitle(doc, pw, blockStart + titleH, "Investimento");
+
+  // Card com valor total
+  const cardY = blockStart + titleH + titleGap;
   setFill(doc, CREAM);
-  doc.roundedRect(m, y, w, 38, 4, 4, "F");
+  doc.roundedRect(m, cardY, w, cardH, 4, 4, "F");
   doc.setFont("helvetica", "italic");
   doc.setFontSize(11);
   setText(doc, OCEAN);
-  safeText(doc, "Valor total da viagem", pw / 2, y + 11, { align: "center" });
+  safeText(doc, "Valor total da viagem", pw / 2, cardY + 11, { align: "center" });
   doc.setFont("helvetica", "bold");
   doc.setFontSize(26);
   setText(doc, OCEAN);
-  safeText(doc, fmtBRL(data.totalTrip || 0), pw / 2, y + 25, { align: "center" });
+  safeText(doc, fmtBRL(data.totalTrip || 0), pw / 2, cardY + 25, { align: "center" });
 
   if (data.payment?.installments && data.payment.installments > 1) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     setText(doc, TEXT_MUTED);
     const inst = (data.totalTrip || 0) / data.payment.installments;
-    safeText(doc, `ou ${data.payment.installments}x de ${fmtBRL(inst)}`, pw / 2, y + 33, { align: "center" });
+    safeText(doc, `ou ${data.payment.installments}x de ${fmtBRL(inst)}`, pw / 2, cardY + 33, { align: "center" });
   }
 
-  y += 50;
+  let y = heroBottom + 5;
 
   // Includes list
   doc.setFont("helvetica", "bold");
