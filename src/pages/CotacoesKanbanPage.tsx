@@ -414,21 +414,21 @@ export default function CotacoesKanbanPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Destino</TableHead>
-                      <TableHead>Período</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Pax</TableHead>
-                      <TableHead>Vendedor</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Criado</TableHead>
+                      <SortableTableHead sortKey="client_name" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
+                      <SortableTableHead sortKey="destination_name" sortState={sortState} onSort={requestSort}>Destino</SortableTableHead>
+                      <SortableTableHead sortKey="trip_start_date" sortState={sortState} onSort={requestSort}>Período</SortableTableHead>
+                      <SortableTableHead sortKey="total_sale" sortState={sortState} onSort={requestSort}>Valor</SortableTableHead>
+                      <SortableTableHead sortKey="passengers_count" sortState={sortState} onSort={requestSort}>Pax</SortableTableHead>
+                      <SortableTableHead sortKey="seller_name" sortState={sortState} onSort={requestSort}>Vendedor</SortableTableHead>
+                      <SortableTableHead sortKey="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
+                      <SortableTableHead sortKey="created_at" sortState={sortState} onSort={requestSort}>Criado</SortableTableHead>
                       <TableHead className="w-20">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredSales.length === 0 ? (
+                    {sortedSales.length === 0 ? (
                       <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma cotação encontrada</TableCell></TableRow>
-                    ) : filteredSales.map(s => {
+                    ) : sortedSales.map(s => {
                       const col = columns.find(c => c.statusKey === s.sale_workflow_status) || columns[0];
                       const daysSince = differenceInDays(new Date(), new Date(s.updated_at));
                       return (
