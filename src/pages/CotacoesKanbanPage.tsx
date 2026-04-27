@@ -50,7 +50,7 @@ export default function CotacoesKanbanPage() {
   const [search, setSearch] = useState('');
   const [filterSeller, setFilterSeller] = useState('all');
   const [filterDestination, setFilterDestination] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all_except_lost');
   const [showFilters, setShowFilters] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<KanbanSale | null>(null);
   const [userEmail, setUserEmail] = useState('');
@@ -145,7 +145,9 @@ export default function CotacoesKanbanPage() {
       if (search && !normalize(s.client_name).includes(normalize(search)) && !normalize(s.destination_name || '').includes(normalize(search))) return false;
       if (filterSeller !== 'all' && s.seller_name !== filterSeller) return false;
       if (filterDestination !== 'all' && s.destination_name !== filterDestination) return false;
-      if (filterStatus !== 'all' && s.sale_workflow_status !== filterStatus) return false;
+      if (filterStatus === 'all_except_lost') {
+        if (s.sale_workflow_status === 'perdido') return false;
+      } else if (filterStatus !== 'all' && s.sale_workflow_status !== filterStatus) return false;
       return true;
     });
   }, [sales, search, filterSeller, filterDestination, filterStatus]);
@@ -273,10 +275,14 @@ export default function CotacoesKanbanPage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  // Stats
-  const totalCotacoes = filteredSales.length;
-  const totalValor = filteredSales.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
-  const staleCount = filteredSales.filter(s => differenceInDays(new Date(), new Date(s.updated_at)) >= 3).length;
+  // Stats — sempre excluem cotações perdidas dos totais e contadores
+  const statsSales = useMemo(
+    () => filteredSales.filter(s => s.sale_workflow_status !== 'perdido'),
+    [filteredSales]
+  );
+  const totalCotacoes = statsSales.length;
+  const totalValor = statsSales.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
+  const staleCount = statsSales.filter(s => differenceInDays(new Date(), new Date(s.updated_at)) >= 3).length;
 
   return (
     <AppLayout>
