@@ -455,8 +455,10 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
         drawPageHeader(doc, pw, agencyName);
         y = 35;
       }
-      // Duração da conexão entre o trecho anterior e o atual (oculta se zerada/vazia)
-      const connDur = (leg.connectionDuration || "").trim();
+      // Duração da conexão entre o trecho anterior e o atual.
+      // O valor é informado no trecho ANTERIOR (tempo de espera após seu pouso).
+      const prevLeg = idx > 0 ? legs[idx - 1] : undefined;
+      const connDur = (prevLeg?.connectionDuration || "").trim();
       const isZeroed = /^0+[:hH]?0*m?$/.test(connDur.replace(/\s/g, "")) || connDur === "00:00";
       if (idx > 0 && connDur && !isZeroed) {
         const connH = 6;
