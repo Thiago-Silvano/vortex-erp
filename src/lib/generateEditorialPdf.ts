@@ -424,14 +424,6 @@ function drawFlightLegCard(
 function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, agencyName: string) {
   if (!data.flightLegs || data.flightLegs.length === 0) return;
 
-  doc.addPage();
-  drawPageBg(doc, pw, ph);
-  drawPageHeader(doc, pw, agencyName);
-
-  let y = 35;
-  y = drawSectionTitle(doc, pw, y, "Aéreo");
-  y += 6;
-
   const ida = data.flightLegs.filter((l) => l.direction !== "volta");
   const volta = data.flightLegs.filter((l) => l.direction === "volta");
 
@@ -446,72 +438,101 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   };
   const countConnections = (legs: Leg[]) =>
     legs.reduce((acc, _l, i) => (i > 0 && !isZeroDur(legs[i - 1].connectionDuration) ? acc + 1 : acc), 0);
-  const totalLegs = ida.length + volta.length;
-  const groupsCount = (ida.length > 0 ? 1 : 0) + (volta.length > 0 ? 1 : 0);
-  const totalConnections = countConnections(ida) + countConnections(volta);
-  const availableH = ph - 30 - y;
-  const subTitleH = 6 + 4;
-  const groupBottomGap = 3;
-  const cardGap = 3;
-  const connBlockH = 8;
-  const baseCardH = 7 + 18 + 8;
-  const fixedH =
-    groupsCount * (subTitleH + groupBottomGap) +
-    Math.max(0, totalLegs - groupsCount) * cardGap +
-    totalConnections * connBlockH;
-  const cardsAvailableH = availableH - fixedH;
-  const idealCardH = totalLegs > 0 ? cardsAvailableH / totalLegs : baseCardH;
-  let scale = Math.min(1, idealCardH / baseCardH);
-  if (!Number.isFinite(scale) || scale <= 0) scale = 1;
-  scale = Math.max(0.45, scale);
-  const cardH = baseCardH * scale;
+  void countConnections;
 
-  const drawGroup = (label: string, legs: Leg[]) => {
-    if (legs.length === 0) return;
-    y = drawSubTitle(doc, pw, y, label);
-    y += 4;
-    legs.forEach((leg, idx) => {
-      if (y + cardH > ph - 30) {
-        drawPageFooter(doc, pw, ph, agencyName);
-        doc.addPage();
-        drawPageBg(doc, pw, ph);
-        drawPageHeader(doc, pw, agencyName);
-        y = 35;
-      }
-      const prevLeg = idx > 0 ? legs[idx - 1] : undefined;
-      const connDur = (prevLeg?.connectionDuration || "").trim();
-      const isZeroed = isZeroDur(connDur);
-      if (idx > 0 && connDur && !isZeroed) {
-        const connH = 6;
-        if (y + connH + cardH > ph - 30) {
-          drawPageFooter(doc, pw, ph, agencyName);
-          doc.addPage();
-          drawPageBg(doc, pw, ph);
-          drawPageHeader(doc, pw, agencyName);
-          y = 35;
-        }
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        setText(doc, TEXT_MUTED);
-        safeText(
-          doc,
-          `Duracao da conexao: ${sanitize(connDur)}`,
-          pw / 2,
-          y + 4,
-          { align: "center" },
-        );
-        y += connH + 2;
-      }
-      y = drawFlightLegCard(doc, m, y, cardW, leg, scale);
-      y += cardGap;
-    });
-    y += groupBottomGap;
+  type FlightPageGroup = { label: string; legs: Leg[]; startIndex: number; allLegs: Leg[] };
+  type FlightPage = { groups: FlightPageGroup[]; legsCount: number };
+
+  const sourceGroups = [
+    { label: "Ida", legs: ida },
+    { label: "Volta", legs: volta },
+  ].filter((group) => group.legs.length > 0);
+  const pages: FlightPage[] = [];
+  let currentPage: FlightPage = { groups: [], legsCount: 0 };
+  const maxLegsPerPage = 6;
+  const pushCurrentPage = () => {
+    if (currentPage.legsCount > 0) pages.push(currentPage);
+    currentPage = { groups: [], legsCount: 0 };
   };
 
-  drawGroup("Ida", ida);
-  drawGroup("Volta", volta);
+  sourceGroups.forEach((group) => {
+    for (let start = 0; start < group.legs.length;) {
+      if (currentPage.legsCount >= maxLegsPerPage) pushCurrentPage();
+      const availableSlots = maxLegsPerPage - currentPage.legsCount;
+      const take = Math.min(availableSlots, group.legs.length - start);
+      currentPage.groups.push({
+        label: start === 0 ? group.label : `${group.label} (cont.)`,
+        legs: group.legs.slice(start, start + take),
+        startIndex: start,
+        allLegs: group.legs,
+      });
+      currentPage.legsCount += take;
+      start += take;
+    }
+  });
+  pushCurrentPage();
 
-  drawPageFooter(doc, pw, ph, agencyName);
+  const groupBottomGap = 3;
+  const subTitleBlockH = 14;
+  const cardGap = 2.5;
+  const connBlockH = 7;
+  const baseCardH = 7 + 18 + 8;
+
+  pages.forEach((page, pageIndex) => {
+    doc.addPage();
+    drawPageBg(doc, pw, ph);
+    drawPageHeader(doc, pw, agencyName);
+
+    let y = 35;
+    if (pageIndex === 0) {
+      y = drawSectionTitle(doc, pw, y, "Aéreo");
+      y += 6;
+    }
+
+    const totalConnections = page.groups.reduce(
+      (acc, group) =>
+        acc +
+        group.legs.reduce((sum, _leg, idx) => {
+          const globalIdx = group.startIndex + idx;
+          return globalIdx > 0 && !isZeroDur(group.allLegs[globalIdx - 1]?.connectionDuration) ? sum + 1 : sum;
+        }, 0),
+      0,
+    );
+    const availableH = ph - 30 - y;
+    const fixedH =
+      page.groups.length * (subTitleBlockH + groupBottomGap) +
+      page.legsCount * cardGap +
+      totalConnections * connBlockH;
+    const idealCardH = page.legsCount > 0 ? (availableH - fixedH) / page.legsCount : baseCardH;
+    let scale = Math.min(1.18, idealCardH / baseCardH);
+    if (!Number.isFinite(scale) || scale <= 0) scale = 1;
+    scale = Math.max(0.4, scale);
+
+    page.groups.forEach((group) => {
+      y = drawSubTitle(doc, pw, y, group.label);
+      y += 4;
+
+      group.legs.forEach((leg, idx) => {
+        const globalIdx = group.startIndex + idx;
+        const prevLeg = globalIdx > 0 ? group.allLegs[globalIdx - 1] : undefined;
+        const connDur = (prevLeg?.connectionDuration || "").trim();
+        if (globalIdx > 0 && connDur && !isZeroDur(connDur)) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(Math.max(6, 8 * scale));
+          setText(doc, TEXT_MUTED);
+          safeText(doc, `Duração da conexão: ${sanitize(connDur)}`, pw / 2, y + 4.2, { align: "center" });
+          y += connBlockH;
+        }
+
+        y = drawFlightLegCard(doc, m, y, cardW, leg, scale);
+        y += cardGap;
+      });
+
+      y += groupBottomGap;
+    });
+
+    drawPageFooter(doc, pw, ph, agencyName);
+  });
 }
 
 // ─── Hotels Section ───────────────────────────────────────
