@@ -455,8 +455,10 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
         drawPageHeader(doc, pw, agencyName);
         y = 35;
       }
-      // Duração da conexão entre o trecho anterior e o atual
-      if (idx > 0 && leg.connectionDuration) {
+      // Duração da conexão entre o trecho anterior e o atual (oculta se zerada/vazia)
+      const connDur = (leg.connectionDuration || "").trim();
+      const isZeroed = /^0+[:hH]?0*m?$/.test(connDur.replace(/\s/g, "")) || connDur === "00:00";
+      if (idx > 0 && connDur && !isZeroed) {
         const connH = 6;
         if (y + connH + 30 > ph - 30) {
           drawPageFooter(doc, pw, ph, agencyName);
@@ -470,7 +472,7 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
         setText(doc, TEXT_MUTED);
         safeText(
           doc,
-          `Duracao da conexao: ${sanitize(leg.connectionDuration)}`,
+          `Duracao da conexao: ${sanitize(connDur)}`,
           pw / 2,
           y + 4,
           { align: "center" },
