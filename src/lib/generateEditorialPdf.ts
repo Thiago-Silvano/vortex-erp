@@ -362,13 +362,13 @@ function drawFlightLegCard(
   setFill(doc, SAND);
   doc.rect(x, y, w, dateH, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(Math.max(6, 8 * scale));
+  doc.setFontSize(Math.max(5, 8 * scale));
   setText(doc, OCEAN);
   safeText(doc, dateStr.toUpperCase(), x + w / 2, y + dateH * 0.7, { align: "center" });
 
   if (leg.flightCode) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(Math.max(5.5, 7 * scale));
+    doc.setFontSize(Math.max(4.5, 7 * scale));
     setText(doc, TEXT_MUTED);
     safeText(doc, sanitize(leg.flightCode), x + w - 3, y + dateH * 0.7, { align: "right" });
   }
@@ -382,20 +382,20 @@ function drawFlightLegCard(
   setFill(doc, CREAM);
   doc.rect(x, locY, sideW, locH, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(Math.max(11, 18 * scale));
+  doc.setFontSize(Math.max(9, 18 * scale));
   setText(doc, OCEAN);
   const oCode = extractCode(leg.origin);
   safeText(doc, oCode, x + sideW / 2, locY + locH / 2 + 3 * scale, { align: "center" });
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(Math.max(9, 14 * scale));
+  doc.setFontSize(Math.max(7, 14 * scale));
   setText(doc, TEXT_MUTED);
   safeText(doc, ">", x + sideW + planeW / 2, locY + locH / 2 + 2 * scale, { align: "center" });
 
   setFill(doc, CREAM);
   doc.rect(x + sideW + planeW, locY, sideW, locH, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(Math.max(11, 18 * scale));
+  doc.setFontSize(Math.max(9, 18 * scale));
   setText(doc, OCEAN);
   const dCode = extractCode(leg.destination);
   safeText(doc, dCode, x + sideW + planeW + sideW / 2, locY + locH / 2 + 3 * scale, { align: "center" });
@@ -409,7 +409,7 @@ function drawFlightLegCard(
   doc.rect(x + w / 2 - 0.4, timeY, 0.8, timeH, "F");
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(Math.max(6, 8 * scale));
+  doc.setFontSize(Math.max(5, 8 * scale));
   setText(doc, TEXT_MUTED);
   safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + w / 4, timeY + timeH * 0.7, {
     align: "center",
@@ -451,8 +451,8 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   const totalConnections = countConnections(ida) + countConnections(volta);
   const availableH = ph - 30 - y;
   const subTitleH = 6 + 4;
-  const groupBottomGap = 4;
-  const cardGap = 4;
+  const groupBottomGap = 3;
+  const cardGap = 3;
   const connBlockH = 8;
   const baseCardH = 7 + 18 + 8;
   const fixedH =
@@ -463,7 +463,7 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   const idealCardH = totalLegs > 0 ? cardsAvailableH / totalLegs : baseCardH;
   let scale = Math.min(1, idealCardH / baseCardH);
   if (!Number.isFinite(scale) || scale <= 0) scale = 1;
-  scale = Math.max(0.55, scale);
+  scale = Math.max(0.45, scale);
   const cardH = baseCardH * scale;
 
   const drawGroup = (label: string, legs: Leg[]) => {
