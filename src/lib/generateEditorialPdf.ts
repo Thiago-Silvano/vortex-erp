@@ -366,7 +366,7 @@ function drawFlightLegCard(doc: jsPDF, x: number, y: number, w: number, leg: Leg
 
   // Código do voo discreto à direita
   if (leg.flightCode) {
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     setText(doc, TEXT_MUTED);
     safeText(doc, sanitize(leg.flightCode), x + w - 3, y + 4.8, { align: "right" });
