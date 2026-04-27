@@ -130,7 +130,7 @@ const CREAM = [236, 233, 223] as const; // #ece9df — fundo das células de voo
 const CREAM_SOFT = [245, 242, 233] as const; // versão mais clara
 const SAND = [211, 204, 191] as const; // #d3ccbf — barra de data dos voos
 const OCEAN = [34, 34, 34] as const; // #222 — títulos
-const OCEAN_BANNER = [105, 132, 155] as const; // #69849b — banner azul oceano da capa / estrelas
+const OCEAN_BANNER = [72, 61, 139] as const; // #483D8B — banner azul (DarkSlateBlue)
 const TEXT_MAIN = [51, 51, 51] as const; // #333
 const TEXT_MUTED = [102, 102, 102] as const; // #666
 const TEXT_SOFT = [136, 136, 136] as const; // #888 — rodapé
@@ -235,7 +235,7 @@ function drawSectionTitle(doc: jsPDF, pw: number, y: number, title: string): num
   doc.setFont("helvetica", "bold");
   doc.setFontSize(24);
   setText(doc, OCEAN);
-  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center", charSpace: 2 });
+  safeText(doc, title.toUpperCase(), pw / 2, y, { align: "center" });
   return y + 12;
 }
 
@@ -243,7 +243,7 @@ function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   setText(doc, OCEAN);
-  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center", charSpace: 2 });
+  safeText(doc, label.toUpperCase(), pw / 2, y, { align: "center" });
   return y + 10;
 }
 
@@ -286,7 +286,6 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
     setText(doc, TEXT_MUTED);
     safeText(doc, `VIAGEM PARA ${data.destination.toUpperCase()}`, pw / 2, preTitleY + 22, {
       align: "center",
-      charSpace: 2.5,
     });
   }
 
@@ -322,8 +321,8 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   setFill(doc, OCEAN_BANNER);
   doc.rect(0, bandY, pw, bandH, "F");
 
-  // Bordas douradas no topo e no fundo do banner
-  const goldH = 1.2;
+  // Bordas douradas (mais finas) no topo e no fundo do banner
+  const goldH = 0.6;
   setFill(doc, GOLD);
   doc.rect(0, bandY - goldH, pw, goldH, "F"); // topo
   doc.rect(0, bandY + bandH, pw, goldH, "F"); // base
@@ -339,17 +338,8 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
     });
   }
 
-  // === Rodapé da capa (.cover-footer) — nome da agência centralizado verticalmente
-  // na faixa branca abaixo do banner. ===
-  const footerAreaTop = bandY + bandH + goldH;
-  const footerAreaBottom = ph;
-  const footerCenterY = (footerAreaTop + footerAreaBottom) / 2 + 1.5; // +1.5 ajuste óptico do baseline
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  setText(doc, TEXT_MUTED);
-  safeText(doc, agencyName.toUpperCase(), pw / 2, footerCenterY, {
-    align: "center",
-  });
+  // Rodapé da capa removido — sem nome da agência
+  void agencyName;
 }
 
 // ─── Flight Section ────────────────────────────────────────
@@ -370,7 +360,7 @@ function drawFlightLegCard(doc: jsPDF, x: number, y: number, w: number, leg: Leg
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setText(doc, OCEAN);
-  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.8, { align: "center", charSpace: 0.5 });
+  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.8, { align: "center" });
 
   // Código do voo discreto à direita
   if (leg.flightCode) {
@@ -425,11 +415,9 @@ function drawFlightLegCard(doc: jsPDF, x: number, y: number, w: number, leg: Leg
   setText(doc, TEXT_MUTED);
   safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + w / 4, timeY + 5.5, {
     align: "center",
-    charSpace: 0.5,
   });
   safeText(doc, `CHEGADA: ${leg.arrivalTime || "--:--"}`, x + (3 * w) / 4, timeY + 5.5, {
     align: "center",
-    charSpace: 0.5,
   });
 
   return timeY + timeH; // altura total usada
@@ -581,7 +569,7 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
 
   // Card com valor total — banner azul com bordas douradas (estilo capa)
   const cardY = blockStart + titleH + titleGap;
-  const goldH = 1.2;
+  const goldH = 0.6;
   // Bordas douradas (topo e fundo)
   setFill(doc, GOLD);
   doc.rect(m, cardY - goldH, w, goldH, "F");
