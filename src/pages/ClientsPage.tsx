@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Plus, Search, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
 import ClientFilesSection, { type ClientFilesSectionRef } from '@/components/ClientFilesSection';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -117,6 +118,15 @@ export default function ClientsPage() {
     c.cpf.includes(search) ||
     normalize(c.email).includes(normalize(search))
   );
+
+  const { sortedData: sortedClients, sortState, requestSort } = useTableSort(filtered, {
+    full_name: (c) => c.full_name,
+    cpf: (c) => c.cpf,
+    email: (c) => c.email,
+    phone: (c) => c.phone,
+    city: (c) => c.city,
+    state: (c) => c.state,
+  }, { initialKey: 'full_name', initialDirection: 'asc' });
 
   const handleEmailChange = (value: string) => {
     const lower = value.toLowerCase();
@@ -270,19 +280,19 @@ export default function ClientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>CPF/CNPJ</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Cidade</TableHead>
-                <TableHead>UF</TableHead>
+                <SortableTableHead sortKey="full_name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                <SortableTableHead sortKey="cpf" sortState={sortState} onSort={requestSort}>CPF/CNPJ</SortableTableHead>
+                <SortableTableHead sortKey="email" sortState={sortState} onSort={requestSort}>Email</SortableTableHead>
+                <SortableTableHead sortKey="phone" sortState={sortState} onSort={requestSort}>Telefone</SortableTableHead>
+                <SortableTableHead sortKey="city" sortState={sortState} onSort={requestSort}>Cidade</SortableTableHead>
+                <SortableTableHead sortKey="state" sortState={sortState} onSort={requestSort}>UF</SortableTableHead>
                 <TableHead className="w-16">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {sortedClients.length === 0 ? (
                 <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-4 text-xs">Nenhum cliente encontrado</TableCell></TableRow>
-              ) : filtered.map(c => (
+              ) : sortedClients.map(c => (
                 <TableRow key={c.id} className="cursor-pointer" onClick={() => handleEdit(c)}>
                   <TableCell className="font-medium">{c.full_name}</TableCell>
                   <TableCell>{c.cpf}</TableCell>
