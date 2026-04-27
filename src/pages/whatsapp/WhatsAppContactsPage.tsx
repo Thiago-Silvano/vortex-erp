@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Search, Plus, Pencil, Trash2, UserRound } from 'lucide-react';
@@ -77,6 +78,12 @@ export default function WhatsAppContactsPage() {
     !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search)
   );
 
+  const { sortedData: sortedContacts, sortState, requestSort } = useTableSort(filtered, {
+    name: (c) => c.name,
+    phone: (c) => c.phone,
+    email: (c) => c.email,
+  }, { initialKey: 'name', initialDirection: 'asc' });
+
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto">
@@ -97,14 +104,14 @@ export default function WhatsAppContactsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Email</TableHead>
+                <SortableTableHead sortKey="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                <SortableTableHead sortKey="phone" sortState={sortState} onSort={requestSort}>Telefone</SortableTableHead>
+                <SortableTableHead sortKey="email" sortState={sortState} onSort={requestSort}>Email</SortableTableHead>
                 <TableHead className="w-[100px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(c => (
+              {sortedContacts.map(c => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell>{c.phone}</TableCell>
@@ -117,7 +124,7 @@ export default function WhatsAppContactsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && (
+              {sortedContacts.length === 0 && (
                 <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum contato encontrado</TableCell></TableRow>
               )}
             </TableBody>
