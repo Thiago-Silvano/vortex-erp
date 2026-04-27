@@ -315,8 +315,7 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   }
 
   // === Banner azul oceano (.cover-banner) — período + cliente ===
-  // No template está absoluto, bottom: 35mm. width 100%, padding vertical generoso.
-  const bandH = 36;
+  const bandH = 22;
   const bandY = ph - 35 - bandH;
   setFill(doc, OCEAN_BANNER);
   doc.rect(0, bandY, pw, bandH, "F");
@@ -327,7 +326,7 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   doc.rect(0, bandY - goldH, pw, goldH, "F"); // topo
   doc.rect(0, bandY + bandH, pw, goldH, "F"); // base
 
-  // Período da viagem — Início / Término / Noites
+  // Período da viagem — Início / Término / Noites lado a lado
   const inicio = formatDateBR(data.departureDate);
   const termino = formatDateBR(data.returnDate);
   const noites = data.nights ?? 0;
@@ -335,18 +334,8 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     setText(doc, WHITE);
-    const lineH = 6.5;
-    const cx = pw / 2;
-    const cy = bandY + bandH / 2;
-    const lines = [
-      `Início: ${inicio || "--/--/----"}`,
-      `Término: ${termino || "--/--/----"}`,
-      `Noites: ${String(noites).padStart(2, "0")}`,
-    ];
-    const startY = cy - lineH + 2;
-    lines.forEach((t, i) => {
-      safeText(doc, t, cx, startY + i * lineH, { align: "center" });
-    });
+    const line = `Início: ${inicio || "--/--/----"}     |     Término: ${termino || "--/--/----"}     |     Noites: ${String(noites).padStart(2, "0")}`;
+    safeText(doc, line, pw / 2, bandY + bandH / 2 + 2, { align: "center" });
   }
   // suprimir aviso de variável não utilizada caso formatRangeLong continue importada
   void formatRangeLong;
