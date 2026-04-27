@@ -120,6 +120,17 @@ export default function CommissionsPage() {
     return { pending, approved, paid, total };
   }, [commissions]);
 
+  const { sortedData: sortedCommissions, sortState, requestSort } = useTableSort(commissions, {
+    sale_date: (c) => c.sale_date,
+    seller_name: (c) => c.seller_name || '',
+    client_name: (c) => c.client_name,
+    sale_value: (c) => Number(c.sale_value) || 0,
+    profit_value: (c) => Number(c.profit_value) || 0,
+    commission_percentage: (c) => Number(c.commission_percentage) || 0,
+    commission_value: (c) => Number(c.commission_value) || 0,
+    status: (c) => c.status,
+  });
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -167,21 +178,21 @@ export default function CommissionsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Vendedor</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Valor Venda</TableHead>
-                  <TableHead>Lucro</TableHead>
-                  <TableHead>%</TableHead>
-                  <TableHead>Comissão</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableTableHead sortKey="sale_date" sortState={sortState} onSort={requestSort}>Data</SortableTableHead>
+                  <SortableTableHead sortKey="seller_name" sortState={sortState} onSort={requestSort}>Vendedor</SortableTableHead>
+                  <SortableTableHead sortKey="client_name" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
+                  <SortableTableHead sortKey="sale_value" sortState={sortState} onSort={requestSort}>Valor Venda</SortableTableHead>
+                  <SortableTableHead sortKey="profit_value" sortState={sortState} onSort={requestSort}>Lucro</SortableTableHead>
+                  <SortableTableHead sortKey="commission_percentage" sortState={sortState} onSort={requestSort}>%</SortableTableHead>
+                  <SortableTableHead sortKey="commission_value" sortState={sortState} onSort={requestSort}>Comissão</SortableTableHead>
+                  <SortableTableHead sortKey="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {commissions.length === 0 ? (
+                {sortedCommissions.length === 0 ? (
                   <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma comissão encontrada</TableCell></TableRow>
-                ) : commissions.map(c => (
+                ) : sortedCommissions.map(c => (
                   <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetailComm(c)}>
                     <TableCell>{c.sale_date ? format(new Date(c.sale_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell className="font-medium">{c.seller_name}</TableCell>
