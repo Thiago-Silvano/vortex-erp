@@ -327,16 +327,29 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   doc.rect(0, bandY - goldH, pw, goldH, "F"); // topo
   doc.rect(0, bandY + bandH, pw, goldH, "F"); // base
 
-  // Período da viagem — centralizado vertical e horizontalmente, fonte maior
-  const dateRange = formatRangeLong(data.departureDate, data.returnDate);
-  if (dateRange) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(20);
+  // Período da viagem — Início / Término / Noites
+  const inicio = formatDateBR(data.departureDate);
+  const termino = formatDateBR(data.returnDate);
+  const noites = data.nights ?? 0;
+  if (inicio || termino || noites) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
     setText(doc, WHITE);
-    safeText(doc, dateRange, pw / 2, bandY + bandH / 2 + 2, {
-      align: "center",
+    const lineH = 6.5;
+    const cx = pw / 2;
+    const cy = bandY + bandH / 2;
+    const lines = [
+      `Início: ${inicio || "--/--/----"}`,
+      `Término: ${termino || "--/--/----"}`,
+      `Noites: ${String(noites).padStart(2, "0")}`,
+    ];
+    const startY = cy - lineH + 2;
+    lines.forEach((t, i) => {
+      safeText(doc, t, cx, startY + i * lineH, { align: "center" });
     });
   }
+  // suprimir aviso de variável não utilizada caso formatRangeLong continue importada
+  void formatRangeLong;
 
   // Rodapé da capa removido — sem nome da agência
   void agencyName;
