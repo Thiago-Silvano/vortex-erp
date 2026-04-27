@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Plus, Search, LayoutGrid, List, Eye, Trash2, Filter, X,
@@ -153,6 +154,18 @@ export default function CotacoesKanbanPage() {
   }, [sales, search, filterSeller, filterDestination, filterStatus]);
 
   const destinations = useMemo(() => [...new Set(sales.map(s => s.destination_name).filter(Boolean))], [sales]);
+
+  // Ordenação por coluna
+  const { sortedData: sortedSales, sortState, requestSort } = useTableSort(filteredSales, {
+    client_name: (s) => s.client_name,
+    destination_name: (s) => s.destination_name || '',
+    trip_start_date: (s) => s.trip_start_date || '',
+    total_sale: (s) => Number(s.total_sale || 0),
+    passengers_count: (s) => Number(s.passengers_count || 0),
+    seller_name: (s) => s.seller_name || '',
+    status: (s) => s.sale_workflow_status || '',
+    created_at: (s) => s.created_at,
+  });
 
   // Move card handler
   const handleMoveCard = async (saleId: string, newStatus: string) => {
