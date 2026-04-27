@@ -251,19 +251,19 @@ function drawSubTitle(doc: jsPDF, pw: number, y: number, label: string): number 
 function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, agencyName: string) {
   drawPageBg(doc, pw, ph);
 
-  // Logo opcional bem no topo (somente se a agência cadastrou).
-  // O template HTML não tem logo na capa — só usamos logo da agência (não a Vortex padrão).
-  let headerOffset = 0;
-  if (data.agency.logoBase64) {
+  // Logo no topo esquerdo da capa.
+  // Prioriza a logo da agência cadastrada; caso contrário usa a logo Vortex (cache).
+  const logoBase64 = data.agency.logoBase64 || vortexLogoBase64Cache || null;
+  if (logoBase64) {
     try {
-      const w = 36;
-      const h = 16;
-      doc.addImage(data.agency.logoBase64, "PNG", pw / 2 - w / 2, 12, w, h);
-      headerOffset = h + 4;
+      const w = 28;
+      const h = 28;
+      doc.addImage(logoBase64, "PNG", 12, 10, w, h);
     } catch {
       /* ignore */
     }
   }
+  const headerOffset = 0;
 
   // === Cabeçalho da capa (espelha .cover-header do template) ===
   // Pré-título italic "Proposta de"
