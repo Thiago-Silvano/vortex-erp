@@ -108,6 +108,11 @@ export default function AirlinesPage() {
     a.name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const { sortedData: sortedAirlines, sortState, requestSort } = useTableSort(filtered, {
+    name: (a: any) => a.name,
+    is_active: (a: any) => a.is_active ? 1 : 0,
+  }, { initialKey: 'name', initialDirection: 'asc' });
+
   return (
     <AppLayout>
       <div className="p-2 space-y-2">
@@ -132,15 +137,15 @@ export default function AirlinesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10">Logo</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableTableHead sortKey="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                  <SortableTableHead sortKey="is_active" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                   <TableHead className="w-20">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {sortedAirlines.length === 0 ? (
                   <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-4">Nenhuma cia aérea cadastrada</TableCell></TableRow>
-                ) : filtered.map(a => (
+                ) : sortedAirlines.map(a => (
                   <TableRow key={a.id}>
                     <TableCell>
                       {a.logo_url ? (

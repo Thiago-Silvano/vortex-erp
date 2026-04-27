@@ -44,6 +44,13 @@ export default function CostCentersPage() {
   };
   useEffect(() => { fetch_(); }, [activeCompany?.id]);
 
+  const { sortedData: sortedItems, sortState, requestSort } = useTableSort(items, {
+    name: (c) => c.name,
+    description: (c) => c.description,
+    status: (c) => c.status,
+    created_at: (c) => c.created_at,
+  }, { initialKey: 'name', initialDirection: 'asc' });
+
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
     const payload: any = { name, description, status };
@@ -92,17 +99,17 @@ export default function CostCentersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data Criação</TableHead>
+                  <SortableTableHead sortKey="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                  <SortableTableHead sortKey="description" sortState={sortState} onSort={requestSort}>Descrição</SortableTableHead>
+                  <SortableTableHead sortKey="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
+                  <SortableTableHead sortKey="created_at" sortState={sortState} onSort={requestSort}>Data Criação</SortableTableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.length === 0 ? (
+                {sortedItems.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum centro de custo cadastrado</TableCell></TableRow>
-                ) : items.map(c => (
+                ) : sortedItems.map(c => (
                   <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(c)}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.description || '-'}</TableCell>

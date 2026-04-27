@@ -148,6 +148,16 @@ export default function SellersPage() {
     s.cpf.includes(search) || s.email.toLowerCase().includes(search.toLowerCase())
   );
 
+  const { sortedData: sortedSellers, sortState, requestSort } = useTableSort(filtered, {
+    full_name: (s) => s.full_name,
+    cpf: (s) => s.cpf,
+    phone: (s) => s.phone,
+    email: (s) => s.email,
+    role_title: (s) => s.role_title,
+    commission_type: (s: any) => s.commission_type,
+    status: (s) => s.status,
+  }, { initialKey: 'full_name', initialDirection: 'asc' });
+
   const setField = (key: string, val: any) => setForm(prev => ({ ...prev, [key]: val }));
 
   return (
@@ -169,20 +179,20 @@ export default function SellersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CPF</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead>Comissão</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableTableHead sortKey="full_name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                  <SortableTableHead sortKey="cpf" sortState={sortState} onSort={requestSort}>CPF</SortableTableHead>
+                  <SortableTableHead sortKey="phone" sortState={sortState} onSort={requestSort}>Telefone</SortableTableHead>
+                  <SortableTableHead sortKey="email" sortState={sortState} onSort={requestSort}>E-mail</SortableTableHead>
+                  <SortableTableHead sortKey="role_title" sortState={sortState} onSort={requestSort}>Cargo</SortableTableHead>
+                  <SortableTableHead sortKey="commission_type" sortState={sortState} onSort={requestSort}>Comissão</SortableTableHead>
+                  <SortableTableHead sortKey="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {sortedSellers.length === 0 ? (
                   <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum vendedor cadastrado</TableCell></TableRow>
-                ) : filtered.map(s => (
+                ) : sortedSellers.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(s)}>
                     <TableCell className="font-medium">{s.full_name}</TableCell>
                     <TableCell>{s.cpf}</TableCell>
