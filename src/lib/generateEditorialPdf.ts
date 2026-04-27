@@ -126,16 +126,16 @@ export interface PremiumPdfData {
 // ─── Editorial Theme — Carol Fonseca style ──────────────────
 // Paleta espelhada no template HTML
 const WHITE = [255, 255, 255] as const;
-const CREAM = [236, 233, 223] as const;       // #ece9df — fundo das células de voo / cards
-const CREAM_SOFT = [245, 242, 233] as const;  // versão mais clara
-const SAND = [211, 204, 191] as const;        // #d3ccbf — barra de data dos voos
-const OCEAN = [34, 34, 34] as const;          // #222 — títulos
-const OCEAN_BANNER = [105, 132, 155] as const;// #69849b — banner azul oceano da capa / estrelas
-const TEXT_MAIN = [51, 51, 51] as const;      // #333
-const TEXT_MUTED = [102, 102, 102] as const;  // #666
-const TEXT_SOFT = [136, 136, 136] as const;   // #888 — rodapé
-const BORDER = [221, 221, 221] as const;      // #ddd
-const GOLD = [191, 158, 92] as const;         // dourado para bordas decorativas
+const CREAM = [236, 233, 223] as const; // #ece9df — fundo das células de voo / cards
+const CREAM_SOFT = [245, 242, 233] as const; // versão mais clara
+const SAND = [211, 204, 191] as const; // #d3ccbf — barra de data dos voos
+const OCEAN = [34, 34, 34] as const; // #222 — títulos
+const OCEAN_BANNER = [105, 132, 155] as const; // #69849b — banner azul oceano da capa / estrelas
+const TEXT_MAIN = [51, 51, 51] as const; // #333
+const TEXT_MUTED = [102, 102, 102] as const; // #666
+const TEXT_SOFT = [136, 136, 136] as const; // #888 — rodapé
+const BORDER = [221, 221, 221] as const; // #ddd
+const GOLD = [191, 158, 92] as const; // dourado para bordas decorativas
 
 // ─── Helpers ───────────────────────────────────────────────
 const sanitize = (text: string = ""): string =>
@@ -325,8 +325,8 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   // Bordas douradas no topo e no fundo do banner
   const goldH = 1.2;
   setFill(doc, GOLD);
-  doc.rect(0, bandY - goldH, pw, goldH, "F");           // topo
-  doc.rect(0, bandY + bandH, pw, goldH, "F");           // base
+  doc.rect(0, bandY - goldH, pw, goldH, "F"); // topo
+  doc.rect(0, bandY + bandH, pw, goldH, "F"); // base
 
   // Período da viagem — centralizado vertical e horizontalmente, fonte maior
   const dateRange = formatRangeLong(data.departureDate, data.returnDate);
@@ -336,7 +336,6 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
     setText(doc, WHITE);
     safeText(doc, dateRange, pw / 2, bandY + bandH / 2 + 2, {
       align: "center",
-      charSpace: 1.2,
     });
   }
 
@@ -386,7 +385,7 @@ function drawFlightLegCard(doc: jsPDF, x: number, y: number, w: number, leg: Leg
   const locY = y + dateH;
   const locH = 18;
   const sideW = w * 0.45;
-  const planeW = w * 0.10;
+  const planeW = w * 0.1;
 
   // Origem (esquerda)
   setFill(doc, CREAM);
@@ -573,8 +572,8 @@ function drawInvestmentPage(doc: jsPDF, data: PremiumPdfData, pw: number, ph: nu
   const heroTop = 20;
   const heroBottom = 155;
   const cardH = 38;
-  const titleH = 12;          // altura visual do título
-  const titleGap = 14;        // gap entre título e card
+  const titleH = 12; // altura visual do título
+  const titleGap = 14; // gap entre título e card
   const blockH = titleH + titleGap + cardH;
   const blockStart = heroTop + (heroBottom - heroTop - blockH) / 2;
 
