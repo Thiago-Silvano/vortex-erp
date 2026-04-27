@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, subMonths, eachDayOfInterval, eachMonthOfInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, subMonths, eachDayOfInterval, eachMonthOfInterval, addDays, parseISO, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DollarSign, ShoppingCart, Users, Target, TrendingUp, TrendingDown, AlertTriangle, FileWarning } from 'lucide-react';
+import { DollarSign, ShoppingCart, Users, Target, TrendingUp, TrendingDown, AlertTriangle, FileWarning, CalendarClock, Plane } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import AppLayout from '@/components/AppLayout';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -27,6 +27,15 @@ interface CategoryData { name: string; value: number; color: string; }
 interface SeriesPoint { label: string; receita: number; despesa: number; }
 interface ProductRow { name: string; qtd: number; receita: number; }
 interface AlertItem { type: 'danger' | 'warning'; message: string; route?: string; }
+interface UpcomingReservation {
+  id: string;
+  description: string;
+  confirmation_code: string | null;
+  status: string;
+  check_in: string;
+  service_type: string | null;
+  daysUntil: number;
+}
 
 const COLORS = ['hsl(var(--primary))', '#22c55e', '#f59e0b', '#a855f7', '#ef4444', '#06b6d4', '#ec4899', '#8b5cf6'];
 
@@ -84,6 +93,7 @@ export default function Dashboard() {
   const [evolution, setEvolution] = useState<{ label: string; valor: number }[]>([]);
   const [topProducts, setTopProducts] = useState<ProductRow[]>([]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [upcomingReservations, setUpcomingReservations] = useState<UpcomingReservation[]>([]);
 
   const isVistos = activeCompany?.slug === 'vortex-vistos';
   const empresaName = activeCompany?.name || 'Vortex';
@@ -114,6 +124,7 @@ export default function Dashboard() {
         await loadViagens(empresaId, ranges);
       }
       await loadAlerts(empresaId);
+      await loadUpcomingReservations(empresaId);
     } catch (e) {
       console.error('Dashboard load error:', e);
     } finally {
@@ -389,6 +400,28 @@ export default function Dashboard() {
     }
 
     setAlerts(list);
+  }
+
+  async function loadUpcomingReservations(empresaId: string) {
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+    const in3daysStr = format(addDays(today, 3), 'yyyy-MM-dd');
+    const { data } = await supabase.from('reservations')
+      .select('id, description, confirmation_code, status, check_in, service_type')
+      .eq('empresa_id', empresaId)
+      .gte('check_in', todayStr)
+      .lte('check_in', in3daysStr)
+      .order('check_in', { ascending: true });
+    const list: UpcomingReservation[] = (data || []).map((r: any) => ({
+      id: r.id,
+      description: r.description || '—',
+      confirmation_code: r.confirmation_code,
+      status: r.status,
+      check_in: r.check_in,
+      service_type: r.service_type,
+      daysUntil: differenceInDays(parseISO(r.check_in + 'T12:00:00'), today),
+    }));
+    setUpcomingReservations(list);
   }
 
   const kpiCards = useMemo(() => {
