@@ -446,7 +446,7 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
     if (legs.length === 0) return;
     y = drawSubTitle(doc, pw, y, label);
     y += 4;
-    legs.forEach((leg) => {
+    legs.forEach((leg, idx) => {
       // page break check
       if (y + 30 > ph - 30) {
         drawPageFooter(doc, pw, ph, agencyName);
@@ -454,6 +454,28 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
         drawPageBg(doc, pw, ph);
         drawPageHeader(doc, pw, agencyName);
         y = 35;
+      }
+      // Duração da conexão entre o trecho anterior e o atual
+      if (idx > 0 && leg.connectionDuration) {
+        const connH = 6;
+        if (y + connH + 30 > ph - 30) {
+          drawPageFooter(doc, pw, ph, agencyName);
+          doc.addPage();
+          drawPageBg(doc, pw, ph);
+          drawPageHeader(doc, pw, agencyName);
+          y = 35;
+        }
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        setText(doc, TEXT_MUTED);
+        safeText(
+          doc,
+          `Duracao da conexao: ${sanitize(leg.connectionDuration)}`,
+          pw / 2,
+          y + 4,
+          { align: "center" },
+        );
+        y += connH + 2;
       }
       y = drawFlightLegCard(doc, m, y, cardW, leg);
       y += 4;
