@@ -50,7 +50,7 @@ export default function CotacoesKanbanPage() {
   const [search, setSearch] = useState('');
   const [filterSeller, setFilterSeller] = useState('all');
   const [filterDestination, setFilterDestination] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all_except_lost');
   const [showFilters, setShowFilters] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<KanbanSale | null>(null);
   const [userEmail, setUserEmail] = useState('');
@@ -145,7 +145,9 @@ export default function CotacoesKanbanPage() {
       if (search && !normalize(s.client_name).includes(normalize(search)) && !normalize(s.destination_name || '').includes(normalize(search))) return false;
       if (filterSeller !== 'all' && s.seller_name !== filterSeller) return false;
       if (filterDestination !== 'all' && s.destination_name !== filterDestination) return false;
-      if (filterStatus !== 'all' && s.sale_workflow_status !== filterStatus) return false;
+      if (filterStatus === 'all_except_lost') {
+        if (s.sale_workflow_status === 'perdido') return false;
+      } else if (filterStatus !== 'all' && s.sale_workflow_status !== filterStatus) return false;
       return true;
     });
   }, [sales, search, filterSeller, filterDestination, filterStatus]);
@@ -273,10 +275,14 @@ export default function CotacoesKanbanPage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  // Stats
-  const totalCotacoes = filteredSales.length;
-  const totalValor = filteredSales.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
-  const staleCount = filteredSales.filter(s => differenceInDays(new Date(), new Date(s.updated_at)) >= 3).length;
+  // Stats — sempre excluem cotações perdidas dos totais e contadores
+  const statsSales = useMemo(
+    () => filteredSales.filter(s => s.sale_workflow_status !== 'perdido'),
+    [filteredSales]
+  );
+  const totalCotacoes = statsSales.length;
+  const totalValor = statsSales.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
+  const staleCount = statsSales.filter(s => differenceInDays(new Date(), new Date(s.updated_at)) >= 3).length;
 
   return (
     <AppLayout>
@@ -330,9 +336,13 @@ export default function CotacoesKanbanPage() {
           <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="gap-2">
             <Filter className="h-4 w-4" />
             Filtros
-            {(filterSeller !== 'all' || filterDestination !== 'all' || filterStatus !== 'all') && (
+            {(filterSeller !== 'all' || filterDestination !== 'all' || filterStatus !== 'all_except_lost') && (
               <span className="bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                {[filterSeller, filterDestination, filterStatus].filter(f => f !== 'all').length}
+                {[
+                  filterSeller !== 'all',
+                  filterDestination !== 'all',
+                  filterStatus !== 'all_except_lost',
+                ].filter(Boolean).length}
               </span>
             )}
           </Button>
@@ -358,12 +368,13 @@ export default function CotacoesKanbanPage() {
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos status</SelectItem>
+                <SelectItem value="all_except_lost">Todas exceto perdidas</SelectItem>
+                <SelectItem value="all">Todos status (incluindo perdidas)</SelectItem>
                 {columns.map(c => <SelectItem key={c.statusKey} value={c.statusKey}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            {(filterSeller !== 'all' || filterDestination !== 'all' || filterStatus !== 'all') && (
-              <Button variant="ghost" size="sm" onClick={() => { setFilterSeller('all'); setFilterDestination('all'); setFilterStatus('all'); }}>
+            {(filterSeller !== 'all' || filterDestination !== 'all' || filterStatus !== 'all_except_lost') && (
+              <Button variant="ghost" size="sm" onClick={() => { setFilterSeller('all'); setFilterDestination('all'); setFilterStatus('all_except_lost'); }}>
                 <X className="h-4 w-4 mr-1" /> Limpar
               </Button>
             )}
