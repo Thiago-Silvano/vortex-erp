@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -190,6 +191,14 @@ export default function UserAdmin() {
     return <Badge variant="secondary">Vendedor</Badge>;
   };
 
+  const { sortedData: sortedUsers, sortState, requestSort } = useTableSort(users, {
+    email: (u) => u.email,
+    displayName: (u) => u.displayName,
+    role: (u) => permissions[u.id]?.user_role || 'zzz',
+    createdAt: (u) => u.createdAt,
+    lastSignIn: (u) => u.lastSignIn,
+  }, { initialKey: 'email', initialDirection: 'asc' });
+
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -212,16 +221,16 @@ export default function UserAdmin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Perfil</TableHead>
-                      <TableHead>Criado em</TableHead>
-                      <TableHead>Último acesso</TableHead>
+                      <SortableTableHead sortKey="email" sortState={sortState} onSort={requestSort}>Email</SortableTableHead>
+                      <SortableTableHead sortKey="displayName" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                      <SortableTableHead sortKey="role" sortState={sortState} onSort={requestSort}>Perfil</SortableTableHead>
+                      <SortableTableHead sortKey="createdAt" sortState={sortState} onSort={requestSort}>Criado em</SortableTableHead>
+                      <SortableTableHead sortKey="lastSignIn" sortState={sortState} onSort={requestSort}>Último acesso</SortableTableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map(user => (
+                    {sortedUsers.map(user => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.email}</TableCell>
                         <TableCell>{user.displayName || '—'}</TableCell>

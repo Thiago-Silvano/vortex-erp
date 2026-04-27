@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
@@ -35,6 +36,11 @@ export default function WhatsAppLabelsPage() {
     const { data } = await (supabase.from('whatsapp_labels').select('*').eq('empresa_id', empresaId).order('name') as any);
     if (data) setLabels(data);
   };
+
+  const { sortedData: sortedLabels, sortState, requestSort } = useTableSort(labels, {
+    name: (l) => l.name,
+    color: (l) => l.color,
+  }, { initialKey: 'name', initialDirection: 'asc' });
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Nome é obrigatório'); return; }
@@ -68,13 +74,13 @@ export default function WhatsAppLabelsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Etiqueta</TableHead>
-                <TableHead>Cor</TableHead>
+                <SortableTableHead sortKey="name" sortState={sortState} onSort={requestSort}>Etiqueta</SortableTableHead>
+                <SortableTableHead sortKey="color" sortState={sortState} onSort={requestSort}>Cor</SortableTableHead>
                 <TableHead className="w-[100px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {labels.map(l => (
+              {sortedLabels.map(l => (
                 <TableRow key={l.id}>
                   <TableCell><Badge style={{ backgroundColor: l.color, color: '#fff' }}>{l.name}</Badge></TableCell>
                   <TableCell><div className="w-6 h-6 rounded-full" style={{ backgroundColor: l.color }} /></TableCell>
@@ -86,7 +92,7 @@ export default function WhatsAppLabelsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {labels.length === 0 && (
+              {sortedLabels.length === 0 && (
                 <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">Nenhuma etiqueta criada</TableCell></TableRow>
               )}
             </TableBody>

@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 
@@ -104,6 +105,14 @@ export default function NfseServicesPage() {
     s.codigo_servico?.includes(search)
   );
 
+  const { sortedData: sortedServices, sortState, requestSort } = useTableSort(filtered, {
+    nome_interno: (s: any) => s.nome_interno,
+    codigo_servico: (s: any) => s.codigo_servico,
+    aliquota: (s: any) => Number(s.aliquota) || 0,
+    retencao_iss: (s: any) => s.retencao_iss ? 1 : 0,
+    is_active: (s: any) => s.is_active ? 1 : 0,
+  }, { initialKey: 'nome_interno', initialDirection: 'asc' });
+
   const updateField = (field: string, value: any) => setEditing(p => ({ ...p, [field]: value }));
 
   return (
@@ -129,18 +138,18 @@ export default function NfseServicesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Alíquota</TableHead>
-                  <TableHead>Retenção</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableTableHead sortKey="nome_interno" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                  <SortableTableHead sortKey="codigo_servico" sortState={sortState} onSort={requestSort}>Código</SortableTableHead>
+                  <SortableTableHead sortKey="aliquota" sortState={sortState} onSort={requestSort}>Alíquota</SortableTableHead>
+                  <SortableTableHead sortKey="retencao_iss" sortState={sortState} onSort={requestSort}>Retenção</SortableTableHead>
+                  <SortableTableHead sortKey="is_active" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {sortedServices.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>
-                ) : filtered.map(s => (
+                ) : sortedServices.map(s => (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{s.nome_interno}</TableCell>
                     <TableCell>{s.codigo_servico || '—'}</TableCell>

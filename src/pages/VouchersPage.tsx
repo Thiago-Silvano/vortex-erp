@@ -1,7 +1,8 @@
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,6 +66,14 @@ export default function VouchersPage() {
       s.client_name?.toLowerCase().includes(q) ||
       s.short_id?.toLowerCase().includes(q)
     );
+  });
+
+  const { sortedData: sortedSales, sortState, requestSort } = useTableSort(filtered, {
+    short_id: (s) => s.short_id,
+    client_name: (s) => s.client_name,
+    sale_date: (s) => s.sale_date,
+    total_sale: (s) => Number(s.total_sale) || 0,
+    sale_workflow_status: (s) => s.sale_workflow_status,
   });
 
   const fmt = (v: number) => v?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00';
@@ -408,11 +417,11 @@ export default function VouchersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[60px]">Ref</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead className="w-[110px]">Data</TableHead>
-                    <TableHead className="w-[120px] text-right">Total</TableHead>
-                    <TableHead className="w-[120px]">Status</TableHead>
+                    <SortableTableHead sortKey="short_id" sortState={sortState} onSort={requestSort} className="w-[60px]">Ref</SortableTableHead>
+                    <SortableTableHead sortKey="client_name" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
+                    <SortableTableHead sortKey="sale_date" sortState={sortState} onSort={requestSort} className="w-[110px]">Data</SortableTableHead>
+                    <SortableTableHead sortKey="total_sale" sortState={sortState} onSort={requestSort} className="w-[120px] text-right">Total</SortableTableHead>
+                    <SortableTableHead sortKey="sale_workflow_status" sortState={sortState} onSort={requestSort} className="w-[120px]">Status</SortableTableHead>
                     <TableHead className="w-[200px] text-center">Vouchers</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -421,14 +430,14 @@ export default function VouchersPage() {
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell>
                     </TableRow>
-                  ) : filtered.length === 0 ? (
+                  ) : sortedSales.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         {search ? 'Nenhuma venda encontrada' : 'Nenhuma venda emitida'}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filtered.map((sale) => (
+                    sortedSales.map((sale) => (
                       <TableRow key={sale.id}>
                         <TableCell className="font-mono text-xs text-muted-foreground">{sale.short_id || '-'}</TableCell>
                         <TableCell className="font-medium">{sale.client_name}</TableCell>

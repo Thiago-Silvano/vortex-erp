@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -112,6 +113,13 @@ export default function ServicesCatalogPage() {
     return acc;
   }, {} as Record<string, CostCenter[]>);
 
+  const { sortedData: sortedItems, sortState, requestSort } = useTableSort(items, {
+    name: (s) => s.name,
+    category: (s) => s.category,
+    cost_center: (s) => getCostCenterName(s.cost_center_id),
+    status: (s) => s.status,
+  }, { initialKey: 'name', initialDirection: 'asc' });
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -127,17 +135,17 @@ export default function ServicesCatalogPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome do Serviço</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Centro de Custo</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableTableHead sortKey="name" sortState={sortState} onSort={requestSort}>Nome do Serviço</SortableTableHead>
+                  <SortableTableHead sortKey="category" sortState={sortState} onSort={requestSort}>Categoria</SortableTableHead>
+                  <SortableTableHead sortKey="cost_center" sortState={sortState} onSort={requestSort}>Centro de Custo</SortableTableHead>
+                  <SortableTableHead sortKey="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.length === 0 ? (
+                {sortedItems.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>
-                ) : items.map(s => (
+                ) : sortedItems.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(s)}>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell>{s.category || '-'}</TableCell>

@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +47,15 @@ export default function BankAccountsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyAccount);
+
+  const { sortedData: sortedAccounts, sortState, requestSort } = useTableSort(accounts, {
+    bank_name: (a) => a.bank_name,
+    agency: (a) => `${a.agency || ''}${a.account_number || ''}`,
+    account_type: (a) => a.account_type,
+    holder_name: (a) => a.holder_name,
+    initial_balance: (a) => Number(a.initial_balance) || 0,
+    status: (a) => a.status,
+  });
 
   const load = async () => {
     if (!activeCompany) return;
@@ -109,21 +119,21 @@ export default function BankAccountsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Banco</TableHead>
-                  <TableHead>Agência / Conta</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Titular</TableHead>
-                  <TableHead className="text-right">Saldo Inicial</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableTableHead sortKey="bank_name" sortState={sortState} onSort={requestSort}>Banco</SortableTableHead>
+                  <SortableTableHead sortKey="agency" sortState={sortState} onSort={requestSort}>Agência / Conta</SortableTableHead>
+                  <SortableTableHead sortKey="account_type" sortState={sortState} onSort={requestSort}>Tipo</SortableTableHead>
+                  <SortableTableHead sortKey="holder_name" sortState={sortState} onSort={requestSort}>Titular</SortableTableHead>
+                  <SortableTableHead sortKey="initial_balance" sortState={sortState} onSort={requestSort} className="text-right">Saldo Inicial</SortableTableHead>
+                  <SortableTableHead sortKey="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-                ) : accounts.length === 0 ? (
+                ) : sortedAccounts.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma conta cadastrada</TableCell></TableRow>
-                ) : accounts.map(a => (
+                ) : sortedAccounts.map(a => (
                   <TableRow key={a.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">

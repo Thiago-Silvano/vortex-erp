@@ -5,7 +5,8 @@ import { useCompany } from '@/contexts/CompanyContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Plus, Pencil, Trash2, Zap } from 'lucide-react';
@@ -34,6 +35,12 @@ export default function WhatsAppQuickRepliesPage() {
     const { data } = await (supabase.from('whatsapp_quick_replies').select('*').eq('empresa_id', empresaId).order('shortcut') as any);
     if (data) setReplies(data);
   };
+
+  const { sortedData: sortedReplies, sortState, requestSort } = useTableSort(replies, {
+    shortcut: (r) => r.shortcut,
+    message: (r) => r.message,
+    category: (r) => r.category,
+  }, { initialKey: 'shortcut', initialDirection: 'asc' });
 
   const handleSave = async () => {
     if (!form.shortcut.trim() || !form.message.trim()) { toast.error('Atalho e mensagem são obrigatórios'); return; }
@@ -67,14 +74,14 @@ export default function WhatsAppQuickRepliesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Atalho</TableHead>
-                <TableHead>Mensagem</TableHead>
-                <TableHead>Categoria</TableHead>
+                <SortableTableHead sortKey="shortcut" sortState={sortState} onSort={requestSort}>Atalho</SortableTableHead>
+                <SortableTableHead sortKey="message" sortState={sortState} onSort={requestSort}>Mensagem</SortableTableHead>
+                <SortableTableHead sortKey="category" sortState={sortState} onSort={requestSort}>Categoria</SortableTableHead>
                 <TableHead className="w-[100px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {replies.map(r => (
+              {sortedReplies.map(r => (
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-sm">/{r.shortcut}</TableCell>
                   <TableCell className="max-w-xs truncate">{r.message}</TableCell>
@@ -87,7 +94,7 @@ export default function WhatsAppQuickRepliesPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {replies.length === 0 && (
+              {sortedReplies.length === 0 && (
                 <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhuma resposta rápida criada</TableCell></TableRow>
               )}
             </TableBody>

@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CepLookup from '@/components/CepLookup';
@@ -90,6 +91,14 @@ export default function SuppliersPage() {
     s.cnpj.includes(search) ||
     normalize(s.email).includes(normalize(search))
   );
+
+  const { sortedData: sortedSuppliers, sortState, requestSort } = useTableSort(filtered, {
+    name: (s) => s.name,
+    cnpj: (s) => s.cnpj,
+    email: (s) => s.email,
+    phone: (s) => s.phone,
+    city: (s) => `${s.city || ''} ${s.state || ''}`,
+  }, { initialKey: 'name', initialDirection: 'asc' });
 
   const handleCnpjSearch = async () => {
     if (isPF) return;
@@ -208,18 +217,18 @@ export default function SuppliersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CPF/CNPJ</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Cidade</TableHead>
+                  <SortableTableHead sortKey="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                  <SortableTableHead sortKey="cnpj" sortState={sortState} onSort={requestSort}>CPF/CNPJ</SortableTableHead>
+                  <SortableTableHead sortKey="email" sortState={sortState} onSort={requestSort}>Email</SortableTableHead>
+                  <SortableTableHead sortKey="phone" sortState={sortState} onSort={requestSort}>Telefone</SortableTableHead>
+                  <SortableTableHead sortKey="city" sortState={sortState} onSort={requestSort}>Cidade</SortableTableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {sortedSuppliers.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum fornecedor encontrado</TableCell></TableRow>
-                ) : filtered.map(s => (
+                ) : sortedSuppliers.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(s)}>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell>{s.cnpj}</TableCell>

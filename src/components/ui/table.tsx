@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -69,4 +70,42 @@ const TableCaption = React.forwardRef<HTMLTableCaptionElement, React.HTMLAttribu
 );
 TableCaption.displayName = "TableCaption";
 
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
+export type SortDirection = "asc" | "desc" | null;
+export interface SortState {
+  key: string | null;
+  direction: SortDirection;
+}
+
+interface SortableTableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
+  sortKey: string;
+  sortState?: SortState;
+  onSort?: (key: string) => void;
+  children: React.ReactNode;
+}
+
+const SortableTableHead = React.forwardRef<HTMLTableCellElement, SortableTableHeadProps>(
+  ({ className, sortKey, sortState, onSort, children, ...props }, ref) => {
+    const isActive = sortState?.key === sortKey && sortState?.direction !== null;
+    const Icon = !isActive
+      ? ArrowUpDown
+      : sortState?.direction === "asc"
+        ? ArrowUp
+        : ArrowDown;
+    return (
+      <TableHead
+        ref={ref}
+        className={cn("cursor-pointer select-none hover:text-foreground transition-colors", className)}
+        onClick={() => onSort?.(sortKey)}
+        {...props}
+      >
+        <span className="inline-flex items-center gap-1">
+          {children}
+          <Icon className={cn("h-3 w-3", isActive ? "text-foreground" : "opacity-50")} />
+        </span>
+      </TableHead>
+    );
+  },
+);
+SortableTableHead.displayName = "SortableTableHead";
+
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption, SortableTableHead };
