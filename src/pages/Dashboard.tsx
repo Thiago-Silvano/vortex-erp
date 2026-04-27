@@ -651,6 +651,72 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Reservas próximos 3 dias */}
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <CalendarClock className="h-3.5 w-3.5 text-primary" />
+                Reservas — Próximos 3 dias
+              </h3>
+              <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => navigate('/reservations')}>
+                Ver todas
+              </Button>
+            </div>
+            {upcomingReservations.length === 0 ? (
+              <div className="h-[80px] flex items-center justify-center text-xs text-muted-foreground">
+                Nenhuma reserva nos próximos 3 dias
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b text-[10px] text-muted-foreground uppercase">
+                      <th className="text-left py-1.5 font-semibold">Check-in</th>
+                      <th className="text-left py-1.5 font-semibold">Serviço</th>
+                      <th className="text-left py-1.5 font-semibold">Descrição</th>
+                      <th className="text-left py-1.5 font-semibold">Localizador</th>
+                      <th className="text-left py-1.5 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {upcomingReservations.map((r) => {
+                      const urgent = r.daysUntil <= 1 && r.status !== 'confirmed';
+                      const dayLabel = r.daysUntil === 0 ? 'Hoje' : r.daysUntil === 1 ? 'Amanhã' : `Em ${r.daysUntil}d`;
+                      return (
+                        <tr
+                          key={r.id}
+                          className={`border-b last:border-0 cursor-pointer hover:bg-muted/40 ${urgent ? 'bg-red-50 dark:bg-red-950/20' : ''}`}
+                          onClick={() => navigate('/reservations')}
+                        >
+                          <td className="py-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium">{format(parseISO(r.check_in + 'T12:00:00'), 'dd/MM')}</span>
+                              <span className="text-[10px] text-muted-foreground">({dayLabel})</span>
+                            </div>
+                          </td>
+                          <td className="py-1.5 capitalize text-muted-foreground">{r.service_type || '—'}</td>
+                          <td className="py-1.5 truncate max-w-[260px]" title={r.description}>{r.description}</td>
+                          <td className="py-1.5 font-mono text-[11px]">{r.confirmation_code || '—'}</td>
+                          <td className="py-1.5">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                              r.status === 'confirmed'
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                            }`}>
+                              {r.status === 'confirmed' ? 'Confirmada' : r.status === 'cancelled' ? 'Cancelada' : 'Pendente'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );
