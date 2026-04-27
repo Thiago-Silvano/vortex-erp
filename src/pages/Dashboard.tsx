@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, subMonths, eachDayOfInterval, eachMonthOfInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, subMonths, eachDayOfInterval, eachMonthOfInterval, addDays, parseISO, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DollarSign, ShoppingCart, Users, Target, TrendingUp, TrendingDown, AlertTriangle, FileWarning } from 'lucide-react';
+import { DollarSign, ShoppingCart, Users, Target, TrendingUp, TrendingDown, AlertTriangle, FileWarning, CalendarClock, Plane } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import AppLayout from '@/components/AppLayout';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -27,6 +27,15 @@ interface CategoryData { name: string; value: number; color: string; }
 interface SeriesPoint { label: string; receita: number; despesa: number; }
 interface ProductRow { name: string; qtd: number; receita: number; }
 interface AlertItem { type: 'danger' | 'warning'; message: string; route?: string; }
+interface UpcomingReservation {
+  id: string;
+  description: string;
+  confirmation_code: string | null;
+  status: string;
+  check_in: string;
+  service_type: string | null;
+  daysUntil: number;
+}
 
 const COLORS = ['hsl(var(--primary))', '#22c55e', '#f59e0b', '#a855f7', '#ef4444', '#06b6d4', '#ec4899', '#8b5cf6'];
 
@@ -84,6 +93,7 @@ export default function Dashboard() {
   const [evolution, setEvolution] = useState<{ label: string; valor: number }[]>([]);
   const [topProducts, setTopProducts] = useState<ProductRow[]>([]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [upcomingReservations, setUpcomingReservations] = useState<UpcomingReservation[]>([]);
 
   const isVistos = activeCompany?.slug === 'vortex-vistos';
   const empresaName = activeCompany?.name || 'Vortex';
@@ -114,6 +124,7 @@ export default function Dashboard() {
         await loadViagens(empresaId, ranges);
       }
       await loadAlerts(empresaId);
+      await loadUpcomingReservations(empresaId);
     } catch (e) {
       console.error('Dashboard load error:', e);
     } finally {
@@ -391,6 +402,28 @@ export default function Dashboard() {
     setAlerts(list);
   }
 
+  async function loadUpcomingReservations(empresaId: string) {
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+    const in3daysStr = format(addDays(today, 3), 'yyyy-MM-dd');
+    const { data } = await supabase.from('reservations')
+      .select('id, description, confirmation_code, status, check_in, service_type')
+      .eq('empresa_id', empresaId)
+      .gte('check_in', todayStr)
+      .lte('check_in', in3daysStr)
+      .order('check_in', { ascending: true });
+    const list: UpcomingReservation[] = (data || []).map((r: any) => ({
+      id: r.id,
+      description: r.description || '—',
+      confirmation_code: r.confirmation_code,
+      status: r.status,
+      check_in: r.check_in,
+      service_type: r.service_type,
+      daysUntil: differenceInDays(parseISO(r.check_in + 'T12:00:00'), today),
+    }));
+    setUpcomingReservations(list);
+  }
+
   const kpiCards = useMemo(() => {
     const fatPct = pct(stats.faturamento, stats.faturamentoAnterior);
     const ticketPct = pct(stats.ticketMedio, stats.ticketMedioAnterior);
@@ -618,6 +651,72 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Reservas próximos 3 dias */}
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <CalendarClock className="h-3.5 w-3.5 text-primary" />
+                Reservas — Próximos 3 dias
+              </h3>
+              <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => navigate('/reservations')}>
+                Ver todas
+              </Button>
+            </div>
+            {upcomingReservations.length === 0 ? (
+              <div className="h-[80px] flex items-center justify-center text-xs text-muted-foreground">
+                Nenhuma reserva nos próximos 3 dias
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b text-[10px] text-muted-foreground uppercase">
+                      <th className="text-left py-1.5 font-semibold">Check-in</th>
+                      <th className="text-left py-1.5 font-semibold">Serviço</th>
+                      <th className="text-left py-1.5 font-semibold">Descrição</th>
+                      <th className="text-left py-1.5 font-semibold">Localizador</th>
+                      <th className="text-left py-1.5 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {upcomingReservations.map((r) => {
+                      const urgent = r.daysUntil <= 1 && r.status !== 'confirmed';
+                      const dayLabel = r.daysUntil === 0 ? 'Hoje' : r.daysUntil === 1 ? 'Amanhã' : `Em ${r.daysUntil}d`;
+                      return (
+                        <tr
+                          key={r.id}
+                          className={`border-b last:border-0 cursor-pointer hover:bg-muted/40 ${urgent ? 'bg-red-50 dark:bg-red-950/20' : ''}`}
+                          onClick={() => navigate('/reservations')}
+                        >
+                          <td className="py-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium">{format(parseISO(r.check_in + 'T12:00:00'), 'dd/MM')}</span>
+                              <span className="text-[10px] text-muted-foreground">({dayLabel})</span>
+                            </div>
+                          </td>
+                          <td className="py-1.5 capitalize text-muted-foreground">{r.service_type || '—'}</td>
+                          <td className="py-1.5 truncate max-w-[260px]" title={r.description}>{r.description}</td>
+                          <td className="py-1.5 font-mono text-[11px]">{r.confirmation_code || '—'}</td>
+                          <td className="py-1.5">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                              r.status === 'confirmed'
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                            }`}>
+                              {r.status === 'confirmed' ? 'Confirmada' : r.status === 'cancelled' ? 'Cancelada' : 'Pendente'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );
