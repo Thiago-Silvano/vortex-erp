@@ -486,7 +486,7 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   drawPageHeader(doc, pw, agencyName);
 
   let y = 35;
-  y = drawSectionTitle(doc, pw, y, "Acomodações");
+  y = drawSectionTitle(doc, pw, y, "Hospedagem");
   y += 8;
 
   const m = 22;
