@@ -349,7 +349,6 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
   setText(doc, TEXT_MUTED);
   safeText(doc, agencyName.toUpperCase(), pw / 2, footerCenterY, {
     align: "center",
-    charSpace: 1.2,
   });
 }
 
