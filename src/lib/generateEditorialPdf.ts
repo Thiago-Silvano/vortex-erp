@@ -451,8 +451,8 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   const totalConnections = countConnections(ida) + countConnections(volta);
   const availableH = ph - 30 - y;
   const subTitleH = 6 + 4;
-  const groupBottomGap = 4;
-  const cardGap = 4;
+  const groupBottomGap = 3;
+  const cardGap = 3;
   const connBlockH = 8;
   const baseCardH = 7 + 18 + 8;
   const fixedH =
@@ -463,7 +463,7 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   const idealCardH = totalLegs > 0 ? cardsAvailableH / totalLegs : baseCardH;
   let scale = Math.min(1, idealCardH / baseCardH);
   if (!Number.isFinite(scale) || scale <= 0) scale = 1;
-  scale = Math.max(0.55, scale);
+  scale = Math.max(0.45, scale);
   const cardH = baseCardH * scale;
 
   const drawGroup = (label: string, legs: Leg[]) => {
