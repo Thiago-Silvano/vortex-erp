@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
 import { useTableSort } from '@/hooks/useTableSort';
 import { Plus, Search, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
 import ClientFilesSection, { type ClientFilesSectionRef } from '@/components/ClientFilesSection';
