@@ -347,82 +347,78 @@ function drawCover(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, age
 // ─── Flight Section ────────────────────────────────────────
 type Leg = NonNullable<PremiumPdfData["flightLegs"]>[number];
 
-function drawFlightLegCard(doc: jsPDF, x: number, y: number, w: number, leg: Leg): number {
-  // === Layout do template HTML (.flight-table) ===
-  // 1) Faixa bege escuro com a DATA (e código do voo opcional à direita)
-  // 2) Linha de localizações: ORIGEM (45%)  ✈ (10%)  DESTINO (45%) — fundo bege claro
-  // 3) Linha de horários abaixo: SAÍDA / CHEGADA — fundo bege claro com linha branca separadora
-
+function drawFlightLegCard(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  leg: Leg,
+  scale: number = 1,
+): number {
   const dateStr = formatWeekday(leg.departureDate) || formatDateBR(leg.departureDate);
 
-  // (1) DATA — barra bege #d3ccbf
-  const dateH = 7;
+  // (1) DATA - barra bege
+  const dateH = 7 * scale;
   setFill(doc, SAND);
   doc.rect(x, y, w, dateH, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  doc.setFontSize(Math.max(6, 8 * scale));
   setText(doc, OCEAN);
-  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + 4.8, { align: "center" });
+  safeText(doc, dateStr.toUpperCase(), x + w / 2, y + dateH * 0.7, { align: "center" });
 
-  // Código do voo discreto à direita
   if (leg.flightCode) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    doc.setFontSize(Math.max(5.5, 7 * scale));
     setText(doc, TEXT_MUTED);
-    safeText(doc, sanitize(leg.flightCode), x + w - 3, y + 4.8, { align: "right" });
+    safeText(doc, sanitize(leg.flightCode), x + w - 3, y + dateH * 0.7, { align: "right" });
   }
 
-  // (2) Linha de localizações
+  // (2) Localizacoes
   const locY = y + dateH;
-  const locH = 18;
+  const locH = 18 * scale;
   const sideW = w * 0.45;
   const planeW = w * 0.1;
 
-  // Origem (esquerda)
   setFill(doc, CREAM);
   doc.rect(x, locY, sideW, locH, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
+  doc.setFontSize(Math.max(11, 18 * scale));
   setText(doc, OCEAN);
   const oCode = extractCode(leg.origin);
-  safeText(doc, oCode, x + sideW / 2, locY + locH / 2 + 3, { align: "center" });
+  safeText(doc, oCode, x + sideW / 2, locY + locH / 2 + 3 * scale, { align: "center" });
 
-  // Plane icon (centro)
-  // ✈ não está nas glyphs Helvetica padrão; usamos ">" como o código já fazia
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(Math.max(9, 14 * scale));
   setText(doc, TEXT_MUTED);
-  safeText(doc, ">", x + sideW + planeW / 2, locY + locH / 2 + 2, { align: "center" });
+  safeText(doc, ">", x + sideW + planeW / 2, locY + locH / 2 + 2 * scale, { align: "center" });
 
-  // Destino (direita)
   setFill(doc, CREAM);
   doc.rect(x + sideW + planeW, locY, sideW, locH, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
+  doc.setFontSize(Math.max(11, 18 * scale));
   setText(doc, OCEAN);
   const dCode = extractCode(leg.destination);
-  safeText(doc, dCode, x + sideW + planeW + sideW / 2, locY + locH / 2 + 3, { align: "center" });
+  safeText(doc, dCode, x + sideW + planeW + sideW / 2, locY + locH / 2 + 3 * scale, { align: "center" });
 
-  // (3) Linha de horários — fundo bege claro com linha branca separadora central
+  // (3) Horarios
   const timeY = locY + locH;
-  const timeH = 8;
+  const timeH = 8 * scale;
   setFill(doc, CREAM);
   doc.rect(x, timeY, w, timeH, "F");
-  // separador branco vertical no meio (.border-top: 2px solid #ffffff equivalente)
   setFill(doc, WHITE);
   doc.rect(x + w / 2 - 0.4, timeY, 0.8, timeH, "F");
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(Math.max(6, 8 * scale));
   setText(doc, TEXT_MUTED);
-  safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + w / 4, timeY + 5.5, {
+  safeText(doc, `SAIDA: ${leg.departureTime || "--:--"}`, x + w / 4, timeY + timeH * 0.7, {
     align: "center",
   });
-  safeText(doc, `CHEGADA: ${leg.arrivalTime || "--:--"}`, x + (3 * w) / 4, timeY + 5.5, {
+  safeText(doc, `CHEGADA: ${leg.arrivalTime || "--:--"}`, x + (3 * w) / 4, timeY + timeH * 0.7, {
     align: "center",
   });
 
-  return timeY + timeH; // altura total usada
+  return timeY + timeH;
 }
 
 function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: number, agencyName: string) {
@@ -442,27 +438,52 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   const m = 24;
   const cardW = pw - m * 2;
 
+  // Calculo dinamico de escala para caber muitos trechos numa pagina
+  const isZeroDur = (s?: string) => {
+    const v = (s || "").trim();
+    if (!v) return true;
+    return /^0+[:hH]?0*m?$/.test(v.replace(/\s/g, "")) || v === "00:00";
+  };
+  const countConnections = (legs: Leg[]) =>
+    legs.reduce((acc, _l, i) => (i > 0 && !isZeroDur(legs[i - 1].connectionDuration) ? acc + 1 : acc), 0);
+  const totalLegs = ida.length + volta.length;
+  const groupsCount = (ida.length > 0 ? 1 : 0) + (volta.length > 0 ? 1 : 0);
+  const totalConnections = countConnections(ida) + countConnections(volta);
+  const availableH = ph - 30 - y;
+  const subTitleH = 6 + 4;
+  const groupBottomGap = 4;
+  const cardGap = 4;
+  const connBlockH = 8;
+  const baseCardH = 7 + 18 + 8;
+  const fixedH =
+    groupsCount * (subTitleH + groupBottomGap) +
+    Math.max(0, totalLegs - groupsCount) * cardGap +
+    totalConnections * connBlockH;
+  const cardsAvailableH = availableH - fixedH;
+  const idealCardH = totalLegs > 0 ? cardsAvailableH / totalLegs : baseCardH;
+  let scale = Math.min(1, idealCardH / baseCardH);
+  if (!Number.isFinite(scale) || scale <= 0) scale = 1;
+  scale = Math.max(0.55, scale);
+  const cardH = baseCardH * scale;
+
   const drawGroup = (label: string, legs: Leg[]) => {
     if (legs.length === 0) return;
     y = drawSubTitle(doc, pw, y, label);
     y += 4;
     legs.forEach((leg, idx) => {
-      // page break check
-      if (y + 30 > ph - 30) {
+      if (y + cardH > ph - 30) {
         drawPageFooter(doc, pw, ph, agencyName);
         doc.addPage();
         drawPageBg(doc, pw, ph);
         drawPageHeader(doc, pw, agencyName);
         y = 35;
       }
-      // Duração da conexão entre o trecho anterior e o atual.
-      // O valor é informado no trecho ANTERIOR (tempo de espera após seu pouso).
       const prevLeg = idx > 0 ? legs[idx - 1] : undefined;
       const connDur = (prevLeg?.connectionDuration || "").trim();
-      const isZeroed = /^0+[:hH]?0*m?$/.test(connDur.replace(/\s/g, "")) || connDur === "00:00";
+      const isZeroed = isZeroDur(connDur);
       if (idx > 0 && connDur && !isZeroed) {
         const connH = 6;
-        if (y + connH + 30 > ph - 30) {
+        if (y + connH + cardH > ph - 30) {
           drawPageFooter(doc, pw, ph, agencyName);
           doc.addPage();
           drawPageBg(doc, pw, ph);
@@ -481,10 +502,10 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
         );
         y += connH + 2;
       }
-      y = drawFlightLegCard(doc, m, y, cardW, leg);
-      y += 4;
+      y = drawFlightLegCard(doc, m, y, cardW, leg, scale);
+      y += cardGap;
     });
-    y += 4;
+    y += groupBottomGap;
   };
 
   drawGroup("Ida", ida);
