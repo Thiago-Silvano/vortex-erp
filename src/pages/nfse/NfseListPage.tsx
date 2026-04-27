@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { Plus, Search, MoreHorizontal, Eye, Download, Mail, MessageCircle, RefreshCw, XCircle, Copy, ExternalLink } from 'lucide-react';
@@ -162,6 +163,16 @@ export default function NfseListPage() {
     (n.numero_nfse || '').includes(search)
   );
 
+  const { sortedData: sortedNotes, sortState, requestSort } = useTableSort(filtered, {
+    numero_nfse: (n: any) => n.numero_nfse,
+    tomador_razao_social: (n: any) => n.tomador_razao_social,
+    tomador_cnpj_cpf: (n: any) => n.tomador_cnpj_cpf,
+    valor_servicos: (n: any) => Number(n.valor_servicos) || 0,
+    created_at: (n: any) => n.created_at,
+    status: (n: any) => n.status,
+    ambiente: (n: any) => n.ambiente,
+  });
+
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
@@ -197,22 +208,22 @@ export default function NfseListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nº</TableHead>
-                  <TableHead>Tomador</TableHead>
-                  <TableHead>CPF/CNPJ</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ambiente</TableHead>
+                  <SortableTableHead sortKey="numero_nfse" sortState={sortState} onSort={requestSort}>Nº</SortableTableHead>
+                  <SortableTableHead sortKey="tomador_razao_social" sortState={sortState} onSort={requestSort}>Tomador</SortableTableHead>
+                  <SortableTableHead sortKey="tomador_cnpj_cpf" sortState={sortState} onSort={requestSort}>CPF/CNPJ</SortableTableHead>
+                  <SortableTableHead sortKey="valor_servicos" sortState={sortState} onSort={requestSort}>Valor</SortableTableHead>
+                  <SortableTableHead sortKey="created_at" sortState={sortState} onSort={requestSort}>Data</SortableTableHead>
+                  <SortableTableHead sortKey="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
+                  <SortableTableHead sortKey="ambiente" sortState={sortState} onSort={requestSort}>Ambiente</SortableTableHead>
                   <TableHead className="w-16">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-                ) : filtered.length === 0 ? (
+                ) : sortedNotes.length === 0 ? (
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhuma nota encontrada</TableCell></TableRow>
-                ) : filtered.map(note => (
+                ) : sortedNotes.map(note => (
                   <TableRow key={note.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/nfse/detail/${note.id}`)}>
                     <TableCell className="font-medium">{note.numero_nfse || '—'}</TableCell>
                     <TableCell>{note.tomador_razao_social || '—'}</TableCell>
