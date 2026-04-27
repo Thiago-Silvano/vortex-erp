@@ -47,6 +47,21 @@ export default function UngroupAccountsPage() {
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [processing, setProcessing] = useState(false);
 
+  const payAccessors = {
+    supplier_name: (p: any) => p.supplier_name,
+    description: (p: any) => p.description,
+    amount: (p: any) => Number(p.amount) || 0,
+    due_date: (p: any) => p.due_date,
+  };
+  const recAccessors = {
+    client_name: (r: any) => r.client_name,
+    description: (r: any) => r.description,
+    amount: (r: any) => Number(r.amount) || 0,
+    due_date: (r: any) => r.due_date,
+  };
+  const { sortedData: sortedPayables, sortState: paySort, requestSort: payRequestSort } = useTableSort(payables, payAccessors);
+  const { sortedData: sortedReceivables, sortState: recSort, requestSort: recRequestSort } = useTableSort(receivables, recAccessors);
+
   const loadGroups = async () => {
     if (!activeCompany) return;
     const eid = activeCompany.id;
@@ -244,17 +259,17 @@ export default function UngroupAccountsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Fornecedor</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                        <TableHead>Vencimento</TableHead>
+                        <SortableTableHead sortKey="supplier_name" sortState={paySort} onSort={payRequestSort}>Fornecedor</SortableTableHead>
+                        <SortableTableHead sortKey="description" sortState={paySort} onSort={payRequestSort}>Descrição</SortableTableHead>
+                        <SortableTableHead sortKey="amount" sortState={paySort} onSort={payRequestSort} className="text-right">Valor</SortableTableHead>
+                        <SortableTableHead sortKey="due_date" sortState={paySort} onSort={payRequestSort}>Vencimento</SortableTableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {payables.length === 0 && (
+                      {sortedPayables.length === 0 && (
                         <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Nenhum</TableCell></TableRow>
                       )}
-                      {payables.map(p => (
+                      {sortedPayables.map(p => (
                         <TableRow key={p.id}>
                           <TableCell className="text-xs">{p.supplier_name}</TableCell>
                           <TableCell className="text-xs">{p.description}</TableCell>
@@ -276,17 +291,17 @@ export default function UngroupAccountsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                        <TableHead>Vencimento</TableHead>
+                        <SortableTableHead sortKey="client_name" sortState={recSort} onSort={recRequestSort}>Cliente</SortableTableHead>
+                        <SortableTableHead sortKey="description" sortState={recSort} onSort={recRequestSort}>Descrição</SortableTableHead>
+                        <SortableTableHead sortKey="amount" sortState={recSort} onSort={recRequestSort} className="text-right">Valor</SortableTableHead>
+                        <SortableTableHead sortKey="due_date" sortState={recSort} onSort={recRequestSort}>Vencimento</SortableTableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {receivables.length === 0 && (
+                      {sortedReceivables.length === 0 && (
                         <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Nenhum</TableCell></TableRow>
                       )}
-                      {receivables.map(r => (
+                      {sortedReceivables.map(r => (
                         <TableRow key={r.id}>
                           <TableCell className="text-xs">{r.client_name}</TableCell>
                           <TableCell className="text-xs">{r.description}</TableCell>
