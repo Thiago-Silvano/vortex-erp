@@ -166,6 +166,12 @@ export default function ContractTemplatesPage() {
 
   const catLabel = (v: string) => CATEGORIES.find(c => c.value === v)?.label || v;
 
+  const { sortedData: sortedTemplates, sortState, requestSort } = useTableSort(templates, {
+    name: (t) => t.name,
+    category: (t) => catLabel(t.category),
+    is_active: (t) => t.is_active ? 1 : 0,
+  }, { initialKey: 'name', initialDirection: 'asc' });
+
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
@@ -184,18 +190,18 @@ export default function ContractTemplatesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableTableHead sortKey="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                  <SortableTableHead sortKey="category" sortState={sortState} onSort={requestSort}>Categoria</SortableTableHead>
+                  <SortableTableHead sortKey="is_active" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-                ) : templates.length === 0 ? (
+                ) : sortedTemplates.length === 0 ? (
                   <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum modelo cadastrado</TableCell></TableRow>
-                ) : templates.map(t => (
+                ) : sortedTemplates.map(t => (
                   <TableRow key={t.id}>
                     <TableCell className="font-medium">{t.name}</TableCell>
                     <TableCell><Badge variant="secondary">{catLabel(t.category)}</Badge></TableCell>

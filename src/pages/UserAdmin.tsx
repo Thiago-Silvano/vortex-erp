@@ -59,6 +59,14 @@ export default function UserAdmin() {
   const [permRole, setPermRole] = useState('vendedor');
   const [permChecks, setPermChecks] = useState<Record<string, boolean>>({});
   const [permEmpresaIds, setPermEmpresaIds] = useState<string[]>([]);
+
+  const { sortedData: sortedUsers, sortState, requestSort } = useTableSort([] as any[], {
+    email: (u: any) => u.email,
+    displayName: (u: any) => u.displayName,
+    role: (u: any) => u.id,
+    createdAt: (u: any) => u.createdAt,
+    lastSignIn: (u: any) => u.lastSignIn,
+  }, { initialKey: 'email', initialDirection: 'asc' });
   const [permDefaultCompany, setPermDefaultCompany] = useState('none');
   const [permHomeRoute, setPermHomeRoute] = useState('/reservations');
   const fetchUsers = async () => {
