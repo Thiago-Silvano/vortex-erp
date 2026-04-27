@@ -336,9 +336,13 @@ export default function CotacoesKanbanPage() {
           <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="gap-2">
             <Filter className="h-4 w-4" />
             Filtros
-            {(filterSeller !== 'all' || filterDestination !== 'all' || filterStatus !== 'all') && (
+            {(filterSeller !== 'all' || filterDestination !== 'all' || filterStatus !== 'all_except_lost') && (
               <span className="bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                {[filterSeller, filterDestination, filterStatus].filter(f => f !== 'all').length}
+                {[
+                  filterSeller !== 'all',
+                  filterDestination !== 'all',
+                  filterStatus !== 'all_except_lost',
+                ].filter(Boolean).length}
               </span>
             )}
           </Button>
@@ -364,12 +368,13 @@ export default function CotacoesKanbanPage() {
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos status</SelectItem>
+                <SelectItem value="all_except_lost">Todas exceto perdidas</SelectItem>
+                <SelectItem value="all">Todos status (incluindo perdidas)</SelectItem>
                 {columns.map(c => <SelectItem key={c.statusKey} value={c.statusKey}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            {(filterSeller !== 'all' || filterDestination !== 'all' || filterStatus !== 'all') && (
-              <Button variant="ghost" size="sm" onClick={() => { setFilterSeller('all'); setFilterDestination('all'); setFilterStatus('all'); }}>
+            {(filterSeller !== 'all' || filterDestination !== 'all' || filterStatus !== 'all_except_lost') && (
+              <Button variant="ghost" size="sm" onClick={() => { setFilterSeller('all'); setFilterDestination('all'); setFilterStatus('all_except_lost'); }}>
                 <X className="h-4 w-4 mr-1" /> Limpar
               </Button>
             )}
