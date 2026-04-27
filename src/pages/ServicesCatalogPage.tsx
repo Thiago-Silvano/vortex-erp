@@ -44,6 +44,8 @@ export default function ServicesCatalogPage() {
   const [status, setStatus] = useState('active');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  const getCcName = (id: string | null) => costCenters.find(c => c.id === id)?.name || '';
+
   const fetchItems = async () => {
     let query = (supabase.from('services_catalog') as any).select('*').order('name');
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
