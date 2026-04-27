@@ -1,6 +1,7 @@
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { useTableSort } from '@/hooks/useTableSort';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -91,6 +92,15 @@ export default function ReservationsPage() {
 
   const urgentReservations = filtered.filter(isUrgent);
 
+  const { sortedData, sortState, requestSort } = useTableSort(filtered, {
+    description: (r) => r.description,
+    confirmation_code: (r) => r.confirmation_code,
+    check_in: (r) => r.check_in,
+    check_out: (r) => r.check_out,
+    status: (r) => r.status,
+    notes: (r) => r.notes,
+  });
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -141,36 +151,37 @@ export default function ReservationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead className="min-w-[200px]">Número da Reserva</TableHead>
-                  <TableHead>Check-in</TableHead>
-                  <TableHead>Check-out</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Observações</TableHead>
+                  <SortableTableHead sortKey="description" sortState={sortState} onSort={requestSort}>Descrição</SortableTableHead>
+                  <SortableTableHead sortKey="confirmation_code" sortState={sortState} onSort={requestSort} className="min-w-[200px]">Número da Reserva</SortableTableHead>
+                  <SortableTableHead sortKey="check_in" sortState={sortState} onSort={requestSort}>Check-in</SortableTableHead>
+                  <SortableTableHead sortKey="check_out" sortState={sortState} onSort={requestSort}>Check-out</SortableTableHead>
+                  <SortableTableHead sortKey="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
+                  <SortableTableHead sortKey="notes" sortState={sortState} onSort={requestSort}>Observações</SortableTableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {sortedData.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhuma reserva encontrada</TableCell></TableRow>
-                ) : filtered.map(r => {
+                ) : sortedData.map(r => {
                   const urgent = isUrgent(r);
                   const isOverdue = r.check_in && r.status === 'pending' && parseISO(r.check_in + 'T12:00:00') < new Date();
                   const rowBg = r.status === 'confirmed'
                     ? 'bg-emerald-50 dark:bg-emerald-950/20'
                     : isOverdue
                       ? 'bg-red-50 dark:bg-red-950/20'
-                      : r.status === 'pending'
-                        ? 'bg-orange-50 dark:bg-orange-950/20'
-                        : '';
+                      : urgent
+                        ? 'bg-red-50 dark:bg-red-950/20'
+                        : r.status === 'pending'
+                          ? 'bg-orange-50 dark:bg-orange-950/20'
+                          : '';
                   return (
-                    <TableRow key={r.id} className={`cursor-pointer ${rowBg} ${r.status === 'confirmed' ? 'hover:bg-emerald-100 dark:hover:bg-emerald-950/40' : isOverdue ? 'hover:bg-red-100 dark:hover:bg-red-950/40' : r.status === 'pending' ? 'hover:bg-orange-100 dark:hover:bg-orange-950/40' : 'hover:bg-muted/50'}`} onClick={() => openStatusDialog(r)}>
+                    <TableRow key={r.id} className={`cursor-pointer ${rowBg} ${r.status === 'confirmed' ? 'hover:bg-emerald-100 dark:hover:bg-emerald-950/40' : (isOverdue || urgent) ? 'hover:bg-red-100 dark:hover:bg-red-950/40' : r.status === 'pending' ? 'hover:bg-orange-100 dark:hover:bg-orange-950/40' : 'hover:bg-muted/50'}`} onClick={() => openStatusDialog(r)}>
                       <TableCell><span className="font-medium">{r.description || '-'}</span></TableCell>
                       <TableCell className="font-mono">{r.confirmation_code || '-'}</TableCell>
                       <TableCell>{r.check_in ? format(parseISO(r.check_in + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
                       <TableCell>{r.check_out ? format(parseISO(r.check_out + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          {urgent && <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
                           <Badge variant={r.status === 'confirmed' ? 'default' : r.status === 'cancelled' ? 'destructive' : 'secondary'}>{statusMap[r.status] || r.status}</Badge>
                         </div>
                       </TableCell>
