@@ -367,7 +367,20 @@ export default function PropostaClienteBuildsPage() {
           </div>
 
           <div className="space-y-4">
-            {items.map((item, idx) => {
+            {[...items].sort((a, b) => {
+              const rank = (it: any) => {
+                const t = it.metadata?.type || '';
+                if (t === 'aereo') return 0;
+                if (t === 'hotel') return 1;
+                const catName = (it.service_catalog_id ? catalogNames[it.service_catalog_id] : '') || '';
+                const s = ((it.description || '') + ' ' + catName).toLowerCase();
+                if (/(aére|aere|passage|voo|flight|airline)/.test(s)) return 0;
+                if (/(hosped|hotel|pousad|resort|acomoda)/.test(s)) return 1;
+                if (/(servi|experi|passei|tour|traslado|transfer|seguro|aluguel|ingresso)/.test(s)) return 2;
+                return 3;
+              };
+              return rank(a) - rank(b);
+            }).map((item, idx) => {
               const isSelected = selectedIds.has(item.id);
               const name = item.metadata?.hotel?.hotelName || item.metadata?.hotelName || item.description || (item.service_catalog_id ? catalogNames[item.service_catalog_id] : null) || `Serviço ${idx + 1}`;
               const hasImages = item.images.length > 0;
