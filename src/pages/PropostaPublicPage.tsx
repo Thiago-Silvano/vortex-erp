@@ -226,12 +226,26 @@ export default function PropostaPublicPage() {
   // Deduplicate items that may have been saved multiple times for the same option
   const filteredItems = (() => {
     const seen = new Set<string>();
-    return rawFilteredItems.filter(item => {
+    const deduped = rawFilteredItems.filter(item => {
       const fp = `${item.description}|${item.total_value}|${item.service_catalog_id || ''}|${JSON.stringify(item.metadata || {})}`;
       if (seen.has(fp)) return false;
       seen.add(fp);
       return true;
     });
+    // Sort by category: Aéreo → Hospedagem → Serviços/Experiências/Passeios → Outros
+    const categoryRank = (item: any): number => {
+      const catName = (item.service_catalog_id ? catalogNames[item.service_catalog_id] : '') || '';
+      const desc = (item.description || '') + ' ' + catName;
+      const s = desc.toLowerCase();
+      if (/(aére|aere|passage|voo|flight|airline|air\b)/.test(s)) return 0;
+      if (/(hosped|hotel|pousad|resort|acomoda|lodging)/.test(s)) return 1;
+      if (/(servi|experi|passei|tour|traslado|transfer|seguro|aluguel|car\b|ingresso)/.test(s)) return 2;
+      return 3;
+    };
+    return deduped
+      .map((item, idx) => ({ item, idx, rank: categoryRank(item) }))
+      .sort((a, b) => a.rank - b.rank || a.idx - b.idx)
+      .map(x => x.item);
   })();
 
   const totalSale = filteredItems.reduce((s, i) => s + i.total_value, 0);
