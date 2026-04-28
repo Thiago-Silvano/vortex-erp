@@ -655,7 +655,20 @@ export default function PropostaClienteBuildsPage() {
               </div>
 
               {/* Items breakdown */}
-              {items.filter(i => selectedIds.has(i.id)).map((item, idx) => {
+              {[...items].sort((a, b) => {
+                const rank = (it: any) => {
+                  const t = it.metadata?.type || '';
+                  if (t === 'aereo') return 0;
+                  if (t === 'hotel') return 1;
+                  const catName = (it.service_catalog_id ? catalogNames[it.service_catalog_id] : '') || '';
+                  const s = ((it.description || '') + ' ' + catName).toLowerCase();
+                  if (/(aére|aere|passage|voo|flight|airline)/.test(s)) return 0;
+                  if (/(hosped|hotel|pousad|resort|acomoda)/.test(s)) return 1;
+                  if (/(servi|experi|passei|tour|traslado|transfer|seguro|aluguel|ingresso)/.test(s)) return 2;
+                  return 3;
+                };
+                return rank(a) - rank(b);
+              }).filter(i => selectedIds.has(i.id)).map((item, idx) => {
                 const title = item.metadata?.hotel?.hotelName || item.metadata?.hotelName || item.description || (item.service_catalog_id ? catalogNames[item.service_catalog_id] : null) || `Serviço ${idx + 1}`;
                 return (
                   <div key={idx} className="py-3 px-6 flex justify-between items-center" style={{ background: idx % 2 === 0 ? '#fff' : '#faf9f6', borderBottom: '1px solid #f0ede8' }}>
