@@ -394,23 +394,12 @@ export default function CrmKanbanPage() {
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-[10px] gap-1">
                 <Target className="h-3 w-3" />
-                {totalLeads} leads
+                {totalLeads} cotações
               </Badge>
               <Badge variant="secondary" className="text-[10px] gap-1">
                 <DollarSign className="h-3 w-3" />
                 {fmt(totalValue)}
               </Badge>
-              {unreadTotal > 0 && (
-                <Badge className="bg-emerald-500 text-white text-[10px] gap-1">
-                  💬 {unreadTotal} não lidas
-                </Badge>
-              )}
-              {staleCount > 0 && (
-                <Badge variant="destructive" className="text-[10px] gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  {staleCount} sem resposta
-                </Badge>
-              )}
             </div>
           </div>
           <Button onClick={() => navigate('/sales/new')} size="sm" className="gap-1.5 h-7 text-xs">
