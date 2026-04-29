@@ -145,7 +145,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [searchingHotel, setSearchingHotel] = useState(false);
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
   const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(new Set());
-  const [googleApiKey, setGoogleApiKey] = useState('');
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
   const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
@@ -171,7 +170,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setSelectedImageIndices(new Set());
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
-      loadGoogleApiKey();
       loadAirlines();
     }
   }, [open, metadata, description]);
@@ -199,15 +197,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     }
   }, [hotel.checkInDate, hotel.checkOutDate]);
 
-  const loadGoogleApiKey = async () => {
-    let query = supabase.from('agency_settings').select('*');
-    if (activeCompany) query = query.eq('empresa_id', activeCompany.id);
-    const { data } = await query.limit(1).single();
-    if (data && (data as any).google_maps_api_key) {
-      setGoogleApiKey((data as any).google_maps_api_key);
-    }
-  };
-
   const addFlightLeg = () => setFlightLegs(prev => [...prev, { ...emptyLeg(), airlineId: airlineId || undefined }]);
   const updateLeg = (idx: number, field: keyof FlightLeg, value: string) => {
     setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, [field]: value } : l));
@@ -227,28 +216,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       else next.add(idx);
       return next;
     });
-  };
-
-  const handleGoogleHotelSelect = (details: HotelDetails) => {
-    setHotel(prev => ({
-      ...prev,
-      hotelName: details.name,
-      address: details.address,
-      city: details.city,
-      country: details.country,
-      phone: details.phone,
-      website: details.website,
-      rating: details.rating,
-      reviewsTotal: details.reviews_total,
-      placeId: details.place_id,
-      stars: Math.round(details.rating),
-    }));
-    setDesc(details.name);
-    if (details.photos && details.photos.length > 0) {
-      setHotelImages(details.photos);
-      setSelectedImageIndices(new Set(details.photos.map((_, i) => i)));
-    }
-    toast.success(`Hotel "${details.name}" selecionado com ${details.photos?.length || 0} fotos!`);
   };
 
   // Fallback AI search
