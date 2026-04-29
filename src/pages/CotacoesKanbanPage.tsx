@@ -32,7 +32,6 @@ const DEFAULT_COLUMNS: KanbanColumnData[] = [
   { id: 'col-2', name: 'Em Atendimento', color: '#3b82f6', statusKey: 'contatando', sortOrder: 1 },
   { id: 'col-3', name: 'Proposta Enviada', color: '#f97316', statusKey: 'proposta_enviada', sortOrder: 2 },
   { id: 'col-4', name: 'Negociação', color: '#a855f7', statusKey: 'negociacao', sortOrder: 3 },
-  { id: 'col-5', name: 'Fechada', color: '#22c55e', statusKey: 'emitido', sortOrder: 4 },
 ];
 
 interface SellerOption {
@@ -85,13 +84,17 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
     supabase.from('kanban_columns').select('*').eq('empresa_id', activeCompany.id).order('sort_order')
       .then(({ data }) => {
         if (data && data.length > 0) {
-          setColumns(data.map(d => ({
-            id: d.id,
-            name: d.name,
-            color: d.color,
-            statusKey: d.status_key,
-            sortOrder: d.sort_order,
-          })));
+          setColumns(
+            data
+              .filter(d => d.status_key !== 'perdido' && d.status_key !== 'emitido')
+              .map(d => ({
+                id: d.id,
+                name: d.name,
+                color: d.color,
+                statusKey: d.status_key,
+                sortOrder: d.sort_order,
+              }))
+          );
         } else {
           setColumns(DEFAULT_COLUMNS);
         }
@@ -159,7 +162,7 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
         // Em arquivadas, só mostra perdido (independente do filtro)
         if (s.sale_workflow_status !== 'perdido') return false;
       } else if (filterStatus === 'all_except_lost') {
-        if (s.sale_workflow_status === 'perdido') return false;
+        if (s.sale_workflow_status === 'perdido' || s.sale_workflow_status === 'emitido') return false;
       } else if (filterStatus !== 'all' && s.sale_workflow_status !== filterStatus) return false;
       return true;
     });
