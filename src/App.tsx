@@ -47,6 +47,7 @@ import BankReconciliationPage from "./pages/BankReconciliationPage";
 import BankStatementReportPage from "./pages/BankStatementReportPage";
 import ItinerariesPage from "./pages/ItinerariesPage";
 import ItineraryEditorPage from "./pages/ItineraryEditorPage";
+import RoteiroPremiumPage from "./pages/roteiro/RoteiroPremiumPage";
 
 // Vistos pages
 import VistosDashboard from "./pages/vistos/VistosDashboard";
@@ -155,6 +156,7 @@ const App = () => (
           <Route path="/financial/bank-report" element={<ProtectedRoute><BankStatementReportPage /></ProtectedRoute>} />
           <Route path="/itineraries" element={<ProtectedRoute><ItinerariesPage /></ProtectedRoute>} />
           <Route path="/itineraries/:id" element={<ProtectedRoute><ItineraryEditorPage /></ProtectedRoute>} />
+          <Route path="/comercial/roteiro-premium" element={<ProtectedRoute><RoteiroPremiumPage /></ProtectedRoute>} />
           <Route path="/promo-maker" element={<ProtectedRoute><PromoMakerPage /></ProtectedRoute>} />
           <Route path="/marketing/promotions" element={<ProtectedRoute><PromotionsPage /></ProtectedRoute>} />
           <Route path="/marketing/promotions/new" element={<ProtectedRoute><PromotionFormPage /></ProtectedRoute>} />

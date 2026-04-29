@@ -212,6 +212,7 @@ function TopMenuBar() {
         { title: "Vendas", url: "/sales", permKey: "sales_view" },
         { title: "Contratos", url: "/contracts/templates" },
         { title: "Vouchers", url: "/sales/vouchers", permKey: "sales_view" },
+        { title: "Roteiro Premium IA", url: "/comercial/roteiro-premium", permKey: "sales_view" },
       ],
     },
     {
