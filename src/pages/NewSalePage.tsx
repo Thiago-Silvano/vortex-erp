@@ -25,6 +25,7 @@ import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger,
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
+import { useRobotImport } from '@/hooks/useRobotImport';
 import ImageSearchModal, { StockImage } from '@/components/ImageSearchModal';
 import ContractSection from '@/components/ContractSection';
 import SaleTimeline from '@/components/SaleTimeline';
@@ -814,6 +815,26 @@ export default function NewSalePage() {
       return newImgs;
     });
   };
+
+  // Importação de serviços vindos do Robô de Cotação (/cotacao/buscar-servicos)
+  useRobotImport((mapped) => {
+    const defaultOptIds = quoteOptions.length > 0
+      ? [quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0)]
+      : [];
+    setItems(prev => [
+      ...prev,
+      ...mapped.map(m => ({
+        description: m.description,
+        cost_price: m.cost_price,
+        rav: m.rav,
+        markup_percent: m.markup_percent,
+        total_value: m.total_value,
+        metadata: m.metadata,
+        quote_option_id: defaultOptIds[0],
+        quote_option_ids: defaultOptIds,
+      })),
+    ]);
+  });
 
   const duplicateItem = (idx: number) => {
     const original = items[idx];
@@ -2491,13 +2512,31 @@ export default function NewSalePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => {
-              const defaultOptIds = quoteOptions.length > 0 ? [quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0)] : [];
-              setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, markup_percent: 0, total_value: 0, metadata: {}, quote_option_id: defaultOptIds[0], quote_option_ids: defaultOptIds }]);
-              setTimeout(() => setEditingItemIdx(items.length), 50);
-            }}>
-              <Plus className="h-4 w-4 mr-1" />Adicionar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (destinationName) params.set('destino', destinationName);
+                  if (tripStartDate) params.set('checkin', tripStartDate);
+                  if (tripEndDate) params.set('checkout', tripEndDate);
+                  if (tripNights) params.set('noites', String(tripNights));
+                  if (passengersCount) params.set('pax', String(passengersCount));
+                  window.open(`/cotacao/buscar-servicos?${params.toString()}`, '_blank');
+                }}
+              >
+                <Sparkles className="h-4 w-4" /> Robô
+              </Button>
+              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => {
+                const defaultOptIds = quoteOptions.length > 0 ? [quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0)] : [];
+                setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, markup_percent: 0, total_value: 0, metadata: {}, quote_option_id: defaultOptIds[0], quote_option_ids: defaultOptIds }]);
+                setTimeout(() => setEditingItemIdx(items.length), 50);
+              }}>
+                <Plus className="h-4 w-4 mr-1" />Adicionar
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4 sm:p-0">
             {/* Desktop Table */}
