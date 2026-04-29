@@ -421,10 +421,12 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             </div>
           )}
 
-          <div>
-            <Label>Descrição detalhada (aparece na proposta)</Label>
-            <RichTextEditor value={detailedDesc} onChange={setDetailedDesc} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
-          </div>
+          {type !== 'hotel' && (
+            <div>
+              <Label>Descrição detalhada (aparece na proposta)</Label>
+              <RichTextEditor value={detailedDesc} onChange={setDetailedDesc} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
+            </div>
+          )}
 
           {type === 'adicional' && (
             <div className="flex items-center gap-2 py-1">
