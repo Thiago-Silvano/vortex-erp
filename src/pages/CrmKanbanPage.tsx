@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   Plus, Search, Filter, X, AlertTriangle, TrendingUp,
-  Users, DollarSign, Clock, Target,
+  Users, DollarSign, Clock, Target, LayoutGrid, Rows3,
 } from 'lucide-react';
 import { differenceInHours, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
@@ -40,6 +40,9 @@ export default function CrmKanbanPage() {
   const [filterSeller, setFilterSeller] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [layout, setLayout] = useState<'vertical' | 'horizontal'>(() => {
+    return (localStorage.getItem('crm-kanban-layout') as 'vertical' | 'horizontal') || 'vertical';
+  });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState('');
   const [drawerLead, setDrawerLead] = useState<CrmLead | null>(null);
@@ -420,6 +423,20 @@ export default function CrmKanbanPage() {
               </span>
             )}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const next = layout === 'vertical' ? 'horizontal' : 'vertical';
+              setLayout(next);
+              localStorage.setItem('crm-kanban-layout', next);
+            }}
+            className="gap-1.5 h-7 text-xs"
+            title={layout === 'vertical' ? 'Mudar para layout horizontal' : 'Mudar para layout vertical'}
+          >
+            {layout === 'vertical' ? <Rows3 className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
+            {layout === 'vertical' ? 'Horizontal' : 'Vertical'}
+          </Button>
         </div>
 
         {showFilters && (
@@ -453,12 +470,16 @@ export default function CrmKanbanPage() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-3 overflow-x-auto pb-4 px-0.5">
+          <div className={layout === 'vertical'
+            ? 'flex gap-3 overflow-x-auto pb-4 px-0.5'
+            : 'flex flex-col gap-3 pb-4 px-0.5'
+          }>
             {columns.sort((a, b) => a.sortOrder - b.sortOrder).map(col => (
               <CrmKanbanColumn
                 key={col.id}
                 column={col}
                 leads={leadsByColumn[col.statusKey] || []}
+                layout={layout}
                 onOpenChat={handleOpenChat}
                 onOpenQuote={handleOpenQuote}
                 onConvert={handleConvert}

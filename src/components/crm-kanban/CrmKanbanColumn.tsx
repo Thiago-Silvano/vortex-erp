@@ -1,5 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import CrmKanbanCard, { CrmLead } from './CrmKanbanCard';
 import { cn } from '@/lib/utils';
 
@@ -14,22 +14,26 @@ export interface CrmColumnData {
 interface CrmKanbanColumnProps {
   column: CrmColumnData;
   leads: CrmLead[];
+  layout?: 'vertical' | 'horizontal';
   onOpenChat: (lead: CrmLead) => void;
   onOpenQuote: (lead: CrmLead) => void;
   onConvert: (lead: CrmLead) => void;
   onEdit: (lead: CrmLead) => void;
 }
 
-export default function CrmKanbanColumn({ column, leads, onOpenChat, onOpenQuote, onConvert, onEdit }: CrmKanbanColumnProps) {
+export default function CrmKanbanColumn({ column, leads, layout = 'vertical', onOpenChat, onOpenQuote, onConvert, onEdit }: CrmKanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.statusKey });
 
   const totalValue = leads.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  const isHorizontal = layout === 'horizontal';
+
   return (
     <div
       className={cn(
-        'flex flex-col min-w-[260px] max-w-[290px] w-full bg-muted/30 rounded-lg border border-border/50 transition-colors',
+        'flex flex-col bg-muted/30 rounded-lg border border-border/50 transition-colors',
+        isHorizontal ? 'w-full' : 'min-w-[260px] max-w-[290px] w-full',
         isOver && 'bg-accent/30 border-primary/30',
       )}
     >
@@ -48,22 +52,37 @@ export default function CrmKanbanColumn({ column, leads, onOpenChat, onOpenQuote
       </div>
 
       {/* Cards */}
-      <div ref={setNodeRef} className="flex-1 px-1.5 pb-1.5 space-y-1.5 overflow-y-auto max-h-[calc(100vh-240px)] min-h-[80px]">
-        <SortableContext items={leads.map(l => l.id)} strategy={verticalListSortingStrategy}>
+      <div
+        ref={setNodeRef}
+        className={cn(
+          'flex-1 px-1.5 pb-1.5 min-h-[80px]',
+          isHorizontal
+            ? 'flex flex-row gap-1.5 overflow-x-auto'
+            : 'space-y-1.5 overflow-y-auto max-h-[calc(100vh-240px)]',
+        )}
+      >
+        <SortableContext
+          items={leads.map(l => l.id)}
+          strategy={isHorizontal ? horizontalListSortingStrategy : verticalListSortingStrategy}
+        >
           {leads.map(lead => (
-            <CrmKanbanCard
-              key={lead.id}
-              lead={lead}
-              columnColor={column.color}
-              onOpenChat={onOpenChat}
-              onOpenQuote={onOpenQuote}
-              onConvert={onConvert}
-              onEdit={onEdit}
-            />
+            <div key={lead.id} className={isHorizontal ? 'shrink-0 w-[260px]' : ''}>
+              <CrmKanbanCard
+                lead={lead}
+                columnColor={column.color}
+                onOpenChat={onOpenChat}
+                onOpenQuote={onOpenQuote}
+                onConvert={onConvert}
+                onEdit={onEdit}
+              />
+            </div>
           ))}
         </SortableContext>
         {leads.length === 0 && (
-          <div className="flex items-center justify-center h-16 text-[10px] text-muted-foreground italic border border-dashed border-border/50 rounded-md">
+          <div className={cn(
+            'flex items-center justify-center text-[10px] text-muted-foreground italic border border-dashed border-border/50 rounded-md',
+            isHorizontal ? 'h-16 w-full' : 'h-16',
+          )}>
             Arraste leads aqui
           </div>
         )}
