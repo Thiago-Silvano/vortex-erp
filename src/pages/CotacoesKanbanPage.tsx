@@ -16,8 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Plus, Search, LayoutGrid, List, Eye, Trash2, Filter, X,
   MapPin, Users, Calendar, DollarSign, AlertTriangle, Clock,
-  Plane, Hotel, Car, Ticket, FileText, Link2, MessageCircle, Copy,
+  Plane, Hotel, Car, Ticket, FileText, Link2, MessageCircle, Copy, Archive, ArchiveRestore,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -32,7 +33,7 @@ const DEFAULT_COLUMNS: KanbanColumnData[] = [
   { id: 'col-3', name: 'Proposta Enviada', color: '#f97316', statusKey: 'proposta_enviada', sortOrder: 2 },
   { id: 'col-4', name: 'Negociação', color: '#a855f7', statusKey: 'negociacao', sortOrder: 3 },
   { id: 'col-5', name: 'Fechada', color: '#22c55e', statusKey: 'emitido', sortOrder: 4 },
-  { id: 'col-6', name: 'Perdida', color: '#ef4444', statusKey: 'perdido', sortOrder: 5 },
+  { id: 'col-6', name: 'Arquivada', color: '#ef4444', statusKey: 'perdido', sortOrder: 5 },
 ];
 
 interface SellerOption {
@@ -40,21 +41,30 @@ interface SellerOption {
   full_name: string;
 }
 
-export default function CotacoesKanbanPage() {
+interface CotacoesKanbanPageProps {
+  archivedView?: boolean;
+}
+
+export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKanbanPageProps = {}) {
   const [sales, setSales] = useState<KanbanSale[]>([]);
   const [columns, setColumns] = useState<KanbanColumnData[]>(DEFAULT_COLUMNS);
   const [sellers, setSellers] = useState<SellerOption[]>([]);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>(() => {
-    if (typeof window !== 'undefined' && window.location.pathname === '/cotacoes/lista') return 'list';
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname;
+      if (p === '/cotacoes/lista' || p === '/cotacoes/arquivadas') return 'list';
+    }
     return 'kanban';
   });
   const [search, setSearch] = useState('');
   const [filterSeller, setFilterSeller] = useState('all');
   const [filterDestination, setFilterDestination] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all_except_lost');
+  const [filterStatus, setFilterStatus] = useState(archivedView ? 'perdido' : 'all_except_lost');
   const [showFilters, setShowFilters] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<KanbanSale | null>(null);
   const [userEmail, setUserEmail] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<string>('');
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
 
@@ -146,12 +156,15 @@ export default function CotacoesKanbanPage() {
       if (search && !normalize(s.client_name).includes(normalize(search)) && !normalize(s.destination_name || '').includes(normalize(search))) return false;
       if (filterSeller !== 'all' && s.seller_name !== filterSeller) return false;
       if (filterDestination !== 'all' && s.destination_name !== filterDestination) return false;
-      if (filterStatus === 'all_except_lost') {
+      if (archivedView) {
+        // Em arquivadas, só mostra perdido (independente do filtro)
+        if (s.sale_workflow_status !== 'perdido') return false;
+      } else if (filterStatus === 'all_except_lost') {
         if (s.sale_workflow_status === 'perdido') return false;
       } else if (filterStatus !== 'all' && s.sale_workflow_status !== filterStatus) return false;
       return true;
     });
-  }, [sales, search, filterSeller, filterDestination, filterStatus]);
+  }, [sales, search, filterSeller, filterDestination, filterStatus, archivedView]);
 
   const destinations = useMemo(() => [...new Set(sales.map(s => s.destination_name).filter(Boolean))], [sales]);
 
@@ -203,6 +216,42 @@ export default function CotacoesKanbanPage() {
 
   const handleViewSale = (id: string) => {
     navigate('/sales/new', { state: { editSaleId: id } });
+  };
+
+  // Bulk selection helpers
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedSales.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(sortedSales.map(s => s.id)));
+  };
+  const handleBulkChangeStatus = async () => {
+    if (!bulkStatus || selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const colName = columns.find(c => c.statusKey === bulkStatus)?.name || bulkStatus;
+    const { error } = await supabase.from('sales').update({
+      sale_workflow_status: bulkStatus,
+      updated_at: new Date().toISOString(),
+    } as any).in('id', ids);
+    if (error) { toast.error('Erro ao alterar status'); return; }
+    // Log
+    const logs = ids.map(id => ({
+      sale_id: id,
+      empresa_id: activeCompany?.id,
+      from_status: sales.find(s => s.id === id)?.sale_workflow_status || '',
+      to_status: bulkStatus,
+      changed_by: userEmail,
+    }));
+    await supabase.from('quote_status_log').insert(logs as any);
+    toast.success(`${ids.length} cotação(ões) movida(s) para "${colName}"`);
+    setSelectedIds(new Set());
+    setBulkStatus('');
+    fetchSales();
   };
 
   const handleDuplicate = async (sale: KanbanSale) => {
@@ -303,7 +352,9 @@ export default function CotacoesKanbanPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Cotações</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+              {archivedView ? 'Cotações Arquivadas' : 'Cotações'}
+            </h1>
             <Badge variant="secondary" className="text-sm">
               {totalCotacoes} cotaç{totalCotacoes !== 1 ? 'ões' : 'ão'} — {fmt(totalValor)}
             </Badge>
@@ -316,7 +367,7 @@ export default function CotacoesKanbanPage() {
           </div>
           <div className="flex items-center gap-2">
             {/* View toggle */}
-            <div className="flex items-center border rounded-lg overflow-hidden">
+            {!archivedView && <div className="flex items-center border rounded-lg overflow-hidden">
               <Button
                 variant={viewMode === 'kanban' ? 'default' : 'ghost'}
                 size="sm"
@@ -333,10 +384,10 @@ export default function CotacoesKanbanPage() {
               >
                 <List className="h-4 w-4" />
               </Button>
-            </div>
-            <Button onClick={() => navigate('/sales/new')} className="gap-2">
+            </div>}
+            {!archivedView && <Button onClick={() => navigate('/sales/new')} className="gap-2">
               <Plus className="h-4 w-4" /> Nova Cotação
-            </Button>
+            </Button>}
           </div>
         </div>
 
@@ -346,7 +397,7 @@ export default function CotacoesKanbanPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input className="pl-9" placeholder="Buscar cliente ou destino..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="gap-2">
+          {!archivedView && <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="gap-2">
             <Filter className="h-4 w-4" />
             Filtros
             {(filterSeller !== 'all' || filterDestination !== 'all' || filterStatus !== 'all_except_lost') && (
@@ -358,11 +409,11 @@ export default function CotacoesKanbanPage() {
                 ].filter(Boolean).length}
               </span>
             )}
-          </Button>
+          </Button>}
         </div>
 
         {/* Filter row */}
-        {showFilters && (
+        {!archivedView && showFilters && (
           <div className="flex flex-wrap gap-3 p-3 bg-muted/50 rounded-lg border">
             <Select value={filterSeller} onValueChange={setFilterSeller}>
               <SelectTrigger className="w-[180px]"><SelectValue placeholder="Vendedor" /></SelectTrigger>
@@ -381,8 +432,8 @@ export default function CotacoesKanbanPage() {
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all_except_lost">Todas exceto perdidas</SelectItem>
-                <SelectItem value="all">Todos status (incluindo perdidas)</SelectItem>
+                <SelectItem value="all_except_lost">Todas exceto arquivadas</SelectItem>
+                <SelectItem value="all">Todos status (incluindo arquivadas)</SelectItem>
                 {columns.map(c => <SelectItem key={c.statusKey} value={c.statusKey}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -395,9 +446,9 @@ export default function CotacoesKanbanPage() {
         )}
 
         {/* Kanban View */}
-        {viewMode === 'kanban' && (
+        {!archivedView && viewMode === 'kanban' && (
           <KanbanBoard
-            columns={columns}
+            columns={columns.filter(c => c.statusKey !== 'perdido')}
             sales={filteredSales}
             onMoveCard={handleMoveCard}
             onViewSale={handleViewSale}
@@ -406,14 +457,39 @@ export default function CotacoesKanbanPage() {
         )}
 
         {/* List View */}
-        {viewMode === 'list' && (
+        {(archivedView || viewMode === 'list') && (
           <>
+            {/* Bulk actions bar */}
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-muted/60 rounded-lg border flex-wrap">
+                <span className="text-sm font-medium">{selectedIds.size} selecionada(s)</span>
+                <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                  <SelectTrigger className="w-[200px]"><SelectValue placeholder="Mover para status..." /></SelectTrigger>
+                  <SelectContent>
+                    {columns.map(c => <SelectItem key={c.statusKey} value={c.statusKey}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button size="sm" onClick={handleBulkChangeStatus} disabled={!bulkStatus}>
+                  {archivedView ? <ArchiveRestore className="h-4 w-4 mr-1" /> : <Archive className="h-4 w-4 mr-1" />}
+                  Aplicar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                  <X className="h-4 w-4 mr-1" /> Limpar seleção
+                </Button>
+              </div>
+            )}
             {/* Desktop Table */}
             <Card className="hidden sm:block">
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={sortedSales.length > 0 && selectedIds.size === sortedSales.length}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
                       <SortableTableHead sortKey="client_name" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
                       <SortableTableHead sortKey="destination_name" sortState={sortState} onSort={requestSort}>Destino</SortableTableHead>
                       <SortableTableHead sortKey="trip_start_date" sortState={sortState} onSort={requestSort}>Período</SortableTableHead>
@@ -427,12 +503,18 @@ export default function CotacoesKanbanPage() {
                   </TableHeader>
                   <TableBody>
                     {sortedSales.length === 0 ? (
-                      <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma cotação encontrada</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma cotação encontrada</TableCell></TableRow>
                     ) : sortedSales.map(s => {
                       const col = columns.find(c => c.statusKey === s.sale_workflow_status) || columns[0];
                       const daysSince = differenceInDays(new Date(), new Date(s.updated_at));
                       return (
                         <TableRow key={s.id} className={cn('cursor-pointer hover:bg-muted/50', daysSince >= 3 && 'bg-destructive/5')} onClick={() => handleViewSale(s.id)}>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.has(s.id)}
+                              onCheckedChange={() => toggleSelect(s.id)}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">{s.client_name}</TableCell>
                           <TableCell>{s.destination_name || '-'}</TableCell>
                           <TableCell>

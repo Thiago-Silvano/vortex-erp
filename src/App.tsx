@@ -123,6 +123,7 @@ const App = () => (
           <Route path="/cotacoes" element={<ProtectedRoute><CotacoesKanbanPage /></ProtectedRoute>} />
           <Route path="/crm-kanban" element={<ProtectedRoute><CrmKanbanPage /></ProtectedRoute>} />
           <Route path="/cotacoes/lista" element={<ProtectedRoute><CotacoesKanbanPage /></ProtectedRoute>} />
+          <Route path="/cotacoes/arquivadas" element={<ProtectedRoute><CotacoesKanbanPage archivedView /></ProtectedRoute>} />
           <Route path="/sales/new" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
           <Route path="/sales/:id" element={<ProtectedRoute><NewSalePage /></ProtectedRoute>} />
           <Route path="/reservations" element={<ProtectedRoute><ReservationsPage /></ProtectedRoute>} />

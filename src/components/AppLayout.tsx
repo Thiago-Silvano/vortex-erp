@@ -208,6 +208,7 @@ function TopMenuBar() {
         { title: "Dashboard", url: "/dashboard" },
         { title: "Kanban CRM", url: "/crm-kanban", permKey: "sales_view" },
         { title: "Cotações", url: "/cotacoes/lista", permKey: "sales_view" },
+        { title: "Cotações Arquivadas", url: "/cotacoes/arquivadas", permKey: "sales_view" },
         { title: "Vendas", url: "/sales", permKey: "sales_view" },
         { title: "Contratos", url: "/contracts/templates" },
         { title: "Vouchers", url: "/sales/vouchers", permKey: "sales_view" },
