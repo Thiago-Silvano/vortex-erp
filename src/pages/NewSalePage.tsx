@@ -816,6 +816,26 @@ export default function NewSalePage() {
     });
   };
 
+  // Importação de serviços vindos do Robô de Cotação (/cotacao/buscar-servicos)
+  useRobotImport((mapped) => {
+    const defaultOptIds = quoteOptions.length > 0
+      ? [quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0)]
+      : [];
+    setItems(prev => [
+      ...prev,
+      ...mapped.map(m => ({
+        description: m.description,
+        cost_price: m.cost_price,
+        rav: m.rav,
+        markup_percent: m.markup_percent,
+        total_value: m.total_value,
+        metadata: m.metadata,
+        quote_option_id: defaultOptIds[0],
+        quote_option_ids: defaultOptIds,
+      })),
+    ]);
+  });
+
   const duplicateItem = (idx: number) => {
     const original = items[idx];
     const cloned: SaleItem = {
