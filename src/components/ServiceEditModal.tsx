@@ -332,7 +332,11 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     if (type === 'experiencia') {
       meta.experience = experience;
     }
-    onSave(desc, meta);
+    // Para hotel, o título usado em listas/recibos é o próprio hotelName
+    const finalDesc = type === 'hotel' ? (hotel.hotelName || desc) : desc;
+    // Para hotel, não persistir detailedDescription (legado)
+    if (type === 'hotel') meta.detailedDescription = undefined;
+    onSave(finalDesc, meta);
     if (type === 'hotel' && selectedImages.length > 0 && onHotelImagesFound) {
       onHotelImagesFound(selectedImages);
     }
