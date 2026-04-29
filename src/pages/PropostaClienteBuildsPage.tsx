@@ -623,6 +623,11 @@ export default function PropostaClienteBuildsPage() {
                             {baggageInfo.checkedBag > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#e8f5e9', color: '#2e7d32' }}>🛄 {baggageInfo.checkedBag} despachada(s)</span>}
                           </div>
                         )}
+
+                        {/* Hotel TripAdvisor + reservation block */}
+                        {isHotel && meta?.hotel && (
+                          <HotelDetailsBlock hotel={meta.hotel} />
+                        )}
                       </div>
                     </div>
                   </div>
