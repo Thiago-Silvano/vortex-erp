@@ -470,12 +470,16 @@ export default function CrmKanbanPage() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-3 overflow-x-auto pb-4 px-0.5">
+          <div className={layout === 'vertical'
+            ? 'flex gap-3 overflow-x-auto pb-4 px-0.5'
+            : 'flex flex-col gap-3 pb-4 px-0.5'
+          }>
             {columns.sort((a, b) => a.sortOrder - b.sortOrder).map(col => (
               <CrmKanbanColumn
                 key={col.id}
                 column={col}
                 leads={leadsByColumn[col.statusKey] || []}
+                layout={layout}
                 onOpenChat={handleOpenChat}
                 onOpenQuote={handleOpenQuote}
                 onConvert={handleConvert}
