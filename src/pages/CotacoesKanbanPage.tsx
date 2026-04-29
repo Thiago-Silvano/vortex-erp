@@ -33,7 +33,6 @@ const DEFAULT_COLUMNS: KanbanColumnData[] = [
   { id: 'col-3', name: 'Proposta Enviada', color: '#f97316', statusKey: 'proposta_enviada', sortOrder: 2 },
   { id: 'col-4', name: 'Negociação', color: '#a855f7', statusKey: 'negociacao', sortOrder: 3 },
   { id: 'col-5', name: 'Fechada', color: '#22c55e', statusKey: 'emitido', sortOrder: 4 },
-  { id: 'col-6', name: 'Arquivada', color: '#ef4444', statusKey: 'perdido', sortOrder: 5 },
 ];
 
 interface SellerOption {
