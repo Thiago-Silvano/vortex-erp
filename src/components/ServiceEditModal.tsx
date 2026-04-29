@@ -332,7 +332,11 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     if (type === 'experiencia') {
       meta.experience = experience;
     }
-    onSave(desc, meta);
+    // Para hotel, o título usado em listas/recibos é o próprio hotelName
+    const finalDesc = type === 'hotel' ? (hotel.hotelName || desc) : desc;
+    // Para hotel, não persistir detailedDescription (legado)
+    if (type === 'hotel') meta.detailedDescription = undefined;
+    onSave(finalDesc, meta);
     if (type === 'hotel' && selectedImages.length > 0 && onHotelImagesFound) {
       onHotelImagesFound(selectedImages);
     }
@@ -364,11 +368,13 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             ))}
           </div>
 
-          {/* Description */}
-          <div>
-            <Label>Descrição resumida {type === 'experiencia' && '(nome da cidade/destino)'}</Label>
-            <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder={type === 'experiencia' ? "Ex: Paris, Roma, Nova York..." : "Título do serviço"} />
-          </div>
+          {/* Description (oculto para hotel — usa hotelName) */}
+          {type !== 'hotel' && (
+            <div>
+              <Label>Descrição resumida {type === 'experiencia' && '(nome da cidade/destino)'}</Label>
+              <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder={type === 'experiencia' ? "Ex: Paris, Roma, Nova York..." : "Título do serviço"} />
+            </div>
+          )}
 
           {/* ── EXPERIÊNCIA dates ── */}
           {type === 'experiencia' && (
@@ -419,10 +425,12 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             </div>
           )}
 
-          <div>
-            <Label>Descrição detalhada (aparece na proposta)</Label>
-            <RichTextEditor value={detailedDesc} onChange={setDetailedDesc} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
-          </div>
+          {type !== 'hotel' && (
+            <div>
+              <Label>Descrição detalhada (aparece na proposta)</Label>
+              <RichTextEditor value={detailedDesc} onChange={setDetailedDesc} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
+            </div>
+          )}
 
           {type === 'adicional' && (
             <div className="flex items-center gap-2 py-1">
@@ -774,10 +782,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 <Input value={hotel.address} onChange={e => setHotel(p => ({ ...p, address: e.target.value }))} />
               </div>
 
-              <div>
-                <Label className="text-xs">Descrição do Hotel</Label>
-                <Textarea value={hotel.description} onChange={e => setHotel(p => ({ ...p, description: e.target.value }))} rows={3} placeholder="Descrição do hotel para a proposta..." />
-              </div>
               <div>
                 <Label className="text-xs">Comodidades (separadas por vírgula)</Label>
                 <Input value={hotel.amenities.join(', ')} onChange={e => setHotel(p => ({ ...p, amenities: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} placeholder="Piscina, Spa, WiFi, Restaurante..." />

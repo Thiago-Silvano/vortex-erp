@@ -1651,6 +1651,22 @@ export default function NewSalePage() {
           stars: h.stars,
           amenities: h.amenities,
           reservationNumber: item.reservation_number || '',
+          checkInTime: h.checkInTime || '',
+          checkOutTime: h.checkOutTime || '',
+          roomCount: h.roomCount,
+          guestCount: h.guestCount,
+          city: h.city,
+          country: h.country,
+          category: h.category,
+          observations: h.observations,
+          address: h.address,
+          tripadvisorRating: h.tripadvisorRating,
+          tripadvisorReviewsCount: h.tripadvisorReviewsCount,
+          tripadvisorRanking: h.tripadvisorRanking,
+          tripadvisorBadges: h.tripadvisorBadges,
+          tripadvisorTopReviews: h.tripadvisorTopReviews,
+          tripadvisorRatingBreakdown: h.tripadvisorRatingBreakdown,
+          tripadvisorPopularMentions: h.tripadvisorPopularMentions,
         });
       }
     }
@@ -1937,7 +1953,19 @@ export default function NewSalePage() {
         const h = item.metadata.hotel;
         hotels.push({
           name: h.hotelName, description: h.description, checkIn: h.checkInDate,
-          checkOut: h.checkOutDate, nights: tripNights || 0,
+          checkOut: h.checkOutDate, nights: h.nightsCount || tripNights || 0,
+          room: h.roomType, stars: h.stars, amenities: h.amenities,
+          checkInTime: h.checkInTime, checkOutTime: h.checkOutTime,
+          roomCount: h.roomCount, guestCount: h.guestCount,
+          city: h.city, country: h.country, category: h.category,
+          observations: h.observations, address: h.address,
+          tripadvisorRating: h.tripadvisorRating,
+          tripadvisorReviewsCount: h.tripadvisorReviewsCount,
+          tripadvisorRanking: h.tripadvisorRanking,
+          tripadvisorBadges: h.tripadvisorBadges,
+          tripadvisorTopReviews: h.tripadvisorTopReviews,
+          tripadvisorRatingBreakdown: h.tripadvisorRatingBreakdown,
+          tripadvisorPopularMentions: h.tripadvisorPopularMentions,
         });
       }
     }
