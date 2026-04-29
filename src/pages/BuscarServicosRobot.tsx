@@ -291,12 +291,26 @@ export default function BuscarServicosRobot() {
 
   const totalSel = Object.values(selecionados).reduce((s, x) => s + (Number(x.custo) || 0), 0);
 
+  const handleVoltar = () => {
+    // Se foi aberto em nova aba via window.open, fecha
+    if (window.opener && !window.opener.closed) {
+      window.close();
+      return;
+    }
+    // Se há histórico, volta; senão vai para nova venda
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/sales/new');
+    }
+  };
+
   return (
     <AppLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1 h-8">
+            <Button variant="ghost" size="sm" onClick={handleVoltar} className="gap-1 h-8">
               <ArrowLeft className="h-4 w-4" /> Voltar
             </Button>
             <div>
