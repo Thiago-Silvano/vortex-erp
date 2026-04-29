@@ -28,7 +28,6 @@ const CRM_COLUMNS: CrmColumnData[] = [
   { id: 'col-2', name: 'Em Atendimento', color: '#8b5cf6', statusKey: 'contatando', sortOrder: 1 },
   { id: 'col-3', name: 'Cotações Enviadas', color: '#f97316', statusKey: 'proposta_enviada', sortOrder: 2 },
   { id: 'col-4', name: 'Negociando', color: '#eab308', statusKey: 'negociacao', sortOrder: 3 },
-  { id: 'col-5', name: 'Ganhos', color: '#22c55e', statusKey: 'emitido', sortOrder: 4 },
   { id: 'col-6', name: 'Perdidos', color: '#ef4444', statusKey: 'perdido', sortOrder: 5 },
 ];
 
