@@ -25,6 +25,7 @@ import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger,
 import PdfImportModal from '@/components/PdfImportModal';
 import QuickClientModal from '@/components/QuickClientModal';
 import ServiceEditModal, { ServiceMetadata } from '@/components/ServiceEditModal';
+import { useRobotImport } from '@/hooks/useRobotImport';
 import ImageSearchModal, { StockImage } from '@/components/ImageSearchModal';
 import ContractSection from '@/components/ContractSection';
 import SaleTimeline from '@/components/SaleTimeline';
