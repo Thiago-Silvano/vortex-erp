@@ -298,6 +298,7 @@ function TopMenuBar() {
         ...(isAdmin ? [
           { title: "Usuários", url: "/users" },
           { title: "Aparência", url: "/settings/appearance", permKey: "settings_access" },
+          { title: "Integrações de API", url: "/settings/api-integrations", permKey: "settings_access" },
           { title: "Configurações", url: "/settings", permKey: "settings_access" },
         ] : []),
         { title: "Email", url: "/email" },

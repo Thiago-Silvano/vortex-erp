@@ -206,6 +206,75 @@ export type Database = {
           },
         ]
       }
+      api_integrations: {
+        Row: {
+          agency_code: string | null
+          api_key: string | null
+          base_url: string | null
+          client_id: string | null
+          client_secret: string | null
+          created_at: string
+          empresa_id: string
+          enabled_operators: string[] | null
+          extra_config: Json | null
+          id: string
+          is_active: boolean
+          last_test_result: Json | null
+          last_tested_at: string | null
+          nome: string
+          notes: string | null
+          password: string | null
+          provider_type: string
+          supported_types: string[] | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          agency_code?: string | null
+          api_key?: string | null
+          base_url?: string | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          empresa_id: string
+          enabled_operators?: string[] | null
+          extra_config?: Json | null
+          id?: string
+          is_active?: boolean
+          last_test_result?: Json | null
+          last_tested_at?: string | null
+          nome: string
+          notes?: string | null
+          password?: string | null
+          provider_type?: string
+          supported_types?: string[] | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          agency_code?: string | null
+          api_key?: string | null
+          base_url?: string | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          empresa_id?: string
+          enabled_operators?: string[] | null
+          extra_config?: Json | null
+          id?: string
+          is_active?: boolean
+          last_test_result?: Json | null
+          last_tested_at?: string | null
+          nome?: string
+          notes?: string | null
+          password?: string | null
+          provider_type?: string
+          supported_types?: string[] | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       bank_accounts: {
         Row: {
           account_digit: string | null
@@ -5577,6 +5646,10 @@ export type Database = {
           p_whatsapp_id?: string
         }
         Returns: string
+      }
+      is_company_admin: {
+        Args: { _empresa_id: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
