@@ -10,7 +10,6 @@ import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, 
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import HotelSearchAutocomplete, { HotelDetails } from '@/components/HotelSearchAutocomplete';
 import { useCompany } from '@/contexts/CompanyContext';
 
 interface FlightLeg {
