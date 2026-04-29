@@ -779,10 +779,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               </div>
 
               <div>
-                <Label className="text-xs">Descrição do Hotel</Label>
-                <Textarea value={hotel.description} onChange={e => setHotel(p => ({ ...p, description: e.target.value }))} rows={3} placeholder="Descrição do hotel para a proposta..." />
-              </div>
-              <div>
                 <Label className="text-xs">Comodidades (separadas por vírgula)</Label>
                 <Input value={hotel.amenities.join(', ')} onChange={e => setHotel(p => ({ ...p, amenities: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} placeholder="Piscina, Spa, WiFi, Restaurante..." />
               </div>
