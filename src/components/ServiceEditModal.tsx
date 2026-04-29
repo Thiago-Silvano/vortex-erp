@@ -10,7 +10,6 @@ import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, 
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import HotelSearchAutocomplete, { HotelDetails } from '@/components/HotelSearchAutocomplete';
 import { useCompany } from '@/contexts/CompanyContext';
 
 interface FlightLeg {
@@ -146,7 +145,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [searchingHotel, setSearchingHotel] = useState(false);
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
   const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(new Set());
-  const [googleApiKey, setGoogleApiKey] = useState('');
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
   const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
@@ -172,7 +170,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setSelectedImageIndices(new Set());
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
-      loadGoogleApiKey();
       loadAirlines();
     }
   }, [open, metadata, description]);
@@ -200,15 +197,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     }
   }, [hotel.checkInDate, hotel.checkOutDate]);
 
-  const loadGoogleApiKey = async () => {
-    let query = supabase.from('agency_settings').select('*');
-    if (activeCompany) query = query.eq('empresa_id', activeCompany.id);
-    const { data } = await query.limit(1).single();
-    if (data && (data as any).google_maps_api_key) {
-      setGoogleApiKey((data as any).google_maps_api_key);
-    }
-  };
-
   const addFlightLeg = () => setFlightLegs(prev => [...prev, { ...emptyLeg(), airlineId: airlineId || undefined }]);
   const updateLeg = (idx: number, field: keyof FlightLeg, value: string) => {
     setFlightLegs(prev => prev.map((l, i) => i === idx ? { ...l, [field]: value } : l));
@@ -228,28 +216,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       else next.add(idx);
       return next;
     });
-  };
-
-  const handleGoogleHotelSelect = (details: HotelDetails) => {
-    setHotel(prev => ({
-      ...prev,
-      hotelName: details.name,
-      address: details.address,
-      city: details.city,
-      country: details.country,
-      phone: details.phone,
-      website: details.website,
-      rating: details.rating,
-      reviewsTotal: details.reviews_total,
-      placeId: details.place_id,
-      stars: Math.round(details.rating),
-    }));
-    setDesc(details.name);
-    if (details.photos && details.photos.length > 0) {
-      setHotelImages(details.photos);
-      setSelectedImageIndices(new Set(details.photos.map((_, i) => i)));
-    }
-    toast.success(`Hotel "${details.name}" selecionado com ${details.photos?.length || 0} fotos!`);
   };
 
   // Fallback AI search
@@ -625,20 +591,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           {/* ── HOTEL ── */}
           {type === 'hotel' && (
             <div className="space-y-4 border-t pt-4">
-              {/* Google Places Search */}
-              {googleApiKey ? (
-                <HotelSearchAutocomplete
-                  apiKey={googleApiKey}
-                  onSelect={handleGoogleHotelSelect}
-                  placeholder="Buscar hotel no Google Maps..."
-                />
-              ) : (
-                <div className="p-3 bg-muted/50 rounded-md text-sm text-muted-foreground">
-                  Configure sua Google Maps API Key em <strong>Configurações → Integrações</strong> para buscar hotéis automaticamente.
-                </div>
-              )}
-
-              {/* Hotel name + AI search */}
+              {/* Hotel name + TripAdvisor AI search */}
+              <div className="p-3 bg-primary/5 border border-primary/20 rounded-md text-xs text-muted-foreground">
+                Digite o nome do hotel e clique em <strong>Buscar no TripAdvisor</strong> para preencher automaticamente as informações, avaliações e reviews.
+              </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <Label>Nome do Hotel</Label>
@@ -646,7 +602,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 </div>
                 <Button variant="outline" className="mt-6" onClick={handleSearchHotelAI} disabled={searchingHotel}>
                   {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
-                  {searchingHotel ? 'Buscando...' : 'Buscar'}
+                  {searchingHotel ? 'Buscando...' : 'Buscar no TripAdvisor'}
                 </Button>
               </div>
 
