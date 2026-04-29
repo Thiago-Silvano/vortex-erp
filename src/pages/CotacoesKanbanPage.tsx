@@ -84,13 +84,17 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
     supabase.from('kanban_columns').select('*').eq('empresa_id', activeCompany.id).order('sort_order')
       .then(({ data }) => {
         if (data && data.length > 0) {
-          setColumns(data.map(d => ({
-            id: d.id,
-            name: d.name,
-            color: d.color,
-            statusKey: d.status_key,
-            sortOrder: d.sort_order,
-          })));
+          setColumns(
+            data
+              .filter(d => d.status_key !== 'perdido' && d.status_key !== 'emitido')
+              .map(d => ({
+                id: d.id,
+                name: d.name,
+                color: d.color,
+                statusKey: d.status_key,
+                sortOrder: d.sort_order,
+              }))
+          );
         } else {
           setColumns(DEFAULT_COLUMNS);
         }
