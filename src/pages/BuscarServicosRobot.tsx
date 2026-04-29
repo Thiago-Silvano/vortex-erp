@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Building2, Plane, Car, Shield, MapPin, Package,
   Search, Plus, ArrowLeft, Sparkles, Star,
+  Wand2, Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { RobotServico } from '@/hooks/useRobotImport';
@@ -291,6 +292,102 @@ export default function BuscarServicosRobot() {
 
   const totalSel = Object.values(selecionados).reduce((s, x) => s + (Number(x.custo) || 0), 0);
 
+  // ─── Busca IA Fornecedores (search-suppliers + enrich-supplier-results) ──
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResults, setAiResults] = useState<any[]>([]);
+  const [aiSelected, setAiSelected] = useState<Record<string, boolean>>({});
+
+  async function buscarComIA() {
+    if (!empresaId) { toast.error('Empresa não identificada'); return; }
+    if (!cotacaoDestino) { toast.error('Destino não informado na cotação'); return; }
+    setAiLoading(true);
+    setAiResults([]);
+    try {
+      const { data: sup, error: e1 } = await supabase.functions.invoke('search-suppliers', {
+        body: {
+          empresa_id: empresaId,
+          destination: cotacaoDestino,
+          checkIn: cotacaoCheckIn,
+          checkOut: cotacaoCheckOut,
+          passengers: cotacaoPax || 1,
+          numNights: cotacaoNoites,
+        },
+      });
+      if (e1) throw e1;
+      const hoteis = (sup as any)?.hotels || [];
+      const servicos = (sup as any)?.services || [];
+
+      const { data: enr, error: e2 } = await supabase.functions.invoke('enrich-supplier-results', {
+        body: {
+          cotacao: {
+            destino: cotacaoDestino,
+            dataInicio: cotacaoCheckIn,
+            dataFim: cotacaoCheckOut,
+            numNoites: cotacaoNoites,
+            numPassageiros: cotacaoPax,
+          },
+          hoteis, servicos,
+        },
+      });
+      if (e2) throw e2;
+      const lista = (enr as any)?.servicos || [];
+      setAiResults(lista);
+      if (lista.length === 0) toast.warning('Nenhum resultado retornado pela IA.');
+      else toast.success(`${lista.length} sugestões geradas`);
+      if ((sup as any)?.message) toast.info((sup as any).message);
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro na busca IA', { description: e?.message });
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  function toggleAi(id: string) {
+    setAiSelected(p => ({ ...p, [id]: !p[id] }));
+  }
+
+  function inserirIaNaCotacao() {
+    const escolhidos = aiResults.filter(r => aiSelected[r.id]);
+    if (escolhidos.length === 0) { toast.error('Selecione ao menos um item'); return; }
+    const lista: RobotServico[] = escolhidos.map((r: any) => {
+      if (r.tipo === 'hotel') {
+        const noites = r.numNoites || cotacaoNoites || 1;
+        const valorNoite = Number(r.custo) || 0;
+        return {
+          tipo: 'hotel',
+          descricaoResumida: `${r.nome} - ${noites} noites`,
+          nomeHotel: r.nome,
+          checkIn: cotacaoCheckIn, checkOut: cotacaoCheckOut, numNoites: noites,
+          horaCheckIn: '15:00', tipoQuarto: 'Standard', qtdQuartos: 1,
+          qtdHospedes: cotacaoPax, valorNoite, estrelas: 3,
+          categoria: r.categoria || 'Hotel', cidade: cotacaoDestino, pais: '',
+          endereco: '', comodidades: '', observacoes: r.descricao || '',
+          custo: valorNoite * noites, custoTotal: valorNoite * noites,
+          moeda: r.moeda || 'BRL', fornecedor: r.fornecedor,
+        } as RobotServico;
+      }
+      return {
+        tipo: 'outros',
+        descricaoResumida: r.nome,
+        descricaoDetalhada: r.descricao || '',
+        custo: Number(r.custo) || 0,
+        moeda: r.moeda || 'BRL',
+        observacoes: r.fornecedor ? `Fornecedor: ${r.fornecedor}` : '',
+      } as RobotServico;
+    });
+    localStorage.setItem('robot_servicos_selecionados', JSON.stringify(lista));
+    window.dispatchEvent(new Event('robot-servicos-importar'));
+    toast.success(`${lista.length} serviço(s) prontos`, { description: 'Voltando para a cotação...' });
+    setTimeout(() => {
+      if (window.opener && !window.opener.closed) {
+        window.opener.dispatchEvent(new Event('robot-servicos-importar'));
+        window.close();
+      } else navigate(-1);
+    }, 600);
+  }
+  // ─── fim Busca IA ─────────────────────────────────────────────────────
+
   const handleVoltar = () => {
     // Se foi aberto em nova aba via window.open, fecha
     if (window.opener && !window.opener.closed) {
@@ -354,7 +451,7 @@ export default function BuscarServicosRobot() {
           </CardHeader>
           <CardContent>
             <Tabs value={tipo} onValueChange={(v) => setTipo(v as any)}>
-              <TabsList className="grid grid-cols-6 w-full">
+              <TabsList className="grid grid-cols-7 w-full">
                 {Object.keys(TIPO_LABEL).map(k => {
                   const Icon = TIPO_ICON[k];
                   return (
@@ -364,6 +461,10 @@ export default function BuscarServicosRobot() {
                     </TabsTrigger>
                   );
                 })}
+                <TabsTrigger value="ia" className="text-xs gap-1.5">
+                  <Wand2 className="h-3.5 w-3.5" />
+                  Busca IA
+                </TabsTrigger>
               </TabsList>
 
               {Object.keys(TIPO_LABEL).map(k => (
@@ -531,6 +632,62 @@ export default function BuscarServicosRobot() {
                   )}
                 </TabsContent>
               ))}
+
+              {/* Aba: Busca IA Fornecedores */}
+              <TabsContent value="ia" className="mt-4 space-y-3">
+                <div className="flex flex-wrap items-center gap-2 p-3 rounded-md bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/30">
+                  <Wand2 className="h-4 w-4 text-purple-600" />
+                  <span className="text-xs flex-1">
+                    Consulta as APIs dos fornecedores cadastrados em <button className="underline" onClick={() => navigate('/settings/api-integrations')}>Integrações de API</button> e a IA organiza os melhores resultados.
+                  </span>
+                  <Button onClick={buscarComIA} disabled={aiLoading} size="sm" className="gap-1.5">
+                    {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    {aiLoading ? 'Buscando...' : 'Buscar com IA'}
+                  </Button>
+                  {aiResults.length > 0 && (
+                    <Button onClick={inserirIaNaCotacao} size="sm" variant="default" className="gap-1.5">
+                      <Plus className="h-3.5 w-3.5" />
+                      Inserir selecionados
+                    </Button>
+                  )}
+                </div>
+
+                {aiResults.length === 0 && !aiLoading && (
+                  <div className="text-center py-12 text-muted-foreground text-sm">
+                    <Wand2 className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                    Clique em "Buscar com IA" para consultar seus fornecedores.
+                  </div>
+                )}
+
+                {aiResults.length > 0 && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                    {aiResults.map((r: any) => {
+                      const sel = !!aiSelected[r.id];
+                      return (
+                        <Card key={r.id} className={sel ? 'border-primary' : ''}>
+                          <CardContent className="p-3">
+                            <div className="flex items-start gap-2">
+                              <Checkbox checked={sel} onCheckedChange={() => toggleAi(r.id)} className="mt-1" />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <h4 className="font-semibold text-sm truncate">{r.nome}</h4>
+                                  <Badge variant="outline" className="text-[10px] capitalize">{r.tipo}</Badge>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">{r.fornecedor}</p>
+                                <p className="text-xs mt-1 line-clamp-2">{r.descricao}</p>
+                                <p className="text-xs mt-1 text-primary font-semibold">
+                                  {fmtBRL(Number(r.custoTotal || r.custo) || 0)}
+                                  {r.numNoites ? ` (${r.numNoites} noites)` : ''}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
