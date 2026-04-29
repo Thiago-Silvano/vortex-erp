@@ -364,11 +364,13 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             ))}
           </div>
 
-          {/* Description */}
-          <div>
-            <Label>Descrição resumida {type === 'experiencia' && '(nome da cidade/destino)'}</Label>
-            <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder={type === 'experiencia' ? "Ex: Paris, Roma, Nova York..." : "Título do serviço"} />
-          </div>
+          {/* Description (oculto para hotel — usa hotelName) */}
+          {type !== 'hotel' && (
+            <div>
+              <Label>Descrição resumida {type === 'experiencia' && '(nome da cidade/destino)'}</Label>
+              <Input value={desc} onChange={e => setDesc(e.target.value)} placeholder={type === 'experiencia' ? "Ex: Paris, Roma, Nova York..." : "Título do serviço"} />
+            </div>
+          )}
 
           {/* ── EXPERIÊNCIA dates ── */}
           {type === 'experiencia' && (
