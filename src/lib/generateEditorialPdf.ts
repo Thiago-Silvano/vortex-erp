@@ -567,68 +567,293 @@ function drawHotelsSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   y += 8;
 
   const m = 22;
-  const cardH = 50;
-  const imgW = 50;
   const cardW = pw - m * 2;
 
-  data.hotels.forEach((h, idx) => {
-    if (y + cardH + 8 > ph - 30) {
+  // Helpers locais
+  const ensureSpace = (need: number) => {
+    if (y + need > ph - 25) {
       drawPageFooter(doc, pw, ph, agencyName);
       doc.addPage();
       drawPageBg(doc, pw, ph);
       drawPageHeader(doc, pw, agencyName);
       y = 35;
     }
+  };
+  const drawChip = (text: string, x: number, yy: number, fill: readonly [number, number, number], color: readonly [number, number, number]): number => {
+    doc.setFontSize(7.5);
+    const w = doc.getTextWidth(sanitize(text)) + 5;
+    setFill(doc, fill);
+    doc.roundedRect(x, yy - 3.5, w, 5.5, 2, 2, "F");
+    setText(doc, color);
+    safeText(doc, text, x + 2.5, yy);
+    return w;
+  };
 
-    // Imagem placeholder (cinza-claro #d8d8d8 do template) com cantos arredondados
-    setFill(doc, [216, 216, 216] as const);
-    doc.roundedRect(m, y, imgW, cardH, 3, 3, "F");
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9);
-    setText(doc, TEXT_SOFT);
-    safeText(doc, "HOTEL", m + imgW / 2, y + cardH / 2 + 2, { align: "center" });
+  const VIOLET_BG = [237, 233, 254] as const; // #ede9fe
+  const VIOLET_FG = [109, 40, 217] as const;  // #6d28d9
+  const GREEN_BG = [209, 250, 229] as const;  // #d1fae5
+  const GREEN_FG = [4, 120, 87] as const;     // #047857
+  const TA_GREEN = [16, 185, 129] as const;   // #10b981
+  const SLATE_BG = [241, 245, 249] as const;  // #f1f5f9
+  const SLATE_FG = [100, 116, 139] as const;  // #64748b
+  const NEUTRAL_BG = [250, 249, 246] as const;
+  const NEUTRAL_BORDER = [240, 237, 232] as const;
 
-    // Right side text
-    const tx = m + imgW + 6;
-    const tw = cardW - imgW - 6;
+  data.hotels.forEach((h, idx) => {
+    ensureSpace(60);
 
+    // ── Header do card: nome, estrelas, categoria
+    setFill(doc, [255, 255, 255]);
+    setStroke(doc, NEUTRAL_BORDER);
+    doc.setLineWidth(0.3);
+
+    const headerY = y;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(13);
     setText(doc, OCEAN);
-    safeText(doc, `OPCAO ${idx + 1}: ${(h.name || "").toUpperCase()}`, tx, y + 5);
+    safeText(doc, sanitize(h.name || ""), m, y + 5);
+    y += 7;
 
-    // Estrelas no tom oceano (#69849b)
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    setText(doc, OCEAN_BANNER);
-    safeText(doc, "* * * * *", tx, y + 11);
+    if (h.stars && h.stars > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      setText(doc, GOLD);
+      safeText(doc, "*".repeat(h.stars), m, y);
+    }
+    if (h.category) {
+      const catX = m + (h.stars ? doc.getTextWidth("*".repeat(h.stars)) + 4 : 0);
+      drawChip(h.category, catX, y, NEUTRAL_BORDER, TEXT_SOFT);
+    }
+    y += 4;
+
+    // Endereço
+    if (h.address || h.city) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      setText(doc, TEXT_SOFT);
+      const addr = [h.address, h.city, h.country].filter(Boolean).join(", ");
+      safeText(doc, addr, m, y + 3);
+      y += 5;
+    }
 
     // Description
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    setText(doc, TEXT_MAIN);
-    const descRaw =
-      h.description ||
-      `${h.nights || 0} diaria(s) - Check-in ${formatDateBR(h.checkIn)} / Check-out ${formatDateBR(h.checkOut)}${h.meal ? " - " + h.meal : ""}`;
-    const descLines = doc.splitTextToSize(sanitize(descRaw), tw);
-    doc.text(descLines.slice(0, 4), tx, y + 17);
+    if (h.description) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      setText(doc, TEXT_MAIN);
+      const lines = doc.splitTextToSize(sanitize(h.description), cardW);
+      doc.text(lines, m, y + 4);
+      y += lines.length * 3.5 + 3;
+    }
 
-    // Amenity chips
-    const chipY = y + cardH - 8;
-    const amenities = [h.meal || "Café da manha", "Wi-Fi", "Piscina"];
-    let cx = tx;
-    amenities.forEach((a) => {
-      const text = sanitize(a);
-      const w = doc.getTextWidth(text) + 6;
-      setFill(doc, CREAM);
-      doc.roundedRect(cx, chipY - 4, w, 5.5, 1.5, 1.5, "F");
-      doc.setFontSize(7);
+    // Amenities (badges roxas)
+    if (h.amenities && h.amenities.length > 0) {
+      ensureSpace(10);
+      let cx = m;
+      const cyAm = y + 4;
+      doc.setFont("helvetica", "normal");
+      h.amenities.forEach(a => {
+        const w = doc.getTextWidth(sanitize(a)) + 5;
+        if (cx + w > m + cardW) { y += 7; cx = m; }
+        drawChip(a, cx, y + 4, VIOLET_BG, VIOLET_FG);
+        cx += w + 2;
+      });
+      y += 7;
+    }
+
+    // ── TripAdvisor block ─────────
+    const ta = {
+      rating: h.tripadvisorRating,
+      reviews: h.tripadvisorReviewsCount,
+      ranking: h.tripadvisorRanking,
+      badges: h.tripadvisorBadges,
+      topReviews: h.tripadvisorTopReviews,
+      breakdown: h.tripadvisorRatingBreakdown,
+      mentions: h.tripadvisorPopularMentions,
+    };
+    const hasTA = !!(ta.rating || ta.ranking || (ta.badges && ta.badges.length) || (ta.topReviews && ta.topReviews.length) || ta.breakdown || (ta.mentions && ta.mentions.length));
+
+    if (hasTA) {
+      ensureSpace(40);
+      // Separator
+      setStroke(doc, NEUTRAL_BORDER);
+      doc.setLineWidth(0.2);
+      doc.line(m, y + 2, m + cardW, y + 2);
+      y += 6;
+
+      // Header TA
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
       setText(doc, OCEAN);
-      safeText(doc, text, cx + 3, chipY);
-      cx += w + 3;
-    });
+      safeText(doc, "TripAdvisor", m, y);
+      let xCursor = m + doc.getTextWidth("TripAdvisor") + 4;
+      if (ta.rating) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        setText(doc, TA_GREEN);
+        safeText(doc, String(ta.rating), xCursor, y);
+        xCursor += doc.getTextWidth(String(ta.rating)) + 1.5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        setText(doc, TEXT_SOFT);
+        safeText(doc, "/5", xCursor, y);
+        xCursor += 4;
+        if (ta.reviews) {
+          safeText(doc, `(${ta.reviews.toLocaleString("pt-BR")} avaliações)`, xCursor, y);
+        }
+      }
+      y += 5;
 
-    y += cardH + 8;
+      if (ta.ranking) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        setText(doc, TEXT_SOFT);
+        safeText(doc, sanitize(ta.ranking), m, y + 2);
+        y += 5;
+      }
+
+      if (ta.badges && ta.badges.length > 0) {
+        ensureSpace(8);
+        let cx = m;
+        ta.badges.forEach(b => {
+          const label = b;
+          const w = doc.getTextWidth(sanitize(label)) + 5;
+          if (cx + w > m + cardW) { y += 7; cx = m; }
+          drawChip(label, cx, y + 4, GREEN_BG, GREEN_FG);
+          cx += w + 2;
+        });
+        y += 7;
+      }
+
+      // Breakdown (5 colunas)
+      if (ta.breakdown) {
+        ensureSpace(14);
+        const items = [
+          { label: "Localização", value: ta.breakdown.location },
+          { label: "Limpeza", value: ta.breakdown.cleanliness },
+          { label: "Serviço", value: ta.breakdown.service },
+          { label: "Custo-benefício", value: ta.breakdown.value },
+          { label: "Quartos", value: ta.breakdown.rooms },
+        ];
+        const colW = cardW / items.length;
+        items.forEach((it, i) => {
+          const cx = m + i * colW + colW / 2;
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          setText(doc, OCEAN);
+          safeText(doc, String(it.value), cx, y + 5, { align: "center" });
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7);
+          setText(doc, TEXT_SOFT);
+          safeText(doc, it.label, cx, y + 9, { align: "center" });
+        });
+        y += 13;
+      }
+
+      // Top reviews
+      if (ta.topReviews && ta.topReviews.length > 0) {
+        ensureSpace(6 + ta.topReviews.length * 5);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        setText(doc, OCEAN);
+        safeText(doc, "Avaliações em destaque:", m, y + 3);
+        y += 5;
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(8);
+        setText(doc, TEXT_SOFT);
+        ta.topReviews.forEach(r => {
+          const lines = doc.splitTextToSize(sanitize(`"${r}"`), cardW);
+          doc.text(lines, m, y + 3);
+          y += lines.length * 3.2 + 1;
+        });
+        y += 1;
+      }
+
+      // Mentions
+      if (ta.mentions && ta.mentions.length > 0) {
+        ensureSpace(8);
+        let cx = m;
+        ta.mentions.forEach(mt => {
+          const label = `#${mt}`;
+          const w = doc.getTextWidth(sanitize(label)) + 5;
+          if (cx + w > m + cardW) { y += 6; cx = m; }
+          drawChip(label, cx, y + 4, SLATE_BG, SLATE_FG);
+          cx += w + 2;
+        });
+        y += 7;
+      }
+    }
+
+    // ── Dados da Reserva ─────────
+    const hasReservation = !!(h.checkIn || h.checkOut || h.room || h.guestCount || h.nights);
+    if (hasReservation) {
+      ensureSpace(28);
+      // Separator
+      setStroke(doc, NEUTRAL_BORDER);
+      doc.setLineWidth(0.2);
+      doc.line(m, y + 2, m + cardW, y + 2);
+      y += 6;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      setText(doc, TEXT_SOFT);
+      safeText(doc, "DADOS DA RESERVA", m, y);
+      y += 4;
+
+      const fields: { label: string; value: string }[] = [];
+      if (h.checkIn) fields.push({ label: "Check-in", value: `${formatDateBR(h.checkIn)}${h.checkInTime ? " " + h.checkInTime : ""}` });
+      if (h.checkOut) fields.push({ label: "Check-out", value: `${formatDateBR(h.checkOut)}${h.checkOutTime ? " " + h.checkOutTime : ""}` });
+      if (h.nights) fields.push({ label: "Noites", value: String(h.nights) });
+      if (h.room) fields.push({ label: "Tipo de Quarto", value: h.room });
+      if (h.roomCount) fields.push({ label: "Qtd. Quartos", value: String(h.roomCount) });
+      if (h.guestCount) fields.push({ label: "Hóspedes", value: String(h.guestCount) });
+      if (h.meal) fields.push({ label: "Regime", value: h.meal });
+
+      const cols = 4;
+      const cellGap = 2;
+      const cellW = (cardW - cellGap * (cols - 1)) / cols;
+      const cellH = 12;
+      fields.forEach((f, i) => {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        if (col === 0 && row > 0) y += cellH + cellGap;
+        const cx = m + col * (cellW + cellGap);
+        const cy = y + 1;
+        setFill(doc, NEUTRAL_BG);
+        setStroke(doc, NEUTRAL_BORDER);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(cx, cy, cellW, cellH, 1.5, 1.5, "FD");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.5);
+        setText(doc, TEXT_SOFT);
+        safeText(doc, f.label.toUpperCase(), cx + 2, cy + 4);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        setText(doc, OCEAN);
+        safeText(doc, f.value, cx + 2, cy + 9);
+      });
+      // Avança após a última linha
+      const totalRows = Math.ceil(fields.length / cols);
+      y += totalRows * cellH + (totalRows - 1) * cellGap + 4;
+
+      if (h.observations) {
+        ensureSpace(8);
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(7.5);
+        setText(doc, TEXT_SOFT);
+        const lines = doc.splitTextToSize(sanitize(`Obs: ${h.observations}`), cardW);
+        doc.text(lines, m, y + 3);
+        y += lines.length * 3 + 2;
+      }
+    }
+
+    // Espaço entre hotéis
+    if (idx < data.hotels.length - 1) {
+      y += 8;
+      setStroke(doc, GOLD);
+      doc.setLineWidth(0.4);
+      doc.line(m + cardW * 0.4, y, m + cardW * 0.6, y);
+      y += 6;
+    }
   });
 
   drawPageFooter(doc, pw, ph, agencyName);
