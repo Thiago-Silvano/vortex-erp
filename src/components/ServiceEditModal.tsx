@@ -591,20 +591,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           {/* ── HOTEL ── */}
           {type === 'hotel' && (
             <div className="space-y-4 border-t pt-4">
-              {/* Google Places Search */}
-              {googleApiKey ? (
-                <HotelSearchAutocomplete
-                  apiKey={googleApiKey}
-                  onSelect={handleGoogleHotelSelect}
-                  placeholder="Buscar hotel no Google Maps..."
-                />
-              ) : (
-                <div className="p-3 bg-muted/50 rounded-md text-sm text-muted-foreground">
-                  Configure sua Google Maps API Key em <strong>Configurações → Integrações</strong> para buscar hotéis automaticamente.
-                </div>
-              )}
-
-              {/* Hotel name + AI search */}
+              {/* Hotel name + TripAdvisor AI search */}
+              <div className="p-3 bg-primary/5 border border-primary/20 rounded-md text-xs text-muted-foreground">
+                Digite o nome do hotel e clique em <strong>Buscar no TripAdvisor</strong> para preencher automaticamente as informações, avaliações e reviews.
+              </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <Label>Nome do Hotel</Label>
@@ -612,7 +602,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 </div>
                 <Button variant="outline" className="mt-6" onClick={handleSearchHotelAI} disabled={searchingHotel}>
                   {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
-                  {searchingHotel ? 'Buscando...' : 'Buscar'}
+                  {searchingHotel ? 'Buscando...' : 'Buscar no TripAdvisor'}
                 </Button>
               </div>
 
