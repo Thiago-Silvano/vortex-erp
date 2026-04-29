@@ -830,3 +830,137 @@ export default function PropostaClienteBuildsPage() {
     </div>
   );
 }
+
+// ─────────── Hotel Details Block (TripAdvisor-style) ───────────
+function HotelDetailsBlock({ hotel }: { hotel: any }) {
+  const ta = {
+    rating: hotel.tripadvisorRating,
+    reviews: hotel.tripadvisorReviewsCount,
+    ranking: hotel.tripadvisorRanking,
+    badges: hotel.tripadvisorBadges as string[] | undefined,
+    topReviews: hotel.tripadvisorTopReviews as string[] | undefined,
+    breakdown: hotel.tripadvisorRatingBreakdown,
+    mentions: hotel.tripadvisorPopularMentions as string[] | undefined,
+  };
+  const hasTA = !!(ta.rating || ta.ranking || ta.badges?.length || ta.topReviews?.length || ta.breakdown || ta.mentions?.length);
+  const hasReservation = !!(hotel.checkInDate || hotel.checkOutDate || hotel.roomType || hotel.guestCount || hotel.nightsCount);
+  if (!hasTA && !hasReservation && !hotel.amenities?.length && !hotel.description) return null;
+
+  return (
+    <div className="mt-4 pt-4 space-y-4" style={{ borderTop: '1px solid #f0ede8' }}>
+      {hotel.description && (
+        <p className="text-sm leading-relaxed" style={{ color: '#555' }}>{hotel.description}</p>
+      )}
+
+      {hotel.amenities && hotel.amenities.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {hotel.amenities.map((a: string, i: number) => (
+            <span key={i} className="px-2.5 py-1 rounded-full text-[11px] font-medium"
+              style={{ background: '#ede9fe', color: '#6d28d9' }}>{a}</span>
+          ))}
+        </div>
+      )}
+
+      {hasTA && (
+        <div className="pt-3 space-y-3" style={{ borderTop: '1px solid #f0ede8' }}>
+          <div className="flex items-center gap-2 flex-wrap text-sm">
+            <span aria-hidden style={{ fontSize: 16 }}>🦉</span>
+            <span className="font-semibold" style={{ color: '#0D1B2A' }}>TripAdvisor</span>
+            {ta.rating && (
+              <>
+                <span className="font-bold" style={{ color: '#10b981' }}>{ta.rating}</span>
+                <span style={{ color: '#888', fontSize: 12 }}>/5</span>
+                {ta.reviews && (
+                  <span style={{ color: '#888', fontSize: 12 }}>({ta.reviews.toLocaleString('pt-BR')} avaliações)</span>
+                )}
+              </>
+            )}
+          </div>
+          {ta.ranking && (
+            <p className="text-xs flex items-center gap-1" style={{ color: '#666' }}>
+              <span>🏆</span><span>{ta.ranking}</span>
+            </p>
+          )}
+          {ta.badges && ta.badges.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {ta.badges.map((b, i) => (
+                <span key={i} className="px-2.5 py-1 rounded-full text-[11px] font-medium inline-flex items-center gap-1"
+                  style={{ background: '#d1fae5', color: '#047857' }}>🏅 {b}</span>
+              ))}
+            </div>
+          )}
+          {ta.breakdown && (
+            <div className="grid grid-cols-5 gap-2 py-1">
+              {[
+                { label: 'Localização', value: ta.breakdown.location },
+                { label: 'Limpeza', value: ta.breakdown.cleanliness },
+                { label: 'Serviço', value: ta.breakdown.service },
+                { label: 'Custo-benefício', value: ta.breakdown.value },
+                { label: 'Quartos', value: ta.breakdown.rooms },
+              ].map((it, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-base font-bold" style={{ color: '#0D1B2A' }}>{it.value}</div>
+                  <div className="text-[10px]" style={{ color: '#888' }}>{it.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {ta.topReviews && ta.topReviews.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold" style={{ color: '#0D1B2A' }}>Avaliações em destaque:</p>
+              {ta.topReviews.map((r, i) => (
+                <p key={i} className="text-xs italic" style={{ color: '#666' }}>"{r}"</p>
+              ))}
+            </div>
+          )}
+          {ta.mentions && ta.mentions.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {ta.mentions.map((m, i) => (
+                <span key={i} className="px-2 py-0.5 rounded-full text-[10px]"
+                  style={{ background: '#f1f5f9', color: '#64748b' }}>#{m}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasReservation && (
+        <div className="pt-3" style={{ borderTop: '1px solid #f0ede8' }}>
+          <p className="text-xs font-semibold uppercase mb-2 tracking-wider" style={{ color: '#888' }}>Dados da Reserva</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {hotel.checkInDate && (
+              <ResField label="Check-in" value={`${formatDateBR(hotel.checkInDate)}${hotel.checkInTime ? ' • ' + hotel.checkInTime : ''}`} />
+            )}
+            {hotel.checkOutDate && (
+              <ResField label="Check-out" value={`${formatDateBR(hotel.checkOutDate)}${hotel.checkOutTime ? ' • ' + hotel.checkOutTime : ''}`} />
+            )}
+            {(hotel.nightsCount || 0) > 0 && (
+              <ResField label="Noites" value={String(hotel.nightsCount)} />
+            )}
+            {hotel.roomType && (
+              <ResField label="Tipo de Quarto" value={hotel.roomType} />
+            )}
+            {(hotel.roomCount || 0) > 0 && (
+              <ResField label="Qtd. Quartos" value={String(hotel.roomCount)} />
+            )}
+            {(hotel.guestCount || 0) > 0 && (
+              <ResField label="Hóspedes" value={String(hotel.guestCount)} />
+            )}
+          </div>
+          {hotel.observations && (
+            <p className="text-xs mt-3 italic" style={{ color: '#888' }}>📝 {hotel.observations}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg px-3 py-2" style={{ background: '#faf9f6', border: '1px solid #f0ede8' }}>
+      <div className="text-[10px] uppercase tracking-wider" style={{ color: '#999' }}>{label}</div>
+      <div className="text-sm font-medium" style={{ color: '#0D1B2A' }}>{value}</div>
+    </div>
+  );
+}
