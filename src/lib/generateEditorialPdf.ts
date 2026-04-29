@@ -47,6 +47,25 @@ export interface HotelPdf {
   meal?: string;
   description?: string;
   address?: string;
+  // Reservation
+  checkInTime?: string;
+  checkOutTime?: string;
+  roomCount?: number;
+  guestCount?: number;
+  city?: string;
+  country?: string;
+  stars?: number;
+  category?: string;
+  observations?: string;
+  amenities?: string[];
+  // TripAdvisor
+  tripadvisorRating?: number;
+  tripadvisorReviewsCount?: number;
+  tripadvisorRanking?: string;
+  tripadvisorBadges?: string[];
+  tripadvisorTopReviews?: string[];
+  tripadvisorRatingBreakdown?: { location: number; cleanliness: number; service: number; value: number; rooms: number };
+  tripadvisorPopularMentions?: string[];
 }
 
 export interface ServicePdf {
