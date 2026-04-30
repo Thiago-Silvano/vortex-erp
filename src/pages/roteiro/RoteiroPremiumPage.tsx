@@ -679,7 +679,7 @@ export default function RoteiroPremiumPage() {
               <div className="space-y-1.5">
                 {cidadesDias.map((c, idx) => (
                   <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                    <div className="col-span-8">
+                    <div className="col-span-6">
                       <Input
                         className="h-7 text-xs"
                         value={c.cidade}
@@ -687,14 +687,25 @@ export default function RoteiroPremiumPage() {
                         placeholder={idx === 0 ? 'Destino principal (ex: Paris, França)' : 'Parada (ex: Lyon, França)'}
                       />
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <Input
                         type="number" min={0}
                         className="h-7 text-xs"
                         value={c.dias || ''}
                         onChange={e => setCidadeDias(idx, Number(e.target.value))}
                         placeholder="Dias"
+                        disabled={!!c.stopLogistico}
                       />
+                    </div>
+                    <div className="col-span-3 flex items-center gap-1.5">
+                      <Checkbox
+                        id={`stop-${idx}`}
+                        checked={!!c.stopLogistico}
+                        onCheckedChange={(v) => setCidadeStopLogistico(idx, !!v)}
+                      />
+                      <Label htmlFor={`stop-${idx}`} className="text-[10px] cursor-pointer leading-tight">
+                        Stop logístico?
+                      </Label>
                     </div>
                     <div className="col-span-1 flex justify-end">
                       {idx > 0 && (
