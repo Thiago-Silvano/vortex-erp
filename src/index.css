@@ -136,6 +136,87 @@
     --warning: 38 100% 62%;
     --whatsapp: 142 70% 45%;
   }
+
+  /* ============================================================
+     LIGHT THEME — versão clara do mesmo design system
+     Mantém o accent #5b5bd6 e a mesma estrutura tonal,
+     mas com superfícies claras e texto escuro.
+     ============================================================ */
+  .light {
+    --background: 240 20% 98%;            /* #f7f7fb base */
+    --foreground: 240 15% 12%;            /* #1b1b22 texto */
+
+    --card: 0 0% 100%;                    /* #ffffff cards */
+    --card-foreground: 240 15% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 15% 12%;
+
+    --primary: 240 60% 60%;               /* #5b5bd6 accent */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 20% 94%;             /* hover/secundário */
+    --secondary-foreground: 240 15% 12%;
+
+    --muted: 240 20% 96%;
+    --muted-foreground: 240 8% 40%;       /* #5e5e6b */
+
+    --accent: 240 60% 95%;                /* nav-active-bg claro */
+    --accent-foreground: 240 60% 40%;
+
+    --destructive: 0 75% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 12% 88%;                /* #dcdce3 */
+    --input: 240 12% 88%;
+    --ring: 240 60% 60%;
+
+    /* Sidebar clara */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 15% 25%;
+    --sidebar-primary: 240 60% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 60% 95%;
+    --sidebar-accent-foreground: 240 60% 40%;
+    --sidebar-border: 240 12% 90%;
+    --sidebar-ring: 240 60% 60%;
+    --sidebar: 0 0% 100%;
+
+    --gold: 45 70% 45%;
+    --gold-foreground: 0 0% 100%;
+    --navy: 240 30% 20%;
+    --navy-foreground: 0 0% 100%;
+    --success: 152 64% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 95% 50%;
+    --warning-foreground: 240 15% 12%;
+    --whatsapp: 142 70% 38%;
+    --whatsapp-foreground: 0 0% 100%;
+
+    --status-new: 240 60% 55%;
+    --status-progress: 38 95% 50%;
+    --status-waiting: 25 95% 55%;
+    --status-done: 152 64% 38%;
+    --status-cancelled: 0 75% 52%;
+
+    --bg-elevated: 240 20% 96%;
+    --bg-hover: 240 20% 93%;
+    --border-subtle: 240 12% 92%;
+    --border-strong: 240 12% 82%;
+    --text-faint: 240 8% 55%;
+    --text-placeholder: 240 8% 60%;
+    --accent-light: 240 60% 60% / 0.10;
+    --accent-glow: 240 60% 60% / 0.06;
+
+    --shadow-2xs: 0 1px 1px 0 hsl(240 15% 20% / 0.04);
+    --shadow-xs: 0 1px 2px 0 hsl(240 15% 20% / 0.06);
+    --shadow-sm: 0 1px 3px 0 hsl(240 15% 20% / 0.08);
+    --shadow: 0 1px 3px 0 hsl(240 15% 20% / 0.08);
+    --shadow-md: 0 2px 6px 0 hsl(240 15% 20% / 0.10);
+    --shadow-lg: 0 4px 12px 0 hsl(240 15% 20% / 0.12);
+    --shadow-xl: 0 8px 20px 0 hsl(240 15% 20% / 0.14);
+    --shadow-2xl: 0 12px 28px 0 hsl(240 15% 20% / 0.16);
+  }
 }
 
 @layer base {
@@ -145,6 +226,10 @@
 
   html {
     color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
   }
 
   body {
@@ -189,6 +274,11 @@
   input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.7) brightness(0.9);
     cursor: pointer;
+  }
+
+  /* No tema light, não inverter o ícone do date picker */
+  html.light input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
   }
 }
 
