@@ -22,6 +22,7 @@ import type {
 import { generateItineraryPdf } from '@/lib/generateItineraryPdf';
 import { AirportCombobox } from '@/components/AirportCombobox';
 import { findAirport } from '@/data/airports';
+import { CityCombobox } from '@/components/CityCombobox';
 
 const INTERESSES_LIST = [
   'Praia', 'Cultura', 'Gastronomia', 'Aventura', 'Natureza',
@@ -680,11 +681,10 @@ export default function RoteiroPremiumPage() {
                 {cidadesDias.map((c, idx) => (
                   <div key={idx} className="grid grid-cols-12 gap-2 items-center">
                     <div className="col-span-6">
-                      <Input
-                        className="h-7 text-xs"
+                      <CityCombobox
                         value={c.cidade}
-                        onChange={e => setCidadeNome(idx, e.target.value)}
-                        placeholder={idx === 0 ? 'Destino principal (ex: Paris, França)' : 'Parada (ex: Lyon, França)'}
+                        onChange={(label) => setCidadeNome(idx, label)}
+                        placeholder={idx === 0 ? 'Destino principal (ex: Paris)' : 'Parada (ex: Lyon)'}
                       />
                     </div>
                     <div className="col-span-2">
