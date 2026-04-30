@@ -3657,6 +3657,39 @@ export type Database = {
           },
         ]
       }
+      roteiro_premium_drafts: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          form_data: Json
+          id: string
+          roteiro_data: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          form_data?: Json
+          id?: string
+          roteiro_data?: Json | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          form_data?: Json
+          id?: string
+          roteiro_data?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sale_internal_files: {
         Row: {
           created_at: string

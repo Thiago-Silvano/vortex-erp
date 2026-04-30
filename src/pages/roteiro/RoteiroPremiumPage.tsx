@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star } from 'lucide-react';
+import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star, Save, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -41,6 +41,7 @@ function parsePreco(s?: string): number {
 
 export default function RoteiroPremiumPage() {
   const navigate = useNavigate();
+  const { draftId } = useParams<{ draftId?: string }>();
   const { activeCompany } = useCompany();
   const { config } = useAgencyConfig();
 
@@ -53,6 +54,8 @@ export default function RoteiroPremiumPage() {
     numPassageiros: 2,
     perfilViajante: 'casal',
     categoriaHotel: '4 estrelas',
+    precoHotelMin: undefined,
+    precoHotelMax: undefined,
     interesses: [],
     ritmoViagem: 'moderado',
     observacoes: '',
@@ -64,6 +67,69 @@ export default function RoteiroPremiumPage() {
   const [roteiro, setRoteiro] = useState<RoteiroGerado | null>(null);
   const [savingRoteiro, setSavingRoteiro] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialLoadRef = useRef(false);
+
+  // Carrega draft existente
+  useEffect(() => {
+    if (!draftId || initialLoadRef.current) return;
+    initialLoadRef.current = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from('roteiro_premium_drafts' as any)
+        .select('*')
+        .eq('id', draftId)
+        .maybeSingle();
+      if (error || !data) {
+        toast.error('Rascunho não encontrado');
+        return;
+      }
+      const d = data as any;
+      if (d.form_data) setForm((p) => ({ ...p, ...d.form_data }));
+      if (d.roteiro_data) setRoteiro(d.roteiro_data as RoteiroGerado);
+      setCurrentDraftId(d.id);
+    })();
+  }, [draftId]);
+
+  // Autosave (debounce 1.2s) sempre que form ou roteiro mudam
+  useEffect(() => {
+    if (!activeCompany?.id) return;
+    if (!form.destinoPrincipal && !roteiro) return; // nada relevante ainda
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        setAutoSaveStatus('saving');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setAutoSaveStatus('idle'); return; }
+        const payload: any = {
+          empresa_id: activeCompany.id,
+          user_id: user.id,
+          title: roteiro?.titulo || form.destinoPrincipal || 'Roteiro sem título',
+          form_data: form,
+          roteiro_data: roteiro,
+        };
+        if (currentDraftId) {
+          await supabase.from('roteiro_premium_drafts' as any).update(payload).eq('id', currentDraftId);
+        } else {
+          const { data, error } = await supabase
+            .from('roteiro_premium_drafts' as any)
+            .insert(payload).select().single();
+          if (!error && data) setCurrentDraftId((data as any).id);
+        }
+        setAutoSaveStatus('saved');
+        setTimeout(() => setAutoSaveStatus('idle'), 1500);
+      } catch (e) {
+        console.error('autosave error', e);
+        setAutoSaveStatus('idle');
+      }
+    }, 1200);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, roteiro, activeCompany?.id]);
 
   function googleMapsLink(h: OpcaoHospedagem): string {
     const q = [h.nomeOficial || h.nome, h.enderecoCompleto || h.localizacao, form.destinoPrincipal]
@@ -430,9 +496,20 @@ export default function RoteiroPremiumPage() {
               </p>
             </div>
           </div>
-          {roteiro && (
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{totalSelecionados} selecionado(s)</Badge>
+          <div className="flex items-center gap-2">
+            {autoSaveStatus === 'saving' && (
+              <Badge variant="outline" className="gap-1 text-[10px]">
+                <Loader2 className="h-3 w-3 animate-spin" /> Salvando…
+              </Badge>
+            )}
+            {autoSaveStatus === 'saved' && (
+              <Badge variant="outline" className="gap-1 text-[10px] text-emerald-600 border-emerald-300">
+                <CheckCircle2 className="h-3 w-3" /> Salvo
+              </Badge>
+            )}
+            {roteiro && (
+              <>
+                <Badge variant="secondary">{totalSelecionados} selecionado(s)</Badge>
               <Button onClick={enviarParaCotacao} className="gap-1.5" size="sm">
                 <Send className="h-4 w-4" /> Enviar para Cotação
               </Button>
@@ -444,8 +521,9 @@ export default function RoteiroPremiumPage() {
                 {generatingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
                 Gerar PDF
               </Button>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* FORMULÁRIO */}
@@ -511,6 +589,26 @@ export default function RoteiroPremiumPage() {
                     <SelectItem value="resort">Resort</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Preço hotel mín. (R$/noite)</Label>
+                <Input
+                  type="number" min={0}
+                  className="h-8 text-xs"
+                  value={form.precoHotelMin ?? ''}
+                  onChange={e => setF('precoHotelMin', e.target.value === '' ? undefined : Number(e.target.value))}
+                  placeholder="Ex: 400"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Preço hotel máx. (R$/noite)</Label>
+                <Input
+                  type="number" min={0}
+                  className="h-8 text-xs"
+                  value={form.precoHotelMax ?? ''}
+                  onChange={e => setF('precoHotelMax', e.target.value === '' ? undefined : Number(e.target.value))}
+                  placeholder="Ex: 1200"
+                />
               </div>
               <div>
                 <Label className="text-xs">Ritmo</Label>
