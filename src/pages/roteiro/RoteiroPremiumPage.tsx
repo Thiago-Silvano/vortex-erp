@@ -20,7 +20,6 @@ import type {
   OpcaoLogistica, DicaGastronomica, ServicoImportadoRoteiro, PayloadCotacaoRoteiro,
 } from '@/types/roteiro';
 import { generateItineraryPdf } from '@/lib/generateItineraryPdf';
-import { getStaticMapUrl } from '@/components/itinerary/ItineraryMapSection';
 
 const INTERESSES_LIST = [
   'Praia', 'Cultura', 'Gastronomia', 'Aventura', 'Natureza',
