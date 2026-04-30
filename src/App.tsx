@@ -69,10 +69,6 @@ import DS160GroupPublicPage from "./pages/DS160GroupPublicPage";
 import VistosDS160Page from "./pages/vistos/VistosDS160Page";
 import ItineraryPublicPage from "./pages/ItineraryPublicPage";
 import PromoMakerPage from "./pages/PromoMakerPage";
-import PromotionsPage from "./pages/marketing/PromotionsPage";
-import PromotionFormPage from "./pages/marketing/PromotionFormPage";
-import MarketingTemplatesPage from "./pages/marketing/MarketingTemplatesPage";
-import PromotionCatalogPage from "./pages/marketing/PromotionCatalogPage";
 import PromotionCatalogPublicPage from "./pages/marketing/PromotionCatalogPublicPage";
 import AirlinesPage from "./pages/AirlinesPage";
 import VouchersPage from "./pages/VouchersPage";
@@ -161,11 +157,6 @@ const App = () => (
           {/* Rota legada: redireciona para o novo local dentro de Roteiros */}
           <Route path="/comercial/roteiro-premium" element={<Navigate to="/itineraries/premium" replace />} />
           <Route path="/promo-maker" element={<ProtectedRoute><PromoMakerPage /></ProtectedRoute>} />
-          <Route path="/marketing/promotions" element={<ProtectedRoute><PromotionsPage /></ProtectedRoute>} />
-          <Route path="/marketing/promotions/new" element={<ProtectedRoute><PromotionFormPage /></ProtectedRoute>} />
-          <Route path="/marketing/promotions/:id" element={<ProtectedRoute><PromotionFormPage /></ProtectedRoute>} />
-          <Route path="/marketing/templates" element={<ProtectedRoute><MarketingTemplatesPage /></ProtectedRoute>} />
-          <Route path="/marketing/catalog" element={<ProtectedRoute><PromotionCatalogPage /></ProtectedRoute>} />
           <Route path="/airlines" element={<ProtectedRoute><AirlinesPage /></ProtectedRoute>} />
 
           {/* Vistos routes */}
