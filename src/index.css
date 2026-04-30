@@ -388,6 +388,27 @@
   html.light .bg-amber-50:not(tr):not(td)   { background-color: rgb(255 251 235) !important; }
   html.light .bg-red-50:not(tr):not(td)     { background-color: rgb(254 242 242) !important; }
   html.light .bg-emerald-50:not(tr):not(td) { background-color: rgb(236 253 245) !important; }
+
+  /* Status badges (bg-{color}-600/20 text-white) — usar fundo claro e texto escuro no light mode */
+  html.light .bg-emerald-600\/20 { background-color: rgb(209 250 229) !important; }
+  html.light .bg-emerald-600\/20.text-white,
+  html.light .bg-emerald-600\/20 { color: rgb(6 78 59) !important; }
+  html.light .border-emerald-500\/50 { border-color: rgb(110 231 183) !important; }
+
+  html.light .bg-red-600\/20 { background-color: rgb(254 226 226) !important; }
+  html.light .bg-red-600\/20.text-white,
+  html.light .bg-red-600\/20 { color: rgb(127 29 29) !important; }
+  html.light .border-red-500\/50 { border-color: rgb(252 165 165) !important; }
+
+  html.light .bg-amber-600\/20 { background-color: rgb(254 243 199) !important; }
+  html.light .bg-amber-600\/20.text-white,
+  html.light .bg-amber-600\/20 { color: rgb(120 53 15) !important; }
+  html.light .border-amber-500\/50 { border-color: rgb(252 211 77) !important; }
+
+  html.light .bg-blue-600\/20 { background-color: rgb(219 234 254) !important; }
+  html.light .bg-blue-600\/20.text-white,
+  html.light .bg-blue-600\/20 { color: rgb(30 58 138) !important; }
+  html.light .border-blue-500\/50 { border-color: rgb(147 197 253) !important; }
 }
 
 /* ============ Scrollbars ============ */
