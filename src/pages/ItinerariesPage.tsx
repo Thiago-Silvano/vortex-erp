@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Map, FileText, ExternalLink, Trash2, Copy, Edit } from 'lucide-react';
+import { Plus, Search, Map, FileText, ExternalLink, Trash2, Copy, Edit, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -27,23 +27,41 @@ interface Itinerary {
   created_at: string;
 }
 
+interface PremiumDraft {
+  id: string;
+  title: string;
+  updated_at: string;
+  form_data: any;
+  roteiro_data: any;
+}
+
 export default function ItinerariesPage() {
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [premiumDrafts, setPremiumDrafts] = useState<PremiumDraft[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteDraftId, setDeleteDraftId] = useState<string | null>(null);
 
   const fetchItineraries = async () => {
     if (!activeCompany) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('itineraries')
-      .select('*')
-      .eq('empresa_id', activeCompany.id)
-      .order('created_at', { ascending: false });
-    setItineraries((data as any[]) || []);
+    const [itResp, drResp] = await Promise.all([
+      supabase
+        .from('itineraries')
+        .select('*')
+        .eq('empresa_id', activeCompany.id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('roteiro_premium_drafts' as any)
+        .select('id, title, updated_at, form_data, roteiro_data')
+        .eq('empresa_id', activeCompany.id)
+        .order('updated_at', { ascending: false }),
+    ]);
+    setItineraries((itResp.data as any[]) || []);
+    setPremiumDrafts((drResp.data as any[]) || []);
     setLoading(false);
   };
 
@@ -88,6 +106,14 @@ export default function ItinerariesPage() {
     fetchItineraries();
   };
 
+  const confirmDeleteDraft = async () => {
+    if (!deleteDraftId) return;
+    await supabase.from('roteiro_premium_drafts' as any).delete().eq('id', deleteDraftId);
+    toast.success('Rascunho excluído');
+    setDeleteDraftId(null);
+    fetchItineraries();
+  };
+
   const filtered = itineraries.filter(it =>
     it.title.toLowerCase().includes(search.toLowerCase()) ||
     it.client_name?.toLowerCase().includes(search.toLowerCase())
@@ -104,9 +130,14 @@ export default function ItinerariesPage() {
             <h1 className="text-2xl font-bold text-foreground">Roteiros</h1>
             <p className="text-sm text-muted-foreground mt-1">Crie roteiros visuais premium para seus clientes</p>
           </div>
-          <Button onClick={createNew} className="gap-2">
-            <Plus className="h-4 w-4" /> Novo Roteiro
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => navigate('/itineraries/premium')} className="gap-2 bg-gradient-to-r from-amber-500 to-pink-500 hover:opacity-90 text-white">
+              <Sparkles className="h-4 w-4" /> Roteiro Premium IA
+            </Button>
+            <Button onClick={createNew} variant="outline" className="gap-2">
+              <Plus className="h-4 w-4" /> Novo Roteiro
+            </Button>
+          </div>
         </div>
 
         <div className="relative mb-6">
@@ -118,6 +149,41 @@ export default function ItinerariesPage() {
             className="pl-10"
           />
         </div>
+
+        {/* Rascunhos Premium IA */}
+        {premiumDrafts.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              <h2 className="text-sm font-semibold text-foreground">Rascunhos Roteiro Premium IA</h2>
+              <Badge variant="secondary" className="text-[10px]">{premiumDrafts.length}</Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {premiumDrafts.map(d => (
+                <Card key={d.id} className="p-3 hover:shadow-md transition-shadow group border-amber-200/60">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/itineraries/premium/${d.id}`)}>
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                        <h3 className="font-medium text-sm text-foreground truncate">{d.title || 'Sem título'}</h3>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        {d.form_data?.destinoPrincipal || '—'}
+                        {d.form_data?.dataInicio ? ` • ${d.form_data.dataInicio}` : ''}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-1">
+                        Atualizado {new Date(d.updated_at).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100" onClick={() => setDeleteDraftId(d.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">Carregando...</div>
