@@ -227,8 +227,7 @@ function TopMenuBar() {
       label: "Financeiro",
       icon: <DollarSign className="h-3 w-3" />,
       items: [
-        { title: "Contas a Pagar", url: "/financial/payable", permKey: "financial_payable" },
-        { title: "Contas a Receber", url: "/financial/receivable", permKey: "financial_receivable" },
+        { title: "Contas Pagar/Receber", url: "/financial/payable", permKey: "financial_payable" },
         { title: "Conciliação Bancária", url: "/financial/reconciliation", permKey: "financial_reconciliation" },
         { title: "Extrato de conta-corrente", url: "/financial/bank-report", permKey: "financial_bank_report" },
         { title: "Fluxo de Caixa", url: "/financial/cashflow", permKey: "financial_cashflow" },
