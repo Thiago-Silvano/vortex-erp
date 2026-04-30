@@ -23,6 +23,8 @@ import { generateItineraryPdf } from '@/lib/generateItineraryPdf';
 import { AirportCombobox } from '@/components/AirportCombobox';
 import { findAirport } from '@/data/airports';
 import { CityCombobox } from '@/components/CityCombobox';
+import QuickClientModal from '@/components/QuickClientModal';
+import { UserPlus, Search, X } from 'lucide-react';
 
 const INTERESSES_LIST = [
   'Praia', 'Cultura', 'Gastronomia', 'Aventura', 'Natureza',
