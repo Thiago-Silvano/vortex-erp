@@ -290,7 +290,7 @@
    ============================================================ */
 @layer utilities {
   /* Row tints — keep a recognizable hue but at ~10-15% opacity over dark */
-  :root:not(.light) tr.bg-red-50, :root:not(.light) tr.bg-red-100,
+  tr.bg-red-50, tr.bg-red-100,
   tr .bg-red-50, tr .bg-red-100 {
     background-color: hsl(0 70% 50% / 0.12) !important;
   }
@@ -365,6 +365,29 @@
   .bg-emerald-50:not(tr):not(td) {
     background-color: hsl(152 60% 45% / 0.10) !important;
   }
+
+  /* No tema LIGHT, restaurar os tons claros nativos do Tailwind */
+  html.light tr.bg-red-50,    html.light tr .bg-red-50    { background-color: rgb(254 242 242) !important; }
+  html.light tr.bg-red-100,   html.light tr .bg-red-100   { background-color: rgb(254 226 226) !important; }
+  html.light tr.bg-orange-50, html.light tr .bg-orange-50 { background-color: rgb(255 247 237) !important; }
+  html.light tr.bg-orange-100,html.light tr .bg-orange-100{ background-color: rgb(255 237 213) !important; }
+  html.light tr.bg-amber-50,  html.light tr .bg-amber-50  { background-color: rgb(255 251 235) !important; }
+  html.light tr.bg-amber-100, html.light tr .bg-amber-100 { background-color: rgb(254 243 199) !important; }
+  html.light tr.bg-yellow-50, html.light tr .bg-yellow-50 { background-color: rgb(254 252 232) !important; }
+  html.light tr.bg-emerald-50,html.light tr .bg-emerald-50{ background-color: rgb(236 253 245) !important; }
+  html.light tr.bg-emerald-100,html.light tr .bg-emerald-100{ background-color: rgb(209 250 229) !important; }
+  html.light tr.bg-green-50,  html.light tr .bg-green-50  { background-color: rgb(240 253 244) !important; }
+  html.light tr.bg-blue-50,   html.light tr .bg-blue-50   { background-color: rgb(239 246 255) !important; }
+  html.light tr.bg-sky-50,    html.light tr .bg-sky-50    { background-color: rgb(240 249 255) !important; }
+  html.light tr.bg-purple-50, html.light tr .bg-purple-50 { background-color: rgb(250 245 255) !important; }
+  html.light tr.bg-pink-50,   html.light tr .bg-pink-50   { background-color: rgb(253 242 248) !important; }
+
+  html.light tr[class*="bg-"] td { color: rgb(17 24 39); }
+  html.light tbody tr td { color: rgb(17 24 39); }
+
+  html.light .bg-amber-50:not(tr):not(td)   { background-color: rgb(255 251 235) !important; }
+  html.light .bg-red-50:not(tr):not(td)     { background-color: rgb(254 242 242) !important; }
+  html.light .bg-emerald-50:not(tr):not(td) { background-color: rgb(236 253 245) !important; }
 }
 
 /* ============ Scrollbars ============ */
@@ -376,6 +399,14 @@
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover { background: hsl(240 10% 30%); }
+}
+
+/* Scrollbar mais clara no tema light */
+html.light ::-webkit-scrollbar-thumb {
+  background: hsl(240 10% 80%);
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: hsl(240 10% 70%);
 }
 
 @layer utilities {
