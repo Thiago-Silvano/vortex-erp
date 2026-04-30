@@ -78,6 +78,41 @@ export default function RoteiroPremiumPage() {
   const initialLoadRef = useRef(false);
   const dataFimInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Busca de clientes
+  const [clientSearch, setClientSearch] = useState('');
+  const [clientResults, setClientResults] = useState<Array<{ id: string; full_name: string; phone?: string; email?: string }>>([]);
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+  const [clientSearching, setClientSearching] = useState(false);
+  const [quickClientOpen, setQuickClientOpen] = useState(false);
+  const clientSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!activeCompany?.id) return;
+    if (clientSearchTimerRef.current) clearTimeout(clientSearchTimerRef.current);
+    const term = clientSearch.trim();
+    if (term.length < 2) { setClientResults([]); return; }
+    clientSearchTimerRef.current = setTimeout(async () => {
+      setClientSearching(true);
+      const { data } = await supabase
+        .from('clients')
+        .select('id, full_name, phone, email')
+        .eq('empresa_id', activeCompany.id)
+        .ilike('full_name', `%${term}%`)
+        .order('full_name')
+        .limit(10);
+      setClientResults((data as any) || []);
+      setClientSearching(false);
+    }, 300);
+    return () => { if (clientSearchTimerRef.current) clearTimeout(clientSearchTimerRef.current); };
+  }, [clientSearch, activeCompany?.id]);
+
+  function selectClient(c: { id: string; full_name: string }) {
+    setF('nomeCliente', c.full_name);
+    setClientSearch('');
+    setClientResults([]);
+    setClientDropdownOpen(false);
+  }
+
   // Carrega draft existente
   useEffect(() => {
     if (!draftId || initialLoadRef.current) return;
