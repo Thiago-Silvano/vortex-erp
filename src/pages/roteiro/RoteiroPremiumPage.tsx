@@ -73,6 +73,7 @@ export default function RoteiroPremiumPage() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(false);
+  const dataFimInputRef = useRef<HTMLInputElement | null>(null);
 
   // Carrega draft existente
   useEffect(() => {
@@ -178,8 +179,13 @@ export default function RoteiroPremiumPage() {
     next[idx] = { ...next[idx], dias: Math.max(0, dias || 0) };
     updateCidades(next);
   }
+  function setCidadeStopLogistico(idx: number, checked: boolean) {
+    const next = [...cidadesDias];
+    next[idx] = { ...next[idx], stopLogistico: checked, dias: checked ? 0 : (next[idx].dias || 1) };
+    updateCidades(next);
+  }
   function addCidade() {
-    updateCidades([...cidadesDias, { cidade: '', dias: 0 }]);
+    updateCidades([...cidadesDias, { cidade: '', dias: 0, stopLogistico: false }]);
   }
   function removeCidade(idx: number) {
     if (idx === 0) return; // não remove o destino principal
