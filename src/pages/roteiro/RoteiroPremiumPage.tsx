@@ -233,6 +233,7 @@ export default function RoteiroPremiumPage() {
     try {
       const aChegada = findAirport(form.aeroportoChegadaIata);
       const aSaida = findAirport(form.aeroportoSaidaIata);
+      const aOrigem = findAirport(form.aeroportoOrigemIata);
       const payload = {
         ...form,
         numDias: numNoites + 1,
@@ -241,6 +242,7 @@ export default function RoteiroPremiumPage() {
         logoUrl: config?.logoUrl,
         aeroportoChegada: aChegada ? `${aChegada.iata} - ${aChegada.name}, ${aChegada.city}/${aChegada.country}` : undefined,
         aeroportoSaida: aSaida ? `${aSaida.iata} - ${aSaida.name}, ${aSaida.city}/${aSaida.country}` : undefined,
+        aeroportoOrigem: aOrigem ? `${aOrigem.iata} - ${aOrigem.name}, ${aOrigem.city}/${aOrigem.country}` : undefined,
       };
       const { data, error } = await supabase.functions.invoke('gerar-roteiro', { body: payload });
       if (error) throw error;
@@ -785,6 +787,23 @@ export default function RoteiroPremiumPage() {
                     <SelectItem value="intenso">Intenso</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Aeroporto de origem (embarque)</Label>
+                <AirportCombobox
+                  value={form.aeroportoOrigemIata}
+                  onChange={(iata, a) => {
+                    setForm(p => ({
+                      ...p,
+                      aeroportoOrigemIata: iata,
+                      aeroportoOrigemLabel: a ? `${a.iata} · ${a.city} (${a.country})` : undefined,
+                    }));
+                  }}
+                  placeholder="Ex: GRU, São Paulo…"
+                />
               </div>
               <div>
                 <Label className="text-xs">Aeroporto de chegada</Label>
