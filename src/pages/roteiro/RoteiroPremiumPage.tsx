@@ -233,6 +233,7 @@ export default function RoteiroPremiumPage() {
     try {
       const aChegada = findAirport(form.aeroportoChegadaIata);
       const aSaida = findAirport(form.aeroportoSaidaIata);
+      const aOrigem = findAirport(form.aeroportoOrigemIata);
       const payload = {
         ...form,
         numDias: numNoites + 1,
@@ -241,6 +242,7 @@ export default function RoteiroPremiumPage() {
         logoUrl: config?.logoUrl,
         aeroportoChegada: aChegada ? `${aChegada.iata} - ${aChegada.name}, ${aChegada.city}/${aChegada.country}` : undefined,
         aeroportoSaida: aSaida ? `${aSaida.iata} - ${aSaida.name}, ${aSaida.city}/${aSaida.country}` : undefined,
+        aeroportoOrigem: aOrigem ? `${aOrigem.iata} - ${aOrigem.name}, ${aOrigem.city}/${aOrigem.country}` : undefined,
       };
       const { data, error } = await supabase.functions.invoke('gerar-roteiro', { body: payload });
       if (error) throw error;
