@@ -461,7 +461,7 @@ export default function BankStatementReportPage() {
                           <TableCell>
                             <Badge variant="outline" className={`text-[10px] ${
                               t.reconciliation_status === 'reconciled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              t.reconciliation_status === 'ignored' ? 'bg-gray-50 text-gray-600 border-gray-200' :
+                              t.reconciliation_status === 'ignored' ? 'bg-muted text-muted-foreground border-border' :
                               'bg-amber-50 text-amber-700 border-amber-200'
                             }`}>
                               {statusLabels[t.reconciliation_status] || t.reconciliation_status}

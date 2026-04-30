@@ -103,7 +103,7 @@ const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200",
   reconciled: "bg-emerald-100 text-emerald-800 border-emerald-200",
   partial: "bg-blue-100 text-blue-800 border-blue-200",
-  ignored: "bg-gray-100 text-gray-600 border-gray-200",
+  ignored: "bg-muted text-muted-foreground border-border",
 };
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
