@@ -141,7 +141,7 @@ ${Array.isArray(form.cidadesDias) && form.cidadesDias.length > 0
      • NÃO sugira hospedagem nem programação de passeios na cidade.
      • Trate-a como conexão de transporte entre a cidade anterior e a próxima no mesmo dia (ou pernoite forçado em hotel próximo ao terminal apenas se inevitável).
      • Escolha o tipo de logística mais viável (avião, trem rápido, ônibus rodoviário, ferry, transfer) considerando distância, horários reais de saída/chegada e tempo total em trânsito (entre 6h–23h).
-     • Inclua na seção "logistica" um item específico para esse stop, com origem = cidade anterior e destino = cidade seguinte, citando o stop em "descricao" (ex: "via ${"${c.cidade}"}").
+     • Inclua na seção "logistica" um item específico para esse stop, com origem = cidade anterior e destino = cidade seguinte, citando o nome da cidade-stop em "descricao" (ex: "via [cidade-stop]").
      • Cite no roteiro diário o horário aproximado de embarque/desembarque para mostrar viabilidade.
   → Para as demais cidades, os dias do roteiro diário devem seguir exatamente a ordem e quantidade indicadas. Inclua transfers entre as cidades nos dias de troca.`
   : ""}
