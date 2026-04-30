@@ -23,7 +23,7 @@ export interface FormularioRoteiro {
   aeroportoSaidaIata?: string;
   aeroportoSaidaLabel?: string;
   /** Distribuição de dias por cidade (inclui o destino principal como primeira entrada). */
-  cidadesDias?: { cidade: string; dias: number }[];
+  cidadesDias?: { cidade: string; dias: number; stopLogistico?: boolean }[];
 }
 
 export interface OpcaoHospedagem {
