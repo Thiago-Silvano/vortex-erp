@@ -984,14 +984,19 @@ export default function RoteiroPremiumPage() {
             <div>
               <Label className="text-xs">Interesses</Label>
               <div className="flex flex-wrap gap-1.5 mt-1">
-                {INTERESSES_LIST.map(i => (
-                  <Badge key={i}
-                    variant={form.interesses.includes(i) ? 'default' : 'outline'}
-                    className="cursor-pointer text-[10px]"
-                    onClick={() => toggleInteresse(i)}>
-                    {i}
-                  </Badge>
-                ))}
+                {INTERESSES_LIST.map(i => {
+                  const active = form.interesses.includes(i);
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => toggleInteresse(i)}
+                      className={`cursor-pointer rounded-full px-3 py-1 text-[11px] transition-colors ${active ? 'badge-tag-active' : 'badge-tag-inactive'}`}
+                    >
+                      {i}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
