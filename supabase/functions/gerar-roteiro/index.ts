@@ -162,13 +162,16 @@ ${form.aeroportoSaida ? `- Aeroporto de SAÍDA: ${form.aeroportoSaida} (programe
 INSTRUÇÕES:
 1. Hospedagens: 3-4 opções reais/verossímeis, cada uma com perfil diferente.
    - Para CADA hotel preencha "enderecoCompleto" (rua, bairro, cidade, país) e "nomeOficial" (nome exato como aparece no Google Maps / TripAdvisor).
+   - Para CADA hotel preencha também "cidade" com APENAS o nome da cidade (sem estado/país).
 2. Passeios: 10-14 opções variadas cobrindo todos os dias, manhã/tarde/noite.
+   - Para CADA passeio preencha "cidade" com APENAS o nome da cidade onde o passeio acontece (sem estado/país). Isso é OBRIGATÓRIO em roteiros multi-cidade.
 3. Logística: 2-3 opções de deslocamento.
    - SE aeroportos foram informados, inclua obrigatoriamente:
      a) Transfer aeroporto de chegada → primeira hospedagem (origem = código IATA + nome do aeroporto).
      b) Transfer última hospedagem → aeroporto de saída.
    - Cite os códigos IATA explicitamente em "origem" e "destino".
 4. Gastronomia: 6-8 restaurantes/experiências reais do destino.
+   - Para CADA item preencha "cidade" com APENAS o nome da cidade.
 5. Roteiro diário: narrativa dia a dia para todos os ${form.numDias} dias.
 6. Escreva em português, tom elegante e comercial.
 7. Preços devem ser estimativas realistas para o destino.
