@@ -181,11 +181,11 @@ export default function RoteiroPremiumPage() {
   }
   function setCidadeStopLogistico(idx: number, checked: boolean) {
     const next = [...cidadesDias];
-    next[idx] = { ...next[idx], stopLogistico: checked, dias: checked ? 0 : (next[idx].dias || 1) };
+    next[idx] = { ...next[idx], stopLogistico: checked, dias: next[idx].dias || 1 };
     updateCidades(next);
   }
   function addCidade() {
-    updateCidades([...cidadesDias, { cidade: '', dias: 0, stopLogistico: false }]);
+    updateCidades([...cidadesDias, { cidade: '', dias: 1, stopLogistico: false }]);
   }
   function removeCidade(idx: number) {
     if (idx === 0) return; // não remove o destino principal
