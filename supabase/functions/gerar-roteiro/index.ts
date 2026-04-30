@@ -129,6 +129,12 @@ DADOS DA VIAGEM:
 - Destino principal: ${form.destinoPrincipal}
 - Paradas/cidades: ${form.paradasSecundarias || "apenas destino principal"}
 - Período: ${form.numDias} dias (${form.dataInicio} a ${form.dataFim})
+${Array.isArray(form.cidadesDias) && form.cidadesDias.length > 0
+  ? `- Distribuição de dias por cidade (RESPEITE EXATAMENTE):\n${form.cidadesDias
+      .filter((c: any) => c?.cidade && c?.dias > 0)
+      .map((c: any, i: number) => `   ${i + 1}. ${c.cidade}: ${c.dias} dia(s)`)
+      .join("\n")}\n  → Os dias do roteiro diário devem seguir essa ordem e quantidade. Inclua transfers entre as cidades nos dias de troca.`
+  : ""}
 - Passageiros: ${form.numPassageiros} (${form.perfilViajante})
 ${form.idadesCriancas ? `- Crianças: ${form.idadesCriancas} anos` : ""}
 - Hotel desejado: ${form.categoriaHotel}
