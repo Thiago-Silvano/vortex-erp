@@ -607,11 +607,6 @@ export default function RoteiroPremiumPage() {
                   onChange={e => setF('destinoPrincipal', e.target.value)} placeholder="Ex: Paris, França" />
               </div>
               <div>
-                <Label className="text-xs">Paradas/cidades</Label>
-                <Input className="h-8 text-xs" value={form.paradasSecundarias}
-                  onChange={e => setF('paradasSecundarias', e.target.value)} placeholder="Ex: Lyon, Nice" />
-              </div>
-              <div>
                 <Label className="text-xs">Cliente</Label>
                 <Input className="h-8 text-xs" value={form.nomeCliente}
                   onChange={e => setF('nomeCliente', e.target.value)} placeholder="Nome do cliente" />
@@ -630,6 +625,70 @@ export default function RoteiroPremiumPage() {
                 <Label className="text-xs">Passageiros</Label>
                 <Input type="number" min={1} className="h-8 text-xs" value={form.numPassageiros}
                   onChange={e => setF('numPassageiros', Number(e.target.value))} />
+              </div>
+            </div>
+
+            {/* Cidades / paradas com dias */}
+            <div className="border rounded-md p-2.5 bg-muted/30">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs font-semibold flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" /> Cidades e dias em cada uma
+                </Label>
+                <div className="flex items-center gap-2 text-[11px]">
+                  {totalDiasViagem > 0 && (
+                    <Badge
+                      variant={diferencaDias === 0 ? 'default' : 'destructive'}
+                      className="h-5 text-[10px]"
+                    >
+                      {totalDiasDistribuidos} / {totalDiasViagem} dias
+                      {diferencaDias > 0 && ` (faltam ${diferencaDias})`}
+                      {diferencaDias < 0 && ` (sobra ${Math.abs(diferencaDias)})`}
+                    </Badge>
+                  )}
+                  <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-[11px] gap-1" onClick={addCidade}>
+                    <Plus className="h-3 w-3" /> Cidade
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                {cidadesDias.map((c, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                    <div className="col-span-8">
+                      <Input
+                        className="h-7 text-xs"
+                        value={c.cidade}
+                        onChange={e => setCidadeNome(idx, e.target.value)}
+                        placeholder={idx === 0 ? 'Destino principal (ex: Paris, França)' : 'Parada (ex: Lyon, França)'}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Input
+                        type="number" min={0}
+                        className="h-7 text-xs"
+                        value={c.dias || ''}
+                        onChange={e => setCidadeDias(idx, Number(e.target.value))}
+                        placeholder="Dias"
+                      />
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      {idx > 0 && (
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6"
+                          onClick={() => removeCidade(idx)}>
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {totalDiasViagem > 0 && diferencaDias !== 0 && (
+                <div className="flex items-center gap-1.5 mt-2 text-[11px] text-destructive">
+                  <AlertTriangle className="h-3 w-3" />
+                  {diferencaDias > 0
+                    ? `Faltam ${diferencaDias} dia(s) — distribua entre as cidades antes de gerar.`
+                    : `Há ${Math.abs(diferencaDias)} dia(s) a mais — ajuste a distribuição.`}
+                </div>
+              )}
               </div>
               <div>
                 <Label className="text-xs">Perfil</Label>
