@@ -226,6 +226,9 @@ function hexToHsl(hex: string): string {
 }
 
 function applyThemeToDOM(theme: ThemeSettings) {
+  // NOTE: Tema global dark agora vive em src/index.css.
+  // Mantemos apenas variáveis --theme-* legadas (algumas páginas as referenciam),
+  // mas NÃO sobrescrevemos --primary/--background/etc para preservar o tema global.
   const root = document.documentElement;
   root.style.setProperty('--theme-primary', theme.primary_color);
   root.style.setProperty('--theme-secondary', theme.secondary_color);
@@ -240,35 +243,8 @@ function applyThemeToDOM(theme: ThemeSettings) {
   root.style.setProperty('--theme-field', theme.field_color);
   root.style.setProperty('--theme-table', theme.table_color);
   root.style.setProperty('--theme-table-alt', theme.table_alt_color);
-  root.style.setProperty('--theme-font-family', theme.font_family);
-  root.style.setProperty('--theme-font-titles', theme.font_family_titles);
-  root.style.setProperty('--theme-font-tables', theme.font_family_tables);
-  root.style.setProperty('--theme-font-size-title', theme.font_size_title);
-  root.style.setProperty('--theme-font-size-tab', theme.font_size_tab);
-  root.style.setProperty('--theme-font-size-body', theme.font_size_body);
-  root.style.setProperty('--theme-font-size-table', theme.font_size_table);
-  root.style.setProperty('--theme-font-size-button', theme.font_size_button);
-  root.style.setProperty('--theme-line-height', theme.line_height);
-  root.style.setProperty('--theme-row-height', theme.row_height);
-  root.style.setProperty('--theme-field-height', theme.field_height);
-  root.style.setProperty('--theme-element-spacing', theme.element_spacing);
-  root.style.setProperty('--theme-inner-padding', theme.inner_padding);
-  root.style.setProperty('--theme-table-row-height', theme.table_row_height);
-
-  // Apply button border-radius based on style
-  const btnRadius = theme.button_style === 'rounded' ? '8px' : theme.button_style === 'square' ? '2px' : '6px';
-  root.style.setProperty('--theme-button-radius', btnRadius);
-
-  // Apply to CSS base variables for global effect
-  root.style.setProperty('--primary', hexToHsl(theme.primary_color));
-  root.style.setProperty('--background', hexToHsl(theme.background_color));
-  root.style.setProperty('--border', hexToHsl(theme.border_color));
-  root.style.setProperty('--input', hexToHsl(theme.border_color));
-  root.style.setProperty('--ring', hexToHsl(theme.primary_color));
-  root.style.setProperty('--secondary', hexToHsl(theme.secondary_color));
-
-  // Font
-  root.style.fontFamily = `'${theme.font_family}', ui-sans-serif, system-ui, sans-serif`;
+  // Suprimido: aplicação a --primary/--background/--border/--input/--ring/--secondary
+  // Suprimido: override de fontFamily no <html>
 }
 
 interface ThemeContextType {
