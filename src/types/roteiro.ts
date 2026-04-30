@@ -28,6 +28,8 @@ export interface OpcaoHospedagem {
   descricao: string;
   diferenciais: string[];
   localizacao: string;
+  enderecoCompleto?: string;
+  nomeOficial?: string;
   precoEstimado: string;
   recomendadoPara: string;
   selecionado: boolean;

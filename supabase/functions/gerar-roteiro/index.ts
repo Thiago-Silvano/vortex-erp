@@ -23,10 +23,12 @@ const ROTEIRO_SCHEMA = {
           descricao: { type: "string" },
           diferenciais: { type: "array", items: { type: "string" } },
           localizacao: { type: "string" },
+          enderecoCompleto: { type: "string", description: "Endereço completo (rua, número, bairro, cidade, país) usado para Google Maps." },
+          nomeOficial: { type: "string", description: "Nome oficial exato do hotel para busca em Google Maps e TripAdvisor." },
           precoEstimado: { type: "string" },
           recomendadoPara: { type: "string" },
         },
-        required: ["id", "tipo", "nome", "categoria", "descricao", "diferenciais", "localizacao", "precoEstimado", "recomendadoPara"],
+          required: ["id", "tipo", "nome", "categoria", "descricao", "diferenciais", "localizacao", "enderecoCompleto", "nomeOficial", "precoEstimado", "recomendadoPara"],
       },
     },
     passeios: {
@@ -137,6 +139,7 @@ ${form.precoHotelMin ? `- Faixa hotel: R$ ${form.precoHotelMin}–${form.precoHo
 
 INSTRUÇÕES:
 1. Hospedagens: 3-4 opções reais/verossímeis, cada uma com perfil diferente.
+   - Para CADA hotel preencha "enderecoCompleto" (rua, bairro, cidade, país) e "nomeOficial" (nome exato como aparece no Google Maps / TripAdvisor).
 2. Passeios: 10-14 opções variadas cobrindo todos os dias, manhã/tarde/noite.
 3. Logística: 2-3 opções de deslocamento.
 4. Gastronomia: 6-8 restaurantes/experiências reais do destino.
