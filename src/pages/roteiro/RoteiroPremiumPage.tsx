@@ -771,6 +771,7 @@ export default function RoteiroPremiumPage() {
               <div>
                 <Label className="text-xs">Início *</Label>
                 <Input type="date" className="h-8 text-xs" value={form.dataInicio}
+                  onClick={(e) => { try { (e.currentTarget as any).showPicker?.(); } catch {} }}
                   onChange={e => {
                     const v = e.target.value;
                     setF('dataInicio', v);
@@ -795,6 +796,7 @@ export default function RoteiroPremiumPage() {
                   type="date" className="h-8 text-xs"
                   min={form.dataInicio || undefined}
                   value={form.dataFim}
+                  onClick={(e) => { try { (e.currentTarget as any).showPicker?.(); } catch {} }}
                   onChange={e => setF('dataFim', e.target.value)}
                 />
               </div>
