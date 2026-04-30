@@ -181,11 +181,11 @@ export default function RoteiroPremiumPage() {
   }
   function setCidadeStopLogistico(idx: number, checked: boolean) {
     const next = [...cidadesDias];
-    next[idx] = { ...next[idx], stopLogistico: checked, dias: checked ? 0 : (next[idx].dias || 1) };
+    next[idx] = { ...next[idx], stopLogistico: checked, dias: next[idx].dias || 1 };
     updateCidades(next);
   }
   function addCidade() {
-    updateCidades([...cidadesDias, { cidade: '', dias: 0, stopLogistico: false }]);
+    updateCidades([...cidadesDias, { cidade: '', dias: 1, stopLogistico: false }]);
   }
   function removeCidade(idx: number) {
     if (idx === 0) return; // não remove o destino principal
@@ -225,7 +225,7 @@ export default function RoteiroPremiumPage() {
         );
         return;
       }
-      const semDias = cidadesDias.find(c => c.cidade && !c.stopLogistico && (!c.dias || c.dias <= 0));
+      const semDias = cidadesDias.find(c => c.cidade && (!c.dias || c.dias <= 0));
       if (semDias) { toast.error(`Informe quantos dias em "${semDias.cidade}".`); return; }
     }
     setLoading(true);
@@ -694,7 +694,6 @@ export default function RoteiroPremiumPage() {
                         value={c.dias || ''}
                         onChange={e => setCidadeDias(idx, Number(e.target.value))}
                         placeholder="Dias"
-                        disabled={!!c.stopLogistico}
                       />
                     </div>
                     <div className="col-span-3 flex items-center gap-1.5">

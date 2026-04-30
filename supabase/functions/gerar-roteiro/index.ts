@@ -134,15 +134,15 @@ ${Array.isArray(form.cidadesDias) && form.cidadesDias.length > 0
       .filter((c: any) => c?.cidade)
       .map((c: any, i: number) =>
         c.stopLogistico
-          ? `   ${i + 1}. ${c.cidade} — STOP LOGÍSTICO (cidade de passagem; NÃO conta dias de hospedagem; serve apenas como conexão entre a cidade anterior e a próxima).`
+          ? `   ${i + 1}. ${c.cidade}: ${c.dias} dia(s) — STOP LOGÍSTICO (parada estratégica entre a cidade anterior e a próxima; INCLUI hospedagem e conta os dias normalmente).`
           : `   ${i + 1}. ${c.cidade}: ${c.dias} dia(s)`)
       .join("\n")}
   → Para cidades marcadas como STOP LOGÍSTICO:
-     • NÃO sugira hospedagem nem programação de passeios na cidade.
-     • Trate-a como conexão de transporte entre a cidade anterior e a próxima no mesmo dia (ou pernoite forçado em hotel próximo ao terminal apenas se inevitável).
-     • Escolha o tipo de logística mais viável (avião, trem rápido, ônibus rodoviário, ferry, transfer) considerando distância, horários reais de saída/chegada e tempo total em trânsito (entre 6h–23h).
-     • Inclua na seção "logistica" um item específico para esse stop, com origem = cidade anterior e destino = cidade seguinte, citando o nome da cidade-stop em "descricao" (ex: "via [cidade-stop]").
-     • Cite no roteiro diário o horário aproximado de embarque/desembarque para mostrar viabilidade.
+     • Trate-a como uma parada intermediária estratégica entre a cidade anterior e a próxima — o passageiro PERNOITA na cidade, então SUGIRA hospedagem (preferência por hotéis próximos ao terminal/centro para facilitar a conexão seguinte).
+     • Os dias informados CONTAM no total da viagem e devem aparecer no roteiro diário como dias regulares (com programação leve/compatível com o tempo de trânsito).
+     • Escolha o tipo de logística mais viável de chegada e saída (avião, trem rápido, ônibus rodoviário, ferry, transfer) considerando distância, horários reais e viabilidade.
+     • Inclua na seção "logistica" os trechos: cidade anterior → cidade-stop e cidade-stop → cidade seguinte, com horários aproximados.
+     • A programação diária deve priorizar 1-2 atrações próximas e tempo de descanso/conexão.
   → Para as demais cidades, os dias do roteiro diário devem seguir exatamente a ordem e quantidade indicadas. Inclua transfers entre as cidades nos dias de troca.`
   : ""}
 - Passageiros: ${form.numPassageiros} (${form.perfilViajante})
