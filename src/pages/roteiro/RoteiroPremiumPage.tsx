@@ -73,6 +73,7 @@ export default function RoteiroPremiumPage() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialLoadRef = useRef(false);
+  const dataFimInputRef = useRef<HTMLInputElement | null>(null);
 
   // Carrega draft existente
   useEffect(() => {
@@ -178,8 +179,13 @@ export default function RoteiroPremiumPage() {
     next[idx] = { ...next[idx], dias: Math.max(0, dias || 0) };
     updateCidades(next);
   }
+  function setCidadeStopLogistico(idx: number, checked: boolean) {
+    const next = [...cidadesDias];
+    next[idx] = { ...next[idx], stopLogistico: checked, dias: checked ? 0 : (next[idx].dias || 1) };
+    updateCidades(next);
+  }
   function addCidade() {
-    updateCidades([...cidadesDias, { cidade: '', dias: 0 }]);
+    updateCidades([...cidadesDias, { cidade: '', dias: 0, stopLogistico: false }]);
   }
   function removeCidade(idx: number) {
     if (idx === 0) return; // não remove o destino principal
@@ -219,7 +225,7 @@ export default function RoteiroPremiumPage() {
         );
         return;
       }
-      const semDias = cidadesDias.find(c => c.cidade && (!c.dias || c.dias <= 0));
+      const semDias = cidadesDias.find(c => c.cidade && !c.stopLogistico && (!c.dias || c.dias <= 0));
       if (semDias) { toast.error(`Informe quantos dias em "${semDias.cidade}".`); return; }
     }
     setLoading(true);
@@ -614,12 +620,32 @@ export default function RoteiroPremiumPage() {
               <div>
                 <Label className="text-xs">Início *</Label>
                 <Input type="date" className="h-8 text-xs" value={form.dataInicio}
-                  onChange={e => setF('dataInicio', e.target.value)} />
+                  onChange={e => {
+                    const v = e.target.value;
+                    setF('dataInicio', v);
+                    if (v) {
+                      // abre o picker de Fim automaticamente para escolha rápida
+                      setTimeout(() => {
+                        const el = dataFimInputRef.current;
+                        if (!el) return;
+                        try {
+                          el.min = v;
+                          el.focus();
+                          (el as any).showPicker?.();
+                        } catch {}
+                      }, 50);
+                    }
+                  }} />
               </div>
               <div>
                 <Label className="text-xs">Fim *</Label>
-                <Input type="date" className="h-8 text-xs" value={form.dataFim}
-                  onChange={e => setF('dataFim', e.target.value)} />
+                <Input
+                  ref={dataFimInputRef}
+                  type="date" className="h-8 text-xs"
+                  min={form.dataInicio || undefined}
+                  value={form.dataFim}
+                  onChange={e => setF('dataFim', e.target.value)}
+                />
               </div>
               <div>
                 <Label className="text-xs">Passageiros</Label>
@@ -653,7 +679,7 @@ export default function RoteiroPremiumPage() {
               <div className="space-y-1.5">
                 {cidadesDias.map((c, idx) => (
                   <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                    <div className="col-span-8">
+                    <div className="col-span-6">
                       <Input
                         className="h-7 text-xs"
                         value={c.cidade}
@@ -661,14 +687,25 @@ export default function RoteiroPremiumPage() {
                         placeholder={idx === 0 ? 'Destino principal (ex: Paris, França)' : 'Parada (ex: Lyon, França)'}
                       />
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <Input
                         type="number" min={0}
                         className="h-7 text-xs"
                         value={c.dias || ''}
                         onChange={e => setCidadeDias(idx, Number(e.target.value))}
                         placeholder="Dias"
+                        disabled={!!c.stopLogistico}
                       />
+                    </div>
+                    <div className="col-span-3 flex items-center gap-1.5">
+                      <Checkbox
+                        id={`stop-${idx}`}
+                        checked={!!c.stopLogistico}
+                        onCheckedChange={(v) => setCidadeStopLogistico(idx, !!v)}
+                      />
+                      <Label htmlFor={`stop-${idx}`} className="text-[10px] cursor-pointer leading-tight">
+                        Stop logístico?
+                      </Label>
                     </div>
                     <div className="col-span-1 flex justify-end">
                       {idx > 0 && (
