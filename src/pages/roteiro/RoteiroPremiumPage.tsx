@@ -689,7 +689,9 @@ export default function RoteiroPremiumPage() {
                     : `Há ${Math.abs(diferencaDias)} dia(s) a mais — ajuste a distribuição.`}
                 </div>
               )}
-              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs">Perfil</Label>
                 <Select value={form.perfilViajante} onValueChange={v => setF('perfilViajante', v as any)}>
