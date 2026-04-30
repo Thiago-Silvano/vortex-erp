@@ -163,11 +163,15 @@ export default function RoteiroPremiumPage() {
     if (!form.dataInicio || !form.dataFim) { toast.error('Informe as datas'); return; }
     setLoading(true);
     try {
+      const aChegada = findAirport(form.aeroportoChegadaIata);
+      const aSaida = findAirport(form.aeroportoSaidaIata);
       const payload = {
         ...form,
         numDias: numNoites + 1,
         nomeAgencia: config?.nomeAgencia || activeCompany?.name || '',
         logoUrl: config?.logoUrl,
+        aeroportoChegada: aChegada ? `${aChegada.iata} - ${aChegada.name}, ${aChegada.city}/${aChegada.country}` : undefined,
+        aeroportoSaida: aSaida ? `${aSaida.iata} - ${aSaida.name}, ${aSaida.city}/${aSaida.country}` : undefined,
       };
       const { data, error } = await supabase.functions.invoke('gerar-roteiro', { body: payload });
       if (error) throw error;
