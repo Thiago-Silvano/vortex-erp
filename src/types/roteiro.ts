@@ -36,6 +36,7 @@ export interface OpcaoHospedagem {
   descricao: string;
   diferenciais: string[];
   localizacao: string;
+  cidade?: string;
   enderecoCompleto?: string;
   nomeOficial?: string;
   precoEstimado: string;
@@ -49,6 +50,7 @@ export interface OpcaoPasseio {
   nome: string;
   descricao: string;
   duracao: string;
+  cidade?: string;
   diaRecomendado?: number;
   periodo?: 'manha' | 'tarde' | 'noite';
   precoEstimado: string;
@@ -73,6 +75,7 @@ export interface DicaGastronomica {
   descricao: string;
   especialidade: string;
   faixaPreco: string;
+  cidade?: string;
   selecionado: boolean;
 }
 
