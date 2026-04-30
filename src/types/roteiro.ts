@@ -18,6 +18,10 @@ export interface FormularioRoteiro {
   logoUrl?: string;
   corPrimaria?: string;
   slogan?: string;
+  aeroportoChegadaIata?: string;
+  aeroportoChegadaLabel?: string;
+  aeroportoSaidaIata?: string;
+  aeroportoSaidaLabel?: string;
 }
 
 export interface OpcaoHospedagem {
