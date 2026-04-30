@@ -500,6 +500,50 @@ export default function NewSalePage() {
     }
   }, [quoteData]);
 
+  // Consume payload coming from "Roteiro Premium → Enviar para Cotação"
+  useEffect(() => {
+    if (editSaleId) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get('origem') !== 'roteiro') return;
+    const raw = localStorage.getItem('roteiro_para_cotacao');
+    if (!raw) return;
+    try {
+      const payload = JSON.parse(raw);
+      const dados = payload?.dadosCotacao || {};
+      if (dados.clienteNomeSugerido) setClientName(dados.clienteNomeSugerido);
+      if (dados.tituloCotacao) setQuoteTitle(dados.tituloCotacao);
+      if (dados.nomeDestino) setDestinationName(dados.nomeDestino);
+      if (dados.inicioViagem) setTripStartDate(dados.inicioViagem);
+      if (dados.finalViagem) setTripEndDate(dados.finalViagem);
+      if (typeof dados.numNoites === 'number' && dados.numNoites > 0) {
+        setTripNights(dados.numNoites);
+        setNightsManuallySet(true);
+      }
+      if (typeof dados.numPassageiros === 'number' && dados.numPassageiros > 0) {
+        setPassengersCount(dados.numPassageiros);
+      }
+      const servicos: any[] = Array.isArray(payload?.servicos) ? payload.servicos : [];
+      if (servicos.length > 0) {
+        const mapped: SaleItem[] = servicos.map((s: any) => ({
+          description: s.descricaoResumida || s.descricaoDetalhada || 'Item do roteiro',
+          cost_price: Number(s.custo) || 0,
+          rav: Number(s.rav) || 0,
+          markup_percent: 0,
+          total_value: Number(s.total) || (Number(s.custo) || 0) + (Number(s.rav) || 0),
+        }));
+        setItems(prev => (prev.length === 0 ? mapped : [...prev, ...mapped]));
+      }
+      // Limpa o payload para não reaproveitar em próximas navegações
+      localStorage.removeItem('roteiro_para_cotacao');
+      // Remove o query param para não reprocessar em re-render
+      navigate('/sales/new', { replace: true });
+      toast.success(`${servicos.length} item(ns) importados do roteiro`);
+    } catch (err) {
+      console.error('Falha ao importar payload do roteiro:', err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (nightsManuallySet) return;
     if (tripStartDate && tripEndDate) {
