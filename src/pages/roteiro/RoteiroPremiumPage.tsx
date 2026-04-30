@@ -208,7 +208,7 @@ export default function RoteiroPremiumPage() {
   }
 
   async function gerarRoteiro() {
-    if (!form.destinoPrincipal) { toast.error('Informe o destino principal'); return; }
+    if (!form.destinoPrincipal) { toast.error('Informe pelo menos uma cidade no roteiro'); return; }
     if (!form.dataInicio || !form.dataFim) { toast.error('Informe as datas'); return; }
     // Validação de dias por cidade vs período total
     if (totalDiasViagem > 0) {
@@ -609,17 +609,20 @@ export default function RoteiroPremiumPage() {
             <CardTitle className="text-sm">1. Brief da Viagem</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <Label className="text-xs">Destino principal *</Label>
-                <Input className="h-8 text-xs" value={form.destinoPrincipal}
-                  onChange={e => setF('destinoPrincipal', e.target.value)} placeholder="Ex: Paris, França" />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Cliente</Label>
                 <Input className="h-8 text-xs" value={form.nomeCliente}
                   onChange={e => setF('nomeCliente', e.target.value)} placeholder="Nome do cliente" />
               </div>
+              <div>
+                <Label className="text-xs">Passageiros</Label>
+                <Input type="number" min={1} className="h-8 text-xs" value={form.numPassageiros}
+                  onChange={e => setF('numPassageiros', Number(e.target.value))} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Início *</Label>
                 <Input type="date" className="h-8 text-xs" value={form.dataInicio}
@@ -649,11 +652,6 @@ export default function RoteiroPremiumPage() {
                   value={form.dataFim}
                   onChange={e => setF('dataFim', e.target.value)}
                 />
-              </div>
-              <div>
-                <Label className="text-xs">Passageiros</Label>
-                <Input type="number" min={1} className="h-8 text-xs" value={form.numPassageiros}
-                  onChange={e => setF('numPassageiros', Number(e.target.value))} />
               </div>
             </div>
 
