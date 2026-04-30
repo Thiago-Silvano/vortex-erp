@@ -912,10 +912,11 @@ export default function RoteiroPremiumPage() {
                   type="date"
                   className="h-8 text-xs"
                   value={form.dataInicio}
-                  onClick={(e) => {
-                    try {
-                      (e.currentTarget as any).showPicker?.();
-                    } catch {}
+                  onFocus={(e) => {
+                    try { (e.currentTarget as any).showPicker?.(); } catch {}
+                  }}
+                  onMouseDown={(e) => {
+                    try { (e.currentTarget as any).showPicker?.(); } catch {}
                   }}
                   onChange={(e) => {
                     const v = e.target.value;
@@ -943,10 +944,11 @@ export default function RoteiroPremiumPage() {
                   className="h-8 text-xs"
                   min={form.dataInicio || undefined}
                   value={form.dataFim}
-                  onClick={(e) => {
-                    try {
-                      (e.currentTarget as any).showPicker?.();
-                    } catch {}
+                  onFocus={(e) => {
+                    try { (e.currentTarget as any).showPicker?.(); } catch {}
+                  }}
+                  onMouseDown={(e) => {
+                    try { (e.currentTarget as any).showPicker?.(); } catch {}
                   }}
                   onChange={(e) => setF("dataFim", e.target.value)}
                 />
