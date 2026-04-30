@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star } from 'lucide-react';
+import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star, Save, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -41,6 +41,7 @@ function parsePreco(s?: string): number {
 
 export default function RoteiroPremiumPage() {
   const navigate = useNavigate();
+  const { draftId } = useParams<{ draftId?: string }>();
   const { activeCompany } = useCompany();
   const { config } = useAgencyConfig();
 
@@ -53,6 +54,8 @@ export default function RoteiroPremiumPage() {
     numPassageiros: 2,
     perfilViajante: 'casal',
     categoriaHotel: '4 estrelas',
+    precoHotelMin: undefined,
+    precoHotelMax: undefined,
     interesses: [],
     ritmoViagem: 'moderado',
     observacoes: '',
@@ -64,6 +67,69 @@ export default function RoteiroPremiumPage() {
   const [roteiro, setRoteiro] = useState<RoteiroGerado | null>(null);
   const [savingRoteiro, setSavingRoteiro] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId || null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialLoadRef = useRef(false);
+
+  // Carrega draft existente
+  useEffect(() => {
+    if (!draftId || initialLoadRef.current) return;
+    initialLoadRef.current = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from('roteiro_premium_drafts' as any)
+        .select('*')
+        .eq('id', draftId)
+        .maybeSingle();
+      if (error || !data) {
+        toast.error('Rascunho não encontrado');
+        return;
+      }
+      const d = data as any;
+      if (d.form_data) setForm((p) => ({ ...p, ...d.form_data }));
+      if (d.roteiro_data) setRoteiro(d.roteiro_data as RoteiroGerado);
+      setCurrentDraftId(d.id);
+    })();
+  }, [draftId]);
+
+  // Autosave (debounce 1.2s) sempre que form ou roteiro mudam
+  useEffect(() => {
+    if (!activeCompany?.id) return;
+    if (!form.destinoPrincipal && !roteiro) return; // nada relevante ainda
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        setAutoSaveStatus('saving');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setAutoSaveStatus('idle'); return; }
+        const payload: any = {
+          empresa_id: activeCompany.id,
+          user_id: user.id,
+          title: roteiro?.titulo || form.destinoPrincipal || 'Roteiro sem título',
+          form_data: form,
+          roteiro_data: roteiro,
+        };
+        if (currentDraftId) {
+          await supabase.from('roteiro_premium_drafts' as any).update(payload).eq('id', currentDraftId);
+        } else {
+          const { data, error } = await supabase
+            .from('roteiro_premium_drafts' as any)
+            .insert(payload).select().single();
+          if (!error && data) setCurrentDraftId((data as any).id);
+        }
+        setAutoSaveStatus('saved');
+        setTimeout(() => setAutoSaveStatus('idle'), 1500);
+      } catch (e) {
+        console.error('autosave error', e);
+        setAutoSaveStatus('idle');
+      }
+    }, 1200);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, roteiro, activeCompany?.id]);
 
   function googleMapsLink(h: OpcaoHospedagem): string {
     const q = [h.nomeOficial || h.nome, h.enderecoCompleto || h.localizacao, form.destinoPrincipal]
