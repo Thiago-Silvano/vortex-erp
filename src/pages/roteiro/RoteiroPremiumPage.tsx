@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send } from 'lucide-react';
+import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -19,6 +19,7 @@ import type {
   FormularioRoteiro, RoteiroGerado, OpcaoHospedagem, OpcaoPasseio,
   OpcaoLogistica, DicaGastronomica, ServicoImportadoRoteiro, PayloadCotacaoRoteiro,
 } from '@/types/roteiro';
+import { generateItineraryPdf } from '@/lib/generateItineraryPdf';
 
 const INTERESSES_LIST = [
   'Praia', 'Cultura', 'Gastronomia', 'Aventura', 'Natureza',
@@ -61,6 +62,18 @@ export default function RoteiroPremiumPage() {
 
   const [loading, setLoading] = useState(false);
   const [roteiro, setRoteiro] = useState<RoteiroGerado | null>(null);
+  const [savingRoteiro, setSavingRoteiro] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  function googleMapsLink(h: OpcaoHospedagem): string {
+    const q = [h.nomeOficial || h.nome, h.enderecoCompleto || h.localizacao, form.destinoPrincipal]
+      .filter(Boolean).join(', ');
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  }
+  function tripadvisorLink(h: OpcaoHospedagem): string {
+    const q = `${h.nomeOficial || h.nome} ${form.destinoPrincipal}`;
+    return `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}`;
+  }
 
   const numNoites = useMemo(() => diasEntre(form.dataInicio, form.dataFim), [form.dataInicio, form.dataFim]);
 
@@ -182,6 +195,223 @@ export default function RoteiroPremiumPage() {
     navigate('/sales/new?origem=roteiro');
   }
 
+  /**
+   * Constrói payload completo (itinerary + destinations + days + attractions) para o módulo Roteiros.
+   * Usa todas as opções selecionadas + o roteiro diário gerado pela IA.
+   */
+  function buildItineraryStructure() {
+    if (!roteiro) return null;
+    const hospedagensSel = roteiro.hospedagens.filter(h => h.selecionado);
+    const passeiosSel = roteiro.passeios.filter(p => p.selecionado);
+    const logisticaSel = roteiro.logistica.filter(l => l.selecionado);
+    const gastronomiaSel = roteiro.gastronomia.filter(g => g.selecionado);
+
+    const cidades = [form.destinoPrincipal, ...form.paradasSecundarias.split(',').map(s => s.trim()).filter(Boolean)];
+    const destinations = cidades.map(name => ({ name }));
+
+    // Distribui passeios pelos dias do roteiro diário (fallback: round-robin)
+    const diasIa = roteiro.roteiroDiario || [];
+    const totalDias = Math.max(diasIa.length, numNoites + 1, 1);
+    const days: Array<{
+      day_number: number;
+      title: string;
+      subtitle: string;
+      description: string;
+      attractions: Array<{
+        name: string; description: string; time?: string; duration?: string;
+        category: string; city?: string; sort_order: number;
+      }>;
+    }> = [];
+
+    for (let i = 0; i < totalDias; i++) {
+      const ia = diasIa[i];
+      days.push({
+        day_number: i + 1,
+        title: ia?.titulo || `Dia ${i + 1}`,
+        subtitle: '',
+        description: ia?.descricao || '',
+        attractions: [],
+      });
+    }
+
+    // Distribui passeios pelo dia recomendado (se houver) senão round-robin
+    let rrIdx = 0;
+    passeiosSel.forEach(p => {
+      const idx = (p.diaRecomendado && p.diaRecomendado >= 1 && p.diaRecomendado <= totalDias)
+        ? p.diaRecomendado - 1
+        : (rrIdx++ % totalDias);
+      days[idx].attractions.push({
+        name: p.nome,
+        description: p.descricao,
+        time: p.periodo === 'manha' ? '09:00' : p.periodo === 'tarde' ? '14:00' : p.periodo === 'noite' ? '19:00' : '',
+        duration: p.duracao,
+        category: p.tipo === 'gastronomia' ? 'gastronomy' : p.tipo === 'cultura' ? 'landmark' : p.tipo === 'aventura' ? 'experience' : 'attraction',
+        city: form.destinoPrincipal,
+        sort_order: days[idx].attractions.length,
+      });
+    });
+
+    // Gastronomia → spread em todos os dias começando no dia 1
+    gastronomiaSel.forEach((g, i) => {
+      const idx = i % totalDias;
+      days[idx].attractions.push({
+        name: g.nome,
+        description: `${g.descricao}\nEspecialidade: ${g.especialidade}`,
+        category: 'gastronomy',
+        city: form.destinoPrincipal,
+        sort_order: days[idx].attractions.length,
+      });
+    });
+
+    // Hospedagens → adiciona como recomendação no dia 1
+    if (hospedagensSel.length > 0 && days[0]) {
+      hospedagensSel.forEach(h => {
+        days[0].attractions.unshift({
+          name: `Hospedagem: ${h.nome}`,
+          description: `${h.descricao}\nLocalização: ${h.localizacao}\nPreço: ${h.precoEstimado}`,
+          category: 'recommendation',
+          city: h.localizacao,
+          sort_order: 0,
+        });
+      });
+    }
+
+    // Logística → recomendação no dia 1 (chegada) e último dia (partida)
+    logisticaSel.forEach((l, i) => {
+      const idx = i === 0 ? 0 : (totalDias - 1);
+      days[idx].attractions.push({
+        name: `${l.tipo.toUpperCase()}: ${l.origem} → ${l.destino}`,
+        description: l.descricao,
+        category: 'recommendation',
+        sort_order: days[idx].attractions.length,
+      });
+    });
+
+    return {
+      itinerary: {
+        title: roteiro.titulo,
+        subtitle: roteiro.subtitulo,
+        client_name: form.nomeCliente,
+        travel_date: form.dataInicio && form.dataFim ? `${form.dataInicio} a ${form.dataFim}` : '',
+      },
+      destinations,
+      days,
+    };
+  }
+
+  async function persistirRoteiroNoBanco() {
+    if (!activeCompany?.id) { toast.error('Empresa ativa não identificada'); return null; }
+    const struct = buildItineraryStructure();
+    if (!struct) return null;
+
+    const { data: itin, error: errIt } = await supabase
+      .from('itineraries')
+      .insert({ ...struct.itinerary, empresa_id: activeCompany.id, status: 'draft' } as any)
+      .select().single();
+    if (errIt || !itin) { toast.error('Erro ao criar roteiro', { description: errIt?.message }); return null; }
+
+    // Destinos
+    const destInserts = struct.destinations.map((d, i) => ({
+      itinerary_id: (itin as any).id, name: d.name, sort_order: i,
+    }));
+    let destRows: any[] = [];
+    if (destInserts.length > 0) {
+      const { data: dRows } = await supabase.from('itinerary_destinations').insert(destInserts as any).select();
+      destRows = dRows || [];
+    }
+    const firstDestId = destRows[0]?.id;
+
+    // Dias
+    const dayInserts = struct.days.map((d, i) => ({
+      itinerary_id: (itin as any).id,
+      destination_id: firstDestId,
+      day_number: d.day_number,
+      title: d.title,
+      subtitle: d.subtitle,
+      description: d.description,
+      sort_order: i,
+    }));
+    const { data: dayRows } = await supabase.from('itinerary_days').insert(dayInserts as any).select();
+
+    // Atrações
+    if (dayRows) {
+      const attrInserts: any[] = [];
+      struct.days.forEach((d, i) => {
+        const dayId = (dayRows as any[])[i]?.id;
+        if (!dayId) return;
+        d.attractions.forEach(a => attrInserts.push({ ...a, day_id: dayId }));
+      });
+      if (attrInserts.length > 0) {
+        await supabase.from('itinerary_attractions').insert(attrInserts as any);
+      }
+    }
+
+    return (itin as any).id as string;
+  }
+
+  async function criarRoteiroInterativo() {
+    if (totalSelecionados === 0) { toast.error('Selecione pelo menos um item'); return; }
+    setSavingRoteiro(true);
+    try {
+      const id = await persistirRoteiroNoBanco();
+      if (!id) return;
+      toast.success('Roteiro interativo criado!');
+      navigate(`/itineraries/${id}`);
+    } finally {
+      setSavingRoteiro(false);
+    }
+  }
+
+  async function gerarPdfDireto() {
+    if (totalSelecionados === 0) { toast.error('Selecione pelo menos um item'); return; }
+    setGeneratingPdf(true);
+    toast.info('Gerando PDF...');
+    try {
+      const struct = buildItineraryStructure();
+      if (!struct) return;
+
+      // Monta objetos compatíveis com generateItineraryPdf sem persistir
+      const itineraryObj: any = {
+        title: struct.itinerary.title,
+        subtitle: struct.itinerary.subtitle,
+        client_name: struct.itinerary.client_name,
+        travel_date: struct.itinerary.travel_date,
+        cover_image_url: '',
+        thank_you_text: 'Obrigado por escolher viajar conosco!',
+        thank_you_image_url: '',
+      };
+      const destinations = struct.destinations.map((d, i) => ({ id: `d${i}`, name: d.name, image_url: '' }));
+      const days = struct.days.map((d, i) => ({
+        id: `day${i}`,
+        day_number: d.day_number,
+        title: d.title,
+        subtitle: d.subtitle,
+        description: d.description,
+        attractions: d.attractions.map((a, j) => ({
+          id: `a${i}-${j}`,
+          name: a.name,
+          location: '',
+          city: a.city || '',
+          description: a.description,
+          image_url: '',
+          time: a.time || '',
+          duration: a.duration || '',
+          category: a.category,
+          sort_order: a.sort_order,
+        })),
+      }));
+
+      const pdf = await generateItineraryPdf(itineraryObj, destinations, days as any, []);
+      pdf.save(`${itineraryObj.title || 'roteiro-premium'}.pdf`);
+      toast.success('PDF gerado!');
+    } catch (e: any) {
+      console.error('PDF error:', e);
+      toast.error('Erro ao gerar PDF', { description: e?.message });
+    } finally {
+      setGeneratingPdf(false);
+    }
+  }
+
   return (
     <AppLayout>
       <div className="space-y-4">
@@ -203,8 +433,16 @@ export default function RoteiroPremiumPage() {
           {roteiro && (
             <div className="flex items-center gap-2">
               <Badge variant="secondary">{totalSelecionados} selecionado(s)</Badge>
-              <Button onClick={enviarParaCotacao} className="gap-1.5">
+              <Button onClick={enviarParaCotacao} className="gap-1.5" size="sm">
                 <Send className="h-4 w-4" /> Enviar para Cotação
+              </Button>
+              <Button onClick={criarRoteiroInterativo} disabled={savingRoteiro} variant="secondary" className="gap-1.5" size="sm">
+                {savingRoteiro ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+                Roteiro Interativo
+              </Button>
+              <Button onClick={gerarPdfDireto} disabled={generatingPdf} variant="outline" className="gap-1.5" size="sm">
+                {generatingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                Gerar PDF
               </Button>
             </div>
           )}
@@ -348,6 +586,26 @@ export default function RoteiroPremiumPage() {
                             <p className="text-[10px] text-muted-foreground">{h.categoria} • {h.localizacao}</p>
                             <p className="text-xs mt-1">{h.descricao}</p>
                             <p className="text-[10px] text-primary mt-1">{h.precoEstimado}</p>
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              <a
+                                href={googleMapsLink(h)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 text-[10px] font-medium transition"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Globe className="h-3 w-3" /> Google Maps
+                              </a>
+                              <a
+                                href={tripadvisorLink(h)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[10px] font-medium transition"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Star className="h-3 w-3" /> TripAdvisor
+                              </a>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
