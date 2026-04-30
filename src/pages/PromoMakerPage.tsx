@@ -1567,7 +1567,7 @@ export default function PromoMakerPage() {
         <div className="flex items-center justify-between px-4 py-2 border-b bg-card gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <Palette className="h-5 w-5 text-primary" /> Promo Maker
+              <Palette className="h-5 w-5 text-primary" /> Lâminas de promoções
             </h1>
             <Separator orientation="vertical" className="h-6" />
             <div className="flex gap-1">
