@@ -130,10 +130,20 @@ DADOS DA VIAGEM:
 - Paradas/cidades: ${form.paradasSecundarias || "apenas destino principal"}
 - Período: ${form.numDias} dias (${form.dataInicio} a ${form.dataFim})
 ${Array.isArray(form.cidadesDias) && form.cidadesDias.length > 0
-  ? `- Distribuição de dias por cidade (RESPEITE EXATAMENTE):\n${form.cidadesDias
-      .filter((c: any) => c?.cidade && c?.dias > 0)
-      .map((c: any, i: number) => `   ${i + 1}. ${c.cidade}: ${c.dias} dia(s)`)
-      .join("\n")}\n  → Os dias do roteiro diário devem seguir essa ordem e quantidade. Inclua transfers entre as cidades nos dias de troca.`
+  ? `- Distribuição de cidades (RESPEITE EXATAMENTE a ordem e a quantidade de dias):\n${form.cidadesDias
+      .filter((c: any) => c?.cidade)
+      .map((c: any, i: number) =>
+        c.stopLogistico
+          ? `   ${i + 1}. ${c.cidade} — STOP LOGÍSTICO (cidade de passagem; NÃO conta dias de hospedagem; serve apenas como conexão entre a cidade anterior e a próxima).`
+          : `   ${i + 1}. ${c.cidade}: ${c.dias} dia(s)`)
+      .join("\n")}
+  → Para cidades marcadas como STOP LOGÍSTICO:
+     • NÃO sugira hospedagem nem programação de passeios na cidade.
+     • Trate-a como conexão de transporte entre a cidade anterior e a próxima no mesmo dia (ou pernoite forçado em hotel próximo ao terminal apenas se inevitável).
+     • Escolha o tipo de logística mais viável (avião, trem rápido, ônibus rodoviário, ferry, transfer) considerando distância, horários reais de saída/chegada e tempo total em trânsito (entre 6h–23h).
+     • Inclua na seção "logistica" um item específico para esse stop, com origem = cidade anterior e destino = cidade seguinte, citando o stop em "descricao" (ex: "via ${"${c.cidade}"}").
+     • Cite no roteiro diário o horário aproximado de embarque/desembarque para mostrar viabilidade.
+  → Para as demais cidades, os dias do roteiro diário devem seguir exatamente a ordem e quantidade indicadas. Inclua transfers entre as cidades nos dias de troca.`
   : ""}
 - Passageiros: ${form.numPassageiros} (${form.perfilViajante})
 ${form.idadesCriancas ? `- Crianças: ${form.idadesCriancas} anos` : ""}
