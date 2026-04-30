@@ -151,6 +151,7 @@ ${form.idadesCriancas ? `- Crianças: ${form.idadesCriancas} anos` : ""}
 ${form.precoHotelMin ? `- Faixa hotel: R$ ${form.precoHotelMin}–${form.precoHotelMax}/noite` : ""}
 - Interesses: ${(form.interesses || []).join(", ")}
 - Ritmo: ${form.ritmoViagem}
+${form.aeroportoOrigem ? `- Aeroporto de ORIGEM (embarque inicial do passageiro): ${form.aeroportoOrigem} (use como ponto de partida da viagem; considere voos saindo deste aeroporto até o aeroporto de chegada).` : ""}
 ${form.aeroportoChegada ? `- Aeroporto de CHEGADA: ${form.aeroportoChegada} (use este aeroporto como ponto de entrada — sugira transfers a partir dele e considere a localização nas hospedagens do dia 1).` : ""}
 ${form.aeroportoSaida ? `- Aeroporto de SAÍDA: ${form.aeroportoSaida} (programe transfer/logística para este aeroporto no último dia).` : ""}
 - Observações: ${form.observacoes || "nenhuma"}
