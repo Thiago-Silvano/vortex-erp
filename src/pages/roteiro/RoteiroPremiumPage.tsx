@@ -1108,6 +1108,17 @@ export default function RoteiroPremiumPage() {
           </Card>
         )}
       </div>
+      <QuickClientModal
+        open={quickClientOpen}
+        onClose={() => setQuickClientOpen(false)}
+        initialName={form.nomeCliente}
+        onClientCreated={(c) => {
+          setF('nomeCliente', c.full_name);
+          setClientSearch('');
+          setQuickClientOpen(false);
+          toast.success(`Cliente "${c.full_name}" vinculado ao roteiro`);
+        }}
+      />
     </AppLayout>
   );
 }
