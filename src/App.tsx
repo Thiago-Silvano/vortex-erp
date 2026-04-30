@@ -155,8 +155,11 @@ const App = () => (
           <Route path="/financial/reconciliation" element={<ProtectedRoute><BankReconciliationPage /></ProtectedRoute>} />
           <Route path="/financial/bank-report" element={<ProtectedRoute><BankStatementReportPage /></ProtectedRoute>} />
           <Route path="/itineraries" element={<ProtectedRoute><ItinerariesPage /></ProtectedRoute>} />
+          <Route path="/itineraries/premium" element={<ProtectedRoute><RoteiroPremiumPage /></ProtectedRoute>} />
+          <Route path="/itineraries/premium/:draftId" element={<ProtectedRoute><RoteiroPremiumPage /></ProtectedRoute>} />
           <Route path="/itineraries/:id" element={<ProtectedRoute><ItineraryEditorPage /></ProtectedRoute>} />
-          <Route path="/comercial/roteiro-premium" element={<ProtectedRoute><RoteiroPremiumPage /></ProtectedRoute>} />
+          {/* Rota legada: redireciona para o novo local dentro de Roteiros */}
+          <Route path="/comercial/roteiro-premium" element={<Navigate to="/itineraries/premium" replace />} />
           <Route path="/promo-maker" element={<ProtectedRoute><PromoMakerPage /></ProtectedRoute>} />
           <Route path="/marketing/promotions" element={<ProtectedRoute><PromotionsPage /></ProtectedRoute>} />
           <Route path="/marketing/promotions/new" element={<ProtectedRoute><PromotionFormPage /></ProtectedRoute>} />
