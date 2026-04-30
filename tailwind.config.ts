@@ -93,9 +93,10 @@ export default {
   			}
   		},
   		borderRadius: {
-  			lg: '2px',
-  			md: '1px',
-  			sm: '1px'
+  			lg: 'var(--radius)',
+  			md: 'calc(var(--radius) - 2px)',
+  			sm: 'calc(var(--radius) - 3px)',
+  			xl: 'calc(var(--radius) + 7px)'
   		},
   		keyframes: {
   			'accordion-down': {
