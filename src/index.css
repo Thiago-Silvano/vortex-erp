@@ -290,7 +290,7 @@
    ============================================================ */
 @layer utilities {
   /* Row tints — keep a recognizable hue but at ~10-15% opacity over dark */
-  tr.bg-red-50, tr.bg-red-100,
+  :root:not(.light) tr.bg-red-50, :root:not(.light) tr.bg-red-100,
   tr .bg-red-50, tr .bg-red-100 {
     background-color: hsl(0 70% 50% / 0.12) !important;
   }
