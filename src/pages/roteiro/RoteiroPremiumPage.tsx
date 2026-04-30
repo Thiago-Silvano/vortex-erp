@@ -496,9 +496,20 @@ export default function RoteiroPremiumPage() {
               </p>
             </div>
           </div>
-          {roteiro && (
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{totalSelecionados} selecionado(s)</Badge>
+          <div className="flex items-center gap-2">
+            {autoSaveStatus === 'saving' && (
+              <Badge variant="outline" className="gap-1 text-[10px]">
+                <Loader2 className="h-3 w-3 animate-spin" /> Salvando…
+              </Badge>
+            )}
+            {autoSaveStatus === 'saved' && (
+              <Badge variant="outline" className="gap-1 text-[10px] text-emerald-600 border-emerald-300">
+                <CheckCircle2 className="h-3 w-3" /> Salvo
+              </Badge>
+            )}
+            {roteiro && (
+              <>
+                <Badge variant="secondary">{totalSelecionados} selecionado(s)</Badge>
               <Button onClick={enviarParaCotacao} className="gap-1.5" size="sm">
                 <Send className="h-4 w-4" /> Enviar para Cotação
               </Button>
@@ -510,8 +521,9 @@ export default function RoteiroPremiumPage() {
                 {generatingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
                 Gerar PDF
               </Button>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* FORMULÁRIO */}
