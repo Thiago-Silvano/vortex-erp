@@ -1,161 +1,140 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   NEW DARK THEME — accent #5b5bd6
+   All values in HSL for shadcn compatibility
+   ============================================================ */
 @layer base {
   :root {
-    --background: 225 27% 97%;
-    --foreground: 220 39% 11%;
+    /* === Backgrounds === */
+    --background: 240 6% 6%;            /* #0f0f10 bg-base */
+    --foreground: 240 24% 93%;          /* #e8e8f0 text-primary */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 39% 11%;
+    --card: 240 6% 9%;                  /* #141416 bg-surface */
+    --card-foreground: 240 24% 93%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 39% 11%;
+    --popover: 240 7% 11%;              /* #1a1a1e bg-elevated */
+    --popover-foreground: 240 24% 93%;
 
-    --primary: 244 100% 70%;
+    --primary: 240 60% 60%;             /* #5b5bd6 accent */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 95%;
-    --secondary-foreground: 220 39% 11%;
+    --secondary: 240 8% 14%;            /* bg-hover #1e1e24 */
+    --secondary-foreground: 240 24% 93%;
 
-    --muted: 220 14% 95%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 240 7% 11%;                /* bg-elevated */
+    --muted-foreground: 240 12% 69%;    /* #a8a8b8 */
 
-    --accent: 246 100% 96%;
-    --accent-foreground: 244 100% 65%;
+    --accent: 240 25% 18%;              /* nav-active-bg #1e1e2e */
+    --accent-foreground: 240 67% 80%;   /* #a8a8f0 */
 
-    --destructive: 1 73% 59%;
+    --destructive: 0 84% 68%;           /* #f16a6a */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 244 100% 70%;
+    --border: 240 7% 15%;               /* #242428 */
+    --input: 240 7% 15%;
+    --ring: 240 60% 60%;
 
-    --radius: 0.75rem;
+    --radius: 0.4375rem;                /* 7px md */
 
-    --sidebar-background: 240 28% 14%;
-    --sidebar-foreground: 222 22% 73%;
-    --sidebar-primary: 244 100% 70%;
+    /* === Sidebar === */
+    --sidebar-background: 240 6% 9%;    /* #141416 */
+    --sidebar-foreground: 240 67% 80%;  /* #a8a8f0 nav-idle */
+    --sidebar-primary: 240 60% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 25% 20%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 22% 22%;
-    --sidebar-ring: 244 100% 70%;
+    --sidebar-accent: 240 25% 18%;      /* nav-active-bg */
+    --sidebar-accent-foreground: 240 67% 80%;
+    --sidebar-border: 240 7% 12%;       /* border-subtle */
+    --sidebar-ring: 240 60% 60%;
+    --sidebar: 240 6% 9%;
 
-    --chart-1: 244 100% 70%;
-    --chart-2: 142 60% 45%;
-    --chart-3: 38 80% 50%;
-    --chart-4: 1 73% 59%;
-    --chart-5: 199 80% 48%;
+    /* === Charts === */
+    --chart-1: 240 60% 60%;
+    --chart-2: 152 64% 54%;
+    --chart-3: 38 100% 62%;
+    --chart-4: 0 84% 68%;
+    --chart-5: 240 67% 80%;
 
-    --sidebar: 240 28% 14%;
-
+    /* === Legacy semantic kept (gold/navy used in PDFs are independent) === */
     --gold: 45 70% 50%;
-    --gold-foreground: 220 40% 10%;
-    --navy: 240 28% 14%;
+    --gold-foreground: 240 6% 6%;
+    --navy: 240 6% 9%;
     --navy-foreground: 0 0% 100%;
-    --success: 142 60% 40%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 80% 50%;
-    --warning-foreground: 0 0% 100%;
+    --success: 152 64% 54%;             /* #3dd68c */
+    --success-foreground: 240 6% 6%;
+    --warning: 38 100% 62%;              /* #ffb43c */
+    --warning-foreground: 240 6% 6%;
 
-    --status-new: 210 80% 50%;
-    --status-progress: 38 80% 50%;
-    --status-waiting: 25 85% 50%;
-    --status-done: 142 60% 40%;
-    --status-cancelled: 0 72% 51%;
+    --status-new: 240 67% 80%;
+    --status-progress: 38 100% 62%;
+    --status-waiting: 25 100% 62%;
+    --status-done: 152 64% 54%;
+    --status-cancelled: 0 84% 68%;
 
     --whatsapp: 142 70% 45%;
     --whatsapp-foreground: 0 0% 100%;
+
+    /* === Custom new tokens === */
+    --bg-elevated: 240 7% 11%;
+    --bg-hover: 240 8% 14%;
+    --border-subtle: 240 7% 12%;
+    --border-strong: 240 7% 17%;
+    --text-faint: 240 9% 31%;           /* #4a4a56 */
+    --text-placeholder: 240 9% 25%;     /* #3a3a46 */
+    --accent-light: 240 60% 60% / 0.15;
+    --accent-glow: 240 60% 60% / 0.10;
 
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-    --shadow-2xs: 0 1px 1px 0 hsl(220 20% 14% / 0.03);
-    --shadow-xs: 0 1px 2px 0 hsl(220 20% 14% / 0.04);
-    --shadow-sm: 0 1px 3px 0 hsl(220 20% 14% / 0.05);
-    --shadow: 0 1px 3px 0 hsl(220 20% 14% / 0.05);
-    --shadow-md: 0 2px 4px 0 hsl(220 20% 14% / 0.06);
-    --shadow-lg: 0 4px 8px 0 hsl(220 20% 14% / 0.08);
-    --shadow-xl: 0 8px 16px 0 hsl(220 20% 14% / 0.1);
-    --shadow-2xl: 0 12px 24px 0 hsl(220 20% 14% / 0.12);
-    --tracking-normal: 0em;
-    --spacing: 0.25rem;
+    --shadow-2xs: 0 1px 1px 0 hsl(0 0% 0% / 0.20);
+    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.25);
+    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.30);
+    --shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.30);
+    --shadow-md: 0 2px 6px 0 hsl(0 0% 0% / 0.35);
+    --shadow-lg: 0 4px 12px 0 hsl(0 0% 0% / 0.40);
+    --shadow-xl: 0 8px 20px 0 hsl(0 0% 0% / 0.45);
+    --shadow-2xl: 0 12px 28px 0 hsl(0 0% 0% / 0.50);
   }
 
+  /* Dark = same (theme is dark by default) */
   .dark {
-    --background: 240 20% 8%;
-    --foreground: 220 10% 92%;
-
-    --card: 240 18% 12%;
-    --card-foreground: 220 10% 92%;
-
-    --popover: 240 18% 12%;
-    --popover-foreground: 220 10% 92%;
-
-    --primary: 244 100% 72%;
+    --background: 240 6% 6%;
+    --foreground: 240 24% 93%;
+    --card: 240 6% 9%;
+    --card-foreground: 240 24% 93%;
+    --popover: 240 7% 11%;
+    --popover-foreground: 240 24% 93%;
+    --primary: 240 60% 60%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 240 15% 18%;
-    --secondary-foreground: 220 10% 92%;
-
-    --muted: 240 15% 18%;
-    --muted-foreground: 220 8% 50%;
-
-    --accent: 244 40% 22%;
-    --accent-foreground: 244 100% 80%;
-
-    --destructive: 1 65% 45%;
+    --secondary: 240 8% 14%;
+    --secondary-foreground: 240 24% 93%;
+    --muted: 240 7% 11%;
+    --muted-foreground: 240 12% 69%;
+    --accent: 240 25% 18%;
+    --accent-foreground: 240 67% 80%;
+    --destructive: 0 84% 68%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 240 15% 22%;
-    --input: 240 15% 22%;
-    --ring: 244 100% 72%;
-
-    --sidebar-background: 240 28% 10%;
-    --sidebar-foreground: 222 22% 78%;
-    --sidebar-primary: 244 100% 72%;
+    --border: 240 7% 15%;
+    --input: 240 7% 15%;
+    --ring: 240 60% 60%;
+    --sidebar-background: 240 6% 9%;
+    --sidebar-foreground: 240 67% 80%;
+    --sidebar-primary: 240 60% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 22% 18%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 20% 18%;
-    --sidebar-ring: 244 100% 72%;
-
-    --chart-1: 244 100% 72%;
-    --chart-2: 142 60% 48%;
-    --chart-3: 38 80% 55%;
-    --chart-4: 1 73% 62%;
-    --chart-5: 199 80% 55%;
-    --sidebar: 240 28% 10%;
-
+    --sidebar-accent: 240 25% 18%;
+    --sidebar-accent-foreground: 240 67% 80%;
+    --sidebar-border: 240 7% 12%;
+    --sidebar-ring: 240 60% 60%;
+    --sidebar: 240 6% 9%;
     --gold: 45 70% 50%;
-    --gold-foreground: 220 40% 10%;
-    --navy: 240 28% 10%;
-    --navy-foreground: 0 0% 100%;
-    --success: 142 60% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 80% 55%;
-    --warning-foreground: 0 0% 100%;
-
-    --status-new: 210 80% 55%;
-    --status-progress: 38 80% 55%;
-    --status-waiting: 25 85% 55%;
-    --status-done: 142 60% 45%;
-    --status-cancelled: 0 72% 55%;
-
+    --navy: 240 6% 9%;
+    --success: 152 64% 54%;
+    --warning: 38 100% 62%;
     --whatsapp: 142 70% 45%;
-    --whatsapp-foreground: 0 0% 100%;
-
-    --shadow-2xs: 0 1px 1px 0 hsl(0 0% 0% / 0.08);
-    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.12);
-    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.15);
-    --shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.15);
-    --shadow-md: 0 2px 4px 0 hsl(0 0% 0% / 0.2);
-    --shadow-lg: 0 4px 8px 0 hsl(0 0% 0% / 0.25);
-    --shadow-xl: 0 8px 16px 0 hsl(0 0% 0% / 0.3);
-    --shadow-2xl: 0 12px 24px 0 hsl(0 0% 0% / 0.35);
-    --radius: 0.75rem;
   }
 }
 
@@ -164,47 +143,91 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-family: var(--font-sans);
-    font-size: 13px;
-    line-height: 1.4;
+  html {
+    color-scheme: dark;
   }
 
-  /* Compact form elements globally */
+  body {
+    @apply bg-background text-muted-foreground antialiased;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1 { @apply text-foreground; font-size: 20px; font-weight: 500; letter-spacing: -0.4px; }
+  h2 { @apply text-foreground; font-size: 16px; font-weight: 500; letter-spacing: -0.3px; }
+  h3 { color: hsl(240 24% 88%); font-size: 14px; font-weight: 500; }
+  h4 { color: hsl(240 24% 88%); font-size: 13px; font-weight: 500; }
+
   input, select, textarea, button {
     font-family: var(--font-sans);
     font-size: 13px;
   }
+
+  /* Inputs darker surface */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  textarea, select {
+    background-color: hsl(var(--bg-elevated));
+  }
+
+  input:focus, textarea:focus, select:focus {
+    background-color: hsl(var(--bg-hover));
+  }
+
+  /* Hide number input spinners */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+
+  /* Date picker icon (Chrome) tinted to muted */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7) brightness(0.9);
+    cursor: pointer;
+  }
 }
 
-/* Scrollbar styling */
+/* ============ Scrollbars ============ */
+@layer base {
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(240 8% 22%);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(240 10% 30%); }
+}
+
 @layer utilities {
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.2);
-    border-radius: 2px;
+    background: hsl(240 8% 22%);
+    border-radius: 4px;
   }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.4);
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(240 10% 30%); }
+
+  .label-group {
+    font-size: 10px;
+    font-weight: 500;
+    color: hsl(var(--text-placeholder));
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
   }
 }
 
-/* ERP compact overrides */
+/* ============ ERP compact components ============ */
 @layer components {
-  /* Dense table rows */
   .erp-table th,
   .erp-table td {
     @apply py-1 px-2 text-xs;
   }
 
-  /* Compact form grid */
   .erp-form-grid {
     @apply grid gap-x-3 gap-y-1.5;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
