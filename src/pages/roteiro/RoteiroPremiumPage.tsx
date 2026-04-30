@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send } from 'lucide-react';
+import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -19,6 +19,8 @@ import type {
   FormularioRoteiro, RoteiroGerado, OpcaoHospedagem, OpcaoPasseio,
   OpcaoLogistica, DicaGastronomica, ServicoImportadoRoteiro, PayloadCotacaoRoteiro,
 } from '@/types/roteiro';
+import { generateItineraryPdf } from '@/lib/generateItineraryPdf';
+import { getStaticMapUrl } from '@/components/itinerary/ItineraryMapSection';
 
 const INTERESSES_LIST = [
   'Praia', 'Cultura', 'Gastronomia', 'Aventura', 'Natureza',
@@ -61,6 +63,18 @@ export default function RoteiroPremiumPage() {
 
   const [loading, setLoading] = useState(false);
   const [roteiro, setRoteiro] = useState<RoteiroGerado | null>(null);
+  const [savingRoteiro, setSavingRoteiro] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  function googleMapsLink(h: OpcaoHospedagem): string {
+    const q = [h.nomeOficial || h.nome, h.enderecoCompleto || h.localizacao, form.destinoPrincipal]
+      .filter(Boolean).join(', ');
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  }
+  function tripadvisorLink(h: OpcaoHospedagem): string {
+    const q = `${h.nomeOficial || h.nome} ${form.destinoPrincipal}`;
+    return `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}`;
+  }
 
   const numNoites = useMemo(() => diasEntre(form.dataInicio, form.dataFim), [form.dataInicio, form.dataFim]);
 
