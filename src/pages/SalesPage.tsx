@@ -283,21 +283,21 @@ export default function SalesPage() {
                      <TableCell>
                        <div className="flex items-center gap-1.5 flex-wrap">
                          {s.invoice_url ? (
-                           <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border gap-1" variant="outline">
+                           <Badge className="bg-emerald-600/20 text-white border-emerald-500/50 border gap-1" variant="outline">
                              <FileCheck className="h-3 w-3" /> Emitida
                            </Badge>
                          ) : (
-                           <Badge className="bg-red-100 text-red-800 border-red-300 border gap-1" variant="outline">
+                           <Badge className="bg-red-600/20 text-white border-red-500/50 border gap-1" variant="outline">
                              <FileX className="h-3 w-3" /> Emitir
                            </Badge>
                          )}
                           {s.commission_invoice_status === 'pending' && (
-                            <Badge className="bg-amber-100 text-amber-800 border-amber-300 border gap-1" variant="outline" title="Aguardando pagamento de comissão pelo fornecedor">
+                            <Badge className="bg-amber-600/20 text-white border-amber-500/50 border gap-1" variant="outline" title="Aguardando pagamento de comissão pelo fornecedor">
                               <Clock className="h-3 w-3" /> Aguard. comissão
                             </Badge>
                           )}
                           {s.commission_invoice_status === 'received' && (
-                           <Badge className="bg-blue-100 text-blue-800 border-blue-300 border gap-1" variant="outline" title="Comissão recebida do fornecedor">
+                           <Badge className="bg-blue-600/20 text-white border-blue-500/50 border gap-1" variant="outline" title="Comissão recebida do fornecedor">
                              <FileCheck className="h-3 w-3" /> Comissão recebida
                            </Badge>
                          )}
@@ -354,21 +354,21 @@ export default function SalesPage() {
                   <span>Total: <strong>{fmt(Number(s.total_sale))}</strong></span>
                   <span>Lucro: <strong>{fmt(Number(s.net_profit))}</strong></span>
                   {s.invoice_url ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border gap-1 text-xs" variant="outline">
+                    <Badge className="bg-emerald-600/20 text-white border-emerald-500/50 border gap-1 text-xs" variant="outline">
                       <FileCheck className="h-3 w-3" /> NF Emitida
                     </Badge>
                   ) : (
-                    <Badge className="bg-red-100 text-red-800 border-red-300 border gap-1 text-xs" variant="outline">
+                    <Badge className="bg-red-600/20 text-white border-red-500/50 border gap-1 text-xs" variant="outline">
                       <FileX className="h-3 w-3" /> Emitir NF
                     </Badge>
                   )}
                   {s.commission_invoice_status === 'pending' && (
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-300 border gap-1 text-xs" variant="outline">
+                    <Badge className="bg-amber-600/20 text-white border-amber-500/50 border gap-1 text-xs" variant="outline">
                       <Clock className="h-3 w-3" /> Aguard. comissão
                     </Badge>
                   )}
                   {s.commission_invoice_status === 'received' && (
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-300 border gap-1 text-xs" variant="outline">
+                    <Badge className="bg-blue-600/20 text-white border-blue-500/50 border gap-1 text-xs" variant="outline">
                       <FileCheck className="h-3 w-3" /> Comissão recebida
                     </Badge>
                   )}
