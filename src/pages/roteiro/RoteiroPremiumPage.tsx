@@ -823,7 +823,7 @@ export default function RoteiroPremiumPage() {
                   <div className="relative flex-1">
                     <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
                     <Input
-                      className="h-8 text-xs pl-7 pr-7"
+                      className="h-8 text-xs pl-9 pr-7"
                       value={clientDropdownOpen ? clientSearch : form.nomeCliente}
                       onFocus={() => {
                         setClientDropdownOpen(true);
@@ -835,7 +835,7 @@ export default function RoteiroPremiumPage() {
                         setF("nomeCliente", e.target.value);
                       }}
                       onBlur={() => setTimeout(() => setClientDropdownOpen(false), 150)}
-                      placeholder="    Buscar cliente cadastrado…"
+                      placeholder="Buscar cliente cadastrado…"
                     />
                     {form.nomeCliente && (
                       <button
