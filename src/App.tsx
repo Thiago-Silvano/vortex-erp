@@ -104,6 +104,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <CompanyProvider>
+        <ColorModeProvider>
         <ThemeProvider>
         <WhatsAppNotificationListener />
         <Routes>
