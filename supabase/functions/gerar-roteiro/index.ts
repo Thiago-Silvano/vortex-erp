@@ -135,6 +135,8 @@ ${form.idadesCriancas ? `- Crianças: ${form.idadesCriancas} anos` : ""}
 ${form.precoHotelMin ? `- Faixa hotel: R$ ${form.precoHotelMin}–${form.precoHotelMax}/noite` : ""}
 - Interesses: ${(form.interesses || []).join(", ")}
 - Ritmo: ${form.ritmoViagem}
+${form.aeroportoChegada ? `- Aeroporto de CHEGADA: ${form.aeroportoChegada} (use este aeroporto como ponto de entrada — sugira transfers a partir dele e considere a localização nas hospedagens do dia 1).` : ""}
+${form.aeroportoSaida ? `- Aeroporto de SAÍDA: ${form.aeroportoSaida} (programe transfer/logística para este aeroporto no último dia).` : ""}
 - Observações: ${form.observacoes || "nenhuma"}
 
 INSTRUÇÕES:
@@ -142,6 +144,10 @@ INSTRUÇÕES:
    - Para CADA hotel preencha "enderecoCompleto" (rua, bairro, cidade, país) e "nomeOficial" (nome exato como aparece no Google Maps / TripAdvisor).
 2. Passeios: 10-14 opções variadas cobrindo todos os dias, manhã/tarde/noite.
 3. Logística: 2-3 opções de deslocamento.
+   - SE aeroportos foram informados, inclua obrigatoriamente:
+     a) Transfer aeroporto de chegada → primeira hospedagem (origem = código IATA + nome do aeroporto).
+     b) Transfer última hospedagem → aeroporto de saída.
+   - Cite os códigos IATA explicitamente em "origem" e "destino".
 4. Gastronomia: 6-8 restaurantes/experiências reais do destino.
 5. Roteiro diário: narrativa dia a dia para todos os ${form.numDias} dias.
 6. Escreva em português, tom elegante e comercial.
