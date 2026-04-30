@@ -788,6 +788,23 @@ export default function RoteiroPremiumPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Aeroporto de origem (embarque)</Label>
+                <AirportCombobox
+                  value={form.aeroportoOrigemIata}
+                  onChange={(iata, a) => {
+                    setForm(p => ({
+                      ...p,
+                      aeroportoOrigemIata: iata,
+                      aeroportoOrigemLabel: a ? `${a.iata} · ${a.city} (${a.country})` : undefined,
+                    }));
+                  }}
+                  placeholder="Ex: GRU, São Paulo…"
+                />
+              </div>
               <div>
                 <Label className="text-xs">Aeroporto de chegada</Label>
                 <AirportCombobox
