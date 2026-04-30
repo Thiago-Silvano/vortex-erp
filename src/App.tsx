@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CompanyProvider } from "@/contexts/CompanyContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ColorModeProvider } from "@/contexts/ColorModeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HomeRedirect from "./components/HomeRedirect";
 import Settings from "./pages/Settings";
@@ -103,6 +104,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <CompanyProvider>
+        <ColorModeProvider>
         <ThemeProvider>
         <WhatsAppNotificationListener />
         <Routes>
@@ -207,6 +209,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         </ThemeProvider>
+        </ColorModeProvider>
         </CompanyProvider>
       </BrowserRouter>
     </TooltipProvider>

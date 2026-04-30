@@ -6,6 +6,7 @@ import {
   LogOut, Building, Camera, MessageCircle, Mail, Plus,
   Users, ShoppingCart, Plane, DollarSign, Megaphone, MessageSquare,
   FileText, BarChart3, Settings, Star, ChevronRight, Search, ArrowLeft,
+  Sun, Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCompany } from "@/contexts/CompanyContext";
@@ -25,6 +26,7 @@ import {
 import { toast } from "sonner";
 import PhotoCaptureModal from "@/components/PhotoCaptureModal";
 import NotificationBell from "@/components/NotificationBell";
+import { useColorMode } from "@/contexts/ColorModeContext";
 
 interface MenuItem {
   title: string;
@@ -375,6 +377,7 @@ function Topbar({
   const navigate = useNavigate();
   const location = useLocation();
   const hideBack = ["/", "/dashboard", "/vistos/dashboard"].includes(location.pathname);
+  const { mode, toggle } = useColorMode();
 
   return (
     <header className="h-12 flex items-center gap-2 px-4 border-b border-border bg-background shrink-0">
@@ -412,6 +415,15 @@ function Topbar({
           className="h-7 text-[11px] gap-1 px-2.5"
         >
           <Plus className="h-3 w-3" /> Nova Cotação
+        </Button>
+        <Button
+          onClick={toggle}
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+          title={mode === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
+        >
+          {mode === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
         </Button>
         <Button onClick={onPhoto} variant="ghost" size="sm" className="h-7 w-7 p-0">
           <Camera className="h-3.5 w-3.5" />
