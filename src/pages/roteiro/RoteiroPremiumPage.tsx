@@ -694,7 +694,6 @@ export default function RoteiroPremiumPage() {
                         value={c.dias || ''}
                         onChange={e => setCidadeDias(idx, Number(e.target.value))}
                         placeholder="Dias"
-                        disabled={!!c.stopLogistico}
                       />
                     </div>
                     <div className="col-span-3 flex items-center gap-1.5">
