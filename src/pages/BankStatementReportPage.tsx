@@ -205,7 +205,7 @@ export default function BankStatementReportPage() {
     // Header
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Relatório de Conta Corrente', pageWidth / 2, y, { align: 'center' });
+    pdf.text('Extrato de conta-corrente', pageWidth / 2, y, { align: 'center' });
     y += 7;
 
     if (account) {
@@ -334,7 +334,7 @@ export default function BankStatementReportPage() {
       <div className="p-4 md:p-6 space-y-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-foreground">Relatório de Conta Corrente</h1>
+            <h1 className="text-xl font-bold text-foreground">Extrato de conta-corrente</h1>
             <p className="text-sm text-muted-foreground">Movimentação detalhada e resumo por centro de custo</p>
           </div>
           {transactions.length > 0 && (
