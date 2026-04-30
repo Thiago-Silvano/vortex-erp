@@ -225,7 +225,7 @@ export default function RoteiroPremiumPage() {
         );
         return;
       }
-      const semDias = cidadesDias.find(c => c.cidade && !c.stopLogistico && (!c.dias || c.dias <= 0));
+      const semDias = cidadesDias.find(c => c.cidade && (!c.dias || c.dias <= 0));
       if (semDias) { toast.error(`Informe quantos dias em "${semDias.cidade}".`); return; }
     }
     setLoading(true);
