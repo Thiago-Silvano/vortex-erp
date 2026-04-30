@@ -649,8 +649,65 @@ export default function RoteiroPremiumPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Cliente</Label>
-                <Input className="h-8 text-xs" value={form.nomeCliente}
-                  onChange={e => setF('nomeCliente', e.target.value)} placeholder="Nome do cliente" />
+                <div className="relative flex gap-1">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+                    <Input
+                      className="h-8 text-xs pl-7 pr-7"
+                      value={clientDropdownOpen ? clientSearch : form.nomeCliente}
+                      onFocus={() => { setClientDropdownOpen(true); setClientSearch(form.nomeCliente || ''); }}
+                      onChange={e => { setClientDropdownOpen(true); setClientSearch(e.target.value); setF('nomeCliente', e.target.value); }}
+                      onBlur={() => setTimeout(() => setClientDropdownOpen(false), 150)}
+                      placeholder="Buscar cliente cadastrado…"
+                    />
+                    {form.nomeCliente && (
+                      <button
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); setF('nomeCliente', ''); setClientSearch(''); }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                    {clientDropdownOpen && (clientSearch.trim().length >= 2 || clientResults.length > 0) && (
+                      <div className="absolute z-50 mt-1 w-full max-h-56 overflow-auto rounded-md border bg-popover shadow-lg">
+                        {clientSearching ? (
+                          <div className="p-2 text-xs text-muted-foreground flex items-center gap-1.5">
+                            <Loader2 className="h-3 w-3 animate-spin" /> Buscando…
+                          </div>
+                        ) : clientResults.length === 0 ? (
+                          <div className="p-2 text-xs text-muted-foreground">Nenhum cliente encontrado</div>
+                        ) : (
+                          clientResults.map(c => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onMouseDown={(e) => { e.preventDefault(); selectClient(c); }}
+                              className="w-full text-left px-2 py-1.5 text-xs hover:bg-accent border-b last:border-b-0"
+                            >
+                              <div className="font-medium">{c.full_name}</div>
+                              {(c.phone || c.email) && (
+                                <div className="text-[10px] text-muted-foreground truncate">
+                                  {[c.phone, c.email].filter(Boolean).join(' · ')}
+                                </div>
+                              )}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2 text-[11px] gap-1 shrink-0"
+                    onClick={() => setQuickClientOpen(true)}
+                    title="Cadastrar novo cliente"
+                  >
+                    <UserPlus className="h-3 w-3" /> Novo
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label className="text-xs">Passageiros</Label>
