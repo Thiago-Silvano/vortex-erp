@@ -17,6 +17,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import ItineraryPreview from '@/components/itinerary/ItineraryPreview';
 import ChecklistEditor from '@/components/itinerary/ChecklistEditor';
 import ImageSearchModal, { type StockImage } from '@/components/ImageSearchModal';
+import TripAdvisorImageModal, { type TripAdvisorImage } from '@/components/TripAdvisorImageModal';
 import { generateItineraryPdf } from '@/lib/generateItineraryPdf';
 import { getStaticMapUrl } from '@/components/itinerary/ItineraryMapSection';
 import ImagePositionEditor, { type ImagePositionConfig, getImageStyle } from '@/components/ImagePositionEditor';
@@ -1234,19 +1235,17 @@ export default function ItineraryEditorPage() {
 
       {/* Attraction image search modal */}
       {attrImageModal && (
-        <ImageSearchModal
+        <TripAdvisorImageModal
           open={!!attrImageModal}
           onClose={() => setAttrImageModal(null)}
-          onSelect={(img: StockImage) => {
+          onSelect={(img: TripAdvisorImage) => {
             if (attrImageModal) {
-              updateAndSaveAttraction(attrImageModal.dayIdx, attrImageModal.attrIdx, { image_url: img.url_full || img.url_download, image_position: null });
+              updateAndSaveAttraction(attrImageModal.dayIdx, attrImageModal.attrIdx, { image_url: img.url_full || img.url_preview, image_position: null });
               setAttrImageModal(null);
-              toast.success('Imagem selecionada!');
+              toast.success('Imagem do TripAdvisor selecionada!');
             }
           }}
           initialQuery={attrImageModal ? `${days[attrImageModal.dayIdx]?.attractions[attrImageModal.attrIdx]?.name || ''} ${days[attrImageModal.dayIdx]?.attractions[attrImageModal.attrIdx]?.city || ''}`.trim() : ''}
-          unsplashKey={unsplashKey}
-          pexelsKey={pexelsKey}
         />
       )}
 
