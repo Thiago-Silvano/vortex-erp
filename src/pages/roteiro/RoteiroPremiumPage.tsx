@@ -1112,7 +1112,11 @@ export default function RoteiroPremiumPage() {
                       key={i}
                       type="button"
                       onClick={() => toggleInteresse(i)}
-                      className={`cursor-pointer rounded-full px-3 py-1 text-[11px] transition-colors ${active ? "badge-tag-active" : "badge-tag-inactive"}`}
+                      className={`cursor-pointer rounded-full px-3 py-1 text-[11px] transition-colors border ${
+                        active
+                          ? "bg-primary/15 text-primary border-primary/40"
+                          : "bg-muted text-muted-foreground border-border hover:bg-muted/70"
+                      }`}
                     >
                       {i}
                     </button>
