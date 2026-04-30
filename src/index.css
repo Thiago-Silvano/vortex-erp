@@ -148,7 +148,7 @@
   }
 
   body {
-    @apply bg-background text-muted-foreground antialiased;
+    @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
     font-size: 13px;
     font-weight: 400;
@@ -189,6 +189,91 @@
   input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.7) brightness(0.9);
     cursor: pointer;
+  }
+}
+
+/* ============================================================
+   Dark-theme overrides for legacy light row tints used in tables
+   These light Tailwind colors (bg-*-50/100) make rows nearly white
+   on a dark background, which kills text legibility. Map them to
+   subtle semantic tints with proper contrast.
+   ============================================================ */
+@layer utilities {
+  /* Row tints — keep a recognizable hue but at ~10-15% opacity over dark */
+  tr.bg-red-50, tr.bg-red-100,
+  tr .bg-red-50, tr .bg-red-100 {
+    background-color: hsl(0 70% 50% / 0.12) !important;
+  }
+  tr.bg-orange-50, tr.bg-orange-100,
+  tr .bg-orange-50, tr .bg-orange-100 {
+    background-color: hsl(25 90% 55% / 0.10) !important;
+  }
+  tr.bg-amber-50, tr.bg-amber-100,
+  tr .bg-amber-50, tr .bg-amber-100 {
+    background-color: hsl(38 95% 55% / 0.10) !important;
+  }
+  tr.bg-yellow-50, tr.bg-yellow-100,
+  tr .bg-yellow-50, tr .bg-yellow-100 {
+    background-color: hsl(48 95% 55% / 0.10) !important;
+  }
+  tr.bg-emerald-50, tr.bg-emerald-100,
+  tr .bg-emerald-50, tr .bg-emerald-100 {
+    background-color: hsl(152 60% 45% / 0.12) !important;
+  }
+  tr.bg-green-50, tr.bg-green-100,
+  tr .bg-green-50, tr .bg-green-100 {
+    background-color: hsl(142 60% 45% / 0.12) !important;
+  }
+  tr.bg-blue-50, tr.bg-blue-100,
+  tr .bg-blue-50, tr .bg-blue-100 {
+    background-color: hsl(217 90% 60% / 0.12) !important;
+  }
+  tr.bg-sky-50, tr.bg-sky-100,
+  tr .bg-sky-50, tr .bg-sky-100 {
+    background-color: hsl(200 90% 55% / 0.12) !important;
+  }
+  tr.bg-purple-50, tr.bg-purple-100,
+  tr .bg-purple-50, tr .bg-purple-100 {
+    background-color: hsl(270 70% 60% / 0.12) !important;
+  }
+  tr.bg-pink-50, tr.bg-pink-100,
+  tr .bg-pink-50, tr .bg-pink-100 {
+    background-color: hsl(330 80% 60% / 0.12) !important;
+  }
+
+  /* Hover variants used by Reservations etc. */
+  tr.hover\:bg-red-100:hover { background-color: hsl(0 70% 50% / 0.20) !important; }
+  tr.hover\:bg-orange-100:hover { background-color: hsl(25 90% 55% / 0.18) !important; }
+  tr.hover\:bg-amber-100:hover { background-color: hsl(38 95% 55% / 0.18) !important; }
+  tr.hover\:bg-emerald-100:hover { background-color: hsl(152 60% 45% / 0.20) !important; }
+  tr.hover\:bg-green-100:hover { background-color: hsl(142 60% 45% / 0.20) !important; }
+  tr.hover\:bg-blue-100:hover { background-color: hsl(217 90% 60% / 0.20) !important; }
+
+  /* Force readable text inside tinted rows (override muted-foreground children) */
+  tr[class*="bg-red-50"] td, tr[class*="bg-orange-50"] td,
+  tr[class*="bg-amber-50"] td, tr[class*="bg-yellow-50"] td,
+  tr[class*="bg-emerald-50"] td, tr[class*="bg-green-50"] td,
+  tr[class*="bg-blue-50"] td, tr[class*="bg-sky-50"] td,
+  tr[class*="bg-purple-50"] td, tr[class*="bg-pink-50"] td,
+  tr[class*="bg-red-100"] td, tr[class*="bg-orange-100"] td,
+  tr[class*="bg-amber-100"] td, tr[class*="bg-emerald-100"] td {
+    color: hsl(var(--foreground));
+  }
+
+  /* Default table body cell color (in case a row has no tint) */
+  tbody tr td {
+    color: hsl(var(--foreground));
+  }
+
+  /* Inline alert banners (amber/red) used above tables */
+  .bg-amber-50:not(tr):not(td) {
+    background-color: hsl(38 95% 55% / 0.10) !important;
+  }
+  .bg-red-50:not(tr):not(td) {
+    background-color: hsl(0 70% 50% / 0.10) !important;
+  }
+  .bg-emerald-50:not(tr):not(td) {
+    background-color: hsl(152 60% 45% / 0.10) !important;
   }
 }
 
