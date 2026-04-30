@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star, Save, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star, Save, CheckCircle2, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -144,6 +144,48 @@ export default function RoteiroPremiumPage() {
   }
 
   const numNoites = useMemo(() => diasEntre(form.dataInicio, form.dataFim), [form.dataInicio, form.dataFim]);
+  const totalDiasViagem = useMemo(() => (numNoites > 0 ? numNoites + 1 : 0), [numNoites]);
+
+  // Cidades com dias (a primeira é sempre o destino principal)
+  const cidadesDias = form.cidadesDias && form.cidadesDias.length > 0
+    ? form.cidadesDias
+    : [{ cidade: form.destinoPrincipal || '', dias: totalDiasViagem || 0 }];
+
+  const totalDiasDistribuidos = useMemo(
+    () => cidadesDias.reduce((s, c) => s + (Number(c.dias) || 0), 0),
+    [cidadesDias]
+  );
+  const diferencaDias = totalDiasViagem - totalDiasDistribuidos;
+
+  function updateCidades(next: { cidade: string; dias: number }[]) {
+    // sincroniza destino principal com a primeira cidade e paradasSecundarias com as demais
+    const principal = next[0]?.cidade || '';
+    const paradas = next.slice(1).map(c => c.cidade).filter(Boolean).join(', ');
+    setForm(p => ({
+      ...p,
+      cidadesDias: next,
+      destinoPrincipal: principal,
+      paradasSecundarias: paradas,
+    }));
+  }
+  function setCidadeNome(idx: number, nome: string) {
+    const next = [...cidadesDias];
+    next[idx] = { ...next[idx], cidade: nome };
+    updateCidades(next);
+  }
+  function setCidadeDias(idx: number, dias: number) {
+    const next = [...cidadesDias];
+    next[idx] = { ...next[idx], dias: Math.max(0, dias || 0) };
+    updateCidades(next);
+  }
+  function addCidade() {
+    updateCidades([...cidadesDias, { cidade: '', dias: 0 }]);
+  }
+  function removeCidade(idx: number) {
+    if (idx === 0) return; // não remove o destino principal
+    const next = cidadesDias.filter((_, i) => i !== idx);
+    updateCidades(next);
+  }
 
   function setF<K extends keyof FormularioRoteiro>(k: K, v: FormularioRoteiro[K]) {
     setForm(p => ({ ...p, [k]: v }));
@@ -161,6 +203,25 @@ export default function RoteiroPremiumPage() {
   async function gerarRoteiro() {
     if (!form.destinoPrincipal) { toast.error('Informe o destino principal'); return; }
     if (!form.dataInicio || !form.dataFim) { toast.error('Informe as datas'); return; }
+    // Validação de dias por cidade vs período total
+    if (totalDiasViagem > 0) {
+      if (diferencaDias > 0) {
+        toast.error(
+          `Faltam ${diferencaDias} dia(s) para distribuir entre as cidades.`,
+          { description: `A viagem tem ${totalDiasViagem} dias, mas as cidades somam apenas ${totalDiasDistribuidos}.` }
+        );
+        return;
+      }
+      if (diferencaDias < 0) {
+        toast.error(
+          `Há ${Math.abs(diferencaDias)} dia(s) a mais distribuído(s) entre as cidades.`,
+          { description: `A viagem tem ${totalDiasViagem} dias, mas as cidades somam ${totalDiasDistribuidos}.` }
+        );
+        return;
+      }
+      const semDias = cidadesDias.find(c => c.cidade && (!c.dias || c.dias <= 0));
+      if (semDias) { toast.error(`Informe quantos dias em "${semDias.cidade}".`); return; }
+    }
     setLoading(true);
     try {
       const aChegada = findAirport(form.aeroportoChegadaIata);
@@ -168,6 +229,7 @@ export default function RoteiroPremiumPage() {
       const payload = {
         ...form,
         numDias: numNoites + 1,
+        cidadesDias,
         nomeAgencia: config?.nomeAgencia || activeCompany?.name || '',
         logoUrl: config?.logoUrl,
         aeroportoChegada: aChegada ? `${aChegada.iata} - ${aChegada.name}, ${aChegada.city}/${aChegada.country}` : undefined,
@@ -545,11 +607,6 @@ export default function RoteiroPremiumPage() {
                   onChange={e => setF('destinoPrincipal', e.target.value)} placeholder="Ex: Paris, França" />
               </div>
               <div>
-                <Label className="text-xs">Paradas/cidades</Label>
-                <Input className="h-8 text-xs" value={form.paradasSecundarias}
-                  onChange={e => setF('paradasSecundarias', e.target.value)} placeholder="Ex: Lyon, Nice" />
-              </div>
-              <div>
                 <Label className="text-xs">Cliente</Label>
                 <Input className="h-8 text-xs" value={form.nomeCliente}
                   onChange={e => setF('nomeCliente', e.target.value)} placeholder="Nome do cliente" />
@@ -569,6 +626,72 @@ export default function RoteiroPremiumPage() {
                 <Input type="number" min={1} className="h-8 text-xs" value={form.numPassageiros}
                   onChange={e => setF('numPassageiros', Number(e.target.value))} />
               </div>
+            </div>
+
+            {/* Cidades / paradas com dias */}
+            <div className="border rounded-md p-2.5 bg-muted/30">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs font-semibold flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" /> Cidades e dias em cada uma
+                </Label>
+                <div className="flex items-center gap-2 text-[11px]">
+                  {totalDiasViagem > 0 && (
+                    <Badge
+                      variant={diferencaDias === 0 ? 'default' : 'destructive'}
+                      className="h-5 text-[10px]"
+                    >
+                      {totalDiasDistribuidos} / {totalDiasViagem} dias
+                      {diferencaDias > 0 && ` (faltam ${diferencaDias})`}
+                      {diferencaDias < 0 && ` (sobra ${Math.abs(diferencaDias)})`}
+                    </Badge>
+                  )}
+                  <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-[11px] gap-1" onClick={addCidade}>
+                    <Plus className="h-3 w-3" /> Cidade
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                {cidadesDias.map((c, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                    <div className="col-span-8">
+                      <Input
+                        className="h-7 text-xs"
+                        value={c.cidade}
+                        onChange={e => setCidadeNome(idx, e.target.value)}
+                        placeholder={idx === 0 ? 'Destino principal (ex: Paris, França)' : 'Parada (ex: Lyon, França)'}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Input
+                        type="number" min={0}
+                        className="h-7 text-xs"
+                        value={c.dias || ''}
+                        onChange={e => setCidadeDias(idx, Number(e.target.value))}
+                        placeholder="Dias"
+                      />
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      {idx > 0 && (
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6"
+                          onClick={() => removeCidade(idx)}>
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {totalDiasViagem > 0 && diferencaDias !== 0 && (
+                <div className="flex items-center gap-1.5 mt-2 text-[11px] text-destructive">
+                  <AlertTriangle className="h-3 w-3" />
+                  {diferencaDias > 0
+                    ? `Faltam ${diferencaDias} dia(s) — distribua entre as cidades antes de gerar.`
+                    : `Há ${Math.abs(diferencaDias)} dia(s) a mais — ajuste a distribuição.`}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs">Perfil</Label>
                 <Select value={form.perfilViajante} onValueChange={v => setF('perfilViajante', v as any)}>
