@@ -23,12 +23,13 @@ const ROTEIRO_SCHEMA = {
           descricao: { type: "string" },
           diferenciais: { type: "array", items: { type: "string" } },
           localizacao: { type: "string" },
+          cidade: { type: "string", description: "Cidade onde a hospedagem está localizada (apenas o nome da cidade)." },
           enderecoCompleto: { type: "string", description: "Endereço completo (rua, número, bairro, cidade, país) usado para Google Maps." },
           nomeOficial: { type: "string", description: "Nome oficial exato do hotel para busca em Google Maps e TripAdvisor." },
           precoEstimado: { type: "string" },
           recomendadoPara: { type: "string" },
         },
-          required: ["id", "tipo", "nome", "categoria", "descricao", "diferenciais", "localizacao", "enderecoCompleto", "nomeOficial", "precoEstimado", "recomendadoPara"],
+          required: ["id", "tipo", "nome", "categoria", "descricao", "diferenciais", "localizacao", "cidade", "enderecoCompleto", "nomeOficial", "precoEstimado", "recomendadoPara"],
       },
     },
     passeios: {
@@ -41,12 +42,13 @@ const ROTEIRO_SCHEMA = {
           nome: { type: "string" },
           descricao: { type: "string" },
           duracao: { type: "string" },
+          cidade: { type: "string", description: "Cidade onde o passeio acontece (apenas o nome da cidade, sem estado/país)." },
           diaRecomendado: { type: "number" },
           periodo: { type: "string", enum: ["manha", "tarde", "noite"] },
           precoEstimado: { type: "string" },
           nivelEsforco: { type: "string", enum: ["baixo", "medio", "alto"] },
         },
-        required: ["id", "tipo", "nome", "descricao", "duracao", "precoEstimado"],
+        required: ["id", "tipo", "nome", "descricao", "duracao", "cidade", "precoEstimado"],
       },
     },
     logistica: {
@@ -75,8 +77,9 @@ const ROTEIRO_SCHEMA = {
           descricao: { type: "string" },
           especialidade: { type: "string" },
           faixaPreco: { type: "string" },
+          cidade: { type: "string", description: "Cidade onde o restaurante/experiência gastronômica está." },
         },
-        required: ["id", "nome", "tipo", "descricao", "especialidade", "faixaPreco"],
+        required: ["id", "nome", "tipo", "descricao", "especialidade", "faixaPreco", "cidade"],
       },
     },
     infoPratica: {
@@ -159,13 +162,16 @@ ${form.aeroportoSaida ? `- Aeroporto de SAÍDA: ${form.aeroportoSaida} (programe
 INSTRUÇÕES:
 1. Hospedagens: 3-4 opções reais/verossímeis, cada uma com perfil diferente.
    - Para CADA hotel preencha "enderecoCompleto" (rua, bairro, cidade, país) e "nomeOficial" (nome exato como aparece no Google Maps / TripAdvisor).
+   - Para CADA hotel preencha também "cidade" com APENAS o nome da cidade (sem estado/país).
 2. Passeios: 10-14 opções variadas cobrindo todos os dias, manhã/tarde/noite.
+   - Para CADA passeio preencha "cidade" com APENAS o nome da cidade onde o passeio acontece (sem estado/país). Isso é OBRIGATÓRIO em roteiros multi-cidade.
 3. Logística: 2-3 opções de deslocamento.
    - SE aeroportos foram informados, inclua obrigatoriamente:
      a) Transfer aeroporto de chegada → primeira hospedagem (origem = código IATA + nome do aeroporto).
      b) Transfer última hospedagem → aeroporto de saída.
    - Cite os códigos IATA explicitamente em "origem" e "destino".
 4. Gastronomia: 6-8 restaurantes/experiências reais do destino.
+   - Para CADA item preencha "cidade" com APENAS o nome da cidade.
 5. Roteiro diário: narrativa dia a dia para todos os ${form.numDias} dias.
 6. Escreva em português, tom elegante e comercial.
 7. Preços devem ser estimativas realistas para o destino.

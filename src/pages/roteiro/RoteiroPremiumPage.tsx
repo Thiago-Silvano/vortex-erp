@@ -1194,7 +1194,12 @@ export default function RoteiroPremiumPage() {
                             className="mt-1"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-sm">{h.nome}</h4>
+                            <h4 className="font-semibold text-sm">
+                              {h.nome}
+                              {h.cidade ? (
+                                <span className="text-muted-foreground font-normal"> ({h.cidade})</span>
+                              ) : null}
+                            </h4>
                             <p className="text-[10px] text-muted-foreground">
                               {h.categoria} • {h.localizacao}
                             </p>
@@ -1238,7 +1243,12 @@ export default function RoteiroPremiumPage() {
                             className="mt-1"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-sm">{p.nome}</h4>
+                            <h4 className="font-semibold text-sm">
+                              {p.nome}
+                              {p.cidade ? (
+                                <span className="text-muted-foreground font-normal"> ({p.cidade})</span>
+                              ) : null}
+                            </h4>
                             <p className="text-[10px] text-muted-foreground">
                               {p.tipo} • {p.duracao}
                               {p.diaRecomendado ? ` • Dia ${p.diaRecomendado}` : ""}
@@ -1287,7 +1297,12 @@ export default function RoteiroPremiumPage() {
                             className="mt-1"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-sm">{g.nome}</h4>
+                            <h4 className="font-semibold text-sm">
+                              {g.nome}
+                              {g.cidade ? (
+                                <span className="text-muted-foreground font-normal"> ({g.cidade})</span>
+                              ) : null}
+                            </h4>
                             <p className="text-[10px] text-muted-foreground">
                               {g.tipo} • {g.especialidade}
                             </p>
