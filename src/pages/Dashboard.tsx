@@ -687,7 +687,7 @@ export default function Dashboard() {
                       return (
                         <tr
                           key={r.id}
-                          className={`border-b last:border-0 cursor-pointer hover:bg-muted/40 ${urgent ? 'bg-red-50 dark:bg-red-950/20' : ''}`}
+                           className={`border-b last:border-0 cursor-pointer hover:bg-muted/40 ${urgent ? 'bg-destructive/10' : ''}`}
                           onClick={() => navigate('/reservations')}
                         >
                           <td className="py-1.5">
