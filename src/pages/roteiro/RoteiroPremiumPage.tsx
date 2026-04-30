@@ -217,8 +217,16 @@ export default function RoteiroPremiumPage() {
           {roteiro && (
             <div className="flex items-center gap-2">
               <Badge variant="secondary">{totalSelecionados} selecionado(s)</Badge>
-              <Button onClick={enviarParaCotacao} className="gap-1.5">
+              <Button onClick={enviarParaCotacao} className="gap-1.5" size="sm">
                 <Send className="h-4 w-4" /> Enviar para Cotação
+              </Button>
+              <Button onClick={criarRoteiroInterativo} disabled={savingRoteiro} variant="secondary" className="gap-1.5" size="sm">
+                {savingRoteiro ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+                Roteiro Interativo
+              </Button>
+              <Button onClick={gerarPdfDireto} disabled={generatingPdf} variant="outline" className="gap-1.5" size="sm">
+                {generatingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                Gerar PDF
               </Button>
             </div>
           )}
