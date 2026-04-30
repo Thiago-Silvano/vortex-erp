@@ -362,6 +362,26 @@ export default function RoteiroPremiumPage() {
                             <p className="text-[10px] text-muted-foreground">{h.categoria} • {h.localizacao}</p>
                             <p className="text-xs mt-1">{h.descricao}</p>
                             <p className="text-[10px] text-primary mt-1">{h.precoEstimado}</p>
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              <a
+                                href={googleMapsLink(h)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 text-[10px] font-medium transition"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Globe className="h-3 w-3" /> Google Maps
+                              </a>
+                              <a
+                                href={tripadvisorLink(h)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[10px] font-medium transition"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Star className="h-3 w-3" /> TripAdvisor
+                              </a>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
