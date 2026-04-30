@@ -594,7 +594,58 @@ export default function RoteiroPremiumPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-4">
+      <div className="roteiro-premium-skin space-y-4">
+        {/* Re-skin escopado: paleta flat #6c63ff, cards 12px, labels uppercase. Aplica-se SOMENTE a esta tela. */}
+        <style>{`
+          .roteiro-premium-skin { background:#f5f6fa; padding:24px; margin:-16px; border-radius:0; font-family:Inter,system-ui,sans-serif; color:#111827; }
+          .roteiro-premium-skin h1, .roteiro-premium-skin h2, .roteiro-premium-skin h3 { font-weight:500 !important; color:#111827; }
+          .roteiro-premium-skin .text-muted-foreground { color:#6b7280 !important; }
+
+          /* Cards */
+          .roteiro-premium-skin [class*="rounded-lg border"], 
+          .roteiro-premium-skin .card { background:#fff !important; border:0.5px solid #e5e7eb !important; border-radius:12px !important; box-shadow:none !important; }
+
+          /* Card titles -> section labels uppercase em #6c63ff */
+          .roteiro-premium-skin [class*="CardTitle"], .roteiro-premium-skin h3.text-sm { 
+            font-size:11px !important; text-transform:uppercase; letter-spacing:0.7px; color:#6c63ff !important; font-weight:500 !important;
+          }
+
+          /* Field labels */
+          .roteiro-premium-skin label { font-size:11px !important; font-weight:500 !important; color:#6b7280 !important; text-transform:none; letter-spacing:normal; }
+
+          /* Inputs / selects / textarea */
+          .roteiro-premium-skin input:not([type=checkbox]):not([type=radio]),
+          .roteiro-premium-skin textarea,
+          .roteiro-premium-skin [role="combobox"],
+          .roteiro-premium-skin button[role="combobox"] {
+            height:34px; min-height:34px; border:0.5px solid #e5e7eb !important; border-radius:8px !important;
+            background:#f9fafb !important; font-size:13px !important; padding:0 10px;
+          }
+          .roteiro-premium-skin textarea { height:72px; padding:8px 10px; }
+          .roteiro-premium-skin input:focus, .roteiro-premium-skin textarea:focus, .roteiro-premium-skin [role="combobox"]:focus {
+            outline:none !important; border-color:#6c63ff !important; box-shadow:0 0 0 3px rgba(108,99,255,0.12) !important;
+          }
+
+          /* Primary buttons */
+          .roteiro-premium-skin button[class*="bg-primary"],
+          .roteiro-premium-skin .btn-primary {
+            background:#6c63ff !important; color:#fff !important; border-radius:8px !important; height:38px; font-size:13px !important; font-weight:500 !important;
+          }
+          .roteiro-premium-skin button[class*="bg-primary"]:hover { background:#5a52e0 !important; }
+
+          /* Outline / ghost buttons */
+          .roteiro-premium-skin button[class*="variant-outline"],
+          .roteiro-premium-skin button[class*="border-input"] {
+            border:0.5px solid #e5e7eb !important; background:#fff !important; color:#111827 !important; border-radius:8px !important;
+          }
+
+          /* Badges -> tags pill */
+          .roteiro-premium-skin .badge-tag-active { background:#eeecff !important; color:#6c63ff !important; border:1px solid #b5b0f5 !important; }
+          .roteiro-premium-skin .badge-tag-inactive { background:#f5f6fa !important; color:#6b7280 !important; border:1px solid #e5e7eb !important; }
+
+          /* Required asterisk */
+          .roteiro-premium-skin .required-mark { color:#e24b4a; }
+        `}</style>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1 h-8">
