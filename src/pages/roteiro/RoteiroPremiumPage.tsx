@@ -20,6 +20,8 @@ import type {
   OpcaoLogistica, DicaGastronomica, ServicoImportadoRoteiro, PayloadCotacaoRoteiro,
 } from '@/types/roteiro';
 import { generateItineraryPdf } from '@/lib/generateItineraryPdf';
+import { AirportCombobox } from '@/components/AirportCombobox';
+import { findAirport } from '@/data/airports';
 
 const INTERESSES_LIST = [
   'Praia', 'Cultura', 'Gastronomia', 'Aventura', 'Natureza',
@@ -620,6 +622,34 @@ export default function RoteiroPremiumPage() {
                     <SelectItem value="intenso">Intenso</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Aeroporto de chegada</Label>
+                <AirportCombobox
+                  value={form.aeroportoChegadaIata}
+                  onChange={(iata, a) => {
+                    setForm(p => ({
+                      ...p,
+                      aeroportoChegadaIata: iata,
+                      aeroportoChegadaLabel: a ? `${a.iata} · ${a.city} (${a.country})` : undefined,
+                    }));
+                  }}
+                  placeholder="Ex: CDG, Paris…"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Aeroporto de saída</Label>
+                <AirportCombobox
+                  value={form.aeroportoSaidaIata}
+                  onChange={(iata, a) => {
+                    setForm(p => ({
+                      ...p,
+                      aeroportoSaidaIata: iata,
+                      aeroportoSaidaLabel: a ? `${a.iata} · ${a.city} (${a.country})` : undefined,
+                    }));
+                  }}
+                  placeholder="Ex: NCE, Nice…"
+                />
               </div>
             </div>
 
