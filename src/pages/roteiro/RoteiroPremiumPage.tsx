@@ -620,12 +620,32 @@ export default function RoteiroPremiumPage() {
               <div>
                 <Label className="text-xs">Início *</Label>
                 <Input type="date" className="h-8 text-xs" value={form.dataInicio}
-                  onChange={e => setF('dataInicio', e.target.value)} />
+                  onChange={e => {
+                    const v = e.target.value;
+                    setF('dataInicio', v);
+                    if (v) {
+                      // abre o picker de Fim automaticamente para escolha rápida
+                      setTimeout(() => {
+                        const el = dataFimInputRef.current;
+                        if (!el) return;
+                        try {
+                          el.min = v;
+                          el.focus();
+                          (el as any).showPicker?.();
+                        } catch {}
+                      }, 50);
+                    }
+                  }} />
               </div>
               <div>
                 <Label className="text-xs">Fim *</Label>
-                <Input type="date" className="h-8 text-xs" value={form.dataFim}
-                  onChange={e => setF('dataFim', e.target.value)} />
+                <Input
+                  ref={dataFimInputRef}
+                  type="date" className="h-8 text-xs"
+                  min={form.dataInicio || undefined}
+                  value={form.dataFim}
+                  onChange={e => setF('dataFim', e.target.value)}
+                />
               </div>
               <div>
                 <Label className="text-xs">Passageiros</Label>
