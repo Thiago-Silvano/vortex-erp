@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star, Save, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ArrowLeft, MapPin, Building2, Plane, UtensilsCrossed, Loader2, Send, FileDown, Globe, Star, Save, CheckCircle2, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -144,6 +144,48 @@ export default function RoteiroPremiumPage() {
   }
 
   const numNoites = useMemo(() => diasEntre(form.dataInicio, form.dataFim), [form.dataInicio, form.dataFim]);
+  const totalDiasViagem = useMemo(() => (numNoites > 0 ? numNoites + 1 : 0), [numNoites]);
+
+  // Cidades com dias (a primeira é sempre o destino principal)
+  const cidadesDias = form.cidadesDias && form.cidadesDias.length > 0
+    ? form.cidadesDias
+    : [{ cidade: form.destinoPrincipal || '', dias: totalDiasViagem || 0 }];
+
+  const totalDiasDistribuidos = useMemo(
+    () => cidadesDias.reduce((s, c) => s + (Number(c.dias) || 0), 0),
+    [cidadesDias]
+  );
+  const diferencaDias = totalDiasViagem - totalDiasDistribuidos;
+
+  function updateCidades(next: { cidade: string; dias: number }[]) {
+    // sincroniza destino principal com a primeira cidade e paradasSecundarias com as demais
+    const principal = next[0]?.cidade || '';
+    const paradas = next.slice(1).map(c => c.cidade).filter(Boolean).join(', ');
+    setForm(p => ({
+      ...p,
+      cidadesDias: next,
+      destinoPrincipal: principal,
+      paradasSecundarias: paradas,
+    }));
+  }
+  function setCidadeNome(idx: number, nome: string) {
+    const next = [...cidadesDias];
+    next[idx] = { ...next[idx], cidade: nome };
+    updateCidades(next);
+  }
+  function setCidadeDias(idx: number, dias: number) {
+    const next = [...cidadesDias];
+    next[idx] = { ...next[idx], dias: Math.max(0, dias || 0) };
+    updateCidades(next);
+  }
+  function addCidade() {
+    updateCidades([...cidadesDias, { cidade: '', dias: 0 }]);
+  }
+  function removeCidade(idx: number) {
+    if (idx === 0) return; // não remove o destino principal
+    const next = cidadesDias.filter((_, i) => i !== idx);
+    updateCidades(next);
+  }
 
   function setF<K extends keyof FormularioRoteiro>(k: K, v: FormularioRoteiro[K]) {
     setForm(p => ({ ...p, [k]: v }));
@@ -161,6 +203,25 @@ export default function RoteiroPremiumPage() {
   async function gerarRoteiro() {
     if (!form.destinoPrincipal) { toast.error('Informe o destino principal'); return; }
     if (!form.dataInicio || !form.dataFim) { toast.error('Informe as datas'); return; }
+    // Validação de dias por cidade vs período total
+    if (totalDiasViagem > 0) {
+      if (diferencaDias > 0) {
+        toast.error(
+          `Faltam ${diferencaDias} dia(s) para distribuir entre as cidades.`,
+          { description: `A viagem tem ${totalDiasViagem} dias, mas as cidades somam apenas ${totalDiasDistribuidos}.` }
+        );
+        return;
+      }
+      if (diferencaDias < 0) {
+        toast.error(
+          `Há ${Math.abs(diferencaDias)} dia(s) a mais distribuído(s) entre as cidades.`,
+          { description: `A viagem tem ${totalDiasViagem} dias, mas as cidades somam ${totalDiasDistribuidos}.` }
+        );
+        return;
+      }
+      const semDias = cidadesDias.find(c => c.cidade && (!c.dias || c.dias <= 0));
+      if (semDias) { toast.error(`Informe quantos dias em "${semDias.cidade}".`); return; }
+    }
     setLoading(true);
     try {
       const aChegada = findAirport(form.aeroportoChegadaIata);
@@ -168,6 +229,7 @@ export default function RoteiroPremiumPage() {
       const payload = {
         ...form,
         numDias: numNoites + 1,
+        cidadesDias,
         nomeAgencia: config?.nomeAgencia || activeCompany?.name || '',
         logoUrl: config?.logoUrl,
         aeroportoChegada: aChegada ? `${aChegada.iata} - ${aChegada.name}, ${aChegada.city}/${aChegada.country}` : undefined,
