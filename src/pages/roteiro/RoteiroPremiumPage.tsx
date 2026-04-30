@@ -821,7 +821,7 @@ export default function RoteiroPremiumPage() {
                 <Label className="text-xs">Cliente</Label>
                 <div className="relative flex gap-1">
                   <div className="relative flex-1">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                     <Input
                       className="h-8 text-xs pl-9 pr-7"
                       value={clientDropdownOpen ? clientSearch : form.nomeCliente}
