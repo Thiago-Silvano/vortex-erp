@@ -758,6 +758,20 @@ export default function RoteiroPremiumPage() {
                 </Select>
               </div>
               <div>
+                <Label className="text-xs">Ritmo</Label>
+                <Select value={form.ritmoViagem} onValueChange={v => setF('ritmoViagem', v as any)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tranquilo">Tranquilo</SelectItem>
+                    <SelectItem value="moderado">Moderado</SelectItem>
+                    <SelectItem value="intenso">Intenso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
                 <Label className="text-xs">Preço hotel mín. (R$/noite)</Label>
                 <Input
                   type="number" min={0}
@@ -776,17 +790,6 @@ export default function RoteiroPremiumPage() {
                   onChange={e => setF('precoHotelMax', e.target.value === '' ? undefined : Number(e.target.value))}
                   placeholder="Ex: 1200"
                 />
-              </div>
-              <div>
-                <Label className="text-xs">Ritmo</Label>
-                <Select value={form.ritmoViagem} onValueChange={v => setF('ritmoViagem', v as any)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="tranquilo">Tranquilo</SelectItem>
-                    <SelectItem value="moderado">Moderado</SelectItem>
-                    <SelectItem value="intenso">Intenso</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
