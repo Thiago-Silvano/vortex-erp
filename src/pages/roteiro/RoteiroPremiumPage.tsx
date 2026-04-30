@@ -579,6 +579,26 @@ export default function RoteiroPremiumPage() {
                 </Select>
               </div>
               <div>
+                <Label className="text-xs">Preço hotel mín. (R$/noite)</Label>
+                <Input
+                  type="number" min={0}
+                  className="h-8 text-xs"
+                  value={form.precoHotelMin ?? ''}
+                  onChange={e => setF('precoHotelMin', e.target.value === '' ? undefined : Number(e.target.value))}
+                  placeholder="Ex: 400"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Preço hotel máx. (R$/noite)</Label>
+                <Input
+                  type="number" min={0}
+                  className="h-8 text-xs"
+                  value={form.precoHotelMax ?? ''}
+                  onChange={e => setF('precoHotelMax', e.target.value === '' ? undefined : Number(e.target.value))}
+                  placeholder="Ex: 1200"
+                />
+              </div>
+              <div>
                 <Label className="text-xs">Ritmo</Label>
                 <Select value={form.ritmoViagem} onValueChange={v => setF('ritmoViagem', v as any)}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
