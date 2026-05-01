@@ -35,6 +35,14 @@ export interface HotelVoucher {
   detailedDescription?: string;
   address?: string;
   reservationNumber?: string;
+  phone?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  adults?: number;
+  children?: number;
+  childrenAges?: number[];
+  imageBase64?: string;
+  images?: string[];
 }
 
 export interface ServiceVoucher {
