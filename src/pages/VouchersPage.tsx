@@ -276,6 +276,18 @@ export default function VouchersPage() {
         }
       }
 
+      // Validation: require at least one image on every hotel before generating
+      const hotelsWithoutImage = hotels.filter((h: any) => !h.imageBase64 && !(h.images && h.images.length > 0));
+      if (hotels.length > 0 && hotelsWithoutImage.length > 0) {
+        const names = hotelsWithoutImage.map((h: any) => h.name).filter(Boolean).join(', ');
+        toast.error(
+          `Selecione ao menos uma imagem para gerar o voucher${names ? `: ${names}` : '.'}. Edite o serviço de hotel e marque as fotos desejadas.`,
+          { duration: 6000 }
+        );
+        setGeneratingId(null);
+        return;
+      }
+
       const sellerName = sellers.find((s: any) => s.id === sale.seller_id)?.full_name;
 
       const voucherData: VoucherPdfData = {
