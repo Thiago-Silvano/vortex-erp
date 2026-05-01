@@ -731,7 +731,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
       if (page.type === "hotel" && page.hotel) {
         y = drawSectionBar(doc, "HOSPEDAGEM", y, m, cw);
         y += 3;
-        y = drawHotelContent(doc, page.hotel, y, m, cw);
+        y = drawHotelContent(doc, page.hotel, data.passengers, y, m, cw);
       } else if (page.type === "service" && page.service) {
         y = drawSectionBar(doc, "DETALHES DO SERVICO", y, m, cw);
         y += 3;
