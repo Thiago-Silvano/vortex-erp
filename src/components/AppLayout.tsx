@@ -166,6 +166,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       { title: "Roteiros", url: "/itineraries" },
     ]},
     { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4" />, url: "/whatsapp", items: [
+      { title: "Conversas", url: "/whatsapp" },
       { title: "Contatos Whatsapp", url: "/whatsapp/contacts" },
       { title: "Etiquetas", url: "/whatsapp/labels" },
       { title: "Respostas Rápidas", url: "/whatsapp/quick-replies" },
