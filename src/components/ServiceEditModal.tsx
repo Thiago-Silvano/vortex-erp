@@ -144,7 +144,9 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [hotel, setHotel] = useState<HotelInfo>(metadata.hotel || emptyHotel());
   const [searchingHotel, setSearchingHotel] = useState(false);
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
-  const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(new Set());
+  const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(
+    new Set((metadata.hotel?.images || []).map((_, i) => i))
+  );
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
   const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
@@ -166,8 +168,9 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setFlightLegs(legs);
       setBaggage(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
       setHotel(metadata.hotel || emptyHotel());
-      setHotelImages(metadata.hotel?.images || []);
-      setSelectedImageIndices(new Set());
+      const existingImgs = metadata.hotel?.images || [];
+      setHotelImages(existingImgs);
+      setSelectedImageIndices(new Set(existingImgs.map((_, i) => i)));
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
       loadAirlines();
