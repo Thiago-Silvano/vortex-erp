@@ -117,6 +117,32 @@ export default function VouchersPage() {
     } catch { return undefined; }
   };
 
+  const loadImageBase64 = async (url: string): Promise<string | undefined> => {
+    if (!url) return undefined;
+    // Try direct fetch first; on CORS failure, fall back to proxy-image edge function
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('fetch failed');
+      const blob = await resp.blob();
+      return await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      try {
+        const proxyUrl = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/proxy-image?url=${encodeURIComponent(url)}`;
+        const resp = await fetch(proxyUrl);
+        const blob = await resp.blob();
+        return await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } catch { return undefined; }
+    }
+  };
+
   const loadVortexWhiteLogo = async (): Promise<string | undefined> => {
     try {
       const resp = await fetch('/images/vortex-white-logo.png');
@@ -197,12 +223,40 @@ export default function VouchersPage() {
                 nights = Math.round((co.getTime() - ci.getTime()) / (1000 * 60 * 60 * 24));
               }
             }
+            const firstImg = Array.isArray(h.images) && h.images.length > 0 ? h.images[0] : undefined;
+            const imageBase64 = firstImg ? await loadImageBase64(firstImg) : undefined;
+            // derive adults/children from passengers (birth_date < 18 = child)
+            const today = new Date();
+            let adults = 0, children = 0;
+            const childrenAges: number[] = [];
+            for (const p of passengers) {
+              if (!p.birth_date) { adults++; continue; }
+              const bd = new Date(p.birth_date + 'T12:00:00');
+              if (isNaN(bd.getTime())) { adults++; continue; }
+              let age = today.getFullYear() - bd.getFullYear();
+              const md = today.getMonth() - bd.getMonth();
+              if (md < 0 || (md === 0 && today.getDate() < bd.getDate())) age--;
+              if (age < 18) { children++; childrenAges.push(age); } else { adults++; }
+            }
             hotels.push({
-              name: h.hotelName || item.description || 'Hotel', description: h.observations || '',
+              name: h.hotelName || item.description || 'Hotel',
+              description: h.observations || '',
               detailedDescription: item.metadata?.detailedDescription || '',
               checkIn: h.checkInDate,
-              checkOut: h.checkOutDate, nights, room: h.roomType || '', meal: '',
+              checkOut: h.checkOutDate,
+              nights,
+              room: h.roomType || '',
+              meal: Array.isArray(h.amenities) && h.amenities.length > 0 ? h.amenities[0] : '',
               reservationNumber: item.reservation_number || '',
+              address: h.address || [h.address, h.city, h.country].filter(Boolean).join(', '),
+              phone: h.phone || '',
+              checkInTime: h.checkInTime || '',
+              checkOutTime: h.checkOutTime || '',
+              adults: h.guestCount && !adults ? h.guestCount : adults || (h.guestCount || 0),
+              children,
+              childrenAges,
+              imageBase64,
+              images: h.images || [],
             });
           } else {
             // Hotel item without structured metadata.hotel — still include it
