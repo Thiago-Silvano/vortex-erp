@@ -299,24 +299,49 @@ export default function BuscarServicosRobot() {
 
   async function buscarComIA() {
     if (!empresaId) { toast.error('Empresa não identificada'); return; }
-    if (!cotacaoDestino) { toast.error('Destino não informado na cotação'); return; }
+    if (!cotacaoDestino) {
+      toast.error('Destino não informado', {
+        description: 'Abra o Robô a partir de uma cotação com destino preenchido.',
+      });
+      return;
+    }
     setAiLoading(true);
     setAiResults([]);
     try {
-      const { data: sup, error: e1 } = await supabase.functions.invoke('search-suppliers', {
-        body: {
-          empresa_id: empresaId,
-          destination: cotacaoDestino,
-          checkIn: cotacaoCheckIn,
-          checkOut: cotacaoCheckOut,
-          passengers: cotacaoPax || 1,
-          numNights: cotacaoNoites,
-        },
-      });
-      if (e1) throw e1;
-      const hoteis = (sup as any)?.hotels || [];
-      const servicos = (sup as any)?.services || [];
+      // 1) Tenta consultar APIs de fornecedores cadastrados (não é bloqueante)
+      let hoteis: any[] = [];
+      let servicos: any[] = [];
+      let supplierWarning = '';
+      try {
+        const { data: sup, error: e1 } = await supabase.functions.invoke('search-suppliers', {
+          body: {
+            empresa_id: empresaId,
+            destination: cotacaoDestino,
+            checkIn: cotacaoCheckIn,
+            checkOut: cotacaoCheckOut,
+            passengers: cotacaoPax || 1,
+            numNights: cotacaoNoites,
+          },
+        });
+        if (e1) {
+          console.warn('search-suppliers falhou (seguindo só com IA):', e1);
+          supplierWarning = 'Não foi possível consultar APIs de fornecedores. Gerando estimativas com IA.';
+        } else {
+          hoteis = (sup as any)?.hotels || [];
+          servicos = (sup as any)?.services || [];
+          const errs = (sup as any)?.errors || [];
+          if (errs.length > 0 && hoteis.length === 0 && servicos.length === 0) {
+            supplierWarning = `Fornecedores sem retorno (${errs[0]?.supplier || 'API'}). Gerando estimativas com IA.`;
+          }
+          if ((sup as any)?.message) supplierWarning = (sup as any).message;
+        }
+      } catch (err: any) {
+        console.warn('search-suppliers exception:', err);
+        supplierWarning = 'APIs de fornecedores indisponíveis. Gerando estimativas com IA.';
+      }
+      if (supplierWarning) toast.info(supplierWarning);
 
+      // 2) Sempre chama enrich (gera estimativas se arrays vazios)
       const { data: enr, error: e2 } = await supabase.functions.invoke('enrich-supplier-results', {
         body: {
           cotacao: {
@@ -334,7 +359,6 @@ export default function BuscarServicosRobot() {
       setAiResults(lista);
       if (lista.length === 0) toast.warning('Nenhum resultado retornado pela IA.');
       else toast.success(`${lista.length} sugestões geradas`);
-      if ((sup as any)?.message) toast.info((sup as any).message);
     } catch (e: any) {
       console.error(e);
       toast.error('Erro na busca IA', { description: e?.message });
