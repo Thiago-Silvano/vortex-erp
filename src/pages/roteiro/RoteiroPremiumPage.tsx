@@ -534,7 +534,7 @@ export default function RoteiroPremiumPage() {
       hospedagensSel.forEach((h) => {
         days[0].attractions.unshift({
           name: `Hospedagem: ${h.nome}`,
-          description: `${h.descricao}\nLocalização: ${h.localizacao}\nPreço: ${h.precoEstimado}`,
+          description: `${h.descricao}\nPreço: ${h.precoEstimado}`,
           category: "recommendation",
           city: h.localizacao,
           sort_order: 0,
