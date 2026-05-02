@@ -240,6 +240,12 @@ export default function VouchersPage() {
               if (md < 0 || (md === 0 && today.getDate() < bd.getDate())) age--;
               if (age < 18) { children++; childrenAges.push(age); } else { adults++; }
             }
+            // Fallbacks when no passengers registered: use hotel's guestCount or sale.passengers_count
+            if (adults === 0 && children === 0) {
+              const fallbackTotal = Number(h.guestCount) || Number(h.adults) || Number(sale.passengers_count) || 0;
+              if (fallbackTotal > 0) adults = fallbackTotal;
+              if (h.children && Number(h.children) > 0) children = Number(h.children);
+            }
             hotels.push({
               name: h.hotelName || item.description || 'Hotel',
               description: h.observations || '',
@@ -254,7 +260,7 @@ export default function VouchersPage() {
               phone: h.phone || '',
               checkInTime: h.checkInTime || '',
               checkOutTime: h.checkOutTime || '',
-              adults: h.guestCount && !adults ? h.guestCount : adults || (h.guestCount || 0),
+              adults,
               children,
               childrenAges,
               imageBase64,
