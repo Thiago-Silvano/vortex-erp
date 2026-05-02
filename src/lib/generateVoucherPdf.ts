@@ -43,6 +43,20 @@ export interface HotelVoucher {
   childrenAges?: number[];
   imageBase64?: string;
   images?: string[];
+  amenities?: string[];
+  tripadvisorRating?: number;
+  tripadvisorReviewsCount?: number;
+  tripadvisorRanking?: string;
+  tripadvisorBadges?: string[];
+  tripadvisorTopReviews?: string[];
+  tripadvisorRatingBreakdown?: {
+    location?: number;
+    cleanliness?: number;
+    service?: number;
+    value?: number;
+    rooms?: number;
+  };
+  tripadvisorPopularMentions?: string[];
 }
 
 export interface ServiceVoucher {
@@ -514,8 +528,227 @@ function drawHotelContent(
     y = roomCardStart + roomCardH + 5;
   }
 
-  // ── Detailed description (rich text) ──────────────────────
-  if (hotel.detailedDescription) {
+  // ── Sobre o hotel + TripAdvisor card ──────────────────────
+  const hasTA =
+    !!hotel.tripadvisorRating ||
+    !!hotel.tripadvisorRanking ||
+    (hotel.tripadvisorBadges && hotel.tripadvisorBadges.length > 0) ||
+    (hotel.tripadvisorTopReviews && hotel.tripadvisorTopReviews.length > 0) ||
+    (hotel.tripadvisorPopularMentions && hotel.tripadvisorPopularMentions.length > 0) ||
+    !!hotel.tripadvisorRatingBreakdown;
+  const hasAmenities = hotel.amenities && hotel.amenities.length > 0;
+  const cleanDetailed = hotel.detailedDescription
+    ? hotel.detailedDescription
+        .replace(/<[^>]*>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .trim()
+    : "";
+
+  if (cleanDetailed || hasAmenities || hasTA) {
+    y = checkPage(doc, y, 30);
+    const cardStart = y;
+    const padX = 5;
+    let cy = y + 5;
+
+    // Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+    doc.text("Sobre o hotel", m + padX, cy);
+    cy += 5;
+
+    // Description
+    if (cleanDetailed) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      const lines = doc.splitTextToSize(s(cleanDetailed), cw - padX * 2);
+      lines.forEach((ln: string) => {
+        cy = checkPage(doc, cy, 5);
+        doc.text(ln, m + padX, cy);
+        cy += 4;
+      });
+      cy += 2;
+    }
+
+    // Amenities chips (light purple bg, purple text - like screenshot)
+    if (hasAmenities) {
+      cy = checkPage(doc, cy, 10);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      let chipX = m + padX;
+      const chipPadX = 3;
+      const chipH = 5.5;
+      const chipGap = 2;
+      const maxRight = m + cw - padX;
+      hotel.amenities!.forEach((amenity) => {
+        const label = s(amenity);
+        const w = doc.getTextWidth(label) + chipPadX * 2;
+        if (chipX + w > maxRight) {
+          chipX = m + padX;
+          cy += chipH + chipGap;
+          cy = checkPage(doc, cy, chipH + 2);
+        }
+        // Light purple background
+        doc.setFillColor(237, 231, 252);
+        doc.roundedRect(chipX, cy, w, chipH, 1.2, 1.2, "F");
+        // Purple text
+        doc.setTextColor(91, 46, 255);
+        doc.text(label, chipX + chipPadX, cy + chipH - 1.7);
+        chipX += w + chipGap;
+      });
+      cy += chipH + 4;
+    }
+
+    // TripAdvisor block
+    if (hasTA) {
+      cy = checkPage(doc, cy, 14);
+      // Header line: 🦉 TripAdvisor [rating]/5 (N avaliações)
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      const taLabel = "TripAdvisor";
+      doc.text(taLabel, m + padX, cy);
+      let xCursor = m + padX + doc.getTextWidth(taLabel) + 3;
+
+      if (hotel.tripadvisorRating != null) {
+        const ratingStr = `${hotel.tripadvisorRating}`;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(5, 150, 105); // emerald-600
+        doc.text(ratingStr, xCursor, cy);
+        xCursor += doc.getTextWidth(ratingStr) + 1;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+        doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+        doc.text("/5", xCursor, cy);
+        xCursor += doc.getTextWidth("/5") + 2;
+        if (hotel.tripadvisorReviewsCount) {
+          const rev = `(${hotel.tripadvisorReviewsCount.toLocaleString("pt-BR")} avaliações)`;
+          doc.setFontSize(8);
+          doc.text(rev, xCursor, cy);
+        }
+      }
+      cy += 5;
+
+      // Ranking
+      if (hotel.tripadvisorRanking) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+        doc.text(s(hotel.tripadvisorRanking), m + padX, cy);
+        cy += 4.5;
+      }
+
+      // Badges (e.g. Certificado de Excelência) - gold pill
+      if (hotel.tripadvisorBadges && hotel.tripadvisorBadges.length > 0) {
+        let bX = m + padX;
+        const bH = 5.5;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7.5);
+        hotel.tripadvisorBadges.forEach((b) => {
+          const lbl = s(b);
+          const w = doc.getTextWidth(lbl) + 6;
+          if (bX + w > m + cw - padX) {
+            bX = m + padX;
+            cy += bH + 1.5;
+          }
+          doc.setFillColor(254, 243, 199); // amber-100
+          doc.roundedRect(bX, cy, w, bH, 1.2, 1.2, "F");
+          doc.setTextColor(146, 64, 14); // amber-800
+          doc.text(lbl, bX + 3, cy + bH - 1.7);
+          bX += w + 2;
+        });
+        cy += bH + 4;
+      }
+
+      // Rating breakdown - 5 columns
+      if (hotel.tripadvisorRatingBreakdown) {
+        const br = hotel.tripadvisorRatingBreakdown;
+        const breakdownItems = [
+          { label: "Localização", value: br.location },
+          { label: "Limpeza", value: br.cleanliness },
+          { label: "Serviço", value: br.service },
+          { label: "Custo-benefício", value: br.value },
+          { label: "Quartos", value: br.rooms },
+        ].filter((i) => i.value != null);
+
+        if (breakdownItems.length > 0) {
+          cy = checkPage(doc, cy, 12);
+          const colW = (cw - padX * 2) / breakdownItems.length;
+          breakdownItems.forEach((item, i) => {
+            const cx = m + padX + i * colW + colW / 2;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+            doc.text(`${item.value}`, cx, cy + 4, { align: "center" });
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+            doc.text(s(item.label), cx, cy + 8, { align: "center" });
+          });
+          cy += 12;
+        }
+      }
+
+      // Top reviews
+      if (hotel.tripadvisorTopReviews && hotel.tripadvisorTopReviews.length > 0) {
+        cy = checkPage(doc, cy, 8);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+        doc.text("Avaliações em destaque:", m + padX, cy);
+        cy += 4.5;
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(8);
+        doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+        hotel.tripadvisorTopReviews.slice(0, 4).forEach((r) => {
+          const txt = `"${s(r).replace(/^"|"$/g, "")}"`;
+          const lns = doc.splitTextToSize(txt, cw - padX * 2);
+          lns.forEach((ln: string) => {
+            cy = checkPage(doc, cy, 4.5);
+            doc.text(ln, m + padX, cy);
+            cy += 4;
+          });
+          cy += 0.5;
+        });
+        cy += 1.5;
+      }
+
+      // Popular mentions as hashtags
+      if (hotel.tripadvisorPopularMentions && hotel.tripadvisorPopularMentions.length > 0) {
+        cy = checkPage(doc, cy, 6);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(91, 46, 255);
+        let hX = m + padX;
+        hotel.tripadvisorPopularMentions.forEach((mention) => {
+          const tag = `#${s(mention).replace(/^#/, "")}`;
+          const w = doc.getTextWidth(tag);
+          if (hX + w > m + cw - padX) {
+            hX = m + padX;
+            cy += 4.5;
+            cy = checkPage(doc, cy, 5);
+          }
+          doc.text(tag, hX, cy);
+          hX += w + 4;
+        });
+        cy += 5;
+      }
+    }
+
+    const cardH = cy - cardStart;
+    doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+    doc.setLineWidth(0.2);
+    doc.rect(m, cardStart, cw, cardH, "S");
+    y = cardStart + cardH + 5;
+  }
+
+  // ── Detailed description (legacy fallback - skipped if already shown) ─
+  if (false && hotel.detailedDescription) {
     const cleanDesc = hotel.detailedDescription
       .replace(/<[^>]*>/g, "")
       .replace(/&nbsp;/g, " ")
