@@ -133,16 +133,11 @@ export default function VouchersPage() {
       });
     } catch {
       try {
-        const proxyUrl = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/proxy-image?url=${encodeURIComponent(url)}`;
-        const resp = await fetch(proxyUrl);
-        if (!resp.ok) throw new Error(`proxy failed: ${resp.status}`);
-        const blob = await resp.blob();
-        if (!blob || blob.size === 0) throw new Error('empty blob from proxy');
-        return await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
+        // proxy-image edge function expects POST with JSON body { url }
+        const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url } });
+        if (error) throw error;
+        if (!data?.dataUrl) throw new Error('proxy returned no dataUrl');
+        return data.dataUrl as string;
       } catch (err) {
         console.warn('[Voucher] failed to load hotel image:', url, err);
         return undefined;
