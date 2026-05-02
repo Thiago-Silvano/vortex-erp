@@ -730,10 +730,6 @@ export default function RoteiroPremiumPage() {
             )}
             {roteiro && (
               <>
-                <Badge variant="secondary">{totalSelecionados} selecionado(s)</Badge>
-                <Button onClick={enviarParaCotacao} className="gap-1.5" size="sm">
-                  <Send className="h-4 w-4" /> Enviar para Cotação
-                </Button>
                 <Button
                   onClick={criarRoteiroInterativo}
                   disabled={savingRoteiro}
