@@ -322,23 +322,18 @@ export async function generateItineraryPdf(
         pdf.line(0, 44, PAGE_W, 44);
         pdf.setLineWidth(0.2);
 
-        // Data no topo (canto direito)
-        if (itinerary.travel_date) {
-          pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(8);
-          pdf.setTextColor(200, 200, 200);
-          pdf.text(sanitize(itinerary.travel_date), PAGE_W - MARGIN, 18, { align: 'right' });
-        }
-
+        // Título do dia centralizado verticalmente no retângulo (8 → 40)
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(14);
         pdf.setTextColor(...AMBER);
-        pdf.text(sanitize(day.title || `DIA ${String(day.day_number).padStart(2, '0')}`).toUpperCase(), MARGIN, 28);
+        const titleText = sanitize(day.title || `DIA ${String(day.day_number).padStart(2, '0')}`).toUpperCase();
+        const titleY = day.subtitle ? 23 : 27;
+        pdf.text(titleText, MARGIN, titleY);
         if (day.subtitle) {
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(9);
           pdf.setTextColor(200, 200, 200);
-          pdf.text(sanitize(day.subtitle), MARGIN, 36);
+          pdf.text(sanitize(day.subtitle), MARGIN, 33);
         }
         dy = 54;
       } else {
