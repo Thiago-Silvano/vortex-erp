@@ -1102,6 +1102,27 @@ export default function RoteiroPremiumPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Horário de chegada no destino final</Label>
+                <Input
+                  type="time"
+                  className="h-8 text-xs"
+                  value={form.horarioChegadaDestino || ""}
+                  onChange={(e) => setF("horarioChegadaDestino", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Horário de saída (retorno)</Label>
+                <Input
+                  type="time"
+                  className="h-8 text-xs"
+                  value={form.horarioSaidaRetorno || ""}
+                  onChange={(e) => setF("horarioSaidaRetorno", e.target.value)}
+                />
+              </div>
+            </div>
+
             <div>
               <Label className="text-xs">Interesses</Label>
               <div className="flex flex-wrap gap-1.5 mt-1">
