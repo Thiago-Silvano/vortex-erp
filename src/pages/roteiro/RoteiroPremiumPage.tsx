@@ -740,16 +740,6 @@ export default function RoteiroPremiumPage() {
                   {savingRoteiro ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
                   Roteiro Interativo
                 </Button>
-                <Button
-                  onClick={gerarPdfDireto}
-                  disabled={generatingPdf}
-                  variant="outline"
-                  className="gap-1.5"
-                  size="sm"
-                >
-                  {generatingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-                  Gerar PDF
-                </Button>
               </>
             )}
           </div>
