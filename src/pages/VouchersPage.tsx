@@ -119,25 +119,43 @@ export default function VouchersPage() {
 
   const loadImageBase64 = async (url: string): Promise<string | undefined> => {
     if (!url) return undefined;
-    // If it's already a data URL, return as-is
-    if (url.startsWith('data:')) return url;
-    // Try direct fetch first; on CORS failure, fall back to proxy-image edge function
+    const absoluteUrl = new URL(url, window.location.origin).href;
+    const normalizeToJpeg = (src: string): Promise<string | undefined> => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx || !canvas.width || !canvas.height) return resolve(undefined);
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.9));
+        } catch { resolve(src.startsWith('data:image/jpeg') ? src : undefined); }
+      };
+      img.onerror = () => resolve(src.startsWith('data:image/jpeg') ? src : undefined);
+      img.src = src;
+    });
+
+    if (url.startsWith('data:')) return normalizeToJpeg(url);
+
     try {
-      const resp = await fetch(url);
+      const resp = await fetch(absoluteUrl, { mode: 'cors' });
       if (!resp.ok) throw new Error('fetch failed');
       const blob = await resp.blob();
-      return await new Promise<string>((resolve) => {
+      const dataUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
         reader.readAsDataURL(blob);
       });
+      return await normalizeToJpeg(dataUrl);
     } catch {
       try {
         // proxy-image edge function expects POST with JSON body { url }
-        const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url } });
+        const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url: absoluteUrl } });
         if (error) throw error;
         if (!data?.dataUrl) throw new Error('proxy returned no dataUrl');
-        return data.dataUrl as string;
+        return await normalizeToJpeg(data.dataUrl as string);
       } catch (err) {
         console.warn('[Voucher] failed to load hotel image:', url, err);
         return undefined;
@@ -225,8 +243,14 @@ export default function VouchersPage() {
                 nights = Math.round((co.getTime() - ci.getTime()) / (1000 * 60 * 60 * 24));
               }
             }
-            const firstImg = Array.isArray(h.images) && h.images.length > 0 ? h.images[0] : undefined;
-            const imageBase64 = firstImg ? await loadImageBase64(firstImg) : undefined;
+            const metadataImages = Array.isArray(h.images) ? h.images.filter(Boolean) : [];
+            const itemImageRows = await (supabase.from('sale_item_images' as any) as any)
+              .select('image_url')
+              .eq('sale_item_id', item.id)
+              .order('sort_order');
+            const storedImages = (itemImageRows.data || []).map((img: any) => img.image_url).filter(Boolean);
+            const hotelImages = [...metadataImages, ...storedImages].filter((img, idx, arr) => arr.indexOf(img) === idx);
+            const imageBase64 = hotelImages.length > 0 ? await loadImageBase64(hotelImages[0]) : undefined;
             // derive adults/children from passengers (birth_date < 18 = child)
             const today = new Date();
             let adults = 0, children = 0;
@@ -264,7 +288,7 @@ export default function VouchersPage() {
               children,
               childrenAges,
               imageBase64,
-              images: h.images || [],
+              images: hotelImages,
             });
           } else {
             // Hotel item without structured metadata.hotel — still include it
@@ -285,7 +309,7 @@ export default function VouchersPage() {
       }
 
       // Validation: require at least one image on every hotel before generating
-      const hotelsWithoutImage = hotels.filter((h: any) => !h.imageBase64 && !(h.images && h.images.length > 0));
+      const hotelsWithoutImage = hotels.filter((h: any) => !h.imageBase64);
       if (hotels.length > 0 && hotelsWithoutImage.length > 0) {
         const names = hotelsWithoutImage.map((h: any) => h.name).filter(Boolean).join(', ');
         toast.error(
