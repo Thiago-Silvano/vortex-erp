@@ -763,7 +763,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
       // Notes on last page
       if (idx === pages.length - 1 && data.notes) {
         y = checkPage(doc, y, 15);
-        y = drawSectionBar(doc, "OBSERVAÇõES", y, m, cw);
+        y = drawSectionBar(doc, "OBSERVAÇÕES", y, m, cw);
         y += 3;
 
         doc.setFont("helvetica", "normal");
