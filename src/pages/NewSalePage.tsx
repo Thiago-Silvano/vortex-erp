@@ -3929,7 +3929,7 @@ export default function NewSalePage() {
                     })(),
                   },
                   valor_comissao: grossProfit,
-                  descricao: `Agenciamento de viagem${destinationName ? ' — ' + destinationName : ''}`,
+                  descricao: `Comissão sobre venda turística — ${destinationName || ''}`,
                   data: saleDate,
                 }}
               />
