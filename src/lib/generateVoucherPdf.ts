@@ -401,6 +401,7 @@ function drawHotelContent(
       { label: "Check-out", value: `${formatDateBR(hotel.checkOut)}${hotel.checkOutTime ? ` ${hotel.checkOutTime}` : ""}` },
       { label: "Noites", value: `${hotel.nights} Noites` },
       { label: "Hóspedes", value: guestsLabel },
+      { label: "Quarto", value: s(hotel.room || "-") },
     ];
     const colW = infoW / stats.length;
     stats.forEach((stat, i) => {
@@ -419,8 +420,8 @@ function drawHotelContent(
 
   y = cardStartY + imgH + 6;
 
-  // ── Room card (highlighted bar + details) ─────────────────
-  if (hotel.room || hotel.meal || hotel.description) {
+  // ── Meal / description card (room moved into stat box above) ─
+  if (hotel.meal || hotel.description) {
     y = checkPage(doc, y, 24);
     const roomCardStart = y;
 
@@ -432,7 +433,7 @@ function drawHotelContent(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-    doc.text(s(hotel.room || "Acomodação"), m + 4, y + 5.5);
+    doc.text(s(hotel.meal ? "Regime / Detalhes" : "Detalhes"), m + 4, y + 5.5);
 
     // Right side: guests summary with children ages
     const adults = hotel.adults ?? 0;
