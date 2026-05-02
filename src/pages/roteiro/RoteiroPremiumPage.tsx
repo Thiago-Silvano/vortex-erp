@@ -534,7 +534,7 @@ export default function RoteiroPremiumPage() {
       hospedagensSel.forEach((h) => {
         days[0].attractions.unshift({
           name: `Hospedagem: ${h.nome}`,
-          description: `${h.descricao}\nLocalização: ${h.localizacao}\nPreço: ${h.precoEstimado}`,
+          description: `${h.descricao}\nPreço: ${h.precoEstimado}`,
           category: "recommendation",
           city: h.localizacao,
           sort_order: 0,
@@ -730,10 +730,6 @@ export default function RoteiroPremiumPage() {
             )}
             {roteiro && (
               <>
-                <Badge variant="secondary">{totalSelecionados} selecionado(s)</Badge>
-                <Button onClick={enviarParaCotacao} className="gap-1.5" size="sm">
-                  <Send className="h-4 w-4" /> Enviar para Cotação
-                </Button>
                 <Button
                   onClick={criarRoteiroInterativo}
                   disabled={savingRoteiro}
@@ -1102,6 +1098,27 @@ export default function RoteiroPremiumPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Horário de chegada no destino final</Label>
+                <Input
+                  type="time"
+                  className="h-8 text-xs"
+                  value={form.horarioChegadaDestino || ""}
+                  onChange={(e) => setF("horarioChegadaDestino", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Horário de saída (retorno)</Label>
+                <Input
+                  type="time"
+                  className="h-8 text-xs"
+                  value={form.horarioSaidaRetorno || ""}
+                  onChange={(e) => setF("horarioSaidaRetorno", e.target.value)}
+                />
+              </div>
+            </div>
+
             <div>
               <Label className="text-xs">Interesses</Label>
               <div className="flex flex-wrap gap-1.5 mt-1">
@@ -1315,30 +1332,6 @@ export default function RoteiroPremiumPage() {
                   ))}
                 </TabsContent>
               </Tabs>
-
-              {/* Roteiro diário */}
-              {roteiro.roteiroDiario?.length > 0 && (
-                <div className="mt-4 border-t pt-3">
-                  <h3 className="text-sm font-semibold mb-2">Roteiro Dia a Dia</h3>
-                  <div className="space-y-2">
-                    {roteiro.roteiroDiario.map((d) => (
-                      <div key={d.dia} className="border rounded p-2 text-xs">
-                        <div className="font-semibold">
-                          Dia {d.dia} — {d.titulo}
-                        </div>
-                        <p className="text-muted-foreground mt-0.5">{d.descricao}</p>
-                        {d.sugestoes?.length > 0 && (
-                          <ul className="list-disc list-inside mt-1 text-[11px]">
-                            {d.sugestoes.map((s, i) => (
-                              <li key={i}>{s}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Info prática */}
               {roteiro.infoPratica && (

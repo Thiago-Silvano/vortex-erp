@@ -24,6 +24,8 @@ export interface FormularioRoteiro {
   aeroportoSaidaLabel?: string;
   aeroportoOrigemIata?: string;
   aeroportoOrigemLabel?: string;
+  horarioChegadaDestino?: string;
+  horarioSaidaRetorno?: string;
   /** Distribuição de dias por cidade (inclui o destino principal como primeira entrada). */
   cidadesDias?: { cidade: string; dias: number; stopLogistico?: boolean }[];
 }

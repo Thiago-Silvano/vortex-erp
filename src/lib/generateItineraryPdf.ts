@@ -283,7 +283,6 @@ export async function generateItineraryPdf(
   });
   if (checklist.length > 0) indexItems.push({ label: 'Checklist de Viagem', detail: '' });
   if (mapImageUrl) indexItems.push({ label: 'Mapa da Viagem', detail: '' });
-  indexItems.push({ label: 'Agradecimento', detail: '' });
 
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(11);
@@ -312,19 +311,36 @@ export async function generateItineraryPdf(
       let dy = 0;
 
       if (pageIdx === 0) {
+        // Linhas douradas + retângulo preto
+        pdf.setDrawColor(...AMBER);
+        pdf.setLineWidth(0.6);
+        pdf.line(0, 4, PAGE_W, 4);
+        pdf.line(0, 6, PAGE_W, 6);
         pdf.setFillColor(30, 30, 35);
-        pdf.rect(0, 0, PAGE_W, 35, 'F');
+        pdf.rect(0, 8, PAGE_W, 32, 'F');
+        pdf.line(0, 42, PAGE_W, 42);
+        pdf.line(0, 44, PAGE_W, 44);
+        pdf.setLineWidth(0.2);
+
+        // Data no topo (canto direito)
+        if (itinerary.travel_date) {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8);
+          pdf.setTextColor(200, 200, 200);
+          pdf.text(sanitize(itinerary.travel_date), PAGE_W - MARGIN, 18, { align: 'right' });
+        }
+
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
+        pdf.setFontSize(14);
         pdf.setTextColor(...AMBER);
-        pdf.text(sanitize(day.title || `DIA ${String(day.day_number).padStart(2, '0')}`).toUpperCase(), MARGIN, 18);
+        pdf.text(sanitize(day.title || `DIA ${String(day.day_number).padStart(2, '0')}`).toUpperCase(), MARGIN, 28);
         if (day.subtitle) {
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(9);
           pdf.setTextColor(200, 200, 200);
-          pdf.text(sanitize(day.subtitle), MARGIN, 26);
+          pdf.text(sanitize(day.subtitle), MARGIN, 36);
         }
-        dy = 45;
+        dy = 54;
       } else {
         dy = 25;
       }
@@ -365,22 +381,25 @@ export async function generateItineraryPdf(
           pdf.setFontSize(6);
           pdf.setTextColor(...AMBER);
           pdf.text((CATEGORY_LABELS[attr.category] || attr.category).toUpperCase(), textX, ty);
-          ty += 6;
+          ty += 7;
         }
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(13);
         pdf.setTextColor(...DARK);
         const nameLines = pdf.splitTextToSize(sanitize(attr.name || 'Atracao'), textW);
-        nameLines.slice(0, 2).forEach((line: string) => {
+        nameLines.slice(0, 3).forEach((line: string) => {
           pdf.text(line, textX, ty);
-          ty += 6;
+          ty += 7;
         });
+        ty += 1;
 
         if (attr.location || attr.city) {
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(8);
           pdf.setTextColor(...MUTED);
-          pdf.text(sanitize([attr.location, attr.city].filter(Boolean).join(', ')), textX, ty);
+          // Apenas cidade (sem região/localização longa)
+          const cityOnly = sanitize(attr.city || attr.location || '').split(/[\/,]/)[0].trim();
+          pdf.text(cityOnly, textX, ty);
           ty += 6;
         }
 
@@ -506,111 +525,6 @@ export async function generateItineraryPdf(
         pdf.addImage(mapImg, 'PNG', mapX, mapY, mapW, mapH);
       } catch { /* ignore */ }
     }
-  }
-
-  // ===== THANK YOU PAGE =====
-  pdf.addPage();
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, 0, PAGE_W, PAGE_H, 'F');
-
-  // Apply text alignment
-  const textAlign = itinerary.thank_you_text_align || 'center';
-  const pdfAlign = textAlign === 'left' ? 'left' : textAlign === 'right' ? 'right' : 'center';
-  const textX = pdfAlign === 'center' ? PAGE_W / 2 : pdfAlign === 'right' ? PAGE_W - MARGIN : MARGIN;
-
-  // Title
-  const titleText = sanitize(itinerary.thank_you_title || 'OBRIGADO');
-  const titleFontStyle = itinerary.thank_you_title_font_style || 'bold';
-  const titleSize = itinerary.thank_you_title_font_size || 12;
-  const titleColor = itinerary.thank_you_title_font_color || '#d97706';
-
-  // Parse hex color
-  const parseHex = (hex: string): [number, number, number] => {
-    const h = hex.replace('#', '');
-    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
-  };
-
-  let thankY = 80;
-
-  // Draw title
-  const isTitleBold = titleFontStyle === 'bold' || titleFontStyle === 'bold-italic';
-  const isTitleItalic = titleFontStyle === 'italic' || titleFontStyle === 'bold-italic';
-  const titleJsPdfStyle = isTitleBold && isTitleItalic ? 'bolditalic' : isTitleBold ? 'bold' : isTitleItalic ? 'italic' : 'normal';
-  pdf.setFont('helvetica', titleJsPdfStyle);
-  pdf.setFontSize(titleSize);
-  const [tr, tg, tb] = parseHex(titleColor);
-  pdf.setTextColor(tr, tg, tb);
-  const titleEffect = itinerary.thank_you_title_font_effect || 'spaced';
-  // For spaced effect in PDF we add spaces between chars
-  const displayTitle = titleEffect === 'spaced' ? titleText.split('').join(' ') : titleText;
-  pdf.text(displayTitle.toUpperCase(), textX, thankY, { align: pdfAlign as any });
-  thankY += titleSize * 0.6 + 8;
-
-  // Draw body text
-  const bodyFontStyle = itinerary.thank_you_font_style || 'normal';
-  const bodySize = itinerary.thank_you_font_size || 16;
-  const bodyColor = itinerary.thank_you_font_color || '#374151';
-  const isBodyBold = bodyFontStyle === 'bold' || bodyFontStyle === 'bold-italic';
-  const isBodyItalic = bodyFontStyle === 'italic' || bodyFontStyle === 'bold-italic';
-  const bodyJsPdfStyle = isBodyBold && isBodyItalic ? 'bolditalic' : isBodyBold ? 'bold' : isBodyItalic ? 'italic' : 'normal';
-
-  pdf.setFont('helvetica', bodyJsPdfStyle);
-  pdf.setFontSize(Math.min(bodySize, 14)); // Cap at 14 for PDF readability
-  const [br, bg, bb] = parseHex(bodyColor);
-  pdf.setTextColor(br, bg, bb);
-
-  const bodyText = sanitize(itinerary.thank_you_text || 'Obrigado por escolher viajar conosco!');
-  const maxTextW = textAlign === 'justify' ? CONTENT_W : 140;
-  const bodyLines = pdf.splitTextToSize(bodyText, maxTextW);
-  const lineH = Math.min(bodySize, 14) * 0.45 + 1.5;
-  
-  if (textAlign === 'justify') {
-    // Justify: distribute words across line width
-    bodyLines.forEach((line: string, i: number) => {
-      const isLast = i === bodyLines.length - 1 || line.trim() === '';
-      if (isLast || line.trim() === '') {
-        // Last line or empty line: left-align
-        pdf.text(line, MARGIN, thankY);
-      } else {
-        // Justify by stretching word spacing
-        const words = line.split(/\s+/);
-        if (words.length <= 1) {
-          pdf.text(line, MARGIN, thankY);
-        } else {
-          const totalTextW = words.reduce((sum, w) => sum + pdf.getTextWidth(w), 0);
-          const spaceW = (CONTENT_W - totalTextW) / (words.length - 1);
-          let wx = MARGIN;
-          words.forEach((word, wi) => {
-            pdf.text(word, wx, thankY);
-            wx += pdf.getTextWidth(word) + spaceW;
-          });
-        }
-      }
-      thankY += lineH;
-    });
-  } else {
-    bodyLines.forEach((line: string) => {
-      pdf.text(line, textX, thankY, { align: pdfAlign as any });
-      thankY += lineH;
-    });
-  }
-
-  // Thank you image (below text)
-  thankY += 10;
-  const tyImg = await loadImageViaProxy(itinerary.thank_you_image_url);
-  if (tyImg) {
-    try {
-      const imgSizePct = (itinerary.thank_you_image_size || 100) / 100;
-      const imgW = CONTENT_W * imgSizePct;
-      const imgH = imgW * 0.5; // Approximate aspect ratio
-      const imgX = MARGIN + (CONTENT_W - imgW) / 2;
-      // Make sure it fits on the page
-      const maxH = PAGE_H - thankY - 15;
-      const finalH = Math.min(imgH, maxH);
-      if (finalH > 10) {
-        pdf.addImage(tyImg, 'JPEG', imgX, thankY, imgW, finalH);
-      }
-    } catch { /* ignore */ }
   }
 
   return pdf;
