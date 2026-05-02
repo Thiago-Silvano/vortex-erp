@@ -707,7 +707,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   const pages: PageItem[] = [];
 
   nonAirlineHotels.forEach((hotel) => {
-    pages.push({ type: "hotel", hotel, name: hotel.name });
+    pages.push({ type: "hotel", hotel, name: `Hospedagem - ${hotel.name}` });
   });
 
   nonAirlineServices.forEach((svc) => {
