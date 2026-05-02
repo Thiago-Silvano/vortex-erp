@@ -119,6 +119,7 @@ export default function VouchersPage() {
 
   const loadImageBase64 = async (url: string): Promise<string | undefined> => {
     if (!url) return undefined;
+    const absoluteUrl = new URL(url, window.location.origin).href;
     const normalizeToJpeg = (src: string): Promise<string | undefined> => new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -139,7 +140,7 @@ export default function VouchersPage() {
     if (url.startsWith('data:')) return normalizeToJpeg(url);
 
     try {
-      const resp = await fetch(url, { mode: 'cors' });
+      const resp = await fetch(absoluteUrl, { mode: 'cors' });
       if (!resp.ok) throw new Error('fetch failed');
       const blob = await resp.blob();
       const dataUrl = await new Promise<string>((resolve) => {
@@ -151,7 +152,7 @@ export default function VouchersPage() {
     } catch {
       try {
         // proxy-image edge function expects POST with JSON body { url }
-        const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url } });
+        const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url: absoluteUrl } });
         if (error) throw error;
         if (!data?.dataUrl) throw new Error('proxy returned no dataUrl');
         return await normalizeToJpeg(data.dataUrl as string);
