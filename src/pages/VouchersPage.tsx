@@ -119,25 +119,42 @@ export default function VouchersPage() {
 
   const loadImageBase64 = async (url: string): Promise<string | undefined> => {
     if (!url) return undefined;
-    // If it's already a data URL, return as-is
-    if (url.startsWith('data:')) return url;
-    // Try direct fetch first; on CORS failure, fall back to proxy-image edge function
+    const normalizeToJpeg = (src: string): Promise<string | undefined> => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx || !canvas.width || !canvas.height) return resolve(undefined);
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.9));
+        } catch { resolve(src.startsWith('data:image/jpeg') ? src : undefined); }
+      };
+      img.onerror = () => resolve(src.startsWith('data:image/jpeg') ? src : undefined);
+      img.src = src;
+    });
+
+    if (url.startsWith('data:')) return normalizeToJpeg(url);
+
     try {
-      const resp = await fetch(url);
+      const resp = await fetch(url, { mode: 'cors' });
       if (!resp.ok) throw new Error('fetch failed');
       const blob = await resp.blob();
-      return await new Promise<string>((resolve) => {
+      const dataUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
         reader.readAsDataURL(blob);
       });
+      return await normalizeToJpeg(dataUrl);
     } catch {
       try {
         // proxy-image edge function expects POST with JSON body { url }
         const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url } });
         if (error) throw error;
         if (!data?.dataUrl) throw new Error('proxy returned no dataUrl');
-        return data.dataUrl as string;
+        return await normalizeToJpeg(data.dataUrl as string);
       } catch (err) {
         console.warn('[Voucher] failed to load hotel image:', url, err);
         return undefined;
