@@ -119,6 +119,8 @@ export default function VouchersPage() {
 
   const loadImageBase64 = async (url: string): Promise<string | undefined> => {
     if (!url) return undefined;
+    // If it's already a data URL, return as-is
+    if (url.startsWith('data:')) return url;
     // Try direct fetch first; on CORS failure, fall back to proxy-image edge function
     try {
       const resp = await fetch(url);
