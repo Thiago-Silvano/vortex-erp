@@ -275,20 +275,28 @@ function drawHotelContent(
 ): number {
   // ── Top row: Reserva (right, stylized) ────────────────────
   if (hotel.reservationNumber) {
-    // Label "Reserva"
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
     const codeStr = s(hotel.reservationNumber);
+    const labelStr = "Reserva";
+
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+    doc.setFontSize(13);
+    const labelW = doc.getTextWidth(labelStr);
+    doc.setFontSize(11);
     const codeW = doc.getTextWidth(codeStr);
-    doc.text(codeStr, m + cw, y + 4, { align: "right" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-    doc.text("Reserva", m + cw - codeW, y - 1, { align: "right" });
+
+    const groupW = labelW + 3 + codeW;
+    const groupX = m + cw - groupW;
+    const baselineY = y + 4;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+    doc.text(labelStr, groupX, baselineY);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+    doc.text(codeStr, groupX + labelW + 3, baselineY);
     y += 8;
   }
 
@@ -300,7 +308,7 @@ function drawHotelContent(
   const infoW = cw - imgW - 5;
 
   // Image (or placeholder)
-  const imgSrc = hotel.imageBase64 || hotel.images?.[0];
+  const imgSrc = hotel.imageBase64;
   if (imgSrc) {
     try {
       doc.addImage(imgSrc, "JPEG", m, y, imgW, imgH);
