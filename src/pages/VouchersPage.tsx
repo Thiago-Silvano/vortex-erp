@@ -122,42 +122,64 @@ export default function VouchersPage() {
     const absoluteUrl = new URL(url, window.location.origin).href;
     const normalizeToJpeg = (src: string): Promise<string | undefined> => new Promise((resolve) => {
       const img = new Image();
+      // Required so canvas is not tainted when src is a remote URL (won't matter for data: URLs)
+      if (!src.startsWith('data:')) img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
           const canvas = document.createElement('canvas');
           canvas.width = img.naturalWidth || img.width;
           canvas.height = img.naturalHeight || img.height;
           const ctx = canvas.getContext('2d');
-          if (!ctx || !canvas.width || !canvas.height) return resolve(undefined);
+          if (!ctx || !canvas.width || !canvas.height) {
+            console.warn('[Voucher] normalizeToJpeg: missing ctx or zero dims');
+            return resolve(undefined);
+          }
           ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/jpeg', 0.9));
-        } catch { resolve(src.startsWith('data:image/jpeg') ? src : undefined); }
+          try {
+            resolve(canvas.toDataURL('image/jpeg', 0.9));
+          } catch (e) {
+            console.warn('[Voucher] canvas.toDataURL failed (tainted?):', e);
+            resolve(src.startsWith('data:image/jpeg') ? src : undefined);
+          }
+        } catch (e) {
+          console.warn('[Voucher] normalizeToJpeg draw error:', e);
+          resolve(src.startsWith('data:image/jpeg') ? src : undefined);
+        }
       };
-      img.onerror = () => resolve(src.startsWith('data:image/jpeg') ? src : undefined);
+      img.onerror = () => {
+        console.warn('[Voucher] normalizeToJpeg: img.onerror for src starting with', src.substring(0, 60));
+        resolve(src.startsWith('data:image/jpeg') ? src : undefined);
+      };
       img.src = src;
     });
 
     if (url.startsWith('data:')) return normalizeToJpeg(url);
 
+    // Always go through the proxy first — it bypasses CORS and returns a data URL,
+    // which means the canvas won't be tainted when re-encoding to JPEG.
     try {
-      const resp = await fetch(absoluteUrl, { mode: 'cors' });
-      if (!resp.ok) throw new Error('fetch failed');
-      const blob = await resp.blob();
-      const dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      });
-      return await normalizeToJpeg(dataUrl);
-    } catch {
+      const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url: absoluteUrl } });
+      if (error) throw error;
+      if (!data?.dataUrl) throw new Error('proxy returned no dataUrl');
+      const normalized = await normalizeToJpeg(data.dataUrl as string);
+      if (normalized) return normalized;
+      // Fallback: return raw proxy data URL even if normalization failed
+      return data.dataUrl as string;
+    } catch (err) {
+      console.warn('[Voucher] proxy-image failed, trying direct fetch:', url, err);
       try {
-        // proxy-image edge function expects POST with JSON body { url }
-        const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url: absoluteUrl } });
-        if (error) throw error;
-        if (!data?.dataUrl) throw new Error('proxy returned no dataUrl');
-        return await normalizeToJpeg(data.dataUrl as string);
-      } catch (err) {
-        console.warn('[Voucher] failed to load hotel image:', url, err);
+        const resp = await fetch(absoluteUrl, { mode: 'cors' });
+        if (!resp.ok) throw new Error('fetch failed: ' + resp.status);
+        const blob = await resp.blob();
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        const normalized = await normalizeToJpeg(dataUrl);
+        return normalized || dataUrl;
+      } catch (err2) {
+        console.warn('[Voucher] failed to load hotel image:', url, err2);
         return undefined;
       }
     }
