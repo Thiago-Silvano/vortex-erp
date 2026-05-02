@@ -3808,39 +3808,6 @@ export default function NewSalePage() {
           />
         )}
 
-        {/* Notes + Internal Files - below contracts */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Observações da Cotação' : 'Observação da Venda'}</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações internas sobre a venda..." rows={4} className="min-h-[80px]" />
-            <div className="border-t pt-4">
-              <Label className="text-sm font-medium flex items-center gap-2 mb-2"><Paperclip className="h-4 w-4" />Arquivos Internos</Label>
-              <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50 w-fit">
-                <Upload className="h-4 w-4" />
-                {uploadingFile ? 'Enviando...' : 'Adicionar arquivos'}
-                <input type="file" multiple className="hidden" onChange={handleInternalFileUpload} disabled={uploadingFile} />
-              </label>
-              {internalFiles.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {internalFiles.map((f, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
-                      <FileText className="h-4 w-4 text-primary shrink-0" />
-                      <a href={f.file_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline hover:text-primary/80 truncate flex items-center gap-1">
-                        {f.file_name}<ExternalLink className="h-3 w-3 shrink-0" />
-                      </a>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 ml-auto" onClick={() => removeInternalFile(idx)}>
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-
-
         {/* Client Proposal Choices */}
         {clientChoices.length > 0 && (
           <Card className="border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20">
