@@ -391,17 +391,22 @@ function drawHotelContent(
     const fallbackAdults = adults || children ? adults : passengers.length;
     const guestsLabel =
       fallbackAdults || children
-        ? [fallbackAdults ? `${fallbackAdults} Adulto${fallbackAdults > 1 ? "s" : ""}` : "", children ? `${children} Criança${children > 1 ? "s" : ""}` : ""]
+        ? [
+            fallbackAdults ? `${fallbackAdults} Adulto${fallbackAdults > 1 ? "s" : ""}` : "",
+            children ? `${children} Criança${children > 1 ? "s" : ""}` : "",
+          ]
             .filter(Boolean)
             .join(" ")
         : "-";
 
     const stats = [
       { label: "Check-in", value: `${formatDateBR(hotel.checkIn)}${hotel.checkInTime ? ` ${hotel.checkInTime}` : ""}` },
-      { label: "Check-out", value: `${formatDateBR(hotel.checkOut)}${hotel.checkOutTime ? ` ${hotel.checkOutTime}` : ""}` },
+      {
+        label: "Check-out",
+        value: `${formatDateBR(hotel.checkOut)}${hotel.checkOutTime ? ` ${hotel.checkOutTime}` : ""}`,
+      },
       { label: "Noites", value: `${hotel.nights} Noites` },
       { label: "Hóspedes", value: guestsLabel },
-      { label: "Quarto", value: s(hotel.room || "-") },
     ];
     const colW = infoW / stats.length;
     stats.forEach((stat, i) => {
@@ -420,8 +425,8 @@ function drawHotelContent(
 
   y = cardStartY + imgH + 6;
 
-  // ── Meal / description card (room moved into stat box above) ─
-  if (hotel.meal || hotel.description) {
+  // ── Room card (highlighted bar + details) ─────────────────
+  if (hotel.room || hotel.meal || hotel.description) {
     y = checkPage(doc, y, 24);
     const roomCardStart = y;
 
@@ -433,7 +438,7 @@ function drawHotelContent(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-    doc.text(s(hotel.meal ? "Regime / Detalhes" : "Detalhes"), m + 4, y + 5.5);
+    doc.text(s(hotel.room || "Acomodação"), m + 4, y + 5.5);
 
     // Right side: guests summary with children ages
     const adults = hotel.adults ?? 0;
@@ -750,7 +755,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
       if (page.type === "hotel" && page.hotel) {
         y = drawHotelContent(doc, page.hotel, data.passengers, y, m, cw);
       } else if (page.type === "service" && page.service) {
-        y = drawSectionBar(doc, "DETALHES DO SERVICO", y, m, cw);
+        y = drawSectionBar(doc, "DETALHES DO SERVIÇO", y, m, cw);
         y += 3;
         y = drawServiceContent(doc, page.service, y, m, cw);
       }
@@ -758,7 +763,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
       // Notes on last page
       if (idx === pages.length - 1 && data.notes) {
         y = checkPage(doc, y, 15);
-        y = drawSectionBar(doc, "OBSERVACOES", y, m, cw);
+        y = drawSectionBar(doc, "OBSERVAÇõES", y, m, cw);
         y += 3;
 
         doc.setFont("helvetica", "normal");
