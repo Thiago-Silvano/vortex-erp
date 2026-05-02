@@ -1333,30 +1333,6 @@ export default function RoteiroPremiumPage() {
                 </TabsContent>
               </Tabs>
 
-              {/* Roteiro diário */}
-              {roteiro.roteiroDiario?.length > 0 && (
-                <div className="mt-4 border-t pt-3">
-                  <h3 className="text-sm font-semibold mb-2">Roteiro Dia a Dia</h3>
-                  <div className="space-y-2">
-                    {roteiro.roteiroDiario.map((d) => (
-                      <div key={d.dia} className="border rounded p-2 text-xs">
-                        <div className="font-semibold">
-                          Dia {d.dia} — {d.titulo}
-                        </div>
-                        <p className="text-muted-foreground mt-0.5">{d.descricao}</p>
-                        {d.sugestoes?.length > 0 && (
-                          <ul className="list-disc list-inside mt-1 text-[11px]">
-                            {d.sugestoes.map((s, i) => (
-                              <li key={i}>{s}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Info prática */}
               {roteiro.infoPratica && (
                 <div className="mt-4 border-t pt-3 grid grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
