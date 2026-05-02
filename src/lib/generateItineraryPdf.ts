@@ -312,19 +312,36 @@ export async function generateItineraryPdf(
       let dy = 0;
 
       if (pageIdx === 0) {
+        // Linhas douradas + retângulo preto
+        pdf.setDrawColor(...AMBER);
+        pdf.setLineWidth(0.6);
+        pdf.line(0, 4, PAGE_W, 4);
+        pdf.line(0, 6, PAGE_W, 6);
         pdf.setFillColor(30, 30, 35);
-        pdf.rect(0, 0, PAGE_W, 35, 'F');
+        pdf.rect(0, 8, PAGE_W, 32, 'F');
+        pdf.line(0, 42, PAGE_W, 42);
+        pdf.line(0, 44, PAGE_W, 44);
+        pdf.setLineWidth(0.2);
+
+        // Data no topo (canto direito)
+        if (itinerary.travel_date) {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8);
+          pdf.setTextColor(200, 200, 200);
+          pdf.text(sanitize(itinerary.travel_date), PAGE_W - MARGIN, 18, { align: 'right' });
+        }
+
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
+        pdf.setFontSize(14);
         pdf.setTextColor(...AMBER);
-        pdf.text(sanitize(day.title || `DIA ${String(day.day_number).padStart(2, '0')}`).toUpperCase(), MARGIN, 18);
+        pdf.text(sanitize(day.title || `DIA ${String(day.day_number).padStart(2, '0')}`).toUpperCase(), MARGIN, 28);
         if (day.subtitle) {
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(9);
           pdf.setTextColor(200, 200, 200);
-          pdf.text(sanitize(day.subtitle), MARGIN, 26);
+          pdf.text(sanitize(day.subtitle), MARGIN, 36);
         }
-        dy = 45;
+        dy = 54;
       } else {
         dy = 25;
       }
@@ -365,22 +382,25 @@ export async function generateItineraryPdf(
           pdf.setFontSize(6);
           pdf.setTextColor(...AMBER);
           pdf.text((CATEGORY_LABELS[attr.category] || attr.category).toUpperCase(), textX, ty);
-          ty += 6;
+          ty += 7;
         }
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(13);
         pdf.setTextColor(...DARK);
         const nameLines = pdf.splitTextToSize(sanitize(attr.name || 'Atracao'), textW);
-        nameLines.slice(0, 2).forEach((line: string) => {
+        nameLines.slice(0, 3).forEach((line: string) => {
           pdf.text(line, textX, ty);
-          ty += 6;
+          ty += 7;
         });
+        ty += 1;
 
         if (attr.location || attr.city) {
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(8);
           pdf.setTextColor(...MUTED);
-          pdf.text(sanitize([attr.location, attr.city].filter(Boolean).join(', ')), textX, ty);
+          // Apenas cidade (sem região/localização longa)
+          const cityOnly = sanitize(attr.city || attr.location || '').split(/[\/,]/)[0].trim();
+          pdf.text(cityOnly, textX, ty);
           ty += 6;
         }
 
