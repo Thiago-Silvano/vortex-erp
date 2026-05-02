@@ -309,16 +309,29 @@ function drawHotelContent(
 
   // Image (or placeholder)
   const imgSrc = hotel.imageBase64;
+  console.log("[Voucher] hotel.imageBase64 type:", typeof imgSrc, "start:", imgSrc?.substring(0, 80));
   if (imgSrc) {
     try {
-      doc.addImage(imgSrc, "JPEG", m, y, imgW, imgH);
-    } catch {
-      try {
-        doc.addImage(imgSrc, "PNG", m, y, imgW, imgH);
-      } catch {
-        doc.setFillColor(LIGHT_BG[0], LIGHT_BG[1], LIGHT_BG[2]);
-        doc.rect(m, y, imgW, imgH, "F");
+      let imgFormat = "JPEG";
+      if (imgSrc.startsWith("data:")) {
+        const match = imgSrc.match(/^data:image\/(\w+);base64,/i);
+        if (match) {
+          const ext = match[1].toUpperCase();
+          imgFormat = ext === "JPG" ? "JPEG" : ext;
+        }
+      } else if (imgSrc.startsWith("http")) {
+        console.warn("[Voucher] Hotel image must be base64, not a URL:", imgSrc.substring(0, 80));
+        throw new Error("URL not supported, must be base64");
       }
+      doc.addImage(imgSrc, imgFormat, m, y, imgW, imgH);
+    } catch (e) {
+      console.error("[Voucher] Erro ao carregar imagem do hotel:", e);
+      doc.setFillColor(LIGHT_BG[0], LIGHT_BG[1], LIGHT_BG[2]);
+      doc.rect(m, y, imgW, imgH, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+      doc.text("(sem imagem)", m + imgW / 2, y + imgH / 2, { align: "center" });
     }
   } else {
     doc.setFillColor(LIGHT_BG[0], LIGHT_BG[1], LIGHT_BG[2]);
