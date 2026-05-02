@@ -1146,6 +1146,57 @@ export default function NewSalePage() {
     });
   };
 
+  const loadVoucherImageBase64 = async (url?: string): Promise<string | undefined> => {
+    if (!url) return undefined;
+    const absoluteUrl = new URL(url, window.location.origin).href;
+
+    const normalizeToJpeg = (src: string): Promise<string | undefined> => new Promise(resolve => {
+      const img = new Image();
+      if (!src.startsWith('data:')) img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx || !canvas.width || !canvas.height) return resolve(undefined);
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.9));
+        } catch (e) {
+          console.warn('[Voucher] Falha ao normalizar imagem:', e);
+          resolve(src.startsWith('data:image/jpeg') || src.startsWith('data:image/png') ? src : undefined);
+        }
+      };
+      img.onerror = () => resolve(src.startsWith('data:image/jpeg') || src.startsWith('data:image/png') ? src : undefined);
+      img.src = src;
+    });
+
+    if (url.startsWith('data:')) return normalizeToJpeg(url);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url: absoluteUrl } });
+      if (error) throw error;
+      if (!data?.dataUrl) throw new Error('proxy returned no dataUrl');
+      return (await normalizeToJpeg(data.dataUrl as string)) || data.dataUrl as string;
+    } catch (err) {
+      console.warn('[Voucher] proxy-image falhou, tentando fetch direto:', err);
+      try {
+        const resp = await fetch(absoluteUrl, { mode: 'cors' });
+        if (!resp.ok) throw new Error(`fetch failed: ${resp.status}`);
+        const blob = await resp.blob();
+        const dataUrl = await new Promise<string>(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        return (await normalizeToJpeg(dataUrl)) || dataUrl;
+      } catch (fallbackErr) {
+        console.warn('[Voucher] Falha ao carregar imagem da hospedagem:', fallbackErr);
+        return undefined;
+      }
+    }
+  };
+
   const handleSearchServiceImages = async (itemIdx: number) => {
     const item = items[itemIdx];
     const searchQuery = item.metadata?.hotel?.hotelName || item.description || '';
@@ -1692,9 +1743,11 @@ export default function NewSalePage() {
 
     // Collect hotels from metadata
     const hotels: any[] = [];
-    for (const item of items) {
+    for (const [itemIdx, item] of items.entries()) {
       if (item.metadata?.type === 'hotel' && item.metadata.hotel) {
         const h = item.metadata.hotel;
+        const selectedImages = itemImages[itemIdx]?.length ? itemImages[itemIdx] : h.images || [];
+        const imageBase64 = selectedImages.length > 0 ? await loadVoucherImageBase64(selectedImages[0]) : undefined;
         // Calculate nights from checkIn/checkOut dates
         let hotelNights = 0;
         if (h.checkInDate && h.checkOutDate) {
@@ -1732,8 +1785,17 @@ export default function NewSalePage() {
           tripadvisorTopReviews: h.tripadvisorTopReviews,
           tripadvisorRatingBreakdown: h.tripadvisorRatingBreakdown,
           tripadvisorPopularMentions: h.tripadvisorPopularMentions,
+          imageBase64,
+          images: selectedImages,
         });
       }
+    }
+
+    const hotelsWithoutImage = hotels.filter((h: any) => !h.imageBase64);
+    if (hotels.length > 0 && hotelsWithoutImage.length > 0) {
+      const names = hotelsWithoutImage.map((h: any) => h.name).filter(Boolean).join(', ');
+      toast.error(`Selecione ao menos uma imagem para gerar o voucher${names ? `: ${names}` : '.'}`);
+      return;
     }
 
     // Load reservations
