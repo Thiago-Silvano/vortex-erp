@@ -43,6 +43,20 @@ export interface HotelVoucher {
   childrenAges?: number[];
   imageBase64?: string;
   images?: string[];
+  amenities?: string[];
+  tripadvisorRating?: number;
+  tripadvisorReviewsCount?: number;
+  tripadvisorRanking?: string;
+  tripadvisorBadges?: string[];
+  tripadvisorTopReviews?: string[];
+  tripadvisorRatingBreakdown?: {
+    location?: number;
+    cleanliness?: number;
+    service?: number;
+    value?: number;
+    rooms?: number;
+  };
+  tripadvisorPopularMentions?: string[];
 }
 
 export interface ServiceVoucher {
