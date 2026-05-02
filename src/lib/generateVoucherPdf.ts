@@ -273,13 +273,23 @@ function drawHotelContent(
   m: number,
   cw: number,
 ): number {
-  // ── Top row: localizador (right) ──────────────────────────
+  // ── Top row: Reserva (right, stylized) ────────────────────
   if (hotel.reservationNumber) {
+    // Label "Reserva"
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-    doc.text(s(`Localizador: ${hotel.reservationNumber}`), m + cw, y, { align: "right" });
-    y += 5;
+    const codeStr = s(hotel.reservationNumber);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+    const codeW = doc.getTextWidth(codeStr);
+    doc.text(codeStr, m + cw, y + 4, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+    doc.text("Reserva", m + cw - codeW, y - 1, { align: "right" });
+    y += 8;
   }
 
   // ── Main card: image (left) + hotel info (right) ──────────
@@ -357,9 +367,10 @@ function drawHotelContent(
 
     const adults = hotel.adults ?? 0;
     const children = hotel.children ?? 0;
+    const fallbackAdults = adults || children ? adults : passengers.length;
     const guestsLabel =
-      adults || children
-        ? [adults ? `${adults} Adulto${adults > 1 ? "s" : ""}` : "", children ? `${children} Criança${children > 1 ? "s" : ""}` : ""]
+      fallbackAdults || children
+        ? [fallbackAdults ? `${fallbackAdults} Adulto${fallbackAdults > 1 ? "s" : ""}` : "", children ? `${children} Criança${children > 1 ? "s" : ""}` : ""]
             .filter(Boolean)
             .join(" ")
         : "-";
@@ -715,8 +726,6 @@ export function generateVoucherPdf(data: VoucherPdfData) {
 
       // Service-specific content
       if (page.type === "hotel" && page.hotel) {
-        y = drawSectionBar(doc, "HOSPEDAGEM", y, m, cw);
-        y += 3;
         y = drawHotelContent(doc, page.hotel, data.passengers, y, m, cw);
       } else if (page.type === "service" && page.service) {
         y = drawSectionBar(doc, "DETALHES DO SERVICO", y, m, cw);
