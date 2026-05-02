@@ -283,7 +283,6 @@ export async function generateItineraryPdf(
   });
   if (checklist.length > 0) indexItems.push({ label: 'Checklist de Viagem', detail: '' });
   if (mapImageUrl) indexItems.push({ label: 'Mapa da Viagem', detail: '' });
-  indexItems.push({ label: 'Agradecimento', detail: '' });
 
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(11);
