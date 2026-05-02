@@ -226,35 +226,49 @@ export async function generateItineraryPdf(
   }
   pdf.setGState(pdf.GState({ opacity: 1 }));
 
-  let coverY = PAGE_H - 80;
+  // Pré-calcula altura total para empilhar a partir da base sem sobreposição
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(32);
+  const titleLines = pdf.splitTextToSize(sanitize(itinerary.title || 'Roteiro de Viagem'), CONTENT_W);
+  const subtitleH = itinerary.subtitle ? 6 + 8 : 0;
+  const titleH = titleLines.length * 13;
+  const destH = destinationNames.length > 0 ? 14 : 0;
+  const clientH = itinerary.client_name || itinerary.travel_date ? 10 : 0;
+  const totalH = subtitleH + titleH + destH + clientH;
+
+  let coverY = PAGE_H - 30 - totalH;
+
   if (itinerary.subtitle) {
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(9);
     pdf.setTextColor(...WHITE);
     pdf.text(sanitize(itinerary.subtitle).toUpperCase(), MARGIN, coverY);
-    coverY += 8;
+    coverY += subtitleH;
   }
+
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(32);
   pdf.setTextColor(...WHITE);
-  const titleLines = pdf.splitTextToSize(sanitize(itinerary.title || 'Roteiro de Viagem'), CONTENT_W);
-  titleLines.forEach((line: string) => {
+  // Avança meio line-height antes da primeira linha do título
+  coverY += 11;
+  titleLines.forEach((line: string, i: number) => {
     pdf.text(line, MARGIN, coverY);
-    coverY += 14;
+    if (i < titleLines.length - 1) coverY += 13;
   });
+  coverY += 14;
 
   if (destinationNames.length > 0) {
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(12);
     pdf.setTextColor(255, 255, 255);
-    pdf.text(destinationNames.join(' · '), MARGIN, coverY + 4);
-    coverY += 12;
+    pdf.text(destinationNames.join(' · '), MARGIN, coverY);
+    coverY += 10;
   }
 
   if (itinerary.client_name || itinerary.travel_date) {
     pdf.setFontSize(9);
     pdf.setTextColor(200, 200, 200);
-    pdf.text([itinerary.client_name, itinerary.travel_date].filter(Boolean).join('  |  '), MARGIN, coverY + 4);
+    pdf.text([itinerary.client_name, itinerary.travel_date].filter(Boolean).join('  |  '), MARGIN, coverY);
   }
 
   // ===== INDEX PAGE =====
