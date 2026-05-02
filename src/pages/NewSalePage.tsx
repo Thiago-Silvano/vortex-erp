@@ -1743,9 +1743,11 @@ export default function NewSalePage() {
 
     // Collect hotels from metadata
     const hotels: any[] = [];
-    for (const item of items) {
+    for (const [itemIdx, item] of items.entries()) {
       if (item.metadata?.type === 'hotel' && item.metadata.hotel) {
         const h = item.metadata.hotel;
+        const selectedImages = itemImages[itemIdx]?.length ? itemImages[itemIdx] : h.images || [];
+        const imageBase64 = selectedImages.length > 0 ? await loadVoucherImageBase64(selectedImages[0]) : undefined;
         // Calculate nights from checkIn/checkOut dates
         let hotelNights = 0;
         if (h.checkInDate && h.checkOutDate) {
@@ -1783,8 +1785,17 @@ export default function NewSalePage() {
           tripadvisorTopReviews: h.tripadvisorTopReviews,
           tripadvisorRatingBreakdown: h.tripadvisorRatingBreakdown,
           tripadvisorPopularMentions: h.tripadvisorPopularMentions,
+          imageBase64,
+          images: selectedImages,
         });
       }
+    }
+
+    const hotelsWithoutImage = hotels.filter((h: any) => !h.imageBase64);
+    if (hotels.length > 0 && hotelsWithoutImage.length > 0) {
+      const names = hotelsWithoutImage.map((h: any) => h.name).filter(Boolean).join(', ');
+      toast.error(`Selecione ao menos uma imagem para gerar o voucher${names ? `: ${names}` : '.'}`);
+      return;
     }
 
     // Load reservations
