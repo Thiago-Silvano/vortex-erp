@@ -1146,6 +1146,57 @@ export default function NewSalePage() {
     });
   };
 
+  const loadVoucherImageBase64 = async (url?: string): Promise<string | undefined> => {
+    if (!url) return undefined;
+    const absoluteUrl = new URL(url, window.location.origin).href;
+
+    const normalizeToJpeg = (src: string): Promise<string | undefined> => new Promise(resolve => {
+      const img = new Image();
+      if (!src.startsWith('data:')) img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx || !canvas.width || !canvas.height) return resolve(undefined);
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.9));
+        } catch (e) {
+          console.warn('[Voucher] Falha ao normalizar imagem:', e);
+          resolve(src.startsWith('data:image/jpeg') || src.startsWith('data:image/png') ? src : undefined);
+        }
+      };
+      img.onerror = () => resolve(src.startsWith('data:image/jpeg') || src.startsWith('data:image/png') ? src : undefined);
+      img.src = src;
+    });
+
+    if (url.startsWith('data:')) return normalizeToJpeg(url);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('proxy-image', { body: { url: absoluteUrl } });
+      if (error) throw error;
+      if (!data?.dataUrl) throw new Error('proxy returned no dataUrl');
+      return (await normalizeToJpeg(data.dataUrl as string)) || data.dataUrl as string;
+    } catch (err) {
+      console.warn('[Voucher] proxy-image falhou, tentando fetch direto:', err);
+      try {
+        const resp = await fetch(absoluteUrl, { mode: 'cors' });
+        if (!resp.ok) throw new Error(`fetch failed: ${resp.status}`);
+        const blob = await resp.blob();
+        const dataUrl = await new Promise<string>(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        return (await normalizeToJpeg(dataUrl)) || dataUrl;
+      } catch (fallbackErr) {
+        console.warn('[Voucher] Falha ao carregar imagem da hospedagem:', fallbackErr);
+        return undefined;
+      }
+    }
+  };
+
   const handleSearchServiceImages = async (itemIdx: number) => {
     const item = items[itemIdx];
     const searchQuery = item.metadata?.hotel?.hotelName || item.description || '';
