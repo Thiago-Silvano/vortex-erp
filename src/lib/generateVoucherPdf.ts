@@ -551,27 +551,20 @@ function drawHotelContent(
     y = checkPage(doc, y, 30);
     const cardStart = y;
     const padX = 5;
-    let cy = y + 5;
-
-    // Title
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-    doc.text("Sobre o hotel", m + padX, cy);
-    cy += 6;
+    let cy = y + 4;
 
     // Description
     if (cleanDetailed) {
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
+      doc.setFontSize(8);
       doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
       const lines = doc.splitTextToSize(s(cleanDetailed), cw - padX * 2);
       lines.forEach((ln: string) => {
-        cy = checkPage(doc, cy, 5);
+        cy = checkPage(doc, cy, 4);
         doc.text(ln, m + padX, cy);
-        cy += 4;
+        cy += 3.5;
       });
-      cy += 2;
+      cy += 1.5;
     }
 
     // Amenities chips (light purple bg, purple text - like screenshot)
@@ -968,7 +961,7 @@ export function generateVoucherPdf(data: VoucherPdfData) {
   const pages: PageItem[] = [];
 
   nonAirlineHotels.forEach((hotel) => {
-    pages.push({ type: "hotel", hotel, name: `Hospedagem - ${hotel.name}` });
+    pages.push({ type: "hotel", hotel, name: `Hospedagem` });
   });
 
   nonAirlineServices.forEach((svc) => {
