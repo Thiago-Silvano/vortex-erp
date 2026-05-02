@@ -378,10 +378,12 @@ function drawHotelContent(
     infoY += 1;
   }
 
-  // ── Inner stat box: Check-in | Check-out | Noites | Hóspedes ─
+  // ── Inner stat box: Check-in | Check-out | Noites | Hóspedes (+ Quarto row) ─
   const statBoxY = Math.max(infoY, y + 18);
-  const statBoxH = imgH - (statBoxY - y);
-  if (statBoxH > 10) {
+  const baseStatBoxH = imgH - (statBoxY - y);
+  const roomRowH = hotel.room ? 7 : 0;
+  const statBoxH = baseStatBoxH + roomRowH;
+  if (baseStatBoxH > 10) {
     doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
     doc.setLineWidth(0.2);
     doc.rect(infoX, statBoxY, infoW, statBoxH, "S");
@@ -421,12 +423,31 @@ function drawHotelContent(
       const vLines = doc.splitTextToSize(s(stat.value), colW - 5);
       doc.text(vLines, x, statBoxY + 10);
     });
+
+    // Room row inside the same box
+    if (hotel.room) {
+      const roomY = statBoxY + baseStatBoxH + 4.5;
+      // separator line
+      doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+      doc.setLineWidth(0.1);
+      doc.line(infoX + 2, statBoxY + baseStatBoxH, infoX + infoW - 2, statBoxY + baseStatBoxH);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      doc.text("Quarto: ", infoX + 3, roomY);
+      const lblW = doc.getTextWidth("Quarto: ");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+      const roomLines = doc.splitTextToSize(s(hotel.room), infoW - 6 - lblW);
+      doc.text(roomLines[0] || "", infoX + 3 + lblW, roomY);
+    }
   }
 
-  y = cardStartY + imgH + 6;
+  y = cardStartY + Math.max(imgH, statBoxY - y + statBoxH) + 6;
 
-  // ── Room card (highlighted bar + details) ─────────────────
-  if (hotel.room || hotel.meal || hotel.description) {
+  // ── Meal / description card (room moved into stat box above) ─
+  if (hotel.meal || hotel.description) {
     y = checkPage(doc, y, 24);
     const roomCardStart = y;
 
@@ -438,7 +459,7 @@ function drawHotelContent(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-    doc.text(s(hotel.room || "Acomodação"), m + 4, y + 5.5);
+    doc.text(s(hotel.meal ? "Regime / Detalhes" : "Detalhes"), m + 4, y + 5.5);
 
     // Right side: guests summary with children ages
     const adults = hotel.adults ?? 0;
