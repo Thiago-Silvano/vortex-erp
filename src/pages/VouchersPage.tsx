@@ -242,8 +242,14 @@ export default function VouchersPage() {
                 nights = Math.round((co.getTime() - ci.getTime()) / (1000 * 60 * 60 * 24));
               }
             }
-            const firstImg = Array.isArray(h.images) && h.images.length > 0 ? h.images[0] : undefined;
-            const imageBase64 = firstImg ? await loadImageBase64(firstImg) : undefined;
+            const metadataImages = Array.isArray(h.images) ? h.images.filter(Boolean) : [];
+            const itemImageRows = await (supabase.from('sale_item_images' as any) as any)
+              .select('image_url')
+              .eq('sale_item_id', item.id)
+              .order('sort_order');
+            const storedImages = (itemImageRows.data || []).map((img: any) => img.image_url).filter(Boolean);
+            const hotelImages = [...metadataImages, ...storedImages].filter((img, idx, arr) => arr.indexOf(img) === idx);
+            const imageBase64 = hotelImages.length > 0 ? await loadImageBase64(hotelImages[0]) : undefined;
             // derive adults/children from passengers (birth_date < 18 = child)
             const today = new Date();
             let adults = 0, children = 0;
@@ -281,7 +287,7 @@ export default function VouchersPage() {
               children,
               childrenAges,
               imageBase64,
-              images: h.images || [],
+              images: hotelImages,
             });
           } else {
             // Hotel item without structured metadata.hotel — still include it
@@ -302,7 +308,7 @@ export default function VouchersPage() {
       }
 
       // Validation: require at least one image on every hotel before generating
-      const hotelsWithoutImage = hotels.filter((h: any) => !h.imageBase64 && !(h.images && h.images.length > 0));
+      const hotelsWithoutImage = hotels.filter((h: any) => !h.imageBase64);
       if (hotels.length > 0 && hotelsWithoutImage.length > 0) {
         const names = hotelsWithoutImage.map((h: any) => h.name).filter(Boolean).join(', ');
         toast.error(
