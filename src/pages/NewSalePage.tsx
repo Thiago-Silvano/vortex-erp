@@ -3,6 +3,7 @@ import ImagePositionEditor, { ImagePositionConfig } from '@/components/ImagePosi
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
+import NfseModulo from '@/components/fiscal/NfseModulo';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -3884,6 +3885,7 @@ export default function NewSalePage() {
 
           <TabsContent value="fiscal" className="space-y-4">
             {!isQuoteMode ? (
+              <>
               <Card>
                 <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Nota Fiscal</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
@@ -3913,6 +3915,25 @@ export default function NewSalePage() {
                   )}
                 </CardContent>
               </Card>
+              <NfseModulo
+                venda={{
+                  id: editSaleId,
+                  empresa_id: activeCompany?.id,
+                  cliente: {
+                    nome: clientName,
+                    cpf: (() => {
+                      const mainP = passengers.find(p => p.is_main) || passengers[0];
+                      if (mainP?.document_type === 'cpf') return mainP.document_number || '';
+                      const cpfPax = passengers.find(p => p.document_type === 'cpf');
+                      return cpfPax?.document_number || '';
+                    })(),
+                  },
+                  valor_comissao: grossProfit,
+                  descricao: `Agenciamento de viagem${destinationName ? ' — ' + destinationName : ''}`,
+                  data: saleDate,
+                }}
+              />
+              </>
             ) : (
               <p className="text-sm text-muted-foreground">Disponível apenas em vendas confirmadas.</p>
             )}
