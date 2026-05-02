@@ -555,10 +555,10 @@ function drawHotelContent(
 
     // Title
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(13);
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
     doc.text("Sobre o hotel", m + padX, cy);
-    cy += 5;
+    cy += 6;
 
     // Description
     if (cleanDetailed) {
@@ -578,10 +578,10 @@ function drawHotelContent(
     if (hasAmenities) {
       cy = checkPage(doc, cy, 10);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       let chipX = m + padX;
-      const chipPadX = 3;
-      const chipH = 5.5;
+      const chipPadX = 2.5;
+      const chipH = 4.8;
       const chipGap = 2;
       const maxRight = m + cw - padX;
       hotel.amenities!.forEach((amenity) => {
@@ -597,7 +597,7 @@ function drawHotelContent(
         doc.roundedRect(chipX, cy, w, chipH, 1.2, 1.2, "F");
         // Purple text
         doc.setTextColor(91, 46, 255);
-        doc.text(label, chipX + chipPadX, cy + chipH - 1.7);
+        doc.text(label, chipX + chipPadX, cy + chipH - 1.5);
         chipX += w + chipGap;
       });
       cy += chipH + 4;
@@ -718,26 +718,6 @@ function drawHotelContent(
         cy += 1.5;
       }
 
-      // Popular mentions as hashtags
-      if (hotel.tripadvisorPopularMentions && hotel.tripadvisorPopularMentions.length > 0) {
-        cy = checkPage(doc, cy, 6);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(91, 46, 255);
-        let hX = m + padX;
-        hotel.tripadvisorPopularMentions.forEach((mention) => {
-          const tag = `#${s(mention).replace(/^#/, "")}`;
-          const w = doc.getTextWidth(tag);
-          if (hX + w > m + cw - padX) {
-            hX = m + padX;
-            cy += 4.5;
-            cy = checkPage(doc, cy, 5);
-          }
-          doc.text(tag, hX, cy);
-          hX += w + 4;
-        });
-        cy += 5;
-      }
     }
 
     const cardH = cy - cardStart;
