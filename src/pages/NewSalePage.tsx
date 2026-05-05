@@ -2572,6 +2572,14 @@ export default function NewSalePage() {
                   <div><Label className="text-xs">Nº Bilhete Eletrônico</Label><Input value={pax.eticket_number} onChange={e => updatePassenger(idx, 'eticket_number', e.target.value)} placeholder="Ex: 957-1234567890" /></div>
                   <div><Label className="text-xs">Assento</Label><Input value={pax.seat} onChange={e => updatePassenger(idx, 'seat', e.target.value)} placeholder="Ex: 12A" /></div>
                 </div>
+                <div className="border-t pt-3 mt-2">
+                  <Label className="text-xs font-semibold text-muted-foreground">Bagagem</Label>
+                  <div className="grid grid-cols-3 gap-3 mt-2">
+                    <div><Label className="text-xs">Item Pessoal</Label><Input type="number" min="0" value={pax.baggage_personal_item} onChange={e => updatePassenger(idx, 'baggage_personal_item', parseInt(e.target.value) || 0)} /></div>
+                    <div><Label className="text-xs">Mão</Label><Input type="number" min="0" value={pax.baggage_carry_on} onChange={e => updatePassenger(idx, 'baggage_carry_on', parseInt(e.target.value) || 0)} /></div>
+                    <div><Label className="text-xs">Despachada</Label><Input type="number" min="0" value={pax.baggage_checked} onChange={e => updatePassenger(idx, 'baggage_checked', parseInt(e.target.value) || 0)} /></div>
+                  </div>
+                </div>
               </div>
             ))}
           </CardContent>
