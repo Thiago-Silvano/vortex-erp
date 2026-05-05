@@ -998,6 +998,55 @@ export default function NewSalePage() {
     });
   };
 
+  const savePassengerAsClient = async (pax: Passenger) => {
+    const fullName = `${pax.first_name} ${pax.last_name}`.trim().toUpperCase();
+    if (!fullName) { toast.error('Informe nome e sobrenome do passageiro'); return; }
+    if (!activeCompany?.id) { toast.error('Selecione uma empresa ativa'); return; }
+    try {
+      const cpfDigits = pax.document_type === 'cpf' ? (pax.document_number || '').replace(/\D/g, '') : '';
+      let existing: any = null;
+      if (cpfDigits) {
+        const { data } = await supabase.from('clients')
+          .select('id, full_name, cpf')
+          .eq('empresa_id', activeCompany.id)
+          .eq('cpf', cpfDigits)
+          .limit(1).maybeSingle();
+        if (data) existing = data;
+      }
+      if (!existing) {
+        const { data } = await supabase.from('clients')
+          .select('id, full_name, cpf')
+          .eq('empresa_id', activeCompany.id)
+          .ilike('full_name', fullName)
+          .limit(1).maybeSingle();
+        if (data) existing = data;
+      }
+      if (existing) {
+        toast.info(`Cliente já cadastrado: ${existing.full_name}`);
+        return;
+      }
+      const payload: any = {
+        empresa_id: activeCompany.id,
+        full_name: fullName,
+        birth_date: pax.birth_date || null,
+        cpf: cpfDigits || null,
+        passport_number: pax.document_type === 'passaporte' ? (pax.document_number || null) : null,
+        passport_expiry_date: pax.document_type === 'passaporte' ? (pax.document_expiry || null) : null,
+        email: pax.email || null,
+        phone: pax.phone || null,
+      };
+      const { error } = await supabase.from('clients').insert(payload);
+      if (error) throw error;
+      toast.success(`Cliente "${fullName}" cadastrado!`);
+      const { data: refreshed } = await supabase.from('clients')
+        .select('id, full_name, cpf, email, phone, birth_date, passport_number, passport_expiry_date')
+        .eq('empresa_id', activeCompany.id).order('full_name');
+      if (refreshed) setAllClients(refreshed as any);
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao salvar cliente');
+    }
+  };
+
   const handleCancel = async () => {
     if (quoteId && !editSaleId) {
       await supabase.from('quotes').update({ status: 'draft' }).eq('id', quoteId);
@@ -2520,7 +2569,12 @@ export default function NewSalePage() {
                     <Checkbox checked={pax.is_main} onCheckedChange={(checked) => updatePassenger(idx, 'is_main', !!checked)} />
                     <Label className="text-sm font-medium">Passageiro principal</Label>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="outline" onClick={() => savePassengerAsClient(pax)} title="Salvar passageiro como novo cliente no CRM">
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Salvar como cliente
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="relative">
