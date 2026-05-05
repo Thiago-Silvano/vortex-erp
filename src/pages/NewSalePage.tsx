@@ -83,6 +83,13 @@ interface Passenger {
 
 interface SupplierOption { id: string; name: string; }
 interface SellerOption { id: string; full_name: string; commission_type?: string; commission_percentage?: number; commission_base?: string; }
+interface FinancialCost {
+  description: string;
+  value: number;
+  cost_center_id?: string;
+  seller_id?: string;
+  commission_percent?: number;
+}
 interface ClientOption { id: string; full_name: string; cpf?: string; email?: string; phone?: string; birth_date?: string; passport_number?: string; passport_expiry_date?: string; }
 interface Receivable { installment_number: number; due_date: string; amount: number; cost_center_id?: string; payment_method?: string; }
 interface CostCenter { id: string; name: string; }
@@ -159,6 +166,7 @@ export default function NewSalePage() {
   const [defaultCostCenterId, setDefaultCostCenterId] = useState<string>('');
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
   const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
+  const [financialCosts, setFinancialCosts] = useState<FinancialCost[]>([]);
 
   const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
   const [linkRates, setLinkRates] = useState<CardRateEntry[]>([]);
@@ -285,6 +293,15 @@ export default function NewSalePage() {
     setDestinationImageUrl((sale as any).destination_image_url || '');
     setDestinationImageConfig((sale as any).destination_image_config || null);
     setDefaultCostCenterId((sale as any).default_cost_center_id || '');
+    if (Array.isArray((sale as any).financial_costs)) {
+      setFinancialCosts(((sale as any).financial_costs as any[]).map((f: any) => ({
+        description: f.description || '',
+        value: Number(f.value) || 0,
+        cost_center_id: f.cost_center_id || undefined,
+        seller_id: f.seller_id || undefined,
+        commission_percent: f.commission_percent != null ? Number(f.commission_percent) : undefined,
+      })));
+    }
     // Load proposal payment options
     if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
       setProposalPaymentOptions((sale as any).proposal_payment_options.map((o: any) => ({
@@ -589,7 +606,19 @@ export default function NewSalePage() {
   const commissionValue = grossProfit * (commissionRate / 100);
   const cardFeeValue = machineFee;
   const cardFeePercent = totalSaleWithInterest > 0 ? (machineFee / totalSaleWithInterest) * 100 : 0;
-  const netProfit = grossProfit - commissionValue - machineFee;
+  const financialCostsTotal = useMemo(
+    () => financialCosts.reduce((s, f) => s + (Number(f.value) || 0), 0),
+    [financialCosts]
+  );
+  const financialCostsCommissionTotal = useMemo(
+    () => financialCosts.reduce((s, f) => {
+      const pct = Number(f.commission_percent) || 0;
+      const val = Number(f.value) || 0;
+      return s + (val * pct / 100);
+    }, 0),
+    [financialCosts]
+  );
+  const netProfit = grossProfit - commissionValue - machineFee - financialCostsTotal - financialCostsCommissionTotal;
 
   // No longer need auto-recalculate since we store only discount % now
 
@@ -1343,6 +1372,7 @@ export default function NewSalePage() {
         quote_title: quoteTitle || '',
         sale_workflow_status: saleWorkflowStatus,
         default_cost_center_id: defaultCostCenterId || null,
+        financial_costs: financialCosts,
       } as any,
       userEmail,
     };
@@ -2341,6 +2371,7 @@ export default function NewSalePage() {
             <TabsTrigger value="servicos">🛒 Serviços</TabsTrigger>
             <TabsTrigger value="passageiros">👤 Passageiros</TabsTrigger>
             <TabsTrigger value="financeiro">💰 Financeiro</TabsTrigger>
+            <TabsTrigger value="custo_financeiro">💸 Custo Financeiro</TabsTrigger>
             <TabsTrigger value="documentos">📄 Documentos</TabsTrigger>
             <TabsTrigger value="fiscal">🧾 Fiscal</TabsTrigger>
           </TabsList>
@@ -3821,6 +3852,12 @@ export default function NewSalePage() {
                   {commissionValue > 0 && (
                     <div><p className="text-sm text-muted-foreground">Comissão ({commissionRate}%)</p><p className="text-lg font-semibold">{fmt(commissionValue)}</p></div>
                   )}
+                  {financialCostsTotal > 0 && (
+                    <div><p className="text-sm text-muted-foreground">Custos Financeiros</p><p className="text-lg font-semibold text-destructive">{fmt(financialCostsTotal)}</p></div>
+                  )}
+                  {financialCostsCommissionTotal > 0 && (
+                    <div><p className="text-sm text-muted-foreground">Comissões (Custos Fin.)</p><p className="text-lg font-semibold text-destructive">{fmt(financialCostsCommissionTotal)}</p></div>
+                  )}
                   <div>
                     <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
                     <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
@@ -3882,6 +3919,119 @@ export default function NewSalePage() {
           </Card>
         )}
 
+          </TabsContent>
+
+          {/* TAB: Documentos */}
+          <TabsContent value="custo_financeiro" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center justify-between">
+                  <span>Custos Financeiros</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const seller = allSellers.find(s => s.id === sellerId);
+                      const pct = seller && seller.commission_type !== 'none' ? (Number(seller.commission_percentage) || 0) : 0;
+                      setFinancialCosts(prev => [...prev, {
+                        description: '',
+                        value: 0,
+                        cost_center_id: defaultCostCenterId || undefined,
+                        seller_id: sellerId && sellerId !== 'none' ? sellerId : undefined,
+                        commission_percent: pct,
+                      }]);
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Adicionar
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {financialCosts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum custo financeiro lançado. Use "Adicionar" para incluir taxas e outros custos que reduzem a margem.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {financialCosts.map((fc, idx) => {
+                      const update = (patch: Partial<FinancialCost>) => setFinancialCosts(prev => prev.map((x, i) => i === idx ? { ...x, ...patch } : x));
+                      const remove = () => setFinancialCosts(prev => prev.filter((_, i) => i !== idx));
+                      const lineCommission = (Number(fc.value) || 0) * (Number(fc.commission_percent) || 0) / 100;
+                      return (
+                        <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end border rounded p-2">
+                          <div className="md:col-span-3">
+                            <Label>Descrição</Label>
+                            <Input value={fc.description} onChange={e => update({ description: e.target.value })} placeholder="Ex.: Taxa de remessa" />
+                          </div>
+                          <div className="md:col-span-2">
+                            <Label>Valor</Label>
+                            <Input
+                              value={maskCurrency(Number(fc.value) || 0)}
+                              onChange={e => update({ value: parseCurrency(e.target.value) })}
+                              placeholder="R$ 0,00"
+                            />
+                          </div>
+                          <div className="md:col-span-3">
+                            <Label>Centro de Custo</Label>
+                            <Select value={fc.cost_center_id || 'none'} onValueChange={v => update({ cost_center_id: v === 'none' ? undefined : v })}>
+                              <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">—</SelectItem>
+                                {costCenters.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="md:col-span-2">
+                            <Label>Vendedor</Label>
+                            <Select
+                              value={fc.seller_id || 'none'}
+                              onValueChange={v => {
+                                if (v === 'none') {
+                                  update({ seller_id: undefined, commission_percent: 0 });
+                                } else {
+                                  const seller = allSellers.find(s => s.id === v);
+                                  const pct = seller && seller.commission_type !== 'none' ? (Number(seller.commission_percentage) || 0) : 0;
+                                  update({ seller_id: v, commission_percent: pct });
+                                }
+                              }}
+                            >
+                              <SelectTrigger><SelectValue placeholder="Vendedor" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">—</SelectItem>
+                                {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="md:col-span-1">
+                            <Label>Comissão %</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={fc.commission_percent ?? 0}
+                              onChange={e => update({ commission_percent: Number(e.target.value) })}
+                            />
+                          </div>
+                          <div className="md:col-span-1 flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={remove}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                          </div>
+                          {lineCommission > 0 && (
+                            <div className="md:col-span-12 text-xs text-muted-foreground">
+                              Comissão deste item: <strong>{fmt(lineCommission)}</strong>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <div className="flex justify-end gap-6 pt-2 border-t text-sm">
+                      <div>Total Custos: <strong className="text-destructive">{fmt(financialCostsTotal)}</strong></div>
+                      {financialCostsCommissionTotal > 0 && (
+                        <div>Total Comissões: <strong className="text-destructive">{fmt(financialCostsCommissionTotal)}</strong></div>
+                      )}
+                      <div>Impacto na Margem: <strong className="text-destructive">- {fmt(financialCostsTotal + financialCostsCommissionTotal)}</strong></div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* TAB: Documentos */}

@@ -3994,6 +3994,7 @@ export type Database = {
           destination_image_url: string | null
           destination_name: string | null
           empresa_id: string | null
+          financial_costs: Json
           fiscal_status: string | null
           gross_profit: number | null
           id: string
@@ -4046,6 +4047,7 @@ export type Database = {
           destination_image_url?: string | null
           destination_name?: string | null
           empresa_id?: string | null
+          financial_costs?: Json
           fiscal_status?: string | null
           gross_profit?: number | null
           id?: string
@@ -4098,6 +4100,7 @@ export type Database = {
           destination_image_url?: string | null
           destination_name?: string | null
           empresa_id?: string | null
+          financial_costs?: Json
           fiscal_status?: string | null
           gross_profit?: number | null
           id?: string
