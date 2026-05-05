@@ -127,12 +127,13 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
   }
 
   // Numero da Compra + Localizador (center-right)
-  const infoX = pw - m - 60;
+  const infoX = pw - m - 85;
+  const locOffset = 55;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(180, 180, 180);
   doc.text("Numero da Compra", infoX, 7);
-  doc.text("Localizador", infoX + 32, 7);
+  doc.text("Localizador", infoX + locOffset, 7);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
@@ -142,7 +143,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-  doc.text(s(data.localizador || "-"), infoX + 32, 14);
+  doc.text(s(data.localizador || "-"), infoX + locOffset, 14);
 
   y = headerH + 8;
 
