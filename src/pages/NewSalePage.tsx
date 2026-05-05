@@ -606,7 +606,19 @@ export default function NewSalePage() {
   const commissionValue = grossProfit * (commissionRate / 100);
   const cardFeeValue = machineFee;
   const cardFeePercent = totalSaleWithInterest > 0 ? (machineFee / totalSaleWithInterest) * 100 : 0;
-  const netProfit = grossProfit - commissionValue - machineFee;
+  const financialCostsTotal = useMemo(
+    () => financialCosts.reduce((s, f) => s + (Number(f.value) || 0), 0),
+    [financialCosts]
+  );
+  const financialCostsCommissionTotal = useMemo(
+    () => financialCosts.reduce((s, f) => {
+      const pct = Number(f.commission_percent) || 0;
+      const val = Number(f.value) || 0;
+      return s + (val * pct / 100);
+    }, 0),
+    [financialCosts]
+  );
+  const netProfit = grossProfit - commissionValue - machineFee - financialCostsTotal - financialCostsCommissionTotal;
 
   // No longer need auto-recalculate since we store only discount % now
 
