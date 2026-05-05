@@ -172,15 +172,15 @@
     --ring: 240 60% 60%;
 
     /* Sidebar clara */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 15% 25%;
-    --sidebar-primary: 240 60% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 60% 95%;
-    --sidebar-accent-foreground: 240 60% 40%;
-    --sidebar-border: 240 12% 90%;
-    --sidebar-ring: 240 60% 60%;
-    --sidebar: 0 0% 100%;
+    --sidebar-background: 210 65% 45%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 210 65% 45%;
+    --sidebar-accent: 210 70% 35%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 60% 40%;
+    --sidebar-ring: 0 0% 100%;
+    --sidebar: 210 65% 45%;
 
     --gold: 45 70% 45%;
     --gold-foreground: 0 0% 100%;
