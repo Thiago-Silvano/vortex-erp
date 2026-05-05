@@ -41,15 +41,15 @@
     --radius: 0.4375rem;                /* 7px md */
 
     /* === Sidebar === */
-    --sidebar-background: 240 6% 9%;    /* #141416 */
-    --sidebar-foreground: 240 67% 80%;  /* #a8a8f0 nav-idle */
-    --sidebar-primary: 240 60% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 25% 18%;      /* nav-active-bg */
-    --sidebar-accent-foreground: 240 67% 80%;
-    --sidebar-border: 240 7% 12%;       /* border-subtle */
-    --sidebar-ring: 240 60% 60%;
-    --sidebar: 240 6% 9%;
+    --sidebar-background: 210 65% 45%;    /* azul claro */
+    --sidebar-foreground: 0 0% 100%;      /* branco */
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 210 65% 45%;
+    --sidebar-accent: 210 70% 35%;        /* azul mais escuro ativo/hover */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 60% 40%;        /* borda azul sutil */
+    --sidebar-ring: 0 0% 100%;
+    --sidebar: 210 65% 45%;
 
     /* === Charts === */
     --chart-1: 240 60% 60%;
