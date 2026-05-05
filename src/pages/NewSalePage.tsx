@@ -1004,23 +1004,20 @@ export default function NewSalePage() {
     if (!activeCompany?.id) { toast.error('Selecione uma empresa ativa'); return; }
     try {
       const cpfDigits = pax.document_type === 'cpf' ? (pax.document_number || '').replace(/\D/g, '') : '';
-      let existing: any = null;
-      if (cpfDigits) {
-        const { data } = await supabase.from('clients')
-          .select('id, full_name, cpf')
-          .eq('empresa_id', activeCompany.id)
-          .eq('cpf', cpfDigits)
-          .limit(1).maybeSingle();
-        if (data) existing = data;
-      }
-      if (!existing) {
-        const { data } = await supabase.from('clients')
-          .select('id, full_name, cpf')
-          .eq('empresa_id', activeCompany.id)
-          .ilike('full_name', fullName)
-          .limit(1).maybeSingle();
-        if (data) existing = data;
-      }
+      const passportNum = pax.document_type === 'passaporte' ? (pax.document_number || '').trim() : '';
+
+      // Duplicate check: same full name AND (same CPF OR same Passport)
+      const { data: candidates } = await supabase.from('clients')
+        .select('id, full_name, cpf, passport_number')
+        .eq('empresa_id', activeCompany.id)
+        .ilike('full_name', fullName);
+
+      const existing = (candidates || []).find((c: any) => {
+        const sameCpf = !!cpfDigits && (c.cpf || '').replace(/\D/g, '') === cpfDigits;
+        const samePassport = !!passportNum && (c.passport_number || '').trim().toUpperCase() === passportNum.toUpperCase();
+        return sameCpf || samePassport;
+      });
+
       if (existing) {
         toast.info(`Cliente já cadastrado: ${existing.full_name}`);
         return;
@@ -1030,7 +1027,7 @@ export default function NewSalePage() {
         full_name: fullName,
         birth_date: pax.birth_date || null,
         cpf: cpfDigits || null,
-        passport_number: pax.document_type === 'passaporte' ? (pax.document_number || null) : null,
+        passport_number: passportNum || null,
         passport_expiry_date: pax.document_type === 'passaporte' ? (pax.document_expiry || null) : null,
         email: pax.email || null,
         phone: pax.phone || null,
