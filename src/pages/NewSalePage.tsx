@@ -3965,7 +3965,7 @@ export default function NewSalePage() {
                           <div className="md:col-span-2">
                             <Label>Valor</Label>
                             <Input
-                              value={maskCurrency(String(Math.round((Number(fc.value) || 0) * 100)))}
+                              value={maskCurrency(Number(fc.value) || 0)}
                               onChange={e => update({ value: parseCurrency(e.target.value) })}
                               placeholder="R$ 0,00"
                             />
