@@ -1975,7 +1975,11 @@ export default function NewSalePage() {
         name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
         eticketNumber: p.eticket_number || undefined,
         seat: p.seat || undefined,
-        baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
+        baggage: {
+          personalItem: p.baggage_personal_item ?? 1,
+          carryOn: p.baggage_carry_on ?? 1,
+          checkedBag: p.baggage_checked ?? 1,
+        },
       }));
 
       let vortexWhiteLogoBase64: string | undefined;
