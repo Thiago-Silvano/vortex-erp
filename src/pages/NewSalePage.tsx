@@ -3930,7 +3930,7 @@ export default function NewSalePage() {
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
+                    className="bg-blue-600 text-white hover:bg-blue-700"
                     onClick={() => {
                       const seller = allSellers.find(s => s.id === sellerId);
                       const pct = seller && seller.commission_type !== 'none' ? (Number(seller.commission_percentage) || 0) : 0;
@@ -3959,10 +3959,6 @@ export default function NewSalePage() {
                       return (
                         <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end border rounded p-2">
                           <div className="md:col-span-3">
-                            <Label>Descrição</Label>
-                            <Input value={fc.description} onChange={e => update({ description: e.target.value })} placeholder="Ex.: Taxa de remessa" />
-                          </div>
-                          <div className="md:col-span-2">
                             <Label>Valor</Label>
                             <Input
                               value={maskCurrency(Number(fc.value) || 0)}
@@ -3980,7 +3976,7 @@ export default function NewSalePage() {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div className="md:col-span-2">
+                          <div className="md:col-span-3">
                             <Label>Vendedor</Label>
                             <Select
                               value={fc.seller_id || 'none'}
