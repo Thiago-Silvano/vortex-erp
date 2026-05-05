@@ -212,8 +212,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
   const isActive = (url: string) => location.pathname === url;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
+    <Sidebar collapsible="icon" className="border-r border-white/20">
+      <SidebarHeader className="border-b border-white/20 px-3 py-3">
         <button
           onClick={() => {
             const target = activeCompany?.slug === "vortex-vistos" ? "/vistos/dashboard" : "/dashboard";
@@ -221,15 +221,15 @@ function AppSidebar({ favorites, toggleFavorite }: {
           }}
           className="flex items-center gap-2 group"
         >
-          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm shrink-0">
+          <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center text-[#3B8ED0] font-bold text-sm shrink-0">
             V
           </div>
           <div className="flex-1 min-w-0 text-left group-data-[collapsible=icon]:hidden">
-            <div className="text-[13px] font-medium text-foreground tracking-tight truncate">
+            <div className="text-[13px] font-bold text-white tracking-tight truncate">
               GRUPO VORTEX
             </div>
             {activeCompany && (
-              <div className="text-[10px] text-muted-foreground truncate">
+              <div className="text-[10px] text-white/70 truncate">
                 {activeCompany.name}
               </div>
             )}
