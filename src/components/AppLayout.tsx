@@ -241,7 +241,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
         {/* Favoritos */}
         {favItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-white/70 font-bold">
               Favoritos
             </SidebarGroupLabel>
             <SidebarGroupContent>
