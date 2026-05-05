@@ -3839,6 +3839,9 @@ export type Database = {
       }
       sale_passengers: {
         Row: {
+          baggage_carry_on: number
+          baggage_checked: number
+          baggage_personal_item: number
           birth_date: string | null
           created_at: string
           document_expiry: string | null
@@ -3856,6 +3859,9 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          baggage_carry_on?: number
+          baggage_checked?: number
+          baggage_personal_item?: number
           birth_date?: string | null
           created_at?: string
           document_expiry?: string | null
@@ -3873,6 +3879,9 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          baggage_carry_on?: number
+          baggage_checked?: number
+          baggage_personal_item?: number
           birth_date?: string | null
           created_at?: string
           document_expiry?: string | null
