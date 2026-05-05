@@ -2371,6 +2371,7 @@ export default function NewSalePage() {
             <TabsTrigger value="servicos">🛒 Serviços</TabsTrigger>
             <TabsTrigger value="passageiros">👤 Passageiros</TabsTrigger>
             <TabsTrigger value="financeiro">💰 Financeiro</TabsTrigger>
+            <TabsTrigger value="custo_financeiro">💸 Custo Financeiro</TabsTrigger>
             <TabsTrigger value="documentos">📄 Documentos</TabsTrigger>
             <TabsTrigger value="fiscal">🧾 Fiscal</TabsTrigger>
           </TabsList>
