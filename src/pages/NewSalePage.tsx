@@ -3347,67 +3347,18 @@ export default function NewSalePage() {
                             );
                           })}
                         </TabsList>
-                        {uniqueMethods.map(m => {
-                          const items = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => (rec.payment_method || 'outros') === m);
-                          const isCardMethod = m === 'credito' || m === 'debito' || m === 'Cartão de Crédito' || m === 'Cartão de Débito';
-                          return (
-                            <TabsContent key={m} value={m}>
-                              {renderTable(items)}
-                              {isCardMethod && (
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mt-3 p-3 rounded-lg bg-muted/40 border border-border">
-                                  <div>
-                                    <Label className="text-destructive">Taxa de Máquina (R$)</Label>
-                                    <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
-                                  </div>
-                                  <div>
-                                    <Label>Fornecedor da Taxa</Label>
-                                    <Select value={machineFeeSupplierId || 'none'} onValueChange={v => setMachineFeeSupplierId(v === 'none' ? '' : v)}>
-                                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="none">Nenhum</SelectItem>
-                                        {allSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  {machineFee > 0 && (
-                                    <>
-                                      <div><p className="text-sm text-muted-foreground">Lucro antes da taxa</p><p className="text-sm font-medium">{fmt(grossProfit)}</p></div>
-                                      <div><p className="text-sm text-muted-foreground">Lucro após taxa</p><p className="text-sm font-bold text-destructive">{fmt(grossProfit - machineFee)}</p></div>
-                                    </>
-                                  )}
-                                </div>
-                              )}
-                            </TabsContent>
-                          );
-                        })}
+                         {uniqueMethods.map(m => {
+                           const items = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => (rec.payment_method || 'outros') === m);
+                           return (
+                             <TabsContent key={m} value={m}>
+                               {renderTable(items)}
+                             </TabsContent>
+                           );
+                         })}
                       </Tabs>
                     ) : (
                       <>
                         {renderTable(receivables.map((rec, idx) => ({ rec, globalIdx: idx })))}
-                        {receivables.length > 0 && (receivables[0].payment_method === 'credito' || receivables[0].payment_method === 'debito' || receivables[0].payment_method === 'Cartão de Crédito' || receivables[0].payment_method === 'Cartão de Débito') && (
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mt-3 p-3 rounded-lg bg-muted/40 border border-border">
-                            <div>
-                              <Label className="text-destructive">Taxa de Máquina (R$)</Label>
-                              <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
-                            </div>
-                            <div>
-                              <Label>Fornecedor da Taxa</Label>
-                              <Select value={machineFeeSupplierId || 'none'} onValueChange={v => setMachineFeeSupplierId(v === 'none' ? '' : v)}>
-                                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">Nenhum</SelectItem>
-                                  {allSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            {machineFee > 0 && (
-                              <>
-                                <div><p className="text-sm text-muted-foreground">Lucro antes da taxa</p><p className="text-sm font-medium">{fmt(grossProfit)}</p></div>
-                                <div><p className="text-sm text-muted-foreground">Lucro após taxa</p><p className="text-sm font-bold text-destructive">{fmt(grossProfit - machineFee)}</p></div>
-                              </>
-                            )}
-                          </div>
-                        )}
                       </>
                     )}
                   </>
@@ -3892,30 +3843,28 @@ export default function NewSalePage() {
               </div>
             )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
+              {!isQuoteMode ? (
+                <div>
+                  <p className="text-sm text-muted-foreground">Custo Financeiro</p>
+                  <p className="text-xl font-bold text-destructive">{fmt(financialCostsTotal + financialCostsCommissionTotal + machineFee)}</p>
+                </div>
+              ) : <div />}
               <div>
-                <p className="text-sm text-muted-foreground">{isQuoteMode ? 'Total Geral (todos)' : 'Total da Venda'}</p>
+                <p className="text-sm text-muted-foreground">{isQuoteMode ? 'Total Geral (todos)' : 'Valor Total da Venda'}</p>
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
                 {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
               </div>
-              <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
               {!isQuoteMode && (
                 <>
-                  {machineFee > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Taxa Cartão ({cardFeePercent.toFixed(2)}%)</p><p className="text-lg font-semibold text-destructive">{fmt(machineFee)}</p></div>
-                  )}
-                  {commissionValue > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Comissão ({commissionRate}%)</p><p className="text-lg font-semibold">{fmt(commissionValue)}</p></div>
-                  )}
-                  {financialCostsTotal > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Custos Financeiros</p><p className="text-lg font-semibold text-destructive">{fmt(financialCostsTotal)}</p></div>
-                  )}
-                  {financialCostsCommissionTotal > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Comissões (Custos Fin.)</p><p className="text-lg font-semibold text-destructive">{fmt(financialCostsCommissionTotal)}</p></div>
-                  )}
                   <div>
-                    <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
-                    <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
+                    <p className="text-sm text-muted-foreground">Lucro Líquido</p>
+                    <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Valor Venda Líquido</p>
+                    <p className="text-xl font-bold">{fmt(totalSaleWithInterest - (financialCostsTotal + financialCostsCommissionTotal + machineFee))}</p>
                   </div>
                 </>
               )}
@@ -4003,6 +3952,22 @@ export default function NewSalePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 rounded-lg bg-muted/40 border border-border">
+                  <div>
+                    <Label className="text-destructive">Taxa de Máquina (R$)</Label>
+                    <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
+                  </div>
+                  <div>
+                    <Label>Fornecedor da Taxa</Label>
+                    <Select value={machineFeeSupplierId || 'none'} onValueChange={v => setMachineFeeSupplierId(v === 'none' ? '' : v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {allSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 {financialCosts.length === 0 ? (
                   <p className="text-xs text-muted-foreground">Nenhum custo financeiro lançado. Use "Adicionar" para incluir taxas e outros custos que reduzem a margem.</p>
                 ) : (
