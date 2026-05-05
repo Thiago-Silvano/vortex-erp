@@ -1372,6 +1372,7 @@ export default function NewSalePage() {
         quote_title: quoteTitle || '',
         sale_workflow_status: saleWorkflowStatus,
         default_cost_center_id: defaultCostCenterId || null,
+        financial_costs: financialCosts,
       } as any,
       userEmail,
     };
