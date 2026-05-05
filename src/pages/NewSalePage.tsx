@@ -16,7 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -194,6 +194,7 @@ export default function NewSalePage() {
   const [internalFiles, setInternalFiles] = useState<InternalFile[]>([]);
   const [supplierPayments, setSupplierPayments] = useState<SupplierPaymentControl[]>([]);
   const supplierPaymentsLoadedRef = useRef(false);
+  const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [savingSale, setSavingSale] = useState(false);
@@ -3606,37 +3607,36 @@ export default function NewSalePage() {
                 );
               })()}
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Supplier selection */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Fornecedores</Label>
-                <div className="flex gap-2">
-                  <Select value={addingSupplierId} onValueChange={setAddingSupplierId}>
-                    <SelectTrigger className="flex-1"><SelectValue placeholder="Selecionar fornecedor..." /></SelectTrigger>
-                    <SelectContent>
-                      {allSuppliers.filter(s => !selectedSupplierIds.includes(s.id)).map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={addSupplier} variant="outline"><Plus className="h-4 w-4 mr-1" />Adicionar</Button>
-                </div>
-                {selectedSupplierIds.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedSupplierIds.map(sid => {
-                      const sup = allSuppliers.find(s => s.id === sid);
-                      return (
-                        <div key={sid} className="flex items-center gap-1 bg-secondary px-3 py-1 rounded-full text-sm">
-                          <span>{sup?.name || sid}</span>
-                          <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setSelectedSupplierIds(prev => prev.filter(s => s !== sid))}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      );
-                    })}
+           <CardContent className="space-y-4">
+              {/* Top summary row: Custo Total | Fornecedores | Forma de Pagamento */}
+              {(() => {
+                const isOpOnlyTop = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
+                const methodLabels: Record<string, string> = { pix: 'Pix', faturado: 'Faturado', credito: 'Cartão de Crédito' };
+                const usedMethods = Array.from(new Set(supplierPayments.map(s => s.payment_method)));
+                const formaLabel = isOpOnlyTop
+                  ? 'Pagamento direto'
+                  : usedMethods.length === 0
+                    ? '—'
+                    : usedMethods.length === 1
+                      ? `${methodLabels[usedMethods[0]] || usedMethods[0]} (todos)`
+                      : 'Misto';
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 border rounded-lg overflow-hidden divide-y md:divide-y-0 md:divide-x bg-muted/20">
+                    <div className="p-3">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Custo Total</p>
+                      <p className="text-lg font-bold text-foreground mt-1">{fmt(totalCost)}</p>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Fornecedores</p>
+                      <p className="text-lg font-bold text-foreground mt-1">{selectedSupplierIds.length} selecionado{selectedSupplierIds.length === 1 ? '' : 's'}</p>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Forma de Pagamento</p>
+                      <p className="text-lg font-bold text-foreground mt-1">{formaLabel}</p>
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })()}
 
               {/* Seller commission info */}
               {sellerId && sellerId !== 'none' && (() => {
@@ -3667,147 +3667,175 @@ export default function NewSalePage() {
                 );
               })()}
 
-              {/* Supplier payments */}
-              {selectedSupplierIds.length > 0 && supplierPayments.map(sp => {
-                const sup = allSuppliers.find(s => s.id === sp.supplier_id);
-                const isOpOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
-                return (
-                  <div key={sp.supplier_id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-medium text-sm">{sup?.name || 'Fornecedor'}</p>
-                      {!isOpOnly && (
-                        <div className="flex items-center gap-2">
-                          <Label className="text-xs text-muted-foreground">Valor:</Label>
-                          <Input
-                            className="w-36 h-8 text-sm font-semibold"
-                            value={sp.amount ? `R$ ${sp.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
-                            onChange={e => {
-                              const digits = e.target.value.replace(/[^\d]/g, '');
-                              const newAmount = parseInt(digits || '0', 10) / 100;
-                              setSupplierPayments(prev => prev.map(s => {
-                                if (s.supplier_id !== sp.supplier_id) return s;
-                                const updatedDates = s.payment_method === 'credito'
-                                  ? s.installment_dates.map(d => ({ ...d, amount: newAmount / (s.installments || 1) }))
-                                  : [{ date: s.installment_dates[0]?.date || s.payment_date, amount: newAmount }];
-                                return { ...s, amount: newAmount, installment_dates: updatedDates };
-                              }));
-                            }}
-                            placeholder="R$ 0,00"
-                          />
-                        </div>
-                      )}
-                      {isOpOnly && (
-                        <span className="text-xs text-muted-foreground italic">Pagamento direto ao fornecedor</span>
-                      )}
-                    </div>
-                    {!isOpOnly && (
-                      <>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                          <div className="md:col-span-4">
-                            <Label className="text-xs">Descrição</Label>
-                            <Input value={sp.description} onChange={e => setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, description: e.target.value } : s))} placeholder="Pagamento de operadoras" />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Forma de Pagamento</Label>
-                            <Select value={sp.payment_method} onValueChange={v => updateSupplierPayment(sp.supplier_id, 'payment_method', v)}>
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pix">Pix</SelectItem>
-                                <SelectItem value="faturado">Faturado</SelectItem>
-                                <SelectItem value="credito">Cartão de Crédito</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div>
-                            <Label className="text-xs">Centro de Custo</Label>
-                            <Select value={sp.cost_center_id || 'none'} onValueChange={v => {
-                              const val = v === 'none' ? undefined : v;
-                              setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, cost_center_id: val } : s));
-                              if (val) { try { localStorage.setItem(`supplier_cc_${sp.supplier_id}`, val); } catch {} }
-                            }}>
-                              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">Nenhum</SelectItem>
-                                {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          {sp.payment_method === 'pix' && (
-                            <div>
-                              <Label className="text-xs">Data do Pagamento</Label>
-                              <Input
-                                type="date"
-                                value={sp.payment_date}
-                                onChange={e => {
-                                  const newDate = e.target.value;
-                                  setSupplierPayments(prev => prev.map(s =>
-                                    s.supplier_id === sp.supplier_id
-                                      ? { ...s, payment_date: newDate, installment_dates: [{ date: newDate, amount: s.amount }] }
-                                      : s
-                                  ));
-                                }}
-                              />
-                            </div>
-                          )}
-
-                          {sp.payment_method === 'faturado' && (
-                            <div>
-                              <Label className="text-xs">Data de Vencimento</Label>
-                              <Input
-                                type="date"
-                                value={sp.installment_dates[0]?.date || sp.payment_date}
-                                onChange={e => {
-                                  updateSupplierPayment(sp.supplier_id, 'payment_date', e.target.value);
-                                  setSupplierPayments(prev => prev.map(s =>
-                                    s.supplier_id === sp.supplier_id
-                                      ? { ...s, installment_dates: [{ date: e.target.value, amount: s.amount }] }
-                                      : s
-                                  ));
-                                }}
-                              />
-                            </div>
-                          )}
-
-                          {sp.payment_method === 'credito' && (
-                            <div>
-                              <Label className="text-xs">Nº de Parcelas</Label>
-                              <Select value={String(sp.installments)} onValueChange={v => updateSupplierPayment(sp.supplier_id, 'installments', parseInt(v))}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>{Array.from({ length: 12 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
-                              </Select>
-                            </div>
-                          )}
-                        </div>
-
-                        {sp.payment_method === 'credito' && sp.installment_dates.length > 0 && (
-                          <div className="border-t pt-3">
-                            <Label className="text-xs text-muted-foreground mb-2 block">Parcelas</Label>
-                            <div className="space-y-2">
-                              {sp.installment_dates.map((inst, idx) => (
-                                <div key={idx} className="grid grid-cols-3 gap-2 items-center">
-                                  <p className="text-sm font-medium">{idx + 1}ª parcela</p>
-                                  <Input
-                                    type="date"
-                                    value={inst.date}
-                                    onChange={e => updateSupplierInstallmentDate(sp.supplier_id, idx, e.target.value)}
-                                    className="h-8 text-sm"
-                                  />
-                                  <p className="text-sm text-right">{fmt(inst.amount)}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
+              {/* Supplier payments table-like list */}
+              {selectedSupplierIds.length > 0 && (
+                <div className="border rounded-lg overflow-hidden">
+                  {/* Header */}
+                  <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                    <div className="col-span-4">Fornecedor</div>
+                    <div className="col-span-2">Pagamento</div>
+                    <div className="col-span-2">Centro de Custo</div>
+                    <div className="col-span-2">Data</div>
+                    <div className="col-span-2 text-right">Valor</div>
                   </div>
-                );
-              })}
+                  <div className="divide-y">
+                    {supplierPayments.map(sp => {
+                      const sup = allSuppliers.find(s => s.id === sp.supplier_id);
+                      const isOpOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
+                      const methodLabels: Record<string, string> = { pix: 'Pix', faturado: 'Faturado', credito: 'Cartão Crédito' };
+                      const cc = costCenters.find(c => c.id === sp.cost_center_id);
+                      const dateStr = sp.payment_date ? format(new Date(sp.payment_date + 'T12:00:00'), 'dd/MM/yyyy') : '—';
+                      const initials = (sup?.name || 'FO').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                      const isExpanded = expandedSupplierId === sp.supplier_id;
+                      return (
+                        <div key={sp.supplier_id}>
+                          <div
+                            className="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-muted/30 cursor-pointer"
+                            onClick={() => setExpandedSupplierId(isExpanded ? null : sp.supplier_id)}
+                          >
+                            <div className="col-span-4 flex items-center gap-3 min-w-0">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">{initials}</div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold truncate">{sup?.name || 'Fornecedor'}</p>
+                                <p className="text-xs text-muted-foreground truncate">{sp.description || 'Pagamento de operadoras'}</p>
+                              </div>
+                            </div>
+                            <div className="col-span-2 text-sm">{methodLabels[sp.payment_method] || sp.payment_method}</div>
+                            <div className="col-span-2 text-sm text-muted-foreground truncate">{cc?.name || 'Nenhum'}</div>
+                            <div className="col-span-2 text-sm">{dateStr}</div>
+                            <div className="col-span-2 flex items-center justify-end gap-2">
+                              <span className="text-sm font-semibold">{fmt(sp.amount)}</span>
+                              {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                            </div>
+                          </div>
+                          {isExpanded && !isOpOnly && (
+                            <div className="px-4 pb-4 pt-1 bg-muted/10 space-y-3">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                  <Label className="text-xs">Forma de Pagamento</Label>
+                                  <Select value={sp.payment_method} onValueChange={v => updateSupplierPayment(sp.supplier_id, 'payment_method', v)}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="pix">Pix</SelectItem>
+                                      <SelectItem value="faturado">Faturado</SelectItem>
+                                      <SelectItem value="credito">Cartão de Crédito</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <Label className="text-xs">Centro de Custo</Label>
+                                  <Select value={sp.cost_center_id || 'none'} onValueChange={v => {
+                                    const val = v === 'none' ? undefined : v;
+                                    setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, cost_center_id: val } : s));
+                                    if (val) { try { localStorage.setItem(`supplier_cc_${sp.supplier_id}`, val); } catch {} }
+                                  }}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="none">Nenhum</SelectItem>
+                                      {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <Label className="text-xs">{sp.payment_method === 'credito' ? 'Nº de Parcelas' : 'Data do Pagamento'}</Label>
+                                  {sp.payment_method === 'credito' ? (
+                                    <Select value={String(sp.installments)} onValueChange={v => updateSupplierPayment(sp.supplier_id, 'installments', parseInt(v))}>
+                                      <SelectTrigger><SelectValue /></SelectTrigger>
+                                      <SelectContent>{Array.from({ length: 12 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <Input
+                                      type="date"
+                                      value={sp.payment_date}
+                                      onChange={e => {
+                                        const newDate = e.target.value;
+                                        setSupplierPayments(prev => prev.map(s =>
+                                          s.supplier_id === sp.supplier_id
+                                            ? { ...s, payment_date: newDate, installment_dates: [{ date: newDate, amount: s.amount }] }
+                                            : s
+                                        ));
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-xs">Descrição</Label>
+                                  <Input value={sp.description} onChange={e => setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, description: e.target.value } : s))} placeholder="Pagamento de operadoras" />
+                                </div>
+                                <div>
+                                  <Label className="text-xs">Valor</Label>
+                                  <Input
+                                    value={sp.amount ? `R$ ${sp.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                                    onChange={e => {
+                                      const digits = e.target.value.replace(/[^\d]/g, '');
+                                      const newAmount = parseInt(digits || '0', 10) / 100;
+                                      setSupplierPayments(prev => prev.map(s => {
+                                        if (s.supplier_id !== sp.supplier_id) return s;
+                                        const updatedDates = s.payment_method === 'credito'
+                                          ? s.installment_dates.map(d => ({ ...d, amount: newAmount / (s.installments || 1) }))
+                                          : [{ date: s.installment_dates[0]?.date || s.payment_date, amount: newAmount }];
+                                        return { ...s, amount: newAmount, installment_dates: updatedDates };
+                                      }));
+                                    }}
+                                    placeholder="R$ 0,00"
+                                  />
+                                </div>
+                              </div>
+                              {sp.payment_method === 'credito' && sp.installment_dates.length > 0 && (
+                                <div className="border-t pt-3">
+                                  <Label className="text-xs text-muted-foreground mb-2 block">Parcelas</Label>
+                                  <div className="space-y-2">
+                                    {sp.installment_dates.map((inst, idx) => (
+                                      <div key={idx} className="grid grid-cols-3 gap-2 items-center">
+                                        <p className="text-sm font-medium">{idx + 1}ª parcela</p>
+                                        <Input
+                                          type="date"
+                                          value={inst.date}
+                                          onChange={e => updateSupplierInstallmentDate(sp.supplier_id, idx, e.target.value)}
+                                          className="h-8 text-sm"
+                                        />
+                                        <p className="text-sm text-right">{fmt(inst.amount)}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              <div className="flex justify-end">
+                                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setSelectedSupplierIds(prev => prev.filter(s => s !== sp.supplier_id))}>
+                                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Remover
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                          {isExpanded && isOpOnly && (
+                            <div className="px-4 pb-4 pt-1 bg-muted/10 text-xs text-muted-foreground italic">
+                              Pagamento direto ao fornecedor (Operadora)
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom add-supplier row */}
+              <div className="flex gap-2">
+                <Select value={addingSupplierId} onValueChange={setAddingSupplierId}>
+                  <SelectTrigger className="flex-1"><SelectValue placeholder="Selecionar fornecedor..." /></SelectTrigger>
+                  <SelectContent>
+                    {allSuppliers.filter(s => !selectedSupplierIds.includes(s.id)).map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={addSupplier} variant="outline"><Plus className="h-4 w-4 mr-1" />Adicionar</Button>
+              </div>
 
               {selectedSupplierIds.length === 0 && (!sellerId || sellerId === 'none' || allSellers.find(s => s.id === sellerId)?.commission_type === 'none') && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhum fornecedor ou comissão configurada</p>
+                <p className="text-sm text-muted-foreground text-center py-2">Nenhum fornecedor ou comissão configurada</p>
               )}
             </CardContent>
           </Card>
