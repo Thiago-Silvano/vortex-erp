@@ -241,7 +241,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
         {/* Favoritos */}
         {favItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-white/70 font-bold">
+            <SidebarGroupLabel className="text-[12px] uppercase tracking-wider text-white/70 font-bold">
               Favoritos
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -254,8 +254,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
                       tooltip={item.title}
                     >
                       <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
-                        <Star className="h-3.5 w-3.5 fill-white text-white shrink-0" />
-                        <span className="truncate text-[13px] font-bold text-white">{item.title}</span>
+                        <Star className="h-4 w-4 fill-white text-white shrink-0" />
+                        <span className="truncate text-[15px] font-bold text-white">{item.title}</span>
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -286,7 +286,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                       >
                         <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
                           {group.icon}
-                          <span className="truncate text-[13px] font-bold text-white">{group.label}</span>
+                          <span className="truncate text-[15px] font-bold text-white">{group.label}</span>
                         </button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -300,7 +300,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
             <Collapsible key={group.label} defaultOpen={groupHasActive} className="group/collapse">
               <SidebarGroup>
                 <SidebarGroupLabel asChild>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-[10px] uppercase tracking-wider text-white/70 hover:text-white font-bold py-1.5 px-2">
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-[12px] uppercase tracking-wider text-white/70 hover:text-white font-bold py-1.5 px-2">
                     {group.icon && <span className="opacity-90">{group.icon}</span>}
                     <span className="flex-1 text-left">{group.label}</span>
                     <ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]/collapse:rotate-90" />
@@ -320,7 +320,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                               className="group/item"
                             >
                               <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full pl-6">
-                                <span className="truncate text-[13px] font-bold text-white flex-1 text-left">{item.title}</span>
+                                <span className="truncate text-[15px] font-bold text-white flex-1 text-left">{item.title}</span>
                                 <span
                                   onClick={(e) => { e.stopPropagation(); toggleFavorite(item.url); }}
                                   className={`shrink-0 ${isFav ? "opacity-100" : "opacity-0 group-hover/item:opacity-70 hover:!opacity-100"}`}
@@ -345,14 +345,14 @@ function AppSidebar({ favorites, toggleFavorite }: {
       <SidebarFooter className="border-t border-white/20 p-2 gap-1">
         <button
           onClick={() => navigate("/whatsapp")}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] text-white font-bold hover:bg-white/20 transition-colors"
+          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[14px] text-white font-bold hover:bg-white/20 transition-colors"
         >
           <MessageCircle className="h-4 w-4 shrink-0" />
           <span className="truncate group-data-[collapsible=icon]:hidden">WhatsApp</span>
         </button>
         <button
           onClick={() => navigate("/email")}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] text-white font-bold hover:bg-white/20 transition-colors"
+          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[14px] text-white font-bold hover:bg-white/20 transition-colors"
         >
           <Mail className="h-4 w-4 shrink-0" />
           <span className="truncate group-data-[collapsible=icon]:hidden">Email</span>
