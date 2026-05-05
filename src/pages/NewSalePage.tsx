@@ -3246,19 +3246,38 @@ export default function NewSalePage() {
                 const hasMultipleMethods = uniqueMethods.length > 1;
 
                 const renderTable = (items: { rec: Receivable; globalIdx: number }[]) => (
-                  <Table>
-                    <TableHeader><TableRow><TableHead className="w-24">Parcela</TableHead><TableHead>Data de Recebimento</TableHead><TableHead className="w-40">Valor</TableHead><TableHead className="w-48">Centro de Custo</TableHead></TableRow></TableHeader>
-                    <TableBody>
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                      <div className="col-span-2">Parcela</div>
+                      <div className="col-span-4">Data de Recebimento</div>
+                      <div className="col-span-3">Valor</div>
+                      <div className="col-span-3">Centro de Custo</div>
+                    </div>
+                    <div className="divide-y">
                       {items.map(({ rec: r, globalIdx: idx }, localIdx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-medium">{localIdx + 1}ª</TableCell>
-                          <TableCell><Input type="date" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} /></TableCell>
-                          <TableCell><Input type="number" className="w-32" value={r.amount} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: Number(e.target.value) } : rec))} /></TableCell>
-                          <TableCell>
+                        <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-2 items-center hover:bg-muted/20">
+                          <div className="col-span-2 flex items-center gap-2">
+                            <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[11px] font-semibold shrink-0">{localIdx + 1}ª</div>
+                          </div>
+                          <div className="col-span-4">
+                            <Input type="date" className="h-8 text-sm" value={r.due_date} onChange={e => setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, due_date: e.target.value } : rec))} />
+                          </div>
+                          <div className="col-span-3">
+                            <Input
+                              className="h-8 text-sm"
+                              value={r.amount ? `R$ ${r.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                              onChange={e => {
+                                const digits = e.target.value.replace(/[^\d]/g, '');
+                                const newAmount = parseInt(digits || '0', 10) / 100;
+                                setReceivables(prev => prev.map((rec, i) => i === idx ? { ...rec, amount: newAmount } : rec));
+                              }}
+                              placeholder="R$ 0,00"
+                            />
+                          </div>
+                          <div className="col-span-3">
                             <Select value={r.cost_center_id || 'none'} onValueChange={v => {
                               const newVal = v === 'none' ? undefined : v;
                               if (localIdx === 0) {
-                                // First installment sets all in this group
                                 const groupIndices = items.map(it => it.globalIdx);
                                 setReceivables(prev => prev.map((rec, i) => groupIndices.includes(i) ? { ...rec, cost_center_id: newVal } : rec));
                               } else {
@@ -3271,41 +3290,49 @@ export default function NewSalePage() {
                                 {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
                               </SelectContent>
                             </Select>
-                          </TableCell>
-                        </TableRow>
+                          </div>
+                        </div>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </div>
+                  </div>
                 );
 
                 return (
                   <>
-                    <div className="flex items-center gap-4 text-sm mb-2 flex-wrap">
-                      <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <strong className="text-foreground">{fmt(expectedReceivables)}</strong></span>
-                      <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalReceivables)}</strong></span>
-                      {Math.abs(diff) > 0.01 ? (
-                        <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
-                          {diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`}
-                        </span>
-                      ) : (
-                        <span className="text-emerald-600 font-semibold">✓ Valores conferem</span>
-                      )}
-                      <div className="flex items-center gap-2 ml-auto">
-                        <Label className="text-xs whitespace-nowrap">Centro de Custo Padrão:</Label>
-                        <Select value={defaultCostCenterId || 'none'} onValueChange={v => {
-                          const newVal = v === 'none' ? '' : v;
-                          setDefaultCostCenterId(newVal);
-                          if (newVal) {
-                            setReceivables(prev => prev.map(rec => ({ ...rec, cost_center_id: newVal })));
-                          }
-                        }}>
-                          <SelectTrigger className="h-8 text-xs w-48"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhum</SelectItem>
-                            {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                    {/* Top summary row mirrors Controle de Pagamentos */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 border rounded-lg overflow-hidden divide-y md:divide-y-0 md:divide-x bg-muted/20 mb-3">
+                      <div className="p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}</p>
+                        <p className="text-lg font-bold text-foreground mt-1">{fmt(expectedReceivables)}</p>
                       </div>
+                      <div className="p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Lançado</p>
+                        <p className="text-lg font-bold text-foreground mt-1">{fmt(totalReceivables)}</p>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Status</p>
+                        <p className={`text-lg font-bold mt-1 ${Math.abs(diff) > 0.01 ? (diff > 0 ? 'text-amber-600' : 'text-destructive') : 'text-emerald-600'}`}>
+                          {Math.abs(diff) > 0.01
+                            ? (diff > 0 ? `Falta ${fmt(diff)}` : `Excedente ${fmt(Math.abs(diff))}`)
+                            : '✓ Valores conferem'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 mb-2">
+                      <Label className="text-xs whitespace-nowrap">Centro de Custo Padrão:</Label>
+                      <Select value={defaultCostCenterId || 'none'} onValueChange={v => {
+                        const newVal = v === 'none' ? '' : v;
+                        setDefaultCostCenterId(newVal);
+                        if (newVal) {
+                          setReceivables(prev => prev.map(rec => ({ ...rec, cost_center_id: newVal })));
+                        }
+                      }}>
+                        <SelectTrigger className="h-8 text-xs w-48"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          {costCenters.map(cc => <SelectItem key={cc.id} value={cc.id}>{cc.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
                     {hasMultipleMethods ? (
                       <Tabs defaultValue={uniqueMethods[0]} className="w-full">
