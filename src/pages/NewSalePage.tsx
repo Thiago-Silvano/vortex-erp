@@ -293,6 +293,15 @@ export default function NewSalePage() {
     setDestinationImageUrl((sale as any).destination_image_url || '');
     setDestinationImageConfig((sale as any).destination_image_config || null);
     setDefaultCostCenterId((sale as any).default_cost_center_id || '');
+    if (Array.isArray((sale as any).financial_costs)) {
+      setFinancialCosts(((sale as any).financial_costs as any[]).map((f: any) => ({
+        description: f.description || '',
+        value: Number(f.value) || 0,
+        cost_center_id: f.cost_center_id || undefined,
+        seller_id: f.seller_id || undefined,
+        commission_percent: f.commission_percent != null ? Number(f.commission_percent) : undefined,
+      })));
+    }
     // Load proposal payment options
     if ((sale as any).proposal_payment_options && Array.isArray((sale as any).proposal_payment_options)) {
       setProposalPaymentOptions((sale as any).proposal_payment_options.map((o: any) => ({
