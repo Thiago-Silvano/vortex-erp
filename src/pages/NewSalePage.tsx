@@ -76,6 +76,9 @@ interface Passenger {
   is_main: boolean;
   eticket_number: string;
   seat: string;
+  baggage_personal_item: number;
+  baggage_carry_on: number;
+  baggage_checked: number;
 }
 
 interface SupplierOption { id: string; name: string; }
