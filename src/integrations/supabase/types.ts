@@ -676,7 +676,7 @@ export type Database = {
           city: string | null
           complement: string | null
           country: string | null
-          cpf: string
+          cpf: string | null
           created_at: string
           email: string | null
           empresa_id: string | null
@@ -698,7 +698,7 @@ export type Database = {
           city?: string | null
           complement?: string | null
           country?: string | null
-          cpf?: string
+          cpf?: string | null
           created_at?: string
           email?: string | null
           empresa_id?: string | null
@@ -720,7 +720,7 @@ export type Database = {
           city?: string | null
           complement?: string | null
           country?: string | null
-          cpf?: string
+          cpf?: string | null
           created_at?: string
           email?: string | null
           empresa_id?: string | null

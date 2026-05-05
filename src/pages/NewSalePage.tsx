@@ -1026,7 +1026,7 @@ export default function NewSalePage() {
         empresa_id: activeCompany.id,
         full_name: fullName,
         birth_date: pax.birth_date || null,
-        cpf: cpfDigits || null,
+        cpf: cpfDigits || '',
         passport_number: passportNum || null,
         passport_expiry_date: pax.document_type === 'passaporte' ? (pax.document_expiry || null) : null,
         email: pax.email || null,
