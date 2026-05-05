@@ -212,8 +212,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
   const isActive = (url: string) => location.pathname === url;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
+    <Sidebar collapsible="icon" className="border-r border-white/20">
+      <SidebarHeader className="border-b border-white/20 px-3 py-3">
         <button
           onClick={() => {
             const target = activeCompany?.slug === "vortex-vistos" ? "/vistos/dashboard" : "/dashboard";
@@ -221,15 +221,15 @@ function AppSidebar({ favorites, toggleFavorite }: {
           }}
           className="flex items-center gap-2 group"
         >
-          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm shrink-0">
+          <div className="w-7 h-7 rounded-md bg-white flex items-center justify-center text-[#3B8ED0] font-bold text-sm shrink-0">
             V
           </div>
           <div className="flex-1 min-w-0 text-left group-data-[collapsible=icon]:hidden">
-            <div className="text-[13px] font-medium text-foreground tracking-tight truncate">
+            <div className="text-[13px] font-bold text-white tracking-tight truncate">
               GRUPO VORTEX
             </div>
             {activeCompany && (
-              <div className="text-[10px] text-muted-foreground truncate">
+              <div className="text-[10px] text-white/70 truncate">
                 {activeCompany.name}
               </div>
             )}
@@ -241,7 +241,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
         {/* Favoritos */}
         {favItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-white/70 font-bold">
               Favoritos
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -254,8 +254,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
                       tooltip={item.title}
                     >
                       <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
-                        <Star className="h-3.5 w-3.5 fill-warning text-warning shrink-0" />
-                        <span className="truncate text-[13px]">{item.title}</span>
+                        <Star className="h-3.5 w-3.5 fill-white text-white shrink-0" />
+                        <span className="truncate text-[13px] font-bold text-white">{item.title}</span>
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -286,7 +286,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                       >
                         <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
                           {group.icon}
-                          <span className="truncate text-[13px]">{group.label}</span>
+                          <span className="truncate text-[13px] font-bold text-white">{group.label}</span>
                         </button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -300,8 +300,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
             <Collapsible key={group.label} defaultOpen={groupHasActive} className="group/collapse">
               <SidebarGroup>
                 <SidebarGroupLabel asChild>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-[10px] uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground font-medium py-1.5 px-2">
-                    {group.icon && <span className="opacity-70">{group.icon}</span>}
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-[10px] uppercase tracking-wider text-white/70 hover:text-white font-bold py-1.5 px-2">
+                    {group.icon && <span className="opacity-90">{group.icon}</span>}
                     <span className="flex-1 text-left">{group.label}</span>
                     <ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]/collapse:rotate-90" />
                   </CollapsibleTrigger>
@@ -320,13 +320,13 @@ function AppSidebar({ favorites, toggleFavorite }: {
                               className="group/item"
                             >
                               <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full pl-6">
-                                <span className="truncate text-[13px] flex-1 text-left">{item.title}</span>
+                                <span className="truncate text-[13px] font-bold text-white flex-1 text-left">{item.title}</span>
                                 <span
                                   onClick={(e) => { e.stopPropagation(); toggleFavorite(item.url); }}
-                                  className={`shrink-0 ${isFav ? "opacity-100" : "opacity-0 group-hover/item:opacity-60 hover:!opacity-100"}`}
+                                  className={`shrink-0 ${isFav ? "opacity-100" : "opacity-0 group-hover/item:opacity-70 hover:!opacity-100"}`}
                                   title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                                 >
-                                  <Star className={`h-3 w-3 ${isFav ? "fill-warning text-warning" : ""}`} />
+                                  <Star className={`h-3 w-3 ${isFav ? "fill-white text-white" : ""}`} />
                                 </span>
                               </button>
                             </SidebarMenuButton>
@@ -342,17 +342,17 @@ function AppSidebar({ favorites, toggleFavorite }: {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-2 gap-1">
+      <SidebarFooter className="border-t border-white/20 p-2 gap-1">
         <button
           onClick={() => navigate("/whatsapp")}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] text-white font-bold hover:bg-white/20 transition-colors"
         >
           <MessageCircle className="h-4 w-4 shrink-0" />
           <span className="truncate group-data-[collapsible=icon]:hidden">WhatsApp</span>
         </button>
         <button
           onClick={() => navigate("/email")}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[12px] text-white font-bold hover:bg-white/20 transition-colors"
         >
           <Mail className="h-4 w-4 shrink-0" />
           <span className="truncate group-data-[collapsible=icon]:hidden">Email</span>
