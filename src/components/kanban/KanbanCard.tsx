@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { format, differenceInDays } from 'date-fns';
 import {
@@ -39,9 +40,11 @@ interface KanbanCardProps {
   onDuplicate?: (sale: KanbanSale) => void;
   onWhatsApp?: (sale: KanbanSale) => void;
   onConvert?: (sale: KanbanSale) => void;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
-export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onWhatsApp, onConvert }: KanbanCardProps) {
+export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onWhatsApp, onConvert, selected, onToggleSelect }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sale.id,
     data: { type: 'card', sale },
@@ -59,7 +62,7 @@ export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onW
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style}>
       <Card
         className={cn(
           'group relative cursor-grab active:cursor-grabbing transition-all duration-200',
@@ -67,13 +70,26 @@ export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onW
           isDragging && 'opacity-50 shadow-lg rotate-2 z-50',
           isStale && 'ring-1 ring-destructive/40',
           isHot && 'ring-1 ring-emerald-400/50',
+          selected && 'ring-2 ring-primary',
         )}
         style={{ borderLeftColor: columnColor }}
       >
-        <div className="p-3 space-y-2">
+        {onToggleSelect && (
+          <div
+            className="absolute top-2 right-2 z-10"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <Checkbox
+              checked={!!selected}
+              onCheckedChange={() => onToggleSelect(sale.id)}
+            />
+          </div>
+        )}
+        <div className="p-3 space-y-2" {...attributes} {...listeners}>
           {/* Header */}
           <div className="flex items-start justify-between gap-2">
-            <h4 className="font-semibold text-sm text-foreground leading-tight truncate flex-1">
+            <h4 className={cn("font-semibold text-sm text-foreground leading-tight truncate flex-1", onToggleSelect && "pr-7")}>
               {sale.client_name}
             </h4>
             {isStale && (
