@@ -398,6 +398,9 @@ export default function NewSalePage() {
       document_type: p.document_type || 'cpf', document_number: p.document_number || '',
       document_expiry: p.document_expiry || '', email: p.email || '', phone: p.phone || '', is_main: p.is_main || false,
       eticket_number: p.eticket_number || '', seat: p.seat || '',
+      baggage_personal_item: p.baggage_personal_item ?? 1,
+      baggage_carry_on: p.baggage_carry_on ?? 1,
+      baggage_checked: p.baggage_checked ?? 1,
     })));
 
     // Load internal files
@@ -932,6 +935,7 @@ export default function NewSalePage() {
       first_name: '', last_name: '', birth_date: '', document_type: 'cpf',
       document_number: '', document_expiry: '', email: '', phone: '', is_main: prev.length === 0,
       eticket_number: '', seat: '',
+      baggage_personal_item: 1, baggage_carry_on: 1, baggage_checked: 1,
     }]);
   };
 
@@ -956,6 +960,7 @@ export default function NewSalePage() {
         phone: client.phone || '',
         is_main: prev.length === 0,
         eticket_number: '', seat: '',
+        baggage_personal_item: 1, baggage_carry_on: 1, baggage_checked: 1,
       }];
     });
   };
