@@ -3952,6 +3952,22 @@ export default function NewSalePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 rounded-lg bg-muted/40 border border-border">
+                  <div>
+                    <Label className="text-destructive">Taxa de Máquina (R$)</Label>
+                    <Input value={machineFee ? `R$ ${machineFee.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''} onChange={e => { const digits = e.target.value.replace(/[^\d]/g, ''); setMachineFee(parseInt(digits || '0', 10) / 100); }} placeholder="R$ 0,00" />
+                  </div>
+                  <div>
+                    <Label>Fornecedor da Taxa</Label>
+                    <Select value={machineFeeSupplierId || 'none'} onValueChange={v => setMachineFeeSupplierId(v === 'none' ? '' : v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {allSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 {financialCosts.length === 0 ? (
                   <p className="text-xs text-muted-foreground">Nenhum custo financeiro lançado. Use "Adicionar" para incluir taxas e outros custos que reduzem a margem.</p>
                 ) : (
