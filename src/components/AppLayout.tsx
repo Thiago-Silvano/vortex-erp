@@ -254,8 +254,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
                       tooltip={item.title}
                     >
                       <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
-                        <Star className="h-3.5 w-3.5 fill-warning text-warning shrink-0" />
-                        <span className="truncate text-[13px]">{item.title}</span>
+                        <Star className="h-3.5 w-3.5 fill-white text-white shrink-0" />
+                        <span className="truncate text-[13px] font-bold text-white">{item.title}</span>
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -286,7 +286,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                       >
                         <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
                           {group.icon}
-                          <span className="truncate text-[13px]">{group.label}</span>
+                          <span className="truncate text-[13px] font-bold text-white">{group.label}</span>
                         </button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -300,8 +300,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
             <Collapsible key={group.label} defaultOpen={groupHasActive} className="group/collapse">
               <SidebarGroup>
                 <SidebarGroupLabel asChild>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-[10px] uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground font-medium py-1.5 px-2">
-                    {group.icon && <span className="opacity-70">{group.icon}</span>}
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-[10px] uppercase tracking-wider text-white/70 hover:text-white font-bold py-1.5 px-2">
+                    {group.icon && <span className="opacity-90">{group.icon}</span>}
                     <span className="flex-1 text-left">{group.label}</span>
                     <ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]/collapse:rotate-90" />
                   </CollapsibleTrigger>
@@ -320,13 +320,13 @@ function AppSidebar({ favorites, toggleFavorite }: {
                               className="group/item"
                             >
                               <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full pl-6">
-                                <span className="truncate text-[13px] flex-1 text-left">{item.title}</span>
+                                <span className="truncate text-[13px] font-bold text-white flex-1 text-left">{item.title}</span>
                                 <span
                                   onClick={(e) => { e.stopPropagation(); toggleFavorite(item.url); }}
-                                  className={`shrink-0 ${isFav ? "opacity-100" : "opacity-0 group-hover/item:opacity-60 hover:!opacity-100"}`}
+                                  className={`shrink-0 ${isFav ? "opacity-100" : "opacity-0 group-hover/item:opacity-70 hover:!opacity-100"}`}
                                   title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                                 >
-                                  <Star className={`h-3 w-3 ${isFav ? "fill-warning text-warning" : ""}`} />
+                                  <Star className={`h-3 w-3 ${isFav ? "fill-white text-white" : ""}`} />
                                 </span>
                               </button>
                             </SidebarMenuButton>
