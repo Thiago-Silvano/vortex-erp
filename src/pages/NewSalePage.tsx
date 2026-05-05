@@ -3607,37 +3607,36 @@ export default function NewSalePage() {
                 );
               })()}
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Supplier selection */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Fornecedores</Label>
-                <div className="flex gap-2">
-                  <Select value={addingSupplierId} onValueChange={setAddingSupplierId}>
-                    <SelectTrigger className="flex-1"><SelectValue placeholder="Selecionar fornecedor..." /></SelectTrigger>
-                    <SelectContent>
-                      {allSuppliers.filter(s => !selectedSupplierIds.includes(s.id)).map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={addSupplier} variant="outline"><Plus className="h-4 w-4 mr-1" />Adicionar</Button>
-                </div>
-                {selectedSupplierIds.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedSupplierIds.map(sid => {
-                      const sup = allSuppliers.find(s => s.id === sid);
-                      return (
-                        <div key={sid} className="flex items-center gap-1 bg-secondary px-3 py-1 rounded-full text-sm">
-                          <span>{sup?.name || sid}</span>
-                          <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setSelectedSupplierIds(prev => prev.filter(s => s !== sid))}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      );
-                    })}
+           <CardContent className="space-y-4">
+              {/* Top summary row: Custo Total | Fornecedores | Forma de Pagamento */}
+              {(() => {
+                const isOpOnlyTop = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
+                const methodLabels: Record<string, string> = { pix: 'Pix', faturado: 'Faturado', credito: 'Cartão de Crédito' };
+                const usedMethods = Array.from(new Set(supplierPayments.map(s => s.payment_method)));
+                const formaLabel = isOpOnlyTop
+                  ? 'Pagamento direto'
+                  : usedMethods.length === 0
+                    ? '—'
+                    : usedMethods.length === 1
+                      ? `${methodLabels[usedMethods[0]] || usedMethods[0]} (todos)`
+                      : 'Misto';
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 border rounded-lg overflow-hidden divide-y md:divide-y-0 md:divide-x bg-muted/20">
+                    <div className="p-3">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Custo Total</p>
+                      <p className="text-lg font-bold text-foreground mt-1">{fmt(totalCost)}</p>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Fornecedores</p>
+                      <p className="text-lg font-bold text-foreground mt-1">{selectedSupplierIds.length} selecionado{selectedSupplierIds.length === 1 ? '' : 's'}</p>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Forma de Pagamento</p>
+                      <p className="text-lg font-bold text-foreground mt-1">{formaLabel}</p>
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })()}
 
               {/* Seller commission info */}
               {sellerId && sellerId !== 'none' && (() => {
