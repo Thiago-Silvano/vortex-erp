@@ -3843,30 +3843,28 @@ export default function NewSalePage() {
               </div>
             )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
+              {!isQuoteMode ? (
+                <div>
+                  <p className="text-sm text-muted-foreground">Custo Financeiro</p>
+                  <p className="text-xl font-bold text-destructive">{fmt(financialCostsTotal + financialCostsCommissionTotal + machineFee)}</p>
+                </div>
+              ) : <div />}
               <div>
-                <p className="text-sm text-muted-foreground">{isQuoteMode ? 'Total Geral (todos)' : 'Total da Venda'}</p>
+                <p className="text-sm text-muted-foreground">{isQuoteMode ? 'Total Geral (todos)' : 'Valor Total da Venda'}</p>
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
                 {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
               </div>
-              <div><p className="text-sm text-muted-foreground">Total Custo Fornecedor</p><p className="text-xl font-bold">{fmt(totalCost)}</p></div>
               <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
               {!isQuoteMode && (
                 <>
-                  {machineFee > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Taxa Cartão ({cardFeePercent.toFixed(2)}%)</p><p className="text-lg font-semibold text-destructive">{fmt(machineFee)}</p></div>
-                  )}
-                  {commissionValue > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Comissão ({commissionRate}%)</p><p className="text-lg font-semibold">{fmt(commissionValue)}</p></div>
-                  )}
-                  {financialCostsTotal > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Custos Financeiros</p><p className="text-lg font-semibold text-destructive">{fmt(financialCostsTotal)}</p></div>
-                  )}
-                  {financialCostsCommissionTotal > 0 && (
-                    <div><p className="text-sm text-muted-foreground">Comissões (Custos Fin.)</p><p className="text-lg font-semibold text-destructive">{fmt(financialCostsCommissionTotal)}</p></div>
-                  )}
                   <div>
-                    <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
-                    <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
+                    <p className="text-sm text-muted-foreground">Lucro Líquido</p>
+                    <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Valor Venda Líquido</p>
+                    <p className="text-xl font-bold">{fmt(totalSaleWithInterest - (financialCostsTotal + financialCostsCommissionTotal + machineFee))}</p>
                   </div>
                 </>
               )}
