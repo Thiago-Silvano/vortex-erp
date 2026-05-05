@@ -34,8 +34,12 @@ const SECTIONS = [
     ['Motivo da Viagem', 'motivo_viagem'], ['Data de Ida', 'data_ida'], ['Data de Volta', 'data_volta'],
     ['Duração (dias)', 'duracao_viagem'], ['Cidade Destino EUA', 'cidade_destino_eua'],
     ['Hospedagem', 'local_hospedagem'], ['Pagador', 'pagador_viagem'],
-    ['Histórico Viagens EUA', 'historico_viagens_eua'], ['Já teve visto', 'ja_teve_visto'],
-    ['Nº Visto Anterior', 'visto_anterior_numero'], ['Consulado', 'visto_anterior_consulado'],
+    ['Nome do Pagador (Terceiro)', 'pagador_nome'], ['Endereço do Pagador', 'pagador_endereco'],
+    ['Email do Pagador', 'pagador_email'], ['Telefone do Pagador', 'pagador_telefone'],
+    ['Histórico Viagens EUA', 'historico_viagens_eua'], ['Já teve visto americano', 'ja_teve_visto'],
+    ['Nº Visto Anterior', 'visto_anterior_numero'], ['Consulado Emissor', 'visto_anterior_consulado'],
+    ['Visto Anterior - Emissão', 'visto_anterior_emissao'], ['Visto Anterior - Validade', 'visto_anterior_validade'],
+    ['Visto Negado', 'visto_negado'], ['Explicação da Negativa', 'visto_negado_explicacao'],
   ]},
   { title: '5. Contato nos EUA', fields: [
     ['Nome', 'contato_eua_nome'], ['Relação', 'contato_eua_relacao'],
@@ -44,19 +48,45 @@ const SECTIONS = [
   { title: '6. Informações de Família', fields: [
     ['Nome do Pai', 'pai_nome'], ['Nascimento do Pai', 'pai_nascimento'],
     ['Nome da Mãe', 'mae_nome'], ['Nascimento da Mãe', 'mae_nascimento'],
-    ['Parentes nos EUA', 'parentes_eua'], ['Nome do Cônjuge', 'conjuge_nome'],
-    ['Nascimento Cônjuge', 'conjuge_nascimento'], ['Cidade Nascimento Cônjuge', 'conjuge_cidade_nascimento'],
+    ['Parentes nos EUA', 'parentes_eua'],
+    ['Nome do Cônjuge', 'conjuge_nome'], ['Nascimento Cônjuge', 'conjuge_nascimento'],
+    ['Cidade Nascimento Cônjuge', 'conjuge_cidade_nascimento'],
+    ['Início do Casamento', 'conjuge_casamento_inicio'], ['Fim do Casamento/Divórcio', 'conjuge_casamento_fim'],
+    ['Detalhes do Divórcio', 'conjuge_divorcio'],
+    ['Detalhes do Falecimento', 'conjuge_falecimento'], ['Data Falecimento Cônjuge', 'conjuge_falecimento_data'],
   ]},
   { title: '7. Histórico Profissional', fields: [
-    ['Status Profissional', 'status_profissional'], ['Empresa Atual', 'empresa_atual'],
-    ['Cargo/Função', 'cargo_atual'], ['Renda Mensal', 'renda_mensal'],
-    ['Endereço Empresa', 'empresa_endereco'], ['Início', 'empresa_data_inicio'],
-    ['Idiomas', 'idiomas'], ['Descrição Funções', 'descricao_funcoes'],
+    ['Status Profissional', 'status_profissional'], ['Empresa/Instituição Atual', 'empresa_atual'],
+    ['Cargo/Função/Curso', 'cargo_atual'], ['Renda Mensal (BRL)', 'renda_mensal'],
+    ['CEP da Empresa', 'empresa_cep'], ['Endereço da Empresa', 'empresa_endereco'],
+    ['Data de Início', 'empresa_data_inicio'], ['Idiomas', 'idiomas'],
+    ['Descrição das Funções', 'descricao_funcoes'],
+    // Emprego anterior #1
+    ['— Emprego Anterior #1 —', '__sep_emp1'],
+    ['Empresa #1', 'emprego_anterior_1_empresa'], ['CEP #1', 'emprego_anterior_1_cep'],
+    ['Endereço #1', 'emprego_anterior_1_endereco'], ['Telefone #1', 'emprego_anterior_1_telefone'],
+    ['Supervisor #1', 'emprego_anterior_1_supervisor'], ['Cargo #1', 'emprego_anterior_1_cargo'],
+    ['Início #1', 'emprego_anterior_1_inicio'], ['Término #1', 'emprego_anterior_1_termino'],
+    // Emprego anterior #2
+    ['— Emprego Anterior #2 —', '__sep_emp2'],
+    ['Empresa #2', 'emprego_anterior_2_empresa'], ['CEP #2', 'emprego_anterior_2_cep'],
+    ['Endereço #2', 'emprego_anterior_2_endereco'], ['Telefone #2', 'emprego_anterior_2_telefone'],
+    ['Supervisor #2', 'emprego_anterior_2_supervisor'], ['Cargo #2', 'emprego_anterior_2_cargo'],
+    ['Início #2', 'emprego_anterior_2_inicio'], ['Término #2', 'emprego_anterior_2_termino'],
   ]},
   { title: '8. Histórico Acadêmico', fields: [
-    ['Instituição #1', 'formacao_1_instituicao'], ['Curso #1', 'formacao_1_curso'],
-    ['Instituição #2', 'formacao_2_instituicao'], ['Curso #2', 'formacao_2_curso'],
-    ['Instituição #3', 'formacao_3_instituicao'], ['Curso #3', 'formacao_3_curso'],
+    ['— Formação #1 —', '__sep_form1'],
+    ['Instituição #1', 'formacao_1_instituicao'], ['CEP #1', 'formacao_1_cep'],
+    ['Endereço #1', 'formacao_1_endereco'], ['Telefone #1', 'formacao_1_telefone'],
+    ['Curso #1', 'formacao_1_curso'], ['Início #1', 'formacao_1_inicio'], ['Término #1', 'formacao_1_termino'],
+    ['— Formação #2 —', '__sep_form2'],
+    ['Instituição #2', 'formacao_2_instituicao'], ['CEP #2', 'formacao_2_cep'],
+    ['Endereço #2', 'formacao_2_endereco'], ['Telefone #2', 'formacao_2_telefone'],
+    ['Curso #2', 'formacao_2_curso'], ['Início #2', 'formacao_2_inicio'], ['Término #2', 'formacao_2_termino'],
+    ['— Formação #3 —', '__sep_form3'],
+    ['Instituição #3', 'formacao_3_instituicao'], ['CEP #3', 'formacao_3_cep'],
+    ['Endereço #3', 'formacao_3_endereco'], ['Telefone #3', 'formacao_3_telefone'],
+    ['Curso #3', 'formacao_3_curso'], ['Início #3', 'formacao_3_inicio'], ['Término #3', 'formacao_3_termino'],
   ]},
   { title: '9. Viagens e Atividades', fields: [
     ['Organizações', 'organizacoes'],
@@ -116,10 +146,28 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
     doc.setFontSize(9);
 
     for (const [label, key] of section.fields) {
+      // Sub-section separators (key starts with __sep)
+      if (typeof key === 'string' && key.startsWith('__sep')) {
+        checkPage(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 90, 140);
+        doc.text(sanitize(label), 15, y);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        y += 6;
+        continue;
+      }
+
       let value = formData[key];
       if (value === undefined || value === null || value === '') continue;
       if (typeof value === 'boolean') value = value ? 'Sim' : 'Nao';
-      if (Array.isArray(value)) value = value.join(', ');
+      if (Array.isArray(value)) {
+        value = value.map((it: any) =>
+          it && typeof it === 'object'
+            ? Object.values(it).filter(Boolean).join(' - ')
+            : String(it)
+        ).join('; ');
+      }
 
       checkPage(8);
       doc.setFont('helvetica', 'bold');
@@ -128,6 +176,20 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
 
       const valStr = sanitize(String(value));
       const lines = doc.splitTextToSize(valStr, pageW - 80);
+      doc.text(lines, 70, y);
+      y += Math.max(lines.length * 4, 6);
+    }
+
+    // Special: companions in section 4
+    if (section.title.includes('4.') && Array.isArray(formData.acompanhantes) && formData.acompanhantes.length) {
+      checkPage(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Acompanhantes:', 15, y);
+      doc.setFont('helvetica', 'normal');
+      const list = formData.acompanhantes
+        .map((a: any) => `${a.nome || ''}${a.parentesco ? ` (${a.parentesco})` : ''}`)
+        .join('; ');
+      const lines = doc.splitTextToSize(sanitize(list), pageW - 80);
       doc.text(lines, 70, y);
       y += Math.max(lines.length * 4, 6);
     }
