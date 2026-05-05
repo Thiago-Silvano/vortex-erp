@@ -76,6 +76,9 @@ interface Passenger {
   is_main: boolean;
   eticket_number: string;
   seat: string;
+  baggage_personal_item: number;
+  baggage_carry_on: number;
+  baggage_checked: number;
 }
 
 interface SupplierOption { id: string; name: string; }
@@ -395,6 +398,9 @@ export default function NewSalePage() {
       document_type: p.document_type || 'cpf', document_number: p.document_number || '',
       document_expiry: p.document_expiry || '', email: p.email || '', phone: p.phone || '', is_main: p.is_main || false,
       eticket_number: p.eticket_number || '', seat: p.seat || '',
+      baggage_personal_item: p.baggage_personal_item ?? 1,
+      baggage_carry_on: p.baggage_carry_on ?? 1,
+      baggage_checked: p.baggage_checked ?? 1,
     })));
 
     // Load internal files
@@ -929,6 +935,7 @@ export default function NewSalePage() {
       first_name: '', last_name: '', birth_date: '', document_type: 'cpf',
       document_number: '', document_expiry: '', email: '', phone: '', is_main: prev.length === 0,
       eticket_number: '', seat: '',
+      baggage_personal_item: 1, baggage_carry_on: 1, baggage_checked: 1,
     }]);
   };
 
@@ -953,6 +960,7 @@ export default function NewSalePage() {
         phone: client.phone || '',
         is_main: prev.length === 0,
         eticket_number: '', seat: '',
+        baggage_personal_item: 1, baggage_carry_on: 1, baggage_checked: 1,
       }];
     });
   };
@@ -1392,6 +1400,9 @@ export default function NewSalePage() {
         document_number: p.document_number, document_expiry: p.document_expiry || null,
         email: p.email, phone: p.phone, is_main: p.is_main, sort_order: idx,
         eticket_number: p.eticket_number || '', seat: p.seat || '',
+        baggage_personal_item: p.baggage_personal_item ?? 1,
+        baggage_carry_on: p.baggage_carry_on ?? 1,
+        baggage_checked: p.baggage_checked ?? 1,
       })));
     }
 
@@ -1964,7 +1975,11 @@ export default function NewSalePage() {
         name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
         eticketNumber: p.eticket_number || undefined,
         seat: p.seat || undefined,
-        baggage: meta.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 },
+        baggage: {
+          personalItem: p.baggage_personal_item ?? 1,
+          carryOn: p.baggage_carry_on ?? 1,
+          checkedBag: p.baggage_checked ?? 1,
+        },
       }));
 
       let vortexWhiteLogoBase64: string | undefined;
@@ -2560,6 +2575,14 @@ export default function NewSalePage() {
                   <div><Label className="text-xs">Telefone</Label><Input value={pax.phone} onChange={e => updatePassenger(idx, 'phone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
                   <div><Label className="text-xs">Nº Bilhete Eletrônico</Label><Input value={pax.eticket_number} onChange={e => updatePassenger(idx, 'eticket_number', e.target.value)} placeholder="Ex: 957-1234567890" /></div>
                   <div><Label className="text-xs">Assento</Label><Input value={pax.seat} onChange={e => updatePassenger(idx, 'seat', e.target.value)} placeholder="Ex: 12A" /></div>
+                </div>
+                <div className="border-t pt-3 mt-2">
+                  <Label className="text-xs font-semibold text-muted-foreground">Bagagem</Label>
+                  <div className="grid grid-cols-3 gap-3 mt-2">
+                    <div><Label className="text-xs">Item Pessoal</Label><Input type="number" min="0" value={pax.baggage_personal_item} onChange={e => updatePassenger(idx, 'baggage_personal_item', parseInt(e.target.value) || 0)} /></div>
+                    <div><Label className="text-xs">Mão</Label><Input type="number" min="0" value={pax.baggage_carry_on} onChange={e => updatePassenger(idx, 'baggage_carry_on', parseInt(e.target.value) || 0)} /></div>
+                    <div><Label className="text-xs">Despachada</Label><Input type="number" min="0" value={pax.baggage_checked} onChange={e => updatePassenger(idx, 'baggage_checked', parseInt(e.target.value) || 0)} /></div>
+                  </div>
                 </div>
               </div>
             ))}
