@@ -3852,6 +3852,12 @@ export default function NewSalePage() {
                   {commissionValue > 0 && (
                     <div><p className="text-sm text-muted-foreground">Comissão ({commissionRate}%)</p><p className="text-lg font-semibold">{fmt(commissionValue)}</p></div>
                   )}
+                  {financialCostsTotal > 0 && (
+                    <div><p className="text-sm text-muted-foreground">Custos Financeiros</p><p className="text-lg font-semibold text-destructive">{fmt(financialCostsTotal)}</p></div>
+                  )}
+                  {financialCostsCommissionTotal > 0 && (
+                    <div><p className="text-sm text-muted-foreground">Comissões (Custos Fin.)</p><p className="text-lg font-semibold text-destructive">{fmt(financialCostsCommissionTotal)}</p></div>
+                  )}
                   <div>
                     <p className="text-sm text-muted-foreground">Lucro Líquido Final</p>
                     <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
