@@ -449,13 +449,35 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
 
         {/* Kanban View */}
         {!archivedView && viewMode === 'kanban' && (
-          <KanbanBoard
-            columns={columns.filter(c => c.statusKey !== 'perdido')}
-            sales={filteredSales}
-            onMoveCard={handleMoveCard}
-            onViewSale={handleViewSale}
-            onDuplicate={handleDuplicate}
-          />
+          <>
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-muted/60 rounded-lg border flex-wrap">
+                <span className="text-sm font-medium">{selectedIds.size} selecionada(s)</span>
+                <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                  <SelectTrigger className="w-[200px]"><SelectValue placeholder="Mover para status..." /></SelectTrigger>
+                  <SelectContent>
+                    {columns.map(c => <SelectItem key={c.statusKey} value={c.statusKey}>{c.name}</SelectItem>)}
+                    <SelectItem value="perdido">Arquivar</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button size="sm" onClick={handleBulkChangeStatus} disabled={!bulkStatus}>
+                  <Archive className="h-4 w-4 mr-1" /> Aplicar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                  <X className="h-4 w-4 mr-1" /> Limpar seleção
+                </Button>
+              </div>
+            )}
+            <KanbanBoard
+              columns={columns.filter(c => c.statusKey !== 'perdido')}
+              sales={filteredSales}
+              onMoveCard={handleMoveCard}
+              onViewSale={handleViewSale}
+              onDuplicate={handleDuplicate}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+            />
+          </>
         )}
 
         {/* List View */}
@@ -469,6 +491,8 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                   <SelectTrigger className="w-[200px]"><SelectValue placeholder="Mover para status..." /></SelectTrigger>
                   <SelectContent>
                     {columns.map(c => <SelectItem key={c.statusKey} value={c.statusKey}>{c.name}</SelectItem>)}
+                    {!archivedView && <SelectItem value="perdido">Arquivar</SelectItem>}
+                    {archivedView && <SelectItem value="em_aberto">Desarquivar (Nova Cotação)</SelectItem>}
                   </SelectContent>
                 </Select>
                 <Button size="sm" onClick={handleBulkChangeStatus} disabled={!bulkStatus}>

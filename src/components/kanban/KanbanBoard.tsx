@@ -14,9 +14,11 @@ interface KanbanBoardProps {
   onDuplicate?: (sale: KanbanSale) => void;
   onWhatsApp?: (sale: KanbanSale) => void;
   onConvert?: (sale: KanbanSale) => void;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
-export default function KanbanBoard({ columns, sales, onMoveCard, onViewSale, onDuplicate, onWhatsApp, onConvert }: KanbanBoardProps) {
+export default function KanbanBoard({ columns, sales, onMoveCard, onViewSale, onDuplicate, onWhatsApp, onConvert, selectedIds, onToggleSelect }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -94,6 +96,8 @@ export default function KanbanBoard({ columns, sales, onMoveCard, onViewSale, on
             onDuplicate={onDuplicate}
             onWhatsApp={onWhatsApp}
             onConvert={onConvert}
+            selectedIds={selectedIds}
+            onToggleSelect={onToggleSelect}
           />
         ))}
       </div>
