@@ -166,6 +166,7 @@ export default function NewSalePage() {
   const [defaultCostCenterId, setDefaultCostCenterId] = useState<string>('');
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
   const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
+  const [financialCosts, setFinancialCosts] = useState<FinancialCost[]>([]);
 
   const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
   const [linkRates, setLinkRates] = useState<CardRateEntry[]>([]);
