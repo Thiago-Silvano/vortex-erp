@@ -586,16 +586,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   </div>
                 ) : null;
               })()}
-
-              {/* Baggage */}
-              <div className="border-t pt-4">
-                <h3 className="font-semibold text-sm mb-3">Bagagem</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div><Label className="text-xs">Item Pessoal</Label><Input type="number" min="0" value={baggage.personalItem} onChange={e => setBaggage(p => ({ ...p, personalItem: parseInt(e.target.value) || 0 }))} /></div>
-                  <div><Label className="text-xs">Mão</Label><Input type="number" min="0" value={baggage.carryOn} onChange={e => setBaggage(p => ({ ...p, carryOn: parseInt(e.target.value) || 0 }))} /></div>
-                  <div><Label className="text-xs">Despachada</Label><Input type="number" min="0" value={baggage.checkedBag} onChange={e => setBaggage(p => ({ ...p, checkedBag: parseInt(e.target.value) || 0 }))} /></div>
-                </div>
-              </div>
             </div>
           )}
 
