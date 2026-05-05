@@ -2569,7 +2569,12 @@ export default function NewSalePage() {
                     <Checkbox checked={pax.is_main} onCheckedChange={(checked) => updatePassenger(idx, 'is_main', !!checked)} />
                     <Label className="text-sm font-medium">Passageiro principal</Label>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="outline" onClick={() => savePassengerAsClient(pax)} title="Salvar passageiro como novo cliente no CRM">
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Salvar como cliente
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="relative">
