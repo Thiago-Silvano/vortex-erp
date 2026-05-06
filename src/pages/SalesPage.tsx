@@ -36,6 +36,7 @@ interface SaleRow {
   sale_workflow_status: string;
   invoice_url: string | null;
   commission_invoice_status: string | null;
+  commission_value?: number;
   suppliers_summary?: string;
 }
 
@@ -229,7 +230,7 @@ export default function SalesPage() {
       const d = new Date(s.sale_date + 'T12:00:00');
       return d < startOfMonth;
     });
-    const total = list.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
+    const total = list.reduce((sum, s) => sum + Number(s.commission_value || 0), 0);
     return { count: list.length, total };
   }, [sales, datePeriod]);
 
