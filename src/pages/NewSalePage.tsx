@@ -2404,11 +2404,15 @@ export default function NewSalePage() {
   };
 
   const handleExportDraftPdf = async () => {
-    const pdfData = await buildPremiumPdfData();
-    if (!pdfData) return;
-    const doc = await generateEditorialPdfAsync(pdfData);
-    doc.save(`proposta-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('PDF da proposta gerado com sucesso!');
+    // Mesma geração dos vouchers: serviços + aéreo
+    await handleExportServicesVoucher();
+    const hasAir = items.some(i =>
+      (i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length) ||
+      (i.metadata?.type === 'adicional' && i.metadata?.isAirService)
+    );
+    if (hasAir) {
+      await handleExportAirlineVoucher();
+    }
   };
 
   const handleGenerateLink = async () => {
