@@ -178,6 +178,8 @@ export default function NewSalePage() {
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [passengerClientResults, setPassengerClientResults] = useState<ClientOption[]>([]);
+  const [passengerSearchLoading, setPassengerSearchLoading] = useState(false);
   const [destinationImageUrl, setDestinationImageUrl] = useState('');
   const [destinationImageConfig, setDestinationImageConfig] = useState<ImagePositionConfig | null>(null);
   const [imagePositionEditorOpen, setImagePositionEditorOpen] = useState(false);
@@ -490,6 +492,44 @@ export default function NewSalePage() {
     let q = supabase.from('clients').select('id, full_name, cpf, email, phone, birth_date, passport_number, passport_expiry_date').order('full_name');
     if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
     q.then(({ data }) => { if (data) setAllClients(data as any); });
+  };
+
+  const normalizeClientSearch = (value: string = '') =>
+    value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+  const clientMatchesPassengerSearch = (client: ClientOption, term: string) => {
+    const terms = normalizeClientSearch(term).split(/\s+/).filter(Boolean);
+    const searchable = normalizeClientSearch(`${client.full_name || ''} ${client.cpf || ''}`);
+    return terms.length > 0 && terms.every(t => searchable.includes(t));
+  };
+
+  const searchPassengerClients = async (term: string) => {
+    if (!activeCompany?.id || term.trim().length < 2) {
+      setPassengerClientResults([]);
+      return;
+    }
+
+    const normalizedTerms = normalizeClientSearch(term).split(/\s+/).filter(Boolean);
+    const mainTerm = normalizedTerms.sort((a, b) => b.length - a.length)[0] || term.trim();
+    const digits = term.replace(/\D/g, '');
+    const searchFilters = [`full_name.ilike.%${mainTerm}%`];
+    if (digits.length >= 2) searchFilters.push(`cpf.ilike.%${digits}%`);
+
+    setPassengerSearchLoading(true);
+    const { data, error } = await supabase
+      .from('clients')
+      .select('id, full_name, cpf, email, phone, birth_date, passport_number, passport_expiry_date')
+      .eq('empresa_id', activeCompany.id)
+      .or(searchFilters.join(','))
+      .order('full_name')
+      .limit(50);
+
+    if (!error && data) {
+      setPassengerClientResults((data as ClientOption[]).filter(c => clientMatchesPassengerSearch(c, term)).slice(0, 15));
+    } else {
+      setPassengerClientResults([]);
+    }
+    setPassengerSearchLoading(false);
   };
 
   useEffect(() => {
