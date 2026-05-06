@@ -2224,6 +2224,7 @@ export default function NewSalePage() {
         agencyWhatsapp: agency.whatsapp || '',
         agencyEmail: agency.email || '',
         agencyWebsite: agency.website || '',
+        hideReference: isQuoteMode,
       };
 
       const airDoc = generateAirlineVoucherPdf(airVoucherData);
