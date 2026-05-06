@@ -11,9 +11,9 @@ import { Calculator } from 'lucide-react';
 interface Fee {
   id: string;
   name: string;
+  institution: string | null;
   method: string;
-  installments: number;
-  fee_percent: number;
+  fees_by_installment: Record<string, number>;
   status: string;
 }
 
@@ -36,6 +36,7 @@ export default function FeeSimulatorPage() {
   const { activeCompany } = useCompany();
   const [fees, setFees] = useState<Fee[]>([]);
   const [method, setMethod] = useState<'maquininha' | 'link'>('maquininha');
+  const [institutionId, setInstitutionId] = useState<string>('');
   const [installments, setInstallments] = useState<number>(1);
   const [valueStr, setValueStr] = useState('');
 
@@ -48,18 +49,39 @@ export default function FeeSimulatorPage() {
     })();
   }, [activeCompany?.id]);
 
-  const availableInstallments = useMemo(
-    () => Array.from(new Set(fees.filter(f => f.method === method).map(f => f.installments))).sort((a, b) => a - b),
+  const institutionsForMethod = useMemo(
+    () => fees.filter(f => f.method === method),
     [fees, method]
   );
 
+  // auto-select first available institution when method changes
+  useEffect(() => {
+    if (!institutionsForMethod.find(f => f.id === institutionId)) {
+      setInstitutionId(institutionsForMethod[0]?.id || '');
+    }
+  }, [institutionsForMethod, institutionId]);
+
   const matched = useMemo(
-    () => fees.find(f => f.method === method && f.installments === installments) || null,
-    [fees, method, installments]
+    () => fees.find(f => f.id === institutionId) || null,
+    [fees, institutionId]
   );
 
+  const availableInstallments = useMemo(() => {
+    if (!matched) return [];
+    return Object.entries(matched.fees_by_installment || {})
+      .filter(([, v]) => Number(v) > 0)
+      .map(([k]) => parseInt(k))
+      .sort((a, b) => a - b);
+  }, [matched]);
+
+  useEffect(() => {
+    if (availableInstallments.length && !availableInstallments.includes(installments)) {
+      setInstallments(availableInstallments[0]);
+    }
+  }, [availableInstallments]); // eslint-disable-line
+
   const value = parseAmount(valueStr);
-  const bankFee = matched ? Number(matched.fee_percent) : 0;
+  const bankFee = matched ? Number(matched.fees_by_installment?.[String(installments)] || 0) : 0;
 
   // Maximized fee formula:
   // step1 = 100 - bankFee
@@ -87,7 +109,7 @@ export default function FeeSimulatorPage() {
 
         <Card>
           <CardHeader><CardTitle className="text-base">Parâmetros</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label>Método</Label>
               <Select value={method} onValueChange={(v: any) => setMethod(v)}>
@@ -99,12 +121,25 @@ export default function FeeSimulatorPage() {
               </Select>
             </div>
             <div>
+              <Label>Instituição</Label>
+              <Select value={institutionId} onValueChange={setInstitutionId}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {institutionsForMethod.length === 0 ? (
+                    <SelectItem value="__none" disabled>Sem cadastros</SelectItem>
+                  ) : institutionsForMethod.map(f => (
+                    <SelectItem key={f.id} value={f.id}>{f.institution || f.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>Número de Parcelas</Label>
               <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {availableInstallments.length === 0 ? (
-                    <SelectItem value="1">Sem taxas cadastradas</SelectItem>
+                    <SelectItem value="1" disabled>Sem taxas</SelectItem>
                   ) : availableInstallments.map(n => (
                     <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
                   ))}
@@ -126,13 +161,13 @@ export default function FeeSimulatorPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              Resultado {matched ? `— ${matched.name}` : ''}
+              Resultado {matched ? `— ${matched.institution} (${matched.method === 'link' ? 'Link' : 'Maquininha'}) ${installments}x` : ''}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!matched ? (
+            {!matched || bankFee <= 0 ? (
               <p className="text-sm text-muted-foreground">
-                Cadastre uma taxa em <strong>Cadastros → Taxas</strong> compatível com o método e parcelas selecionados.
+                Cadastre/edite uma tabela em <strong>Cadastros → Taxas</strong> com a instituição, método e parcela desejados.
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
