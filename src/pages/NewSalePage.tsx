@@ -189,6 +189,11 @@ export default function NewSalePage() {
   const [librarySearch, setLibrarySearch] = useState<Record<number, string>>({});
   const [libraryResults, setLibraryResults] = useState<Record<number, any[]>>({});
   const [libraryLoading, setLibraryLoading] = useState<Record<number, boolean>>({});
+  // Biblioteca para imagem do destino
+  const [destLibraryOpen, setDestLibraryOpen] = useState(false);
+  const [destLibrarySearch, setDestLibrarySearch] = useState('');
+  const [destLibraryResults, setDestLibraryResults] = useState<any[]>([]);
+  const [destLibraryLoading, setDestLibraryLoading] = useState(false);
   const [uploadingDestImage, setUploadingDestImage] = useState(false);
   const [aiImageSearch, setAiImageSearch] = useState(false);
   const [aiImages, setAiImages] = useState<string[]>([]);
