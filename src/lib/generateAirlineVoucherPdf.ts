@@ -58,6 +58,7 @@ export interface AirlineVoucherData {
   agencyWhatsapp?: string;
   agencyEmail?: string;
   agencyWebsite?: string;
+  hideReference?: boolean;
 }
 
 // ─── Helpers ────────────────────────────────────────────────
