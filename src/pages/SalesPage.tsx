@@ -216,20 +216,22 @@ export default function SalesPage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  // Cotações pendentes de meses anteriores (drafts com sale_date antes do mês atual)
+  // Vendas de meses anteriores aguardando comissão (somente quando filtro = Mês atual)
   const pendingPrevMonths = useMemo(() => {
+    if (datePeriod !== 'month') return { count: 0, total: 0 };
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
     const list = sales.filter(s => {
-      if (s.status !== 'draft') return false;
+      if (s.status !== 'active') return false;
+      if (s.commission_invoice_status !== 'pending') return false;
       if (!s.sale_date) return false;
       const d = new Date(s.sale_date + 'T12:00:00');
       return d < startOfMonth;
     });
     const total = list.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
     return { count: list.length, total };
-  }, [sales]);
+  }, [sales, datePeriod]);
 
   const workflowStatusMap: Record<string, { label: string; color: string }> = {
     em_aberto: { label: 'Em aberto', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
@@ -250,9 +252,8 @@ export default function SalesPage() {
           <div className="flex items-start sm:items-center gap-3 rounded-lg border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 px-4 py-3">
             <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5 sm:mt-0" />
             <div className="text-sm text-orange-900 dark:text-orange-100 flex-1">
-              <strong>{pendingPrevMonths.count}</strong> {pendingPrevMonths.count === 1 ? 'cotação pendente' : 'cotações pendentes'} de meses anteriores aguardando retorno — Total a receber: <strong>{fmt(pendingPrevMonths.total)}</strong>
+              <strong>{pendingPrevMonths.count}</strong> {pendingPrevMonths.count === 1 ? 'venda' : 'vendas'} de meses anteriores aguardando comissão — Total a receber: <strong>{fmt(pendingPrevMonths.total)}</strong>
             </div>
-            <Button size="sm" variant="outline" className="border-orange-400 text-orange-700 hover:bg-orange-100" onClick={() => navigate('/cotacoes')}>Ver cotações</Button>
           </div>
         )}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
