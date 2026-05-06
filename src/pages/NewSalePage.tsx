@@ -178,6 +178,8 @@ export default function NewSalePage() {
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [passengerClientResults, setPassengerClientResults] = useState<ClientOption[]>([]);
+  const [passengerSearchLoading, setPassengerSearchLoading] = useState(false);
   const [destinationImageUrl, setDestinationImageUrl] = useState('');
   const [destinationImageConfig, setDestinationImageConfig] = useState<ImagePositionConfig | null>(null);
   const [imagePositionEditorOpen, setImagePositionEditorOpen] = useState(false);
@@ -492,6 +494,50 @@ export default function NewSalePage() {
     q.then(({ data }) => { if (data) setAllClients(data as any); });
   };
 
+  const normalizeClientSearch = (value: string = '') =>
+    value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+  const clientMatchesPassengerSearch = (client: ClientOption, term: string) => {
+    const terms = normalizeClientSearch(term).split(/\s+/).filter(Boolean);
+    const searchable = normalizeClientSearch(`${client.full_name || ''} ${client.cpf || ''}`);
+    return terms.length > 0 && terms.every(t => searchable.includes(t));
+  };
+
+  const searchPassengerClients = async (term: string) => {
+    if (!activeCompany?.id || term.trim().length < 2) {
+      setPassengerClientResults([]);
+      return;
+    }
+
+    const normalizedTerms = normalizeClientSearch(term).split(/\s+/).filter(Boolean);
+    const digits = term.replace(/\D/g, '');
+
+    setPassengerSearchLoading(true);
+    let query = supabase
+      .from('clients')
+      .select('id, full_name, cpf, email, phone, birth_date, passport_number, passport_expiry_date')
+      .eq('empresa_id', activeCompany.id)
+      .order('full_name')
+      .limit(50);
+
+    if (digits.length >= 2) {
+      query = query.or(`full_name.ilike.%${term.trim()}%,cpf.ilike.%${digits}%`);
+    } else {
+      normalizedTerms.forEach(searchTerm => {
+        query = query.ilike('full_name', `%${searchTerm}%`);
+      });
+    }
+
+    const { data, error } = await query;
+
+    if (!error && data) {
+      setPassengerClientResults((data as ClientOption[]).filter(c => clientMatchesPassengerSearch(c, term)).slice(0, 15));
+    } else {
+      setPassengerClientResults([]);
+    }
+    setPassengerSearchLoading(false);
+  };
+
   useEffect(() => {
     fetchClients();
     supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setAllSuppliers(data); });
@@ -520,6 +566,20 @@ export default function NewSalePage() {
       });
     }
   }, [activeCompany]);
+
+  useEffect(() => {
+    if (passengerSearchOpen === null || passengerSearchTerm.trim().length < 2) {
+      setPassengerClientResults([]);
+      setPassengerSearchLoading(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      searchPassengerClients(passengerSearchTerm);
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [passengerSearchTerm, passengerSearchOpen, activeCompany?.id]);
 
   useEffect(() => {
     if (quoteData?.services && items.length === 0 && !editSaleId) {
@@ -2811,15 +2871,13 @@ export default function NewSalePage() {
                       autoComplete="off"
                     />
                     {passengerSearchOpen === idx && passengerSearchTerm.length >= 2 && (() => {
-                      const terms = passengerSearchTerm.toLowerCase().split(/\s+/).filter(Boolean);
-                      const filtered = allClients.filter(c => {
-                        const name = (c.full_name || '').toLowerCase();
-                        const cpf = (c.cpf || '').toLowerCase();
-                        return terms.every(t => name.includes(t) || cpf.includes(t));
-                      }).slice(0, 15);
-                      if (filtered.length === 0) return null;
+                      const filtered = passengerClientResults;
+                      if (filtered.length === 0 && !passengerSearchLoading) return null;
                       return (
                         <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md max-h-60 overflow-y-auto">
+                          {passengerSearchLoading && (
+                            <div className="px-3 py-2 text-sm text-muted-foreground">Buscando...</div>
+                          )}
                           {filtered.map(c => (
                             <button
                               key={c.id}
