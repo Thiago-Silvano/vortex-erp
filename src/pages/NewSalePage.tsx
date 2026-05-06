@@ -3037,6 +3037,19 @@ export default function NewSalePage() {
                                     className="h-6 text-xs w-28"
                                   />
                                 </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Biblioteca:</Label>
+                                  <Input
+                                    value={librarySearch[idx] || ''}
+                                    onChange={e => setLibrarySearch(prev => ({ ...prev, [idx]: e.target.value }))}
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); searchImageLibrary(idx); } }}
+                                    placeholder="nome do produto"
+                                    className="h-6 text-xs w-32"
+                                  />
+                                  <Button variant="ghost" size="sm" className="h-6 text-xs px-1.5 gap-0.5" onClick={() => searchImageLibrary(idx)} disabled={libraryLoading[idx]}>
+                                    {libraryLoading[idx] ? <Loader2 className="h-3 w-3 animate-spin"/> : <Search className="h-3 w-3"/>}
+                                  </Button>
+                                </div>
                               </>
                             )}
                             <div className="flex items-center gap-1.5 flex-shrink-0">
