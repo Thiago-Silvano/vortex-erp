@@ -4233,7 +4233,7 @@ export default function NewSalePage() {
             <div className="flex-1" />
             {isQuoteMode && (
               <Button onClick={handleSaveDraft} disabled={savingDraft} className="gap-1 bg-blue-600 hover:bg-blue-700 text-white">
-                {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : (<>Salvar cotação <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-muted">F10</span></>)}
+                {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : (<>Salvar cotação <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white">F10</span></>)}
               </Button>
             )}
             <Button onClick={handleSave} className={`gap-1 ${isQuoteMode ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}>
