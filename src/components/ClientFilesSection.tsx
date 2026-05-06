@@ -29,6 +29,7 @@ export interface ClientFilesSectionRef {
   uploadPendingFiles: (clientId: string) => Promise<void>;
   hasPendingFiles: () => boolean;
   clearPending: () => void;
+  addPendingFile: (file: globalThis.File) => Promise<void>;
 }
 
 function formatFileSize(bytes: number): string {
