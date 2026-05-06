@@ -46,15 +46,15 @@
     --radius: 0.625rem;                   /* 10px md */
 
     /* === Sidebar (branca) === */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 8% 46%;
-    --sidebar-primary: 246 42% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 245 90% 96%;        /* item ativo / hover */
-    --sidebar-accent-foreground: 246 46% 37%;
-    --sidebar-border: 240 8% 90%;
-    --sidebar-ring: 246 42% 50%;
-    --sidebar: 0 0% 100%;
+    --sidebar-background: 222 65% 30%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 222 65% 30%;
+    --sidebar-accent: 222 60% 40%;        /* item ativo / hover */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 222 50% 40%;
+    --sidebar-ring: 0 0% 100%;
+    --sidebar: 222 65% 30%;
 
     /* === Charts === */
     --chart-1: 246 42% 50%;
