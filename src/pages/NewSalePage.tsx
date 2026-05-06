@@ -1592,6 +1592,9 @@ export default function NewSalePage() {
       );
     }
 
+    // Salvar novas imagens na biblioteca (deduplicado)
+    try { await persistNewImagesToLibrary(); setNewImageUrls({}); } catch (e) { console.warn('Lib save', e); }
+
     return saleId;
   };
 
