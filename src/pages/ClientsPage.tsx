@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
 import { useTableSort } from '@/hooks/useTableSort';
-import { Plus, Search, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Users, Loader2, FileScan } from 'lucide-react';
 import ClientFilesSection, { type ClientFilesSectionRef } from '@/components/ClientFilesSection';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -66,6 +66,10 @@ export default function ClientsPage() {
   const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
   const filesRef = useRef<ClientFilesSectionRef>(null);
   const [returnTo, setReturnTo] = useState<{ path: string; state?: any } | null>(null);
+  const [docImportOpen, setDocImportOpen] = useState(false);
+  const [docType, setDocType] = useState<'identidade' | 'passaporte' | 'cnh'>('identidade');
+  const [docAnalyzing, setDocAnalyzing] = useState(false);
+  const docInputRef = useRef<HTMLInputElement>(null);
 
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
@@ -326,6 +330,11 @@ export default function ClientsPage() {
             </DialogHeader>
 
             <div className="space-y-3">
+              <div className="flex justify-end">
+                <Button type="button" size="sm" variant="outline" onClick={() => setDocImportOpen(true)} className="gap-1 h-7">
+                  <FileScan className="h-3.5 w-3.5" /> Importar documento (IA)
+                </Button>
+              </div>
               {editingId && <ClientPhotosSection clientId={editingId} />}
               <ClientFilesSection ref={filesRef} clientId={editingId || undefined} />
               {editingId && activeCompany?.slug === 'vortex-vistos' && (
