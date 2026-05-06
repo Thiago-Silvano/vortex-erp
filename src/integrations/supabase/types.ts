@@ -3009,6 +3009,42 @@ export type Database = {
           },
         ]
       }
+      payment_fees: {
+        Row: {
+          created_at: string
+          empresa_id: string | null
+          fee_percent: number
+          id: string
+          installments: number
+          method: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id?: string | null
+          fee_percent?: number
+          id?: string
+          installments?: number
+          method?: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string | null
+          fee_percent?: number
+          id?: string
+          installments?: number
+          method?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_images: {
         Row: {
           created_at: string
