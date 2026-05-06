@@ -108,6 +108,14 @@ const ClientFilesSection = forwardRef<ClientFilesSectionRef, ClientFilesSectionP
     },
     hasPendingFiles: () => pendingFiles.length > 0,
     clearPending: () => setPendingFiles([]),
+    addPendingFile: async (file: globalThis.File) => {
+      if (isNewMode) {
+        setPendingFiles(prev => [...prev, { file, id: `${Date.now()}-${Math.random().toString(36).slice(2)}` }]);
+      } else if (clientId) {
+        const ok = await uploadFileToStorage(file, clientId);
+        if (ok) { toast.success('Documento arquivado no cadastro'); loadFiles(); }
+      }
+    },
   }));
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
