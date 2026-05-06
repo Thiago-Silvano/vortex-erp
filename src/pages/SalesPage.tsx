@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Undo2, FileCheck, FileX, Clock } from 'lucide-react';
+import { Eye, Search, Plus, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Undo2, FileCheck, FileX, Clock, AlertTriangle } from 'lucide-react';
 import SalesDateFilter, { DateFilterPeriod, getDateRange } from '@/components/SalesDateFilter';
 
 import { Input } from '@/components/ui/input';
@@ -216,6 +216,21 @@ export default function SalesPage() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  // Cotações pendentes de meses anteriores (drafts com sale_date antes do mês atual)
+  const pendingPrevMonths = useMemo(() => {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const list = sales.filter(s => {
+      if (s.status !== 'draft') return false;
+      if (!s.sale_date) return false;
+      const d = new Date(s.sale_date + 'T12:00:00');
+      return d < startOfMonth;
+    });
+    const total = list.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
+    return { count: list.length, total };
+  }, [sales]);
+
   const workflowStatusMap: Record<string, { label: string; color: string }> = {
     em_aberto: { label: 'Em aberto', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
     contatando: { label: 'Contatando', color: 'bg-blue-100 text-blue-800 border-blue-300' },
@@ -231,6 +246,15 @@ export default function SalesPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Vendas</h1>
           <Button onClick={() => navigate('/sales/new')} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Nova Cotação</Button>
         </div>
+        {pendingPrevMonths.count > 0 && (
+          <div className="flex items-start sm:items-center gap-3 rounded-lg border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 px-4 py-3">
+            <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5 sm:mt-0" />
+            <div className="text-sm text-orange-900 dark:text-orange-100 flex-1">
+              <strong>{pendingPrevMonths.count}</strong> {pendingPrevMonths.count === 1 ? 'cotação pendente' : 'cotações pendentes'} de meses anteriores aguardando retorno — Total a receber: <strong>{fmt(pendingPrevMonths.total)}</strong>
+            </div>
+            <Button size="sm" variant="outline" className="border-orange-400 text-orange-700 hover:bg-orange-100" onClick={() => navigate('/cotacoes')}>Ver cotações</Button>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
