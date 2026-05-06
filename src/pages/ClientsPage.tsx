@@ -512,6 +512,83 @@ export default function ClientsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Document Import Dialog */}
+        <Dialog open={docImportOpen} onOpenChange={(o) => { if (!docAnalyzing) setDocImportOpen(o); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Importar documento pessoal</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label>Tipo de documento</Label>
+                <Select value={docType} onValueChange={(v) => setDocType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="identidade">Identidade (RG)</SelectItem>
+                    <SelectItem value="passaporte">Passaporte</SelectItem>
+                    <SelectItem value="cnh">CNH</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                A imagem será analisada por IA, os campos preenchidos automaticamente (e ainda editáveis), e o arquivo arquivado no cadastro.
+              </p>
+              <input
+                ref={docInputRef}
+                type="file"
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setDocAnalyzing(true);
+                  try {
+                    const base64 = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        const result = reader.result as string;
+                        resolve(result.split(',')[1] || '');
+                      };
+                      reader.onerror = reject;
+                      reader.readAsDataURL(file);
+                    });
+                    const { data, error } = await supabase.functions.invoke('analyze-client-document', {
+                      body: { imageBase64: base64, mimeType: file.type, documentType: docType },
+                    });
+                    if (error) throw error;
+                    if ((data as any)?.error) throw new Error((data as any).error);
+                    const ext = (data as any)?.data || {};
+                    setForm(p => ({
+                      ...p,
+                      full_name: ext.full_name ? String(ext.full_name).toUpperCase() : p.full_name,
+                      cpf: ext.cpf ? maskCpfCnpj(ext.cpf) : p.cpf,
+                      birth_date: ext.birth_date || p.birth_date,
+                      passport_number: ext.passport_number || p.passport_number,
+                      passport_issue_date: ext.passport_issue_date || p.passport_issue_date,
+                      passport_expiry_date: ext.passport_expiry_date || p.passport_expiry_date,
+                    }));
+                    await filesRef.current?.addPendingFile(file);
+                    toast.success('Documento analisado e dados preenchidos');
+                    setDocImportOpen(false);
+                  } catch (err: any) {
+                    console.error(err);
+                    toast.error(err?.message || 'Erro ao analisar documento');
+                  } finally {
+                    setDocAnalyzing(false);
+                    if (docInputRef.current) docInputRef.current.value = '';
+                  }
+                }}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" disabled={docAnalyzing} onClick={() => setDocImportOpen(false)}>Cancelar</Button>
+              <Button disabled={docAnalyzing} onClick={() => docInputRef.current?.click()}>
+                {docAnalyzing ? <><Loader2 className="h-3 w-3 animate-spin mr-1" /> Analisando...</> : 'Selecionar arquivo'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
