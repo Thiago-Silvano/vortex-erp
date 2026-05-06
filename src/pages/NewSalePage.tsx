@@ -1349,6 +1349,65 @@ export default function NewSalePage() {
     }
   };
 
+  const inferProductType = (item: any): 'cidade' | 'hospedagem' | 'servico' => {
+    const t = item?.metadata?.type;
+    if (t === 'hotel') return 'hospedagem';
+    return 'servico';
+  };
+
+  const searchImageLibrary = async (itemIdx: number) => {
+    const q = (librarySearch[itemIdx] || '').trim();
+    if (!q) { toast.error('Digite o nome do produto'); return; }
+    if (!activeCompany?.id) return;
+    setLibraryLoading(prev => ({ ...prev, [itemIdx]: true }));
+    try {
+      const { data } = await (supabase.from('product_images' as any)
+        .select('*')
+        .eq('empresa_id', activeCompany.id)
+        .or(`product_name.ilike.%${q}%,keywords.ilike.%${q}%`)
+        .limit(50) as any);
+      const imgs = (data || []) as any[];
+      setLibraryResults(prev => ({ ...prev, [itemIdx]: imgs }));
+      if (imgs.length === 0) toast.info('Nenhuma imagem encontrada na biblioteca');
+    } finally {
+      setLibraryLoading(prev => ({ ...prev, [itemIdx]: false }));
+    }
+  };
+
+  const addLibraryImage = (itemIdx: number, url: string) => {
+    setItemImages(prev => {
+      const cur = prev[itemIdx] || [];
+      if (cur.includes(url)) return prev;
+      return { ...prev, [itemIdx]: [...cur, url] };
+    });
+    // imagens da biblioteca NÃO entram em newImageUrls (já existem)
+    toast.success('Imagem adicionada');
+  };
+
+  const persistNewImagesToLibrary = async () => {
+    if (!activeCompany?.id) return;
+    const tasks: any[] = [];
+    items.forEach((item, idx) => {
+      const newSet = newImageUrls[idx];
+      if (!newSet || newSet.size === 0) return;
+      const productType = inferProductType(item);
+      const productName = (item.metadata?.hotel?.hotelName || item.description || '').trim();
+      if (!productName) return;
+      newSet.forEach(url => {
+        tasks.push({
+          empresa_id: activeCompany.id,
+          product_type: productType,
+          product_name: productName,
+          image_url: url,
+        });
+      });
+    });
+    if (tasks.length === 0) return;
+    // upsert respeitando UNIQUE (empresa_id, product_type, product_name, image_url)
+    await (supabase.from('product_images' as any)
+      .upsert(tasks, { onConflict: 'empresa_id,product_type,product_name,image_url', ignoreDuplicates: true }) as any);
+  };
+
   const handleInternalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
