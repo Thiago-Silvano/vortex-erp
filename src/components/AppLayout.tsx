@@ -139,6 +139,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       { title: "Contratos", url: "/contracts/templates" },
       { title: "Centro de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
       { title: "Conta-corrente", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
+      { title: "Taxas", url: "/financial/fees" },
     ]},
     { label: "Vendas", icon: <ShoppingCart className="h-4 w-4" />, url: "/sales", items: [
       { title: "Vendas", url: "/sales", permKey: "sales_view" },
@@ -156,6 +157,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       { title: "Comissões", url: "/financial/commissions", permKey: "financial_commissions" },
       { title: "Agrupar Contas", url: "/financial/group-accounts", permKey: "financial_payable" },
       { title: "Desagrupar Contas", url: "/financial/ungroup-accounts", permKey: "financial_payable" },
+      { title: "Simulador de Taxas", url: "/financial/fee-simulator" },
     ]},
     { label: "Operação", icon: <Plane className="h-4 w-4" />, items: [
       { title: "Reservas", url: "/reservations", permKey: "reservations_view" },
