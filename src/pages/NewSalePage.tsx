@@ -2436,32 +2436,34 @@ export default function NewSalePage() {
                   </Button>
                 </div>
               </div>
-              <div className="md:col-span-2">
-                <Label>Nº Passageiros</Label>
-                <Input type="number" min="1" value={passengersCount} onChange={e => setPassengersCount(parseInt(e.target.value) || 1)} />
-              </div>
-              {!isQuoteMode && (
-                <div className="md:col-span-2">
-                  <Label>Status da Venda</Label>
-                  <Select value={saleWorkflowStatus} onValueChange={setSaleWorkflowStatus}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="em_aberto">Em aberto</SelectItem>
-                      <SelectItem value="contatando">Contatando</SelectItem>
-                      <SelectItem value="reservado">Reservado</SelectItem>
-                      <SelectItem value="emitido">Emitido</SelectItem>
-                      <SelectItem value="aguardando_assinatura">Aguardando Assinatura</SelectItem>
-                      <SelectItem value="aguardando_pagamento">Aguardando Pagamento</SelectItem>
-                      <SelectItem value="processo_concluido">Processo Concluído</SelectItem>
-                      <SelectItem value="sem_contrato">Sem Contrato</SelectItem>
-                      <SelectItem value="perdido">Perdido</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className={`md:col-span-2 grid grid-cols-1 ${!isQuoteMode ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+                <div>
+                  <Label>Nº Passageiros</Label>
+                  <Input type="number" min="1" value={passengersCount} onChange={e => setPassengersCount(parseInt(e.target.value) || 1)} />
                 </div>
-              )}
-              <div className="md:col-span-2">
-                <Label>Data da Venda</Label>
-                <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
+                {!isQuoteMode && (
+                  <div>
+                    <Label>Status da Venda</Label>
+                    <Select value={saleWorkflowStatus} onValueChange={setSaleWorkflowStatus}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="em_aberto">Em aberto</SelectItem>
+                        <SelectItem value="contatando">Contatando</SelectItem>
+                        <SelectItem value="reservado">Reservado</SelectItem>
+                        <SelectItem value="emitido">Emitido</SelectItem>
+                        <SelectItem value="aguardando_assinatura">Aguardando Assinatura</SelectItem>
+                        <SelectItem value="aguardando_pagamento">Aguardando Pagamento</SelectItem>
+                        <SelectItem value="processo_concluido">Processo Concluído</SelectItem>
+                        <SelectItem value="sem_contrato">Sem Contrato</SelectItem>
+                        <SelectItem value="perdido">Perdido</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div>
+                  <Label>Data da Venda</Label>
+                  <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
+                </div>
               </div>
               <div className="md:col-span-2">
                 <Label>Vendedor Responsável</Label>
