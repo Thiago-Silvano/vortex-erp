@@ -2710,6 +2710,27 @@ export default function NewSalePage() {
               onSave={(config) => setDestinationImageConfig(config)}
             />
 
+            <Dialog open={destLibraryOpen} onOpenChange={setDestLibraryOpen}>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader><DialogTitle>Biblioteca de imagens — Cidade</DialogTitle></DialogHeader>
+                <div className="flex items-center gap-2">
+                  <Input value={destLibrarySearch} onChange={e => setDestLibrarySearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); searchDestinationLibrary(); } }} placeholder="Nome da cidade ou palavra-chave"/>
+                  <Button onClick={searchDestinationLibrary} disabled={destLibraryLoading} className="gap-1"><Search className="h-4 w-4"/>Buscar</Button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
+                  {destLibraryResults.length === 0 && !destLibraryLoading && (
+                    <p className="col-span-full text-sm text-muted-foreground text-center py-8">Nenhuma imagem encontrada</p>
+                  )}
+                  {destLibraryResults.map((img: any) => (
+                    <button key={img.id} type="button" className="group relative rounded overflow-hidden border hover:ring-2 hover:ring-primary" onClick={() => { setDestinationImageUrl(img.image_url); setDestinationImageConfig(null); setDestLibraryOpen(false); toast.success('Imagem do destino selecionada'); }}>
+                      <img src={img.image_url} alt={img.product_name} className="h-32 w-full object-cover"/>
+                      <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-0.5 truncate">{img.product_name}</span>
+                    </button>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+
             {/* AI Image Selection Dialog */}
             <Dialog open={aiImageDialog} onOpenChange={setAiImageDialog}>
               <DialogContent className="max-w-2xl">
