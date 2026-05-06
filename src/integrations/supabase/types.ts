@@ -170,6 +170,7 @@ export type Database = {
       }
       airlines: {
         Row: {
+          cover_image_url: string | null
           created_at: string | null
           empresa_id: string
           id: string
@@ -179,6 +180,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string | null
           empresa_id: string
           id?: string
@@ -188,6 +190,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string | null
           empresa_id?: string
           id?: string
