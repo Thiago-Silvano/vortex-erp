@@ -562,6 +562,20 @@ export default function NewSalePage() {
   }, [activeCompany]);
 
   useEffect(() => {
+    if (passengerSearchOpen === null || passengerSearchTerm.trim().length < 2) {
+      setPassengerClientResults([]);
+      setPassengerSearchLoading(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      searchPassengerClients(passengerSearchTerm);
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [passengerSearchTerm, passengerSearchOpen, activeCompany?.id]);
+
+  useEffect(() => {
     if (quoteData?.services && items.length === 0 && !editSaleId) {
       const mapped = quoteData.services.map((s: any) => ({
         description: s.title || s.description || '',
