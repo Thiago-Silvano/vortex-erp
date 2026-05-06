@@ -2085,6 +2085,7 @@ export default function NewSalePage() {
       notes: notes || undefined,
       saleDate,
       shortId: voucherReference,
+      hideReference: isQuoteMode,
     };
 
     return { voucherData, logoBase64, shortId: saleShortId };
@@ -2223,6 +2224,7 @@ export default function NewSalePage() {
         agencyWhatsapp: agency.whatsapp || '',
         agencyEmail: agency.email || '',
         agencyWebsite: agency.website || '',
+        hideReference: isQuoteMode,
       };
 
       const airDoc = generateAirlineVoucherPdf(airVoucherData);

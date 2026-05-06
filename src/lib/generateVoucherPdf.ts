@@ -121,6 +121,7 @@ export interface VoucherPdfData {
   notes?: string;
   saleDate?: string;
   shortId?: string;
+  hideReference?: boolean;
 }
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -179,18 +180,18 @@ function drawPageHeader(
     }
   }
 
-  // Ref + Date (center-right)
+  // Ref + Date (center-right) — Referencia oculta em proposta/cotação
   const infoX = pw - m - 60;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(180, 180, 180);
-  doc.text("Referencia", infoX, 7);
+  if (!data.hideReference) doc.text("Referencia", infoX, 7);
   doc.text("Data", infoX + 32, 7);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-  doc.text(s(data.shortId?.toUpperCase() || "-"), infoX, 14);
+  if (!data.hideReference) doc.text(s(data.shortId?.toUpperCase() || "-"), infoX, 14);
   doc.text(s(formatDateBR(data.saleDate) || "-"), infoX + 32, 14);
 
   let y = headerH + 6;
