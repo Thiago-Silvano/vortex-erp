@@ -827,8 +827,6 @@ function drawHotelContent(
 
 // ─── Draw generic service content ───────────────────────────
 function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: number, cw: number): number {
-  y = checkPage(doc, y, 20);
-
   const startY = y;
   doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
 
@@ -862,20 +860,22 @@ function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: n
   }
 
   if (service.description) {
-    const cleanDesc = service.description
+    let cleanDesc = service.description
       .replace(/<[^>]*>/g, "")
       .replace(/&nbsp;/g, " ")
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
       .trim();
+    // Limite para garantir 4 serviços por página sem quebra
+    const MAX_DESC = 280;
+    if (cleanDesc.length > MAX_DESC) cleanDesc = cleanDesc.slice(0, MAX_DESC - 3) + "...";
     if (cleanDesc) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
       const descLines = doc.splitTextToSize(s(cleanDesc), cw - 14);
       descLines.forEach((line: string) => {
-        y = checkPage(doc, y, 5);
         doc.text(line, m + 7, y);
         y += 4;
       });
