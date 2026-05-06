@@ -1305,6 +1305,7 @@ export default function NewSalePage() {
         const { data: airline } = await (supabase.from('airlines' as any).select('cover_image_url, name').eq('id', airlineId).maybeSingle() as any);
         if (airline?.cover_image_url) {
           setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), airline.cover_image_url] }));
+          setNewImageUrls(prev => { const s = new Set(prev[itemIdx] || []); s.add(airline.cover_image_url); return { ...prev, [itemIdx]: s }; });
           toast.success(`Capa da ${airline.name} carregada!`);
         } else {
           toast.error('Esta Cia Aérea não possui imagem de capa cadastrada');
@@ -1322,6 +1323,7 @@ export default function NewSalePage() {
         const imgs = (data?.images || []).map((i: any) => i.url_full || i.url_preview).filter(Boolean);
         if (imgs.length > 0) {
           setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...imgs] }));
+          setNewImageUrls(prev => { const s = new Set(prev[itemIdx] || []); imgs.forEach((u: string) => s.add(u)); return { ...prev, [itemIdx]: s }; });
           toast.success(`${imgs.length} imagem(ns) do TripAdvisor encontrada(s)!`);
         } else {
           toast.error('Nenhuma imagem encontrada no TripAdvisor');
@@ -1338,6 +1340,7 @@ export default function NewSalePage() {
       if (error) throw error;
       if (data?.success && data.photos?.length > 0) {
         setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...data.photos] }));
+        setNewImageUrls(prev => { const s = new Set(prev[itemIdx] || []); data.photos.forEach((u: string) => s.add(u)); return { ...prev, [itemIdx]: s }; });
         toast.success(`${data.photos.length} imagem(ns) encontrada(s)!`);
       } else {
         toast.error('Nenhuma imagem encontrada para este serviço');
