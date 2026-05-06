@@ -171,8 +171,8 @@ export default function FeeSimulatorPage() {
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Box label="Taxa do banco" value={`${bankFee.toFixed(4).replace('.', ',')} %`} />
-                <Box label="Taxa maximizada (a repassar)" value={`${maxFeePct.toFixed(4).replace('.', ',')} %`} highlight />
+                <Box label="Taxa do banco" value={`${bankFee.toFixed(2).replace('.', ',')} %`} />
+                <Box label="Taxa maximizada (a repassar)" value={`${maxFeePct.toFixed(2).replace('.', ',')} %`} highlight />
                 <Box label="Valor original" value={fmtBRL(value)} />
                 <Box label="Acréscimo" value={fmtBRL(surcharge)} />
                 <Box label="Total a cobrar do cliente" value={fmtBRL(totalCharged)} highlight />
@@ -184,10 +184,10 @@ export default function FeeSimulatorPage() {
 
             <div className="mt-6 text-xs text-muted-foreground space-y-1 border-t pt-4">
               <p className="font-medium text-foreground">Como o cálculo é feito:</p>
-              <p>1) 100 − taxa do banco = <strong>{step1.toFixed(4)}</strong></p>
-              <p>2) 100 ÷ resultado = <strong>{step2.toFixed(6)}</strong></p>
-              <p>3) resultado − 1 = <strong>{step3.toFixed(6)}</strong></p>
-              <p>4) × 100 = <strong>{maxFeePct.toFixed(4)} %</strong> → taxa maximizada aplicada sobre o valor.</p>
+              <p>1) 100 − taxa do banco = <strong>{step1.toFixed(2)}</strong></p>
+              <p>2) 100 ÷ resultado = <strong>{step2.toFixed(2)}</strong></p>
+              <p>3) resultado − 1 = <strong>{step3.toFixed(2)}</strong></p>
+              <p>4) × 100 = <strong>{maxFeePct.toFixed(2)} %</strong> → taxa maximizada aplicada sobre o valor.</p>
             </div>
           </CardContent>
         </Card>
