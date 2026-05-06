@@ -3091,6 +3091,21 @@ export default function NewSalePage() {
                               </div>
                             )}
                           </div>
+                          {(libraryResults[idx] || []).length > 0 && (
+                            <div className="mt-1.5 p-1.5 border rounded bg-muted/40">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] text-muted-foreground">Biblioteca ({libraryResults[idx].length}) — clique para adicionar</span>
+                                <button type="button" className="text-[10px] text-muted-foreground hover:text-foreground" onClick={() => setLibraryResults(prev => ({ ...prev, [idx]: [] }))}>fechar</button>
+                              </div>
+                              <div className="flex gap-1.5 overflow-x-auto">
+                                {libraryResults[idx].map((lib: any) => (
+                                  <button key={lib.id} type="button" onClick={() => addLibraryImage(idx, lib.image_url)} title={lib.product_name} className="relative flex-shrink-0 hover:ring-2 hover:ring-primary rounded">
+                                    <img src={lib.image_url} alt={lib.product_name} className="h-12 w-16 object-cover rounded border"/>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     </React.Fragment>
