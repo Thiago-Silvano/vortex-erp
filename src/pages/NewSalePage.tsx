@@ -4026,11 +4026,18 @@ export default function NewSalePage() {
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
                 {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
               </div>
-              <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
+              <div>
+                <p className="text-sm text-muted-foreground">Lucro Bruto {totalSaleWithInterest > 0 && (
+                  <span className="text-xs font-medium text-muted-foreground">({((grossProfit / totalSaleWithInterest) * 100).toFixed(1).replace('.', ',')}%)</span>
+                )}</p>
+                <p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p>
+              </div>
               {!isQuoteMode && (
                 <>
                   <div>
-                    <p className="text-sm text-muted-foreground">Lucro Líquido</p>
+                    <p className="text-sm text-muted-foreground">Lucro Líquido {totalSaleWithInterest > 0 && (
+                      <span className={`text-xs font-medium ${netProfit >= 0 ? 'text-muted-foreground' : 'text-destructive'}`}>({((netProfit / totalSaleWithInterest) * 100).toFixed(1).replace('.', ',')}%)</span>
+                    )}</p>
                     <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
                   </div>
                   <div>
