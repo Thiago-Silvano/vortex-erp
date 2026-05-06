@@ -114,9 +114,9 @@ export default function ClientsPage() {
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
   const filtered = clients.filter(c =>
-    normalize(c.full_name).includes(normalize(search)) ||
-    c.cpf.includes(search) ||
-    normalize(c.email).includes(normalize(search))
+    normalize(c.full_name || '').includes(normalize(search)) ||
+    (c.cpf || '').includes(search) ||
+    normalize(c.email || '').includes(normalize(search))
   );
 
   const { sortedData: sortedClients, sortState, requestSort } = useTableSort(filtered, {
