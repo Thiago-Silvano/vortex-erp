@@ -230,7 +230,7 @@ export default function SalesPage() {
       const d = new Date(s.sale_date + 'T12:00:00');
       return d < startOfMonth;
     });
-    const total = list.reduce((sum, s) => sum + Number(s.commission_value || 0), 0);
+    const total = list.reduce((sum, s) => sum + Number(s.net_profit || 0), 0);
     return { count: list.length, total };
   }, [sales, datePeriod]);
 
