@@ -2356,13 +2356,13 @@ export default function NewSalePage() {
           </div>
         </div>
       )}
-      <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6">
+      <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-6 pb-28">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">
             {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Editar Cotação' : 'Nova Cotação'}
           </h1>
-          <Button variant="outline" onClick={() => setPdfImportOpen(true)}>
-            <FileUp className="h-4 w-4 mr-2" />📄 Importar Orçamento (PDF)
+          <Button variant="outline" onClick={() => setPdfImportOpen(true)} className="gap-2">
+            <FileUp className="h-4 w-4" /> Importar PDF
           </Button>
         </div>
 
@@ -2378,19 +2378,24 @@ export default function NewSalePage() {
           </TabsList>
 
           {/* TAB: Dados */}
-          <TabsContent value="dados" className="space-y-4">
+          <TabsContent value="dados" className="space-y-5">
         {/* Basic Info */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">{isQuoteMode ? 'Informações da Cotação' : 'Informações da Venda'}</CardTitle></CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="overflow-hidden border-border/60">
+          <CardHeader className="bg-muted/30 border-b border-border/60 py-3">
+            <CardTitle className="text-xs font-semibold tracking-wider uppercase text-muted-foreground flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-primary" />
+              {isQuoteMode ? 'Informações da Cotação' : 'Informações da Venda'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-5 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {quoteId && (
                 <div>
                   <Label>Código da Cotação</Label>
                   <Input value={quoteId} disabled className="bg-muted" />
                 </div>
               )}
-              <div className={quoteId ? '' : 'md:col-span-2'}>
+              <div className="md:col-span-2">
                 <Label>Nome do Cliente *</Label>
                 <div className="flex gap-2">
                   <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
@@ -2431,12 +2436,12 @@ export default function NewSalePage() {
                   </Button>
                 </div>
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <Label>Nº Passageiros</Label>
                 <Input type="number" min="1" value={passengersCount} onChange={e => setPassengersCount(parseInt(e.target.value) || 1)} />
               </div>
               {!isQuoteMode && (
-                <div>
+                <div className="md:col-span-2">
                   <Label>Status da Venda</Label>
                   <Select value={saleWorkflowStatus} onValueChange={setSaleWorkflowStatus}>
                     <SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger>
@@ -2454,11 +2459,11 @@ export default function NewSalePage() {
                   </Select>
                 </div>
               )}
-              <div>
+              <div className="md:col-span-2">
                 <Label>Data da Venda</Label>
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <Label>Vendedor Responsável</Label>
                 <Select value={sellerId} onValueChange={setSellerId}>
                   <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
@@ -2468,6 +2473,8 @@ export default function NewSalePage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="border-t border-border/60 pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Início da Viagem</Label>
                 <Input type="date" value={tripStartDate} onChange={e => { setTripStartDate(e.target.value); if (!tripEndDate || e.target.value > tripEndDate) setTripEndDate(e.target.value); }} />
@@ -2479,23 +2486,36 @@ export default function NewSalePage() {
               <div>
                 <Label>Nº de Noites</Label>
                 <Input type="number" min="0" value={tripNights} onChange={e => { setTripNights(parseInt(e.target.value) || 0); setNightsManuallySet(true); }} />
-                <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente pelas datas (editável)</p>
+                <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente pelas datas</p>
               </div>
-              <div className="md:col-span-2">
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Destino e Proposta */}
+        <Card className="overflow-hidden border-border/60">
+          <CardHeader className="bg-muted/30 border-b border-border/60 py-3">
+            <CardTitle className="text-xs font-semibold tracking-wider uppercase text-muted-foreground flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Destino e Proposta
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-5 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <Label>Nome do Destino</Label>
                 <Input value={destinationName} onChange={e => setDestinationName(e.target.value)} placeholder="Ex: Orlando, Paris, Cancún..." />
                 <p className="text-xs text-muted-foreground mt-1">Exibido nas propostas e orçamentos</p>
-             </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-              <div>
-                <Label>Titulo da Cotacao</Label>
-                <Input value={quoteTitle} onChange={e => setQuoteTitle(e.target.value)} placeholder="Ex: Viagem Las Vegas - Família Silva" />
-                <p className="text-xs text-muted-foreground mt-1">Substitui o nome do cliente na proposta e PDF</p>
               </div>
               <div>
-              <Label>Imagem do Destino (para proposta)</Label>
-              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                <Label>Título da Cotação</Label>
+                <Input value={quoteTitle} onChange={e => setQuoteTitle(e.target.value)} placeholder="Ex: Viagem Las Vegas — Família Silva" />
+                <p className="text-xs text-muted-foreground mt-1">Substitui o nome do cliente na proposta e PDF</p>
+              </div>
+            </div>
+            <div>
+              <Label>Imagem do Destino <span className="text-muted-foreground font-normal">(para proposta)</span></Label>
+              <div className="mt-1 flex items-center gap-3 flex-wrap">
                 {destinationImageUrl ? (
                   <>
                     <div className="relative">
@@ -2509,14 +2529,14 @@ export default function NewSalePage() {
                     </Button>
                   </>
                 ) : uploadingDestImage ? (
-                  <div className="flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground">
+                  <div className="flex-1 flex items-center justify-center gap-2 py-8 border-2 border-dashed rounded-lg text-sm text-muted-foreground">
                     <span className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
                     Carregando...
                   </div>
                 ) : (
-                  <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50">
-                    <ImagePlus className="h-4 w-4" />
-                    Adicionar imagem
+                  <label className="flex-1 cursor-pointer flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/40 transition-colors">
+                    <ImagePlus className="h-5 w-5" />
+                    Adicionar imagem do destino
                     <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
                   </label>
                 )}
@@ -2533,7 +2553,6 @@ export default function NewSalePage() {
                     Buscar Imagens
                   </Button>
                 )}
-              </div>
               </div>
             </div>
 
