@@ -189,6 +189,11 @@ export default function NewSalePage() {
   const [librarySearch, setLibrarySearch] = useState<Record<number, string>>({});
   const [libraryResults, setLibraryResults] = useState<Record<number, any[]>>({});
   const [libraryLoading, setLibraryLoading] = useState<Record<number, boolean>>({});
+  // Biblioteca para imagem do destino
+  const [destLibraryOpen, setDestLibraryOpen] = useState(false);
+  const [destLibrarySearch, setDestLibrarySearch] = useState('');
+  const [destLibraryResults, setDestLibraryResults] = useState<any[]>([]);
+  const [destLibraryLoading, setDestLibraryLoading] = useState(false);
   const [uploadingDestImage, setUploadingDestImage] = useState(false);
   const [aiImageSearch, setAiImageSearch] = useState(false);
   const [aiImages, setAiImages] = useState<string[]>([]);
@@ -1385,6 +1390,19 @@ export default function NewSalePage() {
     });
     // imagens da biblioteca NÃO entram em newImageUrls (já existem)
     toast.success('Imagem adicionada');
+  };
+
+  const searchDestinationLibrary = async () => {
+    if (!activeCompany?.id) return;
+    const q = (destLibrarySearch || destinationName || '').trim();
+    setDestLibraryLoading(true);
+    try {
+      let query: any = (supabase.from('product_images' as any) as any)
+        .select('*').eq('empresa_id', activeCompany.id).eq('product_type', 'cidade');
+      if (q) query = query.or(`product_name.ilike.%${q}%,keywords.ilike.%${q}%`);
+      const { data } = await query.limit(60);
+      setDestLibraryResults((data || []) as any[]);
+    } finally { setDestLibraryLoading(false); }
   };
 
   const persistNewImagesToLibrary = async () => {
@@ -2664,6 +2682,9 @@ export default function NewSalePage() {
                     <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
                   </label>
                 )}
+                <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => { setDestLibrarySearch(destinationName || ''); setDestLibraryOpen(true); searchDestinationLibrary(); }}>
+                  <Search className="h-4 w-4" /> Biblioteca
+                </Button>
                 {hasStockKeys && (
                   <Button
                     type="button"
@@ -2688,6 +2709,27 @@ export default function NewSalePage() {
               initialConfig={destinationImageConfig}
               onSave={(config) => setDestinationImageConfig(config)}
             />
+
+            <Dialog open={destLibraryOpen} onOpenChange={setDestLibraryOpen}>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader><DialogTitle>Biblioteca de imagens — Cidade</DialogTitle></DialogHeader>
+                <div className="flex items-center gap-2">
+                  <Input value={destLibrarySearch} onChange={e => setDestLibrarySearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); searchDestinationLibrary(); } }} placeholder="Nome da cidade ou palavra-chave"/>
+                  <Button onClick={searchDestinationLibrary} disabled={destLibraryLoading} className="gap-1"><Search className="h-4 w-4"/>Buscar</Button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
+                  {destLibraryResults.length === 0 && !destLibraryLoading && (
+                    <p className="col-span-full text-sm text-muted-foreground text-center py-8">Nenhuma imagem encontrada</p>
+                  )}
+                  {destLibraryResults.map((img: any) => (
+                    <button key={img.id} type="button" className="group relative rounded overflow-hidden border hover:ring-2 hover:ring-primary" onClick={() => { setDestinationImageUrl(img.image_url); setDestinationImageConfig(null); setDestLibraryOpen(false); toast.success('Imagem do destino selecionada'); }}>
+                      <img src={img.image_url} alt={img.product_name} className="h-32 w-full object-cover"/>
+                      <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-0.5 truncate">{img.product_name}</span>
+                    </button>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* AI Image Selection Dialog */}
             <Dialog open={aiImageDialog} onOpenChange={setAiImageDialog}>
@@ -4026,11 +4068,18 @@ export default function NewSalePage() {
                 <p className="text-xl font-bold">{fmt(totalSaleWithInterest)}</p>
                 {(saleInterest > 0 || operatorTaxes > 0) && <p className="text-xs text-muted-foreground">(Serviços: {fmt(totalSale)}{operatorTaxes > 0 ? ` + Taxas: ${fmt(operatorTaxes)}` : ''}{saleInterest > 0 ? ` + Juros: ${fmt(saleInterest)}` : ''})</p>}
               </div>
-              <div><p className="text-sm text-muted-foreground">Lucro Bruto</p><p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p></div>
+              <div>
+                <p className="text-sm text-muted-foreground">Lucro Bruto {totalSaleWithInterest > 0 && (
+                  <span className="text-xs font-medium text-muted-foreground">({((grossProfit / totalSaleWithInterest) * 100).toFixed(1).replace('.', ',')}%)</span>
+                )}</p>
+                <p className="text-xl font-bold text-primary">{fmt(grossProfit)}</p>
+              </div>
               {!isQuoteMode && (
                 <>
                   <div>
-                    <p className="text-sm text-muted-foreground">Lucro Líquido</p>
+                    <p className="text-sm text-muted-foreground">Lucro Líquido {totalSaleWithInterest > 0 && (
+                      <span className={`text-xs font-medium ${netProfit >= 0 ? 'text-muted-foreground' : 'text-destructive'}`}>({((netProfit / totalSaleWithInterest) * 100).toFixed(1).replace('.', ',')}%)</span>
+                    )}</p>
                     <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-primary' : 'text-destructive'}`}>{fmt(netProfit)}</p>
                   </div>
                   <div>
