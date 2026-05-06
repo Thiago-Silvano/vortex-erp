@@ -2656,7 +2656,12 @@ export default function NewSalePage() {
               </div>
             </div>
             <div>
-              <Label>Imagem do Destino <span className="text-muted-foreground font-normal">(para proposta)</span></Label>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Label>Imagem do Destino <span className="text-muted-foreground font-normal">(para proposta)</span></Label>
+                <Button type="button" size="default" className="gap-2 bg-orange-500 hover:bg-orange-600 text-white" onClick={() => { setDestLibrarySearch(destinationName || ''); setDestLibraryOpen(true); searchDestinationLibrary(); }}>
+                  <Search className="h-4 w-4" /> Biblioteca
+                </Button>
+              </div>
               <div className="mt-1 flex items-center gap-3 flex-wrap">
                 {destinationImageUrl ? (
                   <>
@@ -2682,9 +2687,6 @@ export default function NewSalePage() {
                     <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
                   </label>
                 )}
-                <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => { setDestLibrarySearch(destinationName || ''); setDestLibraryOpen(true); searchDestinationLibrary(); }}>
-                  <Search className="h-4 w-4" /> Biblioteca
-                </Button>
                 {hasStockKeys && (
                   <Button
                     type="button"
