@@ -2622,23 +2622,19 @@ export default function NewSalePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{isQuoteMode ? 'Passageiros' : 'Passageiros da Reserva'}</CardTitle>
-            <Button size="sm" variant="outline" onClick={addPassenger}><Plus className="h-4 w-4 mr-1" />Adicionar</Button>
+            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={addPassenger}><Plus className="h-4 w-4 mr-1" />Adicionar</Button>
           </CardHeader>
           <CardContent className="space-y-4">
             {passengers.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum passageiro adicionado</p>}
             {passengers.map((pax, idx) => (
               <div key={idx} className="border rounded-lg p-4 space-y-3 relative">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Checkbox checked={pax.is_main} onCheckedChange={(checked) => updatePassenger(idx, 'is_main', !!checked)} />
-                    <Label className="text-sm font-medium">Passageiro principal</Label>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button size="sm" variant="outline" onClick={() => savePassengerAsClient(pax)} title="Salvar passageiro como novo cliente no CRM">
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Salvar como cliente
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                  </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Checkbox checked={pax.is_main} onCheckedChange={(checked) => updatePassenger(idx, 'is_main', !!checked)} />
+                  <Label className="text-sm font-medium">Passageiro principal</Label>
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => savePassengerAsClient(pax)} title="Salvar passageiro como novo cliente no CRM">
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Salvar como cliente
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => removePassenger(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="relative">
