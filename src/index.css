@@ -186,132 +186,25 @@
 }
 
 /* ============================================================
-   Dark-theme overrides for legacy light row tints used in tables
-   These light Tailwind colors (bg-*-50/100) make rows nearly white
-   on a dark background, which kills text legibility. Map them to
-   subtle semantic tints with proper contrast.
+   Light-theme tweaks for tinted rows / status badges.
+   Tons nativos do Tailwind funcionam bem; aqui apenas garantimos
+   contraste de texto e ajustamos badges com fundo /20 + text-white.
    ============================================================ */
 @layer utilities {
-  /* Row tints — keep a recognizable hue but at ~10-15% opacity over dark */
-  tr.bg-red-50, tr.bg-red-100,
-  tr .bg-red-50, tr .bg-red-100 {
-    background-color: hsl(0 70% 50% / 0.12) !important;
-  }
-  tr.bg-orange-50, tr.bg-orange-100,
-  tr .bg-orange-50, tr .bg-orange-100 {
-    background-color: hsl(25 90% 55% / 0.10) !important;
-  }
-  tr.bg-amber-50, tr.bg-amber-100,
-  tr .bg-amber-50, tr .bg-amber-100 {
-    background-color: hsl(38 95% 55% / 0.10) !important;
-  }
-  tr.bg-yellow-50, tr.bg-yellow-100,
-  tr .bg-yellow-50, tr .bg-yellow-100 {
-    background-color: hsl(48 95% 55% / 0.10) !important;
-  }
-  tr.bg-emerald-50, tr.bg-emerald-100,
-  tr .bg-emerald-50, tr .bg-emerald-100 {
-    background-color: hsl(152 60% 45% / 0.12) !important;
-  }
-  tr.bg-green-50, tr.bg-green-100,
-  tr .bg-green-50, tr .bg-green-100 {
-    background-color: hsl(142 60% 45% / 0.12) !important;
-  }
-  tr.bg-blue-50, tr.bg-blue-100,
-  tr .bg-blue-50, tr .bg-blue-100 {
-    background-color: hsl(217 90% 60% / 0.12) !important;
-  }
-  tr.bg-sky-50, tr.bg-sky-100,
-  tr .bg-sky-50, tr .bg-sky-100 {
-    background-color: hsl(200 90% 55% / 0.12) !important;
-  }
-  tr.bg-purple-50, tr.bg-purple-100,
-  tr .bg-purple-50, tr .bg-purple-100 {
-    background-color: hsl(270 70% 60% / 0.12) !important;
-  }
-  tr.bg-pink-50, tr.bg-pink-100,
-  tr .bg-pink-50, tr .bg-pink-100 {
-    background-color: hsl(330 80% 60% / 0.12) !important;
-  }
+  tbody tr td { color: hsl(var(--foreground)); }
 
-  /* Hover variants used by Reservations etc. */
-  tr.hover\:bg-red-100:hover { background-color: hsl(0 70% 50% / 0.20) !important; }
-  tr.hover\:bg-orange-100:hover { background-color: hsl(25 90% 55% / 0.18) !important; }
-  tr.hover\:bg-amber-100:hover { background-color: hsl(38 95% 55% / 0.18) !important; }
-  tr.hover\:bg-emerald-100:hover { background-color: hsl(152 60% 45% / 0.20) !important; }
-  tr.hover\:bg-green-100:hover { background-color: hsl(142 60% 45% / 0.20) !important; }
-  tr.hover\:bg-blue-100:hover { background-color: hsl(217 90% 60% / 0.20) !important; }
+  /* Status badges (bg-{color}-600/20 text-white) — fundo claro + texto escuro */
+  .bg-emerald-600\/20 { background-color: rgb(209 250 229) !important; color: rgb(6 78 59) !important; }
+  .border-emerald-500\/50 { border-color: rgb(110 231 183) !important; }
 
-  /* Force readable text inside tinted rows (override muted-foreground children) */
-  tr[class*="bg-red-50"] td, tr[class*="bg-orange-50"] td,
-  tr[class*="bg-amber-50"] td, tr[class*="bg-yellow-50"] td,
-  tr[class*="bg-emerald-50"] td, tr[class*="bg-green-50"] td,
-  tr[class*="bg-blue-50"] td, tr[class*="bg-sky-50"] td,
-  tr[class*="bg-purple-50"] td, tr[class*="bg-pink-50"] td,
-  tr[class*="bg-red-100"] td, tr[class*="bg-orange-100"] td,
-  tr[class*="bg-amber-100"] td, tr[class*="bg-emerald-100"] td {
-    color: hsl(var(--foreground));
-  }
+  .bg-red-600\/20 { background-color: rgb(254 226 226) !important; color: rgb(127 29 29) !important; }
+  .border-red-500\/50 { border-color: rgb(252 165 165) !important; }
 
-  /* Default table body cell color (in case a row has no tint) */
-  tbody tr td {
-    color: hsl(var(--foreground));
-  }
+  .bg-amber-600\/20 { background-color: rgb(254 243 199) !important; color: rgb(120 53 15) !important; }
+  .border-amber-500\/50 { border-color: rgb(252 211 77) !important; }
 
-  /* Inline alert banners (amber/red) used above tables */
-  .bg-amber-50:not(tr):not(td) {
-    background-color: hsl(38 95% 55% / 0.10) !important;
-  }
-  .bg-red-50:not(tr):not(td) {
-    background-color: hsl(0 70% 50% / 0.10) !important;
-  }
-  .bg-emerald-50:not(tr):not(td) {
-    background-color: hsl(152 60% 45% / 0.10) !important;
-  }
-
-  /* No tema LIGHT, restaurar os tons claros nativos do Tailwind */
-  html.light tr.bg-red-50,    html.light tr .bg-red-50    { background-color: rgb(254 242 242) !important; }
-  html.light tr.bg-red-100,   html.light tr .bg-red-100   { background-color: rgb(254 226 226) !important; }
-  html.light tr.bg-orange-50, html.light tr .bg-orange-50 { background-color: rgb(255 247 237) !important; }
-  html.light tr.bg-orange-100,html.light tr .bg-orange-100{ background-color: rgb(255 237 213) !important; }
-  html.light tr.bg-amber-50,  html.light tr .bg-amber-50  { background-color: rgb(255 251 235) !important; }
-  html.light tr.bg-amber-100, html.light tr .bg-amber-100 { background-color: rgb(254 243 199) !important; }
-  html.light tr.bg-yellow-50, html.light tr .bg-yellow-50 { background-color: rgb(254 252 232) !important; }
-  html.light tr.bg-emerald-50,html.light tr .bg-emerald-50{ background-color: rgb(236 253 245) !important; }
-  html.light tr.bg-emerald-100,html.light tr .bg-emerald-100{ background-color: rgb(209 250 229) !important; }
-  html.light tr.bg-green-50,  html.light tr .bg-green-50  { background-color: rgb(240 253 244) !important; }
-  html.light tr.bg-blue-50,   html.light tr .bg-blue-50   { background-color: rgb(239 246 255) !important; }
-  html.light tr.bg-sky-50,    html.light tr .bg-sky-50    { background-color: rgb(240 249 255) !important; }
-  html.light tr.bg-purple-50, html.light tr .bg-purple-50 { background-color: rgb(250 245 255) !important; }
-  html.light tr.bg-pink-50,   html.light tr .bg-pink-50   { background-color: rgb(253 242 248) !important; }
-
-  html.light tr[class*="bg-"] td { color: rgb(17 24 39); }
-  html.light tbody tr td { color: rgb(17 24 39); }
-
-  html.light .bg-amber-50:not(tr):not(td)   { background-color: rgb(255 251 235) !important; }
-  html.light .bg-red-50:not(tr):not(td)     { background-color: rgb(254 242 242) !important; }
-  html.light .bg-emerald-50:not(tr):not(td) { background-color: rgb(236 253 245) !important; }
-
-  /* Status badges (bg-{color}-600/20 text-white) — usar fundo claro e texto escuro no light mode */
-  html.light .bg-emerald-600\/20 { background-color: rgb(209 250 229) !important; }
-  html.light .bg-emerald-600\/20.text-white,
-  html.light .bg-emerald-600\/20 { color: rgb(6 78 59) !important; }
-  html.light .border-emerald-500\/50 { border-color: rgb(110 231 183) !important; }
-
-  html.light .bg-red-600\/20 { background-color: rgb(254 226 226) !important; }
-  html.light .bg-red-600\/20.text-white,
-  html.light .bg-red-600\/20 { color: rgb(127 29 29) !important; }
-  html.light .border-red-500\/50 { border-color: rgb(252 165 165) !important; }
-
-  html.light .bg-amber-600\/20 { background-color: rgb(254 243 199) !important; }
-  html.light .bg-amber-600\/20.text-white,
-  html.light .bg-amber-600\/20 { color: rgb(120 53 15) !important; }
-  html.light .border-amber-500\/50 { border-color: rgb(252 211 77) !important; }
-
-  html.light .bg-blue-600\/20 { background-color: rgb(219 234 254) !important; }
-  html.light .bg-blue-600\/20.text-white,
-  html.light .bg-blue-600\/20 { color: rgb(30 58 138) !important; }
-  html.light .border-blue-500\/50 { border-color: rgb(147 197 253) !important; }
+  .bg-blue-600\/20 { background-color: rgb(219 234 254) !important; color: rgb(30 58 138) !important; }
+  .border-blue-500\/50 { border-color: rgb(147 197 253) !important; }
 }
 
 /* ============ Scrollbars ============ */
@@ -319,28 +212,20 @@
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: hsl(240 8% 22%);
+    background: hsl(240 10% 80%);
     border-radius: 4px;
   }
-  ::-webkit-scrollbar-thumb:hover { background: hsl(240 10% 30%); }
-}
-
-/* Scrollbar mais clara no tema light */
-html.light ::-webkit-scrollbar-thumb {
-  background: hsl(240 10% 80%);
-}
-html.light ::-webkit-scrollbar-thumb:hover {
-  background: hsl(240 10% 70%);
+  ::-webkit-scrollbar-thumb:hover { background: hsl(240 10% 70%); }
 }
 
 @layer utilities {
   .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(240 8% 22%);
+    background: hsl(240 10% 80%);
     border-radius: 4px;
   }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(240 10% 30%); }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(240 10% 70%); }
 
   .label-group {
     font-size: 10px;
