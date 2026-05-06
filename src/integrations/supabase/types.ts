@@ -3013,9 +3013,11 @@ export type Database = {
         Row: {
           created_at: string
           empresa_id: string | null
-          fee_percent: number
+          fee_percent: number | null
+          fees_by_installment: Json
           id: string
-          installments: number
+          installments: number | null
+          institution: string | null
           method: string
           name: string
           status: string
@@ -3024,9 +3026,11 @@ export type Database = {
         Insert: {
           created_at?: string
           empresa_id?: string | null
-          fee_percent?: number
+          fee_percent?: number | null
+          fees_by_installment?: Json
           id?: string
-          installments?: number
+          installments?: number | null
+          institution?: string | null
           method?: string
           name: string
           status?: string
@@ -3035,9 +3039,11 @@ export type Database = {
         Update: {
           created_at?: string
           empresa_id?: string | null
-          fee_percent?: number
+          fee_percent?: number | null
+          fees_by_installment?: Json
           id?: string
-          installments?: number
+          installments?: number | null
+          institution?: string | null
           method?: string
           name?: string
           status?: string
