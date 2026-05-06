@@ -161,6 +161,7 @@ function drawPageHeader(
   m: number,
   cw: number,
   serviceName?: string,
+  showClient: boolean = true,
 ): number {
   const headerH = 22;
   doc.setFillColor(DARK_HEADER[0], DARK_HEADER[1], DARK_HEADER[2]);
@@ -194,35 +195,37 @@ function drawPageHeader(
 
   let y = headerH + 6;
 
-  // ─── CLIENT INFO CARD ──────────────────────────────────
-  const clientCardH = 14;
-  doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
-  doc.rect(m, y, cw, clientCardH, "F");
-  doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
-  doc.setLineWidth(0.2);
-  doc.rect(m, y, cw, clientCardH, "S");
+  // ─── CLIENT INFO CARD (somente página 1) ───────────────
+  if (showClient) {
+    const clientCardH = 14;
+    doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
+    doc.rect(m, y, cw, clientCardH, "F");
+    doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+    doc.setLineWidth(0.2);
+    doc.rect(m, y, cw, clientCardH, "S");
 
-  doc.setFillColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-  doc.rect(m, y, 2.5, clientCardH, "F");
+    doc.setFillColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+    doc.rect(m, y, 2.5, clientCardH, "F");
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-  doc.text("CLIENTE", m + 7, y + 5);
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-  doc.text(s(data.client.name), m + 7, y + 11);
-
-  if (data.seller) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-    doc.text(s(`Consultor: ${data.seller}`), m + cw - 5, y + 11, { align: "right" });
-  }
+    doc.text("CLIENTE", m + 7, y + 5);
 
-  y += clientCardH + 5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+    doc.text(s(data.client.name), m + 7, y + 11);
+
+    if (data.seller) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+      doc.text(s(`Consultor: ${data.seller}`), m + cw - 5, y + 11, { align: "right" });
+    }
+
+    y += clientCardH + 5;
+  }
 
   // Service title bar if provided
   if (serviceName) {
@@ -976,14 +979,12 @@ export function generateVoucherPdf(data: VoucherPdfData) {
     pages.forEach((page, idx) => {
       if (idx > 0) doc.addPage();
 
-      let y = drawPageHeader(doc, data, pw, m, cw, page.name);
+      let y = drawPageHeader(doc, data, pw, m, cw, page.name, idx === 0);
 
       // Service-specific content
       if (page.type === "hotel" && page.hotel) {
         y = drawHotelContent(doc, page.hotel, data.passengers, y, m, cw);
       } else if (page.type === "service" && page.service) {
-        y = drawSectionBar(doc, "DETALHES DO SERVIÇO", y, m, cw);
-        y += 3;
         y = drawServiceContent(doc, page.service, y, m, cw);
       }
 
