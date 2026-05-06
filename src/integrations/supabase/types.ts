@@ -3009,6 +3009,42 @@ export type Database = {
           },
         ]
       }
+      product_images: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          image_url: string
+          keywords: string | null
+          product_name: string
+          product_type: string
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          image_url: string
+          keywords?: string | null
+          product_name: string
+          product_type: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          image_url?: string
+          keywords?: string | null
+          product_name?: string
+          product_type?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       promo_templates: {
         Row: {
           created_at: string
