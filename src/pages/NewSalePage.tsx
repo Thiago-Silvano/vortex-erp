@@ -3957,7 +3957,7 @@ export default function NewSalePage() {
                   <Button
                     type="button"
                     size="sm"
-                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    className="bg-green-600 text-white hover:bg-green-700"
                     onClick={() => {
                       const seller = allSellers.find(s => s.id === sellerId);
                       const pct = seller && seller.commission_type !== 'none' ? (Number(seller.commission_percentage) || 0) : 0;
