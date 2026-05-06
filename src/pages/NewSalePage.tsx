@@ -2436,7 +2436,7 @@ export default function NewSalePage() {
                   </Button>
                 </div>
               </div>
-              <div className={`md:col-span-2 grid grid-cols-1 ${!isQuoteMode ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label>Nº Passageiros</Label>
                   <Input type="number" min="1" value={passengersCount} onChange={e => setPassengersCount(parseInt(e.target.value) || 1)} />
@@ -2464,17 +2464,31 @@ export default function NewSalePage() {
                   <Label>Data da Venda</Label>
                   <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} />
                 </div>
+                {isQuoteMode && (
+                  <div>
+                    <Label>Vendedor Responsável</Label>
+                    <Select value={sellerId} onValueChange={setSellerId}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum</SelectItem>
+                        {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
-              <div className="md:col-span-2">
-                <Label>Vendedor Responsável</Label>
-                <Select value={sellerId} onValueChange={setSellerId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isQuoteMode && (
+                <div className="md:col-span-2">
+                  <Label>Vendedor Responsável</Label>
+                  <Select value={sellerId} onValueChange={setSellerId}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum</SelectItem>
+                      {allSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
             <div className="border-t border-border/60 pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
