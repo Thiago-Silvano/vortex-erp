@@ -342,17 +342,17 @@ function AppSidebar({ favorites, toggleFavorite }: {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-white/20 p-2 gap-1">
+      <SidebarFooter className="border-t border-sidebar-border p-2 gap-1">
         <button
           onClick={() => navigate("/whatsapp")}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[14px] text-white font-bold hover:bg-white/20 transition-colors"
+          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[14px] text-sidebar-foreground font-bold hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
         >
           <MessageCircle className="h-4 w-4 shrink-0" />
           <span className="truncate group-data-[collapsible=icon]:hidden">WhatsApp</span>
         </button>
         <button
           onClick={() => navigate("/email")}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[14px] text-white font-bold hover:bg-white/20 transition-colors"
+          className="flex items-center gap-2 px-2 py-1.5 rounded-md text-[14px] text-sidebar-foreground font-bold hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
         >
           <Mail className="h-4 w-4 shrink-0" />
           <span className="truncate group-data-[collapsible=icon]:hidden">Email</span>
