@@ -3393,12 +3393,14 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base">💳 Opções de Pagamento para Proposta</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <details className="group rounded-lg border border-border" open>
-              <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer select-none text-sm font-medium">
-                <span>Opções de exibição na proposta</span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
-              </summary>
-              <div className="p-3 pt-0 space-y-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <span>Opções de exibição na proposta</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[min(640px,90vw)] space-y-2">
             <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
               <Checkbox
                 id="showIndividualValues"
@@ -3429,14 +3431,16 @@ export default function NewSalePage() {
                 Mostrar somente o valor total? (oculta todas as opções de pagamento na proposta)
               </Label>
             </div>
-              </div>
-            </details>
-            <details className="group rounded-lg border border-border" open>
-              <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer select-none text-sm font-medium">
-                <span>Formas de pagamento ofertadas ({proposalPaymentOptions.filter(o => o.enabled).length} ativas)</span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
-              </summary>
-              <div className="p-3 pt-0 space-y-3">
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <span>Formas de pagamento ofertadas ({proposalPaymentOptions.filter(o => o.enabled).length} ativas)</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[min(900px,95vw)] max-h-[70vh] overflow-y-auto space-y-3">
             <p className="text-sm text-muted-foreground">Selecione quais formas de pagamento deseja ofertar ao cliente na proposta (PDF e interativa).</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {proposalPaymentOptions.map((opt, idx) => (
@@ -3577,8 +3581,8 @@ export default function NewSalePage() {
             >
               <Plus className="h-4 w-4 mr-1" />Adicionar opção
             </Button>
-              </div>
-            </details>
+              </PopoverContent>
+            </Popover>
           </CardContent>
         </Card>
         )}
