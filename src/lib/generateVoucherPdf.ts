@@ -827,8 +827,6 @@ function drawHotelContent(
 
 // ─── Draw generic service content ───────────────────────────
 function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: number, cw: number): number {
-  y = checkPage(doc, y, 20);
-
   const startY = y;
   doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
 
@@ -862,20 +860,22 @@ function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: n
   }
 
   if (service.description) {
-    const cleanDesc = service.description
+    let cleanDesc = service.description
       .replace(/<[^>]*>/g, "")
       .replace(/&nbsp;/g, " ")
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
       .trim();
+    // Limite para garantir 4 serviços por página sem quebra
+    const MAX_DESC = 280;
+    if (cleanDesc.length > MAX_DESC) cleanDesc = cleanDesc.slice(0, MAX_DESC - 3) + "...";
     if (cleanDesc) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
       const descLines = doc.splitTextToSize(s(cleanDesc), cw - 14);
       descLines.forEach((line: string) => {
-        y = checkPage(doc, y, 5);
         doc.text(line, m + 7, y);
         y += 4;
       });
@@ -976,16 +976,29 @@ export function generateVoucherPdf(data: VoucherPdfData) {
     // Fallback: single page with just client info
     drawPageHeader(doc, data, pw, m, cw);
   } else {
+    let isFirstPage = true;
+    let y = 0;
+    let serviceCountOnPage = 0;
+    const SERVICES_PER_PAGE = 4;
+
     pages.forEach((page, idx) => {
-      if (idx > 0) doc.addPage();
+      const isHotel = page.type === "hotel";
+      const needsNewPage = isFirstPage || isHotel || serviceCountOnPage >= SERVICES_PER_PAGE;
 
-      let y = drawPageHeader(doc, data, pw, m, cw, page.name, idx === 0);
+      if (needsNewPage) {
+        if (!isFirstPage) doc.addPage();
+        // Para hotel, mostra o nome da seção; para serviços agrupados, sem título no header
+        y = drawPageHeader(doc, data, pw, m, cw, isHotel ? page.name : "SERVIÇOS", isFirstPage);
+        isFirstPage = false;
+        serviceCountOnPage = 0;
+      }
 
-      // Service-specific content
       if (page.type === "hotel" && page.hotel) {
         y = drawHotelContent(doc, page.hotel, data.passengers, y, m, cw);
+        serviceCountOnPage = SERVICES_PER_PAGE; // força nova página depois
       } else if (page.type === "service" && page.service) {
         y = drawServiceContent(doc, page.service, y, m, cw);
+        serviceCountOnPage++;
       }
 
       // Notes on last page
@@ -997,7 +1010,9 @@ export function generateVoucherPdf(data: VoucherPdfData) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-        const noteLines = doc.splitTextToSize(s(data.notes), cw);
+        const MAX_NOTES = 600;
+        const notesText = data.notes.length > MAX_NOTES ? data.notes.slice(0, MAX_NOTES - 3) + "..." : data.notes;
+        const noteLines = doc.splitTextToSize(s(notesText), cw);
         noteLines.forEach((line: string) => {
           y = checkPage(doc, y, 5);
           doc.text(line, m, y);
