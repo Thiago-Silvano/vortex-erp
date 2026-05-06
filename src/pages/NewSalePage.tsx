@@ -2801,19 +2801,25 @@ export default function NewSalePage() {
                       value={pax.first_name} 
                       onChange={e => { 
                         updatePassenger(idx, 'first_name', e.target.value); 
-                        setPassengerSearchTerm(e.target.value);
-                        setPassengerSearchOpen(e.target.value.length >= 2 ? idx : null);
+                        const term = `${e.target.value} ${pax.last_name}`.trim();
+                        setPassengerSearchTerm(term);
+                        setPassengerSearchOpen(term.length >= 2 ? idx : null);
                       }} 
-                      onFocus={() => { if (pax.first_name.length >= 2) { setPassengerSearchTerm(pax.first_name); setPassengerSearchOpen(idx); } }}
+                      onFocus={() => { const t = `${pax.first_name} ${pax.last_name}`.trim(); if (t.length >= 2) { setPassengerSearchTerm(t); setPassengerSearchOpen(idx); } }}
                       onBlur={() => setTimeout(() => setPassengerSearchOpen(null), 200)}
                       placeholder="Nome" 
                       autoComplete="off"
                     />
                     {passengerSearchOpen === idx && passengerSearchTerm.length >= 2 && (() => {
-                      const filtered = allClients.filter(c => c.full_name.toLowerCase().includes(passengerSearchTerm.toLowerCase())).slice(0, 5);
+                      const terms = passengerSearchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+                      const filtered = allClients.filter(c => {
+                        const name = (c.full_name || '').toLowerCase();
+                        const cpf = (c.cpf || '').toLowerCase();
+                        return terms.every(t => name.includes(t) || cpf.includes(t));
+                      }).slice(0, 15);
                       if (filtered.length === 0) return null;
                       return (
-                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md max-h-40 overflow-y-auto">
+                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md max-h-60 overflow-y-auto">
                           {filtered.map(c => (
                             <button
                               key={c.id}
@@ -2829,7 +2835,22 @@ export default function NewSalePage() {
                       );
                     })()}
                   </div>
-                  <div><Label className="text-xs">Sobrenome</Label><Input value={pax.last_name} onChange={e => updatePassenger(idx, 'last_name', e.target.value)} placeholder="Sobrenome" /></div>
+                  <div className="relative">
+                    <Label className="text-xs">Sobrenome</Label>
+                    <Input
+                      value={pax.last_name}
+                      onChange={e => {
+                        updatePassenger(idx, 'last_name', e.target.value);
+                        const term = `${pax.first_name} ${e.target.value}`.trim();
+                        setPassengerSearchTerm(term);
+                        setPassengerSearchOpen(term.length >= 2 ? idx : null);
+                      }}
+                      onFocus={() => { const t = `${pax.first_name} ${pax.last_name}`.trim(); if (t.length >= 2) { setPassengerSearchTerm(t); setPassengerSearchOpen(idx); } }}
+                      onBlur={() => setTimeout(() => setPassengerSearchOpen(null), 200)}
+                      placeholder="Sobrenome"
+                      autoComplete="off"
+                    />
+                  </div>
                   <div><Label className="text-xs">Data de Nascimento</Label><Input type="date" value={pax.birth_date} onChange={e => updatePassenger(idx, 'birth_date', e.target.value)} /></div>
                   <div>
                     <Label className="text-xs">Tipo de Documento</Label>
