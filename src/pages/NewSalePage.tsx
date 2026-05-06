@@ -4199,43 +4199,45 @@ export default function NewSalePage() {
           </TabsContent>
         </Tabs>
 
-        {/* Actions */}
-        <div className="flex flex-wrap justify-end gap-2 pb-8">
-           <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">Cancelar</Button>
-          {editSaleId && (
-            <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} className="w-full sm:w-auto"><Trash2 className="h-4 w-4 mr-1" /> Excluir</Button>
-          )}
-          {saleStatus === 'active' ? (
-            <>
-              <Button variant="outline" onClick={handleExportServicesVoucher} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1" /> Voucher Servicos</Button>
-              <Button variant="outline" onClick={handleExportAirlineVoucher} className="w-full sm:w-auto"><Plane className="h-4 w-4 mr-1" /> Voucher Aereo</Button>
-            </>
-          ) : (
-            <>
+        {/* Actions — barra fixa no rodapé */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={handleCancel} className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive">Cancelar</Button>
+            {editSaleId && (
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(true)} className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-4 w-4 mr-1" /> Excluir</Button>
+            )}
+            {saleStatus === 'active' ? (
+              <>
+                <Button variant="outline" onClick={handleExportServicesVoucher}><Download className="h-4 w-4 mr-1" /> Voucher Serviços</Button>
+                <Button variant="outline" onClick={handleExportAirlineVoucher}><Plane className="h-4 w-4 mr-1" /> Voucher Aéreo</Button>
+              </>
+            ) : (
               <Button
                 onClick={handleExportDraftPdf}
-                className="w-full sm:w-auto bg-[#1F3A5F] hover:bg-[#16304F] text-white"
+                className="bg-foreground text-background hover:bg-foreground/90 gap-1"
               >
-                <Download className="h-4 w-4 mr-1" /> Gerar PDF da Proposta (F8)
+                <FileText className="h-4 w-4" /> Gerar PDF da proposta
+                <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-background/20">F8</span>
               </Button>
-            </>
-          )}
-          {editSaleId && (
-            <Button variant="outline" onClick={handleGenerateLink} className="w-full sm:w-auto"><Link2 className="h-4 w-4 mr-1" /> Gerar Link Proposta (F9)</Button>
-          )}
-          {editSaleId && isQuoteMode && (
-            <Button variant="outline" onClick={handleGenerateClientBuildsLink} className="w-full sm:w-auto"><Sparkles className="h-4 w-4 mr-1" /> Cliente Monta Proposta</Button>
-          )}
-          {isQuoteMode && (
-            <Button variant="secondary" onClick={handleSaveDraft} disabled={savingDraft} className="w-full sm:w-auto">
-              {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : 'Salvar Cotação (F10)'}
-            </Button>
-          )}
-          <Button onClick={handleSave} className={`w-full sm:w-auto ${isQuoteMode ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
-            {saleStatus === 'active' ? 'Salvar Venda (F10)' : (
-              <><ShieldCheck className="h-4 w-4 mr-1" /> Converter em Venda (F11)</>
             )}
-          </Button>
+            {editSaleId && (
+              <Button variant="outline" onClick={handleGenerateLink}><Link2 className="h-4 w-4 mr-1" /> Link Proposta (F9)</Button>
+            )}
+            {editSaleId && isQuoteMode && (
+              <Button variant="outline" onClick={handleGenerateClientBuildsLink}><Sparkles className="h-4 w-4 mr-1" /> Cliente Monta Proposta</Button>
+            )}
+            <div className="flex-1" />
+            {isQuoteMode && (
+              <Button variant="outline" onClick={handleSaveDraft} disabled={savingDraft} className="gap-1">
+                {savingDraft ? (<><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-1" /> Salvando...</>) : (<>Salvar cotação <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-muted">F10</span></>)}
+              </Button>
+            )}
+            <Button onClick={handleSave} className={`gap-1 ${isQuoteMode ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}>
+              {saleStatus === 'active' ? (<>Salvar Venda <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-background/20">F10</span></>) : (
+                <><ShieldCheck className="h-4 w-4" /> Converter em venda <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-background/20">F11</span></>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Edit Confirmation Dialog */}
