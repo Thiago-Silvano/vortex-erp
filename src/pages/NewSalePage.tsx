@@ -1209,6 +1209,11 @@ export default function NewSalePage() {
     }
     if (newUrls.length > 0) {
       setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...newUrls] }));
+      setNewImageUrls(prev => {
+        const set = new Set(prev[itemIdx] || []);
+        newUrls.forEach(u => set.add(u));
+        return { ...prev, [itemIdx]: set };
+      });
       toast.success(`${newUrls.length} imagem(ns) adicionada(s)!`);
     }
     setUploadingItemImages(prev => ({ ...prev, [itemIdx]: false }));
