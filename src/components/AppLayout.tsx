@@ -135,6 +135,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       { title: "Vendedores", url: "/sellers", permKey: "sellers_view" },
       { title: "Usuários", url: "/users" },
       { title: "Cias aéreas", url: "/airlines" },
+      { title: "Imagens", url: "/product-images" },
       { title: "Contratos", url: "/contracts/templates" },
       { title: "Centro de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
       { title: "Conta-corrente", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
