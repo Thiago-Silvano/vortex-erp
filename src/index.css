@@ -9,95 +9,100 @@
    ============================================================ */
 @layer base {
   :root {
+    /* ============================================================
+       LIGHT DESIGN SYSTEM — accent #534AB7 (violeta)
+       Padrão arredondado, superfícies claras, sidebar branca.
+       ============================================================ */
+
     /* === Backgrounds === */
-    --background: 240 6% 6%;            /* #0f0f10 bg-base */
-    --foreground: 240 24% 93%;          /* #e8e8f0 text-primary */
+    --background: 240 11% 96%;            /* #F4F4F7 bg-base */
+    --foreground: 240 6% 10%;             /* #18181B text-primary */
 
-    --card: 240 6% 9%;                  /* #141416 bg-surface */
-    --card-foreground: 240 24% 93%;
+    --card: 0 0% 100%;                    /* #FFFFFF bg-surface */
+    --card-foreground: 240 6% 10%;
 
-    --popover: 240 7% 11%;              /* #1a1a1e bg-elevated */
-    --popover-foreground: 240 24% 93%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 6% 10%;
 
-    --primary: 240 60% 60%;             /* #5b5bd6 accent */
+    --primary: 246 42% 50%;               /* #534AB7 accent */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 8% 14%;            /* bg-hover #1e1e24 */
-    --secondary-foreground: 240 24% 93%;
+    --secondary: 240 14% 98%;             /* #F8F8FB bg-secondary */
+    --secondary-foreground: 240 6% 10%;
 
-    --muted: 240 7% 11%;                /* bg-elevated */
-    --muted-foreground: 240 12% 69%;    /* #a8a8b8 */
+    --muted: 240 14% 98%;
+    --muted-foreground: 240 8% 46%;       /* #6B6B80 text-secondary */
 
-    --accent: 240 25% 18%;              /* nav-active-bg #1e1e2e */
-    --accent-foreground: 240 67% 80%;   /* #a8a8f0 */
+    --accent: 245 90% 96%;                /* #EEEDFE accent-light */
+    --accent-foreground: 246 46% 37%;     /* #3C3489 accent-text */
 
-    --destructive: 0 84% 68%;           /* #f16a6a */
+    --destructive: 0 57% 41%;             /* #A32D2D danger */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 7% 15%;               /* #242428 */
-    --input: 240 7% 15%;
-    --ring: 240 60% 60%;
+    --border: 240 8% 90%;                 /* rgba(0,0,0,0.08) ~ */
+    --input: 240 8% 86%;                  /* border-medium */
+    --ring: 246 42% 50%;                  /* border-focus */
 
-    --radius: 0.4375rem;                /* 7px md */
+    --radius: 0.625rem;                   /* 10px md */
 
-    /* === Sidebar === */
-    --sidebar-background: 210 65% 45%;    /* azul claro */
-    --sidebar-foreground: 0 0% 100%;      /* branco */
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 210 65% 45%;
-    --sidebar-accent: 210 70% 35%;        /* azul mais escuro ativo/hover */
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 60% 40%;        /* borda azul sutil */
-    --sidebar-ring: 0 0% 100%;
-    --sidebar: 210 65% 45%;
+    /* === Sidebar (branca) === */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 8% 46%;
+    --sidebar-primary: 246 42% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 245 90% 96%;        /* item ativo / hover */
+    --sidebar-accent-foreground: 246 46% 37%;
+    --sidebar-border: 240 8% 90%;
+    --sidebar-ring: 246 42% 50%;
+    --sidebar: 0 0% 100%;
 
     /* === Charts === */
-    --chart-1: 240 60% 60%;
-    --chart-2: 152 64% 54%;
-    --chart-3: 38 100% 62%;
-    --chart-4: 0 84% 68%;
-    --chart-5: 240 67% 80%;
+    --chart-1: 246 42% 50%;
+    --chart-2: 95 73% 35%;
+    --chart-3: 32 85% 45%;
+    --chart-4: 0 57% 50%;
+    --chart-5: 245 60% 70%;
 
-    /* === Legacy semantic kept (gold/navy used in PDFs are independent) === */
-    --gold: 45 70% 50%;
-    --gold-foreground: 240 6% 6%;
-    --navy: 240 6% 9%;
+    /* === Semantic === */
+    --gold: 45 70% 45%;
+    --gold-foreground: 0 0% 100%;
+    --navy: 246 46% 37%;
     --navy-foreground: 0 0% 100%;
-    --success: 152 64% 54%;             /* #3dd68c */
-    --success-foreground: 240 6% 6%;
-    --warning: 38 100% 62%;              /* #ffb43c */
-    --warning-foreground: 240 6% 6%;
+    --success: 95 73% 25%;                /* #3B6D11 */
+    --success-foreground: 0 0% 100%;
+    --warning: 32 85% 28%;                /* #854F0B */
+    --warning-foreground: 0 0% 100%;
 
-    --status-new: 240 67% 80%;
-    --status-progress: 38 100% 62%;
-    --status-waiting: 25 100% 62%;
-    --status-done: 152 64% 54%;
-    --status-cancelled: 0 84% 68%;
+    --status-new: 246 42% 50%;
+    --status-progress: 32 85% 45%;
+    --status-waiting: 25 90% 50%;
+    --status-done: 95 73% 30%;
+    --status-cancelled: 0 57% 45%;
 
-    --whatsapp: 142 70% 45%;
+    --whatsapp: 142 70% 38%;
     --whatsapp-foreground: 0 0% 100%;
 
-    /* === Custom new tokens === */
-    --bg-elevated: 240 7% 11%;
-    --bg-hover: 240 8% 14%;
-    --border-subtle: 240 7% 12%;
-    --border-strong: 240 7% 17%;
-    --text-faint: 240 9% 31%;           /* #4a4a56 */
-    --text-placeholder: 240 9% 25%;     /* #3a3a46 */
-    --accent-light: 240 60% 60% / 0.15;
-    --accent-glow: 240 60% 60% / 0.10;
+    /* === Custom tokens === */
+    --bg-elevated: 240 14% 98%;
+    --bg-hover: 245 32% 96%;              /* #F1F0FA */
+    --border-subtle: 240 8% 92%;
+    --border-strong: 240 8% 78%;
+    --text-faint: 240 14% 67%;            /* #A0A0B8 hint */
+    --text-placeholder: 240 17% 80%;      /* #C4C4D4 */
+    --accent-light: 246 42% 50% / 0.10;
+    --accent-glow: 246 42% 50% / 0.06;
 
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-    --shadow-2xs: 0 1px 1px 0 hsl(0 0% 0% / 0.20);
-    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.25);
-    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.30);
-    --shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.30);
-    --shadow-md: 0 2px 6px 0 hsl(0 0% 0% / 0.35);
-    --shadow-lg: 0 4px 12px 0 hsl(0 0% 0% / 0.40);
-    --shadow-xl: 0 8px 20px 0 hsl(0 0% 0% / 0.45);
-    --shadow-2xl: 0 12px 28px 0 hsl(0 0% 0% / 0.50);
+    --shadow-2xs: 0 1px 1px 0 hsl(240 15% 20% / 0.04);
+    --shadow-xs: 0 1px 2px 0 hsl(240 15% 20% / 0.06);
+    --shadow-sm: 0 1px 3px 0 hsl(240 15% 20% / 0.08);
+    --shadow: 0 1px 3px 0 hsl(240 15% 20% / 0.08);
+    --shadow-md: 0 2px 6px 0 hsl(240 15% 20% / 0.10);
+    --shadow-lg: 0 4px 12px 0 hsl(240 15% 20% / 0.12);
+    --shadow-xl: 0 8px 20px 0 hsl(240 15% 20% / 0.14);
+    --shadow-2xl: 0 12px 28px 0 hsl(240 15% 20% / 0.16);
   }
 
   /* Dark = same (theme is dark by default) */
@@ -225,7 +230,7 @@
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html.light {
@@ -252,14 +257,17 @@
     font-size: 13px;
   }
 
-  /* Inputs darker surface */
+  /* Inputs — superfície secundária clara, foco com borda violeta */
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
   textarea, select {
     background-color: hsl(var(--bg-elevated));
+    border-color: hsl(var(--input));
   }
 
   input:focus, textarea:focus, select:focus {
-    background-color: hsl(var(--bg-hover));
+    background-color: hsl(var(--card));
+    border-color: hsl(var(--ring));
+    box-shadow: 0 0 0 3px hsl(246 42% 50% / 0.10);
   }
 
   /* Hide number input spinners */
@@ -272,7 +280,7 @@
 
   /* Date picker icon (Chrome) tinted to muted */
   input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.7) brightness(0.9);
+    filter: none;
     cursor: pointer;
   }
 
