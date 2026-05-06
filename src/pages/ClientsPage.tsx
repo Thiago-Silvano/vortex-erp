@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
 import { useTableSort } from '@/hooks/useTableSort';
-import { Plus, Search, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Users, Loader2, FileScan } from 'lucide-react';
 import ClientFilesSection, { type ClientFilesSectionRef } from '@/components/ClientFilesSection';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -66,6 +66,10 @@ export default function ClientsPage() {
   const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
   const filesRef = useRef<ClientFilesSectionRef>(null);
   const [returnTo, setReturnTo] = useState<{ path: string; state?: any } | null>(null);
+  const [docImportOpen, setDocImportOpen] = useState(false);
+  const [docType, setDocType] = useState<'identidade' | 'passaporte' | 'cnh'>('identidade');
+  const [docAnalyzing, setDocAnalyzing] = useState(false);
+  const docInputRef = useRef<HTMLInputElement>(null);
 
   const fetchClients = async () => {
     let query = supabase.from('clients').select('*').order('full_name');
@@ -326,6 +330,11 @@ export default function ClientsPage() {
             </DialogHeader>
 
             <div className="space-y-3">
+              <div className="flex justify-end">
+                <Button type="button" size="sm" variant="outline" onClick={() => setDocImportOpen(true)} className="gap-1 h-7">
+                  <FileScan className="h-3.5 w-3.5" /> Importar documento (IA)
+                </Button>
+              </div>
               {editingId && <ClientPhotosSection clientId={editingId} />}
               <ClientFilesSection ref={filesRef} clientId={editingId || undefined} />
               {editingId && activeCompany?.slug === 'vortex-vistos' && (
@@ -503,6 +512,83 @@ export default function ClientsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Document Import Dialog */}
+        <Dialog open={docImportOpen} onOpenChange={(o) => { if (!docAnalyzing) setDocImportOpen(o); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Importar documento pessoal</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label>Tipo de documento</Label>
+                <Select value={docType} onValueChange={(v) => setDocType(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="identidade">Identidade (RG)</SelectItem>
+                    <SelectItem value="passaporte">Passaporte</SelectItem>
+                    <SelectItem value="cnh">CNH</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                A imagem será analisada por IA, os campos preenchidos automaticamente (e ainda editáveis), e o arquivo arquivado no cadastro.
+              </p>
+              <input
+                ref={docInputRef}
+                type="file"
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setDocAnalyzing(true);
+                  try {
+                    const base64 = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        const result = reader.result as string;
+                        resolve(result.split(',')[1] || '');
+                      };
+                      reader.onerror = reject;
+                      reader.readAsDataURL(file);
+                    });
+                    const { data, error } = await supabase.functions.invoke('analyze-client-document', {
+                      body: { imageBase64: base64, mimeType: file.type, documentType: docType },
+                    });
+                    if (error) throw error;
+                    if ((data as any)?.error) throw new Error((data as any).error);
+                    const ext = (data as any)?.data || {};
+                    setForm(p => ({
+                      ...p,
+                      full_name: ext.full_name ? String(ext.full_name).toUpperCase() : p.full_name,
+                      cpf: ext.cpf ? maskCpfCnpj(ext.cpf) : p.cpf,
+                      birth_date: ext.birth_date || p.birth_date,
+                      passport_number: ext.passport_number || p.passport_number,
+                      passport_issue_date: ext.passport_issue_date || p.passport_issue_date,
+                      passport_expiry_date: ext.passport_expiry_date || p.passport_expiry_date,
+                    }));
+                    await filesRef.current?.addPendingFile(file);
+                    toast.success('Documento analisado e dados preenchidos');
+                    setDocImportOpen(false);
+                  } catch (err: any) {
+                    console.error(err);
+                    toast.error(err?.message || 'Erro ao analisar documento');
+                  } finally {
+                    setDocAnalyzing(false);
+                    if (docInputRef.current) docInputRef.current.value = '';
+                  }
+                }}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" disabled={docAnalyzing} onClick={() => setDocImportOpen(false)}>Cancelar</Button>
+              <Button disabled={docAnalyzing} onClick={() => docInputRef.current?.click()}>
+                {docAnalyzing ? <><Loader2 className="h-3 w-3 animate-spin mr-1" /> Analisando...</> : 'Selecionar arquivo'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
