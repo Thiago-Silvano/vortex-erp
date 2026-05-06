@@ -2871,15 +2871,13 @@ export default function NewSalePage() {
                       autoComplete="off"
                     />
                     {passengerSearchOpen === idx && passengerSearchTerm.length >= 2 && (() => {
-                      const terms = passengerSearchTerm.toLowerCase().split(/\s+/).filter(Boolean);
-                      const filtered = allClients.filter(c => {
-                        const name = (c.full_name || '').toLowerCase();
-                        const cpf = (c.cpf || '').toLowerCase();
-                        return terms.every(t => name.includes(t) || cpf.includes(t));
-                      }).slice(0, 15);
-                      if (filtered.length === 0) return null;
+                      const filtered = passengerClientResults;
+                      if (filtered.length === 0 && !passengerSearchLoading) return null;
                       return (
                         <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md max-h-60 overflow-y-auto">
+                          {passengerSearchLoading && (
+                            <div className="px-3 py-2 text-sm text-muted-foreground">Buscando...</div>
+                          )}
                           {filtered.map(c => (
                             <button
                               key={c.id}
