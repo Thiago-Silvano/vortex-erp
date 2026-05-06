@@ -2682,6 +2682,9 @@ export default function NewSalePage() {
                     <input type="file" accept="image/*" className="hidden" onChange={handleDestinationImageUpload} />
                   </label>
                 )}
+                <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => { setDestLibrarySearch(destinationName || ''); setDestLibraryOpen(true); searchDestinationLibrary(); }}>
+                  <Search className="h-4 w-4" /> Biblioteca
+                </Button>
                 {hasStockKeys && (
                   <Button
                     type="button"
