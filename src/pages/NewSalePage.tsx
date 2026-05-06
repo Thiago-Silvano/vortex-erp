@@ -2085,6 +2085,7 @@ export default function NewSalePage() {
       notes: notes || undefined,
       saleDate,
       shortId: voucherReference,
+      hideReference: isQuoteMode,
     };
 
     return { voucherData, logoBase64, shortId: saleShortId };
