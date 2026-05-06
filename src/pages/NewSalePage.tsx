@@ -4431,6 +4431,20 @@ export default function NewSalePage() {
                 }
                 return updated;
               });
+              // Auto-load airline cover image when main airline is set on aereo service
+              if (meta.type === 'aereo' && meta.airlineId) {
+                const existing = itemImages[editingItemIdx] || [];
+                if (existing.length === 0) {
+                  (async () => {
+                    try {
+                      const { data: airline } = await (supabase.from('airlines' as any).select('cover_image_url').eq('id', meta.airlineId).maybeSingle() as any);
+                      if (airline?.cover_image_url) {
+                        setItemImages(prev => ({ ...prev, [editingItemIdx]: [airline.cover_image_url, ...(prev[editingItemIdx] || [])] }));
+                      }
+                    } catch {}
+                  })();
+                }
+              }
               // Auto-save after service detail save (preserve status for active sales)
               if (saleStatus !== 'active') {
                 setTimeout(() => handleSilentSaveDraft(), 300);
