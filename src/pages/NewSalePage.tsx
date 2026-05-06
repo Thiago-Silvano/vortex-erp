@@ -185,6 +185,10 @@ export default function NewSalePage() {
   const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
   // URLs de imagens enviadas/incluídas durante esta venda (precisam ser salvas na biblioteca)
   const [newImageUrls, setNewImageUrls] = useState<Record<number, Set<string>>>({});
+  // Estado da busca na biblioteca de imagens por item
+  const [librarySearch, setLibrarySearch] = useState<Record<number, string>>({});
+  const [libraryResults, setLibraryResults] = useState<Record<number, any[]>>({});
+  const [libraryLoading, setLibraryLoading] = useState<Record<number, boolean>>({});
   const [uploadingDestImage, setUploadingDestImage] = useState(false);
   const [aiImageSearch, setAiImageSearch] = useState(false);
   const [aiImages, setAiImages] = useState<string[]>([]);
