@@ -18,10 +18,11 @@ interface Airline {
   id?: string;
   name: string;
   logo_url: string | null;
+  cover_image_url?: string | null;
   is_active: boolean;
 }
 
-const emptyAirline: Airline = { name: '', logo_url: null, is_active: true };
+const emptyAirline: Airline = { name: '', logo_url: null, cover_image_url: null, is_active: true };
 
 export default function AirlinesPage() {
   const { activeCompany } = useCompany();
@@ -32,7 +33,9 @@ export default function AirlinesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (activeCompany) loadAirlines();
@@ -66,6 +69,24 @@ export default function AirlinesPage() {
     }
   };
 
+  const handleUploadCover = async (file: File) => {
+    if (!activeCompany) return;
+    setUploadingCover(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${activeCompany.id}/cover-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('airline-logos').upload(path, file);
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('airline-logos').getPublicUrl(path);
+      setEditing(prev => ({ ...prev, cover_image_url: urlData.publicUrl }));
+      toast.success('Imagem de capa enviada!');
+    } catch (e: any) {
+      toast.error('Erro ao enviar capa: ' + e.message);
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!activeCompany || !editing.name.trim()) {
       toast.error('Nome da cia aérea é obrigatório.');
@@ -74,12 +95,12 @@ export default function AirlinesPage() {
     try {
       if (editingId) {
         await (supabase.from('airlines' as any) as any)
-          .update({ name: editing.name, logo_url: editing.logo_url, is_active: editing.is_active, updated_at: new Date().toISOString() })
+          .update({ name: editing.name, logo_url: editing.logo_url, cover_image_url: editing.cover_image_url || null, is_active: editing.is_active, updated_at: new Date().toISOString() })
           .eq('id', editingId);
         toast.success('Cia aérea atualizada!');
       } else {
         await (supabase.from('airlines' as any) as any)
-          .insert({ name: editing.name, logo_url: editing.logo_url, is_active: editing.is_active, empresa_id: activeCompany.id });
+          .insert({ name: editing.name, logo_url: editing.logo_url, cover_image_url: editing.cover_image_url || null, is_active: editing.is_active, empresa_id: activeCompany.id });
         toast.success('Cia aérea cadastrada!');
       }
       setShowModal(false);
@@ -93,7 +114,7 @@ export default function AirlinesPage() {
 
   const handleEdit = (a: any) => {
     setEditingId(a.id);
-    setEditing({ name: a.name, logo_url: a.logo_url, is_active: a.is_active });
+    setEditing({ name: a.name, logo_url: a.logo_url, cover_image_url: a.cover_image_url || null, is_active: a.is_active });
     setShowModal(true);
   };
 
@@ -196,6 +217,27 @@ export default function AirlinesPage() {
                   <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => {
                     const f = e.target.files?.[0];
                     if (f) handleUploadLogo(f);
+                    e.target.value = '';
+                  }} />
+                </div>
+              </div>
+              <div>
+                <Label>Imagem de Capa (usada nos serviços aéreos)</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  {editing.cover_image_url ? (
+                    <div className="relative">
+                      <img src={editing.cover_image_url} alt="Capa" className="h-16 w-28 object-cover border rounded" />
+                      <button onClick={() => setEditing(p => ({ ...p, cover_image_url: null }))} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center">
+                        <X className="h-2 w-2" />
+                      </button>
+                    </div>
+                  ) : null}
+                  <Button size="sm" variant="outline" onClick={() => coverRef.current?.click()} disabled={uploadingCover}>
+                    <Upload className="h-3 w-3 mr-1" />{uploadingCover ? 'Enviando...' : 'Upload Capa'}
+                  </Button>
+                  <input ref={coverRef} type="file" accept="image/*" className="hidden" onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) handleUploadCover(f);
                     e.target.value = '';
                   }} />
                 </div>

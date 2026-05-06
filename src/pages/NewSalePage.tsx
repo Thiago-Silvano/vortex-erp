@@ -1284,11 +1284,43 @@ export default function NewSalePage() {
 
   const handleSearchServiceImages = async (itemIdx: number) => {
     const item = items[itemIdx];
-    const searchQuery = item.metadata?.hotel?.hotelName || item.description || '';
-    if (!searchQuery.trim()) { toast.error('Preencha a descrição do serviço primeiro'); return; }
-    if (!googleApiKey) { toast.error('Configure a Google Maps API Key em Configurações → Integrações'); return; }
+    const type = item.metadata?.type;
     setSearchingItemImages(prev => ({ ...prev, [itemIdx]: true }));
     try {
+      // Aéreo: carregar imagem de capa da Cia Aérea principal
+      if (type === 'aereo') {
+        const airlineId = item.metadata?.airlineId || item.metadata?.flightLegs?.[0]?.airlineId;
+        if (!airlineId) { toast.error('Selecione a Cia Aérea principal do voo primeiro'); return; }
+        const { data: airline } = await (supabase.from('airlines' as any).select('cover_image_url, name').eq('id', airlineId).maybeSingle() as any);
+        if (airline?.cover_image_url) {
+          setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), airline.cover_image_url] }));
+          toast.success(`Capa da ${airline.name} carregada!`);
+        } else {
+          toast.error('Esta Cia Aérea não possui imagem de capa cadastrada');
+        }
+        return;
+      }
+      // Hospedagem: buscar 10 imagens da gerência no TripAdvisor
+      if (type === 'hotel') {
+        const searchQuery = item.metadata?.hotel?.hotelName || item.description || '';
+        if (!searchQuery.trim()) { toast.error('Preencha o nome do hotel primeiro'); return; }
+        const { data, error } = await supabase.functions.invoke('search-tripadvisor-images', {
+          body: { query: searchQuery.trim(), limit: 10 },
+        });
+        if (error) throw error;
+        const imgs = (data?.images || []).map((i: any) => i.url_full || i.url_preview).filter(Boolean);
+        if (imgs.length > 0) {
+          setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...imgs] }));
+          toast.success(`${imgs.length} imagem(ns) do TripAdvisor encontrada(s)!`);
+        } else {
+          toast.error('Nenhuma imagem encontrada no TripAdvisor');
+        }
+        return;
+      }
+      // Demais serviços: Google Places
+      const searchQuery = item.description || '';
+      if (!searchQuery.trim()) { toast.error('Preencha a descrição do serviço primeiro'); return; }
+      if (!googleApiKey) { toast.error('Configure a Google Maps API Key em Configurações → Integrações'); return; }
       const { data, error } = await supabase.functions.invoke('google-places', {
         body: { action: 'search_photos', query: searchQuery.trim(), apiKey: googleApiKey },
       });
@@ -4399,6 +4431,20 @@ export default function NewSalePage() {
                 }
                 return updated;
               });
+              // Auto-load airline cover image when main airline is set on aereo service
+              if (meta.type === 'aereo' && meta.airlineId) {
+                const existing = itemImages[editingItemIdx] || [];
+                if (existing.length === 0) {
+                  (async () => {
+                    try {
+                      const { data: airline } = await (supabase.from('airlines' as any).select('cover_image_url').eq('id', meta.airlineId).maybeSingle() as any);
+                      if (airline?.cover_image_url) {
+                        setItemImages(prev => ({ ...prev, [editingItemIdx]: [airline.cover_image_url, ...(prev[editingItemIdx] || [])] }));
+                      }
+                    } catch {}
+                  })();
+                }
+              }
               // Auto-save after service detail save (preserve status for active sales)
               if (saleStatus !== 'active') {
                 setTimeout(() => handleSilentSaveDraft(), 300);
