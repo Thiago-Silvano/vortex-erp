@@ -121,6 +121,7 @@ export interface VoucherPdfData {
   notes?: string;
   saleDate?: string;
   shortId?: string;
+  hideReference?: boolean;
 }
 
 // ─── Helpers ────────────────────────────────────────────────
