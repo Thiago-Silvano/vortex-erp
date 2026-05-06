@@ -1392,6 +1392,19 @@ export default function NewSalePage() {
     toast.success('Imagem adicionada');
   };
 
+  const searchDestinationLibrary = async () => {
+    if (!activeCompany?.id) return;
+    const q = (destLibrarySearch || destinationName || '').trim();
+    setDestLibraryLoading(true);
+    try {
+      let query: any = (supabase.from('product_images' as any) as any)
+        .select('*').eq('empresa_id', activeCompany.id).eq('product_type', 'cidade');
+      if (q) query = query.or(`product_name.ilike.%${q}%,keywords.ilike.%${q}%`);
+      const { data } = await query.limit(60);
+      setDestLibraryResults((data || []) as any[]);
+    } finally { setDestLibraryLoading(false); }
+  };
+
   const persistNewImagesToLibrary = async () => {
     if (!activeCompany?.id) return;
     const tasks: any[] = [];
