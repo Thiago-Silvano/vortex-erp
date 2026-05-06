@@ -510,19 +510,25 @@ export default function NewSalePage() {
     }
 
     const normalizedTerms = normalizeClientSearch(term).split(/\s+/).filter(Boolean);
-    const mainTerm = normalizedTerms.sort((a, b) => b.length - a.length)[0] || term.trim();
     const digits = term.replace(/\D/g, '');
-    const searchFilters = [`full_name.ilike.%${mainTerm}%`];
-    if (digits.length >= 2) searchFilters.push(`cpf.ilike.%${digits}%`);
 
     setPassengerSearchLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from('clients')
       .select('id, full_name, cpf, email, phone, birth_date, passport_number, passport_expiry_date')
       .eq('empresa_id', activeCompany.id)
-      .or(searchFilters.join(','))
       .order('full_name')
       .limit(50);
+
+    if (digits.length >= 2) {
+      query = query.or(`full_name.ilike.%${term.trim()}%,cpf.ilike.%${digits}%`);
+    } else {
+      normalizedTerms.forEach(searchTerm => {
+        query = query.ilike('full_name', `%${searchTerm}%`);
+      });
+    }
+
+    const { data, error } = await query;
 
     if (!error && data) {
       setPassengerClientResults((data as ClientOption[]).filter(c => clientMatchesPassengerSearch(c, term)).slice(0, 15));
