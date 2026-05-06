@@ -2361,7 +2361,7 @@ export default function NewSalePage() {
           <h1 className="text-2xl font-bold text-foreground">
             {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Editar Cotação' : 'Nova Cotação'}
           </h1>
-          <Button variant="outline" onClick={() => setPdfImportOpen(true)} className="gap-2">
+          <Button onClick={() => setPdfImportOpen(true)} className="gap-2 bg-orange-500 hover:bg-orange-600 text-white">
             <FileUp className="h-4 w-4" /> Importar PDF
           </Button>
         </div>
@@ -2700,7 +2700,7 @@ export default function NewSalePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">📋 Opções da Cotação</CardTitle>
-            <Button size="sm" variant="outline" onClick={() => {
+            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => {
               setQuoteOptions(prev => [...prev, { name: `Opção ${prev.length + 1}`, order_index: prev.length }]);
             }}>
               <Plus className="h-4 w-4 mr-1" />Adicionar Opção
@@ -2746,22 +2746,6 @@ export default function NewSalePage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1"
-                onClick={() => {
-                  const params = new URLSearchParams();
-                  if (destinationName) params.set('destino', destinationName);
-                  if (tripStartDate) params.set('checkin', tripStartDate);
-                  if (tripEndDate) params.set('checkout', tripEndDate);
-                  if (tripNights) params.set('noites', String(tripNights));
-                  if (passengersCount) params.set('pax', String(passengersCount));
-                  window.open(`/cotacao/buscar-servicos?${params.toString()}`, '_blank');
-                }}
-              >
-                <Sparkles className="h-4 w-4" /> Robô
-              </Button>
               <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => {
                 const defaultOptIds = quoteOptions.length > 0 ? [quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0)] : [];
                 setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, markup_percent: 0, total_value: 0, metadata: {}, quote_option_id: defaultOptIds[0], quote_option_ids: defaultOptIds }]);
@@ -3076,7 +3060,7 @@ export default function NewSalePage() {
             <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações internas sobre a venda..." rows={4} className="min-h-[80px]" />
             <div className="border-t pt-4">
               <Label className="text-sm font-medium flex items-center gap-2 mb-2"><Paperclip className="h-4 w-4" />Arquivos Internos</Label>
-              <label className="cursor-pointer flex items-center gap-2 px-4 py-2 border border-dashed rounded-lg text-sm text-muted-foreground hover:bg-muted/50 w-fit">
+              <label className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white w-fit">
                 <Upload className="h-4 w-4" />
                 {uploadingFile ? 'Enviando...' : 'Adicionar arquivos'}
                 <input type="file" multiple className="hidden" onChange={handleInternalFileUpload} disabled={uploadingFile} />
