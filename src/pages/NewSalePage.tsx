@@ -183,6 +183,12 @@ export default function NewSalePage() {
   const [imagePositionEditorOpen, setImagePositionEditorOpen] = useState(false);
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
   const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
+  // URLs de imagens enviadas/incluídas durante esta venda (precisam ser salvas na biblioteca)
+  const [newImageUrls, setNewImageUrls] = useState<Record<number, Set<string>>>({});
+  // Estado da busca na biblioteca de imagens por item
+  const [librarySearch, setLibrarySearch] = useState<Record<number, string>>({});
+  const [libraryResults, setLibraryResults] = useState<Record<number, any[]>>({});
+  const [libraryLoading, setLibraryLoading] = useState<Record<number, boolean>>({});
   const [uploadingDestImage, setUploadingDestImage] = useState(false);
   const [aiImageSearch, setAiImageSearch] = useState(false);
   const [aiImages, setAiImages] = useState<string[]>([]);
@@ -1207,6 +1213,11 @@ export default function NewSalePage() {
     }
     if (newUrls.length > 0) {
       setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...newUrls] }));
+      setNewImageUrls(prev => {
+        const set = new Set(prev[itemIdx] || []);
+        newUrls.forEach(u => set.add(u));
+        return { ...prev, [itemIdx]: set };
+      });
       toast.success(`${newUrls.length} imagem(ns) adicionada(s)!`);
     }
     setUploadingItemImages(prev => ({ ...prev, [itemIdx]: false }));
@@ -1294,6 +1305,7 @@ export default function NewSalePage() {
         const { data: airline } = await (supabase.from('airlines' as any).select('cover_image_url, name').eq('id', airlineId).maybeSingle() as any);
         if (airline?.cover_image_url) {
           setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), airline.cover_image_url] }));
+          setNewImageUrls(prev => { const s = new Set(prev[itemIdx] || []); s.add(airline.cover_image_url); return { ...prev, [itemIdx]: s }; });
           toast.success(`Capa da ${airline.name} carregada!`);
         } else {
           toast.error('Esta Cia Aérea não possui imagem de capa cadastrada');
@@ -1311,6 +1323,7 @@ export default function NewSalePage() {
         const imgs = (data?.images || []).map((i: any) => i.url_full || i.url_preview).filter(Boolean);
         if (imgs.length > 0) {
           setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...imgs] }));
+          setNewImageUrls(prev => { const s = new Set(prev[itemIdx] || []); imgs.forEach((u: string) => s.add(u)); return { ...prev, [itemIdx]: s }; });
           toast.success(`${imgs.length} imagem(ns) do TripAdvisor encontrada(s)!`);
         } else {
           toast.error('Nenhuma imagem encontrada no TripAdvisor');
@@ -1327,6 +1340,7 @@ export default function NewSalePage() {
       if (error) throw error;
       if (data?.success && data.photos?.length > 0) {
         setItemImages(prev => ({ ...prev, [itemIdx]: [...(prev[itemIdx] || []), ...data.photos] }));
+        setNewImageUrls(prev => { const s = new Set(prev[itemIdx] || []); data.photos.forEach((u: string) => s.add(u)); return { ...prev, [itemIdx]: s }; });
         toast.success(`${data.photos.length} imagem(ns) encontrada(s)!`);
       } else {
         toast.error('Nenhuma imagem encontrada para este serviço');
@@ -1336,6 +1350,65 @@ export default function NewSalePage() {
     } finally {
       setSearchingItemImages(prev => ({ ...prev, [itemIdx]: false }));
     }
+  };
+
+  const inferProductType = (item: any): 'cidade' | 'hospedagem' | 'servico' => {
+    const t = item?.metadata?.type;
+    if (t === 'hotel') return 'hospedagem';
+    return 'servico';
+  };
+
+  const searchImageLibrary = async (itemIdx: number) => {
+    const q = (librarySearch[itemIdx] || '').trim();
+    if (!q) { toast.error('Digite o nome do produto'); return; }
+    if (!activeCompany?.id) return;
+    setLibraryLoading(prev => ({ ...prev, [itemIdx]: true }));
+    try {
+      const { data } = await (supabase.from('product_images' as any)
+        .select('*')
+        .eq('empresa_id', activeCompany.id)
+        .or(`product_name.ilike.%${q}%,keywords.ilike.%${q}%`)
+        .limit(50) as any);
+      const imgs = (data || []) as any[];
+      setLibraryResults(prev => ({ ...prev, [itemIdx]: imgs }));
+      if (imgs.length === 0) toast.info('Nenhuma imagem encontrada na biblioteca');
+    } finally {
+      setLibraryLoading(prev => ({ ...prev, [itemIdx]: false }));
+    }
+  };
+
+  const addLibraryImage = (itemIdx: number, url: string) => {
+    setItemImages(prev => {
+      const cur = prev[itemIdx] || [];
+      if (cur.includes(url)) return prev;
+      return { ...prev, [itemIdx]: [...cur, url] };
+    });
+    // imagens da biblioteca NÃO entram em newImageUrls (já existem)
+    toast.success('Imagem adicionada');
+  };
+
+  const persistNewImagesToLibrary = async () => {
+    if (!activeCompany?.id) return;
+    const tasks: any[] = [];
+    items.forEach((item, idx) => {
+      const newSet = newImageUrls[idx];
+      if (!newSet || newSet.size === 0) return;
+      const productType = inferProductType(item);
+      const productName = (item.metadata?.hotel?.hotelName || item.description || '').trim();
+      if (!productName) return;
+      newSet.forEach(url => {
+        tasks.push({
+          empresa_id: activeCompany.id,
+          product_type: productType,
+          product_name: productName,
+          image_url: url,
+        });
+      });
+    });
+    if (tasks.length === 0) return;
+    // upsert respeitando UNIQUE (empresa_id, product_type, product_name, image_url)
+    await (supabase.from('product_images' as any)
+      .upsert(tasks, { onConflict: 'empresa_id,product_type,product_name,image_url', ignoreDuplicates: true }) as any);
   };
 
   const handleInternalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1521,6 +1594,9 @@ export default function NewSalePage() {
         internalFiles.map(f => ({ sale_id: saleId, file_name: f.file_name, file_url: f.file_url }))
       );
     }
+
+    // Salvar novas imagens na biblioteca (deduplicado)
+    try { await persistNewImagesToLibrary(); setNewImageUrls({}); } catch (e) { console.warn('Lib save', e); }
 
     return saleId;
   };
@@ -2964,6 +3040,19 @@ export default function NewSalePage() {
                                     className="h-6 text-xs w-28"
                                   />
                                 </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Biblioteca:</Label>
+                                  <Input
+                                    value={librarySearch[idx] || ''}
+                                    onChange={e => setLibrarySearch(prev => ({ ...prev, [idx]: e.target.value }))}
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); searchImageLibrary(idx); } }}
+                                    placeholder="nome do produto"
+                                    className="h-6 text-xs w-32"
+                                  />
+                                  <Button variant="ghost" size="sm" className="h-6 text-xs px-1.5 gap-0.5" onClick={() => searchImageLibrary(idx)} disabled={libraryLoading[idx]}>
+                                    {libraryLoading[idx] ? <Loader2 className="h-3 w-3 animate-spin"/> : <Search className="h-3 w-3"/>}
+                                  </Button>
+                                </div>
                               </>
                             )}
                             <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -3005,6 +3094,21 @@ export default function NewSalePage() {
                               </div>
                             )}
                           </div>
+                          {(libraryResults[idx] || []).length > 0 && (
+                            <div className="mt-1.5 p-1.5 border rounded bg-muted/40">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-[10px] text-muted-foreground">Biblioteca ({libraryResults[idx].length}) — clique para adicionar</span>
+                                <button type="button" className="text-[10px] text-muted-foreground hover:text-foreground" onClick={() => setLibraryResults(prev => ({ ...prev, [idx]: [] }))}>fechar</button>
+                              </div>
+                              <div className="flex gap-1.5 overflow-x-auto">
+                                {libraryResults[idx].map((lib: any) => (
+                                  <button key={lib.id} type="button" onClick={() => addLibraryImage(idx, lib.image_url)} title={lib.product_name} className="relative flex-shrink-0 hover:ring-2 hover:ring-primary rounded">
+                                    <img src={lib.image_url} alt={lib.product_name} className="h-12 w-16 object-cover rounded border"/>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     </React.Fragment>

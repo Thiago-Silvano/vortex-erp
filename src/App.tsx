@@ -72,6 +72,7 @@ import ItineraryPublicPage from "./pages/ItineraryPublicPage";
 import PromoMakerPage from "./pages/PromoMakerPage";
 import PromotionCatalogPublicPage from "./pages/marketing/PromotionCatalogPublicPage";
 import AirlinesPage from "./pages/AirlinesPage";
+import ProductImagesPage from "./pages/ProductImagesPage";
 import VouchersPage from "./pages/VouchersPage";
 import ContractTemplatesPage from "./pages/ContractTemplatesPage";
 import ContractsDashboardPage from "./pages/ContractsDashboardPage";
@@ -160,6 +161,7 @@ const App = () => (
           <Route path="/comercial/roteiro-premium" element={<Navigate to="/itineraries/premium" replace />} />
           <Route path="/promo-maker" element={<ProtectedRoute><PromoMakerPage /></ProtectedRoute>} />
           <Route path="/airlines" element={<ProtectedRoute><AirlinesPage /></ProtectedRoute>} />
+          <Route path="/product-images" element={<ProtectedRoute><ProductImagesPage /></ProtectedRoute>} />
 
           {/* Vistos routes */}
           <Route path="/vistos/dashboard" element={<ProtectedRoute><VistosDashboard /></ProtectedRoute>} />
