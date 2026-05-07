@@ -637,10 +637,10 @@ export default function Dashboard() {
                     <button
                       key={i}
                       onClick={() => a.route && navigate(a.route)}
-                      className={`w-full text-left text-xs px-2.5 py-2 rounded-md border transition-colors hover:opacity-80 ${
+                      className={`w-full text-left text-xs font-medium px-2.5 py-2 rounded-md border transition-colors hover:opacity-80 ${
                         a.type === 'danger'
-                          ? 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/30 dark:border-rose-900 dark:text-rose-300'
-                          : 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-900 dark:text-amber-300'
+                          ? 'bg-rose-100 border-rose-300 text-rose-900 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-100'
+                          : 'bg-amber-100 border-amber-300 text-amber-900 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-100'
                       }`}
                     >
                       {a.message}
