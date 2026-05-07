@@ -213,6 +213,7 @@ export default function NewSalePage() {
   const [savingSale, setSavingSale] = useState(false);
   const [searchingItemImages, setSearchingItemImages] = useState<Record<number, boolean>>({});
   const [googleApiKey, setGoogleApiKey] = useState('');
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
     { method: 'pix', label: 'PIX / À Vista', installments: 1, discountPercent: 0, enabled: false },
     { method: 'credito_3x', label: 'Cartão 3x', installments: 3, discountPercent: 0, enabled: false },
