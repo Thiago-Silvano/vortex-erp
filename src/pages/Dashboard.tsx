@@ -436,28 +436,28 @@ export default function Dashboard() {
         value: fmt(stats.faturamento),
         delta: fatPct, periodLabel,
         icon: DollarSign,
-        accent: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40',
+        accent: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
       },
       {
         label: 'TICKET MÉDIO',
         value: fmt(stats.ticketMedio),
         delta: ticketPct, periodLabel,
         icon: ShoppingCart,
-        accent: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40',
+        accent: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
       },
       {
         label: isVistos ? 'VISTOS VENDIDOS' : 'CLIENTES ATENDIDOS',
         value: stats.clientes.toString(),
         delta: cliPct, periodLabel,
         icon: Users,
-        accent: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40',
+        accent: 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300',
       },
       {
         label: 'LUCRO LÍQUIDO',
         value: fmt(stats.lucro),
         delta: lucroPct, periodLabel,
         icon: Target,
-        accent: 'bg-rose-50 text-rose-600 dark:bg-rose-950/40',
+        accent: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
       },
     ];
   }, [stats, period, isVistos]);
@@ -633,19 +633,23 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  {alerts.map((a, i) => (
+                  {alerts.map((a, i) => {
+                    const isCommission = /comiss/i.test(a.message);
+                    const palette = isCommission
+                      ? 'bg-sky-50 border-sky-200 text-sky-900 dark:bg-sky-950/30 dark:border-sky-800/60 dark:text-sky-100'
+                      : a.type === 'danger'
+                        ? 'bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-950/30 dark:border-rose-800/60 dark:text-rose-100'
+                        : 'bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/30 dark:border-amber-800/60 dark:text-amber-100';
+                    return (
                     <button
                       key={i}
                       onClick={() => a.route && navigate(a.route)}
-                      className={`w-full text-left text-xs font-medium px-2.5 py-2 rounded-md border transition-colors hover:opacity-80 ${
-                        a.type === 'danger'
-                          ? 'bg-rose-100 border-rose-300 text-rose-900 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-100'
-                          : 'bg-amber-100 border-amber-300 text-amber-900 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-100'
-                      }`}
+                      className={`w-full text-left text-xs font-medium px-2.5 py-2 rounded-md border transition-colors hover:opacity-80 ${palette}`}
                     >
                       {a.message}
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
