@@ -3239,7 +3239,7 @@ export default function NewSalePage() {
                                     )}
                                     <div className="relative cursor-zoom-in" onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(url); }} title="Clique para ampliar">
                                       <img src={url} alt="" className={`h-9 w-12 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} draggable={false} />
-                                      <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                                      <button type="button" onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity z-10">×</button>
                                     </div>
                                     {(itemImages[idx] || []).length > 1 && (
                                       <div className="flex gap-0.5">
@@ -3349,7 +3349,7 @@ export default function NewSalePage() {
                         )}
                         <div className="relative cursor-zoom-in" onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(url); }} title="Clique para ampliar">
                           <img src={url} alt="" className={`h-8 w-12 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} draggable={false} />
-                          <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">×</button>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] z-10">×</button>
                         </div>
                         {(itemImages[idx] || []).length > 1 && (
                           <div className="flex gap-0.5 mt-0.5">
