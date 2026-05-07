@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ColorModeProvider } from "@/contexts/ColorModeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HomeRedirect from "./components/HomeRedirect";
+import PermissionGuard from "./components/PermissionGuard";
 import Settings from "./pages/Settings";
 import AppearancePage from "./pages/AppearancePage";
 import ApiIntegrationsPage from "./pages/ApiIntegrationsPage";
@@ -114,7 +115,7 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><PermissionGuard permKey="dashboard_view"><Dashboard /></PermissionGuard></ProtectedRoute>} />
           <Route path="/" element={<ProtectedRoute><HomeRedirect /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/settings/appearance" element={<ProtectedRoute><AppearancePage /></ProtectedRoute>} />
@@ -168,7 +169,7 @@ const App = () => (
           <Route path="/product-images" element={<ProtectedRoute><ProductImagesPage /></ProtectedRoute>} />
 
           {/* Vistos routes */}
-          <Route path="/vistos/dashboard" element={<ProtectedRoute><VistosDashboard /></ProtectedRoute>} />
+          <Route path="/vistos/dashboard" element={<ProtectedRoute><PermissionGuard permKey="dashboard_view"><VistosDashboard /></PermissionGuard></ProtectedRoute>} />
           <Route path="/vistos/products" element={<ProtectedRoute><VistosProductsPage /></ProtectedRoute>} />
           <Route path="/vistos/sales" element={<ProtectedRoute><VistosSalesPage /></ProtectedRoute>} />
           <Route path="/vistos/sales/new" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
