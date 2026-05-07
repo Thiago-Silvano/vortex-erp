@@ -144,6 +144,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [hotel, setHotel] = useState<HotelInfo>(metadata.hotel || emptyHotel());
   const [searchingHotel, setSearchingHotel] = useState(false);
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(
     new Set((metadata.hotel?.images || []).map((_, i) => i))
   );
@@ -170,6 +171,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setHotel(metadata.hotel || emptyHotel());
       const existingImgs = metadata.hotel?.images || [];
       setHotelImages(existingImgs);
+      setPreviewImageUrl(null);
       setSelectedImageIndices(new Set(existingImgs.map((_, i) => i)));
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
@@ -725,16 +727,22 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     {hotelImages.map((img, idx) => (
                       <div
                         key={idx}
-                        className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all aspect-video ${
+                        className={`relative rounded-lg overflow-hidden border-2 transition-all aspect-video ${
                           selectedImageIndices.has(idx) ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-muted-foreground/30'
                         }`}
-                        onClick={() => toggleImageSelection(idx)}
                       >
-                        <img src={img} alt={`Hotel ${idx + 1}`} className="w-full h-full object-cover" />
+                        <button type="button" className="block h-full w-full cursor-zoom-in" onClick={() => setPreviewImageUrl(img)} title="Clique para ampliar">
+                          <img src={img} alt={`Hotel ${idx + 1}`} className="w-full h-full object-cover" />
+                        </button>
                         {selectedImageIndices.has(idx) && (
-                          <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center">
+                          <button type="button" onClick={() => toggleImageSelection(idx)} className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center">
                             <Check className="h-3 w-3" />
-                          </div>
+                          </button>
+                        )}
+                        {!selectedImageIndices.has(idx) && (
+                          <button type="button" onClick={() => toggleImageSelection(idx)} className="absolute top-1 right-1 bg-background/80 text-foreground rounded-full h-5 w-5 flex items-center justify-center border border-border">
+                            <Plus className="h-3 w-3" />
+                          </button>
                         )}
                       </div>
                     ))}
@@ -786,6 +794,14 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             </div>
           )}
         </div>
+
+        <Dialog open={!!previewImageUrl} onOpenChange={(v) => !v && setPreviewImageUrl(null)}>
+          <DialogContent className="max-w-4xl p-2">
+            {previewImageUrl && (
+              <img src={previewImageUrl} alt="Foto da hospedagem ampliada" className="w-full max-h-[85vh] object-contain rounded" />
+            )}
+          </DialogContent>
+        </Dialog>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>

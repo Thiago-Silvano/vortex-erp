@@ -16,7 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp, ZoomIn } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -214,6 +214,7 @@ export default function NewSalePage() {
   const [searchingItemImages, setSearchingItemImages] = useState<Record<number, boolean>>({});
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const itemImagePointerRef = useRef<{ itemIdx: number; imgIdx: number; startX: number; startY: number } | null>(null);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
     { method: 'pix', label: 'PIX / À Vista', installments: 1, discountPercent: 0, enabled: false },
     { method: 'credito_3x', label: 'Cartão 3x', installments: 3, discountPercent: 0, enabled: false },
@@ -1318,6 +1319,29 @@ export default function NewSalePage() {
       images.splice(insertAt, 0, moved);
       return { ...prev, [itemIdx]: images };
     });
+  };
+
+  const handleItemImagePointerDown = (itemIdx: number, imgIdx: number, e: React.PointerEvent<HTMLElement>) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    itemImagePointerRef.current = { itemIdx, imgIdx, startX: e.clientX, startY: e.clientY };
+  };
+
+  const handleItemImagePointerUp = (itemIdx: number, imgIdx: number, url: string, e: React.PointerEvent<HTMLElement>) => {
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    const pointer = itemImagePointerRef.current;
+    itemImagePointerRef.current = null;
+    if (!pointer || pointer.itemIdx !== itemIdx || pointer.imgIdx !== imgIdx) return;
+
+    const deltaX = e.clientX - pointer.startX;
+    const deltaY = e.clientY - pointer.startY;
+    if (Math.abs(deltaX) > 24 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      moveItemImage(itemIdx, imgIdx, deltaX < 0 ? 'right' : 'left');
+      return;
+    }
+
+    if (Math.hypot(deltaX, deltaY) <= 8) {
+      setPreviewImageUrl(url);
+    }
   };
 
   const loadVoucherImageBase64 = async (url?: string): Promise<string | undefined> => {
@@ -3229,17 +3253,22 @@ export default function NewSalePage() {
                                   <div
                                     key={imgIdx}
                                     className="relative group flex flex-col items-center flex-shrink-0"
-                                    draggable
-                                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(imgIdx)); }}
-                                    onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
-                                    onDrop={(e) => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'), 10); if (!isNaN(from)) reorderItemImage(idx, from, imgIdx); }}
                                   >
                                     {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
                                       <span className="text-[8px] font-semibold text-primary leading-none">CAPA</span>
                                     )}
-                                    <div className="relative cursor-zoom-in" onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(url); }} title="Clique para ampliar">
+                                    <div
+                                      role="button"
+                                      tabIndex={0}
+                                      className="relative cursor-zoom-in touch-pan-y select-none"
+                                      onPointerDown={(e) => handleItemImagePointerDown(idx, imgIdx, e)}
+                                      onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, url, e)}
+                                      onPointerCancel={() => { itemImagePointerRef.current = null; }}
+                                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewImageUrl(url); }}
+                                      title="Clique para ampliar"
+                                    >
                                       <img src={url} alt="" className={`h-9 w-12 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} draggable={false} />
-                                      <button type="button" onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity z-10">×</button>
+                                      <button type="button" onPointerDown={(e) => { e.stopPropagation(); itemImagePointerRef.current = null; }} onPointerUp={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity z-10">×</button>
                                     </div>
                                     {(itemImages[idx] || []).length > 1 && (
                                       <div className="flex gap-0.5">
@@ -3339,17 +3368,22 @@ export default function NewSalePage() {
                       <div
                         key={imgIdx}
                         className="relative group flex flex-col items-center"
-                        draggable
-                        onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(imgIdx)); }}
-                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
-                        onDrop={(e) => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'), 10); if (!isNaN(from)) reorderItemImage(idx, from, imgIdx); }}
                       >
                         {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
                           <span className="text-[9px] font-semibold text-primary mb-0.5">CAPA</span>
                         )}
-                        <div className="relative cursor-zoom-in" onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(url); }} title="Clique para ampliar">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          className="relative cursor-zoom-in touch-pan-y select-none"
+                          onPointerDown={(e) => handleItemImagePointerDown(idx, imgIdx, e)}
+                          onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, url, e)}
+                          onPointerCancel={() => { itemImagePointerRef.current = null; }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewImageUrl(url); }}
+                          title="Clique para ampliar"
+                        >
                           <img src={url} alt="" className={`h-8 w-12 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} draggable={false} />
-                          <button type="button" onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] z-10">×</button>
+                          <button type="button" onPointerDown={(e) => { e.stopPropagation(); itemImagePointerRef.current = null; }} onPointerUp={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] z-10">×</button>
                         </div>
                         {(itemImages[idx] || []).length > 1 && (
                           <div className="flex gap-0.5 mt-0.5">
