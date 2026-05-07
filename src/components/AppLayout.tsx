@@ -220,13 +220,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
-        <button
-          onClick={() => {
-            const target = activeCompany?.slug === "vortex-vistos" ? "/vistos/dashboard" : "/dashboard";
-            navigate(target);
-          }}
-          className="flex items-center gap-2 group text-sidebar-foreground"
-        >
+        <div className="flex items-center gap-2 group text-sidebar-foreground">
           <div className="w-7 h-7 rounded-md bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold text-sm shrink-0 shadow-sm">
             V
           </div>
@@ -240,7 +234,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
               </div>
             )}
           </div>
-        </button>
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-2">
