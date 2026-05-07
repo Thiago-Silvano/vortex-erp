@@ -1322,10 +1322,12 @@ export default function NewSalePage() {
   };
 
   const handleItemImagePointerDown = (itemIdx: number, imgIdx: number, e: React.PointerEvent<HTMLElement>) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
     itemImagePointerRef.current = { itemIdx, imgIdx, startX: e.clientX, startY: e.clientY };
   };
 
   const handleItemImagePointerUp = (itemIdx: number, imgIdx: number, url: string, e: React.PointerEvent<HTMLElement>) => {
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
     const pointer = itemImagePointerRef.current;
     itemImagePointerRef.current = null;
     if (!pointer || pointer.itemIdx !== itemIdx || pointer.imgIdx !== imgIdx) return;
