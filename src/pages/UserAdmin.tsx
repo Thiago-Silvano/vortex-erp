@@ -40,6 +40,7 @@ const ALL_PERMISSIONS = [
   { group: 'Vendas', keys: [{ key: 'sales_view', label: 'Visualizar' }, { key: 'sales_create', label: 'Criar' }, { key: 'sales_edit', label: 'Editar' }] },
   { group: 'Reservas', keys: [{ key: 'reservations_view', label: 'Visualizar' }, { key: 'reservations_create', label: 'Criar' }, { key: 'reservations_edit', label: 'Editar' }] },
   { group: 'Financeiro', keys: [{ key: 'financial_receivable', label: 'Contas a receber' }, { key: 'financial_payable', label: 'Contas a pagar' }, { key: 'financial_cashflow', label: 'Fluxo de caixa' }] },
+  { group: 'Dashboard', keys: [{ key: 'dashboard_view', label: 'Visualizar Dashboard' }] },
   { group: 'Relatórios', keys: [{ key: 'reports_dashboard', label: 'Dashboard' }, { key: 'reports_financial', label: 'Financeiro' }, { key: 'reports_sales', label: 'Vendas' }] },
   { group: 'Configurações', keys: [{ key: 'settings_access', label: 'Acesso permitido' }] },
 ];
