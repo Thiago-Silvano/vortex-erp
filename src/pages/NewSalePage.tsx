@@ -16,7 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp, ZoomIn } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -214,6 +214,7 @@ export default function NewSalePage() {
   const [searchingItemImages, setSearchingItemImages] = useState<Record<number, boolean>>({});
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const itemImagePointerRef = useRef<{ itemIdx: number; imgIdx: number; startX: number; startY: number } | null>(null);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
     { method: 'pix', label: 'PIX / À Vista', installments: 1, discountPercent: 0, enabled: false },
     { method: 'credito_3x', label: 'Cartão 3x', installments: 3, discountPercent: 0, enabled: false },
