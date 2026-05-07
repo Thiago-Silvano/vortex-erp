@@ -215,6 +215,7 @@ export default function NewSalePage() {
   const [googleApiKey, setGoogleApiKey] = useState('');
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const itemImagePointerRef = useRef<{ itemIdx: number; imgIdx: number; startX: number; startY: number } | null>(null);
+  const suppressItemImageClickRef = useRef(false);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
     { method: 'pix', label: 'PIX / À Vista', installments: 1, discountPercent: 0, enabled: false },
     { method: 'credito_3x', label: 'Cartão 3x', installments: 3, discountPercent: 0, enabled: false },
@@ -1322,12 +1323,15 @@ export default function NewSalePage() {
   };
 
   const handleItemImagePointerDown = (itemIdx: number, imgIdx: number, e: React.PointerEvent<HTMLElement>) => {
+    suppressItemImageClickRef.current = false;
     e.currentTarget.setPointerCapture?.(e.pointerId);
     itemImagePointerRef.current = { itemIdx, imgIdx, startX: e.clientX, startY: e.clientY };
   };
 
-  const handleItemImagePointerUp = (itemIdx: number, imgIdx: number, url: string, e: React.PointerEvent<HTMLElement>) => {
-    e.currentTarget.releasePointerCapture?.(e.pointerId);
+  const handleItemImagePointerUp = (itemIdx: number, imgIdx: number, e: React.PointerEvent<HTMLElement>) => {
+    if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+    }
     const pointer = itemImagePointerRef.current;
     itemImagePointerRef.current = null;
     if (!pointer || pointer.itemIdx !== itemIdx || pointer.imgIdx !== imgIdx) return;
@@ -1335,13 +1339,17 @@ export default function NewSalePage() {
     const deltaX = e.clientX - pointer.startX;
     const deltaY = e.clientY - pointer.startY;
     if (Math.abs(deltaX) > 24 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      suppressItemImageClickRef.current = true;
       moveItemImage(itemIdx, imgIdx, deltaX < 0 ? 'right' : 'left');
+    }
+  };
+
+  const handleItemImageClick = (url: string) => {
+    if (suppressItemImageClickRef.current) {
+      suppressItemImageClickRef.current = false;
       return;
     }
-
-    if (Math.hypot(deltaX, deltaY) <= 8) {
-      setPreviewImageUrl(url);
-    }
+    setPreviewImageUrl(url);
   };
 
   const loadVoucherImageBase64 = async (url?: string): Promise<string | undefined> => {
