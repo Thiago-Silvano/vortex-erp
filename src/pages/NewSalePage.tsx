@@ -2835,6 +2835,15 @@ export default function NewSalePage() {
               </DialogContent>
             </Dialog>
 
+            {/* Image Preview Dialog (zoom) */}
+            <Dialog open={!!previewImageUrl} onOpenChange={(v) => !v && setPreviewImageUrl(null)}>
+              <DialogContent className="max-w-4xl p-2">
+                {previewImageUrl && (
+                  <img src={previewImageUrl} alt="Preview" className="w-full max-h-[85vh] object-contain rounded" />
+                )}
+              </DialogContent>
+            </Dialog>
+
             {/* Stock Image Search Modal */}
             <ImageSearchModal
               open={stockImageSearchOpen}
