@@ -3251,18 +3251,21 @@ export default function NewSalePage() {
                                   <div
                                     key={imgIdx}
                                     className="relative group flex flex-col items-center flex-shrink-0"
-                                    draggable
-                                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(imgIdx)); }}
-                                    onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
-                                    onDrop={(e) => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'), 10); if (!isNaN(from)) reorderItemImage(idx, from, imgIdx); }}
                                   >
                                     {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
                                       <span className="text-[8px] font-semibold text-primary leading-none">CAPA</span>
                                     )}
-                                    <div className="relative cursor-zoom-in" onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(url); }} title="Clique para ampliar">
+                                    <button
+                                      type="button"
+                                      className="relative cursor-zoom-in touch-pan-y select-none"
+                                      onPointerDown={(e) => handleItemImagePointerDown(idx, imgIdx, e)}
+                                      onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, url, e)}
+                                      onPointerCancel={() => { itemImagePointerRef.current = null; }}
+                                      title="Clique para ampliar"
+                                    >
                                       <img src={url} alt="" className={`h-9 w-12 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} draggable={false} />
                                       <button type="button" onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity z-10">×</button>
-                                    </div>
+                                    </button>
                                     {(itemImages[idx] || []).length > 1 && (
                                       <div className="flex gap-0.5">
                                         <button type="button" disabled={imgIdx === 0} onClick={() => moveItemImage(idx, imgIdx, 'left')} className="text-[9px] text-muted-foreground hover:text-foreground disabled:opacity-30">◀</button>
