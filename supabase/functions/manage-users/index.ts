@@ -74,7 +74,19 @@ serve(async (req) => {
         const updates: any = {};
         if (password) updates.password = password;
         if (displayName !== undefined) updates.user_metadata = { display_name: displayName };
+        // Always auto-confirm email when admin updates a user (admin-created users
+        // shouldn't need email verification)
+        updates.email_confirm = true;
         const { error } = await adminClient.auth.admin.updateUserById(userId, updates);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "confirm_email": {
+        if (!userId) throw new Error("userId é obrigatório");
+        const { error } = await adminClient.auth.admin.updateUserById(userId, { email_confirm: true });
         if (error) throw error;
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
