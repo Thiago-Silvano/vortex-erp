@@ -1340,7 +1340,7 @@ export default function NewSalePage() {
     const deltaY = e.clientY - pointer.startY;
     if (Math.abs(deltaX) > 24 && Math.abs(deltaX) > Math.abs(deltaY)) {
       suppressItemImageClickRef.current = true;
-      moveItemImage(itemIdx, imgIdx, deltaX < 0 ? 'right' : 'left');
+      moveItemImage(itemIdx, imgIdx, deltaX > 0 ? 'right' : 'left');
       return;
     }
 
