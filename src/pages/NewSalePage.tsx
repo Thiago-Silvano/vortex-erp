@@ -4719,6 +4719,14 @@ export default function NewSalePage() {
           onClientCreated={(client) => { setClientName(client.full_name); fetchClients(); }}
         />
 
+        <Dialog open={!!previewImageUrl} onOpenChange={(v) => !v && setPreviewImageUrl(null)}>
+          <DialogContent className="max-w-5xl p-2">
+            {previewImageUrl && (
+              <img src={previewImageUrl} alt="Imagem ampliada" className="w-full max-h-[85vh] object-contain rounded" />
+            )}
+          </DialogContent>
+        </Dialog>
+
         {editingItemIdx !== null && (
           <ServiceEditModal
             open={editingItemIdx !== null}
