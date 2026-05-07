@@ -144,6 +144,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [hotel, setHotel] = useState<HotelInfo>(metadata.hotel || emptyHotel());
   const [searchingHotel, setSearchingHotel] = useState(false);
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(
     new Set((metadata.hotel?.images || []).map((_, i) => i))
   );
@@ -170,6 +171,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setHotel(metadata.hotel || emptyHotel());
       const existingImgs = metadata.hotel?.images || [];
       setHotelImages(existingImgs);
+      setPreviewImageUrl(null);
       setSelectedImageIndices(new Set(existingImgs.map((_, i) => i)));
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
