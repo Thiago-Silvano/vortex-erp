@@ -727,16 +727,22 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     {hotelImages.map((img, idx) => (
                       <div
                         key={idx}
-                        className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all aspect-video ${
+                        className={`relative rounded-lg overflow-hidden border-2 transition-all aspect-video ${
                           selectedImageIndices.has(idx) ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-muted-foreground/30'
                         }`}
-                        onClick={() => toggleImageSelection(idx)}
                       >
-                        <img src={img} alt={`Hotel ${idx + 1}`} className="w-full h-full object-cover" />
+                        <button type="button" className="block h-full w-full cursor-zoom-in" onClick={() => setPreviewImageUrl(img)} title="Clique para ampliar">
+                          <img src={img} alt={`Hotel ${idx + 1}`} className="w-full h-full object-cover" />
+                        </button>
                         {selectedImageIndices.has(idx) && (
-                          <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center">
+                          <button type="button" onClick={() => toggleImageSelection(idx)} className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center">
                             <Check className="h-3 w-3" />
-                          </div>
+                          </button>
+                        )}
+                        {!selectedImageIndices.has(idx) && (
+                          <button type="button" onClick={() => toggleImageSelection(idx)} className="absolute top-1 right-1 bg-background/80 text-foreground rounded-full h-5 w-5 flex items-center justify-center border border-border">
+                            <Plus className="h-3 w-3" />
+                          </button>
                         )}
                       </div>
                     ))}
