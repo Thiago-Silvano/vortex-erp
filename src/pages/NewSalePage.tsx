@@ -3270,12 +3270,13 @@ export default function NewSalePage() {
                                       tabIndex={0}
                                       className="relative cursor-zoom-in touch-pan-y select-none"
                                       onPointerDown={(e) => handleItemImagePointerDown(idx, imgIdx, e)}
-                                      onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, url, e)}
+                                        onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, e)}
                                       onPointerCancel={() => { itemImagePointerRef.current = null; }}
+                                        onClick={() => handleItemImageClick(url)}
                                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewImageUrl(url); }}
                                       title="Clique para ampliar"
                                     >
-                                      <img src={url} alt="" className={`h-9 w-12 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} draggable={false} />
+                                        <img src={url} alt="" className={`h-12 w-16 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} draggable={false} />
                                       <button type="button" onPointerDown={(e) => { e.stopPropagation(); itemImagePointerRef.current = null; }} onPointerUp={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity z-10">×</button>
                                     </div>
                                     {(itemImages[idx] || []).length > 1 && (
@@ -3385,12 +3386,13 @@ export default function NewSalePage() {
                           tabIndex={0}
                           className="relative cursor-zoom-in touch-pan-y select-none"
                           onPointerDown={(e) => handleItemImagePointerDown(idx, imgIdx, e)}
-                          onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, url, e)}
+                          onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, e)}
                           onPointerCancel={() => { itemImagePointerRef.current = null; }}
+                          onClick={() => handleItemImageClick(url)}
                           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewImageUrl(url); }}
                           title="Clique para ampliar"
                         >
-                          <img src={url} alt="" className={`h-8 w-12 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} draggable={false} />
+                          <img src={url} alt="" className={`h-12 w-16 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} draggable={false} />
                           <button type="button" onPointerDown={(e) => { e.stopPropagation(); itemImagePointerRef.current = null; }} onPointerUp={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] z-10">×</button>
                         </div>
                         {(itemImages[idx] || []).length > 1 && (
