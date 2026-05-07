@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -39,6 +39,12 @@ export default function FeeSimulatorPage() {
   const [institutionId, setInstitutionId] = useState<string>('');
   const [installments, setInstallments] = useState<number>(1);
   const [valueStr, setValueStr] = useState('');
+  const valueInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => valueInputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -109,21 +115,21 @@ export default function FeeSimulatorPage() {
 
         <Card>
           <CardHeader><CardTitle className="text-base">Parâmetros</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label>Método</Label>
+          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-5">
+            <div className="space-y-2">
+              <Label className="text-base">Método</Label>
               <Select value={method} onValueChange={(v: any) => setMethod(v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-12 text-base"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="maquininha">Maquininha</SelectItem>
                   <SelectItem value="link">Link</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Instituição</Label>
+            <div className="space-y-2">
+              <Label className="text-base">Instituição</Label>
               <Select value={institutionId} onValueChange={setInstitutionId}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger className="h-12 text-base"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {institutionsForMethod.length === 0 ? (
                     <SelectItem value="__none" disabled>Sem cadastros</SelectItem>
@@ -133,10 +139,10 @@ export default function FeeSimulatorPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Número de Parcelas</Label>
+            <div className="space-y-2">
+              <Label className="text-base">Número de Parcelas</Label>
               <Select value={String(installments)} onValueChange={v => setInstallments(parseInt(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-12 text-base"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {availableInstallments.length === 0 ? (
                     <SelectItem value="1" disabled>Sem taxas</SelectItem>
@@ -146,13 +152,16 @@ export default function FeeSimulatorPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Valor a parcelar</Label>
+            <div className="space-y-2">
+              <Label className="text-base">Valor a parcelar</Label>
               <Input
+                ref={valueInputRef}
+                autoFocus
                 inputMode="numeric"
                 placeholder="R$ 0,00"
                 value={valueStr}
                 onChange={e => setValueStr(maskBRL(e.target.value))}
+                className="h-12 text-base"
               />
             </div>
           </CardContent>
@@ -181,14 +190,6 @@ export default function FeeSimulatorPage() {
                 <Box label="Líquido recebido" value={fmtBRL(netReceived)} />
               </div>
             )}
-
-            <div className="mt-6 text-xs text-muted-foreground space-y-1 border-t pt-4">
-              <p className="font-medium text-foreground">Como o cálculo é feito:</p>
-              <p>1) 100 − taxa do banco = <strong>{step1.toFixed(2)}</strong></p>
-              <p>2) 100 ÷ resultado = <strong>{step2.toFixed(2)}</strong></p>
-              <p>3) resultado − 1 = <strong>{step3.toFixed(2)}</strong></p>
-              <p>4) × 100 = <strong>{maxFeePct.toFixed(2)} %</strong> → taxa maximizada aplicada sobre o valor.</p>
-            </div>
           </CardContent>
         </Card>
       </div>
