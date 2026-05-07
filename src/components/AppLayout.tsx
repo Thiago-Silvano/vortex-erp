@@ -129,6 +129,9 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
     ];
   }
   return [
+    { label: "Dashboard", icon: <BarChart3 className="h-4 w-4" />, url: "/dashboard", items: [
+      { title: "Dashboard", url: "/dashboard" },
+    ]},
     { label: "Cadastros", icon: <Users className="h-4 w-4" />, items: [
       { title: "Clientes", url: "/clients", permKey: "clients_view" },
       { title: "Fornecedores", url: "/suppliers", permKey: "suppliers_view" },
