@@ -1321,6 +1321,27 @@ export default function NewSalePage() {
     });
   };
 
+  const handleItemImagePointerDown = (itemIdx: number, imgIdx: number, e: React.PointerEvent<HTMLButtonElement>) => {
+    itemImagePointerRef.current = { itemIdx, imgIdx, startX: e.clientX, startY: e.clientY };
+  };
+
+  const handleItemImagePointerUp = (itemIdx: number, imgIdx: number, url: string, e: React.PointerEvent<HTMLButtonElement>) => {
+    const pointer = itemImagePointerRef.current;
+    itemImagePointerRef.current = null;
+    if (!pointer || pointer.itemIdx !== itemIdx || pointer.imgIdx !== imgIdx) return;
+
+    const deltaX = e.clientX - pointer.startX;
+    const deltaY = e.clientY - pointer.startY;
+    if (Math.abs(deltaX) > 24 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      moveItemImage(itemIdx, imgIdx, deltaX < 0 ? 'right' : 'left');
+      return;
+    }
+
+    if (Math.hypot(deltaX, deltaY) <= 8) {
+      setPreviewImageUrl(url);
+    }
+  };
+
   const loadVoucherImageBase64 = async (url?: string): Promise<string | undefined> => {
     if (!url) return undefined;
     const absoluteUrl = new URL(url, window.location.origin).href;
