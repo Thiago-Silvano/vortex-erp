@@ -1308,6 +1308,18 @@ export default function NewSalePage() {
     });
   };
 
+  const reorderItemImage = (itemIdx: number, fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    setItemImages(prev => {
+      const images = [...(prev[itemIdx] || [])];
+      if (fromIdx < 0 || fromIdx >= images.length) return prev;
+      const [moved] = images.splice(fromIdx, 1);
+      const insertAt = Math.max(0, Math.min(images.length, toIdx));
+      images.splice(insertAt, 0, moved);
+      return { ...prev, [itemIdx]: images };
+    });
+  };
+
   const loadVoucherImageBase64 = async (url?: string): Promise<string | undefined> => {
     if (!url) return undefined;
     const absoluteUrl = new URL(url, window.location.origin).href;
