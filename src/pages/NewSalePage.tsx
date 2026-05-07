@@ -1328,7 +1328,7 @@ export default function NewSalePage() {
     itemImagePointerRef.current = { itemIdx, imgIdx, startX: e.clientX, startY: e.clientY };
   };
 
-  const handleItemImagePointerUp = (itemIdx: number, imgIdx: number, e: React.PointerEvent<HTMLElement>) => {
+  const handleItemImagePointerUp = (itemIdx: number, imgIdx: number, e: React.PointerEvent<HTMLElement>, url: string) => {
     if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
       e.currentTarget.releasePointerCapture?.(e.pointerId);
     }
@@ -1341,7 +1341,10 @@ export default function NewSalePage() {
     if (Math.abs(deltaX) > 24 && Math.abs(deltaX) > Math.abs(deltaY)) {
       suppressItemImageClickRef.current = true;
       moveItemImage(itemIdx, imgIdx, deltaX < 0 ? 'right' : 'left');
+      return;
     }
+
+    setPreviewImageUrl(url);
   };
 
   const handleItemImageClick = (url: string) => {
