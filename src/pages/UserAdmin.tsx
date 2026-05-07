@@ -275,6 +275,9 @@ export default function UserAdmin() {
             <div>
               <Label>Nova senha (deixe vazio para não alterar)</Label>
               <Input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="••••••" minLength={6} />
+              <p className="text-xs text-muted-foreground mt-1">
+                A senha deve ter no mínimo 6 caracteres. Recomendamos combinar letras, números e símbolos.
+              </p>
             </div>
             <Button onClick={handleSaveEdit} disabled={saving} className="w-full">
               {saving ? 'Salvando...' : 'Salvar Alterações'}
