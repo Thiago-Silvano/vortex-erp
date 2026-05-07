@@ -2870,15 +2870,6 @@ export default function NewSalePage() {
               </DialogContent>
             </Dialog>
 
-            {/* Image Preview Dialog (zoom) */}
-            <Dialog open={!!previewImageUrl} onOpenChange={(v) => !v && setPreviewImageUrl(null)}>
-              <DialogContent className="max-w-4xl p-2">
-                {previewImageUrl && (
-                  <img src={previewImageUrl} alt="Preview" className="w-full max-h-[85vh] object-contain rounded" />
-                )}
-              </DialogContent>
-            </Dialog>
-
             {/* Stock Image Search Modal */}
             <ImageSearchModal
               open={stockImageSearchOpen}
@@ -3273,7 +3264,7 @@ export default function NewSalePage() {
                                       tabIndex={0}
                                       className="relative cursor-zoom-in touch-pan-y select-none"
                                       onPointerDown={(e) => handleItemImagePointerDown(idx, imgIdx, e)}
-                                        onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, e)}
+                                        onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, e, url)}
                                       onPointerCancel={() => { itemImagePointerRef.current = null; }}
                                         onClick={() => handleItemImageClick(url)}
                                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewImageUrl(url); }}
@@ -3389,7 +3380,7 @@ export default function NewSalePage() {
                           tabIndex={0}
                           className="relative cursor-zoom-in touch-pan-y select-none"
                           onPointerDown={(e) => handleItemImagePointerDown(idx, imgIdx, e)}
-                          onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, e)}
+                          onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, e, url)}
                           onPointerCancel={() => { itemImagePointerRef.current = null; }}
                           onClick={() => handleItemImageClick(url)}
                           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewImageUrl(url); }}
