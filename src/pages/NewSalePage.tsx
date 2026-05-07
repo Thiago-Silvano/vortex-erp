@@ -3217,12 +3217,22 @@ export default function NewSalePage() {
                             {(itemImages[idx] || []).length > 0 && (
                               <div className="flex items-center gap-1.5 overflow-x-auto flex-1 min-w-0 py-0.5">
                                 {(itemImages[idx] || []).map((url, imgIdx) => (
-                                  <div key={imgIdx} className="relative group flex flex-col items-center flex-shrink-0">
+                                  <div
+                                    key={imgIdx}
+                                    className="relative group flex flex-col items-center flex-shrink-0"
+                                    draggable
+                                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(imgIdx)); }}
+                                    onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                                    onDrop={(e) => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'), 10); if (!isNaN(from)) reorderItemImage(idx, from, imgIdx); }}
+                                  >
                                     {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
                                       <span className="text-[8px] font-semibold text-primary leading-none">CAPA</span>
                                     )}
-                                    <div className="relative">
-                                      <img src={url} alt="" className={`h-9 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} />
+                                    <div className="relative cursor-grab active:cursor-grabbing">
+                                      <img src={url} alt="" className={`h-9 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} draggable={false} />
+                                      <button type="button" onClick={() => setPreviewImageUrl(url)} title="Ampliar" className="absolute -top-1 -left-1 bg-background border rounded-full h-3.5 w-3.5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <ZoomIn className="h-2.5 w-2.5" />
+                                      </button>
                                       <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
                                     </div>
                                     {(itemImages[idx] || []).length > 1 && (
@@ -3320,12 +3330,22 @@ export default function NewSalePage() {
                       </Button>
                     )}
                     {(itemImages[idx] || []).map((url, imgIdx) => (
-                      <div key={imgIdx} className="relative group flex flex-col items-center">
+                      <div
+                        key={imgIdx}
+                        className="relative group flex flex-col items-center"
+                        draggable
+                        onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(imgIdx)); }}
+                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                        onDrop={(e) => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'), 10); if (!isNaN(from)) reorderItemImage(idx, from, imgIdx); }}
+                      >
                         {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
                           <span className="text-[9px] font-semibold text-primary mb-0.5">CAPA</span>
                         )}
-                        <div className="relative">
-                          <img src={url} alt="" className={`h-8 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} />
+                        <div className="relative cursor-grab active:cursor-grabbing">
+                          <img src={url} alt="" className={`h-8 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} draggable={false} />
+                          <button type="button" onClick={() => setPreviewImageUrl(url)} title="Ampliar" className="absolute -top-1 -left-1 bg-background border rounded-full h-4 w-4 flex items-center justify-center">
+                            <ZoomIn className="h-2.5 w-2.5" />
+                          </button>
                           <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">×</button>
                         </div>
                         {(itemImages[idx] || []).length > 1 && (
