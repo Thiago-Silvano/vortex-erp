@@ -795,6 +795,14 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           )}
         </div>
 
+        <Dialog open={!!previewImageUrl} onOpenChange={(v) => !v && setPreviewImageUrl(null)}>
+          <DialogContent className="max-w-4xl p-2">
+            {previewImageUrl && (
+              <img src={previewImageUrl} alt="Foto da hospedagem ampliada" className="w-full max-h-[85vh] object-contain rounded" />
+            )}
+          </DialogContent>
+        </Dialog>
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSave}>Salvar Detalhes</Button>
