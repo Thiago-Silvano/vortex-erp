@@ -16,7 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp, ZoomIn } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -213,6 +213,7 @@ export default function NewSalePage() {
   const [savingSale, setSavingSale] = useState(false);
   const [searchingItemImages, setSearchingItemImages] = useState<Record<number, boolean>>({});
   const [googleApiKey, setGoogleApiKey] = useState('');
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [proposalPaymentOptions, setProposalPaymentOptions] = useState<ProposalPaymentOption[]>([
     { method: 'pix', label: 'PIX / À Vista', installments: 1, discountPercent: 0, enabled: false },
     { method: 'credito_3x', label: 'Cartão 3x', installments: 3, discountPercent: 0, enabled: false },
@@ -1303,6 +1304,18 @@ export default function NewSalePage() {
       const targetIdx = direction === 'left' ? imgIdx - 1 : imgIdx + 1;
       if (targetIdx < 0 || targetIdx >= images.length) return prev;
       [images[imgIdx], images[targetIdx]] = [images[targetIdx], images[imgIdx]];
+      return { ...prev, [itemIdx]: images };
+    });
+  };
+
+  const reorderItemImage = (itemIdx: number, fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    setItemImages(prev => {
+      const images = [...(prev[itemIdx] || [])];
+      if (fromIdx < 0 || fromIdx >= images.length) return prev;
+      const [moved] = images.splice(fromIdx, 1);
+      const insertAt = Math.max(0, Math.min(images.length, toIdx));
+      images.splice(insertAt, 0, moved);
       return { ...prev, [itemIdx]: images };
     });
   };
@@ -2822,6 +2835,15 @@ export default function NewSalePage() {
               </DialogContent>
             </Dialog>
 
+            {/* Image Preview Dialog (zoom) */}
+            <Dialog open={!!previewImageUrl} onOpenChange={(v) => !v && setPreviewImageUrl(null)}>
+              <DialogContent className="max-w-4xl p-2">
+                {previewImageUrl && (
+                  <img src={previewImageUrl} alt="Preview" className="w-full max-h-[85vh] object-contain rounded" />
+                )}
+              </DialogContent>
+            </Dialog>
+
             {/* Stock Image Search Modal */}
             <ImageSearchModal
               open={stockImageSearchOpen}
@@ -3204,12 +3226,22 @@ export default function NewSalePage() {
                             {(itemImages[idx] || []).length > 0 && (
                               <div className="flex items-center gap-1.5 overflow-x-auto flex-1 min-w-0 py-0.5">
                                 {(itemImages[idx] || []).map((url, imgIdx) => (
-                                  <div key={imgIdx} className="relative group flex flex-col items-center flex-shrink-0">
+                                  <div
+                                    key={imgIdx}
+                                    className="relative group flex flex-col items-center flex-shrink-0"
+                                    draggable
+                                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(imgIdx)); }}
+                                    onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                                    onDrop={(e) => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'), 10); if (!isNaN(from)) reorderItemImage(idx, from, imgIdx); }}
+                                  >
                                     {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
                                       <span className="text-[8px] font-semibold text-primary leading-none">CAPA</span>
                                     )}
-                                    <div className="relative">
-                                      <img src={url} alt="" className={`h-9 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} />
+                                    <div className="relative cursor-grab active:cursor-grabbing">
+                                      <img src={url} alt="" className={`h-9 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} draggable={false} />
+                                      <button type="button" onClick={() => setPreviewImageUrl(url)} title="Ampliar" className="absolute -top-1 -left-1 bg-background border rounded-full h-3.5 w-3.5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <ZoomIn className="h-2.5 w-2.5" />
+                                      </button>
                                       <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
                                     </div>
                                     {(itemImages[idx] || []).length > 1 && (
@@ -3307,12 +3339,22 @@ export default function NewSalePage() {
                       </Button>
                     )}
                     {(itemImages[idx] || []).map((url, imgIdx) => (
-                      <div key={imgIdx} className="relative group flex flex-col items-center">
+                      <div
+                        key={imgIdx}
+                        className="relative group flex flex-col items-center"
+                        draggable
+                        onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(imgIdx)); }}
+                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                        onDrop={(e) => { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'), 10); if (!isNaN(from)) reorderItemImage(idx, from, imgIdx); }}
+                      >
                         {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
                           <span className="text-[9px] font-semibold text-primary mb-0.5">CAPA</span>
                         )}
-                        <div className="relative">
-                          <img src={url} alt="" className={`h-8 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} />
+                        <div className="relative cursor-grab active:cursor-grabbing">
+                          <img src={url} alt="" className={`h-8 w-12 object-cover rounded border ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} draggable={false} />
+                          <button type="button" onClick={() => setPreviewImageUrl(url)} title="Ampliar" className="absolute -top-1 -left-1 bg-background border rounded-full h-4 w-4 flex items-center justify-center">
+                            <ZoomIn className="h-2.5 w-2.5" />
+                          </button>
                           <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">×</button>
                         </div>
                         {(itemImages[idx] || []).length > 1 && (
