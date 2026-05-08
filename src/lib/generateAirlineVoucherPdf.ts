@@ -52,7 +52,12 @@ export interface AirlineVoucherData {
   localizador?: string; // reservation code from airline
   passengers: AirlineVoucherPassenger[];
   flightLegs: AirlineVoucherLeg[];
-  flightGroups?: Array<{ title: string; totalValue?: number; legs: AirlineVoucherLeg[] }>;
+  flightGroups?: Array<{
+    title: string;
+    totalValue?: number;
+    legs: AirlineVoucherLeg[];
+    baggage?: { personalItem: number; carryOn: number; checkedBag: number };
+  }>;
   clientName?: string;
   notes?: string;
   additionalServices?: AdditionalAirService[];
