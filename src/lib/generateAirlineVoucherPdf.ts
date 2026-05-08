@@ -325,6 +325,7 @@ function drawFlightSection(
   m: number,
   pw: number,
   cw: number,
+  suffix: string = "",
 ): number {
   const connections = countConnections(legs);
   const firstDate = legs[0]?.departureDate;
@@ -347,7 +348,7 @@ function drawFlightSection(
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
   const dirIcon = label === "IDA" ? ">" : "<";
   const dirLabel = label === "IDA" ? "IDA" : "VOLTA";
-  doc.text(`${dirIcon}  ${dirLabel}`, m + 7, y + 6.5);
+  doc.text(`${dirIcon}  ${dirLabel}${suffix}`, m + 7, y + 6.5);
 
   // Date + time center (bold)
   if (firstDate) {
