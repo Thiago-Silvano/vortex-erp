@@ -152,17 +152,43 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
   y = headerH + 8;
 
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
+  // Rule: max 18 legs per page. Chunk both IDA and VOLTA accordingly.
+  const MAX_LEGS_PER_PAGE = 18;
   const outbound = data.flightLegs.filter((l) => l.direction !== "volta");
   const returnLegs = data.flightLegs.filter((l) => l.direction === "volta");
 
+  const chunk = <T,>(arr: T[], size: number): T[][] => {
+    const out: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  };
+
+  const renderChunked = (label: "IDA" | "VOLTA", legs: AirlineVoucherLeg[]) => {
+    const chunks = chunk(legs, MAX_LEGS_PER_PAGE);
+    chunks.forEach((part, idx) => {
+      if (idx > 0) {
+        doc.addPage();
+        y = 15;
+      }
+      const partLabel = chunks.length > 1 ? (`${label} (${idx + 1}/${chunks.length})` as any) : label;
+      y = drawFlightSection(doc, partLabel, part, y, m, pw, cw);
+      y += 4;
+    });
+  };
+
   if (outbound.length > 0) {
-    y = drawFlightSection(doc, "IDA", outbound, y, m, pw, cw);
-    y += 4;
+    renderChunked("IDA", outbound);
   }
   if (returnLegs.length > 0) {
-    y = checkPage(doc, y, 50);
-    y = drawFlightSection(doc, "VOLTA", returnLegs, y, m, pw, cw);
-    y += 6;
+    // Force VOLTA to start on a new page if IDA filled a page
+    if (outbound.length >= MAX_LEGS_PER_PAGE) {
+      doc.addPage();
+      y = 15;
+    } else {
+      y = checkPage(doc, y, 50);
+    }
+    renderChunked("VOLTA", returnLegs);
+    y += 2;
   }
 
   // ─── PASSENGERS ───────────────────────────────────────────
