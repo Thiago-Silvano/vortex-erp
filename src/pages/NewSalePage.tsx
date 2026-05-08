@@ -3059,7 +3059,7 @@ export default function NewSalePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10" />
-                    {isQuoteMode && quoteOptions.length > 1 && <TableHead className="min-w-[130px]">Opção</TableHead>}
+                    {isQuoteMode && <TableHead className="min-w-[130px]">Opção</TableHead>}
                     <TableHead className="min-w-[120px]">Serviço</TableHead>
                     <TableHead className="min-w-[100px]">Descrição</TableHead>
                     <TableHead className="w-24 text-right">Custo</TableHead>
@@ -3093,7 +3093,7 @@ export default function NewSalePage() {
                             </Button>
                           </div>
                         </TableCell>
-                        {isQuoteMode && quoteOptions.length > 1 && (
+                        {isQuoteMode && (
                           <TableCell className="px-1">
                             <Popover>
                               <PopoverTrigger asChild>
