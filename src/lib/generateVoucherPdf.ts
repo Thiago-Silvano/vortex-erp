@@ -944,8 +944,9 @@ function drawReservations(doc: jsPDF, reservations: ReservationVoucher[], y: num
 }
 
 // ─── Main Generator ─────────────────────────────────────────
-export function generateVoucherPdf(data: VoucherPdfData) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+export function generateVoucherPdf(data: VoucherPdfData, existingDoc?: jsPDF) {
+  const doc = existingDoc ?? new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  if (existingDoc) doc.addPage();
   const pw = doc.internal.pageSize.getWidth();
   const m = 15;
   const cw = pw - m * 2;
