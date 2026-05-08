@@ -202,11 +202,16 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { pdfBase64, serviceCatalog } = await req.json();
-    if (!pdfBase64) throw new Error("No PDF data provided");
+    const { pdfBase64, serviceCatalog, mimeType } = await req.json();
+    if (!pdfBase64) throw new Error("No document data provided");
+
+    const docMime: string = (mimeType && typeof mimeType === "string") ? mimeType : "application/pdf";
+    const isPdf = docMime === "application/pdf";
 
     const catalogList = (serviceCatalog || []).map((s: any) => s.name).join(", ");
-    const nativeExtraction = await extractPdfText(pdfBase64);
+    const nativeExtraction = isPdf
+      ? await extractPdfText(pdfBase64)
+      : { text: "", pageCount: 0 };
 
     const systemPrompt = `You are a travel agency document analyzer. You receive PDFs from travel suppliers (airlines, hotels, car rentals, insurance, tour operators, etc.) and extract structured service information.
 
@@ -248,8 +253,10 @@ Prices should be numbers without currency symbols.
 Always try your best to extract every service found.`;
 
     const extractedTextBlock = nativeExtraction.text
-      ? `The following text was extracted from the complete PDF (${nativeExtraction.pageCount || "multiple"} page(s)). Use it together with the PDF itself to make sure you capture all pages, quote options, payment terms and general notes.\n\nPDF FULL TEXT START\n${nativeExtraction.text}\nPDF FULL TEXT END`
-      : `Native text extraction was limited. Rely on the PDF visual content and still analyze all ${nativeExtraction.pageCount || "multiple"} page(s).`;
+      ? `The following text was extracted from the complete PDF (${nativeExtraction.pageCount || "multiple"} page(s)). Use it together with the document itself to make sure you capture all pages, quote options, payment terms and general notes.\n\nPDF FULL TEXT START\n${nativeExtraction.text}\nPDF FULL TEXT END`
+      : isPdf
+        ? `Native text extraction was limited. Rely on the PDF visual content and still analyze all ${nativeExtraction.pageCount || "multiple"} page(s).`
+        : `The user provided an IMAGE (screenshot) of a travel quote/itinerary instead of a PDF. Read every visible piece of text in the image, including small print, prices, dates, airport codes, flight numbers and supplier names.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -269,12 +276,12 @@ Always try your best to extract every service found.`;
             content: [
               {
                 type: "text",
-                text: `Analyze this COMPLETE supplier PDF. ${extractedTextBlock}`,
+                text: `Analyze this COMPLETE supplier ${isPdf ? "PDF" : "image"}. ${extractedTextBlock}`,
               },
               {
                 type: "image_url",
                 image_url: {
-                  url: `data:application/pdf;base64,${pdfBase64}`,
+                  url: `data:${docMime};base64,${pdfBase64}`,
                 },
               },
             ],
