@@ -168,7 +168,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
           continue;
         }
         const slice = legs.slice(i, i + remaining);
-        y = drawFlightSection(doc, label, slice, y, m, pw, cw, "", group.totalValue && i === 0 && label === "IDA" ? group.totalValue : undefined);
+        y = drawFlightSection(doc, label, slice, y, m, pw, cw, "", group.totalValue && i === 0 && label === "IDA" ? group.totalValue : undefined, group.localizador);
         legsOnCurrentPage += slice.length;
         i += slice.length;
         y += 4;
