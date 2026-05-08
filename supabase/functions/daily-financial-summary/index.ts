@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             empresa_id: SENDER_EMPRESA_ID,
-            phone: `${num}@c.us`,
+            phone: num,
             message,
           }),
           signal: AbortSignal.timeout(20000),
