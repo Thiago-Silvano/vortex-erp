@@ -57,6 +57,7 @@ export interface AirlineVoucherData {
     totalValue?: number;
     legs: AirlineVoucherLeg[];
     baggage?: { personalItem: number; carryOn: number; checkedBag: number };
+    localizador?: string;
   }>;
   clientName?: string;
   notes?: string;
