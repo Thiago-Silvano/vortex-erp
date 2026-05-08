@@ -127,7 +127,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
 
   const groups = (data.flightGroups && data.flightGroups.length > 0)
     ? data.flightGroups
-    : [{ title: "", totalValue: undefined as number | undefined, legs: data.flightLegs }];
+    : [{ title: "", totalValue: undefined as number | undefined, legs: data.flightLegs, localizador: data.localizador }];
 
   groups.forEach((group, gIdx) => {
     const outbound = group.legs.filter((l) => l.direction !== "volta");
