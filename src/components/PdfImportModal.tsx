@@ -343,8 +343,20 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
         metadata.totalTravelDurationReturn = s.total_travel_duration_return || '';
       }
 
+      let finalDescription = s.description;
+      if (detectedType === 'aereo' && s.flight_legs?.length) {
+        const idaLegs = s.flight_legs.filter(l => l.direction === 'ida');
+        const legsForRoute = idaLegs.length ? idaLegs : s.flight_legs;
+        const first = legsForRoute[0];
+        const last = legsForRoute[legsForRoute.length - 1];
+        if (first && last) {
+          finalDescription = `${first.origin} para ${last.destination}`;
+        }
+        metadata.detailedDescription = '';
+      }
+
       return {
-        description: s.description,
+        description: finalDescription,
         cost_price: cost,
         rav,
         total_value: cost + rav,
