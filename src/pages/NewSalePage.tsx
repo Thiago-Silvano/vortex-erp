@@ -2352,7 +2352,19 @@ export default function NewSalePage() {
       const route = firstLeg ? `${firstLeg.origin || ''} → ${lastLeg?.destination || ''}` : '';
       const baseTitle = airItem.description || `Voo ${idx + 1}`;
       const title = route ? `${baseTitle} • ${route}` : baseTitle;
-      return { title, totalValue: airItem.total_value, legs };
+      const bag = (airItem.metadata as any)?.baggage;
+      return {
+        title,
+        totalValue: airItem.total_value,
+        legs,
+        baggage: bag
+          ? {
+              personalItem: bag.personalItem ?? 0,
+              carryOn: bag.carryOn ?? 0,
+              checkedBag: bag.checkedBag ?? 0,
+            }
+          : undefined,
+      };
     });
 
     const airVoucherData: AirlineVoucherData = {
