@@ -4521,8 +4521,8 @@ export default function NewSalePage() {
             )}
             {saleStatus === 'active' ? (
               <>
-                <Button variant="outline" onClick={handleExportServicesVoucher}><Download className="h-4 w-4 mr-1" /> Voucher Serviços</Button>
-                <Button variant="outline" onClick={handleExportAirlineVoucher}><Plane className="h-4 w-4 mr-1" /> Voucher Aéreo</Button>
+                <Button variant="outline" onClick={() => handleExportServicesVoucher()}><Download className="h-4 w-4 mr-1" /> Voucher Serviços</Button>
+                <Button variant="outline" onClick={() => handleExportAirlineVoucher()}><Plane className="h-4 w-4 mr-1" /> Voucher Aéreo</Button>
               </>
             ) : (
               <Button
