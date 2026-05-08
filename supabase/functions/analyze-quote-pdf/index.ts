@@ -231,6 +231,7 @@ IMPORTANT RULES FOR FLIGHTS / AIR TICKETS:
 - Group ALL flight segments (legs) into a SINGLE service item with service_type "Passagem aérea" (or best match from catalog).
 - Extract EACH flight leg/segment separately in the flight_legs array.
 - For each leg include: origin, destination, departure_date (YYYY-MM-DD), departure_time (HH:MM), arrival_date (YYYY-MM-DD), arrival_time (HH:MM), airline, flight_number, direction (ida or volta).
+- For origin and destination of each leg, ALWAYS use the format "City Name (IATA)" — example: "São Paulo (GRU)", "Lisboa (LIS)". Never return only the IATA code or only the city.
 - Calculate connection_duration between consecutive legs of the same direction.
 - Calculate total_travel_duration for each direction.
 - The description should summarize the full itinerary.
