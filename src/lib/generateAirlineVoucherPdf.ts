@@ -320,6 +320,7 @@ function drawFlightSection(
   pw: number,
   cw: number,
   suffix: string = "",
+  totalValue?: number,
 ): number {
   const connections = countConnections(legs);
   const firstDate = legs[0]?.departureDate;
@@ -354,16 +355,27 @@ function drawFlightSection(
   }
 
   // Connections count (right)
+  // Total value (left of right edge), white, same size as IDA label (9pt bold)
+  let rightAnchor = m + cw - 5;
+  if (typeof totalValue === "number" && totalValue > 0) {
+    const valueStr = totalValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    doc.text(s(valueStr), rightAnchor, y + 6.5, { align: "right" });
+    rightAnchor -= doc.getTextWidth(valueStr) + 8;
+  }
+
   if (connections > 0) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
-    doc.text(`${connections} Escala${connections > 1 ? "s" : ""}`, m + cw - 5, y + 6.5, { align: "right" });
+    doc.text(`${connections} Escala${connections > 1 ? "s" : ""}`, rightAnchor, y + 6.5, { align: "right" });
   } else {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
-    doc.text("Direto", m + cw - 5, y + 6.5, { align: "right" });
+    doc.text("Direto", rightAnchor, y + 6.5, { align: "right" });
   }
 
   y += barH + 3;
