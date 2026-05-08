@@ -468,25 +468,39 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
   ].filter((group) => group.legs.length > 0);
   const pages: FlightPage[] = [];
   let currentPage: FlightPage = { groups: [], legsCount: 0 };
-  const maxLegsPerPage = 6;
+  const maxLegsPerPage = 18;
   const pushCurrentPage = () => {
     if (currentPage.legsCount > 0) pages.push(currentPage);
     currentPage = { groups: [], legsCount: 0 };
   };
 
   sourceGroups.forEach((group) => {
-    for (let start = 0; start < group.legs.length;) {
-      if (currentPage.legsCount >= maxLegsPerPage) pushCurrentPage();
+    // Keep entire group together when possible: if it fits in a fresh page, push it whole.
+    // Only split a group if it exceeds maxLegsPerPage by itself.
+    if (group.legs.length <= maxLegsPerPage) {
       const availableSlots = maxLegsPerPage - currentPage.legsCount;
-      const take = Math.min(availableSlots, group.legs.length - start);
+      if (group.legs.length > availableSlots) pushCurrentPage();
       currentPage.groups.push({
-        label: start === 0 ? group.label : `${group.label} (cont.)`,
-        legs: group.legs.slice(start, start + take),
-        startIndex: start,
+        label: group.label,
+        legs: group.legs,
+        startIndex: 0,
         allLegs: group.legs,
       });
-      currentPage.legsCount += take;
-      start += take;
+      currentPage.legsCount += group.legs.length;
+    } else {
+      for (let start = 0; start < group.legs.length;) {
+        if (currentPage.legsCount >= maxLegsPerPage) pushCurrentPage();
+        const availableSlots = maxLegsPerPage - currentPage.legsCount;
+        const take = Math.min(availableSlots, group.legs.length - start);
+        currentPage.groups.push({
+          label: start === 0 ? group.label : `${group.label} (cont.)`,
+          legs: group.legs.slice(start, start + take),
+          startIndex: start,
+          allLegs: group.legs,
+        });
+        currentPage.legsCount += take;
+        start += take;
+      }
     }
   });
   pushCurrentPage();
@@ -525,7 +539,7 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
     const idealCardH = page.legsCount > 0 ? (availableH - fixedH) / page.legsCount : baseCardH;
     let scale = Math.min(1.18, idealCardH / baseCardH);
     if (!Number.isFinite(scale) || scale <= 0) scale = 1;
-    scale = Math.max(0.4, scale);
+    scale = Math.max(0.22, scale);
 
     page.groups.forEach((group) => {
       y = drawSubTitle(doc, pw, y, group.label);

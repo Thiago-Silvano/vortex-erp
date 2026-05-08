@@ -3059,7 +3059,7 @@ export default function NewSalePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10" />
-                    {isQuoteMode && quoteOptions.length > 1 && <TableHead className="min-w-[130px]">Opção</TableHead>}
+                    {isQuoteMode && <TableHead className="min-w-[130px]">Opção</TableHead>}
                     <TableHead className="min-w-[120px]">Serviço</TableHead>
                     <TableHead className="min-w-[100px]">Descrição</TableHead>
                     <TableHead className="w-24 text-right">Custo</TableHead>
@@ -3093,7 +3093,7 @@ export default function NewSalePage() {
                             </Button>
                           </div>
                         </TableCell>
-                        {isQuoteMode && quoteOptions.length > 1 && (
+                        {isQuoteMode && (
                           <TableCell className="px-1">
                             <Popover>
                               <PopoverTrigger asChild>
@@ -3195,7 +3195,7 @@ export default function NewSalePage() {
                       </TableRow>
                       {/* Second row: reservation + images */}
                       <TableRow className="border-b-2">
-                        <TableCell colSpan={isQuoteMode && quoteOptions.length > 1 ? 8 : 7} className="py-1.5 px-2">
+                        <TableCell colSpan={isQuoteMode ? 8 : 7} className="py-1.5 px-2">
                           <div className="flex items-center gap-2">
                             {!isQuoteMode && (
                               <>
