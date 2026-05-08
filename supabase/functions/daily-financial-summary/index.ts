@@ -19,19 +19,25 @@ const DEFAULT_TEMPLATE =
 📈 Lucro Bruto: *{viagens_lucro}*
 🧾 Qtd. de Vendas: *{viagens_qtd}*
 📅 Total no mês ({mes}): *{viagens_mes}*
+📊 Lucro Bruto no mês: *{viagens_lucro_mes}*
 
 🛂 *VORTEX VISTOS*
 💰 Vendido ({data}): *{vistos_total}*
 📈 Lucro Bruto: *{vistos_lucro}*
 🧾 Qtd. de Vendas: *{vistos_qtd}*
 📅 Total no mês ({mes}): *{vistos_mes}*
+📊 Lucro Bruto no mês: *{vistos_lucro_mes}*
 
 ━━━━━━━━━━━━━━━
 🏆 *CONSOLIDADO {data}*
-💵 Total Vendido: *{total_geral}*
-💎 Lucro Bruto: *{lucro_geral}*
+━━━━━━━━━━━━━━━
+✈️ Viagens — Vendido: *{viagens_total}* | Lucro: *{viagens_lucro}*
+━━━━━━━━━━━━━━━
+🛂 Vistos — Vendido: *{vistos_total}* | Lucro: *{vistos_lucro}*
+━━━━━━━━━━━━━━━
+💎 Lucro Bruto Total: *{lucro_geral}*
 🧾 Total de Vendas: *{qtd_geral}*
-📅 Mês: *{mes_geral}*
+📅 Mês: *{mes_geral}* | Lucro: *{lucro_mes_geral}*
 
 🤖 _Mensagem automática Vortex ERP_`;
 
@@ -82,7 +88,7 @@ Deno.serve(async (req) => {
         .eq("sale_date", yDate);
       const { data: month } = await supabase
         .from("sales")
-        .select("total_sale")
+        .select("total_sale, gross_profit")
         .eq("empresa_id", empresaId)
         .eq("status", "active")
         .gte("sale_date", monthStart)
@@ -91,7 +97,8 @@ Deno.serve(async (req) => {
       const yProfit = (yest || []).reduce((s, r: any) => s + Number(r.gross_profit || 0), 0);
       const yQty = (yest || []).length;
       const mTotal = (month || []).reduce((s, r: any) => s + Number(r.total_sale || 0), 0);
-      return { yTotal, yProfit, yQty, mTotal };
+      const mProfit = (month || []).reduce((s, r: any) => s + Number(r.gross_profit || 0), 0);
+      return { yTotal, yProfit, yQty, mTotal, mProfit };
     }
 
     async function vistosSummary(empresaId: string) {
@@ -116,13 +123,24 @@ Deno.serve(async (req) => {
       const yQty = (yest || []).length;
       const { data: month } = await supabase
         .from("visa_sales")
-        .select("total_value")
+        .select("id, total_value")
         .eq("empresa_id", empresaId)
         .eq("status", "active")
         .gte("sale_date", monthStart)
         .lte("sale_date", monthEnd);
       const mTotal = (month || []).reduce((s, r: any) => s + Number(r.total_value || 0), 0);
-      return { yTotal, yProfit, yQty, mTotal };
+      const monthIds = (month || []).map((s: any) => s.id);
+      let monthSupplierFees = 0;
+      if (monthIds.length) {
+        const { data: mItems } = await supabase
+          .from("visa_sale_items")
+          .select("visa_sale_id, total_value, is_supplier_fee")
+          .in("visa_sale_id", monthIds)
+          .eq("is_supplier_fee", true);
+        monthSupplierFees = (mItems || []).reduce((s, r: any) => s + Number(r.total_value || 0), 0);
+      }
+      const mProfit = mTotal - monthSupplierFees;
+      return { yTotal, yProfit, yQty, mTotal, mProfit };
     }
 
     const viagens = await viagensSummary(VIAGENS_ID);
@@ -150,14 +168,17 @@ Deno.serve(async (req) => {
       viagens_lucro: brl(viagens.yProfit),
       viagens_qtd: String(viagens.yQty),
       viagens_mes: brl(viagens.mTotal),
+      viagens_lucro_mes: brl(viagens.mProfit),
       vistos_total: brl(vistos.yTotal),
       vistos_lucro: brl(vistos.yProfit),
       vistos_qtd: String(vistos.yQty),
       vistos_mes: brl(vistos.mTotal),
+      vistos_lucro_mes: brl(vistos.mProfit),
       total_geral: brl(viagens.yTotal + vistos.yTotal),
       lucro_geral: brl(viagens.yProfit + vistos.yProfit),
       qtd_geral: String(viagens.yQty + vistos.yQty),
       mes_geral: brl(viagens.mTotal + vistos.mTotal),
+      lucro_mes_geral: brl(viagens.mProfit + vistos.mProfit),
     };
     const message = template.replace(/\{(\w+)\}/g, (_m, k) => vars[k] ?? `{${k}}`);
 
