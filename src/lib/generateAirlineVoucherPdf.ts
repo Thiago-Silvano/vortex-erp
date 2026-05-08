@@ -350,7 +350,8 @@ function drawFlightSection(
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
   const dirIcon = label === "IDA" ? ">" : "<";
   const dirLabel = label === "IDA" ? "IDA" : "VOLTA";
-  doc.text(`${dirIcon}  ${dirLabel}${suffix}`, m + 7, y + 6.5);
+  const locStr = localizador ? `  •  Localizador: ${localizador}` : "";
+  doc.text(`${dirIcon}  ${dirLabel}${suffix}${locStr}`, m + 7, y + 6.5);
 
   // Date + time center (bold)
   if (firstDate) {
