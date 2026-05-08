@@ -20,14 +20,17 @@ const PLACEHOLDERS: { key: string; desc: string }[] = [
   { key: 'viagens_lucro', desc: 'Lucro bruto Viagens (dia)' },
   { key: 'viagens_qtd', desc: 'Qtd. de vendas Viagens (dia)' },
   { key: 'viagens_mes', desc: 'Total vendido Viagens (mês)' },
+  { key: 'viagens_lucro_mes', desc: 'Lucro bruto Viagens (mês)' },
   { key: 'vistos_total', desc: 'Total vendido Vistos (dia)' },
   { key: 'vistos_lucro', desc: 'Lucro bruto Vistos (dia)' },
   { key: 'vistos_qtd', desc: 'Qtd. de vendas Vistos (dia)' },
   { key: 'vistos_mes', desc: 'Total vendido Vistos (mês)' },
+  { key: 'vistos_lucro_mes', desc: 'Lucro bruto Vistos (mês)' },
   { key: 'total_geral', desc: 'Total consolidado (dia)' },
   { key: 'lucro_geral', desc: 'Lucro consolidado (dia)' },
   { key: 'qtd_geral', desc: 'Qtd. total de vendas (dia)' },
   { key: 'mes_geral', desc: 'Total consolidado do mês' },
+  { key: 'lucro_mes_geral', desc: 'Lucro consolidado do mês' },
 ];
 
 const DEFAULT_TEMPLATE = `📊 *RESUMO FINANCEIRO DIÁRIO*
@@ -38,19 +41,25 @@ const DEFAULT_TEMPLATE = `📊 *RESUMO FINANCEIRO DIÁRIO*
 📈 Lucro Bruto: *{viagens_lucro}*
 🧾 Qtd. de Vendas: *{viagens_qtd}*
 📅 Total no mês ({mes}): *{viagens_mes}*
+📊 Lucro Bruto no mês: *{viagens_lucro_mes}*
 
 🛂 *VORTEX VISTOS*
 💰 Vendido ({data}): *{vistos_total}*
 📈 Lucro Bruto: *{vistos_lucro}*
 🧾 Qtd. de Vendas: *{vistos_qtd}*
 📅 Total no mês ({mes}): *{vistos_mes}*
+📊 Lucro Bruto no mês: *{vistos_lucro_mes}*
 
 ━━━━━━━━━━━━━━━
 🏆 *CONSOLIDADO {data}*
-💵 Total Vendido: *{total_geral}*
-💎 Lucro Bruto: *{lucro_geral}*
+━━━━━━━━━━━━━━━
+✈️ Viagens — Vendido: *{viagens_total}* | Lucro: *{viagens_lucro}*
+━━━━━━━━━━━━━━━
+🛂 Vistos — Vendido: *{vistos_total}* | Lucro: *{vistos_lucro}*
+━━━━━━━━━━━━━━━
+💎 Lucro Bruto Total: *{lucro_geral}*
 🧾 Total de Vendas: *{qtd_geral}*
-📅 Mês: *{mes_geral}*
+📅 Mês: *{mes_geral}* | Lucro: *{lucro_mes_geral}*
 
 🤖 _Mensagem automática Vortex ERP_`;
 
