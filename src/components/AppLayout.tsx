@@ -91,9 +91,13 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
         { title: "Clientes", url: "/clients", permKey: "clients_view" },
         { title: "Contatos WhatsApp", url: "/whatsapp/contacts" },
       ]},
-      { label: "Comercial", icon: <ShoppingCart className="h-4 w-4" />, items: [
+      { label: "Dashboard", icon: <BarChart3 className="h-4 w-4" />, url: "/vistos/dashboard", items: [
         { title: "Dashboard", url: "/vistos/dashboard", permKey: "dashboard_view" },
+      ]},
+      { label: "Vendas", icon: <ShoppingCart className="h-4 w-4" />, url: "/vistos/sales", items: [
         { title: "Vendas", url: "/vistos/sales", permKey: "sales_view" },
+      ]},
+      { label: "Comercial", icon: <ShoppingCart className="h-4 w-4" />, items: [
         { title: "Produção", url: "/vistos/production" },
         { title: "DS-160 Grupo", url: "/vistos/ds160" },
         { title: "Serviços", url: "/vistos/products" },
