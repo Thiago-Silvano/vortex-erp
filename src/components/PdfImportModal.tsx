@@ -793,5 +793,16 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
         )}
       </DialogContent>
     </Dialog>
+    <QuickClientModal
+      open={quickClientOpen}
+      onClose={() => setQuickClientOpen(false)}
+      onClientCreated={(c) => {
+        const created = { id: c.id, full_name: c.full_name };
+        setClientList(prev => [created, ...prev.filter(x => x.id !== created.id)]);
+        setSelectedClient(created);
+        setQuickClientOpen(false);
+      }}
+    />
+    </>
   );
 }
