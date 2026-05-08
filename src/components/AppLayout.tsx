@@ -108,6 +108,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
         { title: "Relatório de Conta", url: "/financial/bank-report", permKey: "financial_bank_report" },
         { title: "Agrupar Contas", url: "/financial/group-accounts", permKey: "financial_payable" },
         { title: "Desagrupar Contas", url: "/financial/ungroup-accounts", permKey: "financial_payable" },
+        { title: "Envio de Resumo Financeiro", url: "/financial/summary" },
       ]},
       { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4" />, url: "/whatsapp", items: [
         { title: "Conversas", url: "/whatsapp" },
@@ -161,6 +162,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       { title: "Agrupar Contas", url: "/financial/group-accounts", permKey: "financial_payable" },
       { title: "Desagrupar Contas", url: "/financial/ungroup-accounts", permKey: "financial_payable" },
       { title: "Simulador de Taxas", url: "/financial/fee-simulator" },
+      { title: "Envio de Resumo Financeiro", url: "/financial/summary" },
     ]},
     { label: "Operação", icon: <Plane className="h-4 w-4" />, items: [
       { title: "Reservas", url: "/reservations", permKey: "reservations_view" },
