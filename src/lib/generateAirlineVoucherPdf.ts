@@ -530,6 +530,56 @@ function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw
   return y + rowH + 2;
 }
 
+// ─── Group Baggage row (after each flight) ──────────────────
+function drawGroupBaggage(
+  doc: jsPDF,
+  bag: { personalItem: number; carryOn: number; checkedBag: number },
+  y: number,
+  m: number,
+  cw: number,
+): number {
+  if (!bag || (bag.personalItem <= 0 && bag.carryOn <= 0 && bag.checkedBag <= 0)) return y;
+  const rowH = 12;
+  y = checkPage(doc, y, rowH + 2);
+
+  // Light bg with gold left accent
+  doc.setFillColor(LIGHT_BG[0], LIGHT_BG[1], LIGHT_BG[2]);
+  doc.rect(m, y, cw, rowH, "F");
+  doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+  doc.setLineWidth(0.2);
+  doc.rect(m, y, cw, rowH, "S");
+  doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+  doc.rect(m, y, 2.5, rowH, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+  doc.text("Bagagens incluidas:", m + 7, y + 5);
+
+  const iconY = y + 9.5;
+  let cx = m + 50;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+
+  if (bag.personalItem > 0) {
+    drawBagIcon(doc, "personal", cx, iconY);
+    doc.text(`${bag.personalItem}x Bolsa/mochila`, cx + 7, iconY - 1);
+    cx += 50;
+  }
+  if (bag.carryOn > 0) {
+    drawBagIcon(doc, "carryon", cx, iconY);
+    doc.text(`${bag.carryOn}x Mala de mao 12kg`, cx + 7, iconY - 1);
+    cx += 50;
+  }
+  if (bag.checkedBag > 0) {
+    drawBagIcon(doc, "checked", cx, iconY);
+    doc.text(`${bag.checkedBag}x Bagagem despachada 23kg`, cx + 7, iconY - 1);
+  }
+
+  return y + rowH + 2;
+}
+
 // ─── Baggage icon helper (draws a small colored icon) ───────
 function drawBagIcon(doc: jsPDF, type: "personal" | "carryon" | "checked", x: number, y: number) {
   const size = 5;
