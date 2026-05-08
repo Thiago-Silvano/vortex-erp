@@ -30,14 +30,10 @@ const DEFAULT_TEMPLATE =
 
 ━━━━━━━━━━━━━━━
 🏆 *CONSOLIDADO {data}*
-━━━━━━━━━━━━━━━
-✈️ Viagens — Vendido: *{viagens_total}* | Lucro: *{viagens_lucro}*
-━━━━━━━━━━━━━━━
-🛂 Vistos — Vendido: *{vistos_total}* | Lucro: *{vistos_lucro}*
-━━━━━━━━━━━━━━━
-💎 Lucro Bruto Total: *{lucro_geral}*
-🧾 Total de Vendas: *{qtd_geral}*
-📅 Mês: *{mes_geral}* | Lucro: *{lucro_mes_geral}*
+💵 Faturamento: *{total_geral}*
+🧾 Nº de Vendas: *{qtd_geral}*
+💎 Lucro Líquido: *{lucro_geral}*
+📅 Mês ({mes}): *{mes_geral}* | Lucro: *{lucro_mes_geral}*
 
 🤖 _Mensagem automática Vortex ERP_`;
 
