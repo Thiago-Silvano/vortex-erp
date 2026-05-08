@@ -2691,7 +2691,7 @@ export default function NewSalePage() {
         </div>
 
         <Tabs defaultValue="dados" className="w-full">
-          <TabsList className="w-full justify-start border-b mb-4">
+          <TabsList className="w-full justify-start border-b mb-4 text-lg">
             <TabsTrigger value="dados">📋 Dados</TabsTrigger>
             <TabsTrigger value="servicos">🛒 Serviços</TabsTrigger>
             <TabsTrigger value="passageiros">👤 Passageiros</TabsTrigger>
