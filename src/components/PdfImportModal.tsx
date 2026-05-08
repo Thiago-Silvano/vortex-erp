@@ -409,6 +409,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
       quoteOptions: quoteOptions.map(option => ({ title: option.title })),
       paymentTerms,
       generalNotes,
+      selectedClient,
     });
     handleReset();
     onClose();
@@ -425,6 +426,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
     setGeneralNotes('');
     setTripInfo({ client_name: '', origin: '', destination: '', departure_date: '', return_date: '' });
     setProgress(0);
+    setSelectedClient(null);
   };
 
   const totalCost = services.reduce((s, svc) => s + svc.cost_price * (svc.quantity || 1), 0);
