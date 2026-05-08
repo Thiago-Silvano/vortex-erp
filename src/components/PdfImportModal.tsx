@@ -9,7 +9,11 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileText, Upload, Trash2, Plus, Check, Loader2, Plane, Hotel, Car, Shield, MapPin, Clock, ArrowRight, ClipboardPaste, Image as ImageIcon } from 'lucide-react';
+import { FileText, Upload, Trash2, Plus, Check, Loader2, Plane, Hotel, Car, Shield, MapPin, Clock, ArrowRight, ClipboardPaste, Image as ImageIcon, ChevronsUpDown, User } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import QuickClientModal from '@/components/QuickClientModal';
+import { useCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -92,6 +96,7 @@ interface PdfImportResult {
   quoteOptions: { title: string }[];
   paymentTerms: ExtractedPaymentTerm[];
   generalNotes: string;
+  selectedClient?: { id: string; full_name: string } | null;
 }
 
 interface PdfImportModalProps {
@@ -141,6 +146,7 @@ function getServiceColor(serviceType: string): string {
 
 export default function PdfImportModal({ open, onClose, serviceCatalog, onImport, marginMode: initialMarginMode, marginPercent: initialMarginPercent }: PdfImportModalProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const { activeCompany } = useCompany();
   const [file, setFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState('');
   const [isImage, setIsImage] = useState(false);
@@ -154,6 +160,17 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   const [tripInfo, setTripInfo] = useState<TripInfo>({ client_name: '', origin: '', destination: '', departure_date: '', return_date: '' });
   const [marginMode, setMarginMode] = useState<'none' | 'fixed' | 'manual'>(initialMarginMode);
   const [marginPercent, setMarginPercent] = useState(initialMarginPercent);
+  const [clientList, setClientList] = useState<Array<{ id: string; full_name: string }>>([]);
+  const [selectedClient, setSelectedClient] = useState<{ id: string; full_name: string } | null>(null);
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [quickClientOpen, setQuickClientOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let q = supabase.from('clients').select('id, full_name').order('full_name');
+    if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
+    q.then(({ data }) => { if (data) setClientList(data as any); });
+  }, [open, activeCompany?.id]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
