@@ -311,7 +311,22 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
     return 'adicional';
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    // Carrega cias aéreas cadastradas para tentar match automático
+    let airlinesList: Array<{ id: string; name: string }> = [];
+    try {
+      const { data } = await (supabase.from('airlines' as any).select('id, name').eq('is_active', true) as any);
+      airlinesList = (data || []) as any;
+    } catch {}
+    const findAirlineId = (raw?: string): string | undefined => {
+      if (!raw) return undefined;
+      const norm = raw.toLowerCase().trim();
+      const exact = airlinesList.find(a => a.name.toLowerCase() === norm);
+      if (exact) return exact.id;
+      const partial = airlinesList.find(a => norm.includes(a.name.toLowerCase()) || a.name.toLowerCase().includes(norm));
+      return partial?.id;
+    };
+
     const items: ImportedItem[] = services.map(s => {
       const matchedCatalog = serviceCatalog.find(c => c.name.toLowerCase().includes(s.service_type.toLowerCase()) || s.service_type.toLowerCase().includes(c.name.toLowerCase()));
       const cost = s.cost_price * (s.quantity || 1);
@@ -321,6 +336,9 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
       const metadata: any = { type: detectedType, detailedDescription: s.details || '' };
 
       if (detectedType === 'aereo' && s.flight_legs?.length) {
+        const mainAirlineRaw = s.flight_legs.find(l => l.airline)?.airline || '';
+        const mainAirlineId = findAirlineId(mainAirlineRaw);
+        if (mainAirlineId) metadata.airlineId = mainAirlineId;
         metadata.flightLegs = s.flight_legs.map(leg => ({
           origin: leg.origin || '',
           destination: leg.destination || '',
@@ -331,6 +349,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
           connectionDuration: leg.connection_duration || '',
           direction: leg.direction || 'ida',
           flightCode: leg.flight_number ? `${leg.airline || ''} ${leg.flight_number}`.trim() : (leg.airline || ''),
+          airlineId: findAirlineId(leg.airline) || mainAirlineId,
         }));
         if (s.baggage) {
           metadata.baggage = {
