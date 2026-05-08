@@ -2252,6 +2252,8 @@ export default function NewSalePage() {
     const { data: agData } = await agQuery;
     if (agData && agData.length > 0) agency = agData[0] as any;
 
+    let combinedDoc: any = undefined;
+    let firstAirlineName = '';
     for (const airItem of airlineItems) {
       const meta = airItem.metadata!;
       const legs = meta.flightLegs || [];
@@ -2335,11 +2337,14 @@ export default function NewSalePage() {
         hideReference: isQuoteMode,
       };
 
-      const airDoc = generateAirlineVoucherPdf(airVoucherData);
-      const airFileName = `voucher-aereo-${airlineName ? airlineName.replace(/\s+/g, '-').toLowerCase() + '-' : ''}${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
-      airDoc.save(airFileName);
+      combinedDoc = generateAirlineVoucherPdf(airVoucherData, combinedDoc);
+      if (!firstAirlineName && airlineName) firstAirlineName = airlineName;
     }
-    toast.success('Voucher(s) aereo(s) gerado(s)!');
+    if (combinedDoc) {
+      const fileName = `voucher-aereo-${firstAirlineName ? firstAirlineName.replace(/\s+/g, '-').toLowerCase() + '-' : ''}${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      combinedDoc.save(fileName);
+    }
+    toast.success('Voucher aéreo gerado!');
   };
 
   const buildPremiumPdfData = async (): Promise<PremiumPdfData | null> => {

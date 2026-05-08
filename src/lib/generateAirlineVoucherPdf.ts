@@ -103,8 +103,9 @@ function countConnections(legs: AirlineVoucherLeg[]): number {
 }
 
 // ─── Main Generator ─────────────────────────────────────────
-export function generateAirlineVoucherPdf(data: AirlineVoucherData): jsPDF {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?: jsPDF): jsPDF {
+  const doc = existingDoc ?? new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  if (existingDoc) doc.addPage();
   const pw = doc.internal.pageSize.getWidth();
   const m = 15;
   const cw = pw - m * 2;
