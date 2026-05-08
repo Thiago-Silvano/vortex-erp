@@ -555,18 +555,30 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
             <div
               className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
               onClick={() => fileRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
             >
               <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
               <p className="text-sm text-muted-foreground">
-                {file ? file.name : 'Clique ou arraste um PDF (itinerário, voucher, orçamento de fornecedor)'}
+                {file ? file.name : 'Clique, arraste ou cole (Ctrl+V) um PDF ou imagem'}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">O sistema irá identificar automaticamente passagens, hospedagem, aluguel de carro, seguro e outros serviços</p>
-              <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={handleFileChange} />
+              <p className="text-xs text-muted-foreground mt-1">
+                Aceita PDF, JPG, PNG ou WEBP (máx 20MB) — passagens, hospedagem, carro, seguro e outros
+              </p>
+              <p className="text-xs text-primary mt-2 inline-flex items-center gap-1">
+                <ClipboardPaste className="h-3 w-3" /> Dica: copie um print e pressione Ctrl+V aqui
+              </p>
+              <input ref={fileRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleFileChange} />
             </div>
 
-            {pdfUrl && (
+            {pdfUrl && !isImage && (
               <div className="border rounded-lg overflow-hidden">
                 <iframe src={pdfUrl} className="w-full h-[300px]" title="PDF Preview" />
+              </div>
+            )}
+            {pdfUrl && isImage && (
+              <div className="border rounded-lg overflow-hidden bg-muted/30 flex items-center justify-center">
+                <img src={pdfUrl} alt="Preview" className="max-h-[300px] object-contain" />
               </div>
             )}
 
