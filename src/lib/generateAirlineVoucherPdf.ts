@@ -327,6 +327,7 @@ function drawFlightSection(
   cw: number,
   suffix: string = "",
   totalValue?: number,
+  localizador?: string,
 ): number {
   const connections = countConnections(legs);
   const firstDate = legs[0]?.departureDate;
