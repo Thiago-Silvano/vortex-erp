@@ -3076,417 +3076,283 @@ export default function NewSalePage() {
           {/* TAB: Serviços */}
           <TabsContent value="servicos" className="space-y-4">
 
-        {/* Opções da Cotação */}
-        {isQuoteMode && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">📋 Opções da Cotação</CardTitle>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => {
-              setQuoteOptions(prev => [...prev, { name: `Opção ${prev.length + 1}`, order_index: prev.length }]);
-            }}>
-              <Plus className="h-4 w-4 mr-1" />Adicionar Opção
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm text-muted-foreground">Cada opção representa um cenário diferente de viagem. Os serviços serão vinculados a uma opção.</p>
-            <div className="flex flex-wrap gap-2">
-              {quoteOptions.map((opt, idx) => (
-                <div key={idx} className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-muted/30">
-                  <Input
-                    value={opt.name}
-                    onChange={e => setQuoteOptions(prev => prev.map((o, i) => i === idx ? { ...o, name: e.target.value } : o))}
-                    className="h-7 text-sm w-40 border-0 bg-transparent p-0 focus-visible:ring-0"
-                  />
-                  {quoteOptions.length > 1 && (
-                    <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => {
-                    const removedId = opt.id || String(idx);
-                      const remainingOptions = quoteOptions.filter((_, i) => i !== idx);
-                      const fallbackId = remainingOptions[0]?.id || String(remainingOptions[0]?.order_index ?? 0);
-                      setQuoteOptions(remainingOptions.map((o, i) => ({ ...o, order_index: i })));
-                      setItems(prev => prev.map(item => {
-                        const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
-                        const filtered = ids.filter(id => id !== removedId);
-                        if (filtered.length === 0) {
-                          return { ...item, quote_option_id: fallbackId, quote_option_ids: [fallbackId] };
-                        }
-                        return { ...item, quote_option_id: filtered[0], quote_option_ids: filtered };
-                      }));
-                    }}>
-                      <X className="h-3 w-3 text-destructive" />
-                    </Button>
+        {/* Serviços — Kanban por opção */}
+        {(() => {
+          const optionColumns = isQuoteMode
+            ? quoteOptions.map((o, i) => ({ id: o.id || String(i), name: o.name, idx: i, opt: o }))
+            : [{ id: '__single__', name: 'Serviços da Venda', idx: 0, opt: null as any }];
+          const optionPalette = [
+            { pill: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300', icon: 'text-blue-600' },
+            { pill: 'bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300', icon: 'text-teal-600' },
+            { pill: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300', icon: 'text-amber-600' },
+            { pill: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300', icon: 'text-purple-600' },
+            { pill: 'bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300', icon: 'text-pink-600' },
+            { pill: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300', icon: 'text-indigo-600' },
+          ];
+          const typeIcon = (type?: string) => {
+            switch (type) {
+              case 'aereo': return Plane;
+              case 'hotel': return BedDouble;
+              case 'carro': return Car;
+              case 'cruzeiro': return Ship;
+              case 'experiencia': return MapPin;
+              case 'seguro': return ShieldCheck;
+              default: return Briefcase;
+            }
+          };
+          const itemsForOption = (optId: string) => {
+            if (!isQuoteMode) return items.map((it, i) => ({ it, i }));
+            return items
+              .map((it, i) => ({ it, i }))
+              .filter(({ it }) => {
+                const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                return ids.includes(optId);
+              });
+          };
+          const addServiceToOption = (optId: string) => {
+            const ids = isQuoteMode ? [optId] : [];
+            setItems(prev => {
+              const next = [...prev, { description: '', cost_price: 0, rav: 0, markup_percent: 0, total_value: 0, metadata: {}, quote_option_id: ids[0], quote_option_ids: ids } as SaleItem];
+              setTimeout(() => setEditingItemIdx(next.length - 1), 50);
+              return next;
+            });
+          };
+          const totalServices = items.length;
+          return (
+            <Card className="border-border/60">
+              <CardHeader className="flex flex-row items-center justify-between py-3">
+                <div>
+                  <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
+                  {isQuoteMode && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {optionColumns.length} {optionColumns.length === 1 ? 'opção' : 'opções'} · {totalServices} {totalServices === 1 ? 'serviço' : 'serviços'}
+                    </p>
                   )}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        )}
-
-        {/* Serviços da Venda */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => {
-                const defaultOptIds = quoteOptions.length > 0 ? [quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0)] : [];
-                setItems(prev => [...prev, { description: '', cost_price: 0, rav: 0, markup_percent: 0, total_value: 0, metadata: {}, quote_option_id: defaultOptIds[0], quote_option_ids: defaultOptIds }]);
-                setTimeout(() => setEditingItemIdx(items.length), 50);
-              }}>
-                <Plus className="h-4 w-4 mr-1" />Adicionar
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4 sm:p-0">
-            {/* Desktop Table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10" />
-                    {isQuoteMode && <TableHead className="min-w-[130px]">Opção</TableHead>}
-                    <TableHead className="min-w-[120px]">Serviço</TableHead>
-                    <TableHead className="min-w-[100px]">Descrição</TableHead>
-                    <TableHead className="w-24 text-right">Custo</TableHead>
-                    <TableHead className="w-20 text-right">RAV</TableHead>
-                    <TableHead className="w-20 text-right">Acrésc.%</TableHead>
-                    <TableHead className="w-28 text-right">Total</TableHead>
-                    <TableHead className="w-8" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item, idx) => (
-                    <React.Fragment key={idx}>
-                      <TableRow className={(() => {
-                        const type = item.metadata?.type;
-                        if (type === 'aereo') return 'bg-blue-50 dark:bg-blue-950/20';
-                        if (type === 'hotel') return 'bg-orange-50 dark:bg-orange-950/20';
-                        if (type === 'carro') return 'bg-green-50 dark:bg-green-950/20';
-                        if (type === 'seguro') return 'bg-purple-50 dark:bg-purple-950/20';
-                        if (type === 'experiencia') return 'bg-pink-50 dark:bg-pink-950/20';
-                        if (type === 'adicional') return 'bg-yellow-50 dark:bg-yellow-950/20';
-                        return '';
-                      })()}>
-                        <TableCell className="px-1">
-                          <div className="flex flex-col items-center gap-0.5">
-                            <Button size="icon" variant="ghost" className="h-5 w-5" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
-                              <ArrowUp className="h-3 w-3" />
-                            </Button>
-                            <GripVertical className="h-3 w-3 text-muted-foreground" />
-                            <Button size="icon" variant="ghost" className="h-5 w-5" disabled={idx === items.length - 1} onClick={() => moveItem(idx, 'down')}>
-                              <ArrowDown className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                        {isQuoteMode && (
-                          <TableCell className="px-1">
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => addServiceToOption(optionColumns[0]?.id || '')}>
+                  <Plus className="h-4 w-4 mr-1" />Serviço
+                </Button>
+              </CardHeader>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {optionColumns.map((col, colIdx) => {
+                    const palette = optionPalette[colIdx % optionPalette.length];
+                    const optItems = itemsForOption(col.id);
+                    const totalOption = optItems.reduce((s, { it }) => s + (it.total_value || 0), 0);
+                    return (
+                      <div key={col.id} className="flex-shrink-0 w-[300px] flex flex-col gap-2">
+                        {/* Column Header */}
+                        <div className="flex items-center justify-between px-1">
+                          {isQuoteMode ? (
                             <Popover>
                               <PopoverTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-7 text-xs w-full justify-start truncate max-w-[130px]">
-                                  <ChevronsUpDown className="h-3 w-3 mr-1 flex-shrink-0" />
-                                  <span className="truncate">
-                                  {(() => {
-                                    const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
-                                    if (ids.length === 0) return 'Selecionar...';
-                                    if (ids.length === quoteOptions.length) return 'Todas';
-                                    return ids.map(id => {
-                                      const opt = quoteOptions.find(o => (o.id || String(o.order_index)) === id);
-                                      return opt ? opt.name.replace(/^Opção \d+ - /, '') : '?';
-                                    }).join(', ');
-                                  })()}
-                                  </span>
-                                </Button>
+                                <button type="button" className="text-sm font-semibold text-foreground hover:underline">
+                                  {col.name}
+                                </button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-56 p-2">
-                                {quoteOptions.map((opt, oi) => {
-                                  const optId = opt.id || String(oi);
-                                  const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
-                                  const checked = ids.includes(optId);
-                                  return (
-                                    <label key={oi} className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer">
-                                      <Checkbox checked={checked} onCheckedChange={(v) => {
-                                        setItems(prev => prev.map((it, i) => {
-                                          if (i !== idx) return it;
-                                          const currentIds = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
-                                          const newIds = v ? [...currentIds, optId] : currentIds.filter(id => id !== optId);
-                                          return { ...it, quote_option_ids: newIds, quote_option_id: newIds[0] || undefined };
-                                        }));
-                                      }} />
-                                      <span className="text-xs truncate">{opt.name}</span>
-                                    </label>
-                                  );
-                                })}
+                              <PopoverContent className="w-64 p-2 space-y-2">
+                                <Label className="text-xs">Renomear opção</Label>
+                                <Input
+                                  value={col.opt.name}
+                                  onChange={e => setQuoteOptions(prev => prev.map((o, i) => i === col.idx ? { ...o, name: e.target.value } : o))}
+                                  className="h-8 text-sm"
+                                />
+                                {quoteOptions.length > 1 && (
+                                  <Button variant="ghost" size="sm" className="w-full justify-start text-destructive h-7 text-xs" onClick={() => {
+                                    const removedId = col.opt.id || String(col.idx);
+                                    const remaining = quoteOptions.filter((_, i) => i !== col.idx);
+                                    const fallbackId = remaining[0]?.id || String(remaining[0]?.order_index ?? 0);
+                                    setQuoteOptions(remaining.map((o, i) => ({ ...o, order_index: i })));
+                                    setItems(prev => prev.map(item => {
+                                      const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
+                                      const filtered = ids.filter(id => id !== removedId);
+                                      if (filtered.length === 0) return { ...item, quote_option_id: fallbackId, quote_option_ids: [fallbackId] };
+                                      return { ...item, quote_option_id: filtered[0], quote_option_ids: filtered };
+                                    }));
+                                  }}>
+                                    <Trash2 className="h-3 w-3 mr-1" /> Remover opção
+                                  </Button>
+                                )}
                               </PopoverContent>
                             </Popover>
-                          </TableCell>
-                        )}
-                        <TableCell className="px-1">
-                          <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); if (!item.description || item.description.trim() === '') updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
-                            <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="manual">Selecione um serviço</SelectItem>
-                              {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="px-1">
-                          <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal h-7 max-w-[140px]" onClick={() => setEditingItemIdx(idx)}>
-                            <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span className="truncate text-xs">{getServiceTypeLabel(item.metadata)}{item.description || 'Editar...'}</span>
-                          </Button>
-                        </TableCell>
-                        <TableCell className="px-1">
-                          <Input
-                            value={maskCurrency(item.cost_price)}
-                            onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))}
-                            className="text-right h-7 text-xs"
-                            placeholder="R$ 0,00"
-                          />
-                        </TableCell>
-                        <TableCell className="px-1">
-                          <Input
-                            value={maskCurrency(item.rav)}
-                            onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))}
-                            className="text-right h-7 text-xs w-20"
-                            placeholder="R$ 0,00"
-                          />
-                        </TableCell>
-                        <TableCell className="px-1">
-                          <Input
-                            type="number"
-                            step="0.5"
-                            value={item.markup_percent ? item.markup_percent : ''}
-                            onChange={e => updateItem(idx, 'markup_percent', parseFloat(e.target.value) || 0)}
-                            className="text-right h-7 text-xs w-20"
-                          />
-                        </TableCell>
-                        <TableCell className="px-1">
-                          <Input
-                            value={maskCurrency(item.total_value)}
-                            disabled
-                            className="bg-muted text-right h-7 text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="px-0">
-                          <div className="flex items-center">
-                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => duplicateItem(idx)} title="Duplicar item">
-                              <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(idx)}>
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                      {/* Second row: reservation + images */}
-                      <TableRow className="border-b-2">
-                        <TableCell colSpan={isQuoteMode ? 8 : 7} className="py-1.5 px-2">
-                          <div className="flex items-center gap-2">
-                            {!isQuoteMode && (
-                              <>
-                                <div className="flex items-center gap-1 flex-shrink-0">
-                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Reserva:</Label>
-                                  <Input
-                                    value={item.reservation_number || ''}
-                                    onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)}
-                                    placeholder="ABC123"
-                                    className="h-6 text-xs w-28"
-                                  />
-                                </div>
-                                <div className="flex items-center gap-1 flex-shrink-0">
-                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Nº Compra:</Label>
-                                  <Input
-                                    value={item.purchase_number || ''}
-                                    onChange={e => updateItem(idx, 'purchase_number' as keyof SaleItem, e.target.value)}
-                                    placeholder="123456"
-                                    className="h-6 text-xs w-28"
-                                  />
-                                </div>
-                                <div className="flex items-center gap-1 flex-shrink-0">
-                                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Biblioteca:</Label>
-                                  <Input
-                                    value={librarySearch[idx] || ''}
-                                    onChange={e => setLibrarySearch(prev => ({ ...prev, [idx]: e.target.value }))}
-                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); searchImageLibrary(idx); } }}
-                                    placeholder="nome do produto"
-                                    className="h-6 text-xs w-32"
-                                  />
-                                  <Button variant="ghost" size="sm" className="h-6 text-xs px-1.5 gap-0.5" onClick={() => searchImageLibrary(idx)} disabled={libraryLoading[idx]}>
-                                    {libraryLoading[idx] ? <Loader2 className="h-3 w-3 animate-spin"/> : <Search className="h-3 w-3"/>}
-                                  </Button>
-                                </div>
-                              </>
-                            )}
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              {uploadingItemImages[idx] ? (
-                                <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-1.5 py-0.5"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" /></span>
-                              ) : (
-                                <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-1.5 py-0.5">
-                                  <ImagePlus className="h-3 w-3" /><span className="hidden lg:inline">Imagens</span><input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
-                                </label>
-                              )}
-                              {searchingItemImages[idx] ? (
-                                <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-1.5 py-0.5"><Loader2 className="h-3 w-3 animate-spin" /></span>
-                              ) : (
-                                <Button variant="ghost" size="sm" className="h-6 text-xs px-1.5 gap-0.5" onClick={() => handleSearchServiceImages(idx)}>
-                                  <Search className="h-3 w-3" /><span className="hidden lg:inline">Buscar</span>
-                                </Button>
-                              )}
-                            </div>
-                            {/* Scrollable images container */}
-                            {(itemImages[idx] || []).length > 0 && (
-                              <div className="flex items-center gap-1.5 overflow-x-auto flex-1 min-w-0 py-0.5">
-                                {(itemImages[idx] || []).map((url, imgIdx) => (
-                                  <div
-                                    key={imgIdx}
-                                    className="relative group flex flex-col items-center flex-shrink-0"
-                                  >
-                                    {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
-                                      <span className="text-[8px] font-semibold text-primary leading-none">CAPA</span>
-                                    )}
-                                    <div
-                                      role="button"
-                                      tabIndex={0}
-                                      className="relative cursor-zoom-in touch-pan-y select-none"
-                                      onPointerDown={(e) => handleItemImagePointerDown(idx, imgIdx, e)}
-                                        onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, e, url)}
-                                      onPointerCancel={() => { itemImagePointerRef.current = null; }}
-                                        onClick={() => handleItemImageClick(url)}
-                                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewImageUrl(url); }}
-                                      title="Clique para ampliar"
-                                    >
-                                        <img src={url} alt="" className={`h-12 w-16 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} draggable={false} />
-                                      <button type="button" onPointerDown={(e) => { e.stopPropagation(); itemImagePointerRef.current = null; }} onPointerUp={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity z-10">×</button>
-                                    </div>
-                                    {(itemImages[idx] || []).length > 1 && (
-                                      <div className="flex gap-0.5">
-                                        <button type="button" disabled={imgIdx === 0} onClick={() => moveItemImage(idx, imgIdx, 'left')} className="text-[9px] text-muted-foreground hover:text-foreground disabled:opacity-30">◀</button>
-                                        <button type="button" disabled={imgIdx === (itemImages[idx] || []).length - 1} onClick={() => moveItemImage(idx, imgIdx, 'right')} className="text-[9px] text-muted-foreground hover:text-foreground disabled:opacity-30">▶</button>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          {(libraryResults[idx] || []).length > 0 && (
-                            <div className="mt-1.5 p-1.5 border rounded bg-muted/40">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] text-muted-foreground">Biblioteca ({libraryResults[idx].length}) — clique para adicionar</span>
-                                <button type="button" className="text-[10px] text-muted-foreground hover:text-foreground" onClick={() => setLibraryResults(prev => ({ ...prev, [idx]: [] }))}>fechar</button>
-                              </div>
-                              <div className="flex gap-1.5 overflow-x-auto">
-                                {libraryResults[idx].map((lib: any) => (
-                                  <button key={lib.id} type="button" onClick={() => addLibraryImage(idx, lib.image_url)} title={lib.product_name} className="relative flex-shrink-0 hover:ring-2 hover:ring-primary rounded">
-                                    <img src={lib.image_url} alt={lib.product_name} className="h-12 w-16 object-cover rounded border"/>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
+                          ) : (
+                            <span className="text-sm font-semibold">{col.name}</span>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    </React.Fragment>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Mobile Cards */}
-            <div className="sm:hidden space-y-3">
-              {items.map((item, idx) => (
-                <div key={idx} className="border rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => moveItem(idx, 'up')}>
-                        <ArrowUp className="h-3 w-3" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === items.length - 1} onClick={() => moveItem(idx, 'down')}>
-                        <ArrowDown className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <Select value={item.service_catalog_id || 'manual'} onValueChange={(v) => { const svc = serviceCatalog.find(s => s.id === v); if (svc) { updateItem(idx, 'service_catalog_id', svc.id); if (!item.description || item.description.trim() === '') updateItem(idx, 'description', svc.name); if (svc.cost_center_id) updateItem(idx, 'cost_center_id', svc.cost_center_id); } }}>
-                      <SelectTrigger className="flex-1"><SelectValue placeholder="Serviço..." /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="manual">Selecione</SelectItem>
-                        {serviceCatalog.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => duplicateItem(idx)} title="Duplicar item">
-                      <Copy className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="ml-1 shrink-0" onClick={() => removeItem(idx)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal" onClick={() => setEditingItemIdx(idx)}>
-                    <Edit className="h-3 w-3 mr-1 flex-shrink-0" />
-                    <span className="truncate">{getServiceTypeLabel(item.metadata)}{item.description || 'Editar detalhes...'}</span>
-                  </Button>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <Label className="text-xs">Custo</Label>
-                      <Input value={maskCurrency(item.cost_price)} onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))} className="h-8 text-sm text-right" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">RAV</Label>
-                      <Input value={maskCurrency(item.rav)} onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))} className="h-8 text-sm text-right" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Total</Label>
-                      <Input value={maskCurrency(item.total_value)} disabled className="bg-muted h-8 text-sm text-right" />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {uploadingItemImages[idx] ? (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><span className="animate-spin h-3 w-3 border-2 border-primary border-t-transparent rounded-full" />...</span>
-                    ) : (
-                      <label className="cursor-pointer flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1">
-                        <ImagePlus className="h-3 w-3" />Imagens<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
-                      </label>
-                    )}
-                    {searchingItemImages[idx] ? (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground border border-dashed rounded px-2 py-1"><Loader2 className="h-3 w-3 animate-spin" />Buscando...</span>
-                    ) : (
-                      <Button variant="ghost" size="sm" className="h-7 text-xs px-2 gap-1" onClick={() => handleSearchServiceImages(idx)}>
-                        <Search className="h-3 w-3" />Buscar Imagens
-                      </Button>
-                    )}
-                    {(itemImages[idx] || []).map((url, imgIdx) => (
-                      <div
-                        key={imgIdx}
-                        className="relative group flex flex-col items-center"
-                      >
-                        {imgIdx === 0 && (itemImages[idx] || []).length > 1 && (
-                          <span className="text-[9px] font-semibold text-primary mb-0.5">CAPA</span>
-                        )}
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          className="relative cursor-zoom-in touch-pan-y select-none"
-                          onPointerDown={(e) => handleItemImagePointerDown(idx, imgIdx, e)}
-                          onPointerUp={(e) => handleItemImagePointerUp(idx, imgIdx, e, url)}
-                          onPointerCancel={() => { itemImagePointerRef.current = null; }}
-                          onClick={() => handleItemImageClick(url)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewImageUrl(url); }}
-                          title="Clique para ampliar"
-                        >
-                          <img src={url} alt="" className={`h-12 w-16 object-cover rounded border pointer-events-none ${imgIdx === 0 ? 'ring-2 ring-primary' : ''}`} draggable={false} />
-                          <button type="button" onPointerDown={(e) => { e.stopPropagation(); itemImagePointerRef.current = null; }} onPointerUp={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); removeItemImage(idx, imgIdx); }} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px] z-10">×</button>
+                          {isQuoteMode && (
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${palette.pill}`}>
+                              Opção {colIdx + 1}
+                            </span>
+                          )}
                         </div>
-                        {(itemImages[idx] || []).length > 1 && (
-                          <div className="flex gap-0.5 mt-0.5">
-                            <button type="button" disabled={imgIdx === 0} onClick={() => moveItemImage(idx, imgIdx, 'left')} className="text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-30">◀</button>
-                            <button type="button" disabled={imgIdx === (itemImages[idx] || []).length - 1} onClick={() => moveItemImage(idx, imgIdx, 'right')} className="text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-30">▶</button>
-                          </div>
-                        )}
+
+                        {/* Service Cards */}
+                        <div className="flex flex-col gap-2">
+                          {optItems.map(({ it, i: idx }) => {
+                            const Icon = typeIcon(it.metadata?.type);
+                            return (
+                              <div key={idx} className="group bg-muted/40 hover:bg-muted/60 rounded-md p-2.5 transition-colors">
+                                {/* Top row: icon + title + actions */}
+                                <div className="flex items-start gap-2">
+                                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground/60 mt-1 cursor-grab flex-shrink-0" />
+                                  <Icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${palette.icon}`} />
+                                  <button type="button" onClick={() => setEditingItemIdx(idx)} className="flex-1 min-w-0 text-left">
+                                    <div className="text-sm font-semibold text-foreground truncate">
+                                      {it.description || <span className="text-muted-foreground italic">Editar serviço…</span>}
+                                    </div>
+                                    {it.metadata?.type && (
+                                      <div className="text-[11px] text-muted-foreground capitalize truncate">{it.metadata.type}</div>
+                                    )}
+                                  </button>
+                                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditingItemIdx(idx)} title="Editar">
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => duplicateItem(idx)} title="Duplicar">
+                                      <Copy className="h-3 w-3" />
+                                    </Button>
+                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(idx)} title="Excluir">
+                                      <Trash2 className="h-3 w-3 text-destructive" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* Inline editable fields */}
+                                <div className="grid grid-cols-2 gap-1.5 mt-2 pl-6">
+                                  <div>
+                                    <Label className="text-[10px] text-muted-foreground">Custo</Label>
+                                    <Input value={maskCurrency(it.cost_price)} onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))} className="h-7 text-xs text-right" placeholder="R$ 0,00" />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[10px] text-muted-foreground">RAV</Label>
+                                    <Input value={maskCurrency(it.rav)} onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))} className="h-7 text-xs text-right" placeholder="R$ 0,00" />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[10px] text-muted-foreground">Acrésc.%</Label>
+                                    <Input type="number" step="0.5" value={it.markup_percent ? it.markup_percent : ''} onChange={e => updateItem(idx, 'markup_percent', parseFloat(e.target.value) || 0)} className="h-7 text-xs text-right" />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[10px] text-muted-foreground">Total</Label>
+                                    <div className="h-7 flex items-center justify-end text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                      {maskCurrency(it.total_value)}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Reservation / Purchase (sale mode only) */}
+                                {!isQuoteMode && (
+                                  <div className="grid grid-cols-2 gap-1.5 mt-1.5 pl-6">
+                                    <div>
+                                      <Label className="text-[10px] text-muted-foreground">Reserva</Label>
+                                      <Input value={it.reservation_number || ''} onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)} placeholder="ABC123" className="h-7 text-xs" />
+                                    </div>
+                                    <div>
+                                      <Label className="text-[10px] text-muted-foreground">Nº Compra</Label>
+                                      <Input value={it.purchase_number || ''} onChange={e => updateItem(idx, 'purchase_number' as keyof SaleItem, e.target.value)} placeholder="123456" className="h-7 text-xs" />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Quote-mode: link to other options */}
+                                {isQuoteMode && quoteOptions.length > 1 && (
+                                  <div className="mt-1.5 pl-6">
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 gap-1 text-muted-foreground">
+                                          <ChevronsUpDown className="h-3 w-3" />
+                                          {(() => {
+                                            const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                                            if (ids.length === quoteOptions.length) return 'Todas opções';
+                                            return `${ids.length} ${ids.length === 1 ? 'opção' : 'opções'}`;
+                                          })()}
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-56 p-2">
+                                        {quoteOptions.map((opt, oi) => {
+                                          const optId = opt.id || String(oi);
+                                          const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                                          const checked = ids.includes(optId);
+                                          return (
+                                            <label key={oi} className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer">
+                                              <Checkbox checked={checked} onCheckedChange={(v) => {
+                                                setItems(prev => prev.map((x, j) => {
+                                                  if (j !== idx) return x;
+                                                  const cur = x.quote_option_ids || (x.quote_option_id ? [x.quote_option_id] : []);
+                                                  const newIds = v ? [...cur, optId] : cur.filter(id => id !== optId);
+                                                  return { ...x, quote_option_ids: newIds, quote_option_id: newIds[0] || undefined };
+                                                }));
+                                              }} />
+                                              <span className="text-xs truncate">{opt.name}</span>
+                                            </label>
+                                          );
+                                        })}
+                                      </PopoverContent>
+                                    </Popover>
+                                  </div>
+                                )}
+
+                                {/* Images strip */}
+                                <div className="mt-2 pl-6 flex items-center gap-1.5 flex-wrap">
+                                  {uploadingItemImages[idx] ? (
+                                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground border border-dashed rounded px-1.5 py-0.5"><Loader2 className="h-3 w-3 animate-spin" /></span>
+                                  ) : (
+                                    <label className="cursor-pointer flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground border border-dashed rounded px-1.5 py-0.5">
+                                      <ImagePlus className="h-3 w-3" />Imagens
+                                      <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
+                                    </label>
+                                  )}
+                                  {searchingItemImages[idx] ? (
+                                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground border border-dashed rounded px-1.5 py-0.5"><Loader2 className="h-3 w-3 animate-spin" /></span>
+                                  ) : (
+                                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 gap-0.5" onClick={() => handleSearchServiceImages(idx)}>
+                                      <Search className="h-3 w-3" />Buscar
+                                    </Button>
+                                  )}
+                                  {(itemImages[idx] || []).map((url, imgIdx) => (
+                                    <div key={imgIdx} className="relative group/img">
+                                      <img src={url} alt="" className={`h-10 w-12 object-cover rounded border cursor-zoom-in ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} onClick={() => setPreviewImageUrl(url)} />
+                                      <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover/img:opacity-100 transition-opacity">×</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* Add service card */}
+                          <button
+                            type="button"
+                            onClick={() => addServiceToOption(col.id)}
+                            className="border border-dashed border-border rounded-md py-3 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors flex items-center justify-center gap-1"
+                          >
+                            <Plus className="h-3.5 w-3.5" /> Adicionar serviço
+                          </button>
+                        </div>
+
+                        {/* Column footer */}
+                        <div className="border-t border-border/60 mt-1 pt-2 px-1 flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Total opção</span>
+                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{maskCurrency(totalOption)}</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
+
+                  {/* New option column */}
+                  {isQuoteMode && (
+                    <button
+                      type="button"
+                      onClick={() => setQuoteOptions(prev => [...prev, { name: `Opção ${prev.length + 1}`, order_index: prev.length }])}
+                      className="flex-shrink-0 w-[300px] border border-dashed border-border rounded-md flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors min-h-[160px]"
+                    >
+                      <Plus className="h-5 w-5" />
+                      <span className="text-sm">Nova opção</span>
+                    </button>
+                  )}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Notes + Internal Files - moved into Serviços */}
         <Card>
