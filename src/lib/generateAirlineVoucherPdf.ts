@@ -152,17 +152,43 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
   y = headerH + 8;
 
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
+  // Rule: max 18 legs per page. Chunk both IDA and VOLTA accordingly.
+  const MAX_LEGS_PER_PAGE = 18;
   const outbound = data.flightLegs.filter((l) => l.direction !== "volta");
   const returnLegs = data.flightLegs.filter((l) => l.direction === "volta");
 
+  const chunk = <T,>(arr: T[], size: number): T[][] => {
+    const out: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  };
+
+  const renderChunked = (label: "IDA" | "VOLTA", legs: AirlineVoucherLeg[]) => {
+    const chunks = chunk(legs, MAX_LEGS_PER_PAGE);
+    chunks.forEach((part, idx) => {
+      if (idx > 0) {
+        doc.addPage();
+        y = 15;
+      }
+      const suffix = chunks.length > 1 ? ` (${idx + 1}/${chunks.length})` : "";
+      y = drawFlightSection(doc, label, part, y, m, pw, cw, suffix);
+      y += 4;
+    });
+  };
+
   if (outbound.length > 0) {
-    y = drawFlightSection(doc, "IDA", outbound, y, m, pw, cw);
-    y += 4;
+    renderChunked("IDA", outbound);
   }
   if (returnLegs.length > 0) {
-    y = checkPage(doc, y, 50);
-    y = drawFlightSection(doc, "VOLTA", returnLegs, y, m, pw, cw);
-    y += 6;
+    // Force VOLTA to start on a new page if IDA filled a page
+    if (outbound.length >= MAX_LEGS_PER_PAGE) {
+      doc.addPage();
+      y = 15;
+    } else {
+      y = checkPage(doc, y, 50);
+    }
+    renderChunked("VOLTA", returnLegs);
+    y += 2;
   }
 
   // ─── PASSENGERS ───────────────────────────────────────────
@@ -299,6 +325,7 @@ function drawFlightSection(
   m: number,
   pw: number,
   cw: number,
+  suffix: string = "",
 ): number {
   const connections = countConnections(legs);
   const firstDate = legs[0]?.departureDate;
@@ -321,7 +348,7 @@ function drawFlightSection(
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
   const dirIcon = label === "IDA" ? ">" : "<";
   const dirLabel = label === "IDA" ? "IDA" : "VOLTA";
-  doc.text(`${dirIcon}  ${dirLabel}`, m + 7, y + 6.5);
+  doc.text(`${dirIcon}  ${dirLabel}${suffix}`, m + 7, y + 6.5);
 
   // Date + time center (bold)
   if (firstDate) {

@@ -2255,40 +2255,54 @@ export default function NewSalePage() {
     const { data: agData } = await agQuery;
     if (agData && agData.length > 0) agency = agData[0] as any;
 
-    let combinedDoc: any = appendTo;
-    let firstAirlineName = '';
+    // Merge ALL airline items into a single voucher (same page sequence until 18 legs)
+    const allLegs: any[] = [];
+    const allLocalizadores: string[] = [];
+    const allShortIds: string[] = [];
+    const allAirlineIds = new Set<string>();
+    let principalAirlineId: string | undefined;
     for (const airItem of airlineItems) {
       const meta = airItem.metadata!;
       const legs = meta.flightLegs || [];
-
-      let airlineName = '';
-      if (meta.airlineId && activeCompany?.id) {
-        const { data: airlineData } = await (supabase.from('airlines' as any).select('name').eq('id', meta.airlineId).maybeSingle() as any);
-        if (airlineData) airlineName = airlineData.name || '';
+      allLegs.push(...legs);
+      if (airItem.reservation_number) allLocalizadores.push(airItem.reservation_number);
+      if (airItem.purchase_number) allShortIds.push(airItem.purchase_number);
+      if (meta.airlineId) {
+        allAirlineIds.add(meta.airlineId);
+        if (!principalAirlineId) principalAirlineId = meta.airlineId;
       }
+      legs.forEach((l: any) => { if (l.airlineId) allAirlineIds.add(l.airlineId); });
+    }
 
-      const legAirlineIds = [...new Set(legs.map((l: any) => l.airlineId).filter(Boolean))];
-      const airlineCache: Record<string, { name: string; logoBase64?: string }> = {};
-      for (const aid of legAirlineIds) {
-        const { data: aData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', aid).maybeSingle() as any);
-        if (aData) {
-          let legLogoBase64: string | undefined;
-          if (aData.logo_url) {
-            try {
-              const resp = await fetch(aData.logo_url);
-              const blob = await resp.blob();
-              legLogoBase64 = await new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.readAsDataURL(blob);
-              });
-            } catch { /* skip */ }
-          }
-          airlineCache[aid] = { name: aData.name || '', logoBase64: legLogoBase64 };
+    // Resolve principal airline name
+    let airlineName = '';
+    if (principalAirlineId) {
+      const { data: airlineData } = await (supabase.from('airlines' as any).select('name').eq('id', principalAirlineId).maybeSingle() as any);
+      if (airlineData) airlineName = airlineData.name || '';
+    }
+
+    // Build airline logo cache for all legs
+    const airlineCache: Record<string, { name: string; logoBase64?: string }> = {};
+    for (const aid of allAirlineIds) {
+      const { data: aData } = await (supabase.from('airlines' as any).select('name, logo_url').eq('id', aid).maybeSingle() as any);
+      if (aData) {
+        let legLogoBase64: string | undefined;
+        if (aData.logo_url) {
+          try {
+            const resp = await fetch(aData.logo_url);
+            const blob = await resp.blob();
+            legLogoBase64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+          } catch { /* skip */ }
         }
+        airlineCache[aid] = { name: aData.name || '', logoBase64: legLogoBase64 };
       }
+    }
 
-      const airPax: AirlineVoucherPassenger[] = passengers.map((p, i) => ({
+    const airPax: AirlineVoucherPassenger[] = passengers.map((p, i) => ({
         name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
         eticketNumber: p.eticket_number || undefined,
         seat: p.seat || undefined,
@@ -2310,13 +2324,21 @@ export default function NewSalePage() {
         });
       } catch { /* fallback to agency logo */ }
 
-      const airVoucherData: AirlineVoucherData = {
+    // Aggregate detailed notes from all items
+    const aggregatedNotes = airlineItems
+      .map(ai => ai.metadata?.detailedDescription)
+      .filter(Boolean)
+      .map((n: string) => n.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim())
+      .filter(Boolean)
+      .join('\n\n');
+
+    const airVoucherData: AirlineVoucherData = {
         agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
         airlineName,
-        shortId: airItem.purchase_number || shortId || undefined,
-        localizador: airItem.reservation_number || '',
+        shortId: allShortIds[0] || shortId || undefined,
+        localizador: allLocalizadores.join(' / ') || '',
         passengers: airPax,
-        flightLegs: legs.map((l: any) => ({
+        flightLegs: allLegs.map((l: any) => ({
           origin: l.origin || '',
           destination: l.destination || '',
           originFull: l.originFull || '',
@@ -2331,7 +2353,7 @@ export default function NewSalePage() {
           airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
           airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
         })),
-        notes: meta.detailedDescription ? meta.detailedDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim() : undefined,
+        notes: aggregatedNotes || undefined,
         additionalServices,
         agencyName: agency.name,
         agencyWhatsapp: agency.whatsapp || '',
@@ -2340,9 +2362,8 @@ export default function NewSalePage() {
         hideReference: isQuoteMode,
       };
 
-      combinedDoc = generateAirlineVoucherPdf(airVoucherData, combinedDoc);
-      if (!firstAirlineName && airlineName) firstAirlineName = airlineName;
-    }
+    const combinedDoc: any = generateAirlineVoucherPdf(airVoucherData, appendTo);
+    const firstAirlineName = airlineName;
     if (combinedDoc && !appendTo) {
       const fileName = `voucher-aereo-${firstAirlineName ? firstAirlineName.replace(/\s+/g, '-').toLowerCase() + '-' : ''}${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
       combinedDoc.save(fileName);
