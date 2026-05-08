@@ -52,6 +52,8 @@ export interface AirlineVoucherData {
   localizador?: string; // reservation code from airline
   passengers: AirlineVoucherPassenger[];
   flightLegs: AirlineVoucherLeg[];
+  flightGroups?: Array<{ title: string; totalValue?: number; legs: AirlineVoucherLeg[] }>;
+  clientName?: string;
   notes?: string;
   additionalServices?: AdditionalAirService[];
   agencyName?: string;
@@ -110,86 +112,78 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
   const m = 15;
   const cw = pw - m * 2;
 
-  let y = 8;
+  let y = 12;
 
-  // ─── TOP HEADER BAR ──────────────────────────────────────
-  const headerH = 22;
-  doc.setFillColor(DARK_HEADER[0], DARK_HEADER[1], DARK_HEADER[2]);
-  doc.rect(0, 0, pw, headerH, "F");
-  doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
-  doc.rect(0, headerH, pw, 0.8, "F");
-
-  // Agency logo (left)
-  if (data.agencyLogoBase64) {
-    try {
-      doc.addImage(data.agencyLogoBase64, "PNG", m, 1, 24, 24);
-    } catch {
-      /* skip */
-    }
-  }
-
-  // Numero da Compra + Localizador (center-right) — ocultos em modo proposta/cotação
-  if (!data.hideReference) {
-    const infoX = pw - m - 85;
-    const locOffset = 55;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.setTextColor(180, 180, 180);
-    doc.text("Numero da Compra", infoX, 7);
-    doc.text("Localizador", infoX + locOffset, 7);
-
+  // ─── CLIENT NAME (no cover) ──────────────────────────────
+  if (data.clientName) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-    doc.text(s(data.shortId || "-"), infoX, 14);
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-    doc.text(s(data.localizador || "-"), infoX + locOffset, 14);
+    doc.setFontSize(14);
+    doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+    doc.text(s(data.clientName.toUpperCase()), m, y);
+    y += 6;
+    doc.setDrawColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+    doc.setLineWidth(0.6);
+    doc.line(m, y, m + cw, y);
+    y += 6;
   }
-
-  y = headerH + 8;
 
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
-  // Rule: max 18 legs per page. Chunk both IDA and VOLTA accordingly.
+  // Rule: max 18 legs per page. Each group has its own title (separator).
   const MAX_LEGS_PER_PAGE = 18;
-  const outbound = data.flightLegs.filter((l) => l.direction !== "volta");
-  const returnLegs = data.flightLegs.filter((l) => l.direction === "volta");
+  let legsOnCurrentPage = 0;
 
-  const chunk = <T,>(arr: T[], size: number): T[][] => {
-    const out: T[][] = [];
-    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-    return out;
-  };
+  const groups = (data.flightGroups && data.flightGroups.length > 0)
+    ? data.flightGroups
+    : [{ title: "", totalValue: undefined as number | undefined, legs: data.flightLegs }];
 
-  const renderChunked = (label: "IDA" | "VOLTA", legs: AirlineVoucherLeg[]) => {
-    const chunks = chunk(legs, MAX_LEGS_PER_PAGE);
-    chunks.forEach((part, idx) => {
-      if (idx > 0) {
+  groups.forEach((group, gIdx) => {
+    const outbound = group.legs.filter((l) => l.direction !== "volta");
+    const returnLegs = group.legs.filter((l) => l.direction === "volta");
+
+    // Group title (visual separator between flights)
+    if (group.title) {
+      // If adding the title + at least one leg overflows, new page
+      if (y > 240 || legsOnCurrentPage >= MAX_LEGS_PER_PAGE) {
         doc.addPage();
         y = 15;
+        legsOnCurrentPage = 0;
       }
-      const suffix = chunks.length > 1 ? ` (${idx + 1}/${chunks.length})` : "";
-      y = drawFlightSection(doc, label, part, y, m, pw, cw, suffix);
-      y += 4;
-    });
-  };
-
-  if (outbound.length > 0) {
-    renderChunked("IDA", outbound);
-  }
-  if (returnLegs.length > 0) {
-    // Force VOLTA to start on a new page if IDA filled a page
-    if (outbound.length >= MAX_LEGS_PER_PAGE) {
-      doc.addPage();
-      y = 15;
-    } else {
-      y = checkPage(doc, y, 50);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+      doc.text(s(group.title.toUpperCase()), m, y);
+      y += 5;
     }
-    renderChunked("VOLTA", returnLegs);
-    y += 2;
-  }
+
+    const renderSection = (label: "IDA" | "VOLTA", legs: AirlineVoucherLeg[]) => {
+      if (legs.length === 0) return;
+      // Break the legs across pages of 18
+      let i = 0;
+      while (i < legs.length) {
+        const remaining = MAX_LEGS_PER_PAGE - legsOnCurrentPage;
+        if (remaining <= 0) {
+          doc.addPage();
+          y = 15;
+          legsOnCurrentPage = 0;
+          continue;
+        }
+        const slice = legs.slice(i, i + remaining);
+        y = drawFlightSection(doc, label, slice, y, m, pw, cw, "", group.totalValue && i === 0 && label === "IDA" ? group.totalValue : undefined);
+        legsOnCurrentPage += slice.length;
+        i += slice.length;
+        y += 4;
+        if (i < legs.length) {
+          doc.addPage();
+          y = 15;
+          legsOnCurrentPage = 0;
+        }
+      }
+    };
+
+    renderSection("IDA", outbound);
+    renderSection("VOLTA", returnLegs);
+    if (gIdx < groups.length - 1) y += 2;
+  });
 
   // ─── PASSENGERS ───────────────────────────────────────────
   y = checkPage(doc, y, 20);
@@ -326,6 +320,7 @@ function drawFlightSection(
   pw: number,
   cw: number,
   suffix: string = "",
+  totalValue?: number,
 ): number {
   const connections = countConnections(legs);
   const firstDate = legs[0]?.departureDate;
@@ -360,16 +355,27 @@ function drawFlightSection(
   }
 
   // Connections count (right)
+  // Total value (left of right edge), white, same size as IDA label (9pt bold)
+  let rightAnchor = m + cw - 5;
+  if (typeof totalValue === "number" && totalValue > 0) {
+    const valueStr = totalValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    doc.text(s(valueStr), rightAnchor, y + 6.5, { align: "right" });
+    rightAnchor -= doc.getTextWidth(valueStr) + 8;
+  }
+
   if (connections > 0) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
-    doc.text(`${connections} Escala${connections > 1 ? "s" : ""}`, m + cw - 5, y + 6.5, { align: "right" });
+    doc.text(`${connections} Escala${connections > 1 ? "s" : ""}`, rightAnchor, y + 6.5, { align: "right" });
   } else {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
-    doc.text("Direto", m + cw - 5, y + 6.5, { align: "right" });
+    doc.text("Direto", rightAnchor, y + 6.5, { align: "right" });
   }
 
   y += barH + 3;

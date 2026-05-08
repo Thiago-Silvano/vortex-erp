@@ -2256,17 +2256,14 @@ export default function NewSalePage() {
     if (agData && agData.length > 0) agency = agData[0] as any;
 
     // Merge ALL airline items into a single voucher (same page sequence until 18 legs)
+    // Each item becomes a "group" with its own title + total value
     const allLegs: any[] = [];
-    const allLocalizadores: string[] = [];
-    const allShortIds: string[] = [];
     const allAirlineIds = new Set<string>();
     let principalAirlineId: string | undefined;
     for (const airItem of airlineItems) {
       const meta = airItem.metadata!;
       const legs = meta.flightLegs || [];
       allLegs.push(...legs);
-      if (airItem.reservation_number) allLocalizadores.push(airItem.reservation_number);
-      if (airItem.purchase_number) allShortIds.push(airItem.purchase_number);
       if (meta.airlineId) {
         allAirlineIds.add(meta.airlineId);
         if (!principalAirlineId) principalAirlineId = meta.airlineId;
@@ -2332,27 +2329,41 @@ export default function NewSalePage() {
       .filter(Boolean)
       .join('\n\n');
 
+    // Build groups (one per airline item) — gives each flight a visual title
+    const flightGroups = airlineItems.map((airItem, idx) => {
+      const meta = airItem.metadata!;
+      const legs = (meta.flightLegs || []).map((l: any) => ({
+        origin: l.origin || '',
+        destination: l.destination || '',
+        originFull: l.originFull || '',
+        destinationFull: l.destinationFull || '',
+        departureDate: l.departureDate || '',
+        departureTime: l.departureTime || '',
+        arrivalDate: l.arrivalDate || '',
+        arrivalTime: l.arrivalTime || '',
+        flightCode: l.flightCode || '',
+        connectionDuration: l.connectionDuration || '',
+        direction: l.direction || 'ida',
+        airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
+        airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
+      }));
+      const firstLeg = legs[0];
+      const lastLeg = legs[legs.length - 1] || firstLeg;
+      const route = firstLeg ? `${firstLeg.origin || ''} → ${lastLeg?.destination || ''}` : '';
+      const baseTitle = airItem.description || `Voo ${idx + 1}`;
+      const title = route ? `${baseTitle} • ${route}` : baseTitle;
+      return { title, totalValue: airItem.total_value, legs };
+    });
+
     const airVoucherData: AirlineVoucherData = {
         agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
         airlineName,
-        shortId: allShortIds[0] || shortId || undefined,
-        localizador: allLocalizadores.join(' / ') || '',
+        clientName: clientName,
+        shortId: undefined,
+        localizador: '',
         passengers: airPax,
-        flightLegs: allLegs.map((l: any) => ({
-          origin: l.origin || '',
-          destination: l.destination || '',
-          originFull: l.originFull || '',
-          destinationFull: l.destinationFull || '',
-          departureDate: l.departureDate || '',
-          departureTime: l.departureTime || '',
-          arrivalDate: l.arrivalDate || '',
-          arrivalTime: l.arrivalTime || '',
-          flightCode: l.flightCode || '',
-          connectionDuration: l.connectionDuration || '',
-          direction: l.direction || 'ida',
-          airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
-          airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
-        })),
+        flightLegs: [],
+        flightGroups,
         notes: aggregatedNotes || undefined,
         additionalServices,
         agencyName: agency.name,
