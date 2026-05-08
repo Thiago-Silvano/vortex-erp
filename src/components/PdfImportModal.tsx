@@ -591,6 +591,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => { if (!o) { handleReset(); onClose(); } }}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
