@@ -457,28 +457,28 @@ export default function Dashboard() {
         label: isVistos ? 'FATURAMENTO' : 'FATURAMENTO',
         value: fmt(stats.faturamento),
         delta: fatPct, periodLabel,
-        icon: DollarSign,
+        emoji: '💰',
         accent: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
       },
       {
         label: 'TICKET MÉDIO',
         value: fmt(stats.ticketMedio),
         delta: ticketPct, periodLabel,
-        icon: ShoppingCart,
+        emoji: '🛍️',
         accent: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
       },
       {
         label: isVistos ? 'VISTOS VENDIDOS' : 'CLIENTES ATENDIDOS',
         value: stats.clientes.toString(),
         delta: cliPct, periodLabel,
-        icon: Users,
+        emoji: isVistos ? '🛂' : '👥',
         accent: 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300',
       },
       {
         label: 'LUCRO LÍQUIDO',
         value: fmt(stats.lucro),
         delta: lucroPct, periodLabel,
-        icon: Target,
+        emoji: '📈',
         accent: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
       },
     ];
@@ -518,8 +518,8 @@ export default function Dashboard() {
             <Card key={c.label} className="overflow-hidden">
               <CardContent className="p-3">
                 <div className="flex items-start gap-2">
-                  <div className={`rounded-lg p-2 ${c.accent}`}>
-                    <c.icon className="h-4 w-4" />
+                  <div className={`rounded-lg p-2 text-xl leading-none ${c.accent}`}>
+                    <span aria-hidden>{c.emoji}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-semibold text-muted-foreground tracking-wider">
@@ -658,15 +658,15 @@ export default function Dashboard() {
                   {alerts.map((a, i) => {
                     const isCommission = /comiss/i.test(a.message);
                     const palette = isCommission
-                      ? 'bg-sky-50 border-sky-200 text-sky-900 dark:bg-sky-950/30 dark:border-sky-800/60 dark:text-sky-100'
+                      ? 'bg-sky-500 border-sky-600 text-white hover:bg-sky-600'
                       : a.type === 'danger'
-                        ? 'bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-950/30 dark:border-rose-800/60 dark:text-rose-100'
-                        : 'bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/30 dark:border-amber-800/60 dark:text-amber-100';
+                        ? 'bg-rose-500 border-rose-600 text-white hover:bg-rose-600'
+                        : 'bg-amber-500 border-amber-600 text-white hover:bg-amber-600';
                     return (
                     <button
                       key={i}
                       onClick={() => a.route && navigate(a.route)}
-                      className={`w-full text-left text-xs font-medium px-2.5 py-2 rounded-md border transition-colors hover:opacity-80 ${palette}`}
+                      className={`w-full text-left text-xs font-semibold px-2.5 py-2 rounded-md border shadow-sm transition-colors ${palette}`}
                     >
                       {a.message}
                     </button>
