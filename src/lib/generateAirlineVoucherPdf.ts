@@ -119,19 +119,6 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
 
   let y = 12;
 
-  // ─── CLIENT NAME (no cover) ──────────────────────────────
-  if (data.clientName) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-    doc.text(s(data.clientName.toUpperCase()), m, y);
-    y += 6;
-    doc.setDrawColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
-    doc.setLineWidth(0.6);
-    doc.line(m, y, m + cw, y);
-    y += 6;
-  }
-
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
   // Rule: max 18 legs per page. Each group has its own title (separator).
   const MAX_LEGS_PER_PAGE = 18;
@@ -145,9 +132,16 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
     const outbound = group.legs.filter((l) => l.direction !== "volta");
     const returnLegs = group.legs.filter((l) => l.direction === "volta");
 
-    // Group title (visual separator between flights)
+    // Gold separator bar between flights (not before the first)
+    if (gIdx > 0) {
+      y = checkPage(doc, y, 8);
+      doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+      doc.rect(m, y, cw, 1.2, "F");
+      y += 5;
+    }
+
+    // Group title in BLACK
     if (group.title) {
-      // If adding the title + at least one leg overflows, new page
       if (y > 240 || legsOnCurrentPage >= MAX_LEGS_PER_PAGE) {
         doc.addPage();
         y = 15;
@@ -155,7 +149,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
       }
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+      doc.setTextColor(0, 0, 0);
       doc.text(s(group.title.toUpperCase()), m, y);
       y += 5;
     }
@@ -187,6 +181,12 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
 
     renderSection("IDA", outbound);
     renderSection("VOLTA", returnLegs);
+
+    // Baggage info for this flight (right below last leg)
+    if (group.baggage) {
+      y = drawGroupBaggage(doc, group.baggage, y, m, cw);
+    }
+
     if (gIdx < groups.length - 1) y += 2;
   });
 
