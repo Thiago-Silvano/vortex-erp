@@ -45,6 +45,7 @@ const DEFAULT_TEMPLATE = `📊 *RESUMO FINANCEIRO DIÁRIO*
 🧾 Qtd. de Vendas: *{viagens_qtd}*
 📅 Total no mês ({mes}): *{viagens_mes}*
 📊 Lucro Bruto no mês: *{viagens_lucro_mes}*
+🧮 Qtd. vendas no mês: *{viagens_qtd_mes}*
 
 🛂 *VORTEX VISTOS*
 💰 Vendido ({data}): *{vistos_total}*
@@ -52,6 +53,7 @@ const DEFAULT_TEMPLATE = `📊 *RESUMO FINANCEIRO DIÁRIO*
 🧾 Qtd. de Vendas: *{vistos_qtd}*
 📅 Total no mês ({mes}): *{vistos_mes}*
 📊 Lucro Bruto no mês: *{vistos_lucro_mes}*
+🧮 Qtd. vendas no mês: *{vistos_qtd_mes}*
 
 ━━━━━━━━━━━━━━━
 🏆 *CONSOLIDADO {data}*
@@ -59,6 +61,7 @@ const DEFAULT_TEMPLATE = `📊 *RESUMO FINANCEIRO DIÁRIO*
 🧾 Nº de Vendas: *{qtd_geral}*
 💎 Lucro Líquido: *{lucro_geral}*
 📅 Mês ({mes}): *{mes_geral}* | Lucro: *{lucro_mes_geral}*
+🧮 Vendas no mês: *{qtd_mes_geral}*
 
 🤖 _Mensagem automática Vortex ERP_`;
 
