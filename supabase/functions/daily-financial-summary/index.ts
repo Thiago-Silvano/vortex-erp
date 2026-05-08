@@ -8,7 +8,32 @@ const corsHeaders = {
 const VIAGENS_ID = "0dd6a20e-4804-4925-b910-d2f3978ee898";
 const VISTOS_ID = "7c4e00d2-1dbd-4bd3-88e3-11ffd15e3f6d";
 const SENDER_EMPRESA_ID = VIAGENS_ID; // server porta 3001
-const NUMBERS = ["5548991165568", "5548992008820", "5548998149109", "5548991934420"];
+const DEFAULT_NUMBERS = ["5548991165568", "5548992008820", "5548998149109", "5548991934420"];
+
+const DEFAULT_TEMPLATE =
+`📊 *RESUMO FINANCEIRO DIÁRIO*
+🗓️ Referente a: *{data}*
+
+✈️ *VORTEX VIAGENS*
+💰 Vendido ({data}): *{viagens_total}*
+📈 Lucro Bruto: *{viagens_lucro}*
+🧾 Qtd. de Vendas: *{viagens_qtd}*
+📅 Total no mês ({mes}): *{viagens_mes}*
+
+🛂 *VORTEX VISTOS*
+💰 Vendido ({data}): *{vistos_total}*
+📈 Lucro Bruto: *{vistos_lucro}*
+🧾 Qtd. de Vendas: *{vistos_qtd}*
+📅 Total no mês ({mes}): *{vistos_mes}*
+
+━━━━━━━━━━━━━━━
+🏆 *CONSOLIDADO {data}*
+💵 Total Vendido: *{total_geral}*
+💎 Lucro Bruto: *{lucro_geral}*
+🧾 Total de Vendas: *{qtd_geral}*
+📅 Mês: *{mes_geral}*
+
+🤖 _Mensagem automática Vortex ERP_`;
 
 function brl(n: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
@@ -32,6 +57,14 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    let body: any = {};
+    if (req.method === "POST") {
+      try { body = await req.json(); } catch { body = {}; }
+    }
+    const testPhone: string | undefined = body?.test_phone;
+    const overrideTemplate: string | undefined = body?.template;
+    const overrideRecipients: string[] | undefined = body?.recipients;
 
     const today = brNow();
     const yesterday = new Date(today);
@@ -98,30 +131,41 @@ Deno.serve(async (req) => {
     const dataLabel = yesterday.toLocaleDateString("pt-BR");
     const mesLabel = today.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 
-    const message =
-`📊 *RESUMO FINANCEIRO DIÁRIO*
-🗓️ Referente a: *${dataLabel}*
+    // Load saved config (template + recipients)
+    const { data: cfg } = await supabase
+      .from("financial_summary_config")
+      .select("message_template, recipients")
+      .eq("empresa_id", SENDER_EMPRESA_ID)
+      .maybeSingle();
 
-✈️ *VORTEX VIAGENS*
-💰 Vendido (${dataLabel}): *${brl(viagens.yTotal)}*
-📈 Lucro Bruto: *${brl(viagens.yProfit)}*
-🧾 Qtd. de Vendas: *${viagens.yQty}*
-📅 Total no mês (${mesLabel}): *${brl(viagens.mTotal)}*
+    const template = overrideTemplate ?? (cfg?.message_template?.trim() ? cfg!.message_template : DEFAULT_TEMPLATE);
+    const savedRecipients: string[] = Array.isArray(cfg?.recipients)
+      ? (cfg!.recipients as any[]).map((r: any) => typeof r === "string" ? r : r?.phone).filter(Boolean)
+      : [];
 
-🛂 *VORTEX VISTOS*
-💰 Vendido (${dataLabel}): *${brl(vistos.yTotal)}*
-📈 Lucro Bruto: *${brl(vistos.yProfit)}*
-🧾 Qtd. de Vendas: *${vistos.yQty}*
-📅 Total no mês (${mesLabel}): *${brl(vistos.mTotal)}*
+    const vars: Record<string, string> = {
+      data: dataLabel,
+      mes: mesLabel,
+      viagens_total: brl(viagens.yTotal),
+      viagens_lucro: brl(viagens.yProfit),
+      viagens_qtd: String(viagens.yQty),
+      viagens_mes: brl(viagens.mTotal),
+      vistos_total: brl(vistos.yTotal),
+      vistos_lucro: brl(vistos.yProfit),
+      vistos_qtd: String(vistos.yQty),
+      vistos_mes: brl(vistos.mTotal),
+      total_geral: brl(viagens.yTotal + vistos.yTotal),
+      lucro_geral: brl(viagens.yProfit + vistos.yProfit),
+      qtd_geral: String(viagens.yQty + vistos.yQty),
+      mes_geral: brl(viagens.mTotal + vistos.mTotal),
+    };
+    const message = template.replace(/\{(\w+)\}/g, (_m, k) => vars[k] ?? `{${k}}`);
 
-━━━━━━━━━━━━━━━
-🏆 *CONSOLIDADO ${dataLabel}*
-💵 Total Vendido: *${brl(viagens.yTotal + vistos.yTotal)}*
-💎 Lucro Bruto: *${brl(viagens.yProfit + vistos.yProfit)}*
-🧾 Total de Vendas: *${viagens.yQty + vistos.yQty}*
-📅 Mês: *${brl(viagens.mTotal + vistos.mTotal)}*
-
-🤖 _Mensagem automática Vortex ERP_`;
+    const targets: string[] = testPhone
+      ? [String(testPhone).replace(/\D/g, "")]
+      : (overrideRecipients && overrideRecipients.length
+          ? overrideRecipients.map(r => String(r).replace(/\D/g, ""))
+          : (savedRecipients.length ? savedRecipients.map(r => String(r).replace(/\D/g, "")) : DEFAULT_NUMBERS));
 
     // Get sender server URL
     const { data: settings } = await supabase
@@ -132,7 +176,7 @@ Deno.serve(async (req) => {
     const serverUrl = (settings as any)?.server_url || "http://76.13.165.192:3001";
 
     const results: any[] = [];
-    for (const num of NUMBERS) {
+    for (const num of targets) {
       try {
         const res = await fetch(`${serverUrl.replace(/\/$/, "")}/send-message`, {
           method: "POST",

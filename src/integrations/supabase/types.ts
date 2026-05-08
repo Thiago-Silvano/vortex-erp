@@ -1674,6 +1674,36 @@ export type Database = {
           },
         ]
       }
+      financial_summary_config: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          message_template: string
+          recipients: Json
+          sender_empresa_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          message_template?: string
+          recipients?: Json
+          sender_empresa_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          message_template?: string
+          recipients?: Json
+          sender_empresa_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fiscal_certificates: {
         Row: {
           arquivo_encrypted: string | null
