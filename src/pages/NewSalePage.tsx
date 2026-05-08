@@ -2691,14 +2691,14 @@ export default function NewSalePage() {
         </div>
 
         <Tabs defaultValue="dados" className="w-full">
-          <TabsList className="w-full justify-start border-b mb-4">
-            <TabsTrigger value="dados">📋 Dados</TabsTrigger>
-            <TabsTrigger value="servicos">🛒 Serviços</TabsTrigger>
-            <TabsTrigger value="passageiros">👤 Passageiros</TabsTrigger>
-            <TabsTrigger value="financeiro">💰 Financeiro</TabsTrigger>
-            <TabsTrigger value="custo_financeiro">💸 Custo Financeiro</TabsTrigger>
-            <TabsTrigger value="documentos">📄 Documentos</TabsTrigger>
-            <TabsTrigger value="fiscal">🧾 Fiscal</TabsTrigger>
+          <TabsList className="w-full justify-start border-b mb-4 text-lg">
+            <TabsTrigger value="dados" className="text-lg">📋 Dados</TabsTrigger>
+            <TabsTrigger value="servicos" className="text-lg">🛒 Serviços</TabsTrigger>
+            <TabsTrigger value="passageiros" className="text-lg">👤 Passageiros</TabsTrigger>
+            <TabsTrigger value="financeiro" className="text-lg">💰 Financeiro</TabsTrigger>
+            <TabsTrigger value="custo_financeiro" className="text-lg">💸 Custo Financeiro</TabsTrigger>
+            <TabsTrigger value="documentos" className="text-lg">📄 Documentos</TabsTrigger>
+            <TabsTrigger value="fiscal" className="text-lg">🧾 Fiscal</TabsTrigger>
           </TabsList>
 
           {/* TAB: Dados */}
