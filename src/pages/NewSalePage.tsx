@@ -3195,7 +3195,7 @@ export default function NewSalePage() {
                       </TableRow>
                       {/* Second row: reservation + images */}
                       <TableRow className="border-b-2">
-                        <TableCell colSpan={isQuoteMode && quoteOptions.length > 1 ? 8 : 7} className="py-1.5 px-2">
+                        <TableCell colSpan={isQuoteMode ? 8 : 7} className="py-1.5 px-2">
                           <div className="flex items-center gap-2">
                             {!isQuoteMode && (
                               <>
