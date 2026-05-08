@@ -539,7 +539,7 @@ function drawFlightSection(doc: jsPDF, data: PremiumPdfData, pw: number, ph: num
     const idealCardH = page.legsCount > 0 ? (availableH - fixedH) / page.legsCount : baseCardH;
     let scale = Math.min(1.18, idealCardH / baseCardH);
     if (!Number.isFinite(scale) || scale <= 0) scale = 1;
-    scale = Math.max(0.4, scale);
+    scale = Math.max(0.22, scale);
 
     page.groups.forEach((group) => {
       y = drawSubTitle(doc, pw, y, group.label);
