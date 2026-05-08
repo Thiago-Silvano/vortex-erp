@@ -52,7 +52,12 @@ export interface AirlineVoucherData {
   localizador?: string; // reservation code from airline
   passengers: AirlineVoucherPassenger[];
   flightLegs: AirlineVoucherLeg[];
-  flightGroups?: Array<{ title: string; totalValue?: number; legs: AirlineVoucherLeg[] }>;
+  flightGroups?: Array<{
+    title: string;
+    totalValue?: number;
+    legs: AirlineVoucherLeg[];
+    baggage?: { personalItem: number; carryOn: number; checkedBag: number };
+  }>;
   clientName?: string;
   notes?: string;
   additionalServices?: AdditionalAirService[];
@@ -114,19 +119,6 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
 
   let y = 12;
 
-  // ─── CLIENT NAME (no cover) ──────────────────────────────
-  if (data.clientName) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-    doc.text(s(data.clientName.toUpperCase()), m, y);
-    y += 6;
-    doc.setDrawColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
-    doc.setLineWidth(0.6);
-    doc.line(m, y, m + cw, y);
-    y += 6;
-  }
-
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
   // Rule: max 18 legs per page. Each group has its own title (separator).
   const MAX_LEGS_PER_PAGE = 18;
@@ -140,9 +132,16 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
     const outbound = group.legs.filter((l) => l.direction !== "volta");
     const returnLegs = group.legs.filter((l) => l.direction === "volta");
 
-    // Group title (visual separator between flights)
+    // Gold separator bar between flights (not before the first)
+    if (gIdx > 0) {
+      y = checkPage(doc, y, 8);
+      doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+      doc.rect(m, y, cw, 1.2, "F");
+      y += 5;
+    }
+
+    // Group title in BLACK
     if (group.title) {
-      // If adding the title + at least one leg overflows, new page
       if (y > 240 || legsOnCurrentPage >= MAX_LEGS_PER_PAGE) {
         doc.addPage();
         y = 15;
@@ -150,7 +149,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
       }
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+      doc.setTextColor(0, 0, 0);
       doc.text(s(group.title.toUpperCase()), m, y);
       y += 5;
     }
@@ -182,6 +181,12 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
 
     renderSection("IDA", outbound);
     renderSection("VOLTA", returnLegs);
+
+    // Baggage info for this flight (right below last leg)
+    if (group.baggage) {
+      y = drawGroupBaggage(doc, group.baggage, y, m, cw);
+    }
+
     if (gIdx < groups.length - 1) y += 2;
   });
 
@@ -520,6 +525,56 @@ function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw
     doc.setFontSize(6);
     doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
     doc.text(s(leg.airlineName), leftCol, y + 20);
+  }
+
+  return y + rowH + 2;
+}
+
+// ─── Group Baggage row (after each flight) ──────────────────
+function drawGroupBaggage(
+  doc: jsPDF,
+  bag: { personalItem: number; carryOn: number; checkedBag: number },
+  y: number,
+  m: number,
+  cw: number,
+): number {
+  if (!bag || (bag.personalItem <= 0 && bag.carryOn <= 0 && bag.checkedBag <= 0)) return y;
+  const rowH = 12;
+  y = checkPage(doc, y, rowH + 2);
+
+  // Light bg with gold left accent
+  doc.setFillColor(LIGHT_BG[0], LIGHT_BG[1], LIGHT_BG[2]);
+  doc.rect(m, y, cw, rowH, "F");
+  doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+  doc.setLineWidth(0.2);
+  doc.rect(m, y, cw, rowH, "S");
+  doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+  doc.rect(m, y, 2.5, rowH, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+  doc.text("Bagagens incluidas:", m + 7, y + 5);
+
+  const iconY = y + 9.5;
+  let cx = m + 50;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+
+  if (bag.personalItem > 0) {
+    drawBagIcon(doc, "personal", cx, iconY);
+    doc.text(`${bag.personalItem}x Bolsa/mochila`, cx + 7, iconY - 1);
+    cx += 50;
+  }
+  if (bag.carryOn > 0) {
+    drawBagIcon(doc, "carryon", cx, iconY);
+    doc.text(`${bag.carryOn}x Mala de mao 12kg`, cx + 7, iconY - 1);
+    cx += 50;
+  }
+  if (bag.checkedBag > 0) {
+    drawBagIcon(doc, "checked", cx, iconY);
+    doc.text(`${bag.checkedBag}x Bagagem despachada 23kg`, cx + 7, iconY - 1);
   }
 
   return y + rowH + 2;
