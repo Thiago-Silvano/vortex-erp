@@ -137,6 +137,12 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
     { label: "Dashboard", icon: <BarChart3 className="h-4 w-4" />, url: "/dashboard", items: [
       { title: "Dashboard", url: "/dashboard", permKey: "dashboard_view" },
     ]},
+    { label: "Vendas", icon: <ShoppingCart className="h-4 w-4" />, url: "/sales", items: [
+      { title: "Vendas", url: "/sales", permKey: "sales_view" },
+    ]},
+    { label: "Cotação", icon: <FileText className="h-4 w-4" />, url: "/sales/new", items: [
+      { title: "Nova Cotação", url: "/sales/new", permKey: "sales_view" },
+    ]},
     { label: "Cadastros", icon: <Users className="h-4 w-4" />, items: [
       { title: "Clientes", url: "/clients", permKey: "clients_view" },
       { title: "Fornecedores", url: "/suppliers", permKey: "suppliers_view" },
@@ -148,9 +154,6 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       { title: "Centro de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
       { title: "Conta-corrente", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
       { title: "Taxas", url: "/financial/fees" },
-    ]},
-    { label: "Vendas", icon: <ShoppingCart className="h-4 w-4" />, url: "/sales", items: [
-      { title: "Vendas", url: "/sales", permKey: "sales_view" },
     ]},
     { label: "Cotações", icon: <FileText className="h-4 w-4" />, items: [
       { title: "Lista de Cotações", url: "/cotacoes/lista", permKey: "sales_view" },
