@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.analyze-client-document]
 verify_jwt = false
+
+[functions.daily-financial-summary]
+verify_jwt = false
