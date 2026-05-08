@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileText, Upload, Trash2, Plus, Check, Loader2, Plane, Hotel, Car, Shield, MapPin, Clock, ArrowRight } from 'lucide-react';
+import { FileText, Upload, Trash2, Plus, Check, Loader2, Plane, Hotel, Car, Shield, MapPin, Clock, ArrowRight, ClipboardPaste, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -143,6 +143,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState('');
+  const [isImage, setIsImage] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState<'upload' | 'review'>('upload');
@@ -157,10 +158,45 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (f.type !== 'application/pdf') { toast.error('Apenas arquivos PDF são aceitos.'); return; }
+    acceptFile(f);
+  };
+
+  const acceptFile = (f: File) => {
+    const isPdf = f.type === 'application/pdf';
+    const isImg = f.type.startsWith('image/');
+    if (!isPdf && !isImg) { toast.error('Envie um PDF ou uma imagem (JPG/PNG/WEBP).'); return; }
     if (f.size > 20 * 1024 * 1024) { toast.error('Arquivo muito grande (máx 20MB).'); return; }
     setFile(f);
+    setIsImage(isImg);
     setPdfUrl(URL.createObjectURL(f));
+  };
+
+  // Permite colar imagem direto da área de transferência (Ctrl+V) enquanto o modal está aberto
+  useEffect(() => {
+    if (!open || step !== 'upload') return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.kind === 'file') {
+          const f = item.getAsFile();
+          if (f) {
+            e.preventDefault();
+            acceptFile(f);
+            toast.success('Imagem colada da área de transferência.');
+            return;
+          }
+        }
+      }
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [open, step]);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const f = e.dataTransfer.files?.[0];
+    if (f) acceptFile(f);
   };
 
   const handleAnalyze = async () => {
@@ -178,7 +214,11 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
       setProgress(30);
 
       const { data, error } = await supabase.functions.invoke('analyze-quote-pdf', {
-        body: { pdfBase64: base64, serviceCatalog: serviceCatalog.map(s => ({ name: s.name })) },
+        body: {
+          pdfBase64: base64,
+          mimeType: file.type || (isImage ? 'image/png' : 'application/pdf'),
+          serviceCatalog: serviceCatalog.map(s => ({ name: s.name })),
+        },
       });
 
       setProgress(80);
@@ -329,6 +369,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   const handleReset = () => {
     setFile(null);
     setPdfUrl('');
+    setIsImage(false);
     setStep('upload');
     setServices([]);
     setQuoteOptions([]);
