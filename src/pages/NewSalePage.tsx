@@ -4655,7 +4655,7 @@ export default function NewSalePage() {
           serviceCatalog={serviceCatalog}
           marginMode="none"
           marginPercent={20}
-          onImport={({ items: importedItems, tripInfo, quoteOptions: importedQuoteOptions, paymentTerms, generalNotes }) => {
+          onImport={({ items: importedItems, tripInfo, quoteOptions: importedQuoteOptions, paymentTerms, generalNotes, selectedClient }) => {
             const importBatchId = Date.now();
             const mappedOptions = importedQuoteOptions.map((option, index) => ({
               id: `imported-option-${importBatchId}-${index}`,
@@ -4684,12 +4684,10 @@ export default function NewSalePage() {
               quote_option_id: mappedOptions.length > 1 ? optionIdMap.get(item.quote_option_id || '0') : item.quote_option_id,
             }))]);
 
-            if (!clientName.trim() && tripInfo.client_name && tripInfo.client_name.toLowerCase() !== 'não informado') setClientName(tripInfo.client_name);
-            if (tripInfo.destination) setDestinationName(tripInfo.destination);
-            if (tripInfo.departure_date) setTripStartDate(tripInfo.departure_date);
-            if (tripInfo.return_date) setTripEndDate(tripInfo.return_date);
-            if (tripInfo.passengers) setPassengersCount(Number(tripInfo.passengers) || 1);
-            setNightsManuallySet(false);
+            if (selectedClient) {
+              setClientName(selectedClient.full_name);
+              setSelectedClientId(selectedClient.id);
+            }
 
             if (paymentTerms.length > 0) {
               setProposalPaymentOptions(prev => [
