@@ -2524,28 +2524,7 @@ export default function NewSalePage() {
 
   const handleExportDraftPdf = async () => {
     // Unifica voucher de serviços + aéreo em UM único PDF
-    let combined: any = await handleExportServicesVoucher(undefined as any);
-    // Se houve voucher de serviços, recomeçamos como append; senão começamos vazio
-    // handleExportServicesVoucher sem appendTo já salva e retorna doc; precisamos não salvar:
-    // Refazemos: passamos um placeholder para evitar save
-    // Implementação: gerar combined sem salvar
-    combined = null;
-    combined = await handleExportServicesVoucher(undefined as any);
-    // O acima salva. Para evitar, usamos diretamente fluxo combinado:
-    // Reset e refaz combinando
-    combined = null;
-    // Build fresh combined
-    const servicesDoc = await (async () => {
-      // Forçamos modo append passando um doc novo placeholder não funciona;
-      // simplesmente chamamos services com appendTo definido como objeto sentinela tratado depois
-      return null;
-    })();
-    // Fluxo final correto:
-    let unified: any = null;
-    // 1) Serviços
-    const sDoc = await handleExportServicesVoucherCombined();
-    unified = sDoc;
-    // 2) Aéreo (anexa)
+    let unified: any = await handleExportServicesVoucherCombined();
     const hasAir = items.some(i =>
       (i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length) ||
       (i.metadata?.type === 'adicional' && i.metadata?.isAirService)
