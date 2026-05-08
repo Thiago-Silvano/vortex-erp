@@ -282,11 +282,33 @@ export default function Dashboard() {
     const ticketCurr = curr.length > 0 ? sumCurr / curr.length : 0;
     const ticketPrev = prev.length > 0 ? sumPrev / prev.length : 0;
 
+    // Lucro líquido Vistos = Total vendido - Taxas de Fornecedor (visa_sale_items.is_supplier_fee)
+    const currIds = curr.map((s: any) => s.id);
+    const prevIds = prev.map((s: any) => s.id);
+    let supplierCurr = 0;
+    let supplierPrev = 0;
+    if (currIds.length > 0) {
+      const { data } = await supabase
+        .from('visa_sale_items')
+        .select('total_value')
+        .in('visa_sale_id', currIds)
+        .eq('is_supplier_fee', true);
+      supplierCurr = (data || []).reduce((s: number, r: any) => s + Number(r.total_value || 0), 0);
+    }
+    if (prevIds.length > 0) {
+      const { data } = await supabase
+        .from('visa_sale_items')
+        .select('total_value')
+        .in('visa_sale_id', prevIds)
+        .eq('is_supplier_fee', true);
+      supplierPrev = (data || []).reduce((s: number, r: any) => s + Number(r.total_value || 0), 0);
+    }
+
     setStats({
       faturamento: sumCurr, faturamentoAnterior: sumPrev,
       ticketMedio: ticketCurr, ticketMedioAnterior: ticketPrev,
       clientes: curr.length, clientesAnterior: prev.length,
-      lucro: sumCurr - cardCurr, lucroAnterior: sumPrev - cardPrev,
+      lucro: sumCurr - supplierCurr, lucroAnterior: sumPrev - supplierPrev,
     });
 
     // Series
