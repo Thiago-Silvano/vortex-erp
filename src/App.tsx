@@ -171,7 +171,7 @@ const App = () => (
           <Route path="/product-images" element={<ProtectedRoute><ProductImagesPage /></ProtectedRoute>} />
 
           {/* Vistos routes */}
-          <Route path="/vistos/dashboard" element={<ProtectedRoute><PermissionGuard permKey="dashboard_view"><VistosDashboard /></PermissionGuard></ProtectedRoute>} />
+          <Route path="/vistos/dashboard" element={<ProtectedRoute><PermissionGuard permKey="dashboard_view"><Dashboard /></PermissionGuard></ProtectedRoute>} />
           <Route path="/vistos/products" element={<ProtectedRoute><VistosProductsPage /></ProtectedRoute>} />
           <Route path="/vistos/sales" element={<ProtectedRoute><VistosSalesPage /></ProtectedRoute>} />
           <Route path="/vistos/sales/new" element={<ProtectedRoute><VistosNewSalePage /></ProtectedRoute>} />
