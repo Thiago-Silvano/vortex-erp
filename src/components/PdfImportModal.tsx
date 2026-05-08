@@ -673,46 +673,46 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
 
         {step === 'review' && (
           <div className="space-y-4">
-            {/* Trip info summary */}
-            {(tripInfo.client_name || tripInfo.origin || tripInfo.destination) && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardContent className="p-4">
-                  <p className="text-sm font-semibold text-foreground mb-2">📋 Informações da Viagem</p>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-                    {tripInfo.client_name && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Cliente</span>
-                        <span className="font-medium">{tripInfo.client_name}</span>
-                      </div>
-                    )}
-                    {tripInfo.origin && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Origem</span>
-                        <span className="font-medium">{tripInfo.origin}</span>
-                      </div>
-                    )}
-                    {tripInfo.destination && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Destino</span>
-                        <span className="font-medium">{tripInfo.destination}</span>
-                      </div>
-                    )}
-                    {tripInfo.departure_date && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Ida</span>
-                        <span className="font-medium">{formatDate(tripInfo.departure_date)}</span>
-                      </div>
-                    )}
-                    {tripInfo.return_date && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Volta</span>
-                        <span className="font-medium">{formatDate(tripInfo.return_date)}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Client selection (optional) */}
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-semibold text-foreground">Cliente <span className="text-xs font-normal text-muted-foreground">(opcional)</span></p>
+                </div>
+                <div className="flex gap-2">
+                  <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="flex-1 justify-between font-normal h-9">
+                        {selectedClient?.full_name || 'Selecione um cliente existente...'}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar cliente..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                          <CommandGroup>
+                            {clientList.map(c => (
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { setSelectedClient(c); setClientPopoverOpen(false); }}>
+                                {c.full_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {selectedClient && (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedClient(null)}>Limpar</Button>
+                  )}
+                  <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
             {(quoteOptions.length > 0 || paymentTerms.length > 0 || generalNotes) && (
               <Card>
