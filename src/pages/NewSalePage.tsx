@@ -2304,9 +2304,9 @@ export default function NewSalePage() {
         eticketNumber: p.eticket_number || undefined,
         seat: p.seat || undefined,
         baggage: {
-          personalItem: p.baggage_personal_item ?? 1,
-          carryOn: p.baggage_carry_on ?? 1,
-          checkedBag: p.baggage_checked ?? 1,
+          personalItem: p.baggage_personal_item ?? 0,
+          carryOn: p.baggage_carry_on ?? 0,
+          checkedBag: p.baggage_checked ?? 0,
         },
       }));
 
@@ -2352,7 +2352,17 @@ export default function NewSalePage() {
       const route = firstLeg ? `${firstLeg.origin || ''} → ${lastLeg?.destination || ''}` : '';
       const baseTitle = airItem.description || `Voo ${idx + 1}`;
       const title = route ? `${baseTitle} • ${route}` : baseTitle;
-      const bag = (airItem.metadata as any)?.baggage;
+      const sumBag = airPax.reduce(
+        (acc, p) => ({
+          personalItem: acc.personalItem + (p.baggage?.personalItem || 0),
+          carryOn: acc.carryOn + (p.baggage?.carryOn || 0),
+          checkedBag: acc.checkedBag + (p.baggage?.checkedBag || 0),
+        }),
+        { personalItem: 0, carryOn: 0, checkedBag: 0 },
+      );
+      const bag = (sumBag.personalItem || sumBag.carryOn || sumBag.checkedBag)
+        ? sumBag
+        : (airItem.metadata as any)?.baggage;
       return {
         title,
         totalValue: airItem.total_value,
@@ -4521,8 +4531,8 @@ export default function NewSalePage() {
             )}
             {saleStatus === 'active' ? (
               <>
-                <Button variant="outline" onClick={handleExportServicesVoucher}><Download className="h-4 w-4 mr-1" /> Voucher Serviços</Button>
-                <Button variant="outline" onClick={handleExportAirlineVoucher}><Plane className="h-4 w-4 mr-1" /> Voucher Aéreo</Button>
+                <Button variant="outline" onClick={() => handleExportServicesVoucher()}><Download className="h-4 w-4 mr-1" /> Voucher Serviços</Button>
+                <Button variant="outline" onClick={() => handleExportAirlineVoucher()}><Plane className="h-4 w-4 mr-1" /> Voucher Aéreo</Button>
               </>
             ) : (
               <Button
