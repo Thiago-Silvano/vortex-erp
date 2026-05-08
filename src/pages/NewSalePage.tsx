@@ -432,9 +432,9 @@ export default function NewSalePage() {
       document_type: p.document_type || 'cpf', document_number: p.document_number || '',
       document_expiry: p.document_expiry || '', email: p.email || '', phone: p.phone || '', is_main: p.is_main || false,
       eticket_number: p.eticket_number || '', seat: p.seat || '',
-      baggage_personal_item: p.baggage_personal_item ?? 1,
-      baggage_carry_on: p.baggage_carry_on ?? 1,
-      baggage_checked: p.baggage_checked ?? 1,
+      baggage_personal_item: p.baggage_personal_item ?? 0,
+      baggage_carry_on: p.baggage_carry_on ?? 0,
+      baggage_checked: p.baggage_checked ?? 0,
     })));
 
     // Load internal files
@@ -1708,9 +1708,9 @@ export default function NewSalePage() {
         document_number: p.document_number, document_expiry: p.document_expiry || null,
         email: p.email, phone: p.phone, is_main: p.is_main, sort_order: idx,
         eticket_number: p.eticket_number || '', seat: p.seat || '',
-        baggage_personal_item: p.baggage_personal_item ?? 1,
-        baggage_carry_on: p.baggage_carry_on ?? 1,
-        baggage_checked: p.baggage_checked ?? 1,
+        baggage_personal_item: p.baggage_personal_item ?? 0,
+        baggage_carry_on: p.baggage_carry_on ?? 0,
+        baggage_checked: p.baggage_checked ?? 0,
       })));
     }
 
