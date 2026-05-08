@@ -33,6 +33,7 @@ import CashFlowPage from "./pages/CashFlowPage";
 import CostCentersPage from "./pages/CostCentersPage";
 import PaymentFeesPage from "./pages/PaymentFeesPage";
 import FeeSimulatorPage from "./pages/FeeSimulatorPage";
+import FinancialSummaryPage from "./pages/FinancialSummaryPage";
 import ReportDashboard from "./pages/reports/ReportDashboard";
 import ReportSales from "./pages/reports/ReportSales";
 import ReportFinancial from "./pages/reports/ReportFinancial";
@@ -142,6 +143,7 @@ const App = () => (
           <Route path="/financial/cost-centers" element={<ProtectedRoute><CostCentersPage /></ProtectedRoute>} />
           <Route path="/financial/fees" element={<ProtectedRoute><PaymentFeesPage /></ProtectedRoute>} />
           <Route path="/financial/fee-simulator" element={<ProtectedRoute><FeeSimulatorPage /></ProtectedRoute>} />
+          <Route path="/financial/summary" element={<ProtectedRoute><FinancialSummaryPage /></ProtectedRoute>} />
           <Route path="/reports/dashboard" element={<ProtectedRoute><ReportDashboard /></ProtectedRoute>} />
           <Route path="/reports/sales" element={<ProtectedRoute><ReportSales /></ProtectedRoute>} />
           <Route path="/reports/financial" element={<ProtectedRoute><ReportFinancial /></ProtectedRoute>} />
