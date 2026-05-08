@@ -52,6 +52,8 @@ export interface AirlineVoucherData {
   localizador?: string; // reservation code from airline
   passengers: AirlineVoucherPassenger[];
   flightLegs: AirlineVoucherLeg[];
+  flightGroups?: Array<{ title: string; totalValue?: number; legs: AirlineVoucherLeg[] }>;
+  clientName?: string;
   notes?: string;
   additionalServices?: AdditionalAirService[];
   agencyName?: string;
