@@ -170,8 +170,8 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
         doc.addPage();
         y = 15;
       }
-      const partLabel = chunks.length > 1 ? (`${label} (${idx + 1}/${chunks.length})` as any) : label;
-      y = drawFlightSection(doc, partLabel, part, y, m, pw, cw);
+      const suffix = chunks.length > 1 ? ` (${idx + 1}/${chunks.length})` : "";
+      y = drawFlightSection(doc, label, part, y, m, pw, cw, suffix);
       y += 4;
     });
   };
