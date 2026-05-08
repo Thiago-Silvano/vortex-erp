@@ -2357,6 +2357,7 @@ export default function NewSalePage() {
         title,
         totalValue: airItem.total_value,
         legs,
+        localizador: airItem.reservation_number || '',
         baggage: bag
           ? {
               personalItem: bag.personalItem ?? 0,

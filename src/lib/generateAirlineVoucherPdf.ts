@@ -57,6 +57,7 @@ export interface AirlineVoucherData {
     totalValue?: number;
     legs: AirlineVoucherLeg[];
     baggage?: { personalItem: number; carryOn: number; checkedBag: number };
+    localizador?: string;
   }>;
   clientName?: string;
   notes?: string;
@@ -126,7 +127,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
 
   const groups = (data.flightGroups && data.flightGroups.length > 0)
     ? data.flightGroups
-    : [{ title: "", totalValue: undefined as number | undefined, legs: data.flightLegs }];
+    : [{ title: "", totalValue: undefined as number | undefined, legs: data.flightLegs, localizador: data.localizador }];
 
   groups.forEach((group, gIdx) => {
     const outbound = group.legs.filter((l) => l.direction !== "volta");
@@ -167,7 +168,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
           continue;
         }
         const slice = legs.slice(i, i + remaining);
-        y = drawFlightSection(doc, label, slice, y, m, pw, cw, "", group.totalValue && i === 0 && label === "IDA" ? group.totalValue : undefined);
+        y = drawFlightSection(doc, label, slice, y, m, pw, cw, "", group.totalValue && i === 0 && label === "IDA" ? group.totalValue : undefined, group.localizador);
         legsOnCurrentPage += slice.length;
         i += slice.length;
         y += 4;
@@ -326,6 +327,7 @@ function drawFlightSection(
   cw: number,
   suffix: string = "",
   totalValue?: number,
+  localizador?: string,
 ): number {
   const connections = countConnections(legs);
   const firstDate = legs[0]?.departureDate;
@@ -348,7 +350,8 @@ function drawFlightSection(
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
   const dirIcon = label === "IDA" ? ">" : "<";
   const dirLabel = label === "IDA" ? "IDA" : "VOLTA";
-  doc.text(`${dirIcon}  ${dirLabel}${suffix}`, m + 7, y + 6.5);
+  const locStr = localizador ? `  •  Localizador: ${localizador}` : "";
+  doc.text(`${dirIcon}  ${dirLabel}${suffix}${locStr}`, m + 7, y + 6.5);
 
   // Date + time center (bold)
   if (firstDate) {
