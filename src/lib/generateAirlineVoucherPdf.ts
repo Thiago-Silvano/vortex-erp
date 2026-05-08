@@ -692,7 +692,7 @@ function drawPassengerCard(
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
   doc.text("Bagagens*", bagCol, row2LabelY);
 
-  const bag = pax.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 };
+  const bag = pax.baggage || { personalItem: 0, carryOn: 0, checkedBag: 0 };
   const colSpacing = 45;
   let colIdx = 0;
 
@@ -703,22 +703,27 @@ function drawPassengerCard(
   if (bag.personalItem > 0) {
     const cx = bagCol + colIdx * colSpacing;
     drawBagIcon(doc, "personal", cx, row2ValueY);
-    doc.text("Bolsa ou mochila", cx + 7, row2ValueY);
+    doc.text(`${bag.personalItem}x Bolsa ou mochila`, cx + 7, row2ValueY);
     colIdx++;
   }
 
   if (bag.carryOn > 0) {
     const cx = bagCol + colIdx * colSpacing;
     drawBagIcon(doc, "carryon", cx, row2ValueY);
-    doc.text("Mala pequena 12kg", cx + 7, row2ValueY);
+    doc.text(`${bag.carryOn}x Mala pequena 12kg`, cx + 7, row2ValueY);
     colIdx++;
   }
 
   if (bag.checkedBag > 0) {
     const cx = bagCol + colIdx * colSpacing;
     drawBagIcon(doc, "checked", cx, row2ValueY);
-    doc.text("Bagagem despachada 23kg", cx + 7, row2ValueY);
+    doc.text(`${bag.checkedBag}x Bagagem despachada 23kg`, cx + 7, row2ValueY);
     colIdx++;
+  }
+
+  if (colIdx === 0) {
+    doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+    doc.text("Sem bagagem informada", bagCol, row2ValueY);
   }
 
   return y + cardH;
