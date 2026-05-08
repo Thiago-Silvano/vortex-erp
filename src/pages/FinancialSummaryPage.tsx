@@ -21,16 +21,19 @@ const PLACEHOLDERS: { key: string; desc: string }[] = [
   { key: 'viagens_qtd', desc: 'Qtd. de vendas Viagens (dia)' },
   { key: 'viagens_mes', desc: 'Total vendido Viagens (mês)' },
   { key: 'viagens_lucro_mes', desc: 'Lucro bruto Viagens (mês)' },
+  { key: 'viagens_qtd_mes', desc: 'Qtd. de vendas Viagens (mês)' },
   { key: 'vistos_total', desc: 'Total vendido Vistos (dia)' },
   { key: 'vistos_lucro', desc: 'Lucro bruto Vistos (dia)' },
   { key: 'vistos_qtd', desc: 'Qtd. de vendas Vistos (dia)' },
   { key: 'vistos_mes', desc: 'Total vendido Vistos (mês)' },
   { key: 'vistos_lucro_mes', desc: 'Lucro bruto Vistos (mês)' },
+  { key: 'vistos_qtd_mes', desc: 'Qtd. de vendas Vistos (mês)' },
   { key: 'total_geral', desc: 'Total consolidado (dia)' },
   { key: 'lucro_geral', desc: 'Lucro consolidado (dia)' },
   { key: 'qtd_geral', desc: 'Qtd. total de vendas (dia)' },
   { key: 'mes_geral', desc: 'Total consolidado do mês' },
   { key: 'lucro_mes_geral', desc: 'Lucro consolidado do mês' },
+  { key: 'qtd_mes_geral', desc: 'Qtd. total de vendas no mês (consolidado)' },
 ];
 
 const DEFAULT_TEMPLATE = `📊 *RESUMO FINANCEIRO DIÁRIO*

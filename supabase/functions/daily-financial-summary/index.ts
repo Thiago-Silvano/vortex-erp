@@ -94,7 +94,8 @@ Deno.serve(async (req) => {
       const yQty = (yest || []).length;
       const mTotal = (month || []).reduce((s, r: any) => s + Number(r.total_sale || 0), 0);
       const mProfit = (month || []).reduce((s, r: any) => s + Number(r.gross_profit || 0), 0);
-      return { yTotal, yProfit, yQty, mTotal, mProfit };
+      const mQty = (month || []).length;
+      return { yTotal, yProfit, yQty, mTotal, mProfit, mQty };
     }
 
     async function vistosSummary(empresaId: string) {
@@ -136,7 +137,8 @@ Deno.serve(async (req) => {
         monthSupplierFees = (mItems || []).reduce((s, r: any) => s + Number(r.total_value || 0), 0);
       }
       const mProfit = mTotal - monthSupplierFees;
-      return { yTotal, yProfit, yQty, mTotal, mProfit };
+      const mQty = (month || []).length;
+      return { yTotal, yProfit, yQty, mTotal, mProfit, mQty };
     }
 
     const viagens = await viagensSummary(VIAGENS_ID);
@@ -165,16 +167,19 @@ Deno.serve(async (req) => {
       viagens_qtd: String(viagens.yQty),
       viagens_mes: brl(viagens.mTotal),
       viagens_lucro_mes: brl(viagens.mProfit),
+      viagens_qtd_mes: String(viagens.mQty),
       vistos_total: brl(vistos.yTotal),
       vistos_lucro: brl(vistos.yProfit),
       vistos_qtd: String(vistos.yQty),
       vistos_mes: brl(vistos.mTotal),
       vistos_lucro_mes: brl(vistos.mProfit),
+      vistos_qtd_mes: String(vistos.mQty),
       total_geral: brl(viagens.yTotal + vistos.yTotal),
       lucro_geral: brl(viagens.yProfit + vistos.yProfit),
       qtd_geral: String(viagens.yQty + vistos.yQty),
       mes_geral: brl(viagens.mTotal + vistos.mTotal),
       lucro_mes_geral: brl(viagens.mProfit + vistos.mProfit),
+      qtd_mes_geral: String(viagens.mQty + vistos.mQty),
     };
     const message = template.replace(/\{(\w+)\}/g, (_m, k) => vars[k] ?? `{${k}}`);
 
