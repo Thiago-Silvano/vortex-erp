@@ -2568,11 +2568,18 @@ export default function NewSalePage() {
 
   const handleExportDraftPdf = async () => {
     // Unifica voucher de serviços + aéreo em UM único PDF
-    let unified: any = await handleExportServicesVoucherCombined();
     const hasAir = items.some(i =>
       (i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length) ||
       (i.metadata?.type === 'adicional' && i.metadata?.isAirService)
     );
+    const hasNonAir = items.some(i =>
+      i.metadata?.type !== 'aereo' &&
+      !(i.metadata?.type === 'adicional' && i.metadata?.isAirService)
+    );
+    let unified: any = null;
+    if (hasNonAir) {
+      unified = await handleExportServicesVoucherCombined();
+    }
     if (hasAir) {
       unified = await handleExportAirlineVoucher(unified ?? undefined);
     }
