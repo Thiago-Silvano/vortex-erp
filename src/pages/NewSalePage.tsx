@@ -2199,9 +2199,9 @@ export default function NewSalePage() {
     return { voucherData, logoBase64, shortId: saleShortId };
   };
 
-  const handleExportServicesVoucher = async () => {
+  const handleExportServicesVoucher = async (appendTo?: any): Promise<any | null> => {
     const result = await prepareVoucherCommonData();
-    if (!result) return;
+    if (!result) return null;
     const { voucherData } = result;
 
     // Load Vortex white logo (same as airline voucher)
@@ -2218,19 +2218,22 @@ export default function NewSalePage() {
 
     voucherData.vortexWhiteLogoBase64 = vortexWhiteLogoBase64;
 
-    const doc = generateVoucherPdf(voucherData);
-    doc.save(`voucher-servicos-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
-    toast.success('Voucher de servicos gerado com sucesso!');
+    const doc = generateVoucherPdf(voucherData, appendTo);
+    if (!appendTo) {
+      doc.save(`voucher-servicos-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`);
+      toast.success('Voucher de servicos gerado com sucesso!');
+    }
+    return doc;
   };
 
-  const handleExportAirlineVoucher = async () => {
+  const handleExportAirlineVoucher = async (appendTo?: any): Promise<any | null> => {
     if (!clientName.trim()) { toast.error('Nome do cliente é obrigatório para gerar o voucher'); return; }
 
     const airlineItems = items.filter(i => i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length);
     const additionalAirItems = items.filter(i => i.metadata?.type === 'adicional' && i.metadata?.isAirService);
     if (airlineItems.length === 0 && additionalAirItems.length === 0) {
-      toast.error('Nenhum serviço aéreo encontrado nesta venda');
-      return;
+      if (!appendTo) toast.error('Nenhum serviço aéreo encontrado nesta venda');
+      return appendTo ?? null;
     }
 
     // Build additional air services
@@ -2241,7 +2244,7 @@ export default function NewSalePage() {
     }));
 
     const result = await prepareVoucherCommonData();
-    if (!result) return;
+    if (!result) return null;
     const { logoBase64, shortId } = result;
 
     // Load agency for footer
@@ -2252,7 +2255,7 @@ export default function NewSalePage() {
     const { data: agData } = await agQuery;
     if (agData && agData.length > 0) agency = agData[0] as any;
 
-    let combinedDoc: any = undefined;
+    let combinedDoc: any = appendTo;
     let firstAirlineName = '';
     for (const airItem of airlineItems) {
       const meta = airItem.metadata!;
@@ -2340,11 +2343,12 @@ export default function NewSalePage() {
       combinedDoc = generateAirlineVoucherPdf(airVoucherData, combinedDoc);
       if (!firstAirlineName && airlineName) firstAirlineName = airlineName;
     }
-    if (combinedDoc) {
+    if (combinedDoc && !appendTo) {
       const fileName = `voucher-aereo-${firstAirlineName ? firstAirlineName.replace(/\s+/g, '-').toLowerCase() + '-' : ''}${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
       combinedDoc.save(fileName);
+      toast.success('Voucher aéreo gerado!');
     }
-    toast.success('Voucher aéreo gerado!');
+    return combinedDoc ?? null;
   };
 
   const buildPremiumPdfData = async (): Promise<PremiumPdfData | null> => {
@@ -2519,15 +2523,39 @@ export default function NewSalePage() {
   };
 
   const handleExportDraftPdf = async () => {
-    // Mesma geração dos vouchers: serviços + aéreo
-    await handleExportServicesVoucher();
+    // Unifica voucher de serviços + aéreo em UM único PDF
+    let unified: any = await handleExportServicesVoucherCombined();
     const hasAir = items.some(i =>
       (i.metadata?.type === 'aereo' && i.metadata?.flightLegs?.length) ||
       (i.metadata?.type === 'adicional' && i.metadata?.isAirService)
     );
     if (hasAir) {
-      await handleExportAirlineVoucher();
+      unified = await handleExportAirlineVoucher(unified ?? undefined);
     }
+    if (unified) {
+      const fileName = `proposta-${clientName.replace(/\s+/g, '-').toLowerCase()}-${saleDate}.pdf`;
+      unified.save(fileName);
+      toast.success('PDF da proposta gerado!');
+    }
+  };
+
+  // Variação que NÃO salva, retorna o doc com voucher de serviços
+  const handleExportServicesVoucherCombined = async (): Promise<any | null> => {
+    const result = await prepareVoucherCommonData();
+    if (!result) return null;
+    const { voucherData } = result;
+    let vortexWhiteLogoBase64: string | undefined;
+    try {
+      const vortexResp = await fetch('/images/vortex-white-logo.png');
+      const vortexBlob = await vortexResp.blob();
+      vortexWhiteLogoBase64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(vortexBlob);
+      });
+    } catch { /* skip */ }
+    voucherData.vortexWhiteLogoBase64 = vortexWhiteLogoBase64;
+    return generateVoucherPdf(voucherData);
   };
 
   const handleGenerateLink = async () => {
