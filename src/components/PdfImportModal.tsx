@@ -9,7 +9,11 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileText, Upload, Trash2, Plus, Check, Loader2, Plane, Hotel, Car, Shield, MapPin, Clock, ArrowRight, ClipboardPaste, Image as ImageIcon } from 'lucide-react';
+import { FileText, Upload, Trash2, Plus, Check, Loader2, Plane, Hotel, Car, Shield, MapPin, Clock, ArrowRight, ClipboardPaste, Image as ImageIcon, ChevronsUpDown, User } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import QuickClientModal from '@/components/QuickClientModal';
+import { useCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -92,6 +96,7 @@ interface PdfImportResult {
   quoteOptions: { title: string }[];
   paymentTerms: ExtractedPaymentTerm[];
   generalNotes: string;
+  selectedClient?: { id: string; full_name: string } | null;
 }
 
 interface PdfImportModalProps {
@@ -141,6 +146,7 @@ function getServiceColor(serviceType: string): string {
 
 export default function PdfImportModal({ open, onClose, serviceCatalog, onImport, marginMode: initialMarginMode, marginPercent: initialMarginPercent }: PdfImportModalProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const { activeCompany } = useCompany();
   const [file, setFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState('');
   const [isImage, setIsImage] = useState(false);
@@ -154,6 +160,17 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   const [tripInfo, setTripInfo] = useState<TripInfo>({ client_name: '', origin: '', destination: '', departure_date: '', return_date: '' });
   const [marginMode, setMarginMode] = useState<'none' | 'fixed' | 'manual'>(initialMarginMode);
   const [marginPercent, setMarginPercent] = useState(initialMarginPercent);
+  const [clientList, setClientList] = useState<Array<{ id: string; full_name: string }>>([]);
+  const [selectedClient, setSelectedClient] = useState<{ id: string; full_name: string } | null>(null);
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
+  const [quickClientOpen, setQuickClientOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let q = supabase.from('clients').select('id, full_name').order('full_name');
+    if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
+    q.then(({ data }) => { if (data) setClientList(data as any); });
+  }, [open, activeCompany?.id]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -392,6 +409,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
       quoteOptions: quoteOptions.map(option => ({ title: option.title })),
       paymentTerms,
       generalNotes,
+      selectedClient,
     });
     handleReset();
     onClose();
@@ -408,6 +426,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
     setGeneralNotes('');
     setTripInfo({ client_name: '', origin: '', destination: '', departure_date: '', return_date: '' });
     setProgress(0);
+    setSelectedClient(null);
   };
 
   const totalCost = services.reduce((s, svc) => s + svc.cost_price * (svc.quantity || 1), 0);
@@ -572,6 +591,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => { if (!o) { handleReset(); onClose(); } }}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -654,46 +674,46 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
 
         {step === 'review' && (
           <div className="space-y-4">
-            {/* Trip info summary */}
-            {(tripInfo.client_name || tripInfo.origin || tripInfo.destination) && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardContent className="p-4">
-                  <p className="text-sm font-semibold text-foreground mb-2">📋 Informações da Viagem</p>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-                    {tripInfo.client_name && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Cliente</span>
-                        <span className="font-medium">{tripInfo.client_name}</span>
-                      </div>
-                    )}
-                    {tripInfo.origin && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Origem</span>
-                        <span className="font-medium">{tripInfo.origin}</span>
-                      </div>
-                    )}
-                    {tripInfo.destination && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Destino</span>
-                        <span className="font-medium">{tripInfo.destination}</span>
-                      </div>
-                    )}
-                    {tripInfo.departure_date && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Ida</span>
-                        <span className="font-medium">{formatDate(tripInfo.departure_date)}</span>
-                      </div>
-                    )}
-                    {tripInfo.return_date && (
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Volta</span>
-                        <span className="font-medium">{formatDate(tripInfo.return_date)}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Client selection (optional) */}
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-semibold text-foreground">Cliente <span className="text-xs font-normal text-muted-foreground">(opcional)</span></p>
+                </div>
+                <div className="flex gap-2">
+                  <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="flex-1 justify-between font-normal h-9">
+                        {selectedClient?.full_name || 'Selecione um cliente existente...'}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar cliente..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                          <CommandGroup>
+                            {clientList.map(c => (
+                              <CommandItem key={c.id} value={c.full_name} onSelect={() => { setSelectedClient(c); setClientPopoverOpen(false); }}>
+                                {c.full_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {selectedClient && (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedClient(null)}>Limpar</Button>
+                  )}
+                  <Button type="button" size="icon" variant="outline" onClick={() => setQuickClientOpen(true)} title="Cadastrar novo cliente">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
             {(quoteOptions.length > 0 || paymentTerms.length > 0 || generalNotes) && (
               <Card>
@@ -774,5 +794,16 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
         )}
       </DialogContent>
     </Dialog>
+    <QuickClientModal
+      open={quickClientOpen}
+      onClose={() => setQuickClientOpen(false)}
+      onClientCreated={(c) => {
+        const created = { id: c.id, full_name: c.full_name };
+        setClientList(prev => [created, ...prev.filter(x => x.id !== created.id)]);
+        setSelectedClient(created);
+        setQuickClientOpen(false);
+      }}
+    />
+    </>
   );
 }
