@@ -140,7 +140,7 @@ export default function WhatsAppSettingsPage() {
     setDisconnecting(false);
   };
 
-  const fetchQrCode = async () => {
+  const fetchQrCode = async (forceFresh = false) => {
     if (!settings.server_url || settings.server_url.includes('localhost')) {
       toast.error('Configure uma URL de servidor válida');
       return;
@@ -148,24 +148,48 @@ export default function WhatsAppSettingsPage() {
     setLoadingQr(true);
     setQrCode(null);
     try {
+      // Force a fresh QR by disconnecting any stale session first
+      if (forceFresh) {
+        try {
+          await disconnectSession(settings.server_url, empresaId);
+        } catch {
+          // ignore — server may not be connected
+        }
+        await new Promise(r => setTimeout(r, 1500));
+      }
+
       await connectSession(settings.server_url, empresaId);
-      // Wait a moment for QR generation on the server
+      // Wait for QR generation on the server
       await new Promise(r => setTimeout(r, 2000));
-      // Try up to 3 times with delay to get the QR
+
+      // Poll up to ~20s to get a QR
       let qr: string | null = null;
-      for (let attempt = 0; attempt < 3 && !qr; attempt++) {
+      let lastQrSig = '';
+      for (let attempt = 0; attempt < 8 && !qr; attempt++) {
         if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
         const data = await getQrCode(settings.server_url, empresaId);
-        qr = data?.qr || data?.qrcode || data?.qr_code || data?.base64 || data?.image || null;
-        // If server says connected, no QR needed
         if (data?.connected) {
           toast.info('O servidor já está conectado ao WhatsApp.');
           setLoadingQr(false);
           return;
         }
+        const candidate: string | null = data?.qr || data?.qrcode || data?.qr_code || data?.base64 || data?.image || null;
+        if (candidate) {
+          const sig = String(candidate).slice(-40);
+          console.log(`[WA QR] attempt ${attempt + 1} signature:`, sig, 'length:', candidate.length);
+          if (sig !== lastQrSig) {
+            qr = candidate;
+            lastQrSig = sig;
+          }
+        } else {
+          console.log(`[WA QR] attempt ${attempt + 1}: no QR in response`, data);
+        }
       }
       if (qr) {
-        setQrCode(typeof qr === 'string' && !qr.startsWith('data:') ? `data:image/png;base64,${qr}` : qr);
+        const src = typeof qr === 'string' && !qr.startsWith('data:') ? `data:image/png;base64,${qr}` : qr;
+        // Cache-bust the <img> by appending a timestamp fragment (does not affect data URLs decoding)
+        setQrCode(src);
+        toast.success('Novo QR Code gerado. Escaneie agora.');
       } else {
         toast.error('QR Code não disponível. O servidor ainda está gerando, tente novamente em alguns segundos.');
       }
@@ -257,10 +281,16 @@ export default function WhatsAppSettingsPage() {
             {/* QR Code section */}
             {!settings.is_connected && (
               <div className="space-y-3">
-                <Button variant="outline" size="sm" className="gap-2" onClick={fetchQrCode} disabled={loadingQr}>
-                  {loadingQr ? <RefreshCw className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
-                  {loadingQr ? 'Carregando QR Code...' : 'Exibir QR Code'}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => fetchQrCode(false)} disabled={loadingQr}>
+                    {loadingQr ? <RefreshCw className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+                    {loadingQr ? 'Carregando QR Code...' : 'Exibir QR Code'}
+                  </Button>
+                  <Button variant="secondary" size="sm" className="gap-2" onClick={() => fetchQrCode(true)} disabled={loadingQr}>
+                    <RefreshCw className={`h-4 w-4 ${loadingQr ? 'animate-spin' : ''}`} />
+                    Forçar novo QR Code
+                  </Button>
+                </div>
                 {qrCode && (
                   <div className="flex flex-col items-center gap-3 p-4 rounded-lg border bg-card">
                     <p className="text-sm font-medium">Escaneie o QR Code com o WhatsApp</p>
