@@ -31,7 +31,7 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
           <div className="flex justify-center">
-            <img src={vortexLogo} alt="Vortex Viagens" className="h-32 w-auto border-0 rounded-none shadow-none text-xs object-contain" />
+            <img src={vortexLogo} alt="Vortex Viagens" className="h-64 w-auto border-0 rounded-none shadow-none text-xs object-contain" />
           </div>
           <CardDescription className="text-neutral-50">​</CardDescription>
         </CardHeader>
