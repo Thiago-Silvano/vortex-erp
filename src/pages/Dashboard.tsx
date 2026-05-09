@@ -472,7 +472,7 @@ export default function Dashboard() {
         value: stats.clientes.toString(),
         delta: cliPct, periodLabel,
         emoji: isVistos ? '🛂' : '👥',
-        accent: 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300',
+        accent: 'rounded-lg p-2 text-xl leading-none text-slate-200 bg-slate-100',
       },
       {
         label: 'LUCRO LÍQUIDO',
@@ -518,7 +518,7 @@ export default function Dashboard() {
             <Card key={c.label} className="overflow-hidden">
               <CardContent className="p-3">
                 <div className="flex items-start gap-2">
-                  <div className={idx === 0 || idx === 1 ? c.accent : `rounded-lg p-2 text-xl leading-none ${c.accent}`}>
+                  <div className={idx === 0 || idx === 1 || idx === 2 ? c.accent : `rounded-lg p-2 text-xl leading-none ${c.accent}`}>
                     <span aria-hidden>{c.emoji}</span>
                   </div>
                   <div className="flex-1 min-w-0">
