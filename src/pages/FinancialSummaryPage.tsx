@@ -192,7 +192,7 @@ export default function FinancialSummaryPage() {
       <div className="container mx-auto p-3 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-base font-semibold">Envio de Resumo Financeiro</h1>
+            <h1 className="text-base font-semibold text-slate-600">Envio de Resumo Financeiro</h1>
             <p className="text-xs text-muted-foreground">
               Envio automático todos os dias às 06:00 (BRT) via WhatsApp.
             </p>

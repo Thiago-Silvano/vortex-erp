@@ -3333,7 +3333,7 @@ export default function NewSalePage() {
                           <button
                             type="button"
                             onClick={() => addServiceToOption(col.id)}
-                            className="border border-dashed border-emerald-300 text-emerald-700 hover:border-emerald-400 dark:text-emerald-300 dark:border-emerald-800 rounded-md py-3 text-xs font-medium transition-colors flex items-center justify-center gap-1 bg-slate-200"
+                            className="border-dashed rounded-md py-3 text-xs transition-colors flex items-center justify-center gap-1 bg-emerald-500 text-white border-0 font-semibold border-slate-50"
                           >
                             <Plus className="h-3.5 w-3.5" /> Adicionar serviço
                           </button>

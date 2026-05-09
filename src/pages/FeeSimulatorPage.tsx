@@ -201,7 +201,7 @@ function Box({ label, value, highlight }: { label: string; value: string; highli
   return (
     <div className={`rounded-md border p-3 ${highlight ? 'bg-primary/5 border-primary/30' : 'bg-muted/30'}`}>
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`text-base font-semibold ${highlight ? 'text-primary' : ''}`}>{value}</div>
+      <div className={`text-base font-semibold text-slate-600 ${highlight ? 'text-primary' : ''}`}>{value}</div>
     </div>
   );
 }
