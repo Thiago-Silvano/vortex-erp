@@ -29,12 +29,12 @@ export default function Login() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
-          <CardDescription>Área restrita. Faça login para continuar.</CardDescription>
+          <CardDescription className="text-neutral-50">Área restrita. Faça login para continuar.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-neutral-50">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -45,7 +45,7 @@ export default function Login() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password" className="text-neutral-50">Senha</Label>
               <Input
                 id="password"
                 type="password"
@@ -60,7 +60,7 @@ export default function Login() {
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
             <div className="text-center">
-              <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary underline">
+              <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary underline text-neutral-50">
                 Esqueci minha senha
               </Link>
             </div>
