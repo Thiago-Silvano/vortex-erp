@@ -240,7 +240,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <div className="flex items-center gap-2 group text-sidebar-foreground">
           <div className="w-7 h-7 rounded-md bg-sidebar-primary flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
-            <img src={vortexLogo} alt="Grupo Vortex" className="w-full h-full object-contain bg-slate-800" />
+            <img src={vortexLogo} alt="Grupo Vortex" className="w-full h-full object-contain border-0 bg-zinc-800" />
           </div>
           <div className="flex-1 min-w-0 text-left group-data-[collapsible=icon]:hidden">
             <div className="text-[13px] font-bold text-sidebar-accent-foreground tracking-tight truncate">
