@@ -6,11 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import vortexLogo from '@/assets/vortex-logo.png';
 
 export default function Login() {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,12 +20,23 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
 
     if (error) {
+      setLoading(false);
       toast({ title: 'Erro ao entrar', description: 'Email ou senha incorretos.', variant: 'destructive' });
+      return;
     }
+
+    if (data.session) {
+      localStorage.setItem('lastActivity', Date.now().toString());
+      navigate(location.pathname || '/dashboard', { replace: true });
+    }
+
+    setLoading(false);
   };
 
   return (
