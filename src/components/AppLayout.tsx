@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import PhotoCaptureModal from "@/components/PhotoCaptureModal";
 import NotificationBell from "@/components/NotificationBell";
 import { useColorMode } from "@/contexts/ColorModeContext";
+import vortexLogo from "@/assets/vortex-logo.png";
 
 interface MenuItem {
   title: string;
@@ -238,8 +239,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <div className="flex items-center gap-2 group text-sidebar-foreground">
-          <div className="w-7 h-7 rounded-md bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold text-sm shrink-0 shadow-sm">
-            V
+          <div className="w-7 h-7 rounded-md bg-sidebar-primary flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+            <img src={vortexLogo} alt="Grupo Vortex" className="w-full h-full object-contain" />
           </div>
           <div className="flex-1 min-w-0 text-left group-data-[collapsible=icon]:hidden">
             <div className="text-[13px] font-bold text-sidebar-accent-foreground tracking-tight truncate">
