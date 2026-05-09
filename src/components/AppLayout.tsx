@@ -87,22 +87,22 @@ function usePermissions() {
 function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
   if (isVistos) {
     return [
-      { label: "Dashboard", icon: <BarChart3 className="h-4 w-4" />, url: "/vistos/dashboard", items: [
+      { label: "Dashboard", icon: <BarChart3 className="h-4 w-4 text-white" />, url: "/vistos/dashboard", items: [
         { title: "Dashboard", url: "/vistos/dashboard", permKey: "dashboard_view" },
       ]},
-      { label: "Vendas", icon: <ShoppingCart className="h-4 w-4" />, url: "/vistos/sales", items: [
+      { label: "Vendas", icon: <ShoppingCart className="h-4 w-4 text-white" />, url: "/vistos/sales", items: [
         { title: "Vendas", url: "/vistos/sales", permKey: "sales_view" },
       ]},
-      { label: "Clientes", icon: <Users className="h-4 w-4" />, items: [
+      { label: "Clientes", icon: <Users className="h-4 w-4 text-white" />, items: [
         { title: "Clientes", url: "/clients", permKey: "clients_view" },
         { title: "Contatos WhatsApp", url: "/whatsapp/contacts" },
       ]},
-      { label: "Comercial", icon: <ShoppingCart className="h-4 w-4" />, items: [
+      { label: "Comercial", icon: <ShoppingCart className="h-4 w-4 text-white" />, items: [
         { title: "Produção", url: "/vistos/production" },
         { title: "DS-160 Grupo", url: "/vistos/ds160" },
         { title: "Serviços", url: "/vistos/products" },
       ]},
-      { label: "Financeiro", icon: <DollarSign className="h-4 w-4" />, items: [
+      { label: "Financeiro", icon: <DollarSign className="h-4 w-4 text-white" />, items: [
         { title: "Contas a Receber", url: "/financial/receivable", permKey: "financial_receivable" },
         { title: "Contas a Pagar", url: "/financial/payable", permKey: "financial_payable" },
         { title: "Contas Correntes", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
@@ -114,17 +114,17 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
         { title: "Desagrupar Contas", url: "/financial/ungroup-accounts", permKey: "financial_payable" },
         { title: "Envio de Resumo Financeiro", url: "/financial/summary" },
       ]},
-      { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4" />, url: "/whatsapp", items: [
+      { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4 text-white" />, url: "/whatsapp", items: [
         { title: "Conversas", url: "/whatsapp" },
         { title: "Contatos", url: "/whatsapp/contacts" },
         { title: "Etiquetas", url: "/whatsapp/labels" },
         { title: "Respostas Rápidas", url: "/whatsapp/quick-replies" },
         { title: "Configurações", url: "/whatsapp/settings" },
       ]},
-      { label: "Relatórios", icon: <BarChart3 className="h-4 w-4" />, items: [
+      { label: "Relatórios", icon: <BarChart3 className="h-4 w-4 text-white" />, items: [
         { title: "Relatórios", url: "/vistos/reports" },
       ]},
-      ...(isAdmin ? [{ label: "Sistema", icon: <Settings className="h-4 w-4" />, items: [
+      ...(isAdmin ? [{ label: "Sistema", icon: <Settings className="h-4 w-4 text-white" />, items: [
         { title: "Usuários", url: "/users" },
         { title: "Aparência", url: "/settings/appearance" },
         { title: "Configurações", url: "/settings", permKey: "settings_access" },
@@ -134,16 +134,16 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
     ];
   }
   return [
-    { label: "Dashboard", icon: <BarChart3 className="h-4 w-4" />, url: "/dashboard", items: [
+    { label: "Dashboard", icon: <BarChart3 className="h-4 w-4 text-white" />, url: "/dashboard", items: [
       { title: "Dashboard", url: "/dashboard", permKey: "dashboard_view" },
     ]},
-    { label: "Vendas", icon: <ShoppingCart className="h-4 w-4" />, url: "/sales", items: [
+    { label: "Vendas", icon: <ShoppingCart className="h-4 w-4 text-white" />, url: "/sales", items: [
       { title: "Vendas", url: "/sales", permKey: "sales_view" },
     ]},
-    { label: "Cotação", icon: <FileText className="h-4 w-4" />, url: "/sales/new", items: [
+    { label: "Cotação", icon: <FileText className="h-4 w-4 text-white" />, url: "/sales/new", items: [
       { title: "Nova Cotação", url: "/sales/new", permKey: "sales_view" },
     ]},
-    { label: "Cadastros", icon: <Users className="h-4 w-4" />, items: [
+    { label: "Cadastros", icon: <Users className="h-4 w-4 text-white" />, items: [
       { title: "Clientes", url: "/clients", permKey: "clients_view" },
       { title: "Fornecedores", url: "/suppliers", permKey: "suppliers_view" },
       { title: "Vendedores", url: "/sellers", permKey: "sellers_view" },
@@ -155,12 +155,12 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       { title: "Conta-corrente", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
       { title: "Taxas", url: "/financial/fees" },
     ]},
-    { label: "Cotações", icon: <FileText className="h-4 w-4" />, items: [
+    { label: "Cotações", icon: <FileText className="h-4 w-4 text-white" />, items: [
       { title: "Lista de Cotações", url: "/cotacoes/lista", permKey: "sales_view" },
       { title: "Kanban de Cotações", url: "/cotacoes", permKey: "sales_view" },
       { title: "Cotações Arquivadas", url: "/cotacoes/arquivadas", permKey: "sales_view" },
     ]},
-    { label: "Financeiro", icon: <DollarSign className="h-4 w-4" />, items: [
+    { label: "Financeiro", icon: <DollarSign className="h-4 w-4 text-white" />, items: [
       { title: "Contas Pagar/Receber", url: "/financial/payable", permKey: "financial_payable" },
       { title: "Conciliação Bancária", url: "/financial/reconciliation", permKey: "financial_reconciliation" },
       { title: "Extrato de conta-corrente", url: "/financial/bank-report", permKey: "financial_bank_report" },
@@ -171,23 +171,23 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       { title: "Simulador de Taxas", url: "/financial/fee-simulator" },
       { title: "Envio de Resumo Financeiro", url: "/financial/summary" },
     ]},
-    { label: "Operação", icon: <Plane className="h-4 w-4" />, items: [
+    { label: "Operação", icon: <Plane className="h-4 w-4 text-white" />, items: [
       { title: "Reservas", url: "/reservations", permKey: "reservations_view" },
       { title: "Vouchers", url: "/sales/vouchers", permKey: "sales_view" },
       { title: "Calendário", url: "/calendar" },
     ]},
-    { label: "Marketing", icon: <Megaphone className="h-4 w-4" />, items: [
+    { label: "Marketing", icon: <Megaphone className="h-4 w-4 text-white" />, items: [
       { title: "Lâminas de promoções", url: "/promo-maker" },
       { title: "Roteiros", url: "/itineraries" },
     ]},
-    { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4" />, url: "/whatsapp", items: [
+    { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4 text-white" />, url: "/whatsapp", items: [
       { title: "Conversas", url: "/whatsapp" },
       { title: "Contatos Whatsapp", url: "/whatsapp/contacts" },
       { title: "Etiquetas", url: "/whatsapp/labels" },
       { title: "Respostas Rápidas", url: "/whatsapp/quick-replies" },
       { title: "Configuração", url: "/whatsapp/settings" },
     ]},
-    { label: "Fiscal", icon: <FileText className="h-4 w-4" />, items: [
+    { label: "Fiscal", icon: <FileText className="h-4 w-4 text-white" />, items: [
       { title: "Dashboard Fiscal", url: "/nfse" },
       { title: "Emitir NFS-e", url: "/nfse/emit" },
       { title: "Notas Emitidas", url: "/nfse/list" },
@@ -195,7 +195,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       { title: "Certificado Digital", url: "/nfse/certificate" },
       { title: "Configurações", url: "/nfse/settings" },
     ]},
-    { label: "Sistema", icon: <Settings className="h-4 w-4" />, items: [
+    { label: "Sistema", icon: <Settings className="h-4 w-4 text-white" />, items: [
       ...(isAdmin ? [
         { title: "Configurações", url: "/settings", permKey: "settings_access" },
         { title: "Integrações de API", url: "/settings/api-integrations", permKey: "settings_access" },
