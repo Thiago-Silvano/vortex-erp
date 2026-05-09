@@ -34,7 +34,7 @@ export default function Login() {
             <img src={vortexLogo} alt="Vortex Viagens" className="h-64 w-auto border-0 rounded-none shadow-none text-xs object-contain" />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-zinc-800">
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-neutral-50">Email</Label>
