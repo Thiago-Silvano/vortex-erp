@@ -479,7 +479,7 @@ export default function Dashboard() {
         value: fmt(stats.lucro),
         delta: lucroPct, periodLabel,
         emoji: '📈',
-        accent: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
+        accent: 'rounded-lg p-2 text-xl leading-none text-rose-700 dark:text-rose-300 bg-slate-100',
       },
     ];
   }, [stats, period, isVistos]);
@@ -518,7 +518,7 @@ export default function Dashboard() {
             <Card key={c.label} className="overflow-hidden">
               <CardContent className="p-3">
                 <div className="flex items-start gap-2">
-                  <div className={idx === 0 || idx === 1 || idx === 2 ? c.accent : `rounded-lg p-2 text-xl leading-none ${c.accent}`}>
+                  <div className="rounded-lg p-2 text-xl leading-none">
                     <span aria-hidden>{c.emoji}</span>
                   </div>
                   <div className="flex-1 min-w-0">
