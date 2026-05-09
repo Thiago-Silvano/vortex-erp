@@ -518,7 +518,7 @@ export default function Dashboard() {
             <Card key={c.label} className="overflow-hidden">
               <CardContent className="p-3">
                 <div className="flex items-start gap-2">
-                  <div className="rounded-lg p-2 text-xl leading-none">
+                  <div className={c.accent}>
                     <span aria-hidden>{c.emoji}</span>
                   </div>
                   <div className="flex-1 min-w-0">
