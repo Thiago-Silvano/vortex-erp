@@ -842,7 +842,7 @@ export default function ContractSection({
                             <div className="flex items-center gap-2 min-w-0">
                               <cs.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <span className="text-sm truncate">{c.title}</span>
-                              <Badge variant="outline" className="text-[10px] shrink-0">{cs.label}</Badge>
+                              <Badge variant="outline" className="px-2 py-0.5 rounded-full text-blue-700 dark:text-blue-300 bg-slate-50 font-semibold text-sm shrink-0">{cs.label}</Badge>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPreviewHtml(c.body_html)} title="Visualizar">
