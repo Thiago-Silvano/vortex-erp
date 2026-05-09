@@ -237,8 +237,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
-        <div className="flex items-center gap-2 group text-sidebar-foreground">
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-3 bg-zinc-800">
+        <div className="flex items-center gap-2 group text-sidebar-foreground bg-zinc-800">
           <div className="w-14 h-14 rounded-md bg-sidebar-primary flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
             <img src={vortexLogo} alt="Grupo Vortex" className="w-full h-full object-contain border-0 bg-zinc-800 border-zinc-800 border-none rounded-none shadow-none text-zinc-800" />
           </div>
