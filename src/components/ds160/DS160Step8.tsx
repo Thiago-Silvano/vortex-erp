@@ -5,7 +5,7 @@ import { DS160StepProps } from './types';
 export default function DS160Step8({ data, onChange }: DS160StepProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-3">8. Histórico Acadêmico</h2>
+      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">8. Histórico Acadêmico</h2>
       {[1, 2, 3].map(n => (
         <div key={n} className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
           <h3 className="font-semibold text-sm text-slate-700">Formação Acadêmica #{n}</h3>

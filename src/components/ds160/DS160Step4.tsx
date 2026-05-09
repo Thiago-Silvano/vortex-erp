@@ -21,7 +21,7 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-3">4. Detalhes da Viagem</h2>
+      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">4. Detalhes da Viagem</h2>
       <p className="text-sm text-slate-500">Se você não possui uma viagem com data e local definidos, preencha com uma intenção de viagem.</p>
       <div>
         <Label>Motivo da Viagem</Label>

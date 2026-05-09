@@ -18,7 +18,7 @@ export default function DS160Step9({ data, onChange }: DS160StepProps) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-3">9. Viagens e Outras Atividades</h2>
+      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">9. Viagens e Outras Atividades</h2>
       <div>
         <Label>Países visitados nos últimos 5 anos</Label>
         <div className="flex gap-2 mt-1">
