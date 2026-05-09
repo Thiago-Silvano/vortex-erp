@@ -729,7 +729,7 @@ export default function Dashboard() {
                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                               r.status === 'confirmed'
                                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                                : 'bg-amber-100 dark:bg-amber-950/40 text-slate-500'
                             }`}>
                               {r.status === 'confirmed' ? 'Confirmada' : r.status === 'cancelled' ? 'Cancelada' : 'Pendente'}
                             </span>
