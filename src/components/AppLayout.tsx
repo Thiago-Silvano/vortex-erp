@@ -226,6 +226,14 @@ function AppSidebar({ favorites, toggleFavorite }: {
 
   const isActive = (url: string) => location.pathname === url;
 
+  // Accordion: apenas um grupo aberto por vez
+  const initialOpenGroup = useMemo(() => {
+    const g = menus.find(g => g.items.some(i => isActive(i.url)));
+    return g?.label ?? null;
+  }, [menus, location.pathname]);
+  const [openGroup, setOpenGroup] = useState<string | null>(initialOpenGroup);
+  useEffect(() => { setOpenGroup(initialOpenGroup); }, [initialOpenGroup]);
+
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
@@ -250,7 +258,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
         {/* Favoritos */}
         {favItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-[12px] uppercase tracking-wider text-sidebar-foreground/70 font-bold">
+            <SidebarGroupLabel className="text-[12px] uppercase tracking-wider text-sidebar-foreground font-bold">
               Favoritos
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -264,7 +272,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                     >
                       <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
                         <Star className="h-4 w-4 fill-sidebar-primary text-sidebar-primary shrink-0" />
-                        <span className="truncate text-[15px] font-bold text-current">{item.title}</span>
+                        <span className="truncate text-[15px] font-bold text-sidebar-foreground">{item.title}</span>
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -295,7 +303,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                       >
                         <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
                           {group.icon}
-                          <span className="truncate text-[15px] font-bold text-current">{group.label}</span>
+                          <span className="truncate text-[15px] font-bold text-sidebar-foreground">{group.label}</span>
                         </button>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -306,10 +314,15 @@ function AppSidebar({ favorites, toggleFavorite }: {
           }
 
           return (
-            <Collapsible key={group.label} defaultOpen={groupHasActive} className="group/collapse">
+            <Collapsible
+              key={group.label}
+              open={openGroup === group.label}
+              onOpenChange={(o) => setOpenGroup(o ? group.label : null)}
+              className="group/collapse"
+            >
               <SidebarGroup>
                 <SidebarGroupLabel asChild>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-[12px] uppercase tracking-wider text-sidebar-foreground/70 hover:text-sidebar-accent-foreground font-bold py-1.5 px-2">
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-[12px] uppercase tracking-wider text-sidebar-foreground hover:text-sidebar-accent-foreground font-bold py-1.5 px-2">
                     {group.icon && <span className="opacity-90">{group.icon}</span>}
                     <span className="flex-1 text-left">{group.label}</span>
                     <ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]/collapse:rotate-90" />
@@ -329,7 +342,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                               className="group/item"
                             >
                               <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full pl-6">
-                                <span className="truncate text-[15px] font-bold text-current flex-1 text-left">{item.title}</span>
+                                <span className="truncate text-[15px] font-bold text-sidebar-foreground flex-1 text-left">{item.title}</span>
                                 <span
                                   onClick={(e) => { e.stopPropagation(); toggleFavorite(item.url); }}
                                   className={`shrink-0 ${isFav ? "opacity-100" : "opacity-0 group-hover/item:opacity-70 hover:!opacity-100"}`}
