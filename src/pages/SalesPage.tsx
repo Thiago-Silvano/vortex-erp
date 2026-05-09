@@ -250,9 +250,9 @@ export default function SalesPage() {
           <Button onClick={() => navigate('/sales/new')} className="w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />Nova Cotação</Button>
         </div>
         {pendingPrevMonths.count > 0 && (
-          <div className="flex items-start sm:items-center gap-3 rounded-lg border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 px-4 py-3">
+          <div className="flex items-start sm:items-center gap-3 rounded-lg border border-orange-300 dark:border-orange-800 px-4 py-3 bg-slate-200">
             <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5 sm:mt-0" />
-            <div className="text-sm text-orange-900 dark:text-orange-100 flex-1">
+            <div className="text-sm flex-1 text-gray-950">
               <strong>{pendingPrevMonths.count}</strong> {pendingPrevMonths.count === 1 ? 'venda' : 'vendas'} de meses anteriores aguardando comissão — Total a receber: <strong>{fmt(pendingPrevMonths.total)}</strong>
             </div>
           </div>
