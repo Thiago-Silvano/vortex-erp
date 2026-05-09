@@ -8,7 +8,7 @@ import { maskCpf } from '@/lib/masks';
 export default function DS160Step1({ data, onChange }: DS160StepProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-3">1. Dados Pessoais</h2>
+      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">1. Dados Pessoais</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div><Label>Sobrenome</Label><Input value={data.sobrenome || ''} onChange={e => onChange('sobrenome', e.target.value)} placeholder="Seu Sobrenome" /></div>
         <div><Label>Nome</Label><Input value={data.nome || ''} onChange={e => onChange('nome', e.target.value)} placeholder="Seu Nome" /></div>

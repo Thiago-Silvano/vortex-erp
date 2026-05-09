@@ -5,7 +5,7 @@ import { DS160StepProps } from './types';
 export default function DS160Step11({ data, onChange }: DS160StepProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-3">11. Declaração Final</h2>
+      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">11. Declaração Final</h2>
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
         <p className="text-sm text-slate-700 leading-relaxed">
           Declaro que li e entendi todas as perguntas deste formulário e que as respostas fornecidas são verdadeiras e corretas.

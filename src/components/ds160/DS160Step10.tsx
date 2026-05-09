@@ -16,7 +16,7 @@ const SECURITY_QUESTIONS = [
 export default function DS160Step10({ data, onChange }: DS160StepProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-3">10. Segurança e Antecedentes</h2>
+      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">10. Segurança e Antecedentes</h2>
       <p className="text-sm text-slate-500">Para as perguntas abaixo, selecione <strong>Não</strong> como padrão. Se selecionar <strong>Sim</strong>, um campo de texto será exibido para a explicação obrigatória.</p>
       {SECURITY_QUESTIONS.map(q => (
         <div key={q.key} className="space-y-2">

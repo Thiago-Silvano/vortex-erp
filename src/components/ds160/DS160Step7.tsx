@@ -7,7 +7,7 @@ import { DS160StepProps } from './types';
 export default function DS160Step7({ data, onChange }: DS160StepProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-3">7. Histórico Profissional Atual</h2>
+      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">7. Histórico Profissional Atual</h2>
       <div>
         <Label>Status Profissional Atual</Label>
         <Select value={data.status_profissional || undefined} onValueChange={v => onChange('status_profissional', v)}>
