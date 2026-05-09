@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import vortexLogo from '@/assets/vortex-logo.jpeg';
+import vortexLogo from '@/assets/vortex-logo.png';
 
 export default function Login() {
   const { toast } = useToast();
@@ -27,13 +27,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 bg-neutral-800 text-left">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
           <div className="flex justify-center">
-            <img src={vortexLogo} alt="Vortex Viagens" className="h-32 w-auto object-contain" />
+            <img src={vortexLogo} alt="Vortex Viagens" className="h-32 w-auto border-0 rounded-none shadow-none text-xs object-contain" />
           </div>
-          <CardDescription className="text-neutral-50">Área restrita. Faça login para continuar.</CardDescription>
+          <CardDescription className="text-neutral-50">​</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
