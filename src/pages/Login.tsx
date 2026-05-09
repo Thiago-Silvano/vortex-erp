@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Login() {
@@ -29,12 +29,6 @@ export default function Login() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
-          <div className="flex justify-center mb-2">
-            <div className="bg-primary rounded-full p-4">
-              <Lock className="h-8 w-8 text-primary-foreground" />
-            </div>
-          </div>
-          
           <CardDescription>Área restrita. Faça login para continuar.</CardDescription>
         </CardHeader>
         <CardContent>
