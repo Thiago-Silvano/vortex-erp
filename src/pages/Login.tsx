@@ -58,7 +58,7 @@ export default function Login() {
                 required
               />
             </div>
-            <Button className="w-full bg-gray-600" size="lg" type="submit" disabled={loading}>
+            <Button className="w-full bg-blue-900" size="lg" type="submit" disabled={loading}>
               <LogIn className="h-4 w-4 mr-2" />
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
