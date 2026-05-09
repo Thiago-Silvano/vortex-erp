@@ -658,7 +658,7 @@ export default function Dashboard() {
                   {alerts.map((a, i) => {
                     const isCommission = /comiss/i.test(a.message);
                     const palette = isCommission
-                      ? 'bg-sky-500 border-sky-600 text-white hover:bg-sky-600'
+                      ? 'border-sky-600 text-white bg-yellow-600'
                       : a.type === 'danger'
                         ? 'bg-rose-500 border-rose-600 text-white hover:bg-rose-600'
                         : 'bg-amber-500 border-amber-600 text-white hover:bg-amber-600';
