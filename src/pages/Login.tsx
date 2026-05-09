@@ -27,10 +27,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 bg-zinc-800 border-0 border-none shadow-none rounded-none border-neutral-700 text-left">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 border-0 border-none shadow-none rounded-none border-neutral-700 text-left bg-zinc-800">
       <Card className="w-full max-w-md bg-zinc-800 border-0">
         <CardHeader className="text-center space-y-0 pb-0">
-          <div className="flex justify-center">
+          <div className="flex justify-center bg-zinc-800">
             <img src={vortexLogo} alt="Vortex Viagens" className="h-64 w-auto border-0 rounded-none shadow-none text-xs object-contain" />
           </div>
         </CardHeader>
