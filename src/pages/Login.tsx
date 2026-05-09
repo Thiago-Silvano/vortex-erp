@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -29,11 +29,10 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 bg-zinc-800 border-0 border-none shadow-none rounded-none border-neutral-700 text-left">
       <Card className="w-full max-w-md bg-zinc-800 border-0">
-        <CardHeader className="text-center space-y-2">
+        <CardHeader className="text-center space-y-0 pb-0">
           <div className="flex justify-center">
             <img src={vortexLogo} alt="Vortex Viagens" className="h-64 w-auto border-0 rounded-none shadow-none text-xs object-contain" />
           </div>
-          <CardDescription className="text-neutral-50">​</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
