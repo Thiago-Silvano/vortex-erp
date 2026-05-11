@@ -3552,6 +3552,21 @@ export default function NewSalePage() {
 
             {/* Receivables inline with tabs per payment method */}
             <div className="border-t pt-4">
+              {/* Acréscimo de Comissão (cobrado por fora ao cliente) */}
+              <div className="flex items-center justify-end gap-2 mb-3">
+                <Label className="text-xs whitespace-nowrap" title="Quando cobramos uma comissão a mais por fora e o cliente paga diretamente para a empresa. Soma ao Total da Venda e ao Lucro Bruto.">
+                  Acréscimo de Comissão:
+                </Label>
+                <Input
+                  className="h-8 text-sm w-40"
+                  value={commissionSurcharge ? `R$ ${commissionSurcharge.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                  onChange={e => {
+                    const digits = e.target.value.replace(/[^\d]/g, '');
+                    setCommissionSurcharge(parseInt(digits || '0', 10) / 100);
+                  }}
+                  placeholder="R$ 0,00"
+                />
+              </div>
               {(() => {
                 const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
                 const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
