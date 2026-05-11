@@ -540,7 +540,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             showSelector={showSelector}
           />
 
-          <main className="flex-1 overflow-auto">
+           <main className="flex-1 overflow-auto bg-inherit">
             {children}
           </main>
         </div>
