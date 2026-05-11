@@ -813,7 +813,7 @@ export default function NewSalePage() {
       }
 
       if (recs.length === 0) {
-        recs.push({ installment_number: 1, due_date: '', amount: baseAmount, cost_center_id: defaultCostCenterId || undefined });
+        recs.push({ installment_number: 1, due_date: saleDate || new Date().toISOString().split('T')[0], amount: baseAmount, cost_center_id: defaultCostCenterId || undefined });
       }
 
       // Append a dedicated receivable for the Acréscimo de Comissão (charged separately to the client)
