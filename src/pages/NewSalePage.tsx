@@ -3670,25 +3670,6 @@ export default function NewSalePage() {
 
                 return (
                   <>
-                    {/* Top summary row mirrors Controle de Pagamentos */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 border rounded-lg overflow-hidden divide-y md:divide-y-0 md:divide-x bg-muted/20 mb-3">
-                      <div className="p-3">
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}</p>
-                        <p className="text-lg font-bold text-foreground mt-1">{fmt(expectedReceivables)}</p>
-                      </div>
-                      <div className="p-3">
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Lançado</p>
-                        <p className="text-lg font-bold text-foreground mt-1">{fmt(totalReceivables)}</p>
-                      </div>
-                      <div className="p-3">
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Status</p>
-                        <p className={`text-lg font-bold mt-1 ${Math.abs(diff) > 0.01 ? (diff > 0 ? 'text-amber-600' : 'text-destructive') : 'text-emerald-600'}`}>
-                          {Math.abs(diff) > 0.01
-                            ? (diff > 0 ? `Falta ${fmt(diff)}` : `Excedente ${fmt(Math.abs(diff))}`)
-                            : '✓ Valores conferem'}
-                        </p>
-                      </div>
-                    </div>
                     <div className="flex items-center justify-end gap-2 mb-2">
                       <Label className="text-xs whitespace-nowrap">Centro de Custo Padrão:</Label>
                       <Select value={defaultCostCenterId || 'none'} onValueChange={v => {
@@ -3732,6 +3713,25 @@ export default function NewSalePage() {
                         {renderTable(receivables.map((rec, idx) => ({ rec, globalIdx: idx })))}
                       </>
                     )}
+                    {/* Summary row moved below the installments table */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 border rounded-lg overflow-hidden divide-y md:divide-y-0 md:divide-x bg-muted/20 mt-3">
+                      <div className="p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}</p>
+                        <p className="text-lg font-bold text-foreground mt-1">{fmt(expectedReceivables)}</p>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Lançado</p>
+                        <p className="text-lg font-bold text-foreground mt-1">{fmt(totalReceivables)}</p>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Status</p>
+                        <p className={`text-lg font-bold mt-1 ${Math.abs(diff) > 0.01 ? (diff > 0 ? 'text-amber-600' : 'text-destructive') : 'text-emerald-600'}`}>
+                          {Math.abs(diff) > 0.01
+                            ? (diff > 0 ? `Falta ${fmt(diff)}` : `Excedente ${fmt(Math.abs(diff))}`)
+                            : '✓ Valores conferem'}
+                        </p>
+                      </div>
+                    </div>
                   </>
                 );
               })()}
