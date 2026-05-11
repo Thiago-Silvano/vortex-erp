@@ -3227,6 +3227,37 @@ export default function NewSalePage() {
                                   </div>
                                 </div>
 
+                                {/* Quote-mode: options list always visible below name */}
+                                {isQuoteMode && quoteOptions.length > 1 && (
+                                  <div className="mt-1.5 pl-6 flex flex-wrap gap-1">
+                                    {quoteOptions.map((opt, oi) => {
+                                      const optId = opt.id || String(oi);
+                                      const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                                      const checked = ids.includes(optId);
+                                      return (
+                                        <button
+                                          key={oi}
+                                          type="button"
+                                          onClick={() => {
+                                            setItems(prev => prev.map((x, j) => {
+                                              if (j !== idx) return x;
+                                              const cur = x.quote_option_ids || (x.quote_option_id ? [x.quote_option_id] : []);
+                                              const isOn = cur.includes(optId);
+                                              const newIds = isOn ? cur.filter(id => id !== optId) : [...cur, optId];
+                                              const finalIds = newIds.length === 0 ? [optId] : newIds;
+                                              return { ...x, quote_option_ids: finalIds, quote_option_id: finalIds[0] };
+                                            }));
+                                          }}
+                                          className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${checked ? 'bg-primary/10 border-primary/40 text-foreground' : 'bg-transparent border-border text-muted-foreground hover:bg-muted'}`}
+                                          title={opt.name}
+                                        >
+                                          {checked ? '✓ ' : ''}{opt.name}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
                                 {/* Inline editable fields */}
                                 <div className="grid grid-cols-2 gap-1.5 mt-2 pl-6">
                                   <div>
@@ -3260,44 +3291,6 @@ export default function NewSalePage() {
                                       <Label className="text-[10px] text-muted-foreground">Nº Compra</Label>
                                       <Input value={it.purchase_number || ''} onChange={e => updateItem(idx, 'purchase_number' as keyof SaleItem, e.target.value)} placeholder="123456" className="h-7 text-xs" />
                                     </div>
-                                  </div>
-                                )}
-
-                                {/* Quote-mode: link to other options */}
-                                {isQuoteMode && quoteOptions.length > 1 && (
-                                  <div className="mt-1.5 pl-6">
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 gap-1 text-muted-foreground">
-                                          <ChevronsUpDown className="h-3 w-3" />
-                                          {(() => {
-                                            const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
-                                            if (ids.length === quoteOptions.length) return 'Todas opções';
-                                            return `${ids.length} ${ids.length === 1 ? 'opção' : 'opções'}`;
-                                          })()}
-                                        </Button>
-                                      </PopoverTrigger>
-                                      <PopoverContent className="w-56 p-2">
-                                        {quoteOptions.map((opt, oi) => {
-                                          const optId = opt.id || String(oi);
-                                          const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
-                                          const checked = ids.includes(optId);
-                                          return (
-                                            <label key={oi} className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer">
-                                              <Checkbox checked={checked} onCheckedChange={(v) => {
-                                                setItems(prev => prev.map((x, j) => {
-                                                  if (j !== idx) return x;
-                                                  const cur = x.quote_option_ids || (x.quote_option_id ? [x.quote_option_id] : []);
-                                                  const newIds = v ? [...cur, optId] : cur.filter(id => id !== optId);
-                                                  return { ...x, quote_option_ids: newIds, quote_option_id: newIds[0] || undefined };
-                                                }));
-                                              }} />
-                                              <span className="text-xs truncate">{opt.name}</span>
-                                            </label>
-                                          );
-                                        })}
-                                      </PopoverContent>
-                                    </Popover>
                                   </div>
                                 )}
 
