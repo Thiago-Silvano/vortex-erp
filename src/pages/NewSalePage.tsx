@@ -3409,7 +3409,7 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base">Recebimento</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end text-sm">
               <div>
                 <Label>Adicionar forma de recebimento</Label>
                 <Select value="" onValueChange={v => {
@@ -3462,7 +3462,7 @@ export default function NewSalePage() {
 
             {/* Per-method installment selectors for generic methods (pix, dinheiro, debito, transferencia) */}
             {paymentMethods.filter(m => !['credito', 'boleto', 'operadora'].includes(m)).length > 0 && (
-              <div className="space-y-4 pt-4 border-t">
+              <div className="space-y-4 pt-4 border-t text-sm">
                 <p className="text-sm font-medium text-muted-foreground">Parcelamento por forma de pagamento</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {paymentMethods.filter(m => !['credito', 'boleto', 'operadora'].includes(m)).map(m => {
@@ -3482,7 +3482,7 @@ export default function NewSalePage() {
             )}
 
             {hasCredito && (
-              <div className="space-y-4 pt-4 border-t">
+              <div className="space-y-4 pt-4 border-t text-sm">
                 <p className="text-sm font-semibold text-primary mb-1">Cartão de Crédito</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -3504,7 +3504,7 @@ export default function NewSalePage() {
             )}
 
             {hasBoleto && (
-              <div className="space-y-4 pt-4 border-t">
+              <div className="space-y-4 pt-4 border-t text-sm">
                 <p className="text-sm font-semibold text-primary mb-1">Boleto Bancário</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -3533,7 +3533,7 @@ export default function NewSalePage() {
             )}
 
             {hasOperadora && (
-              <div className="space-y-4 pt-4 border-t">
+              <div className="space-y-4 pt-4 border-t text-sm">
                 <p className="text-sm font-semibold text-primary mb-1">Pgto Operadora/Consolidadora</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
