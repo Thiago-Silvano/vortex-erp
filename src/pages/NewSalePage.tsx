@@ -20,6 +20,7 @@ import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, D
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { generateVoucherPdf, VoucherPdfData } from '@/lib/generateVoucherPdf';
 import { generateEditorialPdf, generateEditorialPdfAsync, PremiumPdfData } from '@/lib/generateEditorialPdf';
 import { generateAirlineVoucherPdf, AirlineVoucherData, AirlineVoucherPassenger, AdditionalAirService } from '@/lib/generateAirlineVoucherPdf';
@@ -4519,28 +4520,37 @@ export default function NewSalePage() {
         <div className="sticky bottom-0 -mx-4 sm:-mx-6 z-30 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className="px-4 sm:px-6 py-3 flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={handleCancel} className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive">Cancelar</Button>
-            {editSaleId && (
-              <Button variant="outline" onClick={() => setShowDeleteConfirm(true)} className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-4 w-4 mr-1" /> Excluir</Button>
-            )}
             {saleStatus === 'active' ? (
               <>
                 <Button variant="outline" onClick={() => handleExportServicesVoucher()}><Download className="h-4 w-4 mr-1" /> Voucher Serviços</Button>
                 <Button variant="outline" onClick={() => handleExportAirlineVoucher()}><Plane className="h-4 w-4 mr-1" /> Voucher Aéreo</Button>
               </>
             ) : (
-              <Button
-                onClick={handleExportDraftPdf}
-                className="bg-foreground text-background hover:bg-foreground/90 gap-1"
-              >
-                <FileText className="h-4 w-4" /> Gerar PDF da proposta
-                <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-background/20">F8</span>
-              </Button>
-            )}
-            {editSaleId && (
-              <Button variant="outline" onClick={handleGenerateLink}><Link2 className="h-4 w-4 mr-1" /> Link Proposta (F9)</Button>
-            )}
-            {editSaleId && isQuoteMode && (
-              <Button variant="outline" onClick={handleGenerateClientBuildsLink}><Sparkles className="h-4 w-4 mr-1" /> Cliente Monta Proposta</Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-foreground text-background hover:bg-foreground/90 gap-1">
+                    <FileText className="h-4 w-4" /> Proposta
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={handleExportDraftPdf}>
+                    <FileText className="h-4 w-4 mr-2" /> Gerar PDF da proposta
+                    <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-muted">F8</span>
+                  </DropdownMenuItem>
+                  {editSaleId && (
+                    <DropdownMenuItem onClick={handleGenerateLink}>
+                      <Link2 className="h-4 w-4 mr-2" /> Link Proposta
+                      <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-muted">F9</span>
+                    </DropdownMenuItem>
+                  )}
+                  {editSaleId && isQuoteMode && (
+                    <DropdownMenuItem onClick={handleGenerateClientBuildsLink}>
+                      <Sparkles className="h-4 w-4 mr-2" /> Cliente Monta Proposta
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             <div className="flex-1" />
             {isQuoteMode && (
