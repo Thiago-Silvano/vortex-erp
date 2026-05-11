@@ -180,6 +180,7 @@ const App = () => (
           <Route path="/vistos/production" element={<ProtectedRoute><VistosProductionPage /></ProtectedRoute>} />
           <Route path="/vistos/ds160" element={<ProtectedRoute><VistosDS160Page /></ProtectedRoute>} />
           <Route path="/vistos/reports" element={<ProtectedRoute><VistosReportsPage /></ProtectedRoute>} />
+          <Route path="/vistos/reports/services-sold" element={<ProtectedRoute><VistosServicesSoldReport /></ProtectedRoute>} />
 
 
           {/* Email routes */}
