@@ -61,6 +61,7 @@ import VistosSalesPage from "./pages/vistos/VistosSalesPage";
 import VistosNewSalePage from "./pages/vistos/VistosNewSalePage";
 import VistosProductionPage from "./pages/vistos/VistosProductionPage";
 import VistosReportsPage from "./pages/vistos/VistosReportsPage";
+import VistosServicesSoldReport from "./pages/vistos/VistosServicesSoldReport";
 
 
 // Email pages
@@ -179,6 +180,7 @@ const App = () => (
           <Route path="/vistos/production" element={<ProtectedRoute><VistosProductionPage /></ProtectedRoute>} />
           <Route path="/vistos/ds160" element={<ProtectedRoute><VistosDS160Page /></ProtectedRoute>} />
           <Route path="/vistos/reports" element={<ProtectedRoute><VistosReportsPage /></ProtectedRoute>} />
+          <Route path="/vistos/reports/services-sold" element={<ProtectedRoute><VistosServicesSoldReport /></ProtectedRoute>} />
 
 
           {/* Email routes */}

@@ -124,6 +124,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
       ]},
       { label: "Relatórios", icon: <BarChart3 className="h-4 w-4 text-white" />, items: [
         { title: "Relatórios", url: "/vistos/reports" },
+        { title: "Serviços Vendidos", url: "/vistos/reports/services-sold" },
       ]},
       ...(isAdmin ? [{ label: "Sistema", icon: <Settings className="h-4 w-4 text-white" />, items: [
         { title: "Usuários", url: "/users" },
