@@ -168,6 +168,19 @@ export default function NewSalePage() {
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [defaultCostCenterId, setDefaultCostCenterId] = useState<string>('');
+  // Auto-default cost center for client sales. All sales should be tied to this center.
+  useEffect(() => {
+    if (!defaultCostCenterId && costCenters.length > 0) {
+      const vc = costCenters.find(c => c.name?.toLowerCase() === 'venda ao cliente');
+      if (vc) setDefaultCostCenterId(vc.id);
+    }
+  }, [costCenters, defaultCostCenterId]);
+  // Auto-fill commission surcharge date with sale date (à vista)
+  useEffect(() => {
+    if (commissionSurcharge > 0 && !commissionSurchargeDate && saleDate) {
+      setCommissionSurchargeDate(saleDate);
+    }
+  }, [commissionSurcharge, commissionSurchargeDate, saleDate]);
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
   const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
   const [financialCosts, setFinancialCosts] = useState<FinancialCost[]>([]);
@@ -800,7 +813,7 @@ export default function NewSalePage() {
       }
 
       if (recs.length === 0) {
-        recs.push({ installment_number: 1, due_date: '', amount: baseAmount, cost_center_id: defaultCostCenterId || undefined });
+        recs.push({ installment_number: 1, due_date: saleDate || new Date().toISOString().split('T')[0], amount: baseAmount, cost_center_id: defaultCostCenterId || undefined });
       }
 
       // Append a dedicated receivable for the Acréscimo de Comissão (charged separately to the client)
@@ -808,7 +821,7 @@ export default function NewSalePage() {
         const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência' };
         recs.push({
           installment_number: recIndex++,
-          due_date: commissionSurchargeDate || '',
+          due_date: commissionSurchargeDate || saleDate || '',
           amount: Math.round(commissionSurcharge * 100) / 100,
           payment_method: labelMap[commissionSurchargeMethod] || 'Pix',
           cost_center_id: defaultCostCenterId || undefined,
