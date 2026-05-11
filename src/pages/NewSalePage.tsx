@@ -3430,149 +3430,8 @@ export default function NewSalePage() {
         <Card>
           <CardHeader><CardTitle className="text-base">Recebimento</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end text-sm">
-              <div>
-                <Label>Adicionar forma de recebimento</Label>
-                <Select value="" onValueChange={v => {
-                  if (!v) return;
-                  if (v === 'faturado_cartao') {
-                    // Atalho: adiciona automaticamente "Pgto Operadora" + "Cartão de Crédito"
-                    setPaymentMethods(prev => {
-                      const next = [...prev];
-                      if (!next.includes('operadora')) next.push('operadora');
-                      if (!next.includes('credito')) next.push('credito');
-                      return next;
-                    });
-                    setInstallmentsMap(prev => ({ ...prev, operadora: prev.operadora || 1, credito: prev.credito || 1 }));
-                  } else if (!paymentMethods.includes(v)) {
-                    setInstallmentsMap(prev => ({ ...prev, [v]: 1 }));
-                    setPaymentMethods(prev => [...prev, v]);
-                  }
-                }}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {[
-                      { value: 'pix', label: 'Pix' },
-                      { value: 'dinheiro', label: 'Dinheiro' },
-                      { value: 'boleto', label: 'Boleto' },
-                      { value: 'credito', label: 'Cartão de Crédito' },
-                      { value: 'debito', label: 'Cartão de Débito' },
-                      { value: 'transferencia', label: 'Transferência' },
-                      { value: 'operadora', label: 'Pgto Operadora/Consolidadora' },
-                      { value: 'faturado_cartao', label: 'Faturado + Cartão' },
-                    ].filter(opt => !paymentMethods.includes(opt.value)).map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-2">
-                <div className="flex flex-wrap gap-1.5">
-                  {paymentMethods.map(m => {
-                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora', faturado_cartao: 'Faturado + Cartão' };
-                    return (
-                        <Badge key={m} variant="secondary" className="gap-1 pr-1 text-sm">
-                        {labels[m] || m}
-                        <button type="button" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))} className="ml-1 hover:text-destructive">×</button>
-                      </Badge>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Per-method installment selectors for generic methods (pix, dinheiro, debito, transferencia) */}
-            {paymentMethods.filter(m => !['credito', 'boleto', 'operadora'].includes(m)).length > 0 && (
-              <div className="space-y-4 pt-4 border-t text-sm">
-                <p className="text-sm font-medium text-muted-foreground">Parcelamento por forma de pagamento</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {paymentMethods.filter(m => !['credito', 'boleto', 'operadora'].includes(m)).map(m => {
-                    const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', debito: 'Cartão de Débito', transferencia: 'Transferência' };
-                    return (
-                      <div key={m}>
-                        <Label>{labels[m] || m} — Parcelas</Label>
-                        <Select value={String(getInstallments(m))} onValueChange={v => setMethodInstallments(m, parseInt(v))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {hasCredito && (
-              <div className="space-y-4 pt-4 border-t text-sm">
-                <p className="text-sm font-semibold text-primary mb-1">Cartão de Crédito</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Cartão de Crédito</Label>
-                    <Select value={cardPaymentType} onValueChange={setCardPaymentType}>
-                      <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                      <SelectContent><SelectItem value="ec">EC (Máquina)</SelectItem><SelectItem value="link">Link de Pagamento</SelectItem></SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Parcelamento</Label>
-                    <Select value={String(getInstallments('credito'))} onValueChange={v => setMethodInstallments('credito', parseInt(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{Array.from({ length: 18 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {hasBoleto && (
-              <div className="space-y-4 pt-4 border-t text-sm">
-                <p className="text-sm font-semibold text-primary mb-1">Boleto Bancário</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Número de Parcelas</Label>
-                    <Select value={String(getInstallments('boleto'))} onValueChange={v => setMethodInstallments('boleto', parseInt(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Juros (% ao mês)</Label>
-                    <Input type="number" step="0.01" value={boletoInterestRate} onChange={e => setBoletoInterestRate(parseFloat(e.target.value) || 0)} placeholder="0.00" />
-                  </div>
-                  <div>
-                    <Label>Valor da Venda</Label>
-                    <Input value={fmt(totalSaleWithInterest)} disabled className="bg-muted" />
-                  </div>
-                </div>
-                {getInstallments('boleto') > 1 && boletoInterestRate > 0 && (
-                  <div className="p-3 bg-muted/50 rounded-lg text-sm">
-                    <p>Valor total com juros: <strong>{fmt(receivables.reduce((s, r) => s + r.amount, 0))}</strong></p>
-                    <p>Valor de cada parcela: <strong>{fmt(receivables[0]?.amount || 0)}</strong></p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {hasOperadora && (
-              <div className="space-y-4 pt-4 border-t text-sm">
-                <p className="text-sm font-semibold text-primary mb-1">Pgto Operadora/Consolidadora</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Número de Parcelas</Label>
-                    <Select value={String(getInstallments('operadora'))} onValueChange={v => setMethodInstallments('operadora', parseInt(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{Array.from({ length: 24 }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><p className="text-sm text-muted-foreground">Comissão Bruta</p><p className="text-sm font-bold text-primary">{fmt(grossProfit)}</p></div>
-                  {getInstallments('operadora') > 1 && <div><p className="text-sm text-muted-foreground">Valor por parcela</p><p className="text-sm font-bold">{fmt(grossProfit / getInstallments('operadora'))}</p></div>}
-                </div>
-              </div>
-            )}
-
-
-            {/* Receivables inline with tabs per payment method */}
-            <div className="border-t pt-4">
+            {/* Recebimento padronizado: bloco por forma de pagamento + botão "Adicionar pagamento" */}
+            <div>
               {/* Acréscimo de Comissão (cobrado por fora ao cliente) */}
               <div className="flex flex-wrap items-center justify-end gap-3 mb-3">
                 <Label className="font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 whitespace-nowrap text-base" title="Quando cobramos uma comissão a mais por fora e o cliente paga diretamente para a empresa. Soma ao Total da Venda e ao Lucro Bruto.">
@@ -3611,10 +3470,19 @@ export default function NewSalePage() {
                 const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
                 const diff = expectedReceivables - totalReceivables;
 
-                // Group receivables by payment_method
-                const methodLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora' };
-                const uniqueMethods = Array.from(new Set(receivables.map(r => r.payment_method || 'outros')));
-                const hasMultipleMethods = uniqueMethods.length > 1;
+                // Group receivables by payment_method (key)
+                const labelToKey: Record<string, string> = { 'Pix': 'pix', 'Dinheiro': 'dinheiro', 'Boleto': 'boleto', 'Cartão de Crédito': 'credito', 'Cartão de Débito': 'debito', 'Transferência': 'transferencia', 'Pgto Operadora/Consolidadora': 'operadora', 'Pgto Operadora': 'operadora' };
+                const allMethodOptions = [
+                  { value: 'pix', label: 'Pix' },
+                  { value: 'dinheiro', label: 'Dinheiro' },
+                  { value: 'boleto', label: 'Boleto' },
+                  { value: 'credito', label: 'Cartão de Crédito' },
+                  { value: 'debito', label: 'Cartão de Débito' },
+                  { value: 'transferencia', label: 'Transferência' },
+                  { value: 'operadora', label: 'Pgto Operadora/Consolidadora' },
+                  { value: 'faturado_cartao', label: 'Faturado + Cartão' },
+                ];
+                const maxInstallmentsByMethod: Record<string, number> = { credito: 18, boleto: 24, operadora: 24 };
 
                 const renderTable = (items: { rec: Receivable; globalIdx: number }[]) => (
                   <div className="border rounded-lg overflow-hidden bg-orange-200">
@@ -3686,33 +3554,130 @@ export default function NewSalePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {hasMultipleMethods ? (
-                      <Tabs defaultValue={uniqueMethods[0]} className="w-full">
-                        <TabsList className="w-full justify-start bg-muted/60 p-1">
-                          {uniqueMethods.map(m => {
-                            const methodItems = receivables.filter(r => (r.payment_method || 'outros') === m);
-                            const methodTotal = methodItems.reduce((s, r) => s + r.amount, 0);
-                            return (
-                              <TabsTrigger key={m} value={m} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium">
-                                {Object.values(methodLabels).find(l => l === m) || m} ({methodItems.length}x) - {fmt(methodTotal)}
-                              </TabsTrigger>
-                            );
-                          })}
-                        </TabsList>
-                         {uniqueMethods.map(m => {
-                           const items = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => (rec.payment_method || 'outros') === m);
-                           return (
-                             <TabsContent key={m} value={m}>
-                               {renderTable(items)}
-                             </TabsContent>
-                           );
-                         })}
-                      </Tabs>
-                    ) : (
-                      <>
-                        {renderTable(receivables.map((rec, idx) => ({ rec, globalIdx: idx })))}
-                      </>
-                    )}
+                    {/* Bloco por forma de pagamento — header (forma | total | parcelas | remover) + parcelas embaixo */}
+                    <div className="space-y-4">
+                      {paymentMethods.map(m => {
+                        const items = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => labelToKey[rec.payment_method || ''] === m);
+                        const methodTotal = items.reduce((s, it) => s + it.rec.amount, 0);
+                        const maxInst = maxInstallmentsByMethod[m] || 24;
+                        return (
+                          <div key={m} className="border rounded-lg p-3 bg-card space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                              <div className="md:col-span-4">
+                                <Label className="text-xs">Forma de pagamento</Label>
+                                <Select value={m} onValueChange={(v) => {
+                                  if (!v || v === m) return;
+                                  if (v === 'faturado_cartao') {
+                                    setPaymentMethods(prev => {
+                                      const next = prev.filter(x => x !== m);
+                                      if (!next.includes('operadora')) next.push('operadora');
+                                      if (!next.includes('credito')) next.push('credito');
+                                      return next;
+                                    });
+                                    setInstallmentsMap(prev => ({ ...prev, operadora: prev.operadora || 1, credito: prev.credito || 1 }));
+                                    return;
+                                  }
+                                  if (paymentMethods.includes(v)) return;
+                                  setPaymentMethods(prev => prev.map(x => x === m ? v : x));
+                                  setInstallmentsMap(prev => ({ ...prev, [v]: prev[v] || 1 }));
+                                }}>
+                                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {allMethodOptions.filter(opt => opt.value === m || !paymentMethods.includes(opt.value)).map(opt => (
+                                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="md:col-span-3">
+                                <Label className="text-xs">Valor total</Label>
+                                <Input value={fmt(methodTotal)} disabled className="h-9 bg-muted" />
+                              </div>
+                              <div className="md:col-span-3">
+                                <Label className="text-xs">Nº de parcelas</Label>
+                                <Select value={String(getInstallments(m))} onValueChange={v => setMethodInstallments(m, parseInt(v))}>
+                                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                  <SelectContent>{Array.from({ length: maxInst }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
+                                </Select>
+                              </div>
+                              <div className="md:col-span-2 flex justify-end">
+                                <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))}>
+                                  <Trash2 className="h-4 w-4 mr-1" /> Remover
+                                </Button>
+                              </div>
+                            </div>
+                            {/* Inline extras */}
+                            {m === 'credito' && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                  <Label className="text-xs">Tipo de Cartão</Label>
+                                  <Select value={cardPaymentType} onValueChange={setCardPaymentType}>
+                                    <SelectTrigger className="h-9"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                                    <SelectContent><SelectItem value="ec">EC (Máquina)</SelectItem><SelectItem value="link">Link de Pagamento</SelectItem></SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            )}
+                            {m === 'boleto' && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                  <Label className="text-xs">Juros (% ao mês)</Label>
+                                  <Input type="number" step="0.01" value={boletoInterestRate} onChange={e => setBoletoInterestRate(parseFloat(e.target.value) || 0)} placeholder="0.00" className="h-9" />
+                                </div>
+                              </div>
+                            )}
+                            {m === 'operadora' && (
+                              <div className="text-sm text-muted-foreground">
+                                Comissão Bruta: <span className="font-semibold text-primary">{fmt(grossProfit)}</span>
+                              </div>
+                            )}
+                            {items.length > 0 && renderTable(items)}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Botão Adicionar pagamento */}
+                    <div className="pt-1">
+                      <Select value="" onValueChange={v => {
+                        if (!v) return;
+                        if (v === 'faturado_cartao') {
+                          setPaymentMethods(prev => {
+                            const next = [...prev];
+                            if (!next.includes('operadora')) next.push('operadora');
+                            if (!next.includes('credito')) next.push('credito');
+                            return next;
+                          });
+                          setInstallmentsMap(prev => ({ ...prev, operadora: prev.operadora || 1, credito: prev.credito || 1 }));
+                        } else if (!paymentMethods.includes(v)) {
+                          setInstallmentsMap(prev => ({ ...prev, [v]: 1 }));
+                          setPaymentMethods(prev => [...prev, v]);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9 w-full md:w-72 border-dashed">
+                          <SelectValue placeholder="+ Adicionar pagamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allMethodOptions.filter(opt => !paymentMethods.includes(opt.value)).map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Recebimentos órfãos (ex.: Acréscimo de Comissão sem método ativo) */}
+                    {(() => {
+                      const orphan = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => {
+                        const key = labelToKey[rec.payment_method || ''];
+                        return !key || !paymentMethods.includes(key);
+                      });
+                      return orphan.length > 0 ? (
+                        <div className="pt-2">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-2">Outros recebimentos</p>
+                          {renderTable(orphan)}
+                        </div>
+                      ) : null;
+                    })()}
                     {/* Summary row moved below the installments table */}
                     <div className="grid grid-cols-1 md:grid-cols-3 border rounded-lg overflow-hidden divide-y md:divide-y-0 md:divide-x bg-muted/20 mt-3">
                       <div className="p-3">
