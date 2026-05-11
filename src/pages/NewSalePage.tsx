@@ -709,7 +709,10 @@ export default function NewSalePage() {
 
     // For "operadora" payment, receivables are only for the gross commission
     const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
-    const baseAmount = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
+    // Subtract the commission surcharge so it becomes its own dedicated installment below
+    const baseAmount = isOperadoraOnly
+      ? Math.max(0, grossProfit - commissionSurcharge)
+      : Math.max(0, totalSaleWithInterest - commissionSurcharge);
 
     // Use functional update to read previous receivables without adding to deps
     setReceivables(prev => {
@@ -800,6 +803,18 @@ export default function NewSalePage() {
         recs.push({ installment_number: 1, due_date: '', amount: baseAmount, cost_center_id: defaultCostCenterId || undefined });
       }
 
+      // Append a dedicated receivable for the Acréscimo de Comissão (charged separately to the client)
+      if (commissionSurcharge > 0) {
+        const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência' };
+        recs.push({
+          installment_number: recIndex++,
+          due_date: commissionSurchargeDate || '',
+          amount: Math.round(commissionSurcharge * 100) / 100,
+          payment_method: labelMap[commissionSurchargeMethod] || 'Pix',
+          cost_center_id: defaultCostCenterId || undefined,
+        });
+      }
+
       // Preserve user-edited cost_center_id
       return recs.map((r, idx) => {
         const oldRec = prev[idx];
@@ -809,7 +824,7 @@ export default function NewSalePage() {
         return r;
       });
     });
-  }, [installmentsMap, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora, defaultCostCenterId]);
+  }, [installmentsMap, paymentMethods, totalSaleWithInterest, grossProfit, boletoInterestRate, saleDate, hasCredito, hasBoleto, hasOperadora, defaultCostCenterId, commissionSurcharge, commissionSurchargeMethod, commissionSurchargeDate]);
 
   // Sync supplier payments when suppliers or totalCost change
   useEffect(() => {
