@@ -163,6 +163,8 @@ export default function NewSalePage() {
   const [saleInterest, setSaleInterest] = useState(0);
   const [operatorTaxes, setOperatorTaxes] = useState(0);
   const [commissionSurcharge, setCommissionSurcharge] = useState(0);
+  const [commissionSurchargeMethod, setCommissionSurchargeMethod] = useState<string>('pix');
+  const [commissionSurchargeDate, setCommissionSurchargeDate] = useState<string>('');
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [defaultCostCenterId, setDefaultCostCenterId] = useState<string>('');
@@ -299,6 +301,8 @@ export default function NewSalePage() {
     setSaleInterest(Number((sale as any).sale_interest) || 0);
     setOperatorTaxes(Number((sale as any).operator_taxes) || 0);
     setCommissionSurcharge(Number((sale as any).commission_surcharge) || 0);
+    setCommissionSurchargeMethod((sale as any).commission_surcharge_method || 'pix');
+    setCommissionSurchargeDate((sale as any).commission_surcharge_date || '');
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
     setPassengersCount(Number((sale as any).passengers_count) || 1);
@@ -1605,6 +1609,8 @@ export default function NewSalePage() {
         machine_fee_supplier_id: machineFeeSupplierId || null,
         operator_taxes: operatorTaxes,
         commission_surcharge: commissionSurcharge,
+        commission_surcharge_method: commissionSurchargeMethod,
+        commission_surcharge_date: commissionSurchargeDate || null,
         passengers_count: passengersCount,
         trip_nights: tripNights,
         trip_start_date: tripStartDate || null,
