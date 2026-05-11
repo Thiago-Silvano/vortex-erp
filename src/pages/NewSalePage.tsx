@@ -3498,7 +3498,7 @@ export default function NewSalePage() {
                 const maxInstallmentsByMethod: Record<string, number> = { credito: 18, boleto: 24, operadora: 24 };
 
                 const renderTable = (items: { rec: Receivable; globalIdx: number }[]) => (
-                  <div className="border rounded-lg overflow-hidden bg-orange-200">
+                  <div className="border rounded-lg overflow-hidden bg-lime-100">
                     <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
                       <div className="col-span-2">Parcela</div>
                       <div className="col-span-4">Data de Recebimento</div>
