@@ -4633,17 +4633,28 @@ export default function NewSalePage() {
               });
             }
 
-            setItems(prev => [...prev, ...importedItems.map(item => ({
-              description: item.description,
-              cost_price: item.cost_price,
-              rav: item.rav,
-              markup_percent: 0,
-              total_value: item.total_value,
-              service_catalog_id: item.service_catalog_id,
-              cost_center_id: item.cost_center_id,
-              metadata: item.metadata || {},
-              quote_option_id: mappedOptions.length > 1 ? optionIdMap.get(item.quote_option_id || '0') : item.quote_option_id,
-            }))]);
+            setItems(prev => {
+              const fallbackOptionId = mappedOptions.length > 1
+                ? mappedOptions[0].id
+                : (quoteOptions[0]?.id || String(quoteOptions[0]?.order_index ?? 0));
+              return [...prev, ...importedItems.map(item => {
+                const resolvedId = mappedOptions.length > 1
+                  ? (optionIdMap.get(item.quote_option_id || '0') || fallbackOptionId)
+                  : fallbackOptionId;
+                return {
+                  description: item.description,
+                  cost_price: item.cost_price,
+                  rav: item.rav,
+                  markup_percent: 0,
+                  total_value: item.total_value,
+                  service_catalog_id: item.service_catalog_id,
+                  cost_center_id: item.cost_center_id,
+                  metadata: item.metadata || {},
+                  quote_option_id: resolvedId,
+                  quote_option_ids: resolvedId ? [resolvedId] : undefined,
+                };
+              })];
+            });
 
             if (selectedClient) {
               setClientName(selectedClient.full_name);
