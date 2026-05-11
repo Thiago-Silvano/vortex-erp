@@ -168,6 +168,19 @@ export default function NewSalePage() {
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [defaultCostCenterId, setDefaultCostCenterId] = useState<string>('');
+  // Auto-default cost center for client sales. All sales should be tied to this center.
+  useEffect(() => {
+    if (!defaultCostCenterId && costCenters.length > 0) {
+      const vc = costCenters.find(c => c.name?.toLowerCase() === 'venda ao cliente');
+      if (vc) setDefaultCostCenterId(vc.id);
+    }
+  }, [costCenters, defaultCostCenterId]);
+  // Auto-fill commission surcharge date with sale date (à vista)
+  useEffect(() => {
+    if (commissionSurcharge > 0 && !commissionSurchargeDate && saleDate) {
+      setCommissionSurchargeDate(saleDate);
+    }
+  }, [commissionSurcharge, commissionSurchargeDate, saleDate]);
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
   const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
   const [financialCosts, setFinancialCosts] = useState<FinancialCost[]>([]);
