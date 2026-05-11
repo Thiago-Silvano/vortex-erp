@@ -61,6 +61,7 @@ import VistosSalesPage from "./pages/vistos/VistosSalesPage";
 import VistosNewSalePage from "./pages/vistos/VistosNewSalePage";
 import VistosProductionPage from "./pages/vistos/VistosProductionPage";
 import VistosReportsPage from "./pages/vistos/VistosReportsPage";
+import VistosServicesSoldReport from "./pages/vistos/VistosServicesSoldReport";
 
 
 // Email pages
