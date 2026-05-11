@@ -1042,6 +1042,11 @@ export default function NewSalePage() {
       eticket_number: '', seat: '',
       baggage_personal_item: 1, baggage_carry_on: 1, baggage_checked: 1,
     }]);
+    setTimeout(() => {
+      const inputs = document.querySelectorAll<HTMLInputElement>('input[data-passenger-name]');
+      const last = inputs[inputs.length - 1];
+      last?.focus();
+    }, 50);
   };
 
   const addClientAsPassenger = (client: ClientOption) => {
@@ -3003,6 +3008,7 @@ export default function NewSalePage() {
                     <Label className="text-xs">Nome</Label>
                     <Input 
                       value={pax.first_name} 
+                      data-passenger-name
                       onChange={e => { 
                         updatePassenger(idx, 'first_name', e.target.value); 
                         const term = `${e.target.value} ${pax.last_name}`.trim();
