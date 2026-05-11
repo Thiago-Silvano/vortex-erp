@@ -162,6 +162,7 @@ export default function NewSalePage() {
   const [boletoInterestRate, setBoletoInterestRate] = useState(0);
   const [saleInterest, setSaleInterest] = useState(0);
   const [operatorTaxes, setOperatorTaxes] = useState(0);
+  const [commissionSurcharge, setCommissionSurcharge] = useState(0);
   const [commissionRate, setCommissionRate] = useState(0);
   const [receivables, setReceivables] = useState<Receivable[]>([]);
   const [defaultCostCenterId, setDefaultCostCenterId] = useState<string>('');
@@ -297,6 +298,7 @@ export default function NewSalePage() {
     setCommissionRate(Number(sale.commission_rate) || 0);
     setSaleInterest(Number((sale as any).sale_interest) || 0);
     setOperatorTaxes(Number((sale as any).operator_taxes) || 0);
+    setCommissionSurcharge(Number((sale as any).commission_surcharge) || 0);
     setSellerId((sale as any).seller_id || '');
     setNotes(sale.notes || '');
     setPassengersCount(Number((sale as any).passengers_count) || 1);
@@ -676,9 +678,9 @@ export default function NewSalePage() {
   }, [cardPaymentType, installmentsMap, ecRates, linkRates, hasCredito]);
 
   const totalSale = useMemo(() => items.reduce((s, i) => s + i.total_value, 0), [items]);
-  const totalSaleWithInterest = totalSale + saleInterest + operatorTaxes;
+  const totalSaleWithInterest = totalSale + saleInterest + operatorTaxes + commissionSurcharge;
   const totalCost = useMemo(() => items.reduce((s, i) => s + i.cost_price, 0), [items]);
-  const grossProfit = totalSale + saleInterest - totalCost;
+  const grossProfit = totalSale + saleInterest + commissionSurcharge - totalCost;
   const commissionValue = grossProfit * (commissionRate / 100);
   const cardFeeValue = machineFee;
   const cardFeePercent = totalSaleWithInterest > 0 ? (machineFee / totalSaleWithInterest) * 100 : 0;
@@ -1602,6 +1604,7 @@ export default function NewSalePage() {
         machine_fee: machineFee,
         machine_fee_supplier_id: machineFeeSupplierId || null,
         operator_taxes: operatorTaxes,
+        commission_surcharge: commissionSurcharge,
         passengers_count: passengersCount,
         trip_nights: tripNights,
         trip_start_date: tripStartDate || null,
