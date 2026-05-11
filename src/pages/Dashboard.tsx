@@ -60,9 +60,12 @@ function getRanges(period: Period) {
   const ms = startOfMonth(now);
   const me = endOfMonth(now);
   const lm = subMonths(now, 1);
+  const lmStart = startOfMonth(lm);
+  // Mesmo período do mês anterior (dia 1 até o dia atual)
+  const lmSameDayEnd = endOfDay(new Date(lmStart.getFullYear(), lmStart.getMonth(), now.getDate()));
   return {
     current: { start: ms, end: me, label: 'Mês atual' },
-    previous: { start: startOfMonth(lm), end: endOfMonth(lm), label: 'Mês passado' },
+    previous: { start: lmStart, end: lmSameDayEnd, label: 'Mesmo período mês ant.' },
   };
 }
 
