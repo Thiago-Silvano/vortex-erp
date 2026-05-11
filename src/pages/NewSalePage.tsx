@@ -2762,7 +2762,7 @@ export default function NewSalePage() {
               )}
               <div className="md:col-span-2">
                 <Label>Nome do Cliente *</Label>
-                 <div className="flex gap-2 text-white bg-emerald-600">
+                <div className="flex gap-2">
                   <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" role="combobox" aria-expanded={clientPopoverOpen} className="flex-1 justify-between font-normal">
@@ -3555,7 +3555,7 @@ export default function NewSalePage() {
                       </Select>
                     </div>
                     {/* Top bar: Adicionar pagamento + resumo inline (estilo Controle de Pagamentos) */}
-                     <div className="flex flex-wrap items-center gap-3 mb-3 p-2 rounded-md border bg-muted/30 bg-inherit">
+                    <div className="flex flex-wrap items-center gap-3 mb-3 p-2 rounded-md border bg-muted/30">
                       <Select value="" onValueChange={v => {
                         if (!v) return;
                         if (v === 'faturado_cartao') {
