@@ -3559,7 +3559,7 @@ export default function NewSalePage() {
             {/* Receivables inline with tabs per payment method */}
             <div className="border-t pt-4">
               {/* Acréscimo de Comissão (cobrado por fora ao cliente) */}
-              <div className="flex items-center justify-end gap-2 mb-3">
+              <div className="flex flex-wrap items-center justify-end gap-3 mb-3">
                 <Label className="font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 whitespace-nowrap text-base" title="Quando cobramos uma comissão a mais por fora e o cliente paga diretamente para a empresa. Soma ao Total da Venda e ao Lucro Bruto.">
                   Acréscimo de Comissão:
                 </Label>
@@ -3571,6 +3571,23 @@ export default function NewSalePage() {
                     setCommissionSurcharge(parseInt(digits || '0', 10) / 100);
                   }}
                   placeholder="R$ 0,00"
+                />
+                <Select value={commissionSurchargeMethod} onValueChange={setCommissionSurchargeMethod}>
+                  <SelectTrigger className="h-8 text-sm w-44"><SelectValue placeholder="Forma" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pix">Pix</SelectItem>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="boleto">Boleto</SelectItem>
+                    <SelectItem value="credito">Cartão de Crédito</SelectItem>
+                    <SelectItem value="debito">Cartão de Débito</SelectItem>
+                    <SelectItem value="transferencia">Transferência</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="date"
+                  className="h-8 text-sm w-44"
+                  value={commissionSurchargeDate}
+                  onChange={e => setCommissionSurchargeDate(e.target.value)}
                 />
               </div>
               {(() => {
