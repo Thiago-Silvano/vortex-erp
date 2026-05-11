@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN IF NOT EXISTS commission_surcharge_method text, ADD COLUMN IF NOT EXISTS commission_surcharge_date date;
