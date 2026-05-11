@@ -3450,7 +3450,7 @@ export default function NewSalePage() {
                   {paymentMethods.map(m => {
                     const labels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora', faturado_cartao: 'Faturado + Cartão' };
                     return (
-                      <Badge key={m} variant="secondary" className="gap-1 pr-1">
+                        <Badge key={m} variant="secondary" className="gap-1 pr-1 text-sm">
                         {labels[m] || m}
                         <button type="button" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))} className="ml-1 hover:text-destructive">×</button>
                       </Badge>
@@ -3554,7 +3554,7 @@ export default function NewSalePage() {
             <div className="border-t pt-4">
               {/* Acréscimo de Comissão (cobrado por fora ao cliente) */}
               <div className="flex items-center justify-end gap-2 mb-3">
-                <Label className="text-xs whitespace-nowrap" title="Quando cobramos uma comissão a mais por fora e o cliente paga diretamente para a empresa. Soma ao Total da Venda e ao Lucro Bruto.">
+                <Label className="font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 whitespace-nowrap text-base" title="Quando cobramos uma comissão a mais por fora e o cliente paga diretamente para a empresa. Soma ao Total da Venda e ao Lucro Bruto.">
                   Acréscimo de Comissão:
                 </Label>
                 <Input
@@ -3579,7 +3579,7 @@ export default function NewSalePage() {
                 const hasMultipleMethods = uniqueMethods.length > 1;
 
                 const renderTable = (items: { rec: Receivable; globalIdx: number }[]) => (
-                  <div className="border rounded-lg overflow-hidden">
+                  <div className="border rounded-lg overflow-hidden bg-orange-200">
                     <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
                       <div className="col-span-2">Parcela</div>
                       <div className="col-span-4">Data de Recebimento</div>
