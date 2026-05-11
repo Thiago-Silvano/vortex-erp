@@ -4097,6 +4097,7 @@ export type Database = {
           client_phone: string | null
           commission_invoice_status: string | null
           commission_rate: number | null
+          commission_surcharge: number
           commission_value: number | null
           created_at: string
           created_by: string | null
@@ -4150,6 +4151,7 @@ export type Database = {
           client_phone?: string | null
           commission_invoice_status?: string | null
           commission_rate?: number | null
+          commission_surcharge?: number
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
@@ -4203,6 +4205,7 @@ export type Database = {
           client_phone?: string | null
           commission_invoice_status?: string | null
           commission_rate?: number | null
+          commission_surcharge?: number
           commission_value?: number | null
           created_at?: string
           created_by?: string | null
