@@ -821,7 +821,7 @@ export default function NewSalePage() {
         const labelMap: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência' };
         recs.push({
           installment_number: recIndex++,
-          due_date: commissionSurchargeDate || '',
+          due_date: commissionSurchargeDate || saleDate || '',
           amount: Math.round(commissionSurcharge * 100) / 100,
           payment_method: labelMap[commissionSurchargeMethod] || 'Pix',
           cost_center_id: defaultCostCenterId || undefined,
