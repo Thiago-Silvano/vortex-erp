@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileDown, Filter, X } from 'lucide-react';
+import { FileDown, Filter, X, ChevronDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import SalesDateFilter, { DateFilterPeriod, getDateRange } from '@/components/SalesDateFilter';
 import { generateReportPdf } from '@/lib/generateReportPdf';
@@ -43,6 +45,52 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Ativa', draft: 'Rascunho', cancelled: 'Cancelada', completed: 'Concluída',
 };
 
+interface MultiSelectProps {
+  options: { value: string; label: string }[];
+  values: string[];
+  onChange: (vals: string[]) => void;
+  placeholder?: string;
+}
+function MultiSelect({ options, values, onChange, placeholder = 'Todos' }: MultiSelectProps) {
+  const toggle = (v: string) => {
+    if (values.includes(v)) onChange(values.filter(x => x !== v));
+    else onChange([...values, v]);
+  };
+  const label = values.length === 0
+    ? placeholder
+    : values.length === 1
+      ? (options.find(o => o.value === values[0])?.label || values[0])
+      : `${values.length} selecionados`;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-7 w-full items-center justify-between rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
+        >
+          <span className="truncate">{label}</span>
+          <ChevronDown className="h-3 w-3 opacity-50 ml-1 shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-2 max-h-72 overflow-y-auto" align="start">
+        <div className="flex items-center justify-between mb-1 px-1">
+          <button type="button" className="text-xs text-primary hover:underline" onClick={() => onChange([])}>Limpar</button>
+          <button type="button" className="text-xs text-primary hover:underline" onClick={() => onChange(options.map(o => o.value))}>Todos</button>
+        </div>
+        <div className="space-y-1">
+          {options.length === 0 && <p className="text-xs text-muted-foreground p-2">Sem opções</p>}
+          {options.map(o => (
+            <label key={o.value} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent cursor-pointer text-xs">
+              <Checkbox checked={values.includes(o.value)} onCheckedChange={() => toggle(o.value)} />
+              <span className="truncate">{o.label}</span>
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function VistosServicesSoldReport() {
   const { activeCompany } = useCompany();
   const [rows, setRows] = useState<Row[]>([]);
@@ -53,13 +101,13 @@ export default function VistosServicesSoldReport() {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [search, setSearch] = useState('');
-  const [productFilter, setProductFilter] = useState('all');
-  const [supplierFilter, setSupplierFilter] = useState('all');
-  const [costCenterFilter, setCostCenterFilter] = useState('all');
-  const [paymentFilter, setPaymentFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [productFilter, setProductFilter] = useState<string[]>([]);
+  const [supplierFilter, setSupplierFilter] = useState<string[]>([]);
+  const [costCenterFilter, setCostCenterFilter] = useState<string[]>([]);
+  const [paymentFilter, setPaymentFilter] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [typeFilter, setTypeFilter] = useState('all'); // all | service | supplier_fee
-  const [sellerFilter, setSellerFilter] = useState('all');
+  const [sellerFilter, setSellerFilter] = useState<string[]>([]);
   const [minValue, setMinValue] = useState('');
   const [maxValue, setMaxValue] = useState('');
 
@@ -135,12 +183,12 @@ export default function VistosServicesSoldReport() {
         if (d < dateRange.start || d > dateRange.end) return false;
       }
       if (term && !r.client_name.toLowerCase().includes(term) && !r.product_name.toLowerCase().includes(term)) return false;
-      if (productFilter !== 'all' && r.product_name !== productFilter) return false;
-      if (supplierFilter !== 'all' && r.supplier_name !== supplierFilter) return false;
-      if (costCenterFilter !== 'all' && r.cost_center_name !== costCenterFilter) return false;
-      if (paymentFilter !== 'all' && r.payment_method !== paymentFilter) return false;
-      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-      if (sellerFilter !== 'all' && r.created_by !== sellerFilter) return false;
+      if (productFilter.length > 0 && !productFilter.includes(r.product_name)) return false;
+      if (supplierFilter.length > 0 && !supplierFilter.includes(r.supplier_name)) return false;
+      if (costCenterFilter.length > 0 && !costCenterFilter.includes(r.cost_center_name)) return false;
+      if (paymentFilter.length > 0 && !paymentFilter.includes(r.payment_method)) return false;
+      if (statusFilter.length > 0 && !statusFilter.includes(r.status)) return false;
+      if (sellerFilter.length > 0 && !sellerFilter.includes(r.created_by)) return false;
       if (typeFilter === 'service' && r.is_supplier_fee) return false;
       if (typeFilter === 'supplier_fee' && !r.is_supplier_fee) return false;
       if (r.total_value < min || r.total_value > max) return false;
@@ -158,8 +206,8 @@ export default function VistosServicesSoldReport() {
 
   const clearFilters = () => {
     setPeriod('month'); setCustomStart(''); setCustomEnd(''); setSearch('');
-    setProductFilter('all'); setSupplierFilter('all'); setCostCenterFilter('all');
-    setPaymentFilter('all'); setStatusFilter('all'); setTypeFilter('all'); setSellerFilter('all');
+    setProductFilter([]); setSupplierFilter([]); setCostCenterFilter([]);
+    setPaymentFilter([]); setStatusFilter([]); setTypeFilter('all'); setSellerFilter([]);
     setMinValue(''); setMaxValue('');
   };
 
@@ -216,53 +264,44 @@ export default function VistosServicesSoldReport() {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Serviço</Label>
-                <Select value={productFilter} onValueChange={setProductFilter}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {productOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <MultiSelect
+                  options={productOptions.map(p => ({ value: p, label: p }))}
+                  values={productFilter}
+                  onChange={setProductFilter}
+                />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Fornecedor</Label>
-                <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {supplierOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <MultiSelect
+                  options={supplierOptions.map(p => ({ value: p, label: p }))}
+                  values={supplierFilter}
+                  onChange={setSupplierFilter}
+                />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Centro de Custo</Label>
-                <Select value={costCenterFilter} onValueChange={setCostCenterFilter}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {costCenterOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <MultiSelect
+                  options={costCenterOptions.map(p => ({ value: p, label: p }))}
+                  values={costCenterFilter}
+                  onChange={setCostCenterFilter}
+                />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Forma de Pagamento</Label>
-                <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    {paymentOptions.map(p => <SelectItem key={p} value={p}>{PAYMENT_LABELS[p] || p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <MultiSelect
+                  options={paymentOptions.map(p => ({ value: p, label: PAYMENT_LABELS[p] || p }))}
+                  values={paymentFilter}
+                  onChange={setPaymentFilter}
+                  placeholder="Todas"
+                />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Status da Venda</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {statusOptions.map(p => <SelectItem key={p} value={p}>{STATUS_LABELS[p] || p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <MultiSelect
+                  options={statusOptions.map(p => ({ value: p, label: STATUS_LABELS[p] || p }))}
+                  values={statusFilter}
+                  onChange={setStatusFilter}
+                />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Tipo de Item</Label>
@@ -277,13 +316,11 @@ export default function VistosServicesSoldReport() {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Vendedor</Label>
-                <Select value={sellerFilter} onValueChange={setSellerFilter}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {sellerOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <MultiSelect
+                  options={sellerOptions.map(p => ({ value: p, label: p }))}
+                  values={sellerFilter}
+                  onChange={setSellerFilter}
+                />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Valor mínimo (R$)</Label>
