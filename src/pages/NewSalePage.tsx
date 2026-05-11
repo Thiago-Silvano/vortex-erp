@@ -3470,10 +3470,19 @@ export default function NewSalePage() {
                 const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
                 const diff = expectedReceivables - totalReceivables;
 
-                // Group receivables by payment_method
-                const methodLabels: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', boleto: 'Boleto', credito: 'Cartão de Crédito', debito: 'Cartão de Débito', transferencia: 'Transferência', operadora: 'Pgto Operadora' };
-                const uniqueMethods = Array.from(new Set(receivables.map(r => r.payment_method || 'outros')));
-                const hasMultipleMethods = uniqueMethods.length > 1;
+                // Group receivables by payment_method (key)
+                const labelToKey: Record<string, string> = { 'Pix': 'pix', 'Dinheiro': 'dinheiro', 'Boleto': 'boleto', 'Cartão de Crédito': 'credito', 'Cartão de Débito': 'debito', 'Transferência': 'transferencia', 'Pgto Operadora/Consolidadora': 'operadora', 'Pgto Operadora': 'operadora' };
+                const allMethodOptions = [
+                  { value: 'pix', label: 'Pix' },
+                  { value: 'dinheiro', label: 'Dinheiro' },
+                  { value: 'boleto', label: 'Boleto' },
+                  { value: 'credito', label: 'Cartão de Crédito' },
+                  { value: 'debito', label: 'Cartão de Débito' },
+                  { value: 'transferencia', label: 'Transferência' },
+                  { value: 'operadora', label: 'Pgto Operadora/Consolidadora' },
+                  { value: 'faturado_cartao', label: 'Faturado + Cartão' },
+                ];
+                const maxInstallmentsByMethod: Record<string, number> = { credito: 18, boleto: 24, operadora: 24 };
 
                 const renderTable = (items: { rec: Receivable; globalIdx: number }[]) => (
                   <div className="border rounded-lg overflow-hidden bg-orange-200">
@@ -3545,33 +3554,130 @@ export default function NewSalePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {hasMultipleMethods ? (
-                      <Tabs defaultValue={uniqueMethods[0]} className="w-full">
-                        <TabsList className="w-full justify-start bg-muted/60 p-1">
-                          {uniqueMethods.map(m => {
-                            const methodItems = receivables.filter(r => (r.payment_method || 'outros') === m);
-                            const methodTotal = methodItems.reduce((s, r) => s + r.amount, 0);
-                            return (
-                              <TabsTrigger key={m} value={m} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium">
-                                {Object.values(methodLabels).find(l => l === m) || m} ({methodItems.length}x) - {fmt(methodTotal)}
-                              </TabsTrigger>
-                            );
-                          })}
-                        </TabsList>
-                         {uniqueMethods.map(m => {
-                           const items = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => (rec.payment_method || 'outros') === m);
-                           return (
-                             <TabsContent key={m} value={m}>
-                               {renderTable(items)}
-                             </TabsContent>
-                           );
-                         })}
-                      </Tabs>
-                    ) : (
-                      <>
-                        {renderTable(receivables.map((rec, idx) => ({ rec, globalIdx: idx })))}
-                      </>
-                    )}
+                    {/* Bloco por forma de pagamento — header (forma | total | parcelas | remover) + parcelas embaixo */}
+                    <div className="space-y-4">
+                      {paymentMethods.map(m => {
+                        const items = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => labelToKey[rec.payment_method || ''] === m);
+                        const methodTotal = items.reduce((s, it) => s + it.rec.amount, 0);
+                        const maxInst = maxInstallmentsByMethod[m] || 24;
+                        return (
+                          <div key={m} className="border rounded-lg p-3 bg-card space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                              <div className="md:col-span-4">
+                                <Label className="text-xs">Forma de pagamento</Label>
+                                <Select value={m} onValueChange={(v) => {
+                                  if (!v || v === m) return;
+                                  if (v === 'faturado_cartao') {
+                                    setPaymentMethods(prev => {
+                                      const next = prev.filter(x => x !== m);
+                                      if (!next.includes('operadora')) next.push('operadora');
+                                      if (!next.includes('credito')) next.push('credito');
+                                      return next;
+                                    });
+                                    setInstallmentsMap(prev => ({ ...prev, operadora: prev.operadora || 1, credito: prev.credito || 1 }));
+                                    return;
+                                  }
+                                  if (paymentMethods.includes(v)) return;
+                                  setPaymentMethods(prev => prev.map(x => x === m ? v : x));
+                                  setInstallmentsMap(prev => ({ ...prev, [v]: prev[v] || 1 }));
+                                }}>
+                                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {allMethodOptions.filter(opt => opt.value === m || !paymentMethods.includes(opt.value)).map(opt => (
+                                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="md:col-span-3">
+                                <Label className="text-xs">Valor total</Label>
+                                <Input value={fmt(methodTotal)} disabled className="h-9 bg-muted" />
+                              </div>
+                              <div className="md:col-span-3">
+                                <Label className="text-xs">Nº de parcelas</Label>
+                                <Select value={String(getInstallments(m))} onValueChange={v => setMethodInstallments(m, parseInt(v))}>
+                                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                  <SelectContent>{Array.from({ length: maxInst }, (_, i) => i + 1).map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}</SelectContent>
+                                </Select>
+                              </div>
+                              <div className="md:col-span-2 flex justify-end">
+                                <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setPaymentMethods(prev => prev.filter(x => x !== m))}>
+                                  <Trash2 className="h-4 w-4 mr-1" /> Remover
+                                </Button>
+                              </div>
+                            </div>
+                            {/* Inline extras */}
+                            {m === 'credito' && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                  <Label className="text-xs">Tipo de Cartão</Label>
+                                  <Select value={cardPaymentType} onValueChange={setCardPaymentType}>
+                                    <SelectTrigger className="h-9"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                                    <SelectContent><SelectItem value="ec">EC (Máquina)</SelectItem><SelectItem value="link">Link de Pagamento</SelectItem></SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            )}
+                            {m === 'boleto' && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                  <Label className="text-xs">Juros (% ao mês)</Label>
+                                  <Input type="number" step="0.01" value={boletoInterestRate} onChange={e => setBoletoInterestRate(parseFloat(e.target.value) || 0)} placeholder="0.00" className="h-9" />
+                                </div>
+                              </div>
+                            )}
+                            {m === 'operadora' && (
+                              <div className="text-sm text-muted-foreground">
+                                Comissão Bruta: <span className="font-semibold text-primary">{fmt(grossProfit)}</span>
+                              </div>
+                            )}
+                            {items.length > 0 && renderTable(items)}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Botão Adicionar pagamento */}
+                    <div className="pt-1">
+                      <Select value="" onValueChange={v => {
+                        if (!v) return;
+                        if (v === 'faturado_cartao') {
+                          setPaymentMethods(prev => {
+                            const next = [...prev];
+                            if (!next.includes('operadora')) next.push('operadora');
+                            if (!next.includes('credito')) next.push('credito');
+                            return next;
+                          });
+                          setInstallmentsMap(prev => ({ ...prev, operadora: prev.operadora || 1, credito: prev.credito || 1 }));
+                        } else if (!paymentMethods.includes(v)) {
+                          setInstallmentsMap(prev => ({ ...prev, [v]: 1 }));
+                          setPaymentMethods(prev => [...prev, v]);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9 w-full md:w-72 border-dashed">
+                          <SelectValue placeholder="+ Adicionar pagamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allMethodOptions.filter(opt => !paymentMethods.includes(opt.value)).map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Recebimentos órfãos (ex.: Acréscimo de Comissão sem método ativo) */}
+                    {(() => {
+                      const orphan = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => {
+                        const key = labelToKey[rec.payment_method || ''];
+                        return !key || !paymentMethods.includes(key);
+                      });
+                      return orphan.length > 0 ? (
+                        <div className="pt-2">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-2">Outros recebimentos</p>
+                          {renderTable(orphan)}
+                        </div>
+                      ) : null;
+                    })()}
                     {/* Summary row moved below the installments table */}
                     <div className="grid grid-cols-1 md:grid-cols-3 border rounded-lg overflow-hidden divide-y md:divide-y-0 md:divide-x bg-muted/20 mt-3">
                       <div className="p-3">
