@@ -3554,6 +3554,42 @@ export default function NewSalePage() {
                         </SelectContent>
                       </Select>
                     </div>
+                    {/* Top bar: Adicionar pagamento + resumo inline (estilo Controle de Pagamentos) */}
+                    <div className="flex flex-wrap items-center gap-3 mb-3 p-2 rounded-md border bg-muted/30">
+                      <Select value="" onValueChange={v => {
+                        if (!v) return;
+                        if (v === 'faturado_cartao') {
+                          setPaymentMethods(prev => {
+                            const next = [...prev];
+                            if (!next.includes('operadora')) next.push('operadora');
+                            if (!next.includes('credito')) next.push('credito');
+                            return next;
+                          });
+                          setInstallmentsMap(prev => ({ ...prev, operadora: prev.operadora || 1, credito: prev.credito || 1 }));
+                        } else if (!paymentMethods.includes(v)) {
+                          setInstallmentsMap(prev => ({ ...prev, [v]: 1 }));
+                          setPaymentMethods(prev => [...prev, v]);
+                        }
+                      }}>
+                        <SelectTrigger className="h-8 text-sm w-56 border-dashed">
+                          <SelectValue placeholder="+ Adicionar pagamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allMethodOptions.filter(opt => !paymentMethods.includes(opt.value)).map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                        <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <span className="font-bold text-foreground">{fmt(expectedReceivables)}</span></span>
+                        <span className="text-muted-foreground">Lançado: <span className="font-bold text-foreground">{fmt(totalReceivables)}</span></span>
+                        <span className={`font-bold ${Math.abs(diff) > 0.01 ? (diff > 0 ? 'text-amber-600' : 'text-destructive') : 'text-emerald-600'}`}>
+                          {Math.abs(diff) > 0.01
+                            ? (diff > 0 ? `Falta lançar: ${fmt(diff)}` : `Excedente: ${fmt(Math.abs(diff))}`)
+                            : '✓ Valores conferem'}
+                        </span>
+                      </div>
+                    </div>
                     {/* Bloco por forma de pagamento — header (forma | total | parcelas | remover) + parcelas embaixo */}
                     <div className="space-y-4">
                       {paymentMethods.map(m => {
@@ -3637,34 +3673,6 @@ export default function NewSalePage() {
                       })}
                     </div>
 
-                    {/* Botão Adicionar pagamento */}
-                    <div className="pt-1">
-                      <Select value="" onValueChange={v => {
-                        if (!v) return;
-                        if (v === 'faturado_cartao') {
-                          setPaymentMethods(prev => {
-                            const next = [...prev];
-                            if (!next.includes('operadora')) next.push('operadora');
-                            if (!next.includes('credito')) next.push('credito');
-                            return next;
-                          });
-                          setInstallmentsMap(prev => ({ ...prev, operadora: prev.operadora || 1, credito: prev.credito || 1 }));
-                        } else if (!paymentMethods.includes(v)) {
-                          setInstallmentsMap(prev => ({ ...prev, [v]: 1 }));
-                          setPaymentMethods(prev => [...prev, v]);
-                        }
-                      }}>
-                        <SelectTrigger className="h-9 w-full md:w-72 border-dashed">
-                          <SelectValue placeholder="+ Adicionar pagamento" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {allMethodOptions.filter(opt => !paymentMethods.includes(opt.value)).map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
                     {/* Recebimentos órfãos (ex.: Acréscimo de Comissão sem método ativo) */}
                     {(() => {
                       const orphan = receivables.map((rec, idx) => ({ rec, globalIdx: idx })).filter(({ rec }) => {
@@ -3678,25 +3686,6 @@ export default function NewSalePage() {
                         </div>
                       ) : null;
                     })()}
-                    {/* Summary row moved below the installments table */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 border rounded-lg overflow-hidden divide-y md:divide-y-0 md:divide-x bg-muted/20 mt-3">
-                      <div className="p-3">
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}</p>
-                        <p className="text-lg font-bold text-foreground mt-1">{fmt(expectedReceivables)}</p>
-                      </div>
-                      <div className="p-3">
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Lançado</p>
-                        <p className="text-lg font-bold text-foreground mt-1">{fmt(totalReceivables)}</p>
-                      </div>
-                      <div className="p-3">
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Status</p>
-                        <p className={`text-lg font-bold mt-1 ${Math.abs(diff) > 0.01 ? (diff > 0 ? 'text-amber-600' : 'text-destructive') : 'text-emerald-600'}`}>
-                          {Math.abs(diff) > 0.01
-                            ? (diff > 0 ? `Falta ${fmt(diff)}` : `Excedente ${fmt(Math.abs(diff))}`)
-                            : '✓ Valores conferem'}
-                        </p>
-                      </div>
-                    </div>
                   </>
                 );
               })()}
