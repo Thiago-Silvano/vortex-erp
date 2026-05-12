@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import RichTextEditor from '@/components/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, MapPin, Calendar, OctagonAlert } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, MapPin, Calendar, OctagonAlert, FileUp } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -124,6 +124,7 @@ interface Props {
   rav?: number;
   onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string, costPrice?: number, rav?: number) => void;
   onHotelImagesFound?: (images: string[]) => void;
+  onImportPdf?: () => void;
 }
 
 const emptyLeg = (): FlightLeg => ({
@@ -139,7 +140,7 @@ const emptyHotel = (): HotelInfo => ({
   roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
@@ -369,7 +370,18 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Detalhes do Serviço</DialogTitle>
+          <div className="flex items-center justify-between gap-3 pr-6">
+            <DialogTitle>Editar Detalhes do Serviço</DialogTitle>
+            {onImportPdf && (
+              <Button
+                size="sm"
+                onClick={onImportPdf}
+                className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                <FileUp className="h-4 w-4" /> Importar PDF
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
