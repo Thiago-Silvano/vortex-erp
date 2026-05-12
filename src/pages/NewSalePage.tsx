@@ -3137,7 +3137,7 @@ export default function NewSalePage() {
           };
           const typeMeta = (type?: string) => {
             switch (type) {
-              case 'aereo': return { label: 'Aéreo', pill: 'text-[10px] font-medium px-2 py-0.5 rounded-full text-sky-700 dark:text-sky-300 bg-slate-50', iconBg: 'h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-sky-50 dark:bg-sky-950/40 text-slate-50' };
+              case 'aereo': return { label: 'Aéreo', pill: 'text-sky-700 dark:text-sky-300 bg-slate-50', iconBg: 'bg-sky-50 dark:bg-sky-950/40 text-slate-50' };
               case 'hotel': return { label: 'Hotel', pill: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300', iconBg: 'bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300' };
               case 'carro': return { label: 'Transfer', pill: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300' };
               case 'cruzeiro': return { label: 'Cruzeiro', pill: 'bg-cyan-100 text-cyan-700', iconBg: 'bg-cyan-50 text-cyan-600' };
