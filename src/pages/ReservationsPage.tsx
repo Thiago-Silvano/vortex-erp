@@ -284,6 +284,34 @@ export default function ReservationsPage() {
             )}
           </DialogContent>
         </Dialog>
+
+        <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="text-lg">Alterar status em massa</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">{selectedIds.size} reserva(s) selecionada(s)</p>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Novo status</label>
+                <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="confirmed">Confirmada</SelectItem>
+                    <SelectItem value="cancelled">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setBulkOpen(false)}>Cancelar</Button>
+                <Button size="sm" onClick={applyBulkStatus} disabled={bulkSaving}>
+                  {bulkSaving ? 'Aplicando...' : 'Aplicar'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
