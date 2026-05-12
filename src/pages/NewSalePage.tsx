@@ -143,6 +143,7 @@ export default function NewSalePage() {
   const [quoteTitle, setQuoteTitle] = useState('');
 
   const [allSuppliers, setAllSuppliers] = useState<SupplierOption[]>([]);
+  const [allAirlines, setAllAirlines] = useState<{ id: string; name: string }[]>([]);
   const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);
   const [addingSupplierId, setAddingSupplierId] = useState('');
   const [items, setItems] = useState<SaleItem[]>([]);
