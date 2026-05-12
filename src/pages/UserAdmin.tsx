@@ -214,6 +214,7 @@ export default function UserAdmin() {
     if (!perm) return <Badge variant="outline">Sem perfil</Badge>;
     if (perm.user_role === 'master') return <Badge className="bg-primary">Master</Badge>;
     if (perm.user_role === 'operacional') return <Badge className="bg-orange-500 text-white">Operacional</Badge>;
+    if (perm.user_role === 'cotacao') return <Badge className="bg-sky-600 text-white">Cotação</Badge>;
     return <Badge variant="secondary">Vendedor</Badge>;
   };
 
@@ -353,10 +354,12 @@ export default function UserAdmin() {
                   <SelectItem value="master">Master</SelectItem>
                   <SelectItem value="vendedor">Vendedor</SelectItem>
                   <SelectItem value="operacional">Operacional</SelectItem>
+                  <SelectItem value="cotacao">Cotação</SelectItem>
                 </SelectContent>
               </Select>
               {permRole === 'master' && <p className="text-xs text-muted-foreground mt-1">Master tem acesso total ao sistema e pode alternar entre empresas</p>}
               {permRole === 'operacional' && <p className="text-xs text-muted-foreground mt-1">Operacional tem acesso a produção e calendário</p>}
+              {permRole === 'cotacao' && <p className="text-xs text-muted-foreground mt-1">Cotação tem acesso apenas a Nova Cotação e Cotações (ideal para uso em tablet)</p>}
             </div>
 
             {permRole === 'master' && (
