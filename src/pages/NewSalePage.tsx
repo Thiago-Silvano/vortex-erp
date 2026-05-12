@@ -197,6 +197,7 @@ export default function NewSalePage() {
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [commissionInvoiceStatus, setCommissionInvoiceStatus] = useState<string | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+  const [forceImportOptionId, setForceImportOptionId] = useState<string | null>(null);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
