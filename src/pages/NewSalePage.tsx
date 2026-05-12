@@ -4709,12 +4709,18 @@ export default function NewSalePage() {
             onClose={() => setEditingItemIdx(null)}
             description={items[editingItemIdx]?.description || ''}
             metadata={items[editingItemIdx]?.metadata || {}}
-            onSave={(desc, meta) => {
+            reservationNumber={items[editingItemIdx]?.reservation_number || ''}
+            onSave={(desc, meta, resNumber) => {
               setItems(prev => {
                 const editedItem = prev[editingItemIdx];
                 const updated = prev.map((item, i) => {
                   if (i === editingItemIdx) {
-                    return { ...item, description: desc, metadata: meta };
+                    return {
+                      ...item,
+                      description: desc,
+                      metadata: meta,
+                      ...(resNumber !== undefined ? { reservation_number: resNumber } : {}),
+                    };
                   }
                   return item;
                 });
