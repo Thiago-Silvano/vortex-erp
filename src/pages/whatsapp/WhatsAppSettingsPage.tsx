@@ -384,6 +384,10 @@ export default function WhatsAppSettingsPage() {
                     placeholder="5548999999999"
                   />
                 </div>
+                <Button type="button" variant="outline" size="sm" onClick={sendTestReminder} disabled={sendingTest} className="gap-2">
+                  <Smartphone className="h-4 w-4" />
+                  {sendingTest ? 'Enviando...' : 'Enviar mensagem de teste'}
+                </Button>
                 <div>
                   <Label>Mensagem — 48h antes</Label>
                   <Textarea rows={3} value={settings.reminder_template_48h} onChange={e => setSettings(p => ({ ...p, reminder_template_48h: e.target.value }))} />
