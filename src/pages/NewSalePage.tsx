@@ -3269,9 +3269,9 @@ export default function NewSalePage() {
                     <div className="text-[11px] text-muted-foreground">Serviços</div>
                     <div className="text-sm font-semibold mt-0.5">{optItems.length}</div>
                   </div>
-                  <div className="bg-emerald-50 dark:bg-emerald-950/30 p-3">
-                    <div className="text-[11px] text-emerald-700 dark:text-emerald-300">Total {activeCol?.name?.toLowerCase() || 'venda'}</div>
-                    <div className="text-sm font-semibold mt-0.5 text-emerald-700 dark:text-emerald-300">{maskCurrency(totalOption)}</div>
+                  <div className="p-3 bg-slate-50">
+                    <div className="text-[11px] text-inherit">Total {activeCol?.name?.toLowerCase() || 'venda'}</div>
+                    <div className="text-sm font-semibold mt-0.5 text-inherit">{maskCurrency(totalOption)}</div>
                   </div>
                 </div>
 
