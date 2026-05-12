@@ -51,8 +51,29 @@ export default function WhatsAppSettingsPage() {
     setSendingTest(true);
     try {
       const msg = `✅ Mensagem de teste — Lembretes de Reservas\n\nSe você recebeu esta mensagem, a configuração de envio via WhatsApp está funcionando.`;
-      await sendMessage(settings.server_url, empresaId, settings.reminder_phone, msg);
-      toast.success('Mensagem de teste enviada!');
+      const sendResult: any = await sendMessage(settings.server_url, empresaId, settings.reminder_phone, msg);
+      const sentWaMsgId = sendResult?.message_id || sendResult?.id || null;
+      try {
+        const { data: convId } = await (supabase.rpc('find_or_create_conversation', {
+          p_empresa_id: empresaId,
+          p_phone: settings.reminder_phone,
+          p_client_name: 'Lembrete (Teste)',
+          p_last_message: msg,
+        }) as any);
+        if (convId) {
+          await (supabase.from('whatsapp_messages').insert({
+            conversation_id: convId,
+            empresa_id: empresaId,
+            sender: 'me',
+            content: msg,
+            message_type: 'chat',
+            whatsapp_msg_id: sentWaMsgId,
+          }) as any);
+        }
+      } catch (logErr) {
+        console.warn('Falha ao registrar mensagem de teste na conversa:', logErr);
+      }
+      toast.success('Mensagem de teste enviada e registrada na conversa!');
     } catch (e: any) {
       toast.error(e?.message || 'Falha ao enviar mensagem de teste');
     }
