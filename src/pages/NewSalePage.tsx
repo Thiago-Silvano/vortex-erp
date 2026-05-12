@@ -3183,9 +3183,19 @@ export default function NewSalePage() {
                 <div>
                   <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => addServiceToOption(activeCol?.id || '')}>
-                  <Plus className="h-4 w-4 mr-1" />Serviço
-                </Button>
+                <div className="flex items-center gap-2">
+                  {isQuoteMode && (
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const newOpt = { name: `Opção ${quoteOptions.length + 1}`, order_index: quoteOptions.length };
+                      setQuoteOptions(prev => [...prev, newOpt]);
+                    }}>
+                      <Plus className="h-4 w-4 mr-1" />Opção
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => addServiceToOption(activeCol?.id || '')}>
+                    <Plus className="h-4 w-4 mr-1" />Serviço
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="p-3 sm:p-4 space-y-4">
                 {/* Tabs of options */}
