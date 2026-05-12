@@ -26,6 +26,13 @@ export default function WhatsAppSettingsPage() {
     auto_reply_message: '',
     connected_phone: '',
     connected_name: '',
+    reminder_enabled: false,
+    reminder_phone: '',
+    reminder_template_48h: '',
+    reminder_template_24h: '',
+    reminder_template_10h: '',
+    reminder_template_urgent: '',
+    reminder_template_missed: '',
   });
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -50,6 +57,13 @@ export default function WhatsAppSettingsPage() {
       session_name: settings.session_name,
       auto_reply_enabled: settings.auto_reply_enabled,
       auto_reply_message: settings.auto_reply_message,
+      reminder_enabled: settings.reminder_enabled,
+      reminder_phone: settings.reminder_phone,
+      reminder_template_48h: settings.reminder_template_48h,
+      reminder_template_24h: settings.reminder_template_24h,
+      reminder_template_10h: settings.reminder_template_10h,
+      reminder_template_urgent: settings.reminder_template_urgent,
+      reminder_template_missed: settings.reminder_template_missed,
       updated_at: new Date().toISOString(),
     };
 
