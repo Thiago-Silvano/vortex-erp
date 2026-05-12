@@ -47,6 +47,7 @@ import ReportProfit from "./pages/reports/ReportProfit";
 import SellersPage from "./pages/SellersPage";
 import CommissionsPage from "./pages/CommissionsPage";
 import ServicesCatalogPage from "./pages/ServicesCatalogPage";
+import QuoteStatusesPage from "./pages/QuoteStatusesPage";
 import BankAccountsPage from "./pages/BankAccountsPage";
 import BankReconciliationPage from "./pages/BankReconciliationPage";
 import BankStatementReportPage from "./pages/BankStatementReportPage";
