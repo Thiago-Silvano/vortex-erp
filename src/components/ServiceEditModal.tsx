@@ -454,6 +454,38 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             </div>
           )}
 
+          {/* Valores do serviço — Custo e RAV (Lucro Bruto). Total = Custo + RAV */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-lg border bg-muted/30 p-3">
+            <div>
+              <Label className="text-xs">Valor do Custo</Label>
+              <Input
+                inputMode="numeric"
+                value={costPriceStr}
+                onChange={e => setCostPriceStr(maskCurrencyInput(e.target.value))}
+                placeholder="R$ 0,00"
+                className="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">RAV / Lucro Bruto</Label>
+              <Input
+                inputMode="numeric"
+                value={ravStr}
+                onChange={e => setRavStr(maskCurrencyInput(e.target.value))}
+                placeholder="R$ 0,00"
+                className="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Total do Serviço</Label>
+              <Input
+                value={maskCurrencyInput(parseCurrency(costPriceStr) + parseCurrency(ravStr)) || 'R$ 0,00'}
+                readOnly
+                className="bg-background font-semibold"
+              />
+            </div>
+          </div>
+
           {type === 'adicional' && (
             <div className="flex items-center gap-2 py-1">
               <Checkbox id="isAirService" checked={isAirService} onCheckedChange={(v) => setIsAirService(!!v)} />
