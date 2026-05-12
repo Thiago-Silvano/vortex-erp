@@ -469,6 +469,14 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label className="text-xs">Nº Reserva principal (Localizador)</Label>
+                  <Input
+                    value={mainReservation}
+                    onChange={e => setMainReservation(e.target.value.toUpperCase())}
+                    placeholder="ABC123"
+                  />
+                </div>
               </div>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-sm">Trechos do Voo</h3>
