@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Pencil, Shield } from 'lucide-react';
+import { Trash2, Pencil, Shield, UserPlus } from 'lucide-react';
 import UserManagement from '@/components/UserManagement';
 import { useCompany, Company } from '@/contexts/CompanyContext';
 
@@ -62,6 +62,31 @@ export default function UserAdmin() {
   const [permEmpresaIds, setPermEmpresaIds] = useState<string[]>([]);
   const [permDefaultCompany, setPermDefaultCompany] = useState('none');
   const [permHomeRoute, setPermHomeRoute] = useState('/reservations');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const handleCreateUser = async () => {
+    if (!newEmail.trim() || !newPassword.trim()) return;
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { action: 'create', email: newEmail.trim(), password: newPassword, displayName: newName.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: 'Usuário criado!', description: newEmail });
+      setNewEmail(''); setNewPassword(''); setNewName('');
+      setCreateOpen(false);
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    }
+    setCreating(false);
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -205,7 +230,12 @@ export default function UserAdmin() {
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Gerenciar Usuários</h1>
-          <UserManagement />
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <UserPlus className="h-4 w-4" /> Adicionar Usuário
+            </Button>
+            <UserManagement />
+          </div>
         </div>
 
         <Card>
