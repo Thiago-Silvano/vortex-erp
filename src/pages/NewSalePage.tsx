@@ -3726,147 +3726,196 @@ export default function NewSalePage() {
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="start" className="w-[min(900px,95vw)] max-h-[70vh] overflow-y-auto space-y-3">
-            <p className="text-sm text-muted-foreground">Selecione quais formas de pagamento deseja ofertar ao cliente na proposta (PDF e interativa).</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {proposalPaymentOptions.map((opt, idx) => (
-                <div key={opt.method} className={`border rounded-lg p-4 transition-colors ${opt.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      checked={opt.enabled}
-                      onCheckedChange={(checked) => {
-                        setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, enabled: !!checked } : o));
-                      }}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        {opt.method.startsWith('custom_') || opt.method.startsWith('pdf_import_') ? (
-                          <Input
-                            value={opt.label}
-                            onChange={e => {
-                              setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, label: e.target.value } : o));
-                            }}
-                            className="h-7 text-sm font-medium w-48"
-                            placeholder="Nome da opção"
-                          />
-                        ) : (
-                          <Label className="font-medium">{opt.label}</Label>
-                        )}
-                        {opt.method.startsWith('custom_') && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                            onClick={() => setProposalPaymentOptions(prev => prev.filter((_, i) => i !== idx))}
-                          >
-                            <Trash2 className="h-3 w-3" />
+              <PopoverContent align="start" className="w-[min(960px,95vw)] max-h-[75vh] overflow-y-auto p-0">
+                {(() => {
+                  // Build tabs: Geral + one per quote option (when there are 2+)
+                  const tabs = [
+                    { id: '__geral__', name: 'Geral (todas as opções)' },
+                    ...(quoteOptions.length > 1
+                      ? quoteOptions.map((o, i) => ({ id: o.id || String(i), name: o.name }))
+                      : []),
+                  ];
+                  const activeTab = tabs.find(t => t.id === paymentOptionTab) ? paymentOptionTab : '__geral__';
+                  const tabFilter = (o: ProposalPaymentOption) =>
+                    activeTab === '__geral__'
+                      ? !o.quote_option_id
+                      : (o.quote_option_id || '') === activeTab;
+                  const visibleOptions = proposalPaymentOptions
+                    .map((o, i) => ({ o, i }))
+                    .filter(({ o }) => tabFilter(o));
+                  const updateAt = (idx: number, patch: Partial<ProposalPaymentOption>) =>
+                    setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, ...patch } : o));
+                  const removeAt = (idx: number) =>
+                    setProposalPaymentOptions(prev => prev.filter((_, i) => i !== idx));
+                  const addOption = () => setProposalPaymentOptions(prev => [...prev, {
+                    method: `custom_${Date.now()}`,
+                    label: 'Personalizado',
+                    installments: 1,
+                    discountPercent: 0,
+                    enabled: true,
+                    quote_option_id: activeTab === '__geral__' ? null : activeTab,
+                  }]);
+                  const tabBadge = (tid: string) => {
+                    const count = proposalPaymentOptions.filter(o =>
+                      o.enabled && (tid === '__geral__' ? !o.quote_option_id : (o.quote_option_id || '') === tid)
+                    ).length;
+                    return count;
+                  };
+                  return (
+                    <div className="flex flex-col">
+                      {tabs.length > 1 && (
+                        <div className="flex items-center gap-1 border-b bg-muted/30 px-2 py-1.5 overflow-x-auto">
+                          {tabs.map(t => {
+                            const isActive = t.id === activeTab;
+                            const c = tabBadge(t.id);
+                            return (
+                              <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => setPaymentOptionTab(t.id)}
+                                className={`text-xs px-3 py-1.5 rounded-md whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                                  isActive
+                                    ? 'bg-background border border-border shadow-sm font-medium text-foreground'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-background/60'
+                                }`}
+                              >
+                                {t.name}
+                                {c > 0 && (
+                                  <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                    {c}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <div className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {activeTab === '__geral__'
+                              ? 'Formas de pagamento aplicadas a todas as opções da proposta.'
+                              : `Formas de pagamento exclusivas da "${tabs.find(t => t.id === activeTab)?.name}".`}
+                          </p>
+                          <Button variant="outline" size="sm" onClick={addOption} className="shrink-0 h-8">
+                            <Plus className="h-3.5 w-3.5 mr-1" />Adicionar
                           </Button>
+                        </div>
+
+                        {visibleOptions.length === 0 ? (
+                          <div className="border border-dashed rounded-lg py-8 text-center text-sm text-muted-foreground">
+                            Nenhuma forma de pagamento configurada nesta aba.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+                            {visibleOptions.map(({ o: opt, i: idx }) => {
+                              const isCustom = opt.method.startsWith('custom_') || opt.method.startsWith('pdf_import_');
+                              return (
+                                <div
+                                  key={`${opt.method}-${idx}`}
+                                  className={`rounded-lg border transition-all ${
+                                    opt.enabled
+                                      ? 'border-primary/40 bg-primary/5 shadow-sm'
+                                      : 'border-border bg-background hover:border-border/80'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 px-3 py-2 border-b border-border/50">
+                                    <Checkbox
+                                      checked={opt.enabled}
+                                      onCheckedChange={(c) => updateAt(idx, { enabled: !!c })}
+                                    />
+                                    {isCustom ? (
+                                      <Input
+                                        value={opt.label}
+                                        onChange={e => updateAt(idx, { label: e.target.value })}
+                                        className="h-7 text-sm font-medium flex-1 min-w-0"
+                                        placeholder="Nome da forma de pagamento"
+                                      />
+                                    ) : (
+                                      <Label className="font-medium text-sm flex-1 truncate">{opt.label}</Label>
+                                    )}
+                                    {opt.highlighted && (
+                                      <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">★ Popular</span>
+                                    )}
+                                    {(isCustom) && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
+                                        onClick={() => removeAt(idx)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                  {opt.enabled && (
+                                    <div className="p-3 space-y-2.5">
+                                      <div className="grid grid-cols-3 gap-2">
+                                        <div>
+                                          <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Parcelas</Label>
+                                          <Input
+                                            type="number"
+                                            min="1"
+                                            max="24"
+                                            value={opt.installments}
+                                            onChange={e => updateAt(idx, { installments: parseInt(e.target.value) || 1 })}
+                                            className="h-8 mt-0.5"
+                                          />
+                                        </div>
+                                        <div>
+                                          <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Desc/Acréscimo %</Label>
+                                          <Input
+                                            type="number"
+                                            step="0.5"
+                                            value={opt.discountPercent || 0}
+                                            onChange={e => updateAt(idx, { discountPercent: parseFloat(e.target.value) || 0, fixedValue: undefined })}
+                                            placeholder="0"
+                                            className="h-8 mt-0.5"
+                                          />
+                                        </div>
+                                        <div>
+                                          <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor fixo R$</Label>
+                                          <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={opt.fixedValue || ''}
+                                            onChange={e => {
+                                              const val = parseFloat(e.target.value) || 0;
+                                              updateAt(idx, { fixedValue: val > 0 ? val : undefined, discountPercent: val > 0 ? 0 : opt.discountPercent });
+                                            }}
+                                            placeholder="—"
+                                            className="h-8 mt-0.5"
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                          <Checkbox
+                                            checked={opt.showPerPerson || false}
+                                            onCheckedChange={(c) => updateAt(idx, { showPerPerson: !!c })}
+                                          />
+                                          <span className="text-xs text-muted-foreground">Por pessoa</span>
+                                        </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                          <Checkbox
+                                            checked={opt.highlighted || false}
+                                            onCheckedChange={(c) => updateAt(idx, { highlighted: !!c })}
+                                          />
+                                          <span className="text-xs text-muted-foreground">Mais Popular (destaque)</span>
+                                        </label>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
-                      {opt.enabled && (
-                        <>
-                          <div className="mt-2 grid grid-cols-3 gap-2">
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Parcelas</Label>
-                              <Input
-                                type="number"
-                                min="1"
-                                max="24"
-                                value={opt.installments}
-                                onChange={e => {
-                                  const inst = parseInt(e.target.value) || 1;
-                                  setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
-                                    ...o,
-                                    installments: inst,
-                                  } : o));
-                                }}
-                                className="h-8"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Desconto / Acréscimo (%)</Label>
-                              <Input
-                                type="number"
-                                step="0.5"
-                                value={opt.discountPercent || 0}
-                                onChange={e => {
-                                  const val = parseFloat(e.target.value) || 0;
-                                  setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
-                                    ...o,
-                                    discountPercent: val,
-                                    fixedValue: undefined,
-                                  } : o));
-                                }}
-                                placeholder="Ex: 5 = 5% desconto"
-                                className="h-8"
-                              />
-                              <p className="text-[10px] text-muted-foreground mt-0.5">Positivo = desconto · Negativo = acréscimo</p>
-                            </div>
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={opt.fixedValue || ''}
-                                onChange={e => {
-                                  const val = parseFloat(e.target.value) || 0;
-                                  setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? {
-                                    ...o,
-                                    fixedValue: val > 0 ? val : undefined,
-                                    discountPercent: val > 0 ? 0 : o.discountPercent,
-                                  } : o));
-                                }}
-                                placeholder="Ex: 3000"
-                                className="h-8"
-                              />
-                              <p className="text-[10px] text-muted-foreground mt-0.5">Preencha para valor fixo (ignora %)</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Checkbox
-                              id={`perPerson_${idx}`}
-                              checked={opt.showPerPerson || false}
-                              onCheckedChange={(checked) => {
-                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, showPerPerson: !!checked } : o));
-                              }}
-                            />
-                            <Label htmlFor={`perPerson_${idx}`} className="text-xs text-muted-foreground cursor-pointer">
-                              Mostrar valor por pessoa nesta opção
-                            </Label>
-                          </div>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Checkbox
-                              id={`highlighted_${idx}`}
-                              checked={opt.highlighted || false}
-                              onCheckedChange={(checked) => {
-                                setProposalPaymentOptions(prev => prev.map((o, i) => i === idx ? { ...o, highlighted: !!checked } : o));
-                              }}
-                            />
-                            <Label htmlFor={`highlighted_${idx}`} className="text-xs text-muted-foreground cursor-pointer">
-                              Mais Popular (destaque na proposta)
-                            </Label>
-                          </div>
-                        </>
-                      )}
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setProposalPaymentOptions(prev => [...prev, {
-                method: `custom_${Date.now()}`,
-                label: 'Personalizado',
-                installments: 1,
-                discountPercent: 0,
-                enabled: true,
-              }])}
-            >
-              <Plus className="h-4 w-4 mr-1" />Adicionar opção
-            </Button>
+                  );
+                })()}
               </PopoverContent>
             </Popover>
           </CardContent>
