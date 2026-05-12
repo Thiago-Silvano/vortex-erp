@@ -295,6 +295,31 @@ export default function UserAdmin() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
+      </Dialog>
+      {/* Create Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Adicionar Usuário</DialogTitle></DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="usuario@email.com" />
+            </div>
+            <div>
+              <Label>Nome</Label>
+              <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome do usuário" />
+            </div>
+            <div>
+              <Label>Senha</Label>
+              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" minLength={6} />
+            </div>
+            <Button onClick={handleCreateUser} disabled={creating || !newEmail.trim() || newPassword.length < 6} className="w-full">
+              {creating ? 'Criando...' : 'Criar Usuário'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar Usuário</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-2">
