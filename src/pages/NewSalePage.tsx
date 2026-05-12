@@ -3578,7 +3578,7 @@ export default function NewSalePage() {
                         </SelectContent>
                       </Select>
                       <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                        <span className="text-muted-foreground">{isOperadoraOnly ? 'Comissão Bruta' : 'Total da Venda'}: <span className="font-bold text-foreground">{fmt(expectedReceivables)}</span></span>
+                        <span className="text-muted-foreground">RAV / Comissão: <span className="font-bold text-foreground">{fmt(expectedReceivables)}</span></span>
                         <span className="text-muted-foreground">Lançado: <span className="font-bold text-foreground">{fmt(totalReceivables)}</span></span>
                         <span className={`font-bold ${Math.abs(diff) > 0.01 ? (diff > 0 ? 'text-amber-600' : 'text-destructive') : 'text-emerald-600'}`}>
                           {Math.abs(diff) > 0.01
