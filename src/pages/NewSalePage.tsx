@@ -4768,6 +4768,17 @@ export default function NewSalePage() {
             reservationNumber={items[editingItemIdx]?.reservation_number || ''}
             costPrice={items[editingItemIdx]?.cost_price || 0}
             rav={items[editingItemIdx]?.rav || 0}
+            onImportPdf={() => {
+              const current = items[editingItemIdx];
+              const optId = current?.quote_option_id
+                || (current?.quote_option_ids && current.quote_option_ids[0])
+                || activeOptionId
+                || quoteOptions[0]?.id
+                || String(quoteOptions[0]?.order_index ?? 0);
+              setForceImportOptionId(optId);
+              setEditingItemIdx(null);
+              setTimeout(() => setPdfImportOpen(true), 100);
+            }}
             onSave={(desc, meta, resNumber, newCost, newRav) => {
               setItems(prev => {
                 const editedItem = prev[editingItemIdx];
