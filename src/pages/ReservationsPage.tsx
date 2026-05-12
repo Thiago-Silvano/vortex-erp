@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 
 interface ReservationRow {
   id: string;
@@ -34,6 +36,10 @@ export default function ReservationsPage() {
   const [selectedReservation, setSelectedReservation] = useState<ReservationRow | null>(null);
   const [editStatus, setEditStatus] = useState('pending');
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState('confirmed');
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const fetchReservations = async () => {
     let query = supabase.from('reservations').select('*')
@@ -101,11 +107,44 @@ export default function ReservationsPage() {
     notes: (r) => r.notes,
   });
 
+  const toggleId = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const allVisibleSelected = sortedData.length > 0 && sortedData.every(r => selectedIds.has(r.id));
+  const toggleAll = () => {
+    if (allVisibleSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(sortedData.map(r => r.id)));
+  };
+
+  const applyBulkStatus = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkSaving(true);
+    const { error } = await supabase.from('reservations')
+      .update({ status: bulkStatus })
+      .in('id', Array.from(selectedIds));
+    setBulkSaving(false);
+    if (error) { toast.error('Erro ao atualizar reservas'); return; }
+    toast.success(`${selectedIds.size} reserva(s) atualizada(s)`);
+    setSelectedIds(new Set());
+    setBulkOpen(false);
+    fetchReservations();
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Reservas Aéreas</h1>
+          {selectedIds.size > 0 && (
+            <Button size="sm" onClick={() => setBulkOpen(true)}>
+              Alterar status ({selectedIds.size})
+            </Button>
+          )}
         </div>
 
         {urgentReservations.length > 0 && (
@@ -151,6 +190,9 @@ export default function ReservationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <SortableTableHead className="w-10">
+                    <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAll} aria-label="Selecionar todas" />
+                  </SortableTableHead>
                   <SortableTableHead sortKey="description" sortState={sortState} onSort={requestSort}>Descrição</SortableTableHead>
                   <SortableTableHead sortKey="confirmation_code" sortState={sortState} onSort={requestSort} className="min-w-[200px]">Número da Reserva</SortableTableHead>
                   <SortableTableHead sortKey="check_in" sortState={sortState} onSort={requestSort}>Check-in</SortableTableHead>
@@ -161,7 +203,7 @@ export default function ReservationsPage() {
               </TableHeader>
               <TableBody>
                 {sortedData.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhuma reserva encontrada</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhuma reserva encontrada</TableCell></TableRow>
                 ) : sortedData.map(r => {
                   const urgent = isUrgent(r);
                   const isOverdue = r.check_in && r.status === 'pending' && parseISO(r.check_in + 'T12:00:00') < new Date();
@@ -176,6 +218,9 @@ export default function ReservationsPage() {
                           : '';
                   return (
                     <TableRow key={r.id} className={`cursor-pointer ${rowBg} ${r.status === 'confirmed' ? 'hover:bg-emerald-100 dark:hover:bg-emerald-950/40' : (isOverdue || urgent) ? 'hover:bg-red-100 dark:hover:bg-red-950/40' : r.status === 'pending' ? 'hover:bg-orange-100 dark:hover:bg-orange-950/40' : 'hover:bg-muted/50'}`} onClick={() => openStatusDialog(r)}>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selectedIds.has(r.id)} onCheckedChange={() => toggleId(r.id)} aria-label="Selecionar" />
+                      </TableCell>
                       <TableCell><span className="font-medium">{r.description || '-'}</span></TableCell>
                       <TableCell className="font-mono">{r.confirmation_code || '-'}</TableCell>
                       <TableCell>{r.check_in ? format(parseISO(r.check_in + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
