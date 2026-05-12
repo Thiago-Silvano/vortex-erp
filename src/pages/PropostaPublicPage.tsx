@@ -34,6 +34,7 @@ interface ProposalPaymentOption {
   fixedValue?: number;
   showPerPerson?: boolean;
   highlighted?: boolean;
+  quote_option_id?: string | null;
 }
 
 interface SaleItemData {
@@ -257,7 +258,14 @@ export default function PropostaPublicPage() {
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || passengers.length || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
   const heroImageConfig: ImagePositionConfig | null = (sale as any).destination_image_config || null;
-  const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || []).filter((opt: any) => opt.enabled !== false);
+  const proposalOptions: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || [])
+    .filter((opt: any) => opt.enabled !== false)
+    .filter((opt: any) => {
+      // Show options without quote_option_id (global) OR matching the currently selected quote option
+      if (!opt.quote_option_id) return true;
+      if (quoteOptions.length > 1 && selectedOptionId) return opt.quote_option_id === selectedOptionId;
+      return true;
+    });
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
   const showOnlyTotal = (sale as any).show_only_total === true;
 
