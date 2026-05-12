@@ -184,11 +184,6 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
     renderSection("IDA", outbound);
     renderSection("VOLTA", returnLegs);
 
-    // Baggage info for this flight (right below last leg)
-    if (group.baggage) {
-      y = drawGroupBaggage(doc, group.baggage, y, m, cw);
-    }
-
     if (gIdx < groups.length - 1) y += 2;
   });
 
