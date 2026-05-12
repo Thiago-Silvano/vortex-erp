@@ -190,9 +190,9 @@ export default function ReservationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <SortableTableHead className="w-10">
+                  <th className="h-10 px-2 w-10 text-left align-middle">
                     <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAll} aria-label="Selecionar todas" />
-                  </SortableTableHead>
+                  </th>
                   <SortableTableHead sortKey="description" sortState={sortState} onSort={requestSort}>Descrição</SortableTableHead>
                   <SortableTableHead sortKey="confirmation_code" sortState={sortState} onSort={requestSort} className="min-w-[200px]">Número da Reserva</SortableTableHead>
                   <SortableTableHead sortKey="check_in" sortState={sortState} onSort={requestSort}>Check-in</SortableTableHead>
