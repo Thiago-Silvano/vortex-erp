@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCompany } from '@/contexts/CompanyContext';
+import { maskCurrencyInput, parseCurrency } from '@/lib/masks';
 
 interface FlightLeg {
   origin: string;
@@ -119,7 +120,9 @@ interface Props {
   description: string;
   metadata: ServiceMetadata;
   reservationNumber?: string;
-  onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string) => void;
+  costPrice?: number;
+  rav?: number;
+  onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string, costPrice?: number, rav?: number) => void;
   onHotelImagesFound?: (images: string[]) => void;
 }
 
@@ -136,7 +139,7 @@ const emptyHotel = (): HotelInfo => ({
   roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, onSave, onHotelImagesFound }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
@@ -156,6 +159,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [airlineId, setAirlineId] = useState(metadata.airlineId || '');
   const [airlinesList, setAirlinesList] = useState<any[]>([]);
   const [mainReservation, setMainReservation] = useState(reservationNumber || '');
+  const [costPriceStr, setCostPriceStr] = useState<string>(costPrice ? maskCurrencyInput(costPrice) : '');
+  const [ravStr, setRavStr] = useState<string>(rav ? maskCurrencyInput(rav) : '');
 
   useEffect(() => {
     if (open) {
@@ -179,9 +184,11 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
       setMainReservation(reservationNumber || '');
+      setCostPriceStr(costPrice ? maskCurrencyInput(costPrice) : '');
+      setRavStr(rav ? maskCurrencyInput(rav) : '');
       loadAirlines();
     }
-  }, [open, metadata, description, reservationNumber]);
+  }, [open, metadata, description, reservationNumber, costPrice, rav]);
 
   const loadAirlines = async () => {
     if (!activeCompany) return;
