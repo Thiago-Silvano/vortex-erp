@@ -531,6 +531,16 @@ function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw
     doc.text(s(leg.airlineName), leftCol, y + 20);
   }
 
+  // Per-leg locator (only when different from main reservation)
+  const legLoc = (leg.localizador || "").trim().toUpperCase();
+  const mainLoc = (mainLocalizador || "").trim().toUpperCase();
+  if (legLoc && legLoc !== mainLoc) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+    doc.text(s(`Localizador: ${legLoc}`), midX, y + (hasAirlineLogo ? 24 : 20), { align: "center" });
+  }
+
   return y + rowH + 2;
 }
 
