@@ -293,9 +293,6 @@ export default function UserAdmin() {
         </Card>
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
-      </Dialog>
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
@@ -319,6 +316,7 @@ export default function UserAdmin() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Edit Dialog */}
       <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar Usuário</DialogTitle></DialogHeader>
