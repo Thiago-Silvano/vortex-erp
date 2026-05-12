@@ -118,7 +118,8 @@ interface Props {
   onClose: () => void;
   description: string;
   metadata: ServiceMetadata;
-  onSave: (description: string, metadata: ServiceMetadata) => void;
+  reservationNumber?: string;
+  onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string) => void;
   onHotelImagesFound?: (images: string[]) => void;
 }
 
@@ -135,7 +136,7 @@ const emptyHotel = (): HotelInfo => ({
   roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, onSave, onHotelImagesFound }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, onSave, onHotelImagesFound }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
@@ -154,6 +155,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
   const [airlineId, setAirlineId] = useState(metadata.airlineId || '');
   const [airlinesList, setAirlinesList] = useState<any[]>([]);
+  const [mainReservation, setMainReservation] = useState(reservationNumber || '');
 
   useEffect(() => {
     if (open) {
@@ -176,9 +178,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setSelectedImageIndices(new Set(existingImgs.map((_, i) => i)));
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
+      setMainReservation(reservationNumber || '');
       loadAirlines();
     }
-  }, [open, metadata, description]);
+  }, [open, metadata, description, reservationNumber]);
 
   const loadAirlines = async () => {
     if (!activeCompany) return;
