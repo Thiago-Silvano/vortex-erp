@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCompany } from '@/contexts/CompanyContext';
+import { maskCurrencyInput, parseCurrency } from '@/lib/masks';
 
 interface FlightLeg {
   origin: string;
@@ -119,7 +120,9 @@ interface Props {
   description: string;
   metadata: ServiceMetadata;
   reservationNumber?: string;
-  onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string) => void;
+  costPrice?: number;
+  rav?: number;
+  onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string, costPrice?: number, rav?: number) => void;
   onHotelImagesFound?: (images: string[]) => void;
 }
 
@@ -136,7 +139,7 @@ const emptyHotel = (): HotelInfo => ({
   roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, onSave, onHotelImagesFound }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
@@ -156,6 +159,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [airlineId, setAirlineId] = useState(metadata.airlineId || '');
   const [airlinesList, setAirlinesList] = useState<any[]>([]);
   const [mainReservation, setMainReservation] = useState(reservationNumber || '');
+  const [costPriceStr, setCostPriceStr] = useState<string>(costPrice ? maskCurrencyInput(costPrice) : '');
+  const [ravStr, setRavStr] = useState<string>(rav ? maskCurrencyInput(rav) : '');
 
   useEffect(() => {
     if (open) {
@@ -179,9 +184,11 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
       setMainReservation(reservationNumber || '');
+      setCostPriceStr(costPrice ? maskCurrencyInput(costPrice) : '');
+      setRavStr(rav ? maskCurrencyInput(rav) : '');
       loadAirlines();
     }
-  }, [open, metadata, description, reservationNumber]);
+  }, [open, metadata, description, reservationNumber, costPrice, rav]);
 
   const loadAirlines = async () => {
     if (!activeCompany) return;
@@ -345,7 +352,13 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     const finalDesc = type === 'hotel' ? (hotel.hotelName || desc) : desc;
     // Para hotel, não persistir detailedDescription (legado)
     if (type === 'hotel') meta.detailedDescription = undefined;
-    onSave(finalDesc, meta, type === 'aereo' ? (mainReservation || '') : undefined);
+    onSave(
+      finalDesc,
+      meta,
+      type === 'aereo' ? (mainReservation || '') : undefined,
+      parseCurrency(costPriceStr),
+      parseCurrency(ravStr),
+    );
     if (type === 'hotel' && selectedImages.length > 0 && onHotelImagesFound) {
       onHotelImagesFound(selectedImages);
     }
@@ -440,6 +453,38 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               <RichTextEditor value={detailedDesc} onChange={setDetailedDesc} placeholder="Descrição completa para o cliente..." rows={type === 'experiencia' ? 10 : 3} />
             </div>
           )}
+
+          {/* Valores do serviço — Custo e RAV (Lucro Bruto). Total = Custo + RAV */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-lg border bg-muted/30 p-3">
+            <div>
+              <Label className="text-xs">Valor do Custo</Label>
+              <Input
+                inputMode="numeric"
+                value={costPriceStr}
+                onChange={e => setCostPriceStr(maskCurrencyInput(e.target.value))}
+                placeholder="R$ 0,00"
+                className="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">RAV / Lucro Bruto</Label>
+              <Input
+                inputMode="numeric"
+                value={ravStr}
+                onChange={e => setRavStr(maskCurrencyInput(e.target.value))}
+                placeholder="R$ 0,00"
+                className="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Total do Serviço</Label>
+              <Input
+                value={maskCurrencyInput(parseCurrency(costPriceStr) + parseCurrency(ravStr)) || 'R$ 0,00'}
+                readOnly
+                className="bg-background font-semibold"
+              />
+            </div>
+          </div>
 
           {type === 'adicional' && (
             <div className="flex items-center gap-2 py-1">
