@@ -391,6 +391,8 @@ export default function UserAdmin() {
                   <SelectItem value="/reservations">Reservas</SelectItem>
                   <SelectItem value="/crm-kanban">Kanban CRM</SelectItem>
                   <SelectItem value="/dashboard">Dashboard</SelectItem>
+                  <SelectItem value="/sales/new">Nova Cotação</SelectItem>
+                  <SelectItem value="/cotacoes">Kanban de Cotações</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">Página exibida ao usuário após fazer login</p>
