@@ -3137,7 +3137,7 @@ export default function NewSalePage() {
           };
           const typeMeta = (type?: string) => {
             switch (type) {
-              case 'aereo': return { label: 'Aéreo', pill: 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300', iconBg: 'bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-300' };
+              case 'aereo': return { label: 'Aéreo', pill: 'text-sky-700 dark:text-sky-300 bg-slate-50', iconBg: 'bg-sky-50 dark:bg-sky-950/40 text-slate-50' };
               case 'hotel': return { label: 'Hotel', pill: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300', iconBg: 'bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300' };
               case 'carro': return { label: 'Transfer', pill: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300' };
               case 'cruzeiro': return { label: 'Cruzeiro', pill: 'bg-cyan-100 text-cyan-700', iconBg: 'bg-cyan-50 text-cyan-600' };
@@ -3269,9 +3269,9 @@ export default function NewSalePage() {
                     <div className="text-[11px] text-muted-foreground">Serviços</div>
                     <div className="text-sm font-semibold mt-0.5">{optItems.length}</div>
                   </div>
-                  <div className="bg-emerald-50 dark:bg-emerald-950/30 p-3">
-                    <div className="text-[11px] text-emerald-700 dark:text-emerald-300">Total {activeCol?.name?.toLowerCase() || 'venda'}</div>
-                    <div className="text-sm font-semibold mt-0.5 text-emerald-700 dark:text-emerald-300">{maskCurrency(totalOption)}</div>
+                  <div className="p-3 bg-slate-50">
+                    <div className="text-[11px] text-inherit">Total {activeCol?.name?.toLowerCase() || 'venda'}</div>
+                    <div className="text-sm font-semibold mt-0.5 text-inherit">{maskCurrency(totalOption)}</div>
                   </div>
                 </div>
 
@@ -3294,7 +3294,7 @@ export default function NewSalePage() {
                     return (
                       <div key={idx} className="group flex items-center gap-3 bg-card hover:bg-muted/40 border border-border/60 rounded-lg px-3 py-2.5 transition-colors">
                         <div className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${tm.iconBg}`}>
-                          <Icon className="h-4 w-4" />
+                          <Icon className={`h-4 w-4 ${it.metadata?.type === 'aereo' ? 'text-slate-600' : ''}`} />
                         </div>
                         <button type="button" onClick={() => setEditingItemIdx(idx)} className="flex-1 min-w-0 text-left">
                           <div className="text-sm font-semibold text-foreground truncate">
@@ -3332,7 +3332,7 @@ export default function NewSalePage() {
                           </div>
                         )}
                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${tm.pill}`}>{tm.label}</span>
-                        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums w-[110px] text-right">{maskCurrency(it.total_value)}</span>
+                        <span className="text-sm font-semibold tabular-nums w-[110px] text-right text-inherit">{maskCurrency(it.total_value)}</span>
                         <div className="flex items-center gap-0.5">
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingItemIdx(idx)} title="Editar"><Edit className="h-3.5 w-3.5" /></Button>
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeItem(idx)} title="Excluir"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
@@ -3363,7 +3363,7 @@ export default function NewSalePage() {
                   ) : <span />}
                   <div className="text-sm">
                     <span className="text-muted-foreground">Total {activeCol?.name?.toLowerCase() || 'venda'}</span>
-                    <span className="ml-2 font-semibold text-emerald-600 dark:text-emerald-400">{maskCurrency(totalOption)}</span>
+                    <span className="ml-2 font-semibold text-emerald-600 dark:text-emerald-400 text-sm">{maskCurrency(totalOption)}</span>
                   </div>
                 </div>
               </CardContent>
