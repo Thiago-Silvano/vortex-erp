@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Settings, Wifi, WifiOff, Save, Smartphone, LogOut, QrCode, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { resetServerUrl, checkStatus, disconnectSession, getQrCode, connectSession } from '@/lib/whatsappApi';
+import { sendMessage } from '@/lib/whatsappApi';
 
 export default function WhatsAppSettingsPage() {
   const { activeCompany } = useCompany();
@@ -40,6 +41,23 @@ export default function WhatsAppSettingsPage() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [loadingQr, setLoadingQr] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
+
+  const sendTestReminder = async () => {
+    if (!settings.reminder_phone) { toast.error('Informe o número de destino'); return; }
+    if (!settings.server_url || settings.server_url.includes('localhost')) {
+      toast.error('Configure uma URL de servidor WhatsApp válida'); return;
+    }
+    setSendingTest(true);
+    try {
+      const msg = `✅ Mensagem de teste — Lembretes de Reservas\n\nSe você recebeu esta mensagem, a configuração de envio via WhatsApp está funcionando.`;
+      await sendMessage(settings.server_url, empresaId, settings.reminder_phone, msg);
+      toast.success('Mensagem de teste enviada!');
+    } catch (e: any) {
+      toast.error(e?.message || 'Falha ao enviar mensagem de teste');
+    }
+    setSendingTest(false);
+  };
 
   useEffect(() => {
     if (empresaId) loadSettings();
