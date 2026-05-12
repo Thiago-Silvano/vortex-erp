@@ -341,6 +341,56 @@ export default function WhatsAppSettingsPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Lembretes de Reservas (WhatsApp)</CardTitle>
+            <CardDescription>
+              Envia lembretes automáticos via WhatsApp para reservas com check-in próximo. Use as variáveis{' '}
+              <code className="px-1 rounded bg-muted">{'{{descricao}}'}</code>,{' '}
+              <code className="px-1 rounded bg-muted">{'{{localizador}}'}</code> e{' '}
+              <code className="px-1 rounded bg-muted">{'{{checkin}}'}</code> nas mensagens.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Switch checked={settings.reminder_enabled} onCheckedChange={v => setSettings(p => ({ ...p, reminder_enabled: v }))} />
+              <Label>Ativar lembretes via WhatsApp</Label>
+            </div>
+            {settings.reminder_enabled && (
+              <>
+                <div>
+                  <Label>Número de destino (com DDI/DDD, somente dígitos)</Label>
+                  <Input
+                    value={settings.reminder_phone}
+                    onChange={e => setSettings(p => ({ ...p, reminder_phone: e.target.value.replace(/\D/g, '') }))}
+                    placeholder="5548999999999"
+                  />
+                </div>
+                <div>
+                  <Label>Mensagem — 48h antes</Label>
+                  <Textarea rows={3} value={settings.reminder_template_48h} onChange={e => setSettings(p => ({ ...p, reminder_template_48h: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Mensagem — 24h antes</Label>
+                  <Textarea rows={3} value={settings.reminder_template_24h} onChange={e => setSettings(p => ({ ...p, reminder_template_24h: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Mensagem — 10h antes</Label>
+                  <Textarea rows={3} value={settings.reminder_template_10h} onChange={e => setSettings(p => ({ ...p, reminder_template_10h: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Mensagem — URGENTE (menos de 2h)</Label>
+                  <Textarea rows={3} value={settings.reminder_template_urgent} onChange={e => setSettings(p => ({ ...p, reminder_template_urgent: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Mensagem — Check-in não realizado</Label>
+                  <Textarea rows={3} value={settings.reminder_template_missed} onChange={e => setSettings(p => ({ ...p, reminder_template_missed: e.target.value }))} />
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Clear conversations */}
         <Card className="border-destructive/30">
           <CardHeader>
