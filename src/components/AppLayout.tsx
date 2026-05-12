@@ -23,6 +23,9 @@ import {
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 import PhotoCaptureModal from "@/components/PhotoCaptureModal";
 import NotificationBell from "@/components/NotificationBell";
@@ -330,35 +333,39 @@ function AppSidebar({ favorites, toggleFavorite }: {
           }
 
           return (
-            <Collapsible
-              key={group.label}
-              open={openGroup === group.label}
-              onOpenChange={(o) => setOpenGroup(o ? group.label : null)}
-              className="group/collapse"
-            >
-              <SidebarGroup>
-                <SidebarGroupLabel asChild>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-[12px] uppercase tracking-wider text-sidebar-foreground hover:text-sidebar-accent-foreground font-bold py-1.5 px-2">
+            <SidebarGroup key={group.label}>
+              <Popover
+                open={openGroup === group.label}
+                onOpenChange={(o) => setOpenGroup(o ? group.label : null)}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    className={`flex items-center gap-2 w-full text-[12px] uppercase tracking-wider font-bold py-1.5 px-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${groupHasActive ? "text-sidebar-accent-foreground" : "text-sidebar-foreground"}`}
+                  >
                     {group.icon && <span className="opacity-90">{group.icon}</span>}
-                    <span className="flex-1 text-left">{group.label}</span>
-                    <ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]/collapse:rotate-90" />
-                  </CollapsibleTrigger>
-                </SidebarGroupLabel>
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {items.map(item => {
+                    <span className="flex-1 text-left group-data-[collapsible=icon]:hidden">{group.label}</span>
+                    <ChevronRight className="h-3 w-3 group-data-[collapsible=icon]:hidden" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="right"
+                  align="start"
+                  sideOffset={8}
+                  className="p-1 w-64 bg-sidebar border-sidebar-border"
+                >
+                  <div className="px-2 py-1.5 text-[11px] uppercase tracking-wider text-sidebar-foreground/70 font-bold">
+                    {group.label}
+                  </div>
+                  <div className="flex flex-col">
+                    {items.map(item => {
                         const isFav = favorites.includes(item.url);
                         return (
-                          <SidebarMenuItem key={item.url}>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={isActive(item.url)}
-                              tooltip={item.title}
-                              className="group/item"
-                            >
-                              <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full pl-6">
-                                <span className="truncate text-[15px] font-bold text-sidebar-foreground flex-1 text-left">{item.title}</span>
+                          <button
+                            key={item.url}
+                            onClick={() => { navigate(item.url); setOpenGroup(null); }}
+                            className={`group/item flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-left hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(item.url) ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""}`}
+                          >
+                            <span className="truncate text-[14px] font-semibold text-sidebar-foreground flex-1 text-left">{item.title}</span>
                                 <span
                                   onClick={(e) => { e.stopPropagation(); toggleFavorite(item.url); }}
                                   className={`shrink-0 ${isFav ? "opacity-100" : "opacity-0 group-hover/item:opacity-70 hover:!opacity-100"}`}
@@ -366,16 +373,13 @@ function AppSidebar({ favorites, toggleFavorite }: {
                                 >
                                   <Star className={`h-3 w-3 ${isFav ? "fill-sidebar-primary text-sidebar-primary" : "text-sidebar-foreground/60"}`} />
                                 </span>
-                              </button>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
+                          </button>
                         );
                       })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
-              </SidebarGroup>
-            </Collapsible>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </SidebarGroup>
           );
         })}
       </SidebarContent>
