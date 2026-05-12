@@ -3244,6 +3244,9 @@ export default function NewSalePage() {
                                   if (filtered.length === 0) return { ...item, quote_option_id: fallbackId, quote_option_ids: [fallbackId] };
                                   return { ...item, quote_option_id: filtered[0], quote_option_ids: filtered };
                                 }));
+                                // Drop payment options tied to the removed quote option
+                                setProposalPaymentOptions(prev => prev.filter(po => (po.quote_option_id || null) !== removedId));
+                                if (paymentOptionTab === removedId) setPaymentOptionTab('__geral__');
                                 setActiveOptionId(fallbackId);
                               }}>
                                 <Trash2 className="h-3 w-3 mr-1" /> Remover opção
