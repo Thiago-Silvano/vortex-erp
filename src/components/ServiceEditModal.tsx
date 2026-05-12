@@ -23,6 +23,7 @@ interface FlightLeg {
   direction: 'ida' | 'volta';
   flightCode: string;
   airlineId?: string;
+  localizador?: string;
   stopover?: boolean;
   stopoverDays?: number;
   stopoverMinutes?: number;
@@ -117,7 +118,8 @@ interface Props {
   onClose: () => void;
   description: string;
   metadata: ServiceMetadata;
-  onSave: (description: string, metadata: ServiceMetadata) => void;
+  reservationNumber?: string;
+  onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string) => void;
   onHotelImagesFound?: (images: string[]) => void;
 }
 
@@ -134,7 +136,7 @@ const emptyHotel = (): HotelInfo => ({
   roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, onSave, onHotelImagesFound }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, onSave, onHotelImagesFound }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
@@ -153,6 +155,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
   const [airlineId, setAirlineId] = useState(metadata.airlineId || '');
   const [airlinesList, setAirlinesList] = useState<any[]>([]);
+  const [mainReservation, setMainReservation] = useState(reservationNumber || '');
 
   useEffect(() => {
     if (open) {
@@ -175,9 +178,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setSelectedImageIndices(new Set(existingImgs.map((_, i) => i)));
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
+      setMainReservation(reservationNumber || '');
       loadAirlines();
     }
-  }, [open, metadata, description]);
+  }, [open, metadata, description, reservationNumber]);
 
   const loadAirlines = async () => {
     if (!activeCompany) return;
@@ -341,7 +345,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     const finalDesc = type === 'hotel' ? (hotel.hotelName || desc) : desc;
     // Para hotel, não persistir detailedDescription (legado)
     if (type === 'hotel') meta.detailedDescription = undefined;
-    onSave(finalDesc, meta);
+    onSave(finalDesc, meta, type === 'aereo' ? (mainReservation || '') : undefined);
     if (type === 'hotel' && selectedImages.length > 0 && onHotelImagesFound) {
       onHotelImagesFound(selectedImages);
     }
@@ -465,6 +469,14 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label className="text-xs">Nº Reserva principal (Localizador)</Label>
+                  <Input
+                    value={mainReservation}
+                    onChange={e => setMainReservation(e.target.value.toUpperCase())}
+                    placeholder="ABC123"
+                  />
+                </div>
               </div>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-sm">Trechos do Voo</h3>
@@ -505,6 +517,14 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Localizador do trecho</Label>
+                      <Input
+                        value={leg.localizador || ''}
+                        onChange={e => updateLeg(idx, 'localizador', e.target.value.toUpperCase())}
+                        placeholder={mainReservation ? `(usar ${mainReservation})` : 'Opcional'}
+                      />
                     </div>
                     <div><Label className="text-xs">Conexão (duração)</Label><Input value={leg.connectionDuration} onChange={e => updateLeg(idx, 'connectionDuration', e.target.value)} placeholder="2h30" /></div>
                     <div><Label className="text-xs">Data Partida</Label><Input type="date" value={leg.departureDate} onChange={e => updateLeg(idx, 'departureDate', e.target.value)} /></div>

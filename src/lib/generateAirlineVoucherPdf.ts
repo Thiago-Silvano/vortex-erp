@@ -26,6 +26,7 @@ export interface AirlineVoucherLeg {
   direction?: "ida" | "volta";
   airlineLogoBase64?: string;
   airlineName?: string;
+  localizador?: string;
 }
 
 export interface AirlineVoucherPassenger {
@@ -391,7 +392,7 @@ function drawFlightSection(
   // Render each leg row
   legs.forEach((leg, idx) => {
     y = checkPage(doc, y, 28);
-    y = drawLegRow(doc, leg, y, m, pw, cw);
+    y = drawLegRow(doc, leg, y, m, pw, cw, localizador);
 
     if (idx < legs.length - 1) {
       // Separator line between legs
@@ -406,7 +407,7 @@ function drawFlightSection(
 }
 
 // ─── Single Flight Leg Row ──────────────────────────────────
-function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw: number, cw: number): number {
+function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw: number, cw: number, mainLocalizador?: string): number {
   const hasAirlineLogo = !!leg.airlineLogoBase64;
   const rowH = hasAirlineLogo ? 28 : 24;
   const leftCol = m + 4;
@@ -528,6 +529,16 @@ function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw
     doc.setFontSize(6);
     doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
     doc.text(s(leg.airlineName), leftCol, y + 20);
+  }
+
+  // Per-leg locator (only when different from main reservation)
+  const legLoc = (leg.localizador || "").trim().toUpperCase();
+  const mainLoc = (mainLocalizador || "").trim().toUpperCase();
+  if (legLoc && legLoc !== mainLoc) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+    doc.text(s(`Localizador: ${legLoc}`), midX, y + (hasAirlineLogo ? 24 : 20), { align: "center" });
   }
 
   return y + rowH + 2;
