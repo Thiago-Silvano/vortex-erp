@@ -3294,7 +3294,7 @@ export default function NewSalePage() {
                     return (
                       <div key={idx} className="group flex items-center gap-3 bg-card hover:bg-muted/40 border border-border/60 rounded-lg px-3 py-2.5 transition-colors">
                         <div className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${tm.iconBg}`}>
-                          <Icon className="h-4 w-4" />
+                          <Icon className={`h-4 w-4 ${it.metadata?.type === 'aereo' ? 'text-slate-600' : ''}`} />
                         </div>
                         <button type="button" onClick={() => setEditingItemIdx(idx)} className="flex-1 min-w-0 text-left">
                           <div className="text-sm font-semibold text-foreground truncate">
@@ -3363,7 +3363,7 @@ export default function NewSalePage() {
                   ) : <span />}
                   <div className="text-sm">
                     <span className="text-muted-foreground">Total {activeCol?.name?.toLowerCase() || 'venda'}</span>
-                    <span className="ml-2 font-semibold text-emerald-600 dark:text-emerald-400">{maskCurrency(totalOption)}</span>
+                    <span className="ml-2 font-semibold text-emerald-600 dark:text-emerald-400 text-sm">{maskCurrency(totalOption)}</span>
                   </div>
                 </div>
               </CardContent>
