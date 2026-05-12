@@ -3124,14 +3124,6 @@ export default function NewSalePage() {
           const optionColumns = isQuoteMode
             ? quoteOptions.map((o, i) => ({ id: o.id || String(i), name: o.name, idx: i, opt: o }))
             : [{ id: '__single__', name: 'Serviços da Venda', idx: 0, opt: null as any }];
-          const optionPalette = [
-            { pill: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300', icon: 'text-blue-600' },
-            { pill: 'bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300', icon: 'text-teal-600' },
-            { pill: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300', icon: 'text-amber-600' },
-            { pill: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300', icon: 'text-purple-600' },
-            { pill: 'bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300', icon: 'text-pink-600' },
-            { pill: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300', icon: 'text-indigo-600' },
-          ];
           const typeIcon = (type?: string) => {
             switch (type) {
               case 'aereo': return Plane;
@@ -3142,6 +3134,23 @@ export default function NewSalePage() {
               case 'seguro': return ShieldCheck;
               default: return Briefcase;
             }
+          };
+          const typeMeta = (type?: string) => {
+            switch (type) {
+              case 'aereo': return { label: 'Aéreo', pill: 'bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300', iconBg: 'bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-300' };
+              case 'hotel': return { label: 'Hotel', pill: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300', iconBg: 'bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300' };
+              case 'carro': return { label: 'Transfer', pill: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300' };
+              case 'cruzeiro': return { label: 'Cruzeiro', pill: 'bg-cyan-100 text-cyan-700', iconBg: 'bg-cyan-50 text-cyan-600' };
+              case 'experiencia': return { label: 'Experiência', pill: 'bg-pink-100 text-pink-700', iconBg: 'bg-pink-50 text-pink-600' };
+              case 'seguro': return { label: 'Seguro', pill: 'bg-emerald-100 text-emerald-700', iconBg: 'bg-emerald-50 text-emerald-600' };
+              default: return { label: 'Outros', pill: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300', iconBg: 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300' };
+            }
+          };
+          const supplierFor = (it: SaleItem): string => {
+            const t = it.metadata?.type;
+            if (t === 'aereo' && it.metadata?.airlineId) return allAirlines.find(a => a.id === it.metadata!.airlineId)?.name || '';
+            if (t === 'hotel') return it.metadata?.hotel?.hotelName || '';
+            return '';
           };
           const itemsForOption = (optId: string) => {
             if (!isQuoteMode) return items.map((it, i) => ({ it, i }));
@@ -3160,230 +3169,192 @@ export default function NewSalePage() {
               return next;
             });
           };
-          const totalServices = items.length;
+          const activeId = optionColumns.find(c => c.id === activeOptionId)?.id || optionColumns[0]?.id || '';
+          const activeCol = optionColumns.find(c => c.id === activeId) || optionColumns[0];
+          const activeIdx = optionColumns.findIndex(c => c.id === activeCol?.id);
+          const optItems = activeCol ? itemsForOption(activeCol.id) : [];
+          const totalCost = optItems.reduce((s, { it }) => s + (it.cost_price || 0), 0);
+          const totalRav = optItems.reduce((s, { it }) => s + (it.rav || 0), 0);
+          const avgMarkup = optItems.length > 0 ? (optItems.reduce((s, { it }) => s + (it.markup_percent || 0), 0) / optItems.length) : 0;
+          const totalOption = optItems.reduce((s, { it }) => s + (it.total_value || 0), 0);
           return (
             <Card className="border-border/60">
               <CardHeader className="flex flex-row items-center justify-between py-3">
                 <div>
                   <CardTitle className="text-base">{isQuoteMode ? 'Serviços da Cotação' : 'Serviços da Venda'}</CardTitle>
-                  {isQuoteMode && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {optionColumns.length} {optionColumns.length === 1 ? 'opção' : 'opções'} · {totalServices} {totalServices === 1 ? 'serviço' : 'serviços'}
-                    </p>
-                  )}
                 </div>
-                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => addServiceToOption(optionColumns[0]?.id || '')}>
+                <Button size="sm" variant="outline" onClick={() => addServiceToOption(activeCol?.id || '')}>
                   <Plus className="h-4 w-4 mr-1" />Serviço
                 </Button>
               </CardHeader>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex gap-3 overflow-x-auto pb-2">
-                  {optionColumns.map((col, colIdx) => {
-                    const palette = optionPalette[colIdx % optionPalette.length];
-                    const optItems = itemsForOption(col.id);
-                    const totalOption = optItems.reduce((s, { it }) => s + (it.total_value || 0), 0);
-                    return (
-                      <div key={col.id} className="flex-shrink-0 w-[300px] flex flex-col gap-2">
-                        {/* Column Header */}
-                        <div className="flex items-center justify-between px-1">
-                          {isQuoteMode ? (
-                            <Popover>
+              <CardContent className="p-3 sm:p-4 space-y-4">
+                {/* Tabs of options */}
+                {isQuoteMode && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {optionColumns.map((col, colIdx) => {
+                      const isActive = col.id === activeCol?.id;
+                      return (
+                        <Popover key={col.id}>
+                          <div className="flex items-center">
+                            <button
+                              type="button"
+                              onClick={() => setActiveOptionId(col.id)}
+                              className={`flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors border ${isActive ? 'bg-foreground text-background border-foreground' : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted/70'}`}
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-background' : 'bg-muted-foreground/50'}`} />
+                              {col.name}
+                            </button>
+                            {isActive && (
                               <PopoverTrigger asChild>
-                                <button type="button" className="text-sm font-semibold text-foreground hover:underline">
-                                  {col.name}
-                                </button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 ml-0.5"><Edit className="h-3 w-3" /></Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-64 p-2 space-y-2">
-                                <Label className="text-xs">Renomear opção</Label>
-                                <Input
-                                  value={col.opt.name}
-                                  onChange={e => setQuoteOptions(prev => prev.map((o, i) => i === col.idx ? { ...o, name: e.target.value } : o))}
-                                  className="h-8 text-sm"
-                                />
-                                {quoteOptions.length > 1 && (
-                                  <Button variant="ghost" size="sm" className="w-full justify-start text-destructive h-7 text-xs" onClick={() => {
-                                    const removedId = col.opt.id || String(col.idx);
-                                    const remaining = quoteOptions.filter((_, i) => i !== col.idx);
-                                    const fallbackId = remaining[0]?.id || String(remaining[0]?.order_index ?? 0);
-                                    setQuoteOptions(remaining.map((o, i) => ({ ...o, order_index: i })));
-                                    setItems(prev => prev.map(item => {
-                                      const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
-                                      const filtered = ids.filter(id => id !== removedId);
-                                      if (filtered.length === 0) return { ...item, quote_option_id: fallbackId, quote_option_ids: [fallbackId] };
-                                      return { ...item, quote_option_id: filtered[0], quote_option_ids: filtered };
+                            )}
+                          </div>
+                          <PopoverContent className="w-64 p-2 space-y-2">
+                            <Label className="text-xs">Renomear opção</Label>
+                            <Input
+                              value={col.opt.name}
+                              onChange={e => setQuoteOptions(prev => prev.map((o, i) => i === col.idx ? { ...o, name: e.target.value } : o))}
+                              className="h-8 text-sm"
+                            />
+                            {quoteOptions.length > 1 && (
+                              <Button variant="ghost" size="sm" className="w-full justify-start text-destructive h-7 text-xs" onClick={() => {
+                                const removedId = col.opt.id || String(col.idx);
+                                const remaining = quoteOptions.filter((_, i) => i !== col.idx);
+                                const fallbackId = remaining[0]?.id || String(remaining[0]?.order_index ?? 0);
+                                setQuoteOptions(remaining.map((o, i) => ({ ...o, order_index: i })));
+                                setItems(prev => prev.map(item => {
+                                  const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
+                                  const filtered = ids.filter(id => id !== removedId);
+                                  if (filtered.length === 0) return { ...item, quote_option_id: fallbackId, quote_option_ids: [fallbackId] };
+                                  return { ...item, quote_option_id: filtered[0], quote_option_ids: filtered };
+                                }));
+                                setActiveOptionId(fallbackId);
+                              }}>
+                                <Trash2 className="h-3 w-3 mr-1" /> Remover opção
+                              </Button>
+                            )}
+                          </PopoverContent>
+                        </Popover>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Stats row */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border rounded-lg overflow-hidden border">
+                  <div className="bg-card p-3">
+                    <div className="text-[11px] text-muted-foreground">Custo total</div>
+                    <div className="text-sm font-semibold mt-0.5">{maskCurrency(totalCost)}</div>
+                  </div>
+                  <div className="bg-card p-3">
+                    <div className="text-[11px] text-muted-foreground">RAV total</div>
+                    <div className="text-sm font-semibold mt-0.5">{maskCurrency(totalRav)}</div>
+                  </div>
+                  <div className="bg-card p-3">
+                    <div className="text-[11px] text-muted-foreground">Acrésc. médio</div>
+                    <div className="text-sm font-semibold mt-0.5">{avgMarkup.toFixed(2).replace('.', ',')}%</div>
+                  </div>
+                  <div className="bg-card p-3">
+                    <div className="text-[11px] text-muted-foreground">Serviços</div>
+                    <div className="text-sm font-semibold mt-0.5">{optItems.length}</div>
+                  </div>
+                  <div className="bg-emerald-50 dark:bg-emerald-950/30 p-3">
+                    <div className="text-[11px] text-emerald-700 dark:text-emerald-300">Total {activeCol?.name?.toLowerCase() || 'venda'}</div>
+                    <div className="text-sm font-semibold mt-0.5 text-emerald-700 dark:text-emerald-300">{maskCurrency(totalOption)}</div>
+                  </div>
+                </div>
+
+                {/* Service rows */}
+                <div className="flex flex-col gap-2">
+                  {optItems.map(({ it, i: idx }) => {
+                    const Icon = typeIcon(it.metadata?.type);
+                    const tm = typeMeta(it.metadata?.type);
+                    const sup = supplierFor(it);
+                    const metaParts: string[] = [tm.label];
+                    if (sup) metaParts.push(sup);
+                    if (it.purchase_number) metaParts.push(`Compra: ${it.purchase_number}`);
+                    if (it.metadata?.type === 'hotel' && it.metadata?.hotel?.checkInDate) {
+                      const ci = it.metadata.hotel.checkInDate; const co = it.metadata.hotel.checkOutDate;
+                      const fmt = (d: string) => { const p = (d || '').split('-'); return p.length === 3 ? `${p[2]}/${p[1]}` : ''; };
+                      if (ci) metaParts.push(`Check-in ${fmt(ci)}`);
+                      if (co) metaParts.push(`Check-out ${fmt(co)}`);
+                    }
+                    if (it.markup_percent) metaParts.push(`Acrésc: ${Number(it.markup_percent).toFixed(2).replace('.', ',')}%`);
+                    return (
+                      <div key={idx} className="group flex items-center gap-3 bg-card hover:bg-muted/40 border border-border/60 rounded-lg px-3 py-2.5 transition-colors">
+                        <div className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${tm.iconBg}`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <button type="button" onClick={() => setEditingItemIdx(idx)} className="flex-1 min-w-0 text-left">
+                          <div className="text-sm font-semibold text-foreground truncate">
+                            {it.description || <span className="text-muted-foreground italic font-normal">Editar serviço…</span>}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground truncate">{metaParts.join(' · ')}</div>
+                        </button>
+                        {isQuoteMode && quoteOptions.length > 1 && (
+                          <div className="hidden md:flex flex-wrap gap-1 max-w-[180px]">
+                            {quoteOptions.map((opt, oi) => {
+                              const optId = opt.id || String(oi);
+                              const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                              const checked = ids.includes(optId);
+                              return (
+                                <button
+                                  key={oi}
+                                  type="button"
+                                  onClick={() => {
+                                    setItems(prev => prev.map((x, j) => {
+                                      if (j !== idx) return x;
+                                      const cur = x.quote_option_ids || (x.quote_option_id ? [x.quote_option_id] : []);
+                                      const isOn = cur.includes(optId);
+                                      const newIds = isOn ? cur.filter(id => id !== optId) : [...cur, optId];
+                                      const finalIds = newIds.length === 0 ? [optId] : newIds;
+                                      return { ...x, quote_option_ids: finalIds, quote_option_id: finalIds[0] };
                                     }));
-                                  }}>
-                                    <Trash2 className="h-3 w-3 mr-1" /> Remover opção
-                                  </Button>
-                                )}
-                              </PopoverContent>
-                            </Popover>
-                          ) : (
-                            <span className="text-sm font-semibold">{col.name}</span>
-                          )}
-                          {isQuoteMode && (
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${palette.pill}`}>
-                              Opção {colIdx + 1}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Service Cards */}
-                        <div className="flex flex-col gap-2">
-                          {optItems.map(({ it, i: idx }) => {
-                            const Icon = typeIcon(it.metadata?.type);
-                            return (
-                              <div key={idx} className="group bg-muted/40 hover:bg-muted/60 rounded-md p-2.5 transition-colors">
-                                {/* Top row: icon + title + actions */}
-                                <div className="flex items-start gap-2">
-                                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground/60 mt-1 cursor-grab flex-shrink-0" />
-                                  <Icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${palette.icon}`} />
-                                  <button type="button" onClick={() => setEditingItemIdx(idx)} className="flex-1 min-w-0 text-left">
-                                    <div className="text-sm font-semibold text-foreground truncate">
-                                      {it.description || <span className="text-muted-foreground italic">Editar serviço…</span>}
-                                    </div>
-                                    {it.metadata?.type && (
-                                      <div className="text-[11px] text-muted-foreground capitalize truncate">{it.metadata.type}</div>
-                                    )}
-                                  </button>
-                                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditingItemIdx(idx)} title="Editar">
-                                      <Edit className="h-3 w-3" />
-                                    </Button>
-                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => duplicateItem(idx)} title="Duplicar">
-                                      <Copy className="h-3 w-3" />
-                                    </Button>
-                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeItem(idx)} title="Excluir">
-                                      <Trash2 className="h-3 w-3 text-destructive" />
-                                    </Button>
-                                  </div>
-                                </div>
-
-                                {/* Quote-mode: options list always visible below name */}
-                                {isQuoteMode && quoteOptions.length > 1 && (
-                                  <div className="mt-1.5 pl-6 flex flex-wrap gap-1">
-                                    {quoteOptions.map((opt, oi) => {
-                                      const optId = opt.id || String(oi);
-                                      const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
-                                      const checked = ids.includes(optId);
-                                      return (
-                                        <button
-                                          key={oi}
-                                          type="button"
-                                          onClick={() => {
-                                            setItems(prev => prev.map((x, j) => {
-                                              if (j !== idx) return x;
-                                              const cur = x.quote_option_ids || (x.quote_option_id ? [x.quote_option_id] : []);
-                                              const isOn = cur.includes(optId);
-                                              const newIds = isOn ? cur.filter(id => id !== optId) : [...cur, optId];
-                                              const finalIds = newIds.length === 0 ? [optId] : newIds;
-                                              return { ...x, quote_option_ids: finalIds, quote_option_id: finalIds[0] };
-                                            }));
-                                          }}
-                                          className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${checked ? 'bg-primary/10 border-primary/40 text-foreground' : 'bg-transparent border-border text-muted-foreground hover:bg-muted'}`}
-                                          title={opt.name}
-                                        >
-                                          {checked ? '✓ ' : ''}{opt.name}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-
-                                {/* Inline editable fields */}
-                                <div className="grid grid-cols-2 gap-1.5 mt-2 pl-6">
-                                  <div>
-                                    <Label className="text-[10px] text-muted-foreground">Custo</Label>
-                                    <Input value={maskCurrency(it.cost_price)} onChange={e => updateItem(idx, 'cost_price', parseCurrency(e.target.value))} className="h-7 text-xs text-right" placeholder="R$ 0,00" />
-                                  </div>
-                                  <div>
-                                    <Label className="text-[10px] text-muted-foreground">RAV</Label>
-                                    <Input value={maskCurrency(it.rav)} onChange={e => updateItem(idx, 'rav', parseCurrency(e.target.value))} className="h-7 text-xs text-right" placeholder="R$ 0,00" />
-                                  </div>
-                                  <div>
-                                    <Label className="text-[10px] text-muted-foreground">Acrésc.%</Label>
-                                    <Input type="number" step="0.5" value={it.markup_percent ? it.markup_percent : ''} onChange={e => updateItem(idx, 'markup_percent', parseFloat(e.target.value) || 0)} className="h-7 text-xs text-right" />
-                                  </div>
-                                  <div>
-                                    <Label className="text-[10px] text-muted-foreground">Total</Label>
-                                    <div className="h-7 flex items-center justify-end text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                                      {maskCurrency(it.total_value)}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Reservation / Purchase (sale mode only) */}
-                                {!isQuoteMode && (
-                                  <div className="grid grid-cols-2 gap-1.5 mt-1.5 pl-6">
-                                    <div>
-                                      <Label className="text-[10px] text-muted-foreground">Reserva</Label>
-                                      <Input value={it.reservation_number || ''} onChange={e => updateItem(idx, 'reservation_number' as keyof SaleItem, e.target.value)} placeholder="ABC123" className="h-7 text-xs" />
-                                    </div>
-                                    <div>
-                                      <Label className="text-[10px] text-muted-foreground">Nº Compra</Label>
-                                      <Input value={it.purchase_number || ''} onChange={e => updateItem(idx, 'purchase_number' as keyof SaleItem, e.target.value)} placeholder="123456" className="h-7 text-xs" />
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Images strip */}
-                                <div className="mt-2 pl-6 flex items-center gap-1.5 flex-wrap">
-                                  {uploadingItemImages[idx] ? (
-                                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground border border-dashed rounded px-1.5 py-0.5"><Loader2 className="h-3 w-3 animate-spin" /></span>
-                                  ) : (
-                                    <label className="cursor-pointer flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground border border-dashed rounded px-1.5 py-0.5">
-                                      <ImagePlus className="h-3 w-3" />Imagens
-                                      <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleItemImageUpload(idx, e)} />
-                                    </label>
-                                  )}
-                                  {searchingItemImages[idx] ? (
-                                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground border border-dashed rounded px-1.5 py-0.5"><Loader2 className="h-3 w-3 animate-spin" /></span>
-                                  ) : (
-                                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 gap-0.5" onClick={() => handleSearchServiceImages(idx)}>
-                                      <Search className="h-3 w-3" />Buscar
-                                    </Button>
-                                  )}
-                                  {(itemImages[idx] || []).map((url, imgIdx) => (
-                                    <div key={imgIdx} className="relative group/img">
-                                      <img src={url} alt="" className={`h-10 w-12 object-cover rounded border cursor-zoom-in ${imgIdx === 0 ? 'ring-1 ring-primary' : ''}`} onClick={() => setPreviewImageUrl(url)} />
-                                      <button type="button" onClick={() => removeItemImage(idx, imgIdx)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-3.5 w-3.5 flex items-center justify-center text-[9px] opacity-0 group-hover/img:opacity-100 transition-opacity">×</button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })}
-
-                          {/* Add service card */}
-                          <button
-                            type="button"
-                            onClick={() => addServiceToOption(col.id)}
-                            className="border-dashed rounded-md py-3 text-xs transition-colors flex items-center justify-center gap-1 bg-emerald-500 text-white border-0 font-semibold border-slate-50"
-                          >
-                            <Plus className="h-3.5 w-3.5" /> Adicionar serviço
-                          </button>
-                        </div>
-
-                        {/* Column footer */}
-                        <div className="border-t border-border/60 mt-1 pt-2 px-1 flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">Total opção</span>
-                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{maskCurrency(totalOption)}</span>
+                                  }}
+                                  className={`text-[10px] px-1.5 py-0.5 rounded border ${checked ? 'bg-primary/10 border-primary/40 text-foreground' : 'bg-transparent border-border text-muted-foreground hover:bg-muted'}`}
+                                  title={opt.name}
+                                >
+                                  {checked ? '✓ ' : ''}{opt.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${tm.pill}`}>{tm.label}</span>
+                        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums w-[110px] text-right">{maskCurrency(it.total_value)}</span>
+                        <div className="flex items-center gap-0.5">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingItemIdx(idx)} title="Editar"><Edit className="h-3.5 w-3.5" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeItem(idx)} title="Excluir"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                         </div>
                       </div>
                     );
                   })}
 
-                  {/* New option column */}
-                  {isQuoteMode && (
-                    <button
-                      type="button"
-                      onClick={() => setQuoteOptions(prev => [...prev, { name: `Opção ${prev.length + 1}`, order_index: prev.length }])}
-                      className="flex-shrink-0 w-[300px] border border-dashed border-border rounded-md flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors min-h-[160px]"
-                    >
-                      <Plus className="h-5 w-5" />
-                      <span className="text-sm">Nova opção</span>
-                    </button>
-                  )}
+                  {/* Add service link */}
+                  <button
+                    type="button"
+                    onClick={() => addServiceToOption(activeCol?.id || '')}
+                    className="text-xs text-primary hover:underline flex items-center gap-1 px-3 py-2 self-start"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Adicionar serviço
+                  </button>
+                </div>
+
+                {/* Footer: New option + Total */}
+                <div className="flex items-center justify-between border-t pt-3">
+                  {isQuoteMode ? (
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const newOpt = { name: `Opção ${quoteOptions.length + 1}`, order_index: quoteOptions.length };
+                      setQuoteOptions(prev => [...prev, newOpt]);
+                    }}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Nova opção
+                    </Button>
+                  ) : <span />}
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Total {activeCol?.name?.toLowerCase() || 'venda'}</span>
+                    <span className="ml-2 font-semibold text-emerald-600 dark:text-emerald-400">{maskCurrency(totalOption)}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
