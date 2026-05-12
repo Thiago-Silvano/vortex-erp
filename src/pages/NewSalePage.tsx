@@ -151,6 +151,7 @@ export default function NewSalePage() {
   const [serviceCatalog, setServiceCatalog] = useState<ServiceCatalogOption[]>([]);
   const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
+  const [activeOptionId, setActiveOptionId] = useState<string>('');
 
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [installmentsMap, setInstallmentsMap] = useState<Record<string, number>>({});
