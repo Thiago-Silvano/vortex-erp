@@ -720,12 +720,11 @@ export default function NewSalePage() {
   useEffect(() => {
     const baseDate = new Date(saleDate || new Date());
 
-    // For "operadora" payment, receivables are only for the gross commission
-    const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
-    // Subtract the commission surcharge so it becomes its own dedicated installment below
-    const baseAmount = isOperadoraOnly
-      ? Math.max(0, grossProfit - commissionSurcharge)
-      : Math.max(0, totalSaleWithInterest - commissionSurcharge);
+    // Receivables ALWAYS represent only the agency's RAV/commission (gross profit),
+    // regardless of payment method. The supplier cost is tracked separately in
+    // "Controle de Pagamentos". Subtract the commission surcharge so it becomes
+    // its own dedicated installment below.
+    const baseAmount = Math.max(0, grossProfit - commissionSurcharge);
 
     // Use functional update to read previous receivables without adding to deps
     setReceivables(prev => {
@@ -848,19 +847,9 @@ export default function NewSalePage() {
     }
     setSupplierPayments(prev => {
       const today = format(new Date(), 'yyyy-MM-dd');
-      // When mixed with operadora, auto-set supplier amount to (non-operadora amount - gross commission)
-      const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
-      const isMixedWithOp = paymentMethods.includes('operadora') && paymentMethods.length > 1;
-      let effectiveCost = totalCost;
-      if (isOperadoraOnly) {
-        effectiveCost = 0;
-      } else if (isMixedWithOp) {
-        // Custo a repassar = recebido do cliente (não-operadora) − RAV
-        const nonOperadoraReceived = receivables
-          .filter(r => r.payment_method !== 'Pgto Operadora/Consolidadora')
-          .reduce((s, r) => s + (r.amount || 0), 0);
-        effectiveCost = Math.max(0, Math.round((nonOperadoraReceived - grossProfit) * 100) / 100);
-      }
+      // Controle de Pagamentos always reflects the FULL supplier cost of the sale,
+      // regardless of payment method. Recebimento covers only the RAV/commission.
+      const effectiveCost = totalCost;
       const costPerSupplier = selectedSupplierIds.length > 0 ? effectiveCost / selectedSupplierIds.length : 0;
       return selectedSupplierIds.map(sid => {
         const existing = prev.find(sp => sp.supplier_id === sid);
@@ -1793,14 +1782,9 @@ export default function NewSalePage() {
   };
 
   const generatePayablesForSale = async (saleId: string) => {
-    // When "operadora" is the only payment method, skip supplier payables entirely
-    // (client pays the supplier directly; we only receive the commission)
-    const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
-    // When mixed (operadora + other methods), calculate the amount the agency actually needs to forward:
-    // non-operadora amount - gross commission = totalCost - operadora portion
-    const isMixedWithOperadora = hasOperadora && paymentMethods.length > 1;
-
-    if (!isOperadoraOnly) {
+    // Supplier payables are ALWAYS generated using the full cost shown in
+    // "Controle de Pagamentos", regardless of payment method.
+    if (true) {
       if (supplierPayments.length > 0) {
         const payables: any[] = [];
         for (const sp of supplierPayments) {
@@ -3478,10 +3462,10 @@ export default function NewSalePage() {
                 />
               </div>
               {(() => {
-                const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
-                const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
-                const expectedReceivables = isOperadoraOnly ? grossProfit : totalSaleWithInterest;
-                const diff = expectedReceivables - totalReceivables;
+              const totalReceivables = receivables.reduce((s, r) => s + r.amount, 0);
+              // Recebimento sempre referente apenas ao RAV/comissão da venda
+              const expectedReceivables = grossProfit;
+              const diff = expectedReceivables - totalReceivables;
 
                 // Group receivables by payment_method (key)
                 const labelToKey: Record<string, string> = { 'Pix': 'pix', 'Dinheiro': 'dinheiro', 'Boleto': 'boleto', 'Cartão de Crédito': 'credito', 'Cartão de Débito': 'debito', 'Transferência': 'transferencia', 'Pgto Operadora/Consolidadora': 'operadora', 'Pgto Operadora': 'operadora' };
@@ -3914,23 +3898,13 @@ export default function NewSalePage() {
             <CardHeader>
               <CardTitle className="text-base">💰 Controle de Pagamentos</CardTitle>
               {(() => {
-                const isOperadoraOnly = paymentMethods.length === 1 && paymentMethods[0] === 'operadora';
-                const isMixedOp = hasOperadora && paymentMethods.length > 1;
-                // Soma dos recebíveis NÃO-operadora (valor que efetivamente entra na agência)
-                const nonOperadoraReceived = receivables
-                  .filter(r => r.payment_method !== 'Pgto Operadora/Consolidadora')
-                  .reduce((s, r) => s + (r.amount || 0), 0);
-                // Custo a repassar = recebido do cliente − RAV (lucro bruto)
-                const expectedCost = isOperadoraOnly
-                  ? 0
-                  : (isMixedOp
-                    ? Math.max(0, Math.round((nonOperadoraReceived - grossProfit) * 100) / 100)
-                    : totalCost);
+                // Controle de Pagamentos sempre considera o custo total da venda
+                const expectedCost = totalCost;
                 const totalPayments = supplierPayments.reduce((s, sp) => s + sp.amount, 0);
                 const diff = expectedCost - totalPayments;
                 return (
                   <div className="flex items-center gap-4 text-sm mt-1">
-                    <span className="text-muted-foreground">{isMixedOp ? 'Custo Ajustado' : 'Custo Total'}: <strong className="text-foreground">{fmt(expectedCost)}</strong></span>
+                    <span className="text-muted-foreground">Custo Total: <strong className="text-foreground">{fmt(expectedCost)}</strong></span>
                     <span className="text-muted-foreground">Lançado: <strong className="text-foreground">{fmt(totalPayments)}</strong></span>
                     {Math.abs(diff) > 0.01 ? (
                       <span className={diff > 0 ? "text-amber-600 font-semibold" : "text-destructive font-semibold"}>
