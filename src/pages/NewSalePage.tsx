@@ -355,6 +355,7 @@ export default function NewSalePage() {
         fixedValue: o.fixedValue || undefined,
         showPerPerson: o.showPerPerson || false,
         highlighted: o.highlighted || false,
+        quote_option_id: o.quote_option_id ?? null,
       })));
     }
     if ((sale as any).show_individual_values !== undefined) {
