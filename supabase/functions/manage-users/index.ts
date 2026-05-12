@@ -55,6 +55,20 @@ serve(async (req) => {
         });
       }
 
+      case "create": {
+        if (!email || !password) throw new Error("email e password são obrigatórios");
+        const { data, error } = await adminClient.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: displayName ? { display_name: displayName } : {},
+        });
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true, user: data.user }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       case "delete": {
         if (!userId) throw new Error("userId é obrigatório");
         // Don't allow deleting admin
