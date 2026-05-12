@@ -485,6 +485,7 @@ export default function VouchersPage() {
               arrivalDate: l.arrivalDate || '', arrivalTime: l.arrivalTime || '',
               flightCode: l.flightCode || '', connectionDuration: l.connectionDuration || '',
               direction: l.direction || 'ida',
+              localizador: l.localizador || '',
               airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
               airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
             })),
