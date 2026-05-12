@@ -252,6 +252,7 @@ export default function NewSalePage() {
   const [showIndividualValues, setShowIndividualValues] = useState(true);
   const [showPerPassenger, setShowPerPassenger] = useState(false);
   const [showOnlyTotal, setShowOnlyTotal] = useState(false);
+  const [paymentOptionTab, setPaymentOptionTab] = useState<string>('__geral__');
   const [saleStatus, setSaleStatus] = useState<'draft' | 'active' | 'new'>('new');
   const [saleWorkflowStatus, setSaleWorkflowStatus] = useState('em_aberto');
   const [askAddClientAsPassenger, setAskAddClientAsPassenger] = useState<ClientOption | null>(null);
