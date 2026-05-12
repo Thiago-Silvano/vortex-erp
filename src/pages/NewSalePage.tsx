@@ -4745,15 +4745,25 @@ export default function NewSalePage() {
             description={items[editingItemIdx]?.description || ''}
             metadata={items[editingItemIdx]?.metadata || {}}
             reservationNumber={items[editingItemIdx]?.reservation_number || ''}
-            onSave={(desc, meta, resNumber) => {
+            costPrice={items[editingItemIdx]?.cost_price || 0}
+            rav={items[editingItemIdx]?.rav || 0}
+            onSave={(desc, meta, resNumber, newCost, newRav) => {
               setItems(prev => {
                 const editedItem = prev[editingItemIdx];
                 const updated = prev.map((item, i) => {
                   if (i === editingItemIdx) {
+                    const cost = newCost ?? item.cost_price ?? 0;
+                    const ravVal = newRav ?? item.rav ?? 0;
+                    const total = cost + ravVal;
+                    const markup = cost > 0 ? (ravVal / cost) * 100 : 0;
                     return {
                       ...item,
                       description: desc,
                       metadata: meta,
+                      cost_price: cost,
+                      rav: ravVal,
+                      total_value: total,
+                      markup_percent: markup,
                       ...(resNumber !== undefined ? { reservation_number: resNumber } : {}),
                     };
                   }
