@@ -45,7 +45,15 @@ export default function QuoteStatusesPage() {
     if (!activeCompany?.id) return;
     setLoading(true);
     const { data } = await supabase.from('kanban_columns').select('*').eq('empresa_id', activeCompany.id).order('sort_order') as any;
-    setRows((data as KanbanColumn[]) || []);
+    const list = (data as KanbanColumn[]) || [];
+    if (list.length === 0) {
+      // Auto-seed defaults na primeira carga
+      const toInsert = DEFAULT_STATUSES.map(d => ({ ...d, empresa_id: activeCompany.id, is_default: true }));
+      const { data: inserted } = await supabase.from('kanban_columns').insert(toInsert as any).select() as any;
+      setRows(((inserted as KanbanColumn[]) || []).sort((a, b) => a.sort_order - b.sort_order));
+    } else {
+      setRows(list);
+    }
     setLoading(false);
   };
 
@@ -90,8 +98,9 @@ export default function QuoteStatusesPage() {
     setSaving(false);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: editing ? 'Status atualizado!' : 'Status criado!' });
-    setEditing(null); setForm({ name: '', status_key: '', color: '#3b82f6', sort_order: 0 });
-    (document.getElementById('close-status-dialog') as HTMLButtonElement)?.click();
+    setEditing(null);
+    setForm({ name: '', status_key: '', color: '#3b82f6', sort_order: 0 });
+    setDialogOpen(false);
     fetchRows();
   };
 
