@@ -4654,11 +4654,31 @@ export default function NewSalePage() {
 
         <PdfImportModal
           open={pdfImportOpen}
-          onClose={() => setPdfImportOpen(false)}
+          onClose={() => { setPdfImportOpen(false); setForceImportOptionId(null); }}
           serviceCatalog={serviceCatalog}
           marginMode="none"
           marginPercent={20}
           onImport={({ items: importedItems, tripInfo, quoteOptions: importedQuoteOptions, paymentTerms, generalNotes, selectedClient }) => {
+            // If triggered from inside a service (within a specific option), force all imported items into that option.
+            if (forceImportOptionId) {
+              const targetId = forceImportOptionId;
+              setItems(prev => [...prev, ...importedItems.map(item => ({
+                description: item.description,
+                cost_price: item.cost_price,
+                rav: item.rav,
+                markup_percent: 0,
+                total_value: item.total_value,
+                service_catalog_id: item.service_catalog_id,
+                cost_center_id: item.cost_center_id,
+                metadata: item.metadata || {},
+                quote_option_id: targetId,
+                quote_option_ids: [targetId],
+              }))]);
+              setForceImportOptionId(null);
+              if (generalNotes) setNotes(prev => prev ? `${prev}\n\n${generalNotes}` : generalNotes);
+              toast.success(`${importedItems.length} serviço(s) adicionados à opção atual!`);
+              return;
+            }
             const importBatchId = Date.now();
             const mappedOptions = importedQuoteOptions.map((option, index) => ({
               id: `imported-option-${importBatchId}-${index}`,
