@@ -392,7 +392,7 @@ function drawFlightSection(
   // Render each leg row
   legs.forEach((leg, idx) => {
     y = checkPage(doc, y, 28);
-    y = drawLegRow(doc, leg, y, m, pw, cw);
+    y = drawLegRow(doc, leg, y, m, pw, cw, localizador);
 
     if (idx < legs.length - 1) {
       // Separator line between legs
@@ -407,7 +407,7 @@ function drawFlightSection(
 }
 
 // ─── Single Flight Leg Row ──────────────────────────────────
-function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw: number, cw: number): number {
+function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw: number, cw: number, mainLocalizador?: string): number {
   const hasAirlineLogo = !!leg.airlineLogoBase64;
   const rowH = hasAirlineLogo ? 28 : 24;
   const leftCol = m + 4;
