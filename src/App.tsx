@@ -47,6 +47,7 @@ import ReportProfit from "./pages/reports/ReportProfit";
 import SellersPage from "./pages/SellersPage";
 import CommissionsPage from "./pages/CommissionsPage";
 import ServicesCatalogPage from "./pages/ServicesCatalogPage";
+import QuoteStatusesPage from "./pages/QuoteStatusesPage";
 import BankAccountsPage from "./pages/BankAccountsPage";
 import BankReconciliationPage from "./pages/BankReconciliationPage";
 import BankStatementReportPage from "./pages/BankStatementReportPage";
@@ -158,6 +159,7 @@ const App = () => (
           <Route path="/sellers" element={<ProtectedRoute><SellersPage /></ProtectedRoute>} />
           <Route path="/financial/commissions" element={<ProtectedRoute><CommissionsPage /></ProtectedRoute>} />
           <Route path="/services" element={<ProtectedRoute><ServicesCatalogPage /></ProtectedRoute>} />
+          <Route path="/cadastros/quote-statuses" element={<ProtectedRoute><QuoteStatusesPage /></ProtectedRoute>} />
           <Route path="/financial/bank-accounts" element={<ProtectedRoute><BankAccountsPage /></ProtectedRoute>} />
           <Route path="/financial/reconciliation" element={<ProtectedRoute><BankReconciliationPage /></ProtectedRoute>} />
           <Route path="/financial/bank-report" element={<ProtectedRoute><BankStatementReportPage /></ProtectedRoute>} />

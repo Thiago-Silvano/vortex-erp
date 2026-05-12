@@ -164,6 +164,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean, userRole: string): Menu
       { title: "Vendedores", url: "/sellers", permKey: "sellers_view" },
       { title: "Usuários", url: "/users" },
       { title: "Cias aéreas", url: "/airlines" },
+      { title: "Status cotações", url: "/cadastros/quote-statuses" },
       { title: "Imagens", url: "/product-images" },
       { title: "Contratos", url: "/contracts/templates" },
       { title: "Centro de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
