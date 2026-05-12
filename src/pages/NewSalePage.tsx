@@ -3353,14 +3353,7 @@ export default function NewSalePage() {
 
                 {/* Footer: New option + Total */}
                 <div className="flex items-center justify-between border-t pt-3">
-                  {isQuoteMode ? (
-                    <Button variant="outline" size="sm" onClick={() => {
-                      const newOpt = { name: `Opção ${quoteOptions.length + 1}`, order_index: quoteOptions.length };
-                      setQuoteOptions(prev => [...prev, newOpt]);
-                    }}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Nova opção
-                    </Button>
-                  ) : <span />}
+                  <span />
                   <div className="text-sm">
                     <span className="text-muted-foreground">Total {activeCol?.name?.toLowerCase() || 'venda'}</span>
                     <span className="ml-2 font-semibold text-emerald-600 dark:text-emerald-400 text-sm">{maskCurrency(totalOption)}</span>
