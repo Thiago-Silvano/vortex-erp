@@ -3332,7 +3332,7 @@ export default function NewSalePage() {
                           </div>
                         )}
                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${tm.pill}`}>{tm.label}</span>
-                        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums w-[110px] text-right">{maskCurrency(it.total_value)}</span>
+                        <span className="text-sm font-semibold tabular-nums w-[110px] text-right text-inherit">{maskCurrency(it.total_value)}</span>
                         <div className="flex items-center gap-0.5">
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingItemIdx(idx)} title="Editar"><Edit className="h-3.5 w-3.5" /></Button>
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeItem(idx)} title="Excluir"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
