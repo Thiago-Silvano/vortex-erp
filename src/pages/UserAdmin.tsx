@@ -202,6 +202,10 @@ export default function UserAdmin() {
       ALL_PERMISSIONS.forEach(g => g.keys.forEach(k => { all[k.key] = true; }));
       setPermChecks(all);
     }
+    if (permRole === 'cotacao') {
+      setPermChecks({ sales_view: true, sales_create: true, quotes_view: true, quotes_create: true, clients_view: true, clients_create: true });
+      setPermHomeRoute('/sales/new');
+    }
   }, [permRole]);
 
   const formatDate = (d: string | null) => {
@@ -214,6 +218,7 @@ export default function UserAdmin() {
     if (!perm) return <Badge variant="outline">Sem perfil</Badge>;
     if (perm.user_role === 'master') return <Badge className="bg-primary">Master</Badge>;
     if (perm.user_role === 'operacional') return <Badge className="bg-orange-500 text-white">Operacional</Badge>;
+    if (perm.user_role === 'cotacao') return <Badge className="bg-sky-600 text-white">Cotação</Badge>;
     return <Badge variant="secondary">Vendedor</Badge>;
   };
 
@@ -353,10 +358,12 @@ export default function UserAdmin() {
                   <SelectItem value="master">Master</SelectItem>
                   <SelectItem value="vendedor">Vendedor</SelectItem>
                   <SelectItem value="operacional">Operacional</SelectItem>
+                  <SelectItem value="cotacao">Cotação</SelectItem>
                 </SelectContent>
               </Select>
               {permRole === 'master' && <p className="text-xs text-muted-foreground mt-1">Master tem acesso total ao sistema e pode alternar entre empresas</p>}
               {permRole === 'operacional' && <p className="text-xs text-muted-foreground mt-1">Operacional tem acesso a produção e calendário</p>}
+              {permRole === 'cotacao' && <p className="text-xs text-muted-foreground mt-1">Cotação tem acesso apenas a Nova Cotação e Cotações (ideal para uso em tablet)</p>}
             </div>
 
             {permRole === 'master' && (
@@ -384,6 +391,8 @@ export default function UserAdmin() {
                   <SelectItem value="/reservations">Reservas</SelectItem>
                   <SelectItem value="/crm-kanban">Kanban CRM</SelectItem>
                   <SelectItem value="/dashboard">Dashboard</SelectItem>
+                  <SelectItem value="/sales/new">Nova Cotação</SelectItem>
+                  <SelectItem value="/cotacoes">Kanban de Cotações</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">Página exibida ao usuário após fazer login</p>

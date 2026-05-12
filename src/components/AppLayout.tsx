@@ -81,11 +81,24 @@ function usePermissions() {
   const isAdmin = userRole === "master" || userEmail === "thiago@vortexviagens.com.br";
   const hasPerm = (key?: string) => !key || isAdmin || !!permissions[key];
 
-  return { userEmail, isAdmin, hasPerm };
+  return { userEmail, isAdmin, hasPerm, userRole };
 }
 
 /* ─── Menus ─── */
-function buildMenus(isVistos: boolean, isAdmin: boolean): MenuGroup[] {
+function buildMenus(isVistos: boolean, isAdmin: boolean, userRole: string): MenuGroup[] {
+  // Perfil "Cotação": só vê Cotação (Nova) e Cotações
+  if (userRole === "cotacao") {
+    return [
+      { label: "Cotação", icon: <FileText className="h-4 w-4 text-white" />, url: "/sales/new", items: [
+        { title: "Nova Cotação", url: "/sales/new" },
+      ]},
+      { label: "Cotações", icon: <FileText className="h-4 w-4 text-white" />, items: [
+        { title: "Lista de Cotações", url: "/cotacoes/lista" },
+        { title: "Kanban de Cotações", url: "/cotacoes" },
+        { title: "Cotações Arquivadas", url: "/cotacoes/arquivadas" },
+      ]},
+    ];
+  }
   if (isVistos) {
     return [
       { label: "Dashboard", icon: <BarChart3 className="h-4 w-4 text-white" />, url: "/vistos/dashboard", items: [
@@ -216,10 +229,10 @@ function AppSidebar({ favorites, toggleFavorite }: {
   const navigate = useNavigate();
   const location = useLocation();
   const { activeCompany } = useCompany();
-  const { hasPerm, isAdmin } = usePermissions();
+  const { hasPerm, isAdmin, userRole } = usePermissions();
   const isVistos = activeCompany?.slug === "vortex-vistos";
 
-  const menus = useMemo(() => buildMenus(isVistos, isAdmin), [isVistos, isAdmin]);
+  const menus = useMemo(() => buildMenus(isVistos, isAdmin, userRole), [isVistos, isAdmin, userRole]);
 
   const allItems = useMemo(() => menus.flatMap(g => g.items), [menus]);
   const favItems = favorites
