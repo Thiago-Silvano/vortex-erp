@@ -345,7 +345,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     const finalDesc = type === 'hotel' ? (hotel.hotelName || desc) : desc;
     // Para hotel, não persistir detailedDescription (legado)
     if (type === 'hotel') meta.detailedDescription = undefined;
-    onSave(finalDesc, meta);
+    onSave(finalDesc, meta, type === 'aereo' ? (mainReservation || '') : undefined);
     if (type === 'hotel' && selectedImages.length > 0 && onHotelImagesFound) {
       onHotelImagesFound(selectedImages);
     }
