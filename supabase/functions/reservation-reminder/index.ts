@@ -1,11 +1,28 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import nodemailer from "npm:nodemailer";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+async function sendWhatsAppMessage(serverUrl: string, empresaId: string, phone: string, message: string) {
+  const url = `${serverUrl.replace(/\/$/, '')}/send-message`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ empresa_id: empresaId, number: phone, message }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`WhatsApp send failed [${res.status}]: ${txt}`);
+  }
+  return res.json().catch(() => ({}));
+}
+
+function applyTemplate(tpl: string, vars: Record<string, string>): string {
+  return tpl.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? '');
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -20,13 +37,9 @@ Deno.serve(async (req) => {
     const now = new Date();
     let totalSent = 0;
 
-    // Get all companies that have reservations
-    const { data: companies } = await supabase
-      .from("companies")
-      .select("id");
-
-    if (!companies || companies.length === 0) {
-      return new Response(JSON.stringify({ message: "No companies found", sent: 0 }), {
+    const { data: companies } = await supabase.from("companies").select("id");
+    if (!companies?.length) {
+      return new Response(JSON.stringify({ message: "No companies", sent: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -34,33 +47,15 @@ Deno.serve(async (req) => {
     for (const company of companies) {
       const empresaId = company.id;
 
-      // Get SMTP settings for this company (contract_email_settings first, then email_settings)
-      let smtpSettings: any = null;
-      const { data: contractSettings } = await supabase
-        .from("contract_email_settings")
+      const { data: waSettings } = await supabase
+        .from("whatsapp_settings")
         .select("*")
         .eq("empresa_id", empresaId)
         .maybeSingle();
 
-      if (contractSettings?.smtp_host && contractSettings?.smtp_user && contractSettings?.smtp_password) {
-        smtpSettings = contractSettings;
-      }
+      if (!waSettings?.reminder_enabled) continue;
+      if (!waSettings.reminder_phone || !waSettings.server_url || waSettings.server_url.includes('localhost')) continue;
 
-      if (!smtpSettings) {
-        const { data: emailSettings } = await supabase
-          .from("email_settings")
-          .select("*")
-          .eq("empresa_id", empresaId)
-          .limit(1)
-          .maybeSingle();
-        if (emailSettings?.smtp_host && emailSettings?.smtp_user && emailSettings?.smtp_password) {
-          smtpSettings = emailSettings;
-        }
-      }
-
-      if (!smtpSettings) continue;
-
-      // Get pending reservations with check_in within next 48 hours or already past
       const { data: reservations } = await supabase
         .from("reservations")
         .select("*")
@@ -68,26 +63,12 @@ Deno.serve(async (req) => {
         .eq("status", "pending")
         .not("check_in", "is", null);
 
-      if (!reservations || reservations.length === 0) continue;
-
-      // Build transporter
-      const port = smtpSettings.smtp_port || 587;
-      const transporter = nodemailer.createTransport({
-        host: smtpSettings.smtp_host,
-        port,
-        secure: port === 465,
-        auth: { user: smtpSettings.smtp_user, pass: smtpSettings.smtp_password },
-      });
-
-      const senderAddress = `${smtpSettings.from_name || "ERP Vortex"} <${smtpSettings.from_email || smtpSettings.smtp_user}>`;
-      const recipientEmail = smtpSettings.from_email || smtpSettings.smtp_user;
+      if (!reservations?.length) continue;
 
       for (const reservation of reservations) {
-        // check_in is a date string (YYYY-MM-DD), assume check-in at 12:00 local
         const checkInDate = new Date(reservation.check_in + "T12:00:00");
         const hoursUntilCheckIn = (checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-        // Get already sent reminders for this reservation
         const { data: sentReminders } = await supabase
           .from("reservation_reminders")
           .select("reminder_type")
@@ -96,32 +77,14 @@ Deno.serve(async (req) => {
         const sentTypes = new Set((sentReminders || []).map((r: any) => r.reminder_type));
 
         let reminderType: string | null = null;
-        let subject = "";
-        let bodyHtml = "";
+        let template = '';
 
-        const desc = reservation.description || "Reserva";
-        const code = reservation.confirmation_code || "N/A";
-        const checkInFormatted = reservation.check_in
-          ? new Date(reservation.check_in + "T12:00:00").toLocaleDateString("pt-BR")
-          : "-";
-
-        // Check-in already passed
         if (hoursUntilCheckIn <= 0) {
           if (!sentTypes.has("missed_checkin")) {
             reminderType = "missed_checkin";
-            subject = `⚠️ Check-in NÃO realizado: ${desc}`;
-            bodyHtml = buildEmail(
-              "Check-in Não Realizado",
-              `A reserva <strong>${desc}</strong> (Localizador: ${code}) tinha check-in previsto para <strong>${checkInFormatted}</strong> e o status ainda não foi atualizado para "Confirmada".`,
-              "Por favor, verifique urgentemente o status desta reserva.",
-              "#dc2626"
-            );
+            template = waSettings.reminder_template_missed || '';
           }
-        }
-        // Within 2 hours
-        else if (hoursUntilCheckIn <= 2) {
-          const urgentKey = `urgent_${Math.floor(hoursUntilCheckIn / 2)}`;
-          // Send every 2 hours - check if any urgent was sent in last 1.5 hours
+        } else if (hoursUntilCheckIn <= 2) {
           const { data: recentUrgent } = await supabase
             .from("reservation_reminders")
             .select("sent_at")
@@ -137,69 +100,37 @@ Deno.serve(async (req) => {
 
           if (hoursSinceLastUrgent >= 1.5) {
             reminderType = `urgent_${now.getTime()}`;
-            subject = `🚨 URGENTE - Check-in em menos de 2h: ${desc}`;
-            bodyHtml = buildEmail(
-              "Lembrete URGENTE de Check-in",
-              `A reserva <strong>${desc}</strong> (Localizador: ${code}) tem check-in previsto para <strong>${checkInFormatted}</strong> e faltam menos de 2 horas!`,
-              "Atualize o status da reserva para 'Confirmada' assim que possível.",
-              "#dc2626"
-            );
+            template = waSettings.reminder_template_urgent || '';
           }
-        }
-        // Within 10 hours
-        else if (hoursUntilCheckIn <= 10 && !sentTypes.has("reminder_10h")) {
+        } else if (hoursUntilCheckIn <= 10 && !sentTypes.has("reminder_10h")) {
           reminderType = "reminder_10h";
-          subject = `⏰ Lembrete: Check-in em menos de 10h - ${desc}`;
-          bodyHtml = buildEmail(
-            "Lembrete de Check-in - 10 horas",
-            `A reserva <strong>${desc}</strong> (Localizador: ${code}) tem check-in previsto para <strong>${checkInFormatted}</strong>.`,
-            "Faltam menos de 10 horas. Verifique se tudo está em ordem.",
-            "#f59e0b"
-          );
-        }
-        // Within 24 hours
-        else if (hoursUntilCheckIn <= 24 && !sentTypes.has("reminder_24h")) {
+          template = waSettings.reminder_template_10h || '';
+        } else if (hoursUntilCheckIn <= 24 && !sentTypes.has("reminder_24h")) {
           reminderType = "reminder_24h";
-          subject = `📋 Lembrete: Check-in amanhã - ${desc}`;
-          bodyHtml = buildEmail(
-            "Lembrete de Check-in - 24 horas",
-            `A reserva <strong>${desc}</strong> (Localizador: ${code}) tem check-in previsto para <strong>${checkInFormatted}</strong>.`,
-            "Faltam menos de 24 horas para o check-in. Confirme o status da reserva.",
-            "#f59e0b"
-          );
-        }
-        // Within 48 hours
-        else if (hoursUntilCheckIn <= 48 && !sentTypes.has("reminder_48h")) {
+          template = waSettings.reminder_template_24h || '';
+        } else if (hoursUntilCheckIn <= 48 && !sentTypes.has("reminder_48h")) {
           reminderType = "reminder_48h";
-          subject = `📅 Lembrete: Check-in em 2 dias - ${desc}`;
-          bodyHtml = buildEmail(
-            "Lembrete de Check-in - 48 horas",
-            `A reserva <strong>${desc}</strong> (Localizador: ${code}) tem check-in previsto para <strong>${checkInFormatted}</strong>.`,
-            "Faltam 2 dias para o check-in. Acompanhe a reserva.",
-            "#3b82f6"
-          );
+          template = waSettings.reminder_template_48h || '';
         }
 
-        // Send the email if a reminder type was determined
-        if (reminderType && bodyHtml) {
-          try {
-            await transporter.sendMail({
-              from: senderAddress,
-              to: recipientEmail,
-              subject,
-              html: bodyHtml,
-            });
+        if (reminderType && template) {
+          const message = applyTemplate(template, {
+            descricao: reservation.description || 'Reserva',
+            localizador: reservation.confirmation_code || 'N/A',
+            checkin: new Date(reservation.check_in + "T12:00:00").toLocaleDateString("pt-BR"),
+          });
 
+          try {
+            await sendWhatsAppMessage(waSettings.server_url, empresaId, waSettings.reminder_phone, message);
             await supabase.from("reservation_reminders").insert({
               reservation_id: reservation.id,
               empresa_id: empresaId,
               reminder_type: reminderType,
             });
-
             totalSent++;
-            console.log(`Sent reminder [${reminderType}] for reservation ${reservation.id}`);
-          } catch (emailErr: any) {
-            console.error(`Failed to send reminder for reservation ${reservation.id}:`, emailErr.message);
+            console.log(`Sent WA reminder [${reminderType}] for reservation ${reservation.id}`);
+          } catch (err: any) {
+            console.error(`Failed WA reminder for reservation ${reservation.id}:`, err.message);
           }
         }
       }
@@ -217,19 +148,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-
-function buildEmail(title: string, message: string, action: string, accentColor: string): string {
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: ${accentColor}; color: white; padding: 15px 20px; border-radius: 8px 8px 0 0;">
-        <h2 style="margin: 0; font-size: 18px;">${title}</h2>
-      </div>
-      <div style="border: 1px solid #e5e7eb; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p style="font-size: 14px; color: #374151; line-height: 1.6; margin: 0 0 15px;">${message}</p>
-        <p style="font-size: 14px; color: #374151; line-height: 1.6; margin: 0 0 15px; font-weight: bold;">${action}</p>
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-        <p style="font-size: 11px; color: #9ca3af; margin: 0;">Enviado automaticamente pelo ERP Vortex.</p>
-      </div>
-    </div>
-  `;
-}

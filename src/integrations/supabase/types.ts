@@ -5753,6 +5753,13 @@ export type Database = {
           id: string
           is_connected: boolean | null
           qr_code: string | null
+          reminder_enabled: boolean
+          reminder_phone: string
+          reminder_template_10h: string
+          reminder_template_24h: string
+          reminder_template_48h: string
+          reminder_template_missed: string
+          reminder_template_urgent: string
           server_url: string
           session_name: string | null
           updated_at: string
@@ -5767,6 +5774,13 @@ export type Database = {
           id?: string
           is_connected?: boolean | null
           qr_code?: string | null
+          reminder_enabled?: boolean
+          reminder_phone?: string
+          reminder_template_10h?: string
+          reminder_template_24h?: string
+          reminder_template_48h?: string
+          reminder_template_missed?: string
+          reminder_template_urgent?: string
           server_url?: string
           session_name?: string | null
           updated_at?: string
@@ -5781,6 +5795,13 @@ export type Database = {
           id?: string
           is_connected?: boolean | null
           qr_code?: string | null
+          reminder_enabled?: boolean
+          reminder_phone?: string
+          reminder_template_10h?: string
+          reminder_template_24h?: string
+          reminder_template_48h?: string
+          reminder_template_missed?: string
+          reminder_template_urgent?: string
           server_url?: string
           session_name?: string | null
           updated_at?: string
