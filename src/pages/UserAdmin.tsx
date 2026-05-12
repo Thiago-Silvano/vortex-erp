@@ -202,6 +202,10 @@ export default function UserAdmin() {
       ALL_PERMISSIONS.forEach(g => g.keys.forEach(k => { all[k.key] = true; }));
       setPermChecks(all);
     }
+    if (permRole === 'cotacao') {
+      setPermChecks({ sales_view: true, sales_create: true, quotes_view: true, quotes_create: true, clients_view: true, clients_create: true });
+      setPermHomeRoute('/sales/new');
+    }
   }, [permRole]);
 
   const formatDate = (d: string | null) => {
