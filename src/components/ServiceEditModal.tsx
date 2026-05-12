@@ -518,6 +518,14 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                         </SelectContent>
                       </Select>
                     </div>
+                    <div>
+                      <Label className="text-xs">Localizador do trecho</Label>
+                      <Input
+                        value={leg.localizador || ''}
+                        onChange={e => updateLeg(idx, 'localizador', e.target.value.toUpperCase())}
+                        placeholder={mainReservation ? `(usar ${mainReservation})` : 'Opcional'}
+                      />
+                    </div>
                     <div><Label className="text-xs">Conexão (duração)</Label><Input value={leg.connectionDuration} onChange={e => updateLeg(idx, 'connectionDuration', e.target.value)} placeholder="2h30" /></div>
                     <div><Label className="text-xs">Data Partida</Label><Input type="date" value={leg.departureDate} onChange={e => updateLeg(idx, 'departureDate', e.target.value)} /></div>
                     <div><Label className="text-xs">Hora Partida</Label><Input type="time" value={leg.departureTime} onChange={e => updateLeg(idx, 'departureTime', e.target.value)} /></div>
