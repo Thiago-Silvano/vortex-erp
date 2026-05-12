@@ -116,6 +116,9 @@ interface ProposalPaymentOption {
   fixedValue?: number;
   showPerPerson?: boolean;
   highlighted?: boolean;
+  /** ID da opção da cotação a que esta forma de pagamento se aplica.
+   *  null/undefined = aplica-se a todas as opções (modo "Geral"). */
+  quote_option_id?: string | null;
 }
 interface InternalFile { id?: string; file_name: string; file_url: string; }
 
