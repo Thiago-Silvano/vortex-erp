@@ -197,6 +197,7 @@ export default function NewSalePage() {
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
   const [commissionInvoiceStatus, setCommissionInvoiceStatus] = useState<string | null>(null);
   const [pdfImportOpen, setPdfImportOpen] = useState(false);
+  const [forceImportOptionId, setForceImportOptionId] = useState<string | null>(null);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
@@ -4653,11 +4654,31 @@ export default function NewSalePage() {
 
         <PdfImportModal
           open={pdfImportOpen}
-          onClose={() => setPdfImportOpen(false)}
+          onClose={() => { setPdfImportOpen(false); setForceImportOptionId(null); }}
           serviceCatalog={serviceCatalog}
           marginMode="none"
           marginPercent={20}
           onImport={({ items: importedItems, tripInfo, quoteOptions: importedQuoteOptions, paymentTerms, generalNotes, selectedClient }) => {
+            // If triggered from inside a service (within a specific option), force all imported items into that option.
+            if (forceImportOptionId) {
+              const targetId = forceImportOptionId;
+              setItems(prev => [...prev, ...importedItems.map(item => ({
+                description: item.description,
+                cost_price: item.cost_price,
+                rav: item.rav,
+                markup_percent: 0,
+                total_value: item.total_value,
+                service_catalog_id: item.service_catalog_id,
+                cost_center_id: item.cost_center_id,
+                metadata: item.metadata || {},
+                quote_option_id: targetId,
+                quote_option_ids: [targetId],
+              }))]);
+              setForceImportOptionId(null);
+              if (generalNotes) setNotes(prev => prev ? `${prev}\n\n${generalNotes}` : generalNotes);
+              toast.success(`${importedItems.length} serviço(s) adicionados à opção atual!`);
+              return;
+            }
             const importBatchId = Date.now();
             const mappedOptions = importedQuoteOptions.map((option, index) => ({
               id: `imported-option-${importBatchId}-${index}`,
@@ -4747,6 +4768,17 @@ export default function NewSalePage() {
             reservationNumber={items[editingItemIdx]?.reservation_number || ''}
             costPrice={items[editingItemIdx]?.cost_price || 0}
             rav={items[editingItemIdx]?.rav || 0}
+            onImportPdf={() => {
+              const current = items[editingItemIdx];
+              const optId = current?.quote_option_id
+                || (current?.quote_option_ids && current.quote_option_ids[0])
+                || activeOptionId
+                || quoteOptions[0]?.id
+                || String(quoteOptions[0]?.order_index ?? 0);
+              setForceImportOptionId(optId);
+              setEditingItemIdx(null);
+              setTimeout(() => setPdfImportOpen(true), 100);
+            }}
             onSave={(desc, meta, resNumber, newCost, newRav) => {
               setItems(prev => {
                 const editedItem = prev[editingItemIdx];
