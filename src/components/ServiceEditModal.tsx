@@ -23,6 +23,7 @@ interface FlightLeg {
   direction: 'ida' | 'volta';
   flightCode: string;
   airlineId?: string;
+  localizador?: string;
   stopover?: boolean;
   stopoverDays?: number;
   stopoverMinutes?: number;
