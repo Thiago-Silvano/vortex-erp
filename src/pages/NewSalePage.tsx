@@ -3338,6 +3338,19 @@ export default function NewSalePage() {
                                 {it.metadata.hotel.city}
                               </span>
                             )}
+                            {it.metadata?.type === 'hotel' && (
+                              (() => {
+                                const hasImages = (itemImages[idx]?.length || 0) > 0 || (it.metadata?.hotel?.images?.length || 0) > 0;
+                                return (
+                                  <span
+                                    className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${hasImages ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                                    title={hasImages ? 'Imagens do hotel adicionadas' : 'Nenhuma imagem do hotel adicionada'}
+                                  >
+                                    <Image className="h-2.5 w-2.5" />
+                                  </span>
+                                );
+                              })()
+                            )}
                           </div>
                           <div className="text-[11px] text-muted-foreground truncate">{metaParts.join(' · ')}</div>
                         </button>
