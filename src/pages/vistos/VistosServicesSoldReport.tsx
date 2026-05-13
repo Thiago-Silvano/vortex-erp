@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Badge } from '@/components/ui/badge';
 import { FileDown, Filter, X, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -94,7 +96,8 @@ function MultiSelect({ options, values, onChange, placeholder = 'Todos' }: Multi
 export default function VistosServicesSoldReport() {
   const { activeCompany } = useCompany();
   const [rows, setRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
 
   // Filters
   const [period, setPeriod] = useState<DateFilterPeriod>('month');
@@ -115,7 +118,7 @@ export default function VistosServicesSoldReport() {
 
   const load = async () => {
     if (!activeCompany?.id) return;
-    setLoading(true);
+    setTableLoading(true);
     try {
       const { data: sales } = await supabase
         .from('visa_sales')
@@ -160,7 +163,7 @@ export default function VistosServicesSoldReport() {
       });
       setRows(result);
     } finally {
-      setLoading(false);
+      setTableLoading(false);
     }
   };
 
@@ -369,7 +372,7 @@ export default function VistosServicesSoldReport() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {tableLoading ? (
                   <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Nenhum serviço encontrado</TableCell></TableRow>

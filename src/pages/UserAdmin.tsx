@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -50,8 +52,9 @@ export default function UserAdmin() {
   const { toast } = useToast();
   const { companies } = useCompany();
   const [users, setUsers] = useState<UserInfo[]>([]);
-  const [permissions, setPermissions] = useState<Record<string, UserPermission>>({});
   const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState<Record<string, UserPermission>>({});
+  const [tableLoading, setTableLoading] = useState(true);
   const [editUser, setEditUser] = useState<UserInfo | null>(null);
   const [editName, setEditName] = useState('');
   const [editPassword, setEditPassword] = useState('');
@@ -88,16 +91,18 @@ export default function UserAdmin() {
   };
 
   const fetchUsers = async () => {
-    setLoading(true);
+    setTableLoading(true);
+    setTableLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('manage-users', { body: { action: 'list' } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setUsers(data.users || []);
+    setTableLoading(false);
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });
     }
-    setLoading(false);
+    setTableLoading(false);
   };
 
   const fetchPermissions = async () => {
@@ -248,7 +253,7 @@ export default function UserAdmin() {
             <CardTitle>Usuários Cadastrados ({users.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {tableLoading ? (
               <p className="text-muted-foreground text-center py-8">Carregando...</p>
             ) : users.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">Nenhum usuário encontrado.</p>

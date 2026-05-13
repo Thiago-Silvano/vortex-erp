@@ -15,6 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp, BedDouble, Car, Ship, MapPin, Briefcase } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -131,6 +133,7 @@ export default function NewSalePage() {
   const prefillClientId = (location.state as any)?.prefillClientId;
   const prefillClientName = (location.state as any)?.prefillClientName;
   const [editSaleId, setEditSaleId] = useState<string | undefined>(initialEditSaleId);
+  const [loading, setLoading] = useState(true);
 
   const [quoteId, setQuoteId] = useState(quoteData?.id || '');
   const [clientName, setClientName] = useState(quoteData?.clientName || prefillClientName || '');
@@ -3810,7 +3813,9 @@ export default function NewSalePage() {
                           </Button>
                         </div>
 
-                        {visibleOptions.length === 0 ? (
+                        {loading ? (
+          <TableLoadingRow colSpan={6} />
+        ) : visibleOptions.length === 0 ? (
                           <div className="border border-dashed rounded-lg py-8 text-center text-sm text-muted-foreground">
                             Nenhuma forma de pagamento configurada nesta aba.
                           </div>

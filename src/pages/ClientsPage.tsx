@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Plus, Search, Pencil, Trash2, Users, Loader2, FileScan } from 'lucide-react';
 import ClientFilesSection, { type ClientFilesSectionRef } from '@/components/ClientFilesSection';
@@ -54,6 +56,7 @@ export default function ClientsPage() {
   const location = useLocation();
   const locationState = location.state as { openEditId?: string; returnTo?: string; returnState?: any; prefill?: { full_name?: string; phone?: string }; linkConversationPhone?: string } | null;
   const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -72,10 +75,12 @@ export default function ClientsPage() {
   const docInputRef = useRef<HTMLInputElement>(null);
 
   const fetchClients = async () => {
+    setLoading(true);
     let query = supabase.from('clients').select('*').order('full_name');
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     const { data } = await query;
     if (data) setClients(data as Client[]);
+    setLoading(false);
   };
 
   useEffect(() => { fetchClients(); }, [activeCompany?.id]);
@@ -294,7 +299,9 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedClients.length === 0 ? (
+              {loading ? (
+          <TableLoadingRow colSpan={7} />
+        ) : sortedClients.length === 0 ? (
                 <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-4 text-xs">Nenhum cliente encontrado</TableCell></TableRow>
               ) : sortedClients.map(c => (
                 <TableRow key={c.id} className="cursor-pointer" onClick={() => handleEdit(c)}>

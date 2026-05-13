@@ -2,6 +2,8 @@ import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -38,8 +40,9 @@ interface SaleRow {
 export default function VouchersPage() {
   const { activeCompany } = useCompany();
   const [sales, setSales] = useState<SaleRow[]>([]);
-  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [tableLoading, setTableLoading] = useState(true);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,7 +50,8 @@ export default function VouchersPage() {
   }, [activeCompany?.id]);
 
   const fetchSales = async () => {
-    setLoading(true);
+    setTableLoading(true);
+    setTableLoading(true);
     let query = supabase
       .from('sales')
       .select('*')
@@ -56,7 +60,8 @@ export default function VouchersPage() {
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     const { data } = await query;
     if (data) setSales(data as SaleRow[]);
-    setLoading(false);
+    setTableLoading(false);
+    setTableLoading(false);
   };
 
   const filtered = sales.filter(s => {
@@ -547,7 +552,7 @@ export default function VouchersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {tableLoading ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell>
                     </TableRow>

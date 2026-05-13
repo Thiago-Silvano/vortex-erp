@@ -3,6 +3,8 @@ import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import ReportFilters from '@/components/ReportFilters';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
@@ -14,6 +16,7 @@ import { generateReportPdf } from '@/lib/generateReportPdf';
 export default function ReportProfit() {
   const { activeCompany } = useCompany();
   const [sales, setSales] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [range, setRange] = useState({ start: format(subDays(new Date(), 30), 'yyyy-MM-dd'), end: format(new Date(), 'yyyy-MM-dd') });
 
   useEffect(() => {
@@ -99,7 +102,9 @@ export default function ReportProfit() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sales.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={7} />
+        ) : sales.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhuma venda</TableCell></TableRow>
                 ) : sales.map(s => (
                   <TableRow key={s.id}>

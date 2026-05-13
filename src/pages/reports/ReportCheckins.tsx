@@ -3,6 +3,8 @@ import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
@@ -14,6 +16,7 @@ import { generateReportPdf } from '@/lib/generateReportPdf';
 export default function ReportCheckins() {
   const { activeCompany } = useCompany();
   const [reservations, setReservations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
@@ -75,7 +78,9 @@ export default function ReportCheckins() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={6} />
+        ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum registro</TableCell></TableRow>
                 ) : filtered.map(r => (
                   <TableRow key={r.id}>

@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -46,6 +48,7 @@ export default function AccountsReceivablePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [items, setItems] = useState<Receivable[]>([]);
+  const [loading, setLoading] = useState(true);
   const [clients, setClients] = useState<ClientOpt[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [filterStatus, setFilterStatus] = useState('pending');
@@ -147,22 +150,27 @@ export default function AccountsReceivablePage() {
   const [installmentRows, setInstallmentRows] = useState<InstallmentRow[]>([]);
 
   const fetch_ = async () => {
-    if (!activeCompany?.id) { setItems([]); return; }
-    // Fetch receivables, then filter out any linked to draft sales
-    const { data } = await supabase
-      .from('receivables')
-      .select('*')
-      .eq('empresa_id', activeCompany.id)
-      .order('due_date');
-    if (!data) { setItems([]); return; }
-    // Get draft sale IDs to exclude
-    const saleIds = [...new Set((data as any[]).map(r => r.sale_id).filter(Boolean))];
-    let draftIds: string[] = [];
-    if (saleIds.length > 0) {
-      const { data: drafts } = await supabase.from('sales').select('id').in('id', saleIds).eq('status', 'draft');
-      draftIds = (drafts || []).map(d => d.id);
+    setLoading(true);
+    try {
+      if (!activeCompany?.id) { setItems([]); return; }
+      // Fetch receivables, then filter out any linked to draft sales
+      const { data } = await supabase
+        .from('receivables')
+        .select('*')
+        .eq('empresa_id', activeCompany.id)
+        .order('due_date');
+      if (!data) { setItems([]); return; }
+      // Get draft sale IDs to exclude
+      const saleIds = [...new Set((data as any[]).map(r => r.sale_id).filter(Boolean))];
+      let draftIds: string[] = [];
+      if (saleIds.length > 0) {
+        const { data: drafts } = await supabase.from('sales').select('id').in('id', saleIds).eq('status', 'draft');
+        draftIds = (drafts || []).map(d => d.id);
+      }
+      setItems((data as unknown as Receivable[]).filter(r => !r.sale_id || !draftIds.includes(r.sale_id)));
+    } finally {
+      setLoading(false);
     }
-    setItems((data as unknown as Receivable[]).filter(r => !r.sale_id || !draftIds.includes(r.sale_id)));
   };
 
   useEffect(() => {
@@ -445,7 +453,9 @@ export default function AccountsReceivablePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={8} />
+        ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum registro encontrado</TableCell></TableRow>
                 ) : filtered.map(r => (
                   <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(r)}>

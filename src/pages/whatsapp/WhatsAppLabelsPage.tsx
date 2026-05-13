@@ -5,6 +5,8 @@ import { useCompany } from '@/contexts/CompanyContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -24,6 +26,7 @@ export default function WhatsAppLabelsPage() {
   const { activeCompany } = useCompany();
   const empresaId = activeCompany?.id || '';
   const [labels, setLabels] = useState<LabelItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<LabelItem | null>(null);
   const [form, setForm] = useState({ name: '', color: '#3B82F6' });

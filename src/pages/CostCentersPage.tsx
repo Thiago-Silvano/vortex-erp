@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
@@ -29,6 +31,7 @@ interface CostCenter {
 export default function CostCentersPage() {
   const { activeCompany } = useCompany();
   const [items, setItems] = useState<CostCenter[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -37,10 +40,12 @@ export default function CostCentersPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetch_ = async () => {
+    setLoading(true);
     let query = supabase.from('cost_centers').select('*').order('name');
     if (activeCompany?.id) query = query.or(`empresa_id.eq.${activeCompany.id},empresa_id.is.null`);
     const { data } = await query;
     if (data) setItems(data as CostCenter[]);
+    setLoading(false);
   };
   useEffect(() => { fetch_(); }, [activeCompany?.id]);
 
@@ -107,7 +112,9 @@ export default function CostCentersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedItems.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={5} />
+        ) : sortedItems.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum centro de custo cadastrado</TableCell></TableRow>
                 ) : sortedItems.map(c => (
                   <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(c)}>

@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Search, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
@@ -29,6 +31,7 @@ export default function VistosSalesPage() {
   const navigate = useNavigate();
   const { activeCompany, isMaster } = useCompany();
   const [sales, setSales] = useState<VisaSale[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<VisaSale | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -53,34 +56,42 @@ export default function VistosSalesPage() {
   };
 
   const fetchSales = async () => {
-    if (!activeCompany?.id) return;
-    const { data } = await supabase
-      .from('visa_sales')
-      .select('*, visa_products(name)')
-      .eq('empresa_id', activeCompany.id)
-      .order('sale_date', { ascending: false });
-
-    if (data) {
-      // Fetch sale items for summaries
-      const saleIds = data.map((s: any) => s.id);
-      let itemsMap: Record<string, string[]> = {};
-      if (saleIds.length > 0) {
-        const { data: items } = await (supabase.from('visa_sale_items' as any) as any)
-          .select('visa_sale_id, product_name')
-          .in('visa_sale_id', saleIds);
-        if (items) {
-          items.forEach((item: any) => {
-            if (!itemsMap[item.visa_sale_id]) itemsMap[item.visa_sale_id] = [];
-            itemsMap[item.visa_sale_id].push(item.product_name);
-          });
-        }
+    setLoading(true);
+    try {
+      if (!activeCompany?.id) {
+        setSales([]);
+        return;
       }
+      const { data } = await supabase
+        .from('visa_sales')
+        .select('*, visa_products(name)')
+        .eq('empresa_id', activeCompany.id)
+        .order('sale_date', { ascending: false });
 
-      setSales(data.map((s: any) => ({
-        ...s,
-        product_name: s.visa_products?.name || '',
-        services_summary: itemsMap[s.id]?.join(', ') || s.visa_products?.name || '',
-      })));
+      if (data) {
+        // Fetch sale items for summaries
+        const saleIds = data.map((s: any) => s.id);
+        let itemsMap: Record<string, string[]> = {};
+        if (saleIds.length > 0) {
+          const { data: items } = await (supabase.from('visa_sale_items' as any) as any)
+            .select('visa_sale_id, product_name')
+            .in('visa_sale_id', saleIds);
+          if (items) {
+            items.forEach((item: any) => {
+              if (!itemsMap[item.visa_sale_id]) itemsMap[item.visa_sale_id] = [];
+              itemsMap[item.visa_sale_id].push(item.product_name);
+            });
+          }
+        }
+
+        setSales(data.map((s: any) => ({
+          ...s,
+          product_name: s.visa_products?.name || '',
+          services_summary: itemsMap[s.id]?.join(', ') || s.visa_products?.name || '',
+        })));
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -181,7 +192,9 @@ export default function VistosSalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={7} />
+        ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma venda encontrada</TableCell></TableRow>
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/vistos/sales/edit', { state: { editSaleId: s.id } })}>

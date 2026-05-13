@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { format, eachMonthOfInterval, eachWeekOfInterval, startOfWeek, endOfWeek, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,6 +14,7 @@ interface CostCenter { id: string; name: string; }
 
 export default function CashFlowPage() {
   const [receivables, setReceivables] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [payables, setPayables] = useState<any[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [view, setView] = useState<'month' | 'week'>('month');

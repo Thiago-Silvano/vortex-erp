@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
@@ -41,6 +43,7 @@ interface CostCenter {
 export default function VistosProductsPage() {
   const { activeCompany } = useCompany();
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [name, setName] = useState('');
@@ -52,9 +55,10 @@ export default function VistosProductsPage() {
   const [costCenterId, setCostCenterId] = useState('');
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
 
   const fetchProducts = async () => {
+    setTableLoading(true);
     if (!activeCompany?.id) return;
     const { data } = await supabase
       .from('visa_products')
@@ -62,6 +66,7 @@ export default function VistosProductsPage() {
       .eq('empresa_id', activeCompany.id)
       .order('name');
     if (data) setProducts(data as Product[]);
+    setTableLoading(false);
   };
 
   const fetchSuppliers = async () => {
@@ -91,7 +96,7 @@ export default function VistosProductsPage() {
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Informe o nome do serviço.'); return; }
-    setLoading(true);
+    setTableLoading(true);
     const payload: any = {
       name: name.trim(),
       description: description.trim(),
@@ -110,7 +115,7 @@ export default function VistosProductsPage() {
       await supabase.from('visa_products').insert(payload);
       toast.success('Serviço criado!');
     }
-    setLoading(false);
+    setTableLoading(false);
     setDialogOpen(false);
     fetchProducts();
   };
@@ -143,7 +148,9 @@ export default function VistosProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.length === 0 ? (
+                {tableLoading ? (
+          <TableLoadingRow colSpan={6} />
+        ) : products.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum serviço cadastrado</TableCell></TableRow>
                 ) : products.map(p => (
                   <TableRow key={p.id}>

@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -23,6 +25,7 @@ export default function WhatsAppQuickRepliesPage() {
   const { activeCompany } = useCompany();
   const empresaId = activeCompany?.id || '';
   const [replies, setReplies] = useState<QuickReply[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<QuickReply | null>(null);
   const [form, setForm] = useState({ shortcut: '', message: '', category: 'geral' });

@@ -3,6 +3,8 @@ import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import ReportFilters from '@/components/ReportFilters';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { format, subDays, parseISO } from 'date-fns';
@@ -16,6 +18,7 @@ import { generateReportPdf } from '@/lib/generateReportPdf';
 export default function ReportFinancial() {
   const { activeCompany } = useCompany();
   const [receivables, setReceivables] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [payables, setPayables] = useState<any[]>([]);
   const [range, setRange] = useState({ start: format(subDays(new Date(), 30), 'yyyy-MM-dd'), end: format(new Date(), 'yyyy-MM-dd') });
 
@@ -131,7 +134,9 @@ export default function ReportFinancial() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allItems.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={6} />
+        ) : allItems.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum registro</TableCell></TableRow>
                 ) : allItems.slice(0, 100).map((item, i) => (
                   <TableRow key={i}>

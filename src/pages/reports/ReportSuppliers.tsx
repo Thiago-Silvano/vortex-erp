@@ -3,6 +3,8 @@ import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
@@ -12,6 +14,7 @@ import { generateReportPdf } from '@/lib/generateReportPdf';
 export default function ReportSuppliers() {
   const { activeCompany } = useCompany();
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sales, setSales] = useState<any[]>([]);
   const [saleSups, setSaleSups] = useState<any[]>([]);
 
@@ -88,7 +91,9 @@ export default function ReportSuppliers() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {supplierStats.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={5} />
+        ) : supplierStats.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum dado</TableCell></TableRow>
                 ) : supplierStats.map((s, i) => (
                   <TableRow key={i}>

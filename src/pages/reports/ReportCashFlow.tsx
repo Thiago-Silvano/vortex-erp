@@ -3,6 +3,8 @@ import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { format, addMonths, eachMonthOfInterval, eachWeekOfInterval, startOfWeek, endOfWeek } from 'date-fns';
@@ -16,6 +18,7 @@ import { generateReportPdf } from '@/lib/generateReportPdf';
 export default function ReportCashFlow() {
   const { activeCompany } = useCompany();
   const [receivables, setReceivables] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [payables, setPayables] = useState<any[]>([]);
   const [view, setView] = useState<'month' | 'week'>('month');
 

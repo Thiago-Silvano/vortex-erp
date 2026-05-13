@@ -5,6 +5,8 @@ import { useCompany } from '@/contexts/CompanyContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, CheckCircle2, Clock, AlertCircle, Eye, TrendingUp, Shield, Activity } from 'lucide-react';
 import { format } from 'date-fns';
@@ -49,9 +51,10 @@ const STATUS_LABELS: Record<string, string> = {
 export default function ContractsDashboardPage() {
   const { activeCompany } = useCompany();
   const [stats, setStats] = useState<ContractStat>({ total: 0, signed: 0, pending: 0, viewed: 0, expired: 0, sent: 0 });
+  const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
 
   useEffect(() => {
     if (activeCompany) loadData();
@@ -59,7 +62,7 @@ export default function ContractsDashboardPage() {
 
   const loadData = async () => {
     if (!activeCompany) return;
-    setLoading(true);
+    setTableLoading(true);
 
     // Load contracts
     const { data: contractsData } = await supabase
@@ -99,7 +102,7 @@ export default function ContractsDashboardPage() {
       setAuditLogs(logs);
     }
 
-    setLoading(false);
+    setTableLoading(false);
   };
 
   const conversionRate = stats.total > 0 ? ((stats.signed / stats.total) * 100).toFixed(1) : '0';
@@ -189,7 +192,7 @@ export default function ContractsDashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {loading ? (
+                    {tableLoading ? (
                       <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
                     ) : contracts.length === 0 ? (
                       <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum contrato encontrado</TableCell></TableRow>
@@ -231,7 +234,7 @@ export default function ContractsDashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {loading ? (
+                    {tableLoading ? (
                       <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
                     ) : auditLogs.length === 0 ? (
                       <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum log de auditoria</TableCell></TableRow>

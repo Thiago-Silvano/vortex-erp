@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, User, GripVertical, Send, Plus, Trash2, LayoutGrid, List, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -54,6 +56,7 @@ const CONSULATES = ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Recife', 'Port
 export default function VistosProductionPage() {
   const { activeCompany } = useCompany();
   const [processes, setProcesses] = useState<Process[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [interviewOpen, setInterviewOpen] = useState(false);
@@ -98,52 +101,57 @@ export default function VistosProductionPage() {
   }, [activeCompany?.id]);
 
   const fetchProcesses = async () => {
-    if (!activeCompany?.id) return;
-    const { data } = await supabase
-      .from('visa_processes')
-      .select('*, visa_products(name)')
-      .eq('empresa_id', activeCompany.id)
-      .order('created_at');
-
-    if (data) {
-      // Fetch client photos to sync with processes
-      const clientNames = [...new Set(data.map((p: any) => p.client_name).concat(data.map((p: any) => p.applicant_name)))];
-      const { data: clients } = await supabase
-        .from('clients')
-        .select('id, full_name')
+    setLoading(true);
+    try {
+      if (!activeCompany?.id) { setProcesses([]); return; }
+      const { data } = await supabase
+        .from('visa_processes')
+        .select('*, visa_products(name)')
         .eq('empresa_id', activeCompany.id)
-        .in('full_name', clientNames);
-      
-      const clientMap = new Map<string, string>();
-      clients?.forEach((c: any) => clientMap.set(c.full_name, c.id));
+        .order('created_at');
 
-      // Fetch all client photos for matching clients
-      const clientIds = [...new Set(clients?.map((c: any) => c.id) || [])];
-      let clientPhotosMap = new Map<string, string>();
-      if (clientIds.length > 0) {
-        const { data: photos } = await supabase
-          .from('client_photos')
-          .select('client_id, file_url')
-          .in('client_id', clientIds)
-          .order('created_at', { ascending: false });
-        photos?.forEach((p: any) => {
-          if (!clientPhotosMap.has(p.client_id)) {
-            clientPhotosMap.set(p.client_id, p.file_url);
-          }
-        });
+      if (data) {
+        // Fetch client photos to sync with processes
+        const clientNames = [...new Set(data.map((p: any) => p.client_name).concat(data.map((p: any) => p.applicant_name)))];
+        const { data: clients } = await supabase
+          .from('clients')
+          .select('id, full_name')
+          .eq('empresa_id', activeCompany.id)
+          .in('full_name', clientNames);
+        
+        const clientMap = new Map<string, string>();
+        clients?.forEach((c: any) => clientMap.set(c.full_name, c.id));
+
+        // Fetch all client photos for matching clients
+        const clientIds = [...new Set(clients?.map((c: any) => c.id) || [])];
+        let clientPhotosMap = new Map<string, string>();
+        if (clientIds.length > 0) {
+          const { data: photos } = await supabase
+            .from('client_photos')
+            .select('client_id, file_url')
+            .in('client_id', clientIds)
+            .order('created_at', { ascending: false });
+          photos?.forEach((p: any) => {
+            if (!clientPhotosMap.has(p.client_id)) {
+              clientPhotosMap.set(p.client_id, p.file_url);
+            }
+          });
+        }
+
+        setProcesses(data.map((p: any) => {
+          const clientId = clientMap.get(p.applicant_name) || clientMap.get(p.client_name);
+          const clientPhoto = clientId ? clientPhotosMap.get(clientId) : undefined;
+          return {
+            ...p,
+            documents: Array.isArray(p.documents) ? p.documents : [],
+            product_name: p.visa_products?.name || '',
+            photo_url: p.photo_url || clientPhoto || '',
+            _client_id: clientId || null,
+          };
+        }));
       }
-
-      setProcesses(data.map((p: any) => {
-        const clientId = clientMap.get(p.applicant_name) || clientMap.get(p.client_name);
-        const clientPhoto = clientId ? clientPhotosMap.get(clientId) : undefined;
-        return {
-          ...p,
-          documents: Array.isArray(p.documents) ? p.documents : [],
-          product_name: p.visa_products?.name || '',
-          photo_url: p.photo_url || clientPhoto || '',
-          _client_id: clientId || null,
-        };
-      }));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -398,7 +406,9 @@ export default function VistosProductionPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProcesses.length === 0 ? (
+                  {loading ? (
+          <TableLoadingRow colSpan={6} />
+        ) : filteredProcesses.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={canDelete ? 8 : 7} className="text-center text-muted-foreground py-6 text-xs">
                         Nenhum processo encontrado

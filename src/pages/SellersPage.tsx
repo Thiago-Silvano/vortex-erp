@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -105,6 +107,7 @@ const revenueScopes = [
 export default function SellersPage() {
   const { activeCompany } = useCompany();
   const [sellers, setSellers] = useState<Seller[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Seller | null>(null);
@@ -190,7 +193,9 @@ export default function SellersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSellers.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={8} />
+        ) : sortedSellers.length === 0 ? (
                   <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum vendedor cadastrado</TableCell></TableRow>
                 ) : sortedSellers.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openEdit(s)}>

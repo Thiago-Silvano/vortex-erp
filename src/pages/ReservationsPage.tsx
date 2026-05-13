@@ -1,6 +1,8 @@
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
@@ -31,6 +33,7 @@ interface ReservationRow {
 export default function ReservationsPage() {
   const { activeCompany } = useCompany();
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('pending');
   const [selectedReservation, setSelectedReservation] = useState<ReservationRow | null>(null);
@@ -42,12 +45,14 @@ export default function ReservationsPage() {
   const [bulkSaving, setBulkSaving] = useState(false);
 
   const fetchReservations = async () => {
+    setLoading(true);
     let query = supabase.from('reservations').select('*')
       .eq('service_type', 'aereo')
       .order('check_in', { ascending: true, nullsFirst: false });
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     const { data } = await query;
     if (data) setReservations(data as ReservationRow[]);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -202,7 +207,9 @@ export default function ReservationsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedData.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={7} />
+        ) : sortedData.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhuma reserva encontrada</TableCell></TableRow>
                 ) : sortedData.map(r => {
                   const urgent = isUrgent(r);

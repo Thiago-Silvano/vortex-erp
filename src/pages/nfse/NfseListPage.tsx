@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
@@ -30,6 +32,7 @@ export default function NfseListPage() {
   const navigate = useNavigate();
   const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -39,7 +42,7 @@ export default function NfseListPage() {
 
   const loadNotes = async () => {
     if (!activeCompany) return;
-    setLoading(true);
+    setTableLoading(true);
     let q = supabase
       .from('nfse_documents')
       .select('*')
@@ -51,7 +54,7 @@ export default function NfseListPage() {
 
     const { data } = await q;
     setNotes(data || []);
-    setLoading(false);
+    setTableLoading(false);
   };
 
   const statusBadge = (rawStatus: string) => {
@@ -219,7 +222,7 @@ export default function NfseListPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {tableLoading ? (
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
                 ) : sortedNotes.length === 0 ? (
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhuma nota encontrada</TableCell></TableRow>

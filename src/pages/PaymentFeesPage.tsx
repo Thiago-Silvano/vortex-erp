@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,6 +32,7 @@ interface Fee {
 export default function PaymentFeesPage() {
   const { activeCompany } = useCompany();
   const [items, setItems] = useState<Fee[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [institution, setInstitution] = useState('');
@@ -123,7 +126,9 @@ export default function PaymentFeesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={5} />
+        ) : items.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma tabela cadastrada</TableCell></TableRow>
                 ) : items.map(f => {
                   const vals = Object.values(f.fees_by_installment || {}).map(Number).filter(n => n > 0);

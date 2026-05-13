@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Plus, Edit, Trash2, FileText, Copy, Eye, ChevronDown, Variable } from 'lucide-react';
 import { toast } from 'sonner';
@@ -59,6 +61,7 @@ export default function ContractTemplatesPage() {
   const { activeCompany } = useCompany();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   const [showEditor, setShowEditor] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -77,14 +80,14 @@ export default function ContractTemplatesPage() {
 
   const loadTemplates = async () => {
     if (!activeCompany) return;
-    setLoading(true);
+    setTableLoading(true);
     const { data } = await supabase
       .from('contract_templates')
       .select('*')
       .eq('empresa_id', activeCompany.id)
       .order('created_at', { ascending: false });
     setTemplates((data as any) || []);
-    setLoading(false);
+    setTableLoading(false);
   };
 
   const openNew = () => {
@@ -197,7 +200,7 @@ export default function ContractTemplatesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {tableLoading ? (
                   <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
                 ) : sortedTemplates.length === 0 ? (
                   <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum modelo cadastrado</TableCell></TableRow>

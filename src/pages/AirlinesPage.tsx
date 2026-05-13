@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2, Search, Upload, X } from 'lucide-react';
@@ -27,11 +29,12 @@ const emptyAirline: Airline = { name: '', logo_url: null, cover_image_url: null,
 export default function AirlinesPage() {
   const { activeCompany } = useCompany();
   const [airlines, setAirlines] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Airline>(emptyAirline);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -43,12 +46,12 @@ export default function AirlinesPage() {
 
   const loadAirlines = async () => {
     if (!activeCompany) return;
-    setLoading(true);
+    setTableLoading(true);
     const { data } = await (supabase.from('airlines' as any).select('*') as any)
       .eq('empresa_id', activeCompany.id)
       .order('name');
     setAirlines(data || []);
-    setLoading(false);
+    setTableLoading(false);
   };
 
   const handleUploadLogo = async (file: File) => {
@@ -164,7 +167,9 @@ export default function AirlinesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedAirlines.length === 0 ? (
+                {tableLoading ? (
+          <TableLoadingRow colSpan={4} />
+        ) : sortedAirlines.length === 0 ? (
                   <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-4">Nenhuma cia aérea cadastrada</TableCell></TableRow>
                 ) : sortedAirlines.map(a => (
                   <TableRow key={a.id}>
