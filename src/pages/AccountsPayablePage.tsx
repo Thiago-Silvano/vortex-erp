@@ -177,8 +177,7 @@ export default function AccountsPayablePage() {
 
   useEffect(() => {
     fetch_();
-    supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setSuppliers(data);
-    setLoading(false); });
+    supabase.from('suppliers').select('id, name').order('name').then(({ data }) => { if (data) setSuppliers(data); });
     if (activeCompany?.id) {
       supabase.from('sellers').select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }) => { if (data) setSellers(data as any); });
       supabase.from('bank_accounts').select('id, bank_name, account_number').eq('empresa_id', activeCompany.id).eq('status', 'active').order('bank_name').then(({ data }) => { if (data) setBankAccounts(data as any); });
