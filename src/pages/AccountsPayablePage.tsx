@@ -154,21 +154,25 @@ export default function AccountsPayablePage() {
 
   const fetch_ = async () => {
     setLoading(true);
-    if (!activeCompany?.id) { setItems([]); return; }
-    // Fetch payables, then filter out any linked to draft sales
-    const { data } = await supabase
-      .from('accounts_payable')
-      .select('*')
-      .eq('empresa_id', activeCompany.id)
-      .order('due_date');
-    if (!data) { setItems([]); return; }
-    const saleIds = [...new Set((data as any[]).map(r => r.sale_id).filter(Boolean))];
-    let draftIds: string[] = [];
-    if (saleIds.length > 0) {
-      const { data: drafts } = await supabase.from('sales').select('id').in('id', saleIds).eq('status', 'draft');
-      draftIds = (drafts || []).map(d => d.id);
+    try {
+      if (!activeCompany?.id) { setItems([]); return; }
+      // Fetch payables, then filter out any linked to draft sales
+      const { data } = await supabase
+        .from('accounts_payable')
+        .select('*')
+        .eq('empresa_id', activeCompany.id)
+        .order('due_date');
+      if (!data) { setItems([]); return; }
+      const saleIds = [...new Set((data as any[]).map(r => r.sale_id).filter(Boolean))];
+      let draftIds: string[] = [];
+      if (saleIds.length > 0) {
+        const { data: drafts } = await supabase.from('sales').select('id').in('id', saleIds).eq('status', 'draft');
+        draftIds = (drafts || []).map(d => d.id);
+      }
+      setItems((data as Payable[]).filter(r => !r.sale_id || !draftIds.includes(r.sale_id)));
+    } finally {
+      setLoading(false);
     }
-    setItems((data as Payable[]).filter(r => !r.sale_id || !draftIds.includes(r.sale_id)));
   };
 
   useEffect(() => {
