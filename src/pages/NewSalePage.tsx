@@ -3147,13 +3147,13 @@ export default function NewSalePage() {
           };
           const typeMeta = (type?: string) => {
             switch (type) {
-              case 'aereo': return { label: 'Aéreo', pill: 'text-sky-700 dark:text-sky-300 bg-slate-50', iconBg: 'bg-sky-50 dark:bg-sky-950/40 text-slate-50' };
-              case 'hotel': return { label: 'Hotel', pill: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300', iconBg: 'bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300' };
-              case 'carro': return { label: 'Transfer', pill: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300' };
-              case 'cruzeiro': return { label: 'Cruzeiro', pill: 'bg-cyan-100 text-cyan-700', iconBg: 'bg-cyan-50 text-cyan-600' };
-              case 'experiencia': return { label: 'Experiência', pill: 'bg-pink-100 text-pink-700', iconBg: 'bg-pink-50 text-pink-600' };
-              case 'seguro': return { label: 'Seguro', pill: 'bg-emerald-100 text-emerald-700', iconBg: 'bg-emerald-50 text-emerald-600' };
-              default: return { label: 'Outros', pill: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300', iconBg: 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300' };
+              case 'aereo': return { label: 'Aéreo', pill: 'bg-inherit text-inherit', iconBg: 'bg-inherit text-inherit' };
+              case 'hotel': return { label: 'Hotel', pill: 'bg-inherit text-inherit', iconBg: 'bg-inherit text-inherit' };
+              case 'carro': return { label: 'Transfer', pill: 'bg-inherit text-inherit', iconBg: 'bg-inherit text-inherit' };
+              case 'cruzeiro': return { label: 'Cruzeiro', pill: 'bg-inherit text-inherit', iconBg: 'bg-inherit text-inherit' };
+              case 'experiencia': return { label: 'Experiência', pill: 'bg-inherit text-inherit', iconBg: 'bg-inherit text-inherit' };
+              case 'seguro': return { label: 'Seguro', pill: 'bg-inherit text-inherit', iconBg: 'bg-inherit text-inherit' };
+              default: return { label: 'Outros', pill: 'bg-inherit text-inherit', iconBg: 'bg-inherit text-inherit' };
             }
           };
           const supplierFor = (it: SaleItem): string => {
