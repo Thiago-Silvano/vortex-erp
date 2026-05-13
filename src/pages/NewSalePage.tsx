@@ -3166,13 +3166,30 @@ export default function NewSalePage() {
             return '';
           };
           const itemsForOption = (optId: string) => {
-            if (!isQuoteMode) return items.map((it, i) => ({ it, i }));
-            return items
-              .map((it, i) => ({ it, i }))
-              .filter(({ it }) => {
-                const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
-                return ids.includes(optId);
-              });
+            const base = isQuoteMode
+              ? items
+                  .map((it, i) => ({ it, i }))
+                  .filter(({ it }) => {
+                    const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                    return ids.includes(optId);
+                  })
+              : items.map((it, i) => ({ it, i }));
+            // Ordem fixa: 1) Aéreo, 2) Hospedagem (por check-in / check-out), 3) Demais serviços
+            const rank = (t?: string) => (t === 'aereo' ? 0 : t === 'hotel' ? 1 : 2);
+            return [...base].sort((a, b) => {
+              const ra = rank(a.it.metadata?.type);
+              const rb = rank(b.it.metadata?.type);
+              if (ra !== rb) return ra - rb;
+              if (ra === 1) {
+                const aIn = a.it.metadata?.hotel?.checkInDate || '';
+                const bIn = b.it.metadata?.hotel?.checkInDate || '';
+                if (aIn !== bIn) return aIn < bIn ? -1 : 1;
+                const aOut = a.it.metadata?.hotel?.checkOutDate || '';
+                const bOut = b.it.metadata?.hotel?.checkOutDate || '';
+                if (aOut !== bOut) return aOut < bOut ? -1 : 1;
+              }
+              return a.i - b.i;
+            });
           };
           const addServiceToOption = (optId: string) => {
             const ids = isQuoteMode ? [optId] : [];
