@@ -965,6 +965,19 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           </DialogContent>
         </Dialog>
 
+        <TripAdvisorImageModal
+          open={taImagesOpen}
+          onClose={() => setTaImagesOpen(false)}
+          initialQuery={hotel.hotelName ? `${hotel.hotelName} ${hotel.city || ''}`.trim() : ''}
+          onSelect={(img) => {
+            const url = img.url_full || img.url_preview;
+            if (!url) return;
+            setHotelImages(prev => prev.includes(url) ? prev : [...prev, url]);
+            setSelectedImages(prev => { const n = new Set(prev); n.add(url); return n; });
+            toast.success('Imagem adicionada');
+          }}
+        />
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSave}>Salvar Detalhes</Button>
