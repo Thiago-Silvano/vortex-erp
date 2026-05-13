@@ -117,10 +117,10 @@ serve(async (req) => {
         images = await searchBingForTripAdvisor(coreName + " hotel", max);
       }
     }
-    // Fallback 2: retry without "site:tripadvisor.com" — accept any source as long as URL is from TripAdvisor CDN
+    // Fallback 2: retry with strict site filter as a last attempt.
     if (images.length === 0) {
-      console.log("TripAdvisor fallback 2: searching without site filter");
-      images = await searchBingForTripAdvisor(query + " tripadvisor", max);
+      console.log("TripAdvisor fallback 2: searching with site filter");
+      images = await searchBingForTripAdvisor(query, max, true);
     }
     return new Response(JSON.stringify({ success: true, images, total: images.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
