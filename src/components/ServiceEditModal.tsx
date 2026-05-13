@@ -6,12 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import RichTextEditor from '@/components/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, MapPin, Calendar, OctagonAlert, FileUp } from 'lucide-react';
+import { Plus, Trash2, Search, Loader2, Plane, Hotel, Car, Shield, Star, Check, MapPin, Calendar, OctagonAlert, FileUp, Upload, Images, GripVertical, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCompany } from '@/contexts/CompanyContext';
 import { maskCurrencyInput, parseCurrency } from '@/lib/masks';
+import TripAdvisorImageModal from '@/components/TripAdvisorImageModal';
 
 interface FlightLeg {
   origin: string;
@@ -151,9 +152,12 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [searchingHotel, setSearchingHotel] = useState(false);
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
-  const [selectedImageIndices, setSelectedImageIndices] = useState<Set<number>>(
-    new Set((metadata.hotel?.images || []).map((_, i) => i))
+  const [selectedImages, setSelectedImages] = useState<Set<string>>(
+    new Set((metadata.hotel?.images || []))
   );
+  const [taImagesOpen, setTaImagesOpen] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
   const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
@@ -181,7 +185,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       const existingImgs = metadata.hotel?.images || [];
       setHotelImages(existingImgs);
       setPreviewImageUrl(null);
-      setSelectedImageIndices(new Set(existingImgs.map((_, i) => i)));
+      setSelectedImages(new Set(existingImgs));
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
       setMainReservation(reservationNumber || '');
@@ -226,21 +230,57 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   };
   const removeLeg = (idx: number) => setFlightLegs(prev => prev.filter((_, i) => i !== idx));
 
-  const toggleImageSelection = (idx: number) => {
-    setSelectedImageIndices(prev => {
+  const toggleImageSelection = (url: string) => {
+    setSelectedImages(prev => {
       const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
+      if (next.has(url)) next.delete(url);
+      else next.add(url);
       return next;
     });
+  };
+
+  const removeImage = (idx: number) => {
+    setHotelImages(prev => {
+      const url = prev[idx];
+      setSelectedImages(s => { const n = new Set(s); n.delete(url); return n; });
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
+
+  const reorderImages = (from: number, to: number) => {
+    if (from === to) return;
+    setHotelImages(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  };
+
+  const handleUploadFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const dataUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) continue;
+      const url = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      dataUrls.push(url);
+    }
+    if (dataUrls.length > 0) {
+      setHotelImages(prev => [...prev, ...dataUrls]);
+      setSelectedImages(prev => { const n = new Set(prev); dataUrls.forEach(u => n.add(u)); return n; });
+      toast.success(`${dataUrls.length} imagem(ns) adicionada(s)`);
+    }
   };
 
   // Fallback AI search
   const handleSearchHotelAI = async () => {
     if (!hotel.hotelName.trim()) { toast.error('Digite o nome do hotel'); return; }
     setSearchingHotel(true);
-    setHotelImages([]);
-    setSelectedImageIndices(new Set());
     try {
       const { data, error } = await supabase.functions.invoke('search-hotel-ai', {
         body: { hotelName: hotel.hotelName, location: hotel.city || hotel.country || '' },
@@ -270,12 +310,20 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           tripadvisorPopularMentions: h.tripadvisor_popular_mentions || prev.tripadvisorPopularMentions,
         }));
         if (data.images && data.images.length > 0) {
-          setHotelImages(data.images);
-          setSelectedImageIndices(new Set(data.images.map((_: string, i: number) => i)));
+          setHotelImages(prev => {
+            const merged = [...prev];
+            (data.images as string[]).forEach((u) => { if (!merged.includes(u)) merged.push(u); });
+            return merged;
+          });
+          setSelectedImages(prev => {
+            const n = new Set(prev);
+            (data.images as string[]).forEach((u) => n.add(u));
+            return n;
+          });
         }
         toast.success(`Informações do hotel e TripAdvisor encontradas!`);
       } else {
-        toast.error('Não foi possível encontrar informações do hotel');
+        toast.warning('Hotel não encontrado no TripAdvisor. Ajuste o nome/cidade e tente novamente.');
       }
     } catch (e: any) {
       toast.error(e.message || 'Erro ao buscar hotel');
@@ -316,7 +364,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   };
 
   const handleSave = () => {
-    const selectedImages = hotelImages.filter((_, i) => selectedImageIndices.has(i));
+    const orderedSelectedImages = hotelImages.filter((u) => selectedImages.has(u));
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc, isAirService: type === 'adicional' ? isAirService : undefined };
     if (type === 'aereo') {
       meta.airlineId = airlineId || undefined;
@@ -344,7 +392,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       meta.totalTravelDurationReturn = calcTotalTravelDuration(returnL);
     }
     if (type === 'hotel') {
-      meta.hotel = { ...hotel, images: selectedImages };
+      meta.hotel = { ...hotel, images: orderedSelectedImages };
     }
     if (type === 'experiencia') {
       meta.experience = experience;
@@ -360,8 +408,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       parseCurrency(costPriceStr),
       parseCurrency(ravStr),
     );
-    if (type === 'hotel' && selectedImages.length > 0 && onHotelImagesFound) {
-      onHotelImagesFound(selectedImages);
+    if (type === 'hotel' && orderedSelectedImages.length > 0 && onHotelImagesFound) {
+      onHotelImagesFound(orderedSelectedImages);
     }
     onClose();
   };
