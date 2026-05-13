@@ -4857,7 +4857,17 @@ export default function NewSalePage() {
                 || quoteOptions[0]?.id
                 || String(quoteOptions[0]?.order_index ?? 0);
               setForceImportOptionId(optId);
+              // Se o item atual está vazio (criado pelo "+ Adicionar serviço"), remove
+              // para evitar que sobre um serviço em branco após a importação.
+              const isEmpty = !current?.description
+                && !(current?.cost_price)
+                && !(current?.rav)
+                && !(current?.metadata && Object.keys(current.metadata).length > 0);
+              const idxToRemove = editingItemIdx;
               setEditingItemIdx(null);
+              if (isEmpty) {
+                setItems(prev => prev.filter((_, i) => i !== idxToRemove));
+              }
               setTimeout(() => setPdfImportOpen(true), 100);
             }}
             onSave={(desc, meta, resNumber, newCost, newRav) => {
