@@ -464,7 +464,15 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Label>Nome do Hotel</Label>
-                  <Input value={hotel.hotelName} onChange={e => setHotel(p => ({ ...p, hotelName: e.target.value }))} placeholder="Ex: Grand Hyatt Rio de Janeiro" />
+                  <div className="relative">
+                    <Input value={hotel.hotelName} onChange={e => setHotel(p => ({ ...p, hotelName: e.target.value }))} placeholder="Ex: Grand Hyatt Rio de Janeiro" className={hotel.city ? 'pr-32' : ''} />
+                    {hotel.city && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary max-w-[120px] truncate">
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{hotel.city}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Button variant="outline" onClick={handleSearchHotelAI} disabled={searchingHotel}>
                   {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
