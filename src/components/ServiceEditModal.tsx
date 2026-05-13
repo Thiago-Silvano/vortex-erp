@@ -931,6 +931,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   <div><Label className="text-xs">Check-out</Label><Input type="date" min={hotel.checkInDate || undefined} value={hotel.checkOutDate} onChange={e => setHotel(p => ({ ...p, checkOutDate: e.target.value }))} /></div>
                   <div><Label className="text-xs">Noites</Label><Input type="number" min="0" value={hotel.nightsCount || 0} readOnly className="bg-muted" /></div>
                   <div><Label className="text-xs">Hora Check-in</Label><Input type="time" value={hotel.checkInTime} onChange={e => setHotel(p => ({ ...p, checkInTime: e.target.value }))} /></div>
+                  <div><Label className="text-xs">Hora Check-out</Label><Input type="time" value={hotel.checkOutTime} onChange={e => setHotel(p => ({ ...p, checkOutTime: e.target.value }))} /></div>
                 </div>
               </div>
 
