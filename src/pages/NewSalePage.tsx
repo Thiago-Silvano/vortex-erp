@@ -4663,10 +4663,73 @@ export default function NewSalePage() {
           marginMode="none"
           marginPercent={20}
           onImport={({ items: importedItems, tripInfo, quoteOptions: importedQuoteOptions, paymentTerms, generalNotes, selectedClient }) => {
+            // Auto-enrich imported hotel items via TripAdvisor (search-hotel-ai).
+            const enrichImportedHotels = async (its: any[]) => {
+              const hotelItems = its.filter(i => i?.metadata?.type === 'hotel' && (i?.metadata?.hotel?.hotelName || i?.description));
+              if (hotelItems.length === 0) return;
+              const notFound: string[] = [];
+              for (const it of hotelItems) {
+                const name = (it.metadata?.hotel?.hotelName || it.description || '').trim();
+                if (!name) continue;
+                const location = it.metadata?.hotel?.city || it.metadata?.hotel?.country || '';
+                try {
+                  const { data, error } = await supabase.functions.invoke('search-hotel-ai', {
+                    body: { hotelName: name, location },
+                  });
+                  if (error) throw error;
+                  if (data?.success && data?.data) {
+                    const h = data.data;
+                    const imgs: string[] = data.images || [];
+                    setItems(prev => prev.map((p: any) => {
+                      const pName = (p.metadata?.hotel?.hotelName || p.description || '').trim();
+                      if (p.metadata?.type !== 'hotel' || pName !== name) return p;
+                      const existingHotel: any = p.metadata?.hotel || {};
+                      const mergedImages = Array.from(new Set([...(existingHotel.images || []), ...imgs]));
+                      return {
+                        ...p,
+                        metadata: {
+                          ...p.metadata,
+                          hotel: {
+                            ...existingHotel,
+                            hotelName: existingHotel.hotelName || h.name || name,
+                            stars: existingHotel.stars || h.stars,
+                            address: existingHotel.address || h.address,
+                            city: existingHotel.city || h.city,
+                            country: existingHotel.country || h.country,
+                            description: existingHotel.description || h.description,
+                            amenities: existingHotel.amenities?.length ? existingHotel.amenities : (h.amenities || []),
+                            checkInTime: existingHotel.checkInTime || h.check_in_time,
+                            checkOutTime: existingHotel.checkOutTime || h.check_out_time,
+                            category: existingHotel.category || h.category,
+                            highlights: existingHotel.highlights?.length ? existingHotel.highlights : (h.highlights || []),
+                            images: mergedImages,
+                            tripadvisorRating: h.tripadvisor_rating,
+                            tripadvisorReviewsCount: h.tripadvisor_reviews_count,
+                            tripadvisorRanking: h.tripadvisor_ranking,
+                            tripadvisorBadges: h.tripadvisor_badges,
+                            tripadvisorTopReviews: h.tripadvisor_top_reviews,
+                            tripadvisorRatingBreakdown: h.tripadvisor_rating_breakdown,
+                            tripadvisorPopularMentions: h.tripadvisor_popular_mentions,
+                          },
+                        },
+                      };
+                    }));
+                  } else {
+                    notFound.push(name);
+                  }
+                } catch (e) {
+                  notFound.push(name);
+                }
+              }
+              if (notFound.length > 0) {
+                toast.warning(`Hotéis não encontrados no TripAdvisor: ${notFound.join(', ')}. Edite o serviço, ajuste o nome e clique em "Buscar no TripAdvisor".`, { duration: 8000 });
+              }
+            };
+
             // If triggered from inside a service (within a specific option), force all imported items into that option.
             if (forceImportOptionId) {
               const targetId = forceImportOptionId;
-              setItems(prev => [...prev, ...importedItems.map(item => ({
+              const newItems: SaleItem[] = importedItems.map(item => ({
                 description: item.description,
                 cost_price: item.cost_price,
                 rav: item.rav,
@@ -4677,10 +4740,12 @@ export default function NewSalePage() {
                 metadata: item.metadata || {},
                 quote_option_id: targetId,
                 quote_option_ids: [targetId],
-              }))]);
+              }));
+              setItems(prev => [...prev, ...newItems]);
               setForceImportOptionId(null);
               if (generalNotes) setNotes(prev => prev ? `${prev}\n\n${generalNotes}` : generalNotes);
               toast.success(`${importedItems.length} serviço(s) adicionados à opção atual!`);
+              enrichImportedHotels(newItems);
               return;
             }
             const importBatchId = Date.now();
@@ -4745,6 +4810,7 @@ export default function NewSalePage() {
             }
 
             toast.success(`${importedItems.length} serviço(s) importados do PDF!`);
+            enrichImportedHotels(importedItems);
           }}
         />
 
