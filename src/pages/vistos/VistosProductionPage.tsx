@@ -97,7 +97,6 @@ export default function VistosProductionPage() {
     if (!activeCompany?.id) return;
     supabase.from('visa_products').select('id, name').eq('empresa_id', activeCompany.id).then(({ data }) => {
       if (data) setProducts(data as any);
-    setLoading(false);
     });
   }, [activeCompany?.id]);
 
