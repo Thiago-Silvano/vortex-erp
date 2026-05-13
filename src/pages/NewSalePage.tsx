@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { TableLoadingRow } from '@/components/TableLoadingRow';
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp, BedDouble, Car, Ship, MapPin, Briefcase } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp, BedDouble, Car, Ship, MapPin, Briefcase, Image } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
