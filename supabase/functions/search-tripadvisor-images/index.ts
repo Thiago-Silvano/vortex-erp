@@ -22,8 +22,8 @@ interface TaImage {
  * Usamos Bing Images filtrando por site:tripadvisor.com (sem precisar de API key).
  * Isso devolve thumbnails do CDN do TripAdvisor (media-cdn.tripadvisor.com / dynamic-media-cdn).
  */
-async function searchBingForTripAdvisor(query: string, limit: number): Promise<TaImage[]> {
-  const q = encodeURIComponent(`${query} site:tripadvisor.com`);
+async function searchBingForTripAdvisor(query: string, limit: number, useSiteFilter = false): Promise<TaImage[]> {
+  const q = encodeURIComponent(useSiteFilter ? `${query} site:tripadvisor.com` : `${query} Tripadvisor`);
   const url = `https://www.bing.com/images/search?q=${q}&form=HDRSC2&first=1`;
   const resp = await fetch(url, {
     headers: {
@@ -40,18 +40,24 @@ async function searchBingForTripAdvisor(query: string, limit: number): Promise<T
   const results: TaImage[] = [];
   const seen = new Set<string>();
 
-  // Bing embeda em data-m='{"murl":"https://...","turl":"https://...","t":"..."}'
-  const re = /m=\\?["']?(\{[^}]*?\})\\?["']?/g;
+  // Bing embeda os dados da imagem no atributo m="{&quot;murl&quot;:...}".
+  // O parser antigo só pegava JSON literal e falhava quando o Bing devolvia &quot;.
+  const re = /class="iusc"[^>]+\sm="([^"]+)"/g;
   let match: RegExpExecArray | null;
   while ((match = re.exec(html)) !== null && results.length < limit) {
     try {
-      const raw = match[1].replace(/&quot;/g, '"').replace(/\\"/g, '"');
+      const raw = match[1]
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, "&")
+        .replace(/&#39;/g, "'")
+        .replace(/\\"/g, '"');
       const obj = JSON.parse(raw);
       const murl: string = obj.murl || "";
       const turl: string = obj.turl || obj.murl || "";
       const title: string = obj.t || query;
       if (!murl || seen.has(murl)) continue;
-      if (!/tripadvisor\.com/i.test(murl)) continue;
+      const pageUrl: string = obj.purl || "";
+      if (!/tripadvisor\.com/i.test(`${murl} ${pageUrl} ${title}`)) continue;
       seen.add(murl);
       results.push({
         id: `ta-${results.length}-${Date.now()}`,
@@ -111,10 +117,10 @@ serve(async (req) => {
         images = await searchBingForTripAdvisor(coreName + " hotel", max);
       }
     }
-    // Fallback 2: retry without "site:tripadvisor.com" — accept any source as long as URL is from TripAdvisor CDN
+    // Fallback 2: retry with strict site filter as a last attempt.
     if (images.length === 0) {
-      console.log("TripAdvisor fallback 2: searching without site filter");
-      images = await searchBingForTripAdvisor(query + " tripadvisor", max);
+      console.log("TripAdvisor fallback 2: searching with site filter");
+      images = await searchBingForTripAdvisor(query, max, true);
     }
     return new Response(JSON.stringify({ success: true, images, total: images.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
