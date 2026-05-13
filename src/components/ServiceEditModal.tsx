@@ -984,7 +984,14 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
         <TripAdvisorImageModal
           open={taImagesOpen}
           onClose={() => setTaImagesOpen(false)}
-          initialQuery={hotel.hotelName ? `${hotel.hotelName} ${hotel.city || ''}`.trim() : ''}
+          initialQuery={
+            hotel.hotelName
+              ? [hotel.hotelName, hotel.city, hotel.country]
+                  .filter(Boolean)
+                  .join(' ')
+                  .trim()
+              : ''
+          }
           onSelect={(img) => {
             const url = img.url_full || img.url_preview;
             if (!url) return;
