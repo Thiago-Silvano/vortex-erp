@@ -458,6 +458,25 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             </div>
           )}
 
+          {/* Hotel name (entre tipo de serviço e valores) */}
+          {type === 'hotel' && (
+            <div className="space-y-2">
+              <div className="p-3 bg-primary/5 border border-primary/20 rounded-md text-xs text-muted-foreground">
+                Digite o nome do hotel e clique em <strong>Buscar no TripAdvisor</strong> para preencher automaticamente as informações, avaliações e reviews.
+              </div>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Label>Nome do Hotel</Label>
+                  <Input value={hotel.hotelName} onChange={e => setHotel(p => ({ ...p, hotelName: e.target.value }))} placeholder="Ex: Grand Hyatt Rio de Janeiro" />
+                </div>
+                <Button variant="outline" onClick={handleSearchHotelAI} disabled={searchingHotel}>
+                  {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
+                  {searchingHotel ? 'Buscando...' : 'Buscar no TripAdvisor'}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* ── EXPERIÊNCIA dates ── */}
           {type === 'experiencia' && (
             <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
@@ -719,21 +738,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           {/* ── HOTEL ── */}
           {type === 'hotel' && (
             <div className="space-y-4 border-t pt-4">
-              {/* Hotel name + TripAdvisor AI search */}
-              <div className="p-3 bg-primary/5 border border-primary/20 rounded-md text-xs text-muted-foreground">
-                Digite o nome do hotel e clique em <strong>Buscar no TripAdvisor</strong> para preencher automaticamente as informações, avaliações e reviews.
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <Label>Nome do Hotel</Label>
-                  <Input value={hotel.hotelName} onChange={e => setHotel(p => ({ ...p, hotelName: e.target.value }))} placeholder="Ex: Grand Hyatt Rio de Janeiro" />
-                </div>
-                <Button variant="outline" className="mt-6" onClick={handleSearchHotelAI} disabled={searchingHotel}>
-                  {searchingHotel ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
-                  {searchingHotel ? 'Buscando...' : 'Buscar no TripAdvisor'}
-                </Button>
-              </div>
-
               {searchingHotel && (
                 <div className="p-4 bg-muted/50 rounded-lg text-center text-sm text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
@@ -929,7 +933,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     });
                   }} /></div>
                   <div><Label className="text-xs">Check-out</Label><Input type="date" min={hotel.checkInDate || undefined} value={hotel.checkOutDate} onChange={e => setHotel(p => ({ ...p, checkOutDate: e.target.value }))} /></div>
-                  <div><Label className="text-xs">Noites</Label><Input type="number" min="0" value={hotel.nightsCount || 0} readOnly className="bg-muted" /></div>
                   <div><Label className="text-xs">Hora Check-in</Label><Input type="time" value={hotel.checkInTime} onChange={e => setHotel(p => ({ ...p, checkInTime: e.target.value }))} /></div>
                   <div><Label className="text-xs">Hora Check-out</Label><Input type="time" value={hotel.checkOutTime} onChange={e => setHotel(p => ({ ...p, checkOutTime: e.target.value }))} /></div>
                 </div>
@@ -939,14 +942,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 <div><Label className="text-xs">Tipo de Quarto</Label><Input value={hotel.roomType || ''} onChange={e => setHotel(p => ({ ...p, roomType: e.target.value }))} placeholder="Deluxe Suite" /></div>
                 <div><Label className="text-xs">Qtd. Quartos</Label><Input type="number" min="1" value={hotel.roomCount || 1} onChange={e => setHotel(p => ({ ...p, roomCount: parseInt(e.target.value) || 1 }))} /></div>
                 <div><Label className="text-xs">Qtd. Hóspedes</Label><Input type="number" min="1" value={hotel.guestCount || 2} onChange={e => setHotel(p => ({ ...p, guestCount: parseInt(e.target.value) || 1 }))} /></div>
-                <div><Label className="text-xs">Valor/Noite (R$)</Label><Input type="number" min="0" step="0.01" value={hotel.pricePerNight || 0} onChange={e => {
-                  const ppn = parseFloat(e.target.value) || 0;
-                  setHotel(p => ({ ...p, pricePerNight: ppn, totalPrice: ppn * (p.nightsCount || 0) }));
-                }} /></div>
+                <div><Label className="text-xs">Estrelas</Label><Input type="number" min="0" max="5" value={hotel.stars} onChange={e => setHotel(p => ({ ...p, stars: parseInt(e.target.value) || 0 }))} /></div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div><Label className="text-xs">Estrelas</Label><Input type="number" min="0" max="5" value={hotel.stars} onChange={e => setHotel(p => ({ ...p, stars: parseInt(e.target.value) || 0 }))} /></div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div><Label className="text-xs">Categoria</Label><Input value={hotel.category} onChange={e => setHotel(p => ({ ...p, category: e.target.value }))} placeholder="Resort, Boutique..." /></div>
                 <div><Label className="text-xs">Cidade</Label><Input value={hotel.city} onChange={e => setHotel(p => ({ ...p, city: e.target.value }))} /></div>
                 <div><Label className="text-xs">País</Label><Input value={hotel.country} onChange={e => setHotel(p => ({ ...p, country: e.target.value }))} /></div>
