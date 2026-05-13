@@ -4680,10 +4680,10 @@ export default function NewSalePage() {
                   if (data?.success && data?.data) {
                     const h = data.data;
                     const imgs: string[] = data.images || [];
-                    setItems(prev => prev.map(p => {
+                    setItems(prev => prev.map((p: any) => {
                       const pName = (p.metadata?.hotel?.hotelName || p.description || '').trim();
                       if (p.metadata?.type !== 'hotel' || pName !== name) return p;
-                      const existingHotel = p.metadata?.hotel || {};
+                      const existingHotel: any = p.metadata?.hotel || {};
                       const mergedImages = Array.from(new Set([...(existingHotel.images || []), ...imgs]));
                       return {
                         ...p,
