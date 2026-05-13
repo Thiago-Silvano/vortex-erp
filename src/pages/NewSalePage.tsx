@@ -3330,7 +3330,7 @@ export default function NewSalePage() {
                           <Icon className={`h-4 w-4 ${it.metadata?.type === 'aereo' ? 'text-slate-600' : ''}`} />
                         </div>
                         <button type="button" onClick={() => setEditingItemIdx(idx)} className="flex-1 min-w-0 text-left">
-                          <div className="text-sm font-semibold text-foreground truncate flex items-center gap-2">
+                          <div className="text-sm font-semibold text-foreground flex items-center gap-2">
                             <span className="truncate">{it.description || <span className="text-muted-foreground italic font-normal">Editar serviço…</span>}</span>
                             {it.metadata?.type === 'hotel' && it.metadata?.hotel?.city && (
                               <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium flex-shrink-0">
