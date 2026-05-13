@@ -2733,7 +2733,11 @@ export default function NewSalePage() {
           <h1 className="text-2xl font-bold text-foreground">
             {saleStatus === 'active' ? 'Editar Venda' : editSaleId ? 'Editar Cotação' : 'Nova Cotação'}
           </h1>
-          <Button onClick={() => setPdfImportOpen(true)} className="gap-2 bg-orange-500 hover:bg-orange-600 text-white">
+          <Button onClick={() => {
+            const activeId = activeOptionId || quoteOptions[0]?.id || '';
+            if (activeId) setForceImportOptionId(activeId);
+            setPdfImportOpen(true);
+          }} className="gap-2 bg-orange-500 hover:bg-orange-600 text-white">
             <FileUp className="h-4 w-4" /> Importar PDF
           </Button>
         </div>
