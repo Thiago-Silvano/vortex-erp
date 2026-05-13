@@ -176,8 +176,7 @@ export default function AccountsReceivablePage() {
   useEffect(() => {
     fetch_();
     supabase.from('clients').select('id, full_name').order('full_name')
-      .then(({ data }) => { if (data) setClients(data);
-    setLoading(false); });
+      .then(({ data }) => { if (data) setClients(data); });
     supabase.from('cost_centers').select('id, name').eq('status', 'active')
       .or(`empresa_id.eq.${activeCompany?.id},empresa_id.is.null`).order('name')
       .then(({ data }) => { if (data) setCostCenters(data); });
