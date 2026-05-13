@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,11 +39,13 @@ export default function QuoteStatusesPage() {
   const { activeCompany } = useCompany();
   const [rows, setRows] = useState<KanbanColumn[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<KanbanColumn | null>(null);
   const [form, setForm] = useState({ name: '', status_key: '', color: '#3b82f6', sort_order: 0 });
   const [saving, setSaving] = useState(false);
 
   const fetchRows = async () => {
+    setLoading(true);
     if (!activeCompany?.id) return;
     setLoading(true);
     const { data } = await supabase.from('kanban_columns').select('*').eq('empresa_id', activeCompany.id).order('sort_order') as any;

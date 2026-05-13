@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -45,12 +47,14 @@ export default function PromotionsPage() {
   const { activeCompany } = useCompany();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [creativePromo, setCreativePromo] = useState<Promotion | null>(null);
 
   const fetchPromotions = async () => {
+    setLoading(true);
     if (!activeCompany) return;
     setLoading(true);
     let query = supabase

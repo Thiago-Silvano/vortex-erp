@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,6 +44,7 @@ type SortDir = 'asc' | 'desc';
 export default function GroupAccountsPage() {
   const { activeCompany } = useCompany();
   const [payables, setPayables] = useState<PayableRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [receivables, setReceivables] = useState<ReceivableRow[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOpt[]>([]);
   const [selectedPayables, setSelectedPayables] = useState<Set<string>>(new Set());

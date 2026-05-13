@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { format, subDays, startOfMonth, startOfYear } from 'date-fns';
@@ -34,6 +36,7 @@ type Period = '7d' | '30d' | 'month' | 'year' | 'custom';
 export default function VistosReportsPage() {
   const { activeCompany } = useCompany();
   const [period, setPeriod] = useState<Period>('30d');
+  const [loading, setLoading] = useState(true);
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [sales, setSales] = useState<any[]>([]);
@@ -227,7 +230,9 @@ export default function VistosReportsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sales.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={5} />
+        ) : sales.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma venda no período</TableCell></TableRow>
                 ) : sales.map(s => (
                   <TableRow key={s.id}>

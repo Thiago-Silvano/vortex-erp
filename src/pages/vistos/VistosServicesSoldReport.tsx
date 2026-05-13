@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Badge } from '@/components/ui/badge';
 import { FileDown, Filter, X, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -94,6 +96,7 @@ function MultiSelect({ options, values, onChange, placeholder = 'Todos' }: Multi
 export default function VistosServicesSoldReport() {
   const { activeCompany } = useCompany();
   const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
   const [loading, setLoading] = useState(false);
 
   // Filters

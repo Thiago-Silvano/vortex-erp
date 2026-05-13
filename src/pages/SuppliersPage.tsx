@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -51,6 +53,7 @@ export default function SuppliersPage() {
   const navigate = useNavigate();
   const locationState = location.state as any;
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -62,10 +65,12 @@ export default function SuppliersPage() {
   const prefillApplied = useRef(false);
 
   const fetchSuppliers = async () => {
+    setLoading(true);
     let query = supabase.from('suppliers').select('*').order('name');
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     const { data } = await query;
     if (data) setSuppliers(data as unknown as Supplier[]);
+    setLoading(false);
   };
 
   useEffect(() => { fetchSuppliers(); }, [activeCompany?.id]);
@@ -226,7 +231,9 @@ export default function SuppliersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSuppliers.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={6} />
+        ) : sortedSuppliers.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum fornecedor encontrado</TableCell></TableRow>
                 ) : sortedSuppliers.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleEdit(s)}>

@@ -5,6 +5,8 @@ import { useCompany } from '@/contexts/CompanyContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, CheckCircle2, Clock, AlertCircle, Eye, TrendingUp, Shield, Activity } from 'lucide-react';
 import { format } from 'date-fns';
@@ -49,6 +51,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default function ContractsDashboardPage() {
   const { activeCompany } = useCompany();
   const [stats, setStats] = useState<ContractStat>({ total: 0, signed: 0, pending: 0, viewed: 0, expired: 0, sent: 0 });
+  const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);

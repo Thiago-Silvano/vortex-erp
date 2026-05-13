@@ -2,6 +2,8 @@ import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
@@ -42,6 +44,7 @@ interface SaleRow {
 
 export default function SalesPage() {
   const [sales, setSales] = useState<SaleRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<SaleRow | null>(null);
   const [revertTarget, setRevertTarget] = useState<SaleRow | null>(null);
@@ -69,6 +72,7 @@ export default function SalesPage() {
   };
 
   const fetchSales = async () => {
+    setLoading(true);
     let query = supabase.from('sales').select('*').order('sale_date', { ascending: false });
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     const { data } = await query;
@@ -296,7 +300,9 @@ export default function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={9} />
+        ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>

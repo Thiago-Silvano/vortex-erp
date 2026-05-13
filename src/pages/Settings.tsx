@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Save, X, CheckCircle, XCircle, Loader2, MapPin, Image, Mail } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,6 +26,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
   const [settings, setSettings] = useState<AgencySettings>(getAgencySettings());
+  const [loading, setLoading] = useState(true);
   const [ecRates, setEcRates] = useState<CardRate[]>([]);
   const [linkRates, setLinkRates] = useState<CardRate[]>([]);
   const [googleApiKey, setGoogleApiKey] = useState('');

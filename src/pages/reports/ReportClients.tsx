@@ -3,6 +3,8 @@ import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -14,6 +16,7 @@ import { generateReportPdf } from '@/lib/generateReportPdf';
 export default function ReportClients() {
   const { activeCompany } = useCompany();
   const [clients, setClients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sales, setSales] = useState<any[]>([]);
 
   useEffect(() => {

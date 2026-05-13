@@ -3,6 +3,8 @@ import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,7 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', '#f59e0b', '#8
 export default function ReportCostCenters() {
   const { activeCompany } = useCompany();
   const [costCenters, setCostCenters] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [receivables, setReceivables] = useState<any[]>([]);
   const [payables, setPayables] = useState<any[]>([]);
 
@@ -88,7 +91,9 @@ export default function ReportCostCenters() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ccData.length === 0 ? (
+                  {loading ? (
+          <TableLoadingRow colSpan={4} />
+        ) : ccData.length === 0 ? (
                     <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum dado</TableCell></TableRow>
                   ) : ccData.map((c, i) => (
                     <TableRow key={i}>

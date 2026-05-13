@@ -2,6 +2,8 @@ import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +40,7 @@ interface SaleRow {
 export default function VouchersPage() {
   const { activeCompany } = useCompany();
   const [sales, setSales] = useState<SaleRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
@@ -48,6 +51,7 @@ export default function VouchersPage() {
 
   const fetchSales = async () => {
     setLoading(true);
+    setLoading(true);
     let query = supabase
       .from('sales')
       .select('*')
@@ -56,6 +60,7 @@ export default function VouchersPage() {
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     const { data } = await query;
     if (data) setSales(data as SaleRow[]);
+    setLoading(false);
     setLoading(false);
   };
 

@@ -11,6 +11,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
@@ -40,6 +42,7 @@ const emptyService: FiscalService = {
 export default function NfseServicesPage() {
   const { activeCompany } = useCompany();
   const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<FiscalService>(emptyService);
@@ -147,7 +150,9 @@ export default function NfseServicesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedServices.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={6} />
+        ) : sortedServices.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>
                 ) : sortedServices.map(s => (
                   <TableRow key={s.id}>

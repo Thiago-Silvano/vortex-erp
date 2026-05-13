@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, User, GripVertical, Send, Plus, Trash2, LayoutGrid, List, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -54,6 +56,7 @@ const CONSULATES = ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Recife', 'Port
 export default function VistosProductionPage() {
   const { activeCompany } = useCompany();
   const [processes, setProcesses] = useState<Process[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [interviewOpen, setInterviewOpen] = useState(false);
@@ -94,10 +97,12 @@ export default function VistosProductionPage() {
     if (!activeCompany?.id) return;
     supabase.from('visa_products').select('id, name').eq('empresa_id', activeCompany.id).then(({ data }) => {
       if (data) setProducts(data as any);
+    setLoading(false);
     });
   }, [activeCompany?.id]);
 
   const fetchProcesses = async () => {
+    setLoading(true);
     if (!activeCompany?.id) return;
     const { data } = await supabase
       .from('visa_processes')
@@ -398,7 +403,9 @@ export default function VistosProductionPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProcesses.length === 0 ? (
+                  {loading ? (
+          <TableLoadingRow colSpan={6} />
+        ) : filteredProcesses.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={canDelete ? 8 : 7} className="text-center text-muted-foreground py-6 text-xs">
                         Nenhum processo encontrado

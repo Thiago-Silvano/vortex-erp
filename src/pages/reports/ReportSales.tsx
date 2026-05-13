@@ -3,6 +3,8 @@ import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ReportFilters from '@/components/ReportFilters';
@@ -15,6 +17,7 @@ import { generateReportPdf } from '@/lib/generateReportPdf';
 export default function ReportSales() {
   const { activeCompany } = useCompany();
   const [sales, setSales] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saleItems, setSaleItems] = useState<any[]>([]);
   const [range, setRange] = useState({ start: format(subDays(new Date(), 30), 'yyyy-MM-dd'), end: format(new Date(), 'yyyy-MM-dd') });
   const [filterClient, setFilterClient] = useState('');
@@ -119,7 +122,9 @@ export default function ReportSales() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {loading ? (
+          <TableLoadingRow colSpan={8} />
+        ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
                 ) : filtered.map(s => (
                   <TableRow key={s.id}>

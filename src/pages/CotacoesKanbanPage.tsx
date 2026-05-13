@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SortableTableHead } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { useTableSort } from '@/hooks/useTableSort';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -45,6 +47,7 @@ interface CotacoesKanbanPageProps {
 
 export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKanbanPageProps = {}) {
   const [sales, setSales] = useState<KanbanSale[]>([]);
+  const [loading, setLoading] = useState(true);
   const [columns, setColumns] = useState<KanbanColumnData[]>(DEFAULT_COLUMNS);
   const [sellers, setSellers] = useState<SellerOption[]>([]);
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>(() => {
@@ -75,7 +78,8 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   useEffect(() => {
     if (!activeCompany?.id) return;
     supabase.from('sellers').select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active')
-      .then(({ data }) => { if (data) setSellers(data); });
+      .then(({ data }) => { if (data) setSellers(data);
+    setLoading(false); });
   }, [activeCompany?.id]);
 
   // Load kanban columns from DB (or use defaults)
@@ -103,6 +107,7 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
 
   // Load cotações (draft sales)
   const fetchSales = async () => {
+    setLoading(true);
     if (!activeCompany?.id) return;
 
     // Fetch sales with seller info
@@ -528,7 +533,9 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sortedSales.length === 0 ? (
+                    {loading ? (
+          <TableLoadingRow colSpan={10} />
+        ) : sortedSales.length === 0 ? (
                       <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma cotação encontrada</TableCell></TableRow>
                     ) : sortedSales.map(s => {
                       const col = columns.find(c => c.statusKey === s.sale_workflow_status) || columns[0];

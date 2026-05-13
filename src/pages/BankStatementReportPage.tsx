@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +39,7 @@ const originLabels: Record<string, string> = {
 export default function BankStatementReportPage() {
   const { activeCompany } = useCompany();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [loading, setLoading] = useState(true);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [selectedAccount, setSelectedAccount] = useState('');
   const [dateFrom, setDateFrom] = useState(() => {

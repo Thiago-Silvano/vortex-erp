@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TableLoadingRow } from '@/components/TableLoadingRow';
+
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -118,6 +120,7 @@ export default function BankReconciliationPage() {
   const [searchParams] = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [loading, setLoading] = useState(true);
   const [accountBalances, setAccountBalances] = useState<Record<string, number>>({});
   const [selectedAccount, setSelectedAccount] = useState(searchParams.get("account") || "");
   const [transactions, setTransactions] = useState<BankTx[]>([]);
@@ -1124,7 +1127,9 @@ export default function BankReconciliationPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTx.length === 0 ? (
+                  {loading ? (
+          <TableLoadingRow colSpan={5} />
+        ) : filteredTx.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
                         Nenhum lançamento ignorado
