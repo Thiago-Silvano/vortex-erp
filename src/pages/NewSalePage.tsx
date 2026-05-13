@@ -4729,7 +4729,7 @@ export default function NewSalePage() {
             // If triggered from inside a service (within a specific option), force all imported items into that option.
             if (forceImportOptionId) {
               const targetId = forceImportOptionId;
-              const newItems = importedItems.map(item => ({
+              const newItems: SaleItem[] = importedItems.map(item => ({
                 description: item.description,
                 cost_price: item.cost_price,
                 rav: item.rav,
