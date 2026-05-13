@@ -78,8 +78,7 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   useEffect(() => {
     if (!activeCompany?.id) return;
     supabase.from('sellers').select('id, full_name').eq('empresa_id', activeCompany.id).eq('status', 'active')
-      .then(({ data }) => { if (data) setSellers(data);
-    setLoading(false); });
+      .then(({ data }) => { if (data) setSellers(data); });
   }, [activeCompany?.id]);
 
   // Load kanban columns from DB (or use defaults)
