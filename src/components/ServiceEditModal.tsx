@@ -461,9 +461,6 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           {/* Hotel name (entre tipo de serviço e valores) */}
           {type === 'hotel' && (
             <div className="space-y-2">
-              <div className="p-3 bg-primary/5 border border-primary/20 rounded-md text-xs text-muted-foreground">
-                Digite o nome do hotel e clique em <strong>Buscar no TripAdvisor</strong> para preencher automaticamente as informações, avaliações e reviews.
-              </div>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Label>Nome do Hotel</Label>
