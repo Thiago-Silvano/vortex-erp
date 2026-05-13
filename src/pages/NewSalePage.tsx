@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { TableLoadingRow } from '@/components/TableLoadingRow';
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp, BedDouble, Car, Ship, MapPin, Briefcase } from 'lucide-react';
+import { Plus, Trash2, Upload, FileText, ExternalLink, FileUp, ChevronsUpDown, Download, Link2, ImagePlus, X, Edit, Paperclip, GripVertical, ArrowUp, ArrowDown, Sparkles, Loader2, ShieldCheck, FileEdit, Move, Search, Send, Plane, UserPen, Copy, FileCheck, Clock, ChevronDown, ChevronUp, BedDouble, Car, Ship, MapPin, Briefcase, Image as ImageIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -3330,12 +3330,28 @@ export default function NewSalePage() {
                           <Icon className={`h-4 w-4 ${it.metadata?.type === 'aereo' ? 'text-slate-600' : ''}`} />
                         </div>
                         <button type="button" onClick={() => setEditingItemIdx(idx)} className="flex-1 min-w-0 text-left">
-                          <div className="text-sm font-semibold text-foreground truncate flex items-center gap-2">
+                          <div className="text-sm font-semibold text-foreground flex items-center gap-2">
                             <span className="truncate">{it.description || <span className="text-muted-foreground italic font-normal">Editar serviço…</span>}</span>
                             {it.metadata?.type === 'hotel' && it.metadata?.hotel?.city && (
                               <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium flex-shrink-0">
                                 <MapPin className="h-2.5 w-2.5" />
                                 {it.metadata.hotel.city}
+                              </span>
+                            )}
+                            {it.metadata?.type === 'hotel' && (
+                              <span
+                                className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                                  (itemImages[idx]?.length || 0) > 0 || (it.metadata?.hotel?.images?.length || 0) > 0
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-red-100 text-red-700'
+                                }`}
+                                title={
+                                  (itemImages[idx]?.length || 0) > 0 || (it.metadata?.hotel?.images?.length || 0) > 0
+                                    ? 'Imagens do hotel adicionadas'
+                                    : 'Nenhuma imagem do hotel adicionada'
+                                }
+                              >
+                                <ImageIcon className="h-2.5 w-2.5" />
                               </span>
                             )}
                           </div>
