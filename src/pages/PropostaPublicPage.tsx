@@ -301,7 +301,7 @@ export default function PropostaPublicPage() {
       <div className="relative" style={{ minHeight: heroImage ? 520 : 340 }}>
         {heroImage && (
           <div className="absolute inset-0 overflow-hidden" style={{ border: '4px solid #C8A45B' }}>
-            <img src={heroImage} alt={destination || 'Destino'} className="w-full h-full" style={getImageStyle(heroImageConfig)} />
+            <img src={heroImage} alt={destination || 'Destino'} className="w-full h-full" style={{ objectFit: 'contain', objectPosition: 'center', width: '100%', height: '100%' }} />
           </div>
         )}
         <div className="absolute inset-0" style={{
