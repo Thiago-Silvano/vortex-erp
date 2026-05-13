@@ -73,29 +73,36 @@ export default function SalesPage() {
 
   const fetchSales = async () => {
     setLoading(true);
-    let query = supabase.from('sales').select('*').order('sale_date', { ascending: false });
-    if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
-    const { data } = await query;
-    if (!data) return;
-
-    const saleIds = data.map((s: any) => s.id);
-    const suppliersMap: Record<string, string[]> = {};
-    if (saleIds.length > 0) {
-      const { data: links } = await supabase
-        .from('sale_suppliers')
-        .select('sale_id, suppliers(name)')
-        .in('sale_id', saleIds);
-      if (links) {
-        links.forEach((l: any) => {
-          const name = l.suppliers?.name;
-          if (!name) return;
-          if (!suppliersMap[l.sale_id]) suppliersMap[l.sale_id] = [];
-          if (!suppliersMap[l.sale_id].includes(name)) suppliersMap[l.sale_id].push(name);
-        });
+    try {
+      let query = supabase.from('sales').select('*').order('sale_date', { ascending: false });
+      if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
+      const { data } = await query;
+      if (!data) {
+        setSales([]);
+        return;
       }
-    }
 
-    setSales(data.map((s: any) => ({ ...s, suppliers_summary: suppliersMap[s.id]?.join(', ') || '' })) as SaleRow[]);
+      const saleIds = data.map((s: any) => s.id);
+      const suppliersMap: Record<string, string[]> = {};
+      if (saleIds.length > 0) {
+        const { data: links } = await supabase
+          .from('sale_suppliers')
+          .select('sale_id, suppliers(name)')
+          .in('sale_id', saleIds);
+        if (links) {
+          links.forEach((l: any) => {
+            const name = l.suppliers?.name;
+            if (!name) return;
+            if (!suppliersMap[l.sale_id]) suppliersMap[l.sale_id] = [];
+            if (!suppliersMap[l.sale_id].includes(name)) suppliersMap[l.sale_id].push(name);
+          });
+        }
+      }
+
+      setSales(data.map((s: any) => ({ ...s, suppliers_summary: suppliersMap[s.id]?.join(', ') || '' })) as SaleRow[]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
