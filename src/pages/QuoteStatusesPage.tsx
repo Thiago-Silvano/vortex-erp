@@ -39,15 +39,15 @@ export default function QuoteStatusesPage() {
   const { activeCompany } = useCompany();
   const [rows, setRows] = useState<KanbanColumn[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   const [editing, setEditing] = useState<KanbanColumn | null>(null);
   const [form, setForm] = useState({ name: '', status_key: '', color: '#3b82f6', sort_order: 0 });
   const [saving, setSaving] = useState(false);
 
   const fetchRows = async () => {
-    setLoading(true);
+    setTableLoading(true);
     if (!activeCompany?.id) return;
-    setLoading(true);
+    setTableLoading(true);
     const { data } = await supabase.from('kanban_columns').select('*').eq('empresa_id', activeCompany.id).order('sort_order') as any;
     const list = (data as KanbanColumn[]) || [];
     if (list.length === 0) {
@@ -58,7 +58,7 @@ export default function QuoteStatusesPage() {
     } else {
       setRows(list);
     }
-    setLoading(false);
+    setTableLoading(false);
   };
 
   useEffect(() => { fetchRows(); }, [activeCompany?.id]);
@@ -139,7 +139,7 @@ export default function QuoteStatusesPage() {
             <CardTitle>Status cadastrados ({rows.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {tableLoading ? (
               <p className="text-muted-foreground text-center py-8">Carregando...</p>
             ) : rows.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">

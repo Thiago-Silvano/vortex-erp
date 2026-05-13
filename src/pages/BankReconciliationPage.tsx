@@ -126,7 +126,7 @@ export default function BankReconciliationPage() {
   const [transactions, setTransactions] = useState<BankTx[]>([]);
   const [titles, setTitles] = useState<FinancialTitle[]>([]);
   const [importingOFX, setImportingOFX] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("pending");
   const [filterType, setFilterType] = useState("all");
   const [searchTx, setSearchTx] = useState("");
@@ -314,7 +314,7 @@ export default function BankReconciliationPage() {
 
   const loadTransactions = useCallback(async () => {
     if (!selectedAccount || !activeCompany) return;
-    setLoading(true);
+    setTableLoading(true);
     const { data } = await supabase
       .from("bank_transactions")
       .select("*")
@@ -394,7 +394,7 @@ export default function BankReconciliationPage() {
         notes: r.notes || "",
       }));
     setTitles([...payables, ...receivables]);
-    setLoading(false);
+    setTableLoading(false);
   }, [selectedAccount, activeCompany]);
 
   useEffect(() => {
@@ -1127,7 +1127,7 @@ export default function BankReconciliationPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {tableLoading ? (
           <TableLoadingRow colSpan={5} />
         ) : filteredTx.length === 0 ? (
                     <TableRow>

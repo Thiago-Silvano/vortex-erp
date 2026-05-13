@@ -55,10 +55,10 @@ export default function VistosProductsPage() {
   const [costCenterId, setCostCenterId] = useState('');
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
 
   const fetchProducts = async () => {
-    setLoading(true);
+    setTableLoading(true);
     if (!activeCompany?.id) return;
     const { data } = await supabase
       .from('visa_products')
@@ -66,7 +66,7 @@ export default function VistosProductsPage() {
       .eq('empresa_id', activeCompany.id)
       .order('name');
     if (data) setProducts(data as Product[]);
-    setLoading(false);
+    setTableLoading(false);
   };
 
   const fetchSuppliers = async () => {
@@ -96,7 +96,7 @@ export default function VistosProductsPage() {
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Informe o nome do serviço.'); return; }
-    setLoading(true);
+    setTableLoading(true);
     const payload: any = {
       name: name.trim(),
       description: description.trim(),
@@ -115,7 +115,7 @@ export default function VistosProductsPage() {
       await supabase.from('visa_products').insert(payload);
       toast.success('Serviço criado!');
     }
-    setLoading(false);
+    setTableLoading(false);
     setDialogOpen(false);
     fetchProducts();
   };
@@ -148,7 +148,7 @@ export default function VistosProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {tableLoading ? (
           <TableLoadingRow colSpan={6} />
         ) : products.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum serviço cadastrado</TableCell></TableRow>

@@ -47,7 +47,7 @@ export default function NfseServicesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<FiscalService>(emptyService);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
 
   useEffect(() => {
     if (activeCompany) loadServices();
@@ -55,14 +55,14 @@ export default function NfseServicesPage() {
 
   const loadServices = async () => {
     if (!activeCompany) return;
-    setLoading(true);
+    setTableLoading(true);
     const { data } = await supabase
       .from('fiscal_service_mappings')
       .select('*')
       .eq('empresa_id', activeCompany.id)
       .order('nome_interno');
     setServices(data || []);
-    setLoading(false);
+    setTableLoading(false);
   };
 
   const handleSave = async () => {
@@ -150,7 +150,7 @@ export default function NfseServicesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {tableLoading ? (
           <TableLoadingRow colSpan={6} />
         ) : sortedServices.length === 0 ? (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum serviço cadastrado</TableCell></TableRow>

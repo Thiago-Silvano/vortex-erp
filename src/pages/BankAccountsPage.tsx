@@ -46,7 +46,7 @@ export default function BankAccountsPage() {
   const { activeCompany } = useCompany();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyAccount);
@@ -62,14 +62,14 @@ export default function BankAccountsPage() {
 
   const load = async () => {
     if (!activeCompany) return;
-    setLoading(true);
+    setTableLoading(true);
     const { data } = await supabase
       .from('bank_accounts')
       .select('*')
       .eq('empresa_id', activeCompany.id)
       .order('bank_name');
     setAccounts((data as any[]) || []);
-    setLoading(false);
+    setTableLoading(false);
   };
 
   useEffect(() => { load(); }, [activeCompany]);
@@ -132,7 +132,7 @@ export default function BankAccountsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {tableLoading ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
                 ) : sortedAccounts.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma conta cadastrada</TableCell></TableRow>

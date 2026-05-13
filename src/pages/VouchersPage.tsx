@@ -42,7 +42,7 @@ export default function VouchersPage() {
   const [sales, setSales] = useState<SaleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,8 +50,8 @@ export default function VouchersPage() {
   }, [activeCompany?.id]);
 
   const fetchSales = async () => {
-    setLoading(true);
-    setLoading(true);
+    setTableLoading(true);
+    setTableLoading(true);
     let query = supabase
       .from('sales')
       .select('*')
@@ -60,8 +60,8 @@ export default function VouchersPage() {
     if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
     const { data } = await query;
     if (data) setSales(data as SaleRow[]);
-    setLoading(false);
-    setLoading(false);
+    setTableLoading(false);
+    setTableLoading(false);
   };
 
   const filtered = sales.filter(s => {
@@ -552,7 +552,7 @@ export default function VouchersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {tableLoading ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell>
                     </TableRow>

@@ -67,7 +67,7 @@ export default function PromotionCatalogPage() {
   const { activeCompany } = useCompany();
   const [pages, setPages] = useState<CatalogPage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Builder state
@@ -98,9 +98,9 @@ export default function PromotionCatalogPage() {
   const [editPromoData, setEditPromoData] = useState<Partial<PromotionCardData>>({});
 
   const fetchPages = async () => {
-    setLoading(true);
+    setTableLoading(true);
     if (!activeCompany) return;
-    setLoading(true);
+    setTableLoading(true);
     const { data } = await supabase
       .from("promotion_pages")
       .select("*")
@@ -111,7 +111,7 @@ export default function PromotionCatalogPage() {
       promotion_ids: d.promotion_ids || [],
       card_style: d.card_style || null,
     })) || []);
-    setLoading(false);
+    setTableLoading(false);
   };
 
   const fetchPromotions = async () => {
@@ -313,7 +313,7 @@ export default function PromotionCatalogPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {tableLoading ? (
                 <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
               ) : pages.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma página criada</TableCell></TableRow>
@@ -458,7 +458,7 @@ export default function PromotionCatalogPage() {
                   </Button>
                 </div>
                 <div className="max-h-[300px] overflow-y-auto border rounded-md divide-y">
-                  {loading ? (
+                  {tableLoading ? (
           <TableLoadingRow colSpan={6} />
         ) : promotions.length === 0 ? (
                     <p className="p-4 text-xs text-muted-foreground text-center">Nenhuma promoção ativa</p>

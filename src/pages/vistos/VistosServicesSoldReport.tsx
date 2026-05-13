@@ -97,7 +97,7 @@ export default function VistosServicesSoldReport() {
   const { activeCompany } = useCompany();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
 
   // Filters
   const [period, setPeriod] = useState<DateFilterPeriod>('month');
@@ -118,7 +118,7 @@ export default function VistosServicesSoldReport() {
 
   const load = async () => {
     if (!activeCompany?.id) return;
-    setLoading(true);
+    setTableLoading(true);
     try {
       const { data: sales } = await supabase
         .from('visa_sales')
@@ -163,7 +163,7 @@ export default function VistosServicesSoldReport() {
       });
       setRows(result);
     } finally {
-      setLoading(false);
+      setTableLoading(false);
     }
   };
 
@@ -372,7 +372,7 @@ export default function VistosServicesSoldReport() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {tableLoading ? (
                   <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Nenhum serviço encontrado</TableCell></TableRow>

@@ -51,7 +51,7 @@ export default function BankStatementReportPage() {
   const [filterOrigin, setFilterOrigin] = useState('all');
   const [filterCostCenter, setFilterCostCenter] = useState('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'full' | 'expenses' | 'revenue' | 'consolidated'>('full');
   const [showUnclassified, setShowUnclassified] = useState(false);
   const [editingTxId, setEditingTxId] = useState<string | null>(null);
@@ -71,7 +71,7 @@ export default function BankStatementReportPage() {
 
   const loadReport = useCallback(async () => {
     if (!selectedAccount || !activeCompany) return;
-    setLoading(true);
+    setTableLoading(true);
     let query = supabase.from('bank_transactions').select('*')
       .eq('bank_account_id', selectedAccount).eq('empresa_id', activeCompany.id)
       .gte('transaction_date', dateFrom).lte('transaction_date', dateTo)
@@ -114,7 +114,7 @@ export default function BankStatementReportPage() {
       : enriched;
 
     setTransactions(filtered);
-    setLoading(false);
+    setTableLoading(false);
   }, [selectedAccount, activeCompany, dateFrom, dateTo, filterStatus, filterOrigin, filterCostCenter]);
 
   useEffect(() => { loadReport(); }, [loadReport]);
