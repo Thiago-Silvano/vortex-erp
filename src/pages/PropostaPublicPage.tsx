@@ -823,9 +823,16 @@ function ServiceCard({
       <div className="p-6 md:p-8">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <h3 className="font-bold text-lg mb-1" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
-              {metadata?.hotel?.hotelName || name}
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <h3 className="font-bold text-lg" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                {metadata?.hotel?.hotelName || name}
+              </h3>
+              {metadata?.hotel?.city && (
+                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
+                  <MapPin className="h-3 w-3" style={{ color: '#C8A45B' }} /> {metadata.hotel.city}
+                </span>
+              )}
+            </div>
             {/* Detailed description with expand/collapse */}
             {metadata?.detailedDescription && (
               <ExpandableText text={metadata.detailedDescription} />
