@@ -57,34 +57,41 @@ export default function VistosSalesPage() {
 
   const fetchSales = async () => {
     setLoading(true);
-    if (!activeCompany?.id) return;
-    const { data } = await supabase
-      .from('visa_sales')
-      .select('*, visa_products(name)')
-      .eq('empresa_id', activeCompany.id)
-      .order('sale_date', { ascending: false });
-
-    if (data) {
-      // Fetch sale items for summaries
-      const saleIds = data.map((s: any) => s.id);
-      let itemsMap: Record<string, string[]> = {};
-      if (saleIds.length > 0) {
-        const { data: items } = await (supabase.from('visa_sale_items' as any) as any)
-          .select('visa_sale_id, product_name')
-          .in('visa_sale_id', saleIds);
-        if (items) {
-          items.forEach((item: any) => {
-            if (!itemsMap[item.visa_sale_id]) itemsMap[item.visa_sale_id] = [];
-            itemsMap[item.visa_sale_id].push(item.product_name);
-          });
-        }
+    try {
+      if (!activeCompany?.id) {
+        setSales([]);
+        return;
       }
+      const { data } = await supabase
+        .from('visa_sales')
+        .select('*, visa_products(name)')
+        .eq('empresa_id', activeCompany.id)
+        .order('sale_date', { ascending: false });
 
-      setSales(data.map((s: any) => ({
-        ...s,
-        product_name: s.visa_products?.name || '',
-        services_summary: itemsMap[s.id]?.join(', ') || s.visa_products?.name || '',
-      })));
+      if (data) {
+        // Fetch sale items for summaries
+        const saleIds = data.map((s: any) => s.id);
+        let itemsMap: Record<string, string[]> = {};
+        if (saleIds.length > 0) {
+          const { data: items } = await (supabase.from('visa_sale_items' as any) as any)
+            .select('visa_sale_id, product_name')
+            .in('visa_sale_id', saleIds);
+          if (items) {
+            items.forEach((item: any) => {
+              if (!itemsMap[item.visa_sale_id]) itemsMap[item.visa_sale_id] = [];
+              itemsMap[item.visa_sale_id].push(item.product_name);
+            });
+          }
+        }
+
+        setSales(data.map((s: any) => ({
+          ...s,
+          product_name: s.visa_products?.name || '',
+          services_summary: itemsMap[s.id]?.join(', ') || s.visa_products?.name || '',
+        })));
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
