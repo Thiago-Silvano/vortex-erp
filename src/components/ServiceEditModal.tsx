@@ -916,8 +916,19 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               <div className="border-t pt-4">
                 <h3 className="font-semibold text-sm mb-3">Dados da Reserva</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div><Label className="text-xs">Check-in</Label><Input type="date" value={hotel.checkInDate} onChange={e => setHotel(p => ({ ...p, checkInDate: e.target.value }))} /></div>
-                  <div><Label className="text-xs">Check-out</Label><Input type="date" value={hotel.checkOutDate} onChange={e => setHotel(p => ({ ...p, checkOutDate: e.target.value }))} /></div>
+                  <div><Label className="text-xs">Check-in</Label><Input type="date" value={hotel.checkInDate} onChange={e => {
+                    const cin = e.target.value;
+                    setHotel(p => {
+                      const next = { ...p, checkInDate: cin };
+                      if (cin && !p.checkOutDate) {
+                        const d = new Date(cin);
+                        d.setDate(d.getDate() + 1);
+                        next.checkOutDate = d.toISOString().split('T')[0];
+                      }
+                      return next;
+                    });
+                  }} /></div>
+                  <div><Label className="text-xs">Check-out</Label><Input type="date" min={hotel.checkInDate || undefined} value={hotel.checkOutDate} onChange={e => setHotel(p => ({ ...p, checkOutDate: e.target.value }))} /></div>
                   <div><Label className="text-xs">Noites</Label><Input type="number" min="0" value={hotel.nightsCount || 0} readOnly className="bg-muted" /></div>
                   <div><Label className="text-xs">Hora Check-in</Label><Input type="time" value={hotel.checkInTime} onChange={e => setHotel(p => ({ ...p, checkInTime: e.target.value }))} /></div>
                 </div>
