@@ -99,7 +99,23 @@ serve(async (req) => {
       });
     }
     const max = Math.min(Math.max(Number(limit) || 10, 1), 20);
-    const images = await searchBingForTripAdvisor(query, max);
+    let images = await searchBingForTripAdvisor(query, max);
+    // Fallback 1: retry with just the first part (hotel name without city/country)
+    if (images.length === 0) {
+      const firstPart = query.split(/[,\-—|]/)[0].trim();
+      const words = firstPart.split(/\s+/);
+      // Heuristic: take first 3-4 words as the "core" hotel name
+      const coreName = words.slice(0, Math.min(4, words.length)).join(" ");
+      if (coreName && coreName.toLowerCase() !== query.toLowerCase()) {
+        console.log("TripAdvisor fallback 1: core name =", coreName);
+        images = await searchBingForTripAdvisor(coreName + " hotel", max);
+      }
+    }
+    // Fallback 2: retry without "site:tripadvisor.com" — accept any source as long as URL is from TripAdvisor CDN
+    if (images.length === 0) {
+      console.log("TripAdvisor fallback 2: searching without site filter");
+      images = await searchBingForTripAdvisor(query + " tripadvisor", max);
+    }
     return new Response(JSON.stringify({ success: true, images, total: images.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
