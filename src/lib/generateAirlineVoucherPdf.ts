@@ -50,6 +50,7 @@ export interface AirlineVoucherData {
   agencyLogoBase64?: string;
   airlineName?: string;
   shortId?: string;
+  saleDate?: string;
   localizador?: string; // reservation code from airline
   passengers: AirlineVoucherPassenger[];
   flightLegs: AirlineVoucherLeg[];
@@ -120,6 +121,56 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
   const cw = pw - m * 2;
 
   let y = 12;
+
+  // ─── HEADER (logo + Referencia/Data + Cliente) ────────────
+  {
+    const headerH = 22;
+    doc.setFillColor(DARK_HEADER[0], DARK_HEADER[1], DARK_HEADER[2]);
+    doc.rect(0, 0, pw, headerH, "F");
+    doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+    doc.rect(0, headerH, pw, 0.8, "F");
+
+    if (data.agencyLogoBase64) {
+      try {
+        doc.addImage(data.agencyLogoBase64, "PNG", m, 1, 24, 24);
+      } catch { /* skip */ }
+    }
+
+    const infoX = pw - m - 60;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(180, 180, 180);
+    if (!data.hideReference) doc.text("Referencia", infoX, 7);
+    doc.text("Data", infoX + 32, 7);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    if (!data.hideReference) doc.text(s((data.shortId || "-").toUpperCase()), infoX, 14);
+    doc.text(s(formatDateBR(data.saleDate) || "-"), infoX + 32, 14);
+
+    y = headerH + 6;
+
+    if (data.clientName) {
+      const clientCardH = 14;
+      doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
+      doc.rect(m, y, cw, clientCardH, "F");
+      doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+      doc.setLineWidth(0.2);
+      doc.rect(m, y, cw, clientCardH, "S");
+      doc.setFillColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+      doc.rect(m, y, 2.5, clientCardH, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+      doc.text("CLIENTE", m + 7, y + 5);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      doc.text(s(data.clientName.toUpperCase()), m + 7, y + 11);
+      y += clientCardH + 5;
+    }
+  }
 
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
   // Rule: max 18 legs per page. Each group has its own title (separator).
@@ -358,17 +409,9 @@ function drawFlightSection(
     doc.text(s(dateStr), m + cw / 2, y + 6.5, { align: "center" });
   }
 
-  // Connections count (right)
-  // Total value (left of right edge), white, same size as IDA label (9pt bold)
+  // Connections count (right) — ticket value intentionally omitted from voucher
+  void totalValue;
   let rightAnchor = m + cw - 5;
-  if (typeof totalValue === "number" && totalValue > 0) {
-    const valueStr = totalValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-    doc.text(s(valueStr), rightAnchor, y + 6.5, { align: "right" });
-    rightAnchor -= doc.getTextWidth(valueStr) + 8;
-  }
 
   if (connections > 0) {
     doc.setFont("helvetica", "normal");

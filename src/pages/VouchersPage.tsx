@@ -432,6 +432,8 @@ export default function VouchersPage() {
           agencyLogoBase64: vortexLogo,
           airlineName: '',
           shortId: sale.short_id || undefined,
+          saleDate: (sale as any).sale_date || undefined,
+          clientName: sale.client_name,
           localizador: '',
           passengers: passengers.map((p: any, i: number) => ({
             name: `${p.first_name} ${p.last_name}`.trim() || `Passageiro ${i + 1}`,
@@ -481,6 +483,8 @@ export default function VouchersPage() {
             agencyLogoBase64: vortexLogo,
             airlineName,
             shortId: airItem.purchase_number || sale.short_id || undefined,
+            saleDate: (sale as any).sale_date || undefined,
+            clientName: sale.client_name,
             localizador: airItem.reservation_number || '',
             passengers: airPax,
             flightLegs: legs.map((l: any) => ({

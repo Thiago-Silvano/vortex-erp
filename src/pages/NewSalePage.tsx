@@ -2417,11 +2417,8 @@ export default function NewSalePage() {
         airlineLogoBase64: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].logoBase64 : undefined,
         airlineName: l.airlineId && airlineCache[l.airlineId] ? airlineCache[l.airlineId].name : undefined,
       }));
-      const firstLeg = legs[0];
-      const lastLeg = legs[legs.length - 1] || firstLeg;
-      const route = firstLeg ? `${firstLeg.origin || ''} → ${lastLeg?.destination || ''}` : '';
       const baseTitle = airItem.description || `Voo ${idx + 1}`;
-      const title = route ? `${baseTitle} • ${route}` : baseTitle;
+      const title = baseTitle;
       const sumBag = airPax.reduce(
         (acc, p) => ({
           personalItem: acc.personalItem + (p.baggage?.personalItem || 0),
@@ -2452,7 +2449,8 @@ export default function NewSalePage() {
         agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
         airlineName,
         clientName: clientName,
-        shortId: undefined,
+        shortId: shortId || undefined,
+        saleDate,
         localizador: '',
         passengers: airPax,
         flightLegs: [],
