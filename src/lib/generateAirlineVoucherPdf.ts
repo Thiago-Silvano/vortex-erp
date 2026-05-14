@@ -193,19 +193,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
       y += 5;
     }
 
-    // Group title in BLACK
-    if (group.title) {
-      if (y > 240 || legsOnCurrentPage >= MAX_LEGS_PER_PAGE) {
-        doc.addPage();
-        y = 15;
-        legsOnCurrentPage = 0;
-      }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      doc.text(s(group.title.toUpperCase()), m, y);
-      y += 5;
-    }
+    // Group title intentionally omitted from the airline voucher
 
     const renderSection = (label: "IDA" | "VOLTA", legs: AirlineVoucherLeg[]) => {
       if (legs.length === 0) return;
