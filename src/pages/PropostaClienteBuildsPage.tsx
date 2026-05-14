@@ -3,6 +3,7 @@ import { getImageStyle, type ImagePositionConfig } from '@/components/ImagePosit
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChevronLeft, ChevronRight, X, MapPin, Moon, Users, Plane, Check, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface SaleData {
   id: string;
@@ -199,10 +200,39 @@ export default function PropostaClienteBuildsPage() {
   };
 
   const toggleItem = (id: string) => {
+    const target = items.find(i => i.id === id);
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        return next;
+      }
+      // Hotel period overlap check
+      const tMeta = target?.metadata as any;
+      const isHotelTarget = tMeta?.type === 'hotel';
+      const tIn = tMeta?.hotel?.checkInDate || tMeta?.startDate;
+      const tOut = tMeta?.hotel?.checkOutDate || tMeta?.endDate;
+      if (isHotelTarget && tIn && tOut) {
+        const conflict = items.find(it => {
+          if (!next.has(it.id)) return false;
+          const m = it.metadata as any;
+          if (m?.type !== 'hotel') return false;
+          const inD = m?.hotel?.checkInDate || m?.startDate;
+          const outD = m?.hotel?.checkOutDate || m?.endDate;
+          if (!inD || !outD) return false;
+          // Overlap: tIn < outD && tOut > inD
+          return tIn < outD && tOut > inD;
+        });
+        if (conflict) {
+          const cMeta = conflict.metadata as any;
+          const cName = cMeta?.hotel?.hotelName || cMeta?.hotelName || conflict.description || 'Outro hotel';
+          toast.error('Período já reservado', {
+            description: `Você já selecionou "${cName}" para este período. Desmarque-o antes de escolher outro hotel para as mesmas datas.`,
+          });
+          return prev;
+        }
+      }
+      next.add(id);
       return next;
     });
     setSubmitted(false);
