@@ -1658,6 +1658,13 @@ export default function NewSalePage() {
   const saveSaleCore = async (salePayload: any, userEmail: string) => {
     let saleId = editSaleId;
 
+    // Validate: every enabled custom payment option must have a non-empty label
+    const invalidLabel = proposalPaymentOptions.find(o => o.enabled && (o.method.startsWith('custom_') || o.method.startsWith('pdf_import_')) && !(o.label || '').trim());
+    if (invalidLabel) {
+      toast.error('Preencha o título de todas as formas de pagamento personalizadas.');
+      return null;
+    }
+
     if (editSaleId) {
       const { error } = await supabase.from('sales').update({ ...salePayload, updated_by: userEmail } as any).eq('id', editSaleId);
       if (error) { console.error('Erro ao atualizar venda:', error); toast.error('Erro ao atualizar venda: ' + error.message); return null; }
