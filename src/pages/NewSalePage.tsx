@@ -3217,7 +3217,7 @@ export default function NewSalePage() {
                 <div className="flex items-center gap-2">
                   {isQuoteMode && (
                     <Button size="sm" variant="outline" onClick={() => {
-                      const newOpt = { name: `Opção ${quoteOptions.length + 1}`, order_index: quoteOptions.length };
+                      const newOpt: QuoteOption = { name: `Opção ${quoteOptions.length + 1}`, order_index: quoteOptions.length, display_mode: 'total' };
                       setQuoteOptions(prev => [...prev, newOpt]);
                     }}>
                       <Plus className="h-4 w-4 mr-1" />Opção
