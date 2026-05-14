@@ -416,14 +416,17 @@ export default function PropostaClienteBuildsPage() {
               };
               const ra = rank(a), rb = rank(b);
               if (ra !== rb) return ra - rb;
-              // Within hotels, sort by city then by check-in date
+              // Within hotels, sort by check-in date (stay period) so cities follow the trip chronology
               if (ra === 1) {
-                const ca = (a.metadata?.hotel?.city || '').toLowerCase();
-                const cb = (b.metadata?.hotel?.city || '').toLowerCase();
-                if (ca !== cb) return ca.localeCompare(cb);
                 const da = a.metadata?.hotel?.checkInDate || a.metadata?.startDate || '';
                 const db = b.metadata?.hotel?.checkInDate || b.metadata?.startDate || '';
-                return da.localeCompare(db);
+                if (da !== db) return da.localeCompare(db);
+                const oa = a.metadata?.hotel?.checkOutDate || a.metadata?.endDate || '';
+                const ob = b.metadata?.hotel?.checkOutDate || b.metadata?.endDate || '';
+                if (oa !== ob) return oa.localeCompare(ob);
+                const ca = (a.metadata?.hotel?.city || '').toLowerCase();
+                const cb = (b.metadata?.hotel?.city || '').toLowerCase();
+                return ca.localeCompare(cb);
               }
               return 0;
             });
