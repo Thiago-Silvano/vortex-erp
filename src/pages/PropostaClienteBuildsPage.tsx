@@ -227,8 +227,9 @@ export default function PropostaClienteBuildsPage() {
         if (conflict) {
           const cMeta = conflict.metadata as any;
           const cName = cMeta?.hotel?.hotelName || cMeta?.hotelName || conflict.description || 'Outro hotel';
-          toast.error('Período já reservado', {
-            description: `Você já selecionou "${cName}" para este período. Desmarque-o antes de escolher outro hotel para as mesmas datas.`,
+          setHotelConflict({
+            title: 'Período já reservado',
+            message: `Você já selecionou "${cName}" para este período. Desmarque-o antes de escolher outro hotel para as mesmas datas.`,
           });
           return prev;
         }
