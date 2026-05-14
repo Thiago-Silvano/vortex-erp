@@ -58,6 +58,7 @@ interface QuoteOption {
   id?: string;
   name: string;
   order_index: number;
+  display_mode?: 'individual' | 'total';
 }
 
 interface ServiceCatalogOption {
