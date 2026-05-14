@@ -134,6 +134,12 @@ export default function PropostaClienteBuildsPage() {
     loadProposal();
   }, [shortId]);
 
+  useEffect(() => {
+    if (!hotelConflict) return;
+    const timer = setTimeout(() => setHotelConflict(null), 5000);
+    return () => clearTimeout(timer);
+  }, [hotelConflict]);
+
   const loadProposal = async () => {
     setLoading(true);
     const { data: saleData, error } = await (supabase.from('sales').select('*') as any).eq('short_id', shortId).single();
