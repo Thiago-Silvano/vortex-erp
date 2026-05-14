@@ -254,7 +254,7 @@ export default function NewSalePage() {
 
   // Service edit modal
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
-  const [showIndividualValues, setShowIndividualValues] = useState(true);
+  const [showIndividualValues, setShowIndividualValues] = useState(false);
   const [showPerPassenger, setShowPerPassenger] = useState(false);
   const [showOnlyTotal, setShowOnlyTotal] = useState(false);
   const [paymentOptionTab, setPaymentOptionTab] = useState<string>('__geral__');
