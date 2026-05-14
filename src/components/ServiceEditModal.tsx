@@ -126,6 +126,7 @@ interface Props {
   onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string, costPrice?: number, rav?: number) => void;
   onHotelImagesFound?: (images: string[]) => void;
   onImportPdf?: () => void;
+  existingImages?: string[];
 }
 
 const emptyLeg = (): FlightLeg => ({
@@ -141,7 +142,7 @@ const emptyHotel = (): HotelInfo => ({
   roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
@@ -182,7 +183,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setFlightLegs(legs);
       setBaggage(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
       setHotel(metadata.hotel || emptyHotel());
-      const existingImgs = metadata.hotel?.images || [];
+      const tp = metadata.type || 'adicional';
+      const existingImgs = tp === 'hotel'
+        ? (metadata.hotel?.images || [])
+        : (existingImages || []);
       setHotelImages(existingImgs);
       setPreviewImageUrl(null);
       setSelectedImages(new Set(existingImgs));
@@ -408,7 +412,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       parseCurrency(costPriceStr),
       parseCurrency(ravStr),
     );
-    if (type === 'hotel' && orderedSelectedImages.length > 0 && onHotelImagesFound) {
+    if (onHotelImagesFound) {
       onHotelImagesFound(orderedSelectedImages);
     }
     onClose();
