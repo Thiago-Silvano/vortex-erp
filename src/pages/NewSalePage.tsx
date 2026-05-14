@@ -3882,55 +3882,6 @@ export default function NewSalePage() {
         </Card>
         )}
 
-        {/* Proposal Payment Options - only in draft/quote mode */}
-        {isQuoteMode && (
-        <Card>
-          <CardHeader><CardTitle className="text-base">⚙️ Opções de exibição na proposta</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  <span>Opções de exibição na proposta</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[min(640px,90vw)] space-y-2">
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
-              <Checkbox
-                id="showIndividualValues"
-                checked={showIndividualValues}
-                onCheckedChange={(checked) => setShowIndividualValues(!!checked)}
-              />
-              <Label htmlFor="showIndividualValues" className="text-sm cursor-pointer">
-                Mostrar valores individuais de serviços e ocultar o valor total na proposta (PDF e interativa)
-              </Label>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
-              <Checkbox
-                id="showPerPassenger"
-                checked={showPerPassenger}
-                onCheckedChange={(checked) => setShowPerPassenger(!!checked)}
-              />
-              <Label htmlFor="showPerPassenger" className="text-sm cursor-pointer">
-                Mostrar o valor da parcela por pessoa? (divide o total e as parcelas pelo nº de passageiros)
-              </Label>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
-              <Checkbox
-                id="showOnlyTotal"
-                checked={showOnlyTotal}
-                onCheckedChange={(checked) => setShowOnlyTotal(!!checked)}
-              />
-              <Label htmlFor="showOnlyTotal" className="text-sm cursor-pointer">
-                Mostrar somente o valor total? (oculta todas as opções de pagamento na proposta)
-              </Label>
-            </div>
-              </PopoverContent>
-            </Popover>
-          </CardContent>
-        </Card>
-        )}
-
         {/* Receivables card removed - now inline inside Recebimento */}
 
         {/* Controle de Pagamentos - only in sale mode */}
