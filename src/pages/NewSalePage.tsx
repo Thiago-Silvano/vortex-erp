@@ -157,7 +157,7 @@ export default function NewSalePage() {
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [serviceCatalog, setServiceCatalog] = useState<ServiceCatalogOption[]>([]);
   const [passengers, setPassengers] = useState<Passenger[]>([]);
-  const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
+  const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0, display_mode: 'total' }]);
   const [activeOptionId, setActiveOptionId] = useState<string>('');
 
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
@@ -476,7 +476,7 @@ export default function NewSalePage() {
     // Load quote options
     const { data: options } = await (supabase.from('sale_quote_options' as any) as any).select('*').eq('sale_id', id).order('order_index');
     if (options && options.length > 0) {
-      setQuoteOptions(options.map((o: any) => ({ id: o.id, name: o.name, order_index: o.order_index })));
+      setQuoteOptions(options.map((o: any) => ({ id: o.id, name: o.name, order_index: o.order_index, display_mode: (o.display_mode === 'individual' ? 'individual' : 'total') })));
       // Update items with their quote_option_id
       if (saleItems) {
         // Merge items that share the same base data but different quote_option_ids
@@ -1685,7 +1685,7 @@ export default function NewSalePage() {
     if (quoteOptions.length > 0) {
       const { data: insertedOptions } = await (supabase.from('sale_quote_options' as any) as any).insert(
         quoteOptions.map((opt, idx) => ({
-          sale_id: saleId, name: opt.name, order_index: idx,
+          sale_id: saleId, name: opt.name, order_index: idx, display_mode: opt.display_mode || 'total',
         }))
       ).select('id, order_index');
       if (insertedOptions) {
