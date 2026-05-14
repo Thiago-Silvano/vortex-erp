@@ -3,7 +3,6 @@ import { getImageStyle, type ImagePositionConfig } from '@/components/ImagePosit
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChevronLeft, ChevronRight, X, MapPin, Moon, Users, Plane, Check, Send } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface SaleData {
   id: string;
