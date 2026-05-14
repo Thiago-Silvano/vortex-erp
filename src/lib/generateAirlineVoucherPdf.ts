@@ -409,17 +409,9 @@ function drawFlightSection(
     doc.text(s(dateStr), m + cw / 2, y + 6.5, { align: "center" });
   }
 
-  // Connections count (right)
-  // Total value (left of right edge), white, same size as IDA label (9pt bold)
+  // Connections count (right) — ticket value intentionally omitted from voucher
+  void totalValue;
   let rightAnchor = m + cw - 5;
-  if (typeof totalValue === "number" && totalValue > 0) {
-    const valueStr = totalValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-    doc.text(s(valueStr), rightAnchor, y + 6.5, { align: "right" });
-    rightAnchor -= doc.getTextWidth(valueStr) + 8;
-  }
 
   if (connections > 0) {
     doc.setFont("helvetica", "normal");
