@@ -1693,6 +1693,28 @@ export default function NewSalePage() {
       }
     }
 
+    // Remap proposal_payment_options.quote_option_id → newly-inserted DB ids,
+    // then re-save the sale row so the per-option payment configurations persist
+    // across reloads (quote options are deleted+reinserted with fresh ids).
+    if (Object.keys(optionIdMap).length > 0) {
+      const remapped = proposalPaymentOptions.filter(o => o.enabled).map(o => {
+        const oldId = o.quote_option_id;
+        let newId: string | null = null;
+        if (oldId) {
+          const idx = quoteOptions.findIndex(q => q.id === oldId || String(q.order_index) === oldId);
+          if (idx >= 0 && optionIdMap[idx]) newId = optionIdMap[idx];
+          else if (optionIdMap[0]) newId = optionIdMap[0];
+        } else if (optionIdMap[0]) {
+          newId = optionIdMap[0];
+        }
+        return { ...o, quote_option_id: newId };
+      });
+      await supabase.from('sales').update({ proposal_payment_options: remapped } as any).eq('id', saleId);
+      // Sync local state so the UI keeps showing the per-option configs without reload
+      setQuoteOptions(prev => prev.map((q, i) => ({ ...q, id: optionIdMap[i] || q.id })));
+      setProposalPaymentOptions(remapped);
+    }
+
     if (items.length > 0) {
       // Expand items with multiple quote_option_ids into separate rows
       const expandedItems: { item: SaleItem; idx: number; optionId: string | null }[] = [];
