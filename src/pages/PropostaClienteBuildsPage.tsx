@@ -3,7 +3,6 @@ import { getImageStyle, type ImagePositionConfig } from '@/components/ImagePosit
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChevronLeft, ChevronRight, X, MapPin, Moon, Users, Plane, Check, Send } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface SaleData {
   id: string;
@@ -127,11 +126,18 @@ export default function PropostaClienteBuildsPage() {
   const [submitted, setSubmitted] = useState(false);
   const [previousChoices, setPreviousChoices] = useState<string[] | null>(null);
   const [quoteData, setQuoteData] = useState<any>(null);
+  const [hotelConflict, setHotelConflict] = useState<{ title: string; message: string } | null>(null);
 
   useEffect(() => {
     if (!shortId) return;
     loadProposal();
   }, [shortId]);
+
+  useEffect(() => {
+    if (!hotelConflict) return;
+    const timer = setTimeout(() => setHotelConflict(null), 5000);
+    return () => clearTimeout(timer);
+  }, [hotelConflict]);
 
   const loadProposal = async () => {
     setLoading(true);
@@ -226,8 +232,9 @@ export default function PropostaClienteBuildsPage() {
         if (conflict) {
           const cMeta = conflict.metadata as any;
           const cName = cMeta?.hotel?.hotelName || cMeta?.hotelName || conflict.description || 'Outro hotel';
-          toast.error('Período já reservado', {
-            description: `Você já selecionou "${cName}" para este período. Desmarque-o antes de escolher outro hotel para as mesmas datas.`,
+          setHotelConflict({
+            title: 'Período já reservado',
+            message: `Você já selecionou "${cName}" para este período. Desmarque-o antes de escolher outro hotel para as mesmas datas.`,
           });
           return prev;
         }
@@ -324,6 +331,28 @@ export default function PropostaClienteBuildsPage() {
   return (
     <div className="min-h-screen" style={{ background: '#F5F0E8', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
       {lightbox && <ImageLightbox images={lightbox.images} initialIndex={lightbox.index} onClose={() => setLightbox(null)} />}
+
+      {/* Hotel conflict overlay */}
+      {hotelConflict && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center px-6"
+          onClick={() => setHotelConflict(null)}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative z-10 w-full max-w-lg rounded-2xl p-8 text-center shadow-2xl animate-in zoom-in-95 fade-in duration-300"
+            style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)', border: '1px solid rgba(200,164,91,0.3)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(200,164,91,0.15)' }}>
+              <X className="h-7 w-7" style={{ color: '#C8A45B' }} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">{hotelConflict.title}</h3>
+            <p className="text-white/70 text-base leading-relaxed">{hotelConflict.message}</p>
+            <p className="text-white/40 text-xs mt-5">Toque em qualquer lugar para fechar</p>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <div className="relative" style={{ minHeight: heroImage ? 420 : 280 }}>
