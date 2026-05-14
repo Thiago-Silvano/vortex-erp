@@ -401,7 +401,8 @@ export default function PropostaClienteBuildsPage() {
           </div>
 
           <div className="space-y-4">
-            {[...items].sort((a, b) => {
+            {(() => {
+              const sorted = [...items].sort((a, b) => {
               const rank = (it: any) => {
                 const t = it.metadata?.type || '';
                 if (t === 'aereo') return 0;
@@ -413,8 +414,22 @@ export default function PropostaClienteBuildsPage() {
                 if (/(servi|experi|passei|tour|traslado|transfer|seguro|aluguel|ingresso)/.test(s)) return 2;
                 return 3;
               };
-              return rank(a) - rank(b);
-            }).map((item, idx) => {
+              const ra = rank(a), rb = rank(b);
+              if (ra !== rb) return ra - rb;
+              // Within hotels, sort by city then by check-in date
+              if (ra === 1) {
+                const ca = (a.metadata?.hotel?.city || '').toLowerCase();
+                const cb = (b.metadata?.hotel?.city || '').toLowerCase();
+                if (ca !== cb) return ca.localeCompare(cb);
+                const da = a.metadata?.hotel?.checkInDate || a.metadata?.startDate || '';
+                const db = b.metadata?.hotel?.checkInDate || b.metadata?.startDate || '';
+                return da.localeCompare(db);
+              }
+              return 0;
+            });
+            let lastHotelCity: string | null = null;
+            const out: JSX.Element[] = [];
+            sorted.forEach((item, idx) => {
               const isSelected = selectedIds.has(item.id);
               const name = item.metadata?.hotel?.hotelName || item.metadata?.hotelName || item.description || (item.service_catalog_id ? catalogNames[item.service_catalog_id] : null) || `Serviço ${idx + 1}`;
               const hasImages = item.images.length > 0;
@@ -432,7 +447,24 @@ export default function PropostaClienteBuildsPage() {
               const flightCode = meta?.flightCode || '';
               const baggageInfo = meta?.baggage;
 
-              return (
+              // City separator for hotels
+              if (isHotel) {
+                const city = meta?.hotel?.city || '';
+                if (city && city !== lastHotelCity) {
+                  lastHotelCity = city;
+                  out.push(
+                    <div key={`city-${city}-${idx}`} className="flex items-center gap-3 pt-4 pb-1">
+                      <MapPin className="h-4 w-4" style={{ color: '#C8A45B' }} />
+                      <h3 className="text-sm font-bold uppercase tracking-[2px]" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+                        Hospedagem em {city}
+                      </h3>
+                      <div className="flex-1 h-[1px]" style={{ background: 'linear-gradient(90deg, #C8A45B33, transparent)' }} />
+                    </div>
+                  );
+                }
+              }
+
+              out.push(
                 <div
                   key={item.id}
                   className="rounded-2xl overflow-hidden transition-all duration-300"
@@ -524,7 +556,7 @@ export default function PropostaClienteBuildsPage() {
                               <div className="text-sm leading-relaxed mt-3 line-clamp-3" style={{ color: '#777' }}
                                 dangerouslySetInnerHTML={{ __html: meta.detailedDescription }} />
                             )}
-                            {!meta?.detailedDescription && item.description && (
+                            {!meta?.detailedDescription && item.description && !isHotel && (
                               <p className="text-sm leading-relaxed mt-3 line-clamp-3" style={{ color: '#777' }}>
                                 {item.description}
                               </p>
