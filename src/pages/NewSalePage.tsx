@@ -3457,14 +3457,17 @@ export default function NewSalePage() {
                       setShowOnlyTotal(false);
                     }
                   };
-                  // Options for the active quote option (legacy null options surface in the first option)
+                  // Options for the active quote option. Legacy/null options and stale option ids
+                  // (from quotes saved before option ids were remapped) surface in the first option.
                   const firstOptionId = optionColumns[0]?.id || '';
+                  const validOptionIds = new Set(optionColumns.map(col => col.id).filter(Boolean));
                   const visibleOptions = proposalPaymentOptions
                     .map((o, i) => ({ o, i }))
                     .filter(({ o }) => {
                       const oid = o.quote_option_id ?? null;
                       if (oid === scopeId) return true;
                       if (oid === null && scopeId === firstOptionId) return true;
+                      if (oid && !validOptionIds.has(oid) && scopeId === firstOptionId) return true;
                       return false;
                     });
                   const updateAt = (idx: number, patch: Partial<ProposalPaymentOption>) =>
