@@ -428,7 +428,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               <Button
                 size="sm"
                 onClick={onImportPdf}
-                className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+                className="gap-2 bg-orange-500 hover:bg-orange-600 text-white mx-[10px]"
               >
                 <FileUp className="h-4 w-4" /> Importar PDF
               </Button>
