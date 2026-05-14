@@ -127,6 +127,7 @@ export default function PropostaClienteBuildsPage() {
   const [submitted, setSubmitted] = useState(false);
   const [previousChoices, setPreviousChoices] = useState<string[] | null>(null);
   const [quoteData, setQuoteData] = useState<any>(null);
+  const [hotelConflict, setHotelConflict] = useState<{ title: string; message: string } | null>(null);
 
   useEffect(() => {
     if (!shortId) return;
