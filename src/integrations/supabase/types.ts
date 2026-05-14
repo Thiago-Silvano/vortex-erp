@@ -4022,6 +4022,7 @@ export type Database = {
       sale_quote_options: {
         Row: {
           created_at: string
+          display_mode: string
           id: string
           name: string
           order_index: number
@@ -4029,6 +4030,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          display_mode?: string
           id?: string
           name?: string
           order_index?: number
@@ -4036,6 +4038,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          display_mode?: string
           id?: string
           name?: string
           order_index?: number
