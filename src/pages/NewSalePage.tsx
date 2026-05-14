@@ -58,6 +58,7 @@ interface QuoteOption {
   id?: string;
   name: string;
   order_index: number;
+  display_mode?: 'individual' | 'total';
 }
 
 interface ServiceCatalogOption {
@@ -156,7 +157,7 @@ export default function NewSalePage() {
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [serviceCatalog, setServiceCatalog] = useState<ServiceCatalogOption[]>([]);
   const [passengers, setPassengers] = useState<Passenger[]>([]);
-  const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0 }]);
+  const [quoteOptions, setQuoteOptions] = useState<QuoteOption[]>([{ name: 'Opção 1', order_index: 0, display_mode: 'total' }]);
   const [activeOptionId, setActiveOptionId] = useState<string>('');
 
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
@@ -253,7 +254,7 @@ export default function NewSalePage() {
 
   // Service edit modal
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null);
-  const [showIndividualValues, setShowIndividualValues] = useState(true);
+  const [showIndividualValues, setShowIndividualValues] = useState(false);
   const [showPerPassenger, setShowPerPassenger] = useState(false);
   const [showOnlyTotal, setShowOnlyTotal] = useState(false);
   const [paymentOptionTab, setPaymentOptionTab] = useState<string>('__geral__');
@@ -475,7 +476,7 @@ export default function NewSalePage() {
     // Load quote options
     const { data: options } = await (supabase.from('sale_quote_options' as any) as any).select('*').eq('sale_id', id).order('order_index');
     if (options && options.length > 0) {
-      setQuoteOptions(options.map((o: any) => ({ id: o.id, name: o.name, order_index: o.order_index })));
+      setQuoteOptions(options.map((o: any) => ({ id: o.id, name: o.name, order_index: o.order_index, display_mode: (o.display_mode === 'individual' ? 'individual' : 'total') })));
       // Update items with their quote_option_id
       if (saleItems) {
         // Merge items that share the same base data but different quote_option_ids
@@ -1684,7 +1685,7 @@ export default function NewSalePage() {
     if (quoteOptions.length > 0) {
       const { data: insertedOptions } = await (supabase.from('sale_quote_options' as any) as any).insert(
         quoteOptions.map((opt, idx) => ({
-          sale_id: saleId, name: opt.name, order_index: idx,
+          sale_id: saleId, name: opt.name, order_index: idx, display_mode: opt.display_mode || 'total',
         }))
       ).select('id, order_index');
       if (insertedOptions) {
@@ -3216,7 +3217,7 @@ export default function NewSalePage() {
                 <div className="flex items-center gap-2">
                   {isQuoteMode && (
                     <Button size="sm" variant="outline" onClick={() => {
-                      const newOpt = { name: `Opção ${quoteOptions.length + 1}`, order_index: quoteOptions.length };
+                      const newOpt: QuoteOption = { name: `Opção ${quoteOptions.length + 1}`, order_index: quoteOptions.length, display_mode: 'total' };
                       setQuoteOptions(prev => [...prev, newOpt]);
                     }}>
                       <Plus className="h-4 w-4 mr-1" />Opção
@@ -3418,6 +3419,15 @@ export default function NewSalePage() {
                 {/* Per-option payment methods (only in quote mode) */}
                 {isQuoteMode && activeCol && (() => {
                   const scopeId = activeCol.id;
+                  const activeIdx = quoteOptions.findIndex(o => (o.id || String(o.order_index)) === scopeId);
+                  const activeMode: 'individual' | 'total' = (activeIdx >= 0 ? quoteOptions[activeIdx]?.display_mode : 'total') || 'total';
+                  const setActiveMode = (mode: 'individual' | 'total') => {
+                    setQuoteOptions(prev => prev.map((o, i) => i === activeIdx ? { ...o, display_mode: mode } : o));
+                    if (activeIdx === 0) {
+                      setShowIndividualValues(mode === 'individual');
+                      setShowOnlyTotal(false);
+                    }
+                  };
                   // Options for the active quote option (legacy null options surface in the first option)
                   const firstOptionId = optionColumns[0]?.id || '';
                   const visibleOptions = proposalPaymentOptions
@@ -3443,6 +3453,34 @@ export default function NewSalePage() {
                   const enabledCount = visibleOptions.filter(({ o }) => o.enabled).length;
                   return (
                     <div className="border-t pt-4 mt-2">
+                      {/* Display mode (per option) */}
+                      <div className="mb-3 rounded-lg border border-border p-3 space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">👁️ Exibição na proposta</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setActiveMode('individual')}
+                            className={`text-left rounded-md border px-3 py-2 transition-all ${activeMode === 'individual' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-border/80'}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`h-3.5 w-3.5 rounded-full border ${activeMode === 'individual' ? 'border-primary bg-primary' : 'border-border'}`} />
+                              <span className="text-sm font-medium">Mostrar valor individual dos serviços</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-1 ml-5">Lista cada serviço com seu valor + total + condições de pagamento.</p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveMode('total')}
+                            className={`text-left rounded-md border px-3 py-2 transition-all ${activeMode === 'total' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-border/80'}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`h-3.5 w-3.5 rounded-full border ${activeMode === 'total' ? 'border-primary bg-primary' : 'border-border'}`} />
+                              <span className="text-sm font-medium">Mostrar valor total <span className="text-[10px] text-muted-foreground font-normal">(padrão)</span></span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-1 ml-5">Mostra apenas o valor total + condições de pagamento.</p>
+                          </button>
+                        </div>
+                      </div>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className="w-full justify-between">
@@ -3840,55 +3878,6 @@ export default function NewSalePage() {
                 );
               })()}
             </div>
-          </CardContent>
-        </Card>
-        )}
-
-        {/* Proposal Payment Options - only in draft/quote mode */}
-        {isQuoteMode && (
-        <Card>
-          <CardHeader><CardTitle className="text-base">⚙️ Opções de exibição na proposta</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  <span>Opções de exibição na proposta</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[min(640px,90vw)] space-y-2">
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
-              <Checkbox
-                id="showIndividualValues"
-                checked={showIndividualValues}
-                onCheckedChange={(checked) => setShowIndividualValues(!!checked)}
-              />
-              <Label htmlFor="showIndividualValues" className="text-sm cursor-pointer">
-                Mostrar valores individuais de serviços e ocultar o valor total na proposta (PDF e interativa)
-              </Label>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
-              <Checkbox
-                id="showPerPassenger"
-                checked={showPerPassenger}
-                onCheckedChange={(checked) => setShowPerPassenger(!!checked)}
-              />
-              <Label htmlFor="showPerPassenger" className="text-sm cursor-pointer">
-                Mostrar o valor da parcela por pessoa? (divide o total e as parcelas pelo nº de passageiros)
-              </Label>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
-              <Checkbox
-                id="showOnlyTotal"
-                checked={showOnlyTotal}
-                onCheckedChange={(checked) => setShowOnlyTotal(!!checked)}
-              />
-              <Label htmlFor="showOnlyTotal" className="text-sm cursor-pointer">
-                Mostrar somente o valor total? (oculta todas as opções de pagamento na proposta)
-              </Label>
-            </div>
-              </PopoverContent>
-            </Popover>
           </CardContent>
         </Card>
         )}

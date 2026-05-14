@@ -1,0 +1,1 @@
+ALTER TABLE public.sale_quote_options ADD COLUMN IF NOT EXISTS display_mode text NOT NULL DEFAULT 'total';
