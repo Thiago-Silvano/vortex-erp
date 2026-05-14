@@ -3419,6 +3419,15 @@ export default function NewSalePage() {
                 {/* Per-option payment methods (only in quote mode) */}
                 {isQuoteMode && activeCol && (() => {
                   const scopeId = activeCol.id;
+                  const activeIdx = quoteOptions.findIndex(o => (o.id || String(o.order_index)) === scopeId);
+                  const activeMode: 'individual' | 'total' = (activeIdx >= 0 ? quoteOptions[activeIdx]?.display_mode : 'total') || 'total';
+                  const setActiveMode = (mode: 'individual' | 'total') => {
+                    setQuoteOptions(prev => prev.map((o, i) => i === activeIdx ? { ...o, display_mode: mode } : o));
+                    if (activeIdx === 0) {
+                      setShowIndividualValues(mode === 'individual');
+                      setShowOnlyTotal(false);
+                    }
+                  };
                   // Options for the active quote option (legacy null options surface in the first option)
                   const firstOptionId = optionColumns[0]?.id || '';
                   const visibleOptions = proposalPaymentOptions
@@ -3444,6 +3453,34 @@ export default function NewSalePage() {
                   const enabledCount = visibleOptions.filter(({ o }) => o.enabled).length;
                   return (
                     <div className="border-t pt-4 mt-2">
+                      {/* Display mode (per option) */}
+                      <div className="mb-3 rounded-lg border border-border p-3 space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">👁️ Exibição na proposta</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setActiveMode('individual')}
+                            className={`text-left rounded-md border px-3 py-2 transition-all ${activeMode === 'individual' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-border/80'}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`h-3.5 w-3.5 rounded-full border ${activeMode === 'individual' ? 'border-primary bg-primary' : 'border-border'}`} />
+                              <span className="text-sm font-medium">Mostrar valor individual dos serviços</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-1 ml-5">Lista cada serviço com seu valor + total + condições de pagamento.</p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveMode('total')}
+                            className={`text-left rounded-md border px-3 py-2 transition-all ${activeMode === 'total' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-border/80'}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`h-3.5 w-3.5 rounded-full border ${activeMode === 'total' ? 'border-primary bg-primary' : 'border-border'}`} />
+                              <span className="text-sm font-medium">Mostrar valor total <span className="text-[10px] text-muted-foreground font-normal">(padrão)</span></span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-1 ml-5">Mostra apenas o valor total + condições de pagamento.</p>
+                          </button>
+                        </div>
+                      </div>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className="w-full justify-between">
