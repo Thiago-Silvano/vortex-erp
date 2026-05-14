@@ -126,6 +126,7 @@ interface Props {
   onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string, costPrice?: number, rav?: number) => void;
   onHotelImagesFound?: (images: string[]) => void;
   onImportPdf?: () => void;
+  existingImages?: string[];
 }
 
 const emptyLeg = (): FlightLeg => ({
@@ -141,7 +142,7 @@ const emptyHotel = (): HotelInfo => ({
   roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
@@ -182,7 +183,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setFlightLegs(legs);
       setBaggage(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
       setHotel(metadata.hotel || emptyHotel());
-      const existingImgs = metadata.hotel?.images || [];
+      const tp = metadata.type || 'adicional';
+      const existingImgs = tp === 'hotel'
+        ? (metadata.hotel?.images || [])
+        : (existingImages || []);
       setHotelImages(existingImgs);
       setPreviewImageUrl(null);
       setSelectedImages(new Set(existingImgs));
@@ -408,7 +412,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       parseCurrency(costPriceStr),
       parseCurrency(ravStr),
     );
-    if (type === 'hotel' && orderedSelectedImages.length > 0 && onHotelImagesFound) {
+    if (onHotelImagesFound) {
       onHotelImagesFound(orderedSelectedImages);
     }
     onClose();
@@ -574,6 +578,83 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             <div className="flex items-center gap-2 py-1">
               <Checkbox id="isAirService" checked={isAirService} onCheckedChange={(v) => setIsAirService(!!v)} />
               <Label htmlFor="isAirService" className="text-sm cursor-pointer">Serviço aéreo? (aparecerá no voucher aéreo)</Label>
+            </div>
+          )}
+
+          {/* ── Generic image gallery (for non-hotel services) ── */}
+          {type !== 'hotel' && (
+            <div className="space-y-2 border-t pt-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <Label className="text-sm font-semibold">
+                  Fotos do Serviço {hotelImages.length > 0 && `(${selectedImages.size}/${hotelImages.length} selecionadas)`}
+                </Label>
+                <div className="flex gap-2 flex-wrap">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => { handleUploadFiles(e.target.files); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                  />
+                  <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="h-3 w-3 mr-1" /> Importar do Arquivo
+                  </Button>
+                </div>
+              </div>
+              {hotelImages.length === 0 ? (
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center text-xs text-muted-foreground">
+                  Nenhuma imagem ainda. Clique em "Importar do Arquivo" para adicionar fotos do seu computador.
+                </div>
+              ) : (
+                <>
+                  <p className="text-[11px] text-muted-foreground">Arraste as miniaturas para reordenar. Clique para ampliar. Use o ✓ para incluir/excluir da proposta.</p>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    {hotelImages.map((img, idx) => {
+                      const isSelected = selectedImages.has(img);
+                      return (
+                        <div
+                          key={img + idx}
+                          draggable
+                          onDragStart={() => setDragIdx(idx)}
+                          onDragOver={(e) => { e.preventDefault(); }}
+                          onDrop={(e) => { e.preventDefault(); if (dragIdx !== null) reorderImages(dragIdx, idx); setDragIdx(null); }}
+                          onDragEnd={() => setDragIdx(null)}
+                          className={`group relative rounded-lg overflow-hidden border-2 transition-all aspect-video ${
+                            isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-dashed border-muted-foreground/30 opacity-60'
+                          } ${dragIdx === idx ? 'opacity-50' : ''}`}
+                        >
+                          <button type="button" className="block h-full w-full cursor-zoom-in" onClick={() => setPreviewImageUrl(img)} title="Clique para ampliar">
+                            <img src={img} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover pointer-events-none" />
+                          </button>
+                          <div className="absolute top-1 left-1 bg-background/80 text-foreground rounded p-0.5 cursor-grab active:cursor-grabbing">
+                            <GripVertical className="h-3 w-3" />
+                          </div>
+                          <span className="absolute bottom-1 left-1 bg-background/80 text-foreground rounded text-[10px] px-1">#{idx + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleImageSelection(img)}
+                            className={`absolute top-1 right-7 rounded-full h-5 w-5 flex items-center justify-center ${
+                              isSelected ? 'bg-primary text-primary-foreground' : 'bg-background/80 text-foreground border border-border'
+                            }`}
+                            title={isSelected ? 'Remover da proposta' : 'Incluir na proposta'}
+                          >
+                            {isSelected ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(idx)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full h-5 w-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Excluir imagem"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           )}
 

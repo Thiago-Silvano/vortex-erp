@@ -4882,6 +4882,7 @@ export default function NewSalePage() {
             reservationNumber={items[editingItemIdx]?.reservation_number || ''}
             costPrice={items[editingItemIdx]?.cost_price || 0}
             rav={items[editingItemIdx]?.rav || 0}
+            existingImages={itemImages[editingItemIdx] || []}
             onImportPdf={() => {
               const current = items[editingItemIdx];
               const optId = current?.quote_option_id
@@ -4958,7 +4959,7 @@ export default function NewSalePage() {
             onHotelImagesFound={(images) => {
               setItemImages(prev => ({
                 ...prev,
-                [editingItemIdx]: [...(prev[editingItemIdx] || []), ...images],
+                [editingItemIdx]: images,
               }));
             }}
           />
