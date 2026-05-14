@@ -699,7 +699,6 @@ export default function PropostaClienteBuildsPage() {
                   </div>
                 </div>
               );
-              );
             });
             return out;
             })()}
