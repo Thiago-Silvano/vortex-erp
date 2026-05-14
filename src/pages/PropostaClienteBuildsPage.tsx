@@ -290,16 +290,18 @@ export default function PropostaClienteBuildsPage() {
   const passengersCount = (sale as any).passengers_count || quoteData?.client_passengers || 1;
   const heroImage = sale.destination_image_url || quoteData?.destination_image_url;
   const heroImageConfig: ImagePositionConfig | null = (sale as any).destination_image_config || null;
-  // Build flow is à la carte: show all enabled payment options regardless of which
-  // quote option they were originally tied to (deduped by label+installments+discount).
+  // Build flow is à la carte (single proposal): show only the payment options
+  // tied to the FIRST quote option (or legacy null), to avoid duplicating the
+  // same configurations that were replicated across multiple quote options.
   const allPayOpts: ProposalPaymentOption[] = ((sale as any).proposal_payment_options || [])
     .filter((opt: any) => opt.enabled !== false);
-  const seenKeys = new Set<string>();
+  const optionIdsInOrder: string[] = Array.from(
+    new Set(allPayOpts.map((o: any) => o.quote_option_id).filter(Boolean) as string[])
+  );
+  const primaryOptId: string | null = optionIdsInOrder[0] || null;
   const proposalOptions: ProposalPaymentOption[] = allPayOpts.filter((opt: any) => {
-    const key = `${opt.label || opt.method || ''}|${opt.installments || 1}|${opt.discountPercent || 0}|${opt.fixedValue || 0}`;
-    if (seenKeys.has(key)) return false;
-    seenKeys.add(key);
-    return true;
+    const oid = opt.quote_option_id || null;
+    return oid === primaryOptId;
   });
   const showPerPassenger = (sale as any).show_per_passenger === true && passengersCount > 1;
 
