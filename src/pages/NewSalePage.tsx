@@ -1658,6 +1658,13 @@ export default function NewSalePage() {
   const saveSaleCore = async (salePayload: any, userEmail: string) => {
     let saleId = editSaleId;
 
+    // Validate: every enabled custom payment option must have a non-empty label
+    const invalidLabel = proposalPaymentOptions.find(o => o.enabled && (o.method.startsWith('custom_') || o.method.startsWith('pdf_import_')) && !(o.label || '').trim());
+    if (invalidLabel) {
+      toast.error('Preencha o título de todas as formas de pagamento personalizadas.');
+      return null;
+    }
+
     if (editSaleId) {
       const { error } = await supabase.from('sales').update({ ...salePayload, updated_by: userEmail } as any).eq('id', editSaleId);
       if (error) { console.error('Erro ao atualizar venda:', error); toast.error('Erro ao atualizar venda: ' + error.message); return null; }
@@ -3466,7 +3473,7 @@ export default function NewSalePage() {
                     setProposalPaymentOptions(prev => prev.filter((_, i) => i !== idx));
                   const addOption = () => setProposalPaymentOptions(prev => [...prev, {
                     method: `custom_${Date.now()}`,
-                    label: 'Personalizado',
+                    label: '',
                     installments: 1,
                     discountPercent: 0,
                     enabled: true,
@@ -3539,7 +3546,13 @@ export default function NewSalePage() {
                                       <div className="flex items-center gap-2.5 px-3 py-2 border-b border-border/50">
                                         <Checkbox checked={opt.enabled} onCheckedChange={(c) => updateAt(idx, { enabled: !!c })} />
                                         {isCustom ? (
-                                          <Input value={opt.label} onChange={e => updateAt(idx, { label: e.target.value })} className="h-7 text-sm font-medium flex-1 min-w-0" placeholder="Nome da forma de pagamento" />
+                                          <Input
+                                            value={opt.label}
+                                            onChange={e => updateAt(idx, { label: e.target.value })}
+                                            className={`h-7 text-sm font-medium flex-1 min-w-0 ${opt.enabled && !opt.label.trim() ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                                            placeholder="Nome da forma de pagamento *"
+                                            required
+                                          />
                                         ) : (
                                           <Label className="font-medium text-sm flex-1 truncate">{opt.label}</Label>
                                         )}
