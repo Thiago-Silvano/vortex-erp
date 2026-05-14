@@ -3539,7 +3539,7 @@ export default function NewSalePage() {
                                             </div>
                                             <div>
                                               <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Desc/Acréscimo %</Label>
-                                              <Input type="number" step="0.5" value={opt.discountPercent || 0} onChange={e => updateAt(idx, { discountPercent: parseFloat(e.target.value) || 0, fixedValue: undefined })} placeholder="0" className="h-8 mt-0.5" />
+                                              <Input type="number" step="0.5" value={opt.discountPercent ? opt.discountPercent : ''} onChange={e => { const v = e.target.value; updateAt(idx, { discountPercent: v === '' || v === '-' ? 0 : (parseFloat(v) || 0), fixedValue: undefined }); }} placeholder="0 ou -5" className="h-8 mt-0.5" />
                                             </div>
                                             <div>
                                               <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor fixo R$</Label>
