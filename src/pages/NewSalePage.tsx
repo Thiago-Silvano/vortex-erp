@@ -2449,7 +2449,7 @@ export default function NewSalePage() {
         agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
         airlineName,
         clientName: clientName,
-        shortId: voucherReference || undefined,
+        shortId: shortId || undefined,
         saleDate,
         localizador: '',
         passengers: airPax,
