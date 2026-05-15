@@ -1720,6 +1720,27 @@ export default function NewSalePage() {
       // Sync local state so the UI keeps showing the per-option configs without reload
       setQuoteOptions(prev => prev.map((q, i) => ({ ...q, id: optionIdMap[i] || q.id })));
       setProposalPaymentOptions(remapped);
+      // Remap items' quote_option_ids from OLD ids → NEW ids so that the
+      // per-option filter (itemsForOption) keeps matching after the silent
+      // autosave triggered by service edits. Without this, all services
+      // visually "disappear" from the active option tab.
+      const oldToNew: Record<string, string> = {};
+      quoteOptions.forEach((q, i) => {
+        const newId = optionIdMap[i];
+        if (newId && q.id && q.id !== newId) oldToNew[q.id] = newId;
+      });
+      if (Object.keys(oldToNew).length > 0) {
+        setItems(prev => prev.map(it => {
+          const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+          const mapped = ids.map(id => oldToNew[id] || id);
+          return {
+            ...it,
+            quote_option_id: mapped[0] || it.quote_option_id,
+            quote_option_ids: mapped.length > 0 ? mapped : it.quote_option_ids,
+          };
+        }));
+        setActiveOptionId(prev => oldToNew[prev] || prev);
+      }
     }
 
     if (items.length > 0) {
