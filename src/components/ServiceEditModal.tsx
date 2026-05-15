@@ -692,6 +692,22 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 <h3 className="font-semibold text-sm">Trechos do Voo</h3>
                 <Button size="sm" variant="outline" onClick={addFlightLeg}><Plus className="h-3 w-3 mr-1" />Trecho</Button>
               </div>
+              {(() => {
+                const hasIda = flightLegs.some(l => l.direction === 'ida');
+                const hasVolta = flightLegs.some(l => l.direction === 'volta');
+                if (hasIda && hasVolta) {
+                  return (
+                    <div className="flex items-start gap-2 p-2 rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-xs">
+                      <OctagonAlert className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <span>
+                        Recomendado: cada voo (ida e volta) deve ser um <b>serviço separado</b>.
+                        Crie 2 serviços aéreos — um por par origem→destino final.
+                      </span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               {flightLegs.map((leg, idx) => (
                 <div key={idx} className="border rounded-lg p-4 space-y-3 relative bg-muted/30">
                   <div className="flex items-center justify-between">
