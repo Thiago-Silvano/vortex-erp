@@ -279,7 +279,7 @@ export default function VistosNewSalePage() {
         }
       }
       if (field === 'num_installments') {
-        const num = Math.max(1, Number(value) || 1);
+        const num = Math.max(0, Number(value) || 0);
         updated.num_installments = num;
         if (num > 1 && isInstallmentType(updated.payment_type)) {
           updated.installments = generateInstallments(updated.value, num, updated.payment_date);
