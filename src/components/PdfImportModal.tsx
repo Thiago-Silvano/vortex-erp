@@ -344,82 +344,63 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
       return partial?.id;
     };
 
-    const items: ImportedItem[] = services.flatMap(s => {
+    const items: ImportedItem[] = services.map(s => {
       const matchedCatalog = serviceCatalog.find(c => c.name.toLowerCase().includes(s.service_type.toLowerCase()) || s.service_type.toLowerCase().includes(c.name.toLowerCase()));
-      const fullCost = s.cost_price * (s.quantity || 1);
+      const cost = s.cost_price * (s.quantity || 1);
+      const rav = calcRav(cost);
       const detectedType = detectServiceType(s.service_type);
 
-      // ── AÉREO: 1 serviço por par origem→destino final (split por direção) ──
+      const metadata: any = { type: detectedType, detailedDescription: s.details || '' };
+
       if (detectedType === 'aereo' && s.flight_legs?.length) {
         const mainAirlineRaw = s.flight_legs.find(l => l.airline)?.airline || '';
         const mainAirlineId = findAirlineId(mainAirlineRaw);
-
-        // Group legs by direction (ida/volta). Unspecified → ida.
-        const groups: Record<string, typeof s.flight_legs> = {};
-        s.flight_legs.forEach(leg => {
-          const dir = leg.direction === 'volta' ? 'volta' : 'ida';
-          (groups[dir] = groups[dir] || []).push(leg);
-        });
-        const dirKeys = Object.keys(groups);
-        const splitCost = dirKeys.length > 0 ? fullCost / dirKeys.length : fullCost;
-
-        return dirKeys.map(dir => {
-          const legs = groups[dir];
-          const meta: any = { type: 'aereo', detailedDescription: '' };
-          if (mainAirlineId) meta.airlineId = mainAirlineId;
-          meta.flightLegs = legs.map(leg => ({
-            origin: leg.origin || '',
-            destination: leg.destination || '',
-            departureDate: leg.departure_date || '',
-            departureTime: leg.departure_time || '',
-            arrivalDate: leg.arrival_date || '',
-            arrivalTime: leg.arrival_time || '',
-            connectionDuration: leg.connection_duration || '',
-            direction: dir,
-            flightCode: leg.flight_number ? `${leg.airline || ''} ${leg.flight_number}`.trim() : (leg.airline || ''),
-            airlineId: findAirlineId(leg.airline) || mainAirlineId,
-          }));
-          if (s.baggage) {
-            meta.baggage = {
-              personalItem: s.baggage.personal_item ?? 1,
-              carryOn: s.baggage.carry_on ?? 1,
-              checkedBag: s.baggage.checked_bag ?? 1,
-            };
-          }
-          if (dir === 'ida') meta.totalTravelDurationOutbound = s.total_travel_duration_outbound || '';
-          if (dir === 'volta') meta.totalTravelDurationReturn = s.total_travel_duration_return || '';
-
-          const first = legs[0];
-          const last = legs[legs.length - 1];
-          const description = first && last ? `${first.origin} para ${last.destination}` : s.description;
-          const rav = calcRav(splitCost);
-
-          return {
-            description,
-            cost_price: splitCost,
-            rav,
-            total_value: splitCost + rav,
-            service_catalog_id: matchedCatalog?.id,
-            cost_center_id: matchedCatalog?.cost_center_id || undefined,
-            metadata: meta,
-            quote_option_id: s.quote_option_key,
+        if (mainAirlineId) metadata.airlineId = mainAirlineId;
+        metadata.flightLegs = s.flight_legs.map(leg => ({
+          origin: leg.origin || '',
+          destination: leg.destination || '',
+          departureDate: leg.departure_date || '',
+          departureTime: leg.departure_time || '',
+          arrivalDate: leg.arrival_date || '',
+          arrivalTime: leg.arrival_time || '',
+          connectionDuration: leg.connection_duration || '',
+          direction: leg.direction || 'ida',
+          flightCode: leg.flight_number ? `${leg.airline || ''} ${leg.flight_number}`.trim() : (leg.airline || ''),
+          airlineId: findAirlineId(leg.airline) || mainAirlineId,
+        }));
+        if (s.baggage) {
+          metadata.baggage = {
+            personalItem: s.baggage.personal_item ?? 1,
+            carryOn: s.baggage.carry_on ?? 1,
+            checkedBag: s.baggage.checked_bag ?? 1,
           };
-        });
+        }
+        metadata.totalTravelDurationOutbound = s.total_travel_duration_outbound || '';
+        metadata.totalTravelDurationReturn = s.total_travel_duration_return || '';
       }
 
-      // Non-aereo path
-      const metadata: any = { type: detectedType, detailedDescription: s.details || '' };
-      const rav = calcRav(fullCost);
-      return [{
-        description: s.description,
-        cost_price: fullCost,
+      let finalDescription = s.description;
+      if (detectedType === 'aereo' && s.flight_legs?.length) {
+        const idaLegs = s.flight_legs.filter(l => l.direction === 'ida');
+        const legsForRoute = idaLegs.length ? idaLegs : s.flight_legs;
+        const first = legsForRoute[0];
+        const last = legsForRoute[legsForRoute.length - 1];
+        if (first && last) {
+          finalDescription = `${first.origin} para ${last.destination}`;
+        }
+        metadata.detailedDescription = '';
+      }
+
+      return {
+        description: finalDescription,
+        cost_price: cost,
         rav,
-        total_value: fullCost + rav,
+        total_value: cost + rav,
         service_catalog_id: matchedCatalog?.id,
         cost_center_id: matchedCatalog?.cost_center_id || undefined,
         metadata,
         quote_option_id: s.quote_option_key,
-      }];
+      };
     });
 
     onImport({
