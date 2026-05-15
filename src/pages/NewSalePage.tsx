@@ -3279,23 +3279,32 @@ export default function NewSalePage() {
               <CardContent className="p-3 sm:p-4 space-y-4">
                 {/* Tabs of options */}
                 {isQuoteMode && (
-                  <div className="flex items-center gap-2">
-                    <Select value={activeCol?.id || ''} onValueChange={(v) => setActiveOptionId(v)}>
-                      <SelectTrigger className="h-9 w-full sm:w-80 text-xs">
-                        <SelectValue placeholder="Selecione uma opção" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {optionColumns.map((col) => (
-                          <SelectItem key={col.id} value={col.id} className="text-xs">
-                            {col.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="flex items-center gap-2 border-b border-border">
+                    <div className="flex-1 overflow-x-auto">
+                      <div className="flex items-center gap-1 min-w-max">
+                        {optionColumns.map((col) => {
+                          const isActive = col.id === activeCol?.id;
+                          return (
+                            <button
+                              key={col.id}
+                              type="button"
+                              onClick={() => setActiveOptionId(col.id)}
+                              className={`relative px-3 h-9 text-xs font-medium whitespace-nowrap transition-colors ${
+                                isActive
+                                  ? 'text-foreground after:absolute after:left-0 after:right-0 after:-bottom-px after:h-0.5 after:bg-foreground'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                            >
+                              {col.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                     {activeCol && (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title="Editar opção">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 mb-1" title="Editar opção">
                             <Edit className="h-3.5 w-3.5" />
                           </Button>
                         </PopoverTrigger>
