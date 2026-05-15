@@ -3279,32 +3279,32 @@ export default function NewSalePage() {
               <CardContent className="p-3 sm:p-4 space-y-4">
                 {/* Tabs of options */}
                 {isQuoteMode && (
-                  <div className="flex items-center gap-2 border-b border-border">
-                    <div className="flex-1 overflow-x-auto">
-                      <div className="flex items-center gap-1 min-w-max">
-                        {optionColumns.map((col) => {
-                          const isActive = col.id === activeCol?.id;
-                          return (
-                            <button
-                              key={col.id}
-                              type="button"
-                              onClick={() => setActiveOptionId(col.id)}
-                              className={`relative px-3 h-9 text-xs font-medium whitespace-nowrap transition-colors ${
-                                isActive
-                                  ? 'text-foreground after:absolute after:left-0 after:right-0 after:-bottom-px after:h-0.5 after:bg-foreground'
-                                  : 'text-muted-foreground hover:text-foreground'
-                              }`}
-                            >
-                              {col.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                  <div className="flex items-end gap-1 flex-wrap border-b border-border pb-0">
+                    {optionColumns.map((col) => {
+                      const isActive = col.id === activeCol?.id;
+                      return (
+                        <button
+                          key={col.id}
+                          type="button"
+                          onClick={() => setActiveOptionId(col.id)}
+                          className={`relative -mb-px px-3 py-1.5 text-xs font-medium rounded-t-md border border-b-0 transition-colors ${
+                            isActive
+                              ? 'bg-card text-foreground border-border z-10 shadow-[0_-1px_0_0_hsl(var(--border))]'
+                              : 'bg-muted/40 text-muted-foreground border-transparent hover:bg-muted/70 hover:text-foreground'
+                          }`}
+                          title={col.name}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
+                            {col.name}
+                          </span>
+                        </button>
+                      );
+                    })}
                     {activeCol && (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 mb-1" title="Editar opção">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 ml-1 mb-0.5" title="Editar opção ativa">
                             <Edit className="h-3.5 w-3.5" />
                           </Button>
                         </PopoverTrigger>
