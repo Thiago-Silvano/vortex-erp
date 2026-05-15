@@ -3413,7 +3413,6 @@ export default function NewSalePage() {
                           </div>
                           <div className="text-[11px] text-muted-foreground truncate">{metaParts.join(' · ')}</div>
                         </button>
-                        {isQuoteMode && quoteOptions.length > 1 && (
                         {isQuoteMode && quoteOptions.length > 1 && (() => {
                           const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
                           const selectedCount = quoteOptions.filter(opt => ids.includes(opt.id || String(opt.order_index))).length;
