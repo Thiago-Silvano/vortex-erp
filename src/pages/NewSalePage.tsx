@@ -3414,34 +3414,59 @@ export default function NewSalePage() {
                           <div className="text-[11px] text-muted-foreground truncate">{metaParts.join(' · ')}</div>
                         </button>
                         {isQuoteMode && quoteOptions.length > 1 && (
-                          <div className="hidden md:flex flex-wrap gap-1 max-w-[180px]">
-                            {quoteOptions.map((opt, oi) => {
-                              const optId = opt.id || String(oi);
-                              const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
-                              const checked = ids.includes(optId);
-                              return (
-                                <button
-                                  key={oi}
-                                  type="button"
-                                  onClick={() => {
-                                    setItems(prev => prev.map((x, j) => {
-                                      if (j !== idx) return x;
-                                      const cur = x.quote_option_ids || (x.quote_option_id ? [x.quote_option_id] : []);
-                                      const isOn = cur.includes(optId);
-                                      const newIds = isOn ? cur.filter(id => id !== optId) : [...cur, optId];
-                                      const finalIds = newIds.length === 0 ? [optId] : newIds;
-                                      return { ...x, quote_option_ids: finalIds, quote_option_id: finalIds[0] };
-                                    }));
-                                  }}
-                                  className={`text-[10px] px-1.5 py-0.5 rounded border ${checked ? 'bg-primary/10 border-primary/40 text-foreground' : 'bg-transparent border-border text-muted-foreground hover:bg-muted'}`}
-                                  title={opt.name}
+                        {isQuoteMode && quoteOptions.length > 1 && (() => {
+                          const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                          const selectedCount = quoteOptions.filter(opt => ids.includes(opt.id || String(opt.order_index))).length;
+                          return (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="hidden md:inline-flex h-7 px-2 text-[10px] font-medium gap-1"
+                                  title="Opções da cotação que incluem este serviço"
                                 >
-                                  {checked ? '✓ ' : ''}{opt.name}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
+                                  <span className="text-muted-foreground">Opções:</span>
+                                  <span className="text-foreground">{selectedCount}/{quoteOptions.length}</span>
+                                  <ChevronDown className="h-3 w-3 opacity-60" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-64 p-2" align="end">
+                                <div className="text-[11px] font-medium text-muted-foreground px-1 pb-1.5">
+                                  Aparece nas opções:
+                                </div>
+                                <div className="space-y-0.5 max-h-60 overflow-y-auto">
+                                  {quoteOptions.map((opt, oi) => {
+                                    const optId = opt.id || String(oi);
+                                    const checked = ids.includes(optId);
+                                    return (
+                                      <button
+                                        key={oi}
+                                        type="button"
+                                        onClick={() => {
+                                          setItems(prev => prev.map((x, j) => {
+                                            if (j !== idx) return x;
+                                            const cur = x.quote_option_ids || (x.quote_option_id ? [x.quote_option_id] : []);
+                                            const isOn = cur.includes(optId);
+                                            const newIds = isOn ? cur.filter(id => id !== optId) : [...cur, optId];
+                                            const finalIds = newIds.length === 0 ? [optId] : newIds;
+                                            return { ...x, quote_option_ids: finalIds, quote_option_id: finalIds[0] };
+                                          }));
+                                        }}
+                                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-colors ${checked ? 'bg-primary/10 text-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                                      >
+                                        <span className={`flex h-3.5 w-3.5 items-center justify-center rounded border ${checked ? 'bg-primary border-primary text-primary-foreground' : 'border-border'}`}>
+                                          {checked && <Check className="h-2.5 w-2.5" />}
+                                        </span>
+                                        <span className="truncate">{opt.name}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          );
+                        })()}
                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${tm.pill}`}>{tm.label}</span>
                         <span className="text-sm font-semibold tabular-nums w-[110px] text-right text-inherit">{maskCurrency(it.total_value)}</span>
                         <div className="flex items-center gap-0.5">
