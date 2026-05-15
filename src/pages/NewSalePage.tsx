@@ -3279,57 +3279,55 @@ export default function NewSalePage() {
               <CardContent className="p-3 sm:p-4 space-y-4">
                 {/* Tabs of options */}
                 {isQuoteMode && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    {optionColumns.map((col, colIdx) => {
-                      const isActive = col.id === activeCol?.id;
-                      return (
-                        <Popover key={col.id}>
-                          <div className="flex items-center">
-                            <button
-                              type="button"
-                              onClick={() => setActiveOptionId(col.id)}
-                              className={`flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors border ${isActive ? 'bg-foreground text-background border-foreground' : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted/70'}`}
-                            >
-                              <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-background' : 'bg-muted-foreground/50'}`} />
-                              {col.name}
-                            </button>
-                            {isActive && (
-                              <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 ml-0.5"><Edit className="h-3 w-3" /></Button>
-                              </PopoverTrigger>
-                            )}
-                          </div>
-                          <PopoverContent className="w-64 p-2 space-y-2">
-                            <Label className="text-xs">Renomear opção</Label>
-                            <Input
-                              value={col.opt.name}
-                              onChange={e => setQuoteOptions(prev => prev.map((o, i) => i === col.idx ? { ...o, name: e.target.value } : o))}
-                              className="h-8 text-sm"
-                            />
-                            {quoteOptions.length > 1 && (
-                              <Button variant="ghost" size="sm" className="w-full justify-start text-destructive h-7 text-xs" onClick={() => {
-                                const removedId = col.opt.id || String(col.idx);
-                                const remaining = quoteOptions.filter((_, i) => i !== col.idx);
-                                const fallbackId = remaining[0]?.id || String(remaining[0]?.order_index ?? 0);
-                                setQuoteOptions(remaining.map((o, i) => ({ ...o, order_index: i })));
-                                setItems(prev => prev.map(item => {
-                                  const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
-                                  const filtered = ids.filter(id => id !== removedId);
-                                  if (filtered.length === 0) return { ...item, quote_option_id: fallbackId, quote_option_ids: [fallbackId] };
-                                  return { ...item, quote_option_id: filtered[0], quote_option_ids: filtered };
-                                }));
-                                // Drop payment options tied to the removed quote option
-                                setProposalPaymentOptions(prev => prev.filter(po => (po.quote_option_id || null) !== removedId));
-                                if (paymentOptionTab === removedId) setPaymentOptionTab('__geral__');
-                                setActiveOptionId(fallbackId);
-                              }}>
-                                <Trash2 className="h-3 w-3 mr-1" /> Remover opção
-                              </Button>
-                            )}
-                          </PopoverContent>
-                        </Popover>
-                      );
-                    })}
+                  <div className="flex items-center gap-2">
+                    <Select value={activeCol?.id || ''} onValueChange={(v) => setActiveOptionId(v)}>
+                      <SelectTrigger className="h-9 w-full sm:w-80 text-xs">
+                        <SelectValue placeholder="Selecione uma opção" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {optionColumns.map((col) => (
+                          <SelectItem key={col.id} value={col.id} className="text-xs">
+                            {col.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {activeCol && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title="Editar opção">
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-2 space-y-2">
+                          <Label className="text-xs">Renomear opção</Label>
+                          <Input
+                            value={activeCol.opt.name}
+                            onChange={e => setQuoteOptions(prev => prev.map((o, i) => i === activeCol.idx ? { ...o, name: e.target.value } : o))}
+                            className="h-8 text-sm"
+                          />
+                          {quoteOptions.length > 1 && (
+                            <Button variant="ghost" size="sm" className="w-full justify-start text-destructive h-7 text-xs" onClick={() => {
+                              const removedId = activeCol.opt.id || String(activeCol.idx);
+                              const remaining = quoteOptions.filter((_, i) => i !== activeCol.idx);
+                              const fallbackId = remaining[0]?.id || String(remaining[0]?.order_index ?? 0);
+                              setQuoteOptions(remaining.map((o, i) => ({ ...o, order_index: i })));
+                              setItems(prev => prev.map(item => {
+                                const ids = item.quote_option_ids || (item.quote_option_id ? [item.quote_option_id] : []);
+                                const filtered = ids.filter(id => id !== removedId);
+                                if (filtered.length === 0) return { ...item, quote_option_id: fallbackId, quote_option_ids: [fallbackId] };
+                                return { ...item, quote_option_id: filtered[0], quote_option_ids: filtered };
+                              }));
+                              setProposalPaymentOptions(prev => prev.filter(po => (po.quote_option_id || null) !== removedId));
+                              if (paymentOptionTab === removedId) setPaymentOptionTab('__geral__');
+                              setActiveOptionId(fallbackId);
+                            }}>
+                              <Trash2 className="h-3 w-3 mr-1" /> Remover opção
+                            </Button>
+                          )}
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                 )}
 
