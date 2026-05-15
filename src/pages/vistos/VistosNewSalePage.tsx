@@ -90,7 +90,7 @@ export default function VistosNewSalePage() {
   const [quickClientForApplicant, setQuickClientForApplicant] = useState<number | null>(null);
 
   const makeDefaultPayment = (): PaymentEntry => ({
-    payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false, num_installments: 1, installments: [],
+    payment_type: 'pix', value: 0, payment_date: format(new Date(), 'yyyy-MM-dd'), is_received: false, num_installments: 0, installments: [],
   });
 
   const [payments, setPayments] = useState<PaymentEntry[]>([makeDefaultPayment()]);
@@ -177,7 +177,7 @@ export default function VistosNewSalePage() {
         value: Number(p.value),
         payment_date: p.payment_date || '',
         is_received: p.is_received || false,
-        num_installments: 1,
+        num_installments: 0,
         installments: [],
       })));
     }
@@ -830,7 +830,7 @@ export default function VistosNewSalePage() {
                   {isInstallmentType(payment.payment_type) && (
                     <div>
                       <Label className="text-xs">Parcelas</Label>
-                      <Input className="h-9" type="number" min={1} max={24} value={payment.num_installments} onChange={e => updatePayment(idx, 'num_installments', parseInt(e.target.value) || 1)} />
+                       <Input className="h-9" type="number" min={1} max={24} value={payment.num_installments || ''} placeholder="" onChange={e => updatePayment(idx, 'num_installments', parseInt(e.target.value) || 0)} />
                     </div>
                   )}
                   {(payment.num_installments <= 1 || !isInstallmentType(payment.payment_type)) && (
