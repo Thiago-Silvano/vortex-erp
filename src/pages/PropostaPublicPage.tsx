@@ -306,7 +306,7 @@ export default function PropostaPublicPage() {
         )}
         <div className="absolute inset-0" style={{
           background: heroImage
-            ? 'linear-gradient(to bottom, rgba(13,27,42,0.2) 0%, rgba(13,27,42,0.55) 40%, rgba(13,27,42,0.95) 100%)'
+            ? 'transparent'
             : 'linear-gradient(135deg, #0D1B2A 0%, #1B3A4B 100%)',
         }} />
         <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }} />
