@@ -86,7 +86,7 @@ interface Passenger {
 }
 
 interface SupplierOption { id: string; name: string; }
-interface SellerOption { id: string; full_name: string; commission_type?: string; commission_percentage?: number; commission_base?: string; }
+interface SellerOption { id: string; full_name: string; email?: string; commission_type?: string; commission_percentage?: number; commission_base?: string; }
 interface FinancialCost {
   description: string;
   value: number;
@@ -192,6 +192,20 @@ export default function NewSalePage() {
   }, [commissionSurcharge, commissionSurchargeDate, saleDate]);
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
   const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
+  const sellerAutoFilledRef = useRef(false);
+  useEffect(() => {
+    if (sellerAutoFilledRef.current) return;
+    if (!allSellers.length || sellerId || initialEditSaleId || quoteData?.sellerId) return;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user?.email) return;
+      const matched = allSellers.find((s: SellerOption) => s.email && s.email.toLowerCase() === user.email!.toLowerCase());
+      if (matched) {
+        setSellerId(matched.id);
+        sellerAutoFilledRef.current = true;
+      }
+    });
+  }, [allSellers]);
+
   const [financialCosts, setFinancialCosts] = useState<FinancialCost[]>([]);
 
   const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
@@ -590,7 +604,7 @@ export default function NewSalePage() {
       });
     })();
     if (activeCompany) {
-      (supabase.from('sellers') as any).select('id, full_name, commission_type, commission_percentage, commission_base').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
+      (supabase.from('sellers') as any).select('id, full_name, email, commission_type, commission_percentage, commission_base').eq('empresa_id', activeCompany.id).eq('status', 'active').order('full_name').then(({ data }: any) => { if (data) setAllSellers(data); });
       // Load stock image API keys
       supabase.from('agency_settings').select('*').eq('empresa_id', activeCompany.id).limit(1).single().then(({ data }) => {
         if (data) {
