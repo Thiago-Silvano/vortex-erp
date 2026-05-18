@@ -193,6 +193,19 @@ export default function NewSalePage() {
   const [allSellers, setAllSellers] = useState<SellerOption[]>([]);
   const [sellerId, setSellerId] = useState<string>(quoteData?.sellerId || '');
   const sellerAutoFilledRef = useRef(false);
+  useEffect(() => {
+    if (sellerAutoFilledRef.current) return;
+    if (!allSellers.length || sellerId || initialEditSaleId || quoteData?.sellerId) return;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user?.email) return;
+      const matched = allSellers.find((s: SellerOption) => s.email && s.email.toLowerCase() === user.email!.toLowerCase());
+      if (matched) {
+        setSellerId(matched.id);
+        sellerAutoFilledRef.current = true;
+      }
+    });
+  }, [allSellers]);
+
   const [financialCosts, setFinancialCosts] = useState<FinancialCost[]>([]);
 
   const [ecRates, setEcRates] = useState<CardRateEntry[]>([]);
