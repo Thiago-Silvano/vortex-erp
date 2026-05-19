@@ -197,7 +197,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean, userRole: string): Menu
     { label: "Marketing", icon: <Megaphone className="h-4 w-4 text-white" />, items: [
       { title: "Lâminas de promoções", url: "/promo-maker" },
       { title: "Roteiros", url: "/itineraries" },
-      { title: "Banco de Imagens", url: "/product-images" },
+      { title: "Banco\nde\nImagens", url: "/product-images" },
     ]},
     { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4 text-white" />, url: "/whatsapp", items: [
       { title: "Conversas", url: "/whatsapp" },
@@ -292,7 +292,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                     >
                       <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
                         <Star className="h-4 w-4 fill-sidebar-primary text-sidebar-primary shrink-0" />
-                        <span className="truncate text-[15px] font-bold text-sidebar-foreground">{item.title}</span>
+                        <span className="whitespace-pre-line text-[15px] font-bold text-sidebar-foreground">{item.title}</span>
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -366,7 +366,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                             onClick={() => { navigate(item.url); setOpenGroup(null); }}
                             className={`group/item flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-left hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(item.url) ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""}`}
                           >
-                            <span className="truncate text-[14px] font-semibold text-sidebar-foreground flex-1 text-left">{item.title}</span>
+                            <span className="whitespace-pre-line text-[14px] font-semibold text-sidebar-foreground flex-1 text-left">{item.title}</span>
                                 <span
                                   onClick={(e) => { e.stopPropagation(); toggleFavorite(item.url); }}
                                   className={`shrink-0 ${isFav ? "opacity-100" : "opacity-0 group-hover/item:opacity-70 hover:!opacity-100"}`}
