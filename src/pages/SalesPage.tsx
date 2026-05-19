@@ -78,14 +78,36 @@ export default function SalesPage() {
     return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
   };
 
-  const fetchSales = async () => {
-    setLoading(true);
+  const PAGE_SIZE = 20;
+
+  const buildBaseQuery = () => {
+    let q: any = supabase.from('sales').select('*', { count: 'exact' }).eq('status', 'active');
+    if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
+    const term = debouncedSearch.trim();
+    if (term) {
+      const safe = term.replace(/[,()]/g, ' ');
+      q = q.ilike('client_name', `%${safe}%`);
+    }
+    const range = getDateRange(datePeriod, customStart, customEnd);
+    if (range) {
+      const toISO = (d: Date) => d.toISOString().slice(0, 10);
+      q = q.gte('sale_date', toISO(range.start)).lte('sale_date', toISO(range.end));
+    }
+    return q;
+  };
+
+  const fetchSales = async (append = false) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     try {
-      let query = supabase.from('sales').select('*').order('sale_date', { ascending: false });
-      if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
-      const { data } = await query;
+      const from = append ? sales.length : 0;
+      const to = from + PAGE_SIZE - 1;
+      const { data, count } = await buildBaseQuery()
+        .order('sale_date', { ascending: false })
+        .range(from, to);
+
       if (!data) {
-        setSales([]);
+        if (!append) setSales([]);
+        setHasMore(false);
         return;
       }
 
@@ -106,15 +128,58 @@ export default function SalesPage() {
         }
       }
 
-      setSales(data.map((s: any) => ({ ...s, suppliers_summary: suppliersMap[s.id]?.join(', ') || '' })) as SaleRow[]);
+      const enriched = data.map((s: any) => ({ ...s, suppliers_summary: suppliersMap[s.id]?.join(', ') || '' })) as SaleRow[];
+      if (append) setSales(prev => [...prev, ...enriched]);
+      else setSales(enriched);
+      const totalCount = count ?? (from + data.length);
+      setHasMore((from + data.length) < totalCount);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
+  // Debounce search
   useEffect(() => {
-    fetchSales();
-  }, [activeCompany?.id]);
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Refetch first page on filter change
+  useEffect(() => {
+    fetchSales(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCompany?.id, debouncedSearch, datePeriod, customStart, customEnd]);
+
+  // Aggregate totals + pending prev months (lightweight separate queries so cards remain accurate)
+  useEffect(() => {
+    (async () => {
+      const range = getDateRange(datePeriod, customStart, customEnd);
+      const toISO = (d: Date) => d.toISOString().slice(0, 10);
+      let agg: any = supabase.from('sales').select('total_sale, net_profit', { count: 'exact' }).eq('status', 'active');
+      if (activeCompany?.id) agg = agg.eq('empresa_id', activeCompany.id);
+      const term = debouncedSearch.trim();
+      if (term) agg = agg.ilike('client_name', `%${term.replace(/[,()]/g, ' ')}%`);
+      if (range) agg = agg.gte('sale_date', toISO(range.start)).lte('sale_date', toISO(range.end));
+      const { data, count } = await agg;
+      const sum = (data || []).reduce((s: number, r: any) => s + Number(r.total_sale || 0), 0);
+      setTotalFilteredAmount(sum);
+      setTotalFilteredCount(count ?? (data?.length || 0));
+
+      if (datePeriod === 'month' && activeCompany?.id) {
+        const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+        const { data: pend } = await supabase.from('sales')
+          .select('net_profit')
+          .eq('status', 'active').eq('empresa_id', activeCompany.id)
+          .eq('commission_invoice_status', 'pending')
+          .lt('sale_date', toISO(startOfMonth));
+        const total = (pend || []).reduce((s: number, r: any) => s + Number(r.net_profit || 0), 0);
+        setPendingPrevMonthsAgg({ count: pend?.length || 0, total });
+      } else {
+        setPendingPrevMonthsAgg({ count: 0, total: 0 });
+      }
+    })();
+  }, [activeCompany?.id, debouncedSearch, datePeriod, customStart, customEnd]);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
