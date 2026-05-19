@@ -637,10 +637,10 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
               </CardContent>
             </Card>
 
-            {sortedSales.length > visibleCount && (
+            {hasMore && (
               <div className="hidden sm:flex justify-center mt-3">
-                <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
-                  Carregar mais 20 ({sortedSales.length - visibleCount} restantes)
+                <Button variant="outline" disabled={loadingMore} onClick={() => fetchSales(true)}>
+                  {loadingMore ? 'Carregando...' : 'Carregar mais 20'}
                 </Button>
               </div>
             )}
@@ -669,10 +669,10 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                   </Card>
                 );
               })}
-              {filteredSales.length > visibleCount && (
+              {hasMore && (
                 <div className="flex justify-center pt-2">
-                  <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
-                    Carregar mais 20 ({filteredSales.length - visibleCount} restantes)
+                  <Button variant="outline" disabled={loadingMore} onClick={() => fetchSales(true)}>
+                    {loadingMore ? 'Carregando...' : 'Carregar mais 20'}
                   </Button>
                 </div>
               )}
