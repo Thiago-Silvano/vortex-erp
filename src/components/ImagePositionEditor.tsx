@@ -142,11 +142,10 @@ export default function ImagePositionEditor({
           {/* Gradient overlay like the proposal */}
           <div
             className="absolute inset-0 pointer-events-none"
-            style={
-              {
-                /*background: 'linear-gradient(to bottom, rgba(13,27,42,0.2) 0%, rgba(13,27,42,0.55) 40%, rgba(13,27,42,0.95) 100%)',*/
-              }
-            }
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(13,27,42,0.2) 0%, rgba(13,27,42,0.55) 40%, rgba(13,27,42,0.95) 100%)",
+            }}
           />
           <div className="absolute bottom-4 left-4 right-4 text-white pointer-events-none">
             <p className="text-sm opacity-70">Preview da proposta</p>
