@@ -387,7 +387,7 @@ export default function PropostaPublicPage() {
           <section>
             <div className="rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
               <div className="px-6 py-4" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
-                <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: '#C8A45B' }}>
+                <p className="text-sm font-bold tracking-[3px] uppercase mb-3" style={{ color: '#E8D5A3' }}>
                   Selecione uma opção
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -395,7 +395,7 @@ export default function PropostaPublicPage() {
                     <button
                       key={opt.id}
                       onClick={() => setSelectedOptionId(opt.id)}
-                      className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      className="px-6 py-3 rounded-xl text-base font-bold transition-all"
                       style={{
                         background: selectedOptionId === opt.id
                           ? 'linear-gradient(135deg, #C8A45B, #E8D5A3)'
