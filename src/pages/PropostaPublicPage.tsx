@@ -323,7 +323,7 @@ export default function PropostaPublicPage() {
           <div className="flex items-start justify-between">
             <div>
               {/* Logo tripled */}
-              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[252px] opacity-90" />
+              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[252px] opacity-100" />
             </div>
             <div className="text-right text-sm font-medium text-white/60">
               {agency && (
