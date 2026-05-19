@@ -2800,12 +2800,12 @@ export default function NewSalePage() {
 
   return (
     <AppLayout>
-      {(savingDraft || savingSale) && (
+      {(savingDraft || savingSale || loadingSale) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
           <div className="bg-card rounded-xl shadow-lg px-8 py-6 flex flex-col items-center gap-3">
             <span className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
             <span className="text-sm font-medium text-foreground">
-              {savingSale ? 'Salvando venda...' : 'Salvando cotação...'}
+              {loadingSale ? 'Carregando cotação...' : savingSale ? 'Salvando venda...' : 'Salvando cotação...'}
             </span>
           </div>
         </div>
