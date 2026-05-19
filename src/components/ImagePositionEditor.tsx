@@ -1,13 +1,13 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { ZoomIn, ZoomOut, Move, RotateCcw, Sun } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { ZoomIn, ZoomOut, Move, RotateCcw, Sun } from "lucide-react";
 
 export interface ImagePositionConfig {
   offsetX: number; // percentage -50 to 50
   offsetY: number; // percentage -50 to 50
-  zoom: number;    // 1 to 3
+  zoom: number; // 1 to 3
   brightness: number; // 0.3 to 1.5 (1 = normal)
 }
 
@@ -22,17 +22,23 @@ interface ImagePositionEditorProps {
 const DEFAULT_CONFIG: ImagePositionConfig = { offsetX: 0, offsetY: 0, zoom: 1, brightness: 1 };
 
 export function getImageStyle(config?: ImagePositionConfig | null): React.CSSProperties {
-  if (!config) return { objectFit: 'cover' as const, objectPosition: 'center' };
+  if (!config) return { objectFit: "cover" as const, objectPosition: "center" };
   const brightness = config.brightness ?? 1;
   return {
-    objectFit: 'cover' as const,
+    objectFit: "cover" as const,
     objectPosition: `${50 + config.offsetX}% ${50 + config.offsetY}%`,
     transform: `scale(${config.zoom})`,
     filter: brightness !== 1 ? `brightness(${brightness})` : undefined,
   };
 }
 
-export default function ImagePositionEditor({ open, onOpenChange, imageUrl, initialConfig, onSave }: ImagePositionEditorProps) {
+export default function ImagePositionEditor({
+  open,
+  onOpenChange,
+  imageUrl,
+  initialConfig,
+  onSave,
+}: ImagePositionEditorProps) {
   const [config, setConfig] = useState<ImagePositionConfig>(initialConfig || DEFAULT_CONFIG);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
@@ -42,45 +48,57 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
     if (open) setConfig({ ...DEFAULT_CONFIG, ...(initialConfig || {}) });
   }, [open, initialConfig]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-    dragStartRef.current = { x: e.clientX, y: e.clientY, ox: config.offsetX, oy: config.offsetY };
-  }, [config.offsetX, config.offsetY]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+      dragStartRef.current = { x: e.clientX, y: e.clientY, ox: config.offsetX, oy: config.offsetY };
+    },
+    [config.offsetX, config.offsetY],
+  );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !dragStartRef.current) return;
-    const dx = (e.clientX - dragStartRef.current.x) / 3;
-    const dy = (e.clientY - dragStartRef.current.y) / 3;
-    setConfig(prev => ({
-      ...prev,
-      offsetX: Math.max(-50, Math.min(50, dragStartRef.current!.ox + dx)),
-      offsetY: Math.max(-50, Math.min(50, dragStartRef.current!.oy + dy)),
-    }));
-  }, [isDragging]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isDragging || !dragStartRef.current) return;
+      const dx = (e.clientX - dragStartRef.current.x) / 3;
+      const dy = (e.clientY - dragStartRef.current.y) / 3;
+      setConfig((prev) => ({
+        ...prev,
+        offsetX: Math.max(-50, Math.min(50, dragStartRef.current!.ox + dx)),
+        offsetY: Math.max(-50, Math.min(50, dragStartRef.current!.oy + dy)),
+      }));
+    },
+    [isDragging],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     dragStartRef.current = null;
   }, []);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    setIsDragging(true);
-    dragStartRef.current = { x: touch.clientX, y: touch.clientY, ox: config.offsetX, oy: config.offsetY };
-  }, [config.offsetX, config.offsetY]);
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      const touch = e.touches[0];
+      setIsDragging(true);
+      dragStartRef.current = { x: touch.clientX, y: touch.clientY, ox: config.offsetX, oy: config.offsetY };
+    },
+    [config.offsetX, config.offsetY],
+  );
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging || !dragStartRef.current) return;
-    const touch = e.touches[0];
-    const dx = (touch.clientX - dragStartRef.current.x) / 3;
-    const dy = (touch.clientY - dragStartRef.current.y) / 3;
-    setConfig(prev => ({
-      ...prev,
-      offsetX: Math.max(-50, Math.min(50, dragStartRef.current!.ox + dx)),
-      offsetY: Math.max(-50, Math.min(50, dragStartRef.current!.oy + dy)),
-    }));
-  }, [isDragging]);
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isDragging || !dragStartRef.current) return;
+      const touch = e.touches[0];
+      const dx = (touch.clientX - dragStartRef.current.x) / 3;
+      const dy = (touch.clientY - dragStartRef.current.y) / 3;
+      setConfig((prev) => ({
+        ...prev,
+        offsetX: Math.max(-50, Math.min(50, dragStartRef.current!.ox + dx)),
+        offsetY: Math.max(-50, Math.min(50, dragStartRef.current!.oy + dy)),
+      }));
+    },
+    [isDragging],
+  );
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
@@ -105,7 +123,7 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
         <div
           ref={containerRef}
           className="relative w-full overflow-hidden rounded-lg border-2 border-border select-none"
-          style={{ height: 340, cursor: isDragging ? 'grabbing' : 'grab' }}
+          style={{ height: 340, cursor: isDragging ? "grabbing" : "grab" }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -122,9 +140,14 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
             style={getImageStyle(config)}
           />
           {/* Gradient overlay like the proposal */}
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: 'linear-gradient(to bottom, rgba(13,27,42,0.2) 0%, rgba(13,27,42,0.55) 40%, rgba(13,27,42,0.95) 100%)',
-          }} />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={
+              {
+                /*background: 'linear-gradient(to bottom, rgba(13,27,42,0.2) 0%, rgba(13,27,42,0.55) 40%, rgba(13,27,42,0.95) 100%)',*/
+              }
+            }
+          />
           <div className="absolute bottom-4 left-4 right-4 text-white pointer-events-none">
             <p className="text-sm opacity-70">Preview da proposta</p>
             <h2 className="text-2xl font-bold">Destino da Viagem</h2>
@@ -138,7 +161,7 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
             <ZoomOut className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <Slider
               value={[config.zoom]}
-              onValueChange={([v]) => setConfig(prev => ({ ...prev, zoom: v }))}
+              onValueChange={([v]) => setConfig((prev) => ({ ...prev, zoom: v }))}
               min={1}
               max={3}
               step={0.05}
@@ -153,13 +176,15 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
             <Sun className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <Slider
               value={[config.brightness]}
-              onValueChange={([v]) => setConfig(prev => ({ ...prev, brightness: v }))}
+              onValueChange={([v]) => setConfig((prev) => ({ ...prev, brightness: v }))}
               min={0.3}
               max={1.5}
               step={0.05}
               className="flex-1"
             />
-            <span className="text-xs text-muted-foreground w-20 text-right">Brilho {Math.round(config.brightness * 100)}%</span>
+            <span className="text-xs text-muted-foreground w-20 text-right">
+              Brilho {Math.round(config.brightness * 100)}%
+            </span>
           </div>
         </div>
 
@@ -168,8 +193,17 @@ export default function ImagePositionEditor({ open, onOpenChange, imageUrl, init
             <RotateCcw className="h-3.5 w-3.5" /> Resetar
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button onClick={() => { onSave(config); onOpenChange(false); }}>Salvar</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                onSave(config);
+                onOpenChange(false);
+              }}
+            >
+              Salvar
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>
