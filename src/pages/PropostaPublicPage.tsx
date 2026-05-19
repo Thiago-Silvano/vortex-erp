@@ -733,9 +733,9 @@ function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: numbe
         />
       ) : (
         <p
-          className="text-sm leading-relaxed whitespace-pre-line"
+          className="text-base leading-relaxed font-medium whitespace-pre-line"
           style={{
-            color: '#888',
+            color: '#2d2d2d',
             ...(needsTruncate && !expanded ? {
               display: '-webkit-box',
               WebkitLineClamp: maxLines,
