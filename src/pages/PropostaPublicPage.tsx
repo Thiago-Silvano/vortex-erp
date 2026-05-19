@@ -629,11 +629,11 @@ export default function PropostaPublicPage() {
             })() : (
               <div className="mt-8 p-6 rounded-2xl" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
                 <div className="flex items-center gap-4 mb-5">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
-                    <span className="text-white text-sm font-bold">$</span>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
+                    <span className="text-white text-base font-bold">$</span>
                   </div>
-                  <div>
-                    <p className="font-bold text-sm" style={{ color: '#0D1B2A' }}>{methodLabels[sale.payment_method || ''] || sale.payment_method}</p>
+                  <div className="flex-1">
+                    <p className="font-bold text-base" style={{ color: '#0D1B2A' }}>{methodLabels[sale.payment_method || ''] || sale.payment_method}</p>
                   </div>
                 </div>
 
