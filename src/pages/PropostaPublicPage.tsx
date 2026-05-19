@@ -656,7 +656,7 @@ export default function PropostaPublicPage() {
           {sale.notes && (
             <section>
               <SectionTitle>Observações</SectionTitle>
-              <div className="mt-8 p-6 rounded-2xl text-sm leading-relaxed" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', color: '#666', whiteSpace: 'pre-wrap' }}>
+              <div className="mt-8 p-8 rounded-2xl text-base font-medium leading-relaxed" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', color: '#2d2d2d', whiteSpace: 'pre-wrap' }}>
                 {sale.notes}
               </div>
             </section>
