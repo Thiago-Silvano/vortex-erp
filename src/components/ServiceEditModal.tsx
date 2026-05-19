@@ -270,21 +270,57 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
 
   const handleUploadFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    const dataUrls: string[] = [];
+    const libType = inferLibraryType();
+    const productName = (type === 'hotel' ? hotel.hotelName : desc)?.trim() || '';
+    const canSaveToLibrary = !!activeCompany?.id && !!productName;
+    const urls: string[] = [];
+    let savedToLibrary = 0;
+
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) continue;
-      const url = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      dataUrls.push(url);
+      try {
+        if (canSaveToLibrary) {
+          const ext = file.name.split('.').pop() || 'jpg';
+          const path = `${activeCompany!.id}/${libType}/${crypto.randomUUID()}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from('product-images-library').upload(path, file);
+          if (upErr) throw upErr;
+          const { data: pub } = supabase.storage
+            .from('product-images-library').getPublicUrl(path);
+          await (supabase.from('product_images' as any).insert({
+            empresa_id: activeCompany!.id,
+            product_type: libType,
+            product_name: productName,
+            image_url: pub.publicUrl,
+            storage_path: path,
+            keywords: null,
+          }) as any);
+          urls.push(pub.publicUrl);
+          savedToLibrary++;
+        } else {
+          // Fallback: sem empresa/nome, mantém comportamento antigo (base64)
+          const url = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          urls.push(url);
+        }
+      } catch (err: any) {
+        console.error('Upload error:', err);
+        toast.error(`Falha ao enviar ${file.name}`);
+      }
     }
-    if (dataUrls.length > 0) {
-      setHotelImages(prev => [...prev, ...dataUrls]);
-      setSelectedImages(prev => { const n = new Set(prev); dataUrls.forEach(u => n.add(u)); return n; });
-      toast.success(`${dataUrls.length} imagem(ns) adicionada(s)`);
+
+    if (urls.length > 0) {
+      setHotelImages(prev => [...prev, ...urls]);
+      setSelectedImages(prev => { const n = new Set(prev); urls.forEach(u => n.add(u)); return n; });
+      if (savedToLibrary > 0) {
+        toast.success(`${urls.length} imagem(ns) adicionada(s) e salva(s) no Banco de Imagens`);
+      } else {
+        toast.success(`${urls.length} imagem(ns) adicionada(s)`);
+      }
     }
   };
 
