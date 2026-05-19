@@ -288,6 +288,65 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     }
   };
 
+  const inferLibraryType = (): string => {
+    if (type === 'hotel') return 'hospedagem';
+    if (type === 'carro') return 'carro';
+    if (type === 'experiencia') return 'experiencia';
+    return 'servico';
+  };
+
+  const openLibrary = () => {
+    setLibrarySelected(new Set());
+    const defaultName = type === 'hotel'
+      ? (hotel.hotelName || '')
+      : (desc || '');
+    setLibrarySearch(defaultName.trim());
+    setLibraryTypeFilter(inferLibraryType());
+    setLibraryOpen(true);
+    // Run initial search with current filter
+    setTimeout(() => runLibrarySearch(defaultName.trim(), inferLibraryType()), 0);
+  };
+
+  const runLibrarySearch = async (q?: string, typeFilter?: string) => {
+    if (!activeCompany?.id) return;
+    setLibraryLoading(true);
+    try {
+      const term = (q ?? librarySearch).trim();
+      const tf = typeFilter ?? libraryTypeFilter;
+      let query: any = (supabase.from('product_images' as any) as any)
+        .select('*').eq('empresa_id', activeCompany.id);
+      if (tf && tf !== 'all') query = query.eq('product_type', tf);
+      if (term) query = query.or(`product_name.ilike.%${term}%,keywords.ilike.%${term}%`);
+      const { data } = await query.order('product_name').limit(120);
+      setLibraryResults((data || []) as any[]);
+    } finally { setLibraryLoading(false); }
+  };
+
+  const toggleLibrarySelected = (url: string) => {
+    setLibrarySelected(prev => {
+      const n = new Set(prev);
+      if (n.has(url)) n.delete(url); else n.add(url);
+      return n;
+    });
+  };
+
+  const addSelectedFromLibrary = () => {
+    const urls = Array.from(librarySelected);
+    if (urls.length === 0) { toast.info('Selecione ao menos uma imagem'); return; }
+    setHotelImages(prev => {
+      const merged = [...prev];
+      urls.forEach(u => { if (!merged.includes(u)) merged.push(u); });
+      return merged;
+    });
+    setSelectedImages(prev => {
+      const n = new Set(prev);
+      urls.forEach(u => n.add(u));
+      return n;
+    });
+    toast.success(`${urls.length} imagem(ns) adicionada(s) do banco`);
+    setLibraryOpen(false);
+  };
+
   // Fallback AI search
   const handleSearchHotelAI = async () => {
     if (!hotel.hotelName.trim()) { toast.error('Digite o nome do hotel'); return; }
