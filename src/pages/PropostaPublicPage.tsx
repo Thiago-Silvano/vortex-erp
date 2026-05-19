@@ -506,8 +506,8 @@ export default function PropostaPublicPage() {
                   background: idx % 2 === 0 ? '#fff' : '#faf9f6', borderBottom: '1px solid #f0ede8'
                 }}>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium" style={{ color: '#2d2d2d' }}>{title}</span>
-                    <span className="text-sm font-semibold tabular-nums" style={{ color: '#C8A45B' }}>{fmt(item.total_value)}</span>
+                    <span className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{title}</span>
+                    <span className="text-base font-bold tabular-nums" style={{ color: '#C8A45B' }}>{fmt(item.total_value)}</span>
                   </div>
                   {subtitle && (
                     <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: '#999' }} dangerouslySetInnerHTML={{ __html: subtitle }} />
