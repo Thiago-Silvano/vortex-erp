@@ -563,7 +563,7 @@ export default function PropostaPublicPage() {
                       </div>
                     )}
                     <div className="py-6 px-6 text-center" style={{ background: isHighlighted ? 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' : '#fff' }}>
-                      <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: isHighlighted ? '#C8A45B' : '#999' }}>
+                      <p className="text-sm font-bold tracking-[3px] uppercase mb-3" style={{ color: isHighlighted ? '#E8D5A3' : '#666' }}>
                         {opt.label}
                         {(opt.discountPercent || 0) > 0 && (
                           <span className="block text-[10px] mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.5)' : '#bbb' }}>
