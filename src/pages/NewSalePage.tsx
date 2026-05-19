@@ -406,11 +406,21 @@ export default function NewSalePage() {
         quote_option_id: (i as any).quote_option_id || undefined,
         quote_option_ids: (i as any).quote_option_id ? [(i as any).quote_option_id] : undefined,
       })));
-      
-      for (let idx = 0; idx < saleItems.length; idx++) {
-        const { data: imgs } = await (supabase.from('sale_item_images' as any) as any).select('*').eq('sale_item_id', saleItems[idx].id).order('sort_order');
-        if (imgs && imgs.length > 0) {
-          imgMap[idx] = imgs.map((img: any) => img.image_url);
+
+      // Batch fetch all images for all sale_items in a single query (avoid N+1)
+      const itemIds = saleItems.map((si: any) => si.id);
+      if (itemIds.length > 0) {
+        const { data: allImgs } = await (supabase.from('sale_item_images' as any) as any)
+          .select('*').in('sale_item_id', itemIds).order('sort_order');
+        if (allImgs && allImgs.length > 0) {
+          const byItemId: Record<string, string[]> = {};
+          for (const img of allImgs as any[]) {
+            (byItemId[img.sale_item_id] ||= []).push(img.image_url);
+          }
+          saleItems.forEach((si: any, idx: number) => {
+            const urls = byItemId[si.id];
+            if (urls && urls.length > 0) imgMap[idx] = urls;
+          });
         }
       }
       setItemImages(imgMap);
