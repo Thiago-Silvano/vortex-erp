@@ -51,6 +51,7 @@ interface QuoteOptionData {
   id: string;
   name: string;
   order_index: number;
+  display_mode?: 'individual' | 'total' | null;
 }
 
 interface PassengerData { first_name: string; last_name: string; is_main: boolean; }
@@ -178,7 +179,7 @@ export default function PropostaPublicPage() {
 
     // Load quote options
     const { data: optionsData } = await (supabase.from('sale_quote_options' as any) as any).select('*').eq('sale_id', saleId).order('order_index');
-    if (optionsData && optionsData.length > 1) {
+    if (optionsData && optionsData.length > 0) {
       setQuoteOptions(optionsData);
       setSelectedOptionId(optionsData[0].id);
     }
