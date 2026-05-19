@@ -116,25 +116,31 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
         .select('id, client_name, destination_name, trip_start_date, trip_end_date, total_sale, passengers_count, created_at, updated_at, sale_workflow_status, status, short_id, seller_id')
         .eq('empresa_id', activeCompany.id)
         .eq('status', 'draft')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       if (!salesData) { setSales([]); return; }
 
-      // Get seller names
+      // Fetch sellers and sale items in parallel (avoid sequential round trips)
       const sellerIds = [...new Set(salesData.filter(s => s.seller_id).map(s => s.seller_id!))];
-      let sellerMap: Record<string, string> = {};
-      if (sellerIds.length > 0) {
-        const { data: sellersData } = await supabase.from('sellers').select('id, full_name').in('id', sellerIds);
-        if (sellersData) sellerMap = Object.fromEntries(sellersData.map(s => [s.id, s.full_name]));
-      }
-
-      // Get sale items metadata for service icons
       const saleIds = salesData.map(s => s.id);
-      let itemsMap: Record<string, { has_aereo: boolean; has_hotel: boolean; has_carro: boolean; has_experiencia: boolean }> = {};
-      if (saleIds.length > 0) {
-        const { data: items } = await supabase.from('sale_items').select('sale_id, metadata').in('sale_id', saleIds);
-        if (items) {
-          for (const item of items) {
+
+      const [sellersRes, itemsRes] = await Promise.all([
+        sellerIds.length > 0
+          ? supabase.from('sellers').select('id, full_name').in('id', sellerIds)
+          : Promise.resolve({ data: [] as any[] }),
+        saleIds.length > 0
+          ? supabase.from('sale_items').select('sale_id, metadata').in('sale_id', saleIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const sellerMap: Record<string, string> = Object.fromEntries(
+        (sellersRes.data || []).map((s: any) => [s.id, s.full_name])
+      );
+
+      const itemsMap: Record<string, { has_aereo: boolean; has_hotel: boolean; has_carro: boolean; has_experiencia: boolean }> = {};
+      if (itemsRes.data) {
+        for (const item of itemsRes.data as any[]) {
             if (!itemsMap[item.sale_id]) itemsMap[item.sale_id] = { has_aereo: false, has_hotel: false, has_carro: false, has_experiencia: false };
             const meta = item.metadata as any;
             const type = meta?.service_type || meta?.type || '';
@@ -142,7 +148,6 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
             if (type === 'hotel') itemsMap[item.sale_id].has_hotel = true;
             if (type === 'carro' || type === 'transfer') itemsMap[item.sale_id].has_carro = true;
             if (type === 'experiencia' || type === 'ingresso') itemsMap[item.sale_id].has_experiencia = true;
-          }
         }
       }
 
