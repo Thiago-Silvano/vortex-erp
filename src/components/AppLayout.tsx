@@ -251,7 +251,8 @@ function AppSidebar({ favorites, toggleFavorite }: {
     return g?.label ?? null;
   }, [menus, location.pathname]);
   const [openGroup, setOpenGroup] = useState<string | null>(initialOpenGroup);
-  useEffect(() => { setOpenGroup(initialOpenGroup); }, [initialOpenGroup]);
+  // Fecha o submenu ao mudar de rota (evita reabrir após clicar em um item)
+  useEffect(() => { setOpenGroup(null); }, [location.pathname]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
