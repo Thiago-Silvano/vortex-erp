@@ -372,6 +372,14 @@ export default function SalesPage() {
           </CardContent>
         </Card>
 
+        {filtered.length > visibleCount && (
+          <div className="hidden sm:flex justify-center">
+            <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
+              Carregar mais 20 ({filtered.length - visibleCount} restantes)
+            </Button>
+          </div>
+        )}
+
         {/* Mobile Cards */}
         <div className="sm:hidden space-y-3">
           {filtered.length === 0 ? (
