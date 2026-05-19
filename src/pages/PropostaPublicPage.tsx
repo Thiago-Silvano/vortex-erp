@@ -314,7 +314,7 @@ export default function PropostaPublicPage() {
         )}
         <div className="absolute inset-0" style={{
           background: heroImage
-            ? 'transparent'
+            ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.65) 100%)'
             : 'linear-gradient(135deg, #0D1B2A 0%, #1B3A4B 100%)',
         }} />
         <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }} />
@@ -336,20 +336,20 @@ export default function PropostaPublicPage() {
           </div>
 
           <div className="text-center my-auto py-10">
-            <p className="text-xs font-semibold tracking-[6px] uppercase mb-4" style={{ color: '#C8A45B' }}>
+            <p className="text-sm md:text-base font-bold tracking-[6px] uppercase mb-4" style={{ color: '#E8D5A3', textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}>
               Viagem personalizada para
             </p>
-            <h1 className="text-4xl md:text-6xl font-bold mb-5 text-white" style={{ fontFamily: "'Georgia', serif", textShadow: '0 4px 30px rgba(0,0,0,0.4)', letterSpacing: '-0.02em' }}>
+            <h1 className="text-5xl md:text-7xl font-bold mb-5 text-white" style={{ fontFamily: "'Georgia', serif", textShadow: '0 4px 24px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.7)', letterSpacing: '-0.02em' }}>
               {(sale as any).quote_title || sale.client_name}
             </h1>
             <div className="w-20 h-[2px] mx-auto mb-5" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
             {destination && (
-              <p className="text-xl md:text-2xl font-medium text-white/90 mb-3" style={{ fontFamily: "'Georgia', serif" }}>
+              <p className="text-2xl md:text-3xl font-semibold text-white mb-3" style={{ fontFamily: "'Georgia', serif", textShadow: '0 2px 14px rgba(0,0,0,0.85)' }}>
                 {destination}
               </p>
             )}
             {departureDate && returnDate && (
-              <p className="text-sm text-white/50 tracking-wide">
+              <p className="text-base md:text-lg font-semibold text-white tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.85)' }}>
                 {formatDateLong(departureDate)} — {formatDateLong(returnDate)}
               </p>
             )}
