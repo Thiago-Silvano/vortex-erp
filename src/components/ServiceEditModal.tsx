@@ -1154,6 +1154,69 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
           }}
         />
 
+        <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Banco de Imagens</DialogTitle>
+            </DialogHeader>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={libraryTypeFilter} onValueChange={(v) => { setLibraryTypeFilter(v); runLibrarySearch(undefined, v); }}>
+                <SelectTrigger className="w-40"><SelectValue/></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  <SelectItem value="cidade">Cidade</SelectItem>
+                  <SelectItem value="hospedagem">Hospedagem</SelectItem>
+                  <SelectItem value="servico">Serviço</SelectItem>
+                  <SelectItem value="carro">Carro</SelectItem>
+                  <SelectItem value="passeio">Passeio</SelectItem>
+                  <SelectItem value="experiencia">Experiência</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                className="flex-1 min-w-[200px]"
+                value={librarySearch}
+                onChange={e => setLibrarySearch(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); runLibrarySearch(); } }}
+                placeholder="Nome ou palavra-chave"
+              />
+              <Button onClick={() => runLibrarySearch()} disabled={libraryLoading} className="gap-1">
+                <Search className="h-4 w-4"/>Buscar
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Clique para selecionar várias imagens.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-[55vh] overflow-y-auto">
+              {libraryResults.length === 0 && !libraryLoading && (
+                <p className="col-span-full text-sm text-muted-foreground text-center py-8">Nenhuma imagem encontrada</p>
+              )}
+              {libraryResults.map((img: any) => {
+                const isSel = librarySelected.has(img.image_url);
+                return (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => toggleLibrarySelected(img.image_url)}
+                    className={`group relative rounded overflow-hidden border-2 text-left transition-all ${isSel ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-primary/50'}`}
+                  >
+                    <img src={img.image_url} alt={img.product_name} className="h-32 w-full object-cover"/>
+                    <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-0.5 truncate">{img.product_name}</span>
+                    {isSel && (
+                      <span className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center">
+                        <Check className="h-3 w-3"/>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setLibraryOpen(false)}>Cancelar</Button>
+              <Button onClick={addSelectedFromLibrary} disabled={librarySelected.size === 0}>
+                Adicionar {librarySelected.size > 0 ? `(${librarySelected.size})` : ''}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSave}>Salvar Detalhes</Button>
