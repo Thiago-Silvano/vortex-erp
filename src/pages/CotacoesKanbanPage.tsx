@@ -66,7 +66,6 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   const [userEmail, setUserEmail] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState<string>('');
-  const [visibleCount, setVisibleCount] = useState(20);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
