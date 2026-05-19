@@ -719,9 +719,9 @@ function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: numbe
     <div className="mt-2">
       {isHtml ? (
         <div
-          className="text-sm leading-relaxed [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic"
+          className="text-base leading-relaxed font-medium [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic"
           style={{
-            color: '#888',
+            color: '#2d2d2d',
             ...(needsTruncate && !expanded ? {
               display: '-webkit-box',
               WebkitLineClamp: maxLines,
