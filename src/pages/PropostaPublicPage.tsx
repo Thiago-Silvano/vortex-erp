@@ -558,7 +558,7 @@ export default function PropostaPublicPage() {
                   return (
                   <div key={idx} className="rounded-2xl overflow-hidden relative" style={{ background: '#fff', boxShadow: isHighlighted ? '0 8px 32px rgba(200,164,91,0.25)' : '0 4px 24px rgba(0,0,0,0.06)', border: isHighlighted ? '2px solid #C8A45B' : 'none' }}>
                     {isHighlighted && (
-                      <div className="text-center py-1.5 text-[10px] font-bold tracking-[2px] uppercase text-white" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }}>
+                      <div className="text-center py-2 text-xs font-black tracking-[2px] uppercase text-[#0D1B2A]" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }}>
                         Mais popular
                       </div>
                     )}
