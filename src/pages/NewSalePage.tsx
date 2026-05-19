@@ -251,6 +251,7 @@ export default function NewSalePage() {
   const [expandedSupplierId, setExpandedSupplierId] = useState<string | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [loadingSale, setLoadingSale] = useState(false);
   const [savingSale, setSavingSale] = useState(false);
   const [searchingItemImages, setSearchingItemImages] = useState<Record<number, boolean>>({});
   const [googleApiKey, setGoogleApiKey] = useState('');
