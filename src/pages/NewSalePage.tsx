@@ -313,6 +313,8 @@ export default function NewSalePage() {
   }, [initialEditSaleId]);
 
   const loadSale = async (id: string) => {
+    setLoadingSale(true);
+    try {
     const { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
     if (!sale) return;
     setSaleStatus(sale.status === 'active' ? 'active' : 'draft');
@@ -545,6 +547,9 @@ export default function NewSalePage() {
         setItems(mergedItems);
         setItemImages(mergedImageMap);
       }
+    }
+    } finally {
+      setLoadingSale(false);
     }
   };
 
