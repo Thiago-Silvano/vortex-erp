@@ -323,7 +323,7 @@ export default function SalesPage() {
           </div>
           <SalesDateFilter period={datePeriod} onPeriodChange={setDatePeriod} customStart={customStart} customEnd={customEnd} onCustomStartChange={setCustomStart} onCustomEndChange={setCustomEnd} />
           <div className="ml-auto text-sm font-semibold text-foreground whitespace-nowrap">
-            Total: <span className="text-primary">{fmt(totalFiltered)}</span> <span className="text-muted-foreground font-normal">({filtered.length} vendas)</span>
+            Total: <span className="text-primary">{fmt(totalFiltered)}</span> <span className="text-muted-foreground font-normal">({totalFilteredCount} vendas)</span>
           </div>
         </div>
 
@@ -415,10 +415,10 @@ export default function SalesPage() {
           </CardContent>
         </Card>
 
-        {filtered.length > visibleCount && (
+        {hasMore && (
           <div className="hidden sm:flex justify-center">
-            <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
-              Carregar mais 20 ({filtered.length - visibleCount} restantes)
+            <Button variant="outline" disabled={loadingMore} onClick={() => fetchSales(true)}>
+              {loadingMore ? 'Carregando...' : 'Carregar mais 20'}
             </Button>
           </div>
         )}
@@ -484,10 +484,10 @@ export default function SalesPage() {
               </div>
             </Card>
           ))}
-          {filtered.length > visibleCount && (
+          {hasMore && (
             <div className="flex justify-center pt-2">
-              <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
-                Carregar mais 20 ({filtered.length - visibleCount} restantes)
+              <Button variant="outline" disabled={loadingMore} onClick={() => fetchSales(true)}>
+                {loadingMore ? 'Carregando...' : 'Carregar mais 20'}
               </Button>
             </div>
           )}
