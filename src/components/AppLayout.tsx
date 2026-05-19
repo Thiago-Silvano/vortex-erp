@@ -366,7 +366,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                             onClick={() => { navigate(item.url); setOpenGroup(null); }}
                             className={`group/item flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-left hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${isActive(item.url) ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""}`}
                           >
-                            <span className="truncate text-[14px] font-semibold text-sidebar-foreground flex-1 text-left">{item.title}</span>
+                            <span className="whitespace-pre-line text-[14px] font-semibold text-sidebar-foreground flex-1 text-left">{item.title}</span>
                                 <span
                                   onClick={(e) => { e.stopPropagation(); toggleFavorite(item.url); }}
                                   className={`shrink-0 ${isFav ? "opacity-100" : "opacity-0 group-hover/item:opacity-70 hover:!opacity-100"}`}
