@@ -832,12 +832,12 @@ function ServiceCard({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="font-bold text-lg" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+              <h3 className="font-bold text-2xl" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
                 {metadata?.hotel?.hotelName || name}
               </h3>
               {metadata?.hotel?.city && (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
-                  <MapPin className="h-3 w-3" style={{ color: '#C8A45B' }} /> {metadata.hotel.city}
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full" style={{ background: '#f5f0e8', color: '#0D1B2A' }}>
+                  <MapPin className="h-3.5 w-3.5" style={{ color: '#C8A45B' }} /> {metadata.hotel.city}
                 </span>
               )}
             </div>
