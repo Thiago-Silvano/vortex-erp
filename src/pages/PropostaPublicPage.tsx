@@ -536,7 +536,7 @@ export default function PropostaPublicPage() {
             <section className="md:col-span-2">
               <SectionTitle>Investimento</SectionTitle>
               <div className="mt-8 p-8 rounded-2xl text-center" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-                <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: '#999' }}>Valor Total</p>
+                <p className="text-sm font-bold tracking-[3px] uppercase mb-3" style={{ color: '#666' }}>Valor Total</p>
                 <span className="text-4xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
                   {fmt(totalSale)}
                 </span>
