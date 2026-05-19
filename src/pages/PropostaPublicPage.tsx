@@ -367,9 +367,9 @@ export default function PropostaPublicPage() {
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(200,164,91,0.15)' }}>
                     <item.icon className="h-4 w-4" style={{ color: '#C8A45B' }} />
                   </div>
-                  <div>
-                    <p className="text-[10px] font-semibold tracking-[2px] uppercase" style={{ color: '#C8A45B' }}>{item.label}</p>
-                    <p className="text-sm font-semibold text-white">{item.value}</p>
+                  <div className="flex flex-col">
+                    <p className="text-xs font-bold tracking-[2px] uppercase" style={{ color: '#E8D5A3' }}>{item.label}</p>
+                    <p className="text-base font-bold text-white whitespace-nowrap">{item.value}</p>
                   </div>
                 </div>
               ))}
