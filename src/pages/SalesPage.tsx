@@ -227,6 +227,10 @@ export default function SalesPage() {
 
   const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + Number(s.total_sale || 0), 0), [filtered]);
 
+  // Reset pagination when filters/search change
+  useEffect(() => { setVisibleCount(20); }, [search, datePeriod, customStart, customEnd, activeCompany?.id]);
+  const visibleFiltered = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   // Vendas de meses anteriores aguardando comissão (somente quando filtro = Mês atual)
