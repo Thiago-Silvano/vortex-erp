@@ -800,7 +800,7 @@ function ServiceCard({
               </>
             )}
             {images.length > 1 && (
-              <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: 'rgba(0,0,0,0.5)' }}>
+              <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: 'rgba(0,0,0,0.7)' }}>
                 {currentImg + 1}/{images.length}
               </div>
             )}
