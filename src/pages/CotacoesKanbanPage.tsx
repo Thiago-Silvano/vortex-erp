@@ -66,7 +66,9 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   const [userEmail, setUserEmail] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState<string>('');
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
 
@@ -106,25 +108,52 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   }, [activeCompany?.id]);
 
   // Load cotações (draft sales)
-  const fetchSales = async () => {
-    setLoading(true);
-    try {
-      if (!activeCompany?.id) { setSales([]); return; }
+  const PAGE_SIZE = 20;
+  const paginatedMode = archivedView || viewMode === 'list';
 
-      // Fetch sales with seller info
-      const { data: salesData } = await supabase
+  const fetchSales = async (append = false) => {
+    if (append) setLoadingMore(true); else setLoading(true);
+    try {
+      if (!activeCompany?.id) { setSales([]); setHasMore(false); return; }
+
+      let q: any = supabase
         .from('sales')
         .select('id, client_name, destination_name, trip_start_date, trip_end_date, total_sale, passengers_count, created_at, updated_at, sale_workflow_status, status, short_id, seller_id')
         .eq('empresa_id', activeCompany.id)
-        .eq('status', 'draft')
-        .order('created_at', { ascending: false })
-        .limit(500);
+        .eq('status', 'draft');
 
-      if (!salesData) { setSales([]); return; }
+      if (paginatedMode) {
+        // Apply status filter server-side
+        if (archivedView) {
+          q = q.eq('sale_workflow_status', 'perdido');
+        } else if (filterStatus === 'all_except_lost') {
+          q = q.not('sale_workflow_status', 'in', '(perdido,emitido)');
+        } else if (filterStatus !== 'all') {
+          q = q.eq('sale_workflow_status', filterStatus);
+        }
+        // Search server-side
+        const term = debouncedSearch.trim();
+        if (term) {
+          const safe = term.replace(/[,()]/g, ' ');
+          q = q.or(`client_name.ilike.%${safe}%,destination_name.ilike.%${safe}%`);
+        }
+      }
+
+      q = q.order('created_at', { ascending: false });
+
+      if (paginatedMode) {
+        const from = append ? sales.length : 0;
+        q = q.range(from, from + PAGE_SIZE - 1);
+      } else {
+        q = q.limit(500);
+      }
+
+      const { data: salesData } = await q;
+      if (!salesData) { if (!append) setSales([]); setHasMore(false); return; }
 
       // Fetch sellers and sale items in parallel (avoid sequential round trips)
-      const sellerIds = [...new Set(salesData.filter(s => s.seller_id).map(s => s.seller_id!))];
-      const saleIds = salesData.map(s => s.id);
+      const sellerIds: string[] = Array.from(new Set(salesData.filter((s: any) => s.seller_id).map((s: any) => s.seller_id as string)));
+      const saleIds: string[] = salesData.map((s: any) => s.id as string);
 
       const [sellersRes, itemsRes] = await Promise.all([
         sellerIds.length > 0
@@ -152,17 +181,32 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
         }
       }
 
-      setSales(salesData.map(s => ({
+      const enriched = salesData.map((s: any) => ({
         ...s,
         seller_name: s.seller_id ? sellerMap[s.seller_id] : undefined,
         ...itemsMap[s.id],
-      })) as KanbanSale[]);
+      })) as KanbanSale[];
+
+      if (append) setSales(prev => [...prev, ...enriched]);
+      else setSales(enriched);
+      setHasMore(paginatedMode && salesData.length === PAGE_SIZE);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  useEffect(() => { fetchSales(); }, [activeCompany?.id]);
+  // Debounce search input (avoid spamming DB on every keystroke)
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Refetch first page whenever filters/view change
+  useEffect(() => {
+    fetchSales(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCompany?.id, viewMode, archivedView, filterStatus, debouncedSearch]);
 
   // Filter logic
   const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -196,10 +240,9 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
     created_at: (s) => s.created_at,
   });
 
-  // Pagination (list/mobile views): reset to 20 when filters/search change
-  useEffect(() => { setVisibleCount(20); }, [search, filterSeller, filterDestination, filterStatus, archivedView, activeCompany?.id]);
-  const visibleSortedSales = useMemo(() => sortedSales.slice(0, visibleCount), [sortedSales, visibleCount]);
-  const visibleFilteredSales = useMemo(() => filteredSales.slice(0, visibleCount), [filteredSales, visibleCount]);
+  // In paginated mode, the page already loaded only the current batch from DB
+  const visibleSortedSales = sortedSales;
+  const visibleFilteredSales = filteredSales;
 
   // Move card handler
   const handleMoveCard = async (saleId: string, newStatus: string) => {
@@ -593,10 +636,10 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
               </CardContent>
             </Card>
 
-            {sortedSales.length > visibleCount && (
+            {hasMore && (
               <div className="hidden sm:flex justify-center mt-3">
-                <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
-                  Carregar mais 20 ({sortedSales.length - visibleCount} restantes)
+                <Button variant="outline" disabled={loadingMore} onClick={() => fetchSales(true)}>
+                  {loadingMore ? 'Carregando...' : 'Carregar mais 20'}
                 </Button>
               </div>
             )}
@@ -625,10 +668,10 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                   </Card>
                 );
               })}
-              {filteredSales.length > visibleCount && (
+              {hasMore && (
                 <div className="flex justify-center pt-2">
-                  <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
-                    Carregar mais 20 ({filteredSales.length - visibleCount} restantes)
+                  <Button variant="outline" disabled={loadingMore} onClick={() => fetchSales(true)}>
+                    {loadingMore ? 'Carregando...' : 'Carregar mais 20'}
                   </Button>
                 </div>
               )}

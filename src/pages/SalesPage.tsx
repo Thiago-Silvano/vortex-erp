@@ -54,7 +54,12 @@ export default function SalesPage() {
   const [datePeriod, setDatePeriod] = useState<DateFilterPeriod>('month');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalFilteredAmount, setTotalFilteredAmount] = useState(0);
+  const [totalFilteredCount, setTotalFilteredCount] = useState(0);
+  const [pendingPrevMonthsAgg, setPendingPrevMonthsAgg] = useState<{ count: number; total: number }>({ count: 0, total: 0 });
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
 
@@ -72,14 +77,36 @@ export default function SalesPage() {
     return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
   };
 
-  const fetchSales = async () => {
-    setLoading(true);
+  const PAGE_SIZE = 20;
+
+  const buildBaseQuery = () => {
+    let q: any = supabase.from('sales').select('*', { count: 'exact' }).eq('status', 'active');
+    if (activeCompany?.id) q = q.eq('empresa_id', activeCompany.id);
+    const term = debouncedSearch.trim();
+    if (term) {
+      const safe = term.replace(/[,()]/g, ' ');
+      q = q.ilike('client_name', `%${safe}%`);
+    }
+    const range = getDateRange(datePeriod, customStart, customEnd);
+    if (range) {
+      const toISO = (d: Date) => d.toISOString().slice(0, 10);
+      q = q.gte('sale_date', toISO(range.start)).lte('sale_date', toISO(range.end));
+    }
+    return q;
+  };
+
+  const fetchSales = async (append = false) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     try {
-      let query = supabase.from('sales').select('*').order('sale_date', { ascending: false });
-      if (activeCompany?.id) query = query.eq('empresa_id', activeCompany.id);
-      const { data } = await query;
+      const from = append ? sales.length : 0;
+      const to = from + PAGE_SIZE - 1;
+      const { data, count } = await buildBaseQuery()
+        .order('sale_date', { ascending: false })
+        .range(from, to);
+
       if (!data) {
-        setSales([]);
+        if (!append) setSales([]);
+        setHasMore(false);
         return;
       }
 
@@ -100,15 +127,58 @@ export default function SalesPage() {
         }
       }
 
-      setSales(data.map((s: any) => ({ ...s, suppliers_summary: suppliersMap[s.id]?.join(', ') || '' })) as SaleRow[]);
+      const enriched = data.map((s: any) => ({ ...s, suppliers_summary: suppliersMap[s.id]?.join(', ') || '' })) as SaleRow[];
+      if (append) setSales(prev => [...prev, ...enriched]);
+      else setSales(enriched);
+      const totalCount = count ?? (from + data.length);
+      setHasMore((from + data.length) < totalCount);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
+  // Debounce search
   useEffect(() => {
-    fetchSales();
-  }, [activeCompany?.id]);
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Refetch first page on filter change
+  useEffect(() => {
+    fetchSales(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCompany?.id, debouncedSearch, datePeriod, customStart, customEnd]);
+
+  // Aggregate totals + pending prev months (lightweight separate queries so cards remain accurate)
+  useEffect(() => {
+    (async () => {
+      const range = getDateRange(datePeriod, customStart, customEnd);
+      const toISO = (d: Date) => d.toISOString().slice(0, 10);
+      let agg: any = supabase.from('sales').select('total_sale, net_profit', { count: 'exact' }).eq('status', 'active');
+      if (activeCompany?.id) agg = agg.eq('empresa_id', activeCompany.id);
+      const term = debouncedSearch.trim();
+      if (term) agg = agg.ilike('client_name', `%${term.replace(/[,()]/g, ' ')}%`);
+      if (range) agg = agg.gte('sale_date', toISO(range.start)).lte('sale_date', toISO(range.end));
+      const { data, count } = await agg;
+      const sum = (data || []).reduce((s: number, r: any) => s + Number(r.total_sale || 0), 0);
+      setTotalFilteredAmount(sum);
+      setTotalFilteredCount(count ?? (data?.length || 0));
+
+      if (datePeriod === 'month' && activeCompany?.id) {
+        const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+        const { data: pend } = await supabase.from('sales')
+          .select('net_profit')
+          .eq('status', 'active').eq('empresa_id', activeCompany.id)
+          .eq('commission_invoice_status', 'pending')
+          .lt('sale_date', toISO(startOfMonth));
+        const total = (pend || []).reduce((s: number, r: any) => s + Number(r.net_profit || 0), 0);
+        setPendingPrevMonthsAgg({ count: pend?.length || 0, total });
+      } else {
+        setPendingPrevMonthsAgg({ count: 0, total: 0 });
+      }
+    })();
+  }, [activeCompany?.id, debouncedSearch, datePeriod, customStart, customEnd]);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -201,19 +271,8 @@ export default function SalesPage() {
     }
   };
 
-  const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const dateRange = useMemo(() => getDateRange(datePeriod, customStart, customEnd), [datePeriod, customStart, customEnd]);
-
-  const filtered = sales
-    .filter(s => {
-      if (s.status !== 'active') return false;
-      if (!normalize(s.client_name).includes(normalize(search))) return false;
-      if (dateRange && s.sale_date) {
-        const d = new Date(s.sale_date + 'T12:00:00');
-        if (d < dateRange.start || d > dateRange.end) return false;
-      }
-      return true;
-    })
+  // Server filters already applied (status/active, search, date range); sort the loaded page client-side
+  const filtered = [...sales]
     .sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'client_name') cmp = a.client_name.localeCompare(b.client_name);
@@ -225,30 +284,13 @@ export default function SalesPage() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
 
-  const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + Number(s.total_sale || 0), 0), [filtered]);
-
-  // Reset pagination when filters/search change
-  useEffect(() => { setVisibleCount(20); }, [search, datePeriod, customStart, customEnd, activeCompany?.id]);
-  const visibleFiltered = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  // Header total comes from server-side aggregate (covers all matching rows)
+  const totalFiltered = totalFilteredAmount;
+  const visibleFiltered = filtered;
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  // Vendas de meses anteriores aguardando comissão (somente quando filtro = Mês atual)
-  const pendingPrevMonths = useMemo(() => {
-    if (datePeriod !== 'month') return { count: 0, total: 0 };
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    const list = sales.filter(s => {
-      if (s.status !== 'active') return false;
-      if (s.commission_invoice_status !== 'pending') return false;
-      if (!s.sale_date) return false;
-      const d = new Date(s.sale_date + 'T12:00:00');
-      return d < startOfMonth;
-    });
-    const total = list.reduce((sum, s) => sum + Number(s.net_profit || 0), 0);
-    return { count: list.length, total };
-  }, [sales, datePeriod]);
+  const pendingPrevMonths = pendingPrevMonthsAgg;
 
   const workflowStatusMap: Record<string, { label: string; color: string }> = {
     em_aberto: { label: 'Em aberto', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
@@ -280,7 +322,7 @@ export default function SalesPage() {
           </div>
           <SalesDateFilter period={datePeriod} onPeriodChange={setDatePeriod} customStart={customStart} customEnd={customEnd} onCustomStartChange={setCustomStart} onCustomEndChange={setCustomEnd} />
           <div className="ml-auto text-sm font-semibold text-foreground whitespace-nowrap">
-            Total: <span className="text-primary">{fmt(totalFiltered)}</span> <span className="text-muted-foreground font-normal">({filtered.length} vendas)</span>
+            Total: <span className="text-primary">{fmt(totalFiltered)}</span> <span className="text-muted-foreground font-normal">({totalFilteredCount} vendas)</span>
           </div>
         </div>
 
@@ -372,10 +414,10 @@ export default function SalesPage() {
           </CardContent>
         </Card>
 
-        {filtered.length > visibleCount && (
+        {hasMore && (
           <div className="hidden sm:flex justify-center">
-            <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
-              Carregar mais 20 ({filtered.length - visibleCount} restantes)
+            <Button variant="outline" disabled={loadingMore} onClick={() => fetchSales(true)}>
+              {loadingMore ? 'Carregando...' : 'Carregar mais 20'}
             </Button>
           </div>
         )}
@@ -441,10 +483,10 @@ export default function SalesPage() {
               </div>
             </Card>
           ))}
-          {filtered.length > visibleCount && (
+          {hasMore && (
             <div className="flex justify-center pt-2">
-              <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
-                Carregar mais 20 ({filtered.length - visibleCount} restantes)
+              <Button variant="outline" disabled={loadingMore} onClick={() => fetchSales(true)}>
+                {loadingMore ? 'Carregando...' : 'Carregar mais 20'}
               </Button>
             </div>
           )}
