@@ -272,19 +272,8 @@ export default function SalesPage() {
     }
   };
 
-  const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const dateRange = useMemo(() => getDateRange(datePeriod, customStart, customEnd), [datePeriod, customStart, customEnd]);
-
-  const filtered = sales
-    .filter(s => {
-      if (s.status !== 'active') return false;
-      if (!normalize(s.client_name).includes(normalize(search))) return false;
-      if (dateRange && s.sale_date) {
-        const d = new Date(s.sale_date + 'T12:00:00');
-        if (d < dateRange.start || d > dateRange.end) return false;
-      }
-      return true;
-    })
+  // Server filters already applied (status/active, search, date range); sort the loaded page client-side
+  const filtered = [...sales]
     .sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'client_name') cmp = a.client_name.localeCompare(b.client_name);
@@ -296,30 +285,13 @@ export default function SalesPage() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
 
-  const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + Number(s.total_sale || 0), 0), [filtered]);
-
-  // Reset pagination when filters/search change
-  useEffect(() => { setVisibleCount(20); }, [search, datePeriod, customStart, customEnd, activeCompany?.id]);
-  const visibleFiltered = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  // Header total comes from server-side aggregate (covers all matching rows)
+  const totalFiltered = totalFilteredAmount;
+  const visibleFiltered = filtered;
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  // Vendas de meses anteriores aguardando comissão (somente quando filtro = Mês atual)
-  const pendingPrevMonths = useMemo(() => {
-    if (datePeriod !== 'month') return { count: 0, total: 0 };
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    const list = sales.filter(s => {
-      if (s.status !== 'active') return false;
-      if (s.commission_invoice_status !== 'pending') return false;
-      if (!s.sale_date) return false;
-      const d = new Date(s.sale_date + 'T12:00:00');
-      return d < startOfMonth;
-    });
-    const total = list.reduce((sum, s) => sum + Number(s.net_profit || 0), 0);
-    return { count: list.length, total };
-  }, [sales, datePeriod]);
+  const pendingPrevMonths = pendingPrevMonthsAgg;
 
   const workflowStatusMap: Record<string, { label: string; color: string }> = {
     em_aberto: { label: 'Em aberto', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
