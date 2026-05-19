@@ -54,6 +54,7 @@ export default function SalesPage() {
   const [datePeriod, setDatePeriod] = useState<DateFilterPeriod>('month');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [visibleCount, setVisibleCount] = useState(20);
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
 
@@ -226,6 +227,10 @@ export default function SalesPage() {
 
   const totalFiltered = useMemo(() => filtered.reduce((sum, s) => sum + Number(s.total_sale || 0), 0), [filtered]);
 
+  // Reset pagination when filters/search change
+  useEffect(() => { setVisibleCount(20); }, [search, datePeriod, customStart, customEnd, activeCompany?.id]);
+  const visibleFiltered = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   // Vendas de meses anteriores aguardando comissão (somente quando filtro = Mês atual)
@@ -311,7 +316,7 @@ export default function SalesPage() {
           <TableLoadingRow colSpan={9} />
         ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</TableCell></TableRow>
-                 ) : filtered.map(s => (
+                 ) : visibleFiltered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
                     <TableCell>{s.sale_date ? format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</TableCell>
@@ -367,11 +372,19 @@ export default function SalesPage() {
           </CardContent>
         </Card>
 
+        {filtered.length > visibleCount && (
+          <div className="hidden sm:flex justify-center">
+            <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
+              Carregar mais 20 ({filtered.length - visibleCount} restantes)
+            </Button>
+          </div>
+        )}
+
         {/* Mobile Cards */}
         <div className="sm:hidden space-y-3">
           {filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Nenhuma venda encontrada</p>
-          ) : filtered.map(s => (
+          ) : visibleFiltered.map(s => (
              <Card key={s.id} className="p-4 cursor-pointer" onClick={() => navigate('/sales/new', { state: { editSaleId: s.id } })}>
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -428,6 +441,13 @@ export default function SalesPage() {
               </div>
             </Card>
           ))}
+          {filtered.length > visibleCount && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
+                Carregar mais 20 ({filtered.length - visibleCount} restantes)
+              </Button>
+            </div>
+          )}
         </div>
 
         <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
