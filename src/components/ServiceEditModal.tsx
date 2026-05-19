@@ -159,6 +159,13 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [taImagesOpen, setTaImagesOpen] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  // Library picker
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState('');
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryResults, setLibraryResults] = useState<any[]>([]);
+  const [librarySelected, setLibrarySelected] = useState<Set<string>>(new Set());
+  const [libraryTypeFilter, setLibraryTypeFilter] = useState<string>('all');
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
   const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
