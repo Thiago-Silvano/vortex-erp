@@ -224,6 +224,13 @@ export default function PropostaPublicPage() {
   const rawFilteredItems = quoteOptions.length > 1 && selectedOptionId
     ? items.filter(i => i.quote_option_id === selectedOptionId)
     : items;
+
+  // Determine display mode based on the currently selected quote option,
+  // falling back to the sale-level flag for legacy sales without options.
+  const selectedOption = quoteOptions.find(o => o.id === selectedOptionId) || quoteOptions[0];
+  const showIndividual = selectedOption
+    ? selectedOption.display_mode === 'individual'
+    : (sale as any).show_individual_values === true;
   
   // Deduplicate items that may have been saved multiple times for the same option
   const filteredItems = (() => {
