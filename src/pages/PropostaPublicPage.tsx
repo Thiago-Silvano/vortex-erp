@@ -323,9 +323,9 @@ export default function PropostaPublicPage() {
           <div className="flex items-start justify-between">
             <div>
               {/* Logo tripled */}
-              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[252px] opacity-90" />
+              <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[252px] opacity-100" />
             </div>
-            <div className="text-right text-xs text-white/40">
+            <div className="text-right text-sm font-medium text-white/60">
               {agency && (
                 <>
                   {agency.whatsapp && <p>{agency.whatsapp}</p>}
@@ -367,9 +367,9 @@ export default function PropostaPublicPage() {
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(200,164,91,0.15)' }}>
                     <item.icon className="h-4 w-4" style={{ color: '#C8A45B' }} />
                   </div>
-                  <div>
-                    <p className="text-[10px] font-semibold tracking-[2px] uppercase" style={{ color: '#C8A45B' }}>{item.label}</p>
-                    <p className="text-sm font-semibold text-white">{item.value}</p>
+                  <div className="flex flex-col">
+                    <p className="text-xs font-bold tracking-[2px] uppercase" style={{ color: '#E8D5A3' }}>{item.label}</p>
+                    <p className="text-base font-bold text-white whitespace-nowrap">{item.value}</p>
                   </div>
                 </div>
               ))}
@@ -387,7 +387,7 @@ export default function PropostaPublicPage() {
           <section>
             <div className="rounded-2xl overflow-hidden" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
               <div className="px-6 py-4" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
-                <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: '#C8A45B' }}>
+                <p className="text-sm font-bold tracking-[3px] uppercase mb-3" style={{ color: '#E8D5A3' }}>
                   Selecione uma opção
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -395,7 +395,7 @@ export default function PropostaPublicPage() {
                     <button
                       key={opt.id}
                       onClick={() => setSelectedOptionId(opt.id)}
-                      className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      className="px-6 py-3 rounded-xl text-base font-bold transition-all"
                       style={{
                         background: selectedOptionId === opt.id
                           ? 'linear-gradient(135deg, #C8A45B, #E8D5A3)'
@@ -447,7 +447,7 @@ export default function PropostaPublicPage() {
             {/* Prominent per-person installment hero */}
             {sale.installments > 1 && receivables.length > 0 && !showIndividual && (
               <div className="text-center py-12 px-8" style={{ background: 'linear-gradient(135deg, #0F1A2A 0%, #15233A 50%, #0B1422 100%)' }}>
-                <p className="text-[11px] font-semibold tracking-[6px] uppercase mb-6" style={{ color: '#C8A45B' }}>
+                <p className="text-sm font-bold tracking-[6px] uppercase mb-6" style={{ color: '#E8D5A3' }}>
                   {showPerPassenger ? 'Investimento por pessoa' : 'Investimento total'}
                 </p>
                 <div className="flex items-baseline justify-center gap-2">
@@ -478,7 +478,7 @@ export default function PropostaPublicPage() {
             {/* Single payment (no installments) hero */}
             {(sale.installments <= 1 || receivables.length === 0) && !showIndividual && (
               <div className="text-center py-12 px-8" style={{ background: 'linear-gradient(135deg, #0F1A2A 0%, #15233A 50%, #0B1422 100%)' }}>
-                <p className="text-[11px] font-semibold tracking-[6px] uppercase mb-6" style={{ color: '#C8A45B' }}>
+                <p className="text-sm font-bold tracking-[6px] uppercase mb-6" style={{ color: '#E8D5A3' }}>
                   {showPerPassenger ? 'Investimento por pessoa' : 'Investimento total'}
                 </p>
                 <span className="text-6xl md:text-7xl font-bold text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
@@ -506,8 +506,8 @@ export default function PropostaPublicPage() {
                   background: idx % 2 === 0 ? '#fff' : '#faf9f6', borderBottom: '1px solid #f0ede8'
                 }}>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium" style={{ color: '#2d2d2d' }}>{title}</span>
-                    <span className="text-sm font-semibold tabular-nums" style={{ color: '#C8A45B' }}>{fmt(item.total_value)}</span>
+                    <span className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{title}</span>
+                    <span className="text-base font-bold tabular-nums" style={{ color: '#C8A45B' }}>{fmt(item.total_value)}</span>
                   </div>
                   {subtitle && (
                     <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: '#999' }} dangerouslySetInnerHTML={{ __html: subtitle }} />
@@ -536,7 +536,7 @@ export default function PropostaPublicPage() {
             <section className="md:col-span-2">
               <SectionTitle>Investimento</SectionTitle>
               <div className="mt-8 p-8 rounded-2xl text-center" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-                <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: '#999' }}>Valor Total</p>
+                <p className="text-sm font-bold tracking-[3px] uppercase mb-3" style={{ color: '#666' }}>Valor Total</p>
                 <span className="text-4xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
                   {fmt(totalSale)}
                 </span>
@@ -558,12 +558,12 @@ export default function PropostaPublicPage() {
                   return (
                   <div key={idx} className="rounded-2xl overflow-hidden relative" style={{ background: '#fff', boxShadow: isHighlighted ? '0 8px 32px rgba(200,164,91,0.25)' : '0 4px 24px rgba(0,0,0,0.06)', border: isHighlighted ? '2px solid #C8A45B' : 'none' }}>
                     {isHighlighted && (
-                      <div className="text-center py-1.5 text-[10px] font-bold tracking-[2px] uppercase text-white" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }}>
+                      <div className="text-center py-2 text-xs font-black tracking-[2px] uppercase text-[#0D1B2A]" style={{ background: 'linear-gradient(90deg, #C8A45B, #E8D5A3, #C8A45B)' }}>
                         Mais popular
                       </div>
                     )}
                     <div className="py-6 px-6 text-center" style={{ background: isHighlighted ? 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' : '#fff' }}>
-                      <p className="text-xs font-semibold tracking-[3px] uppercase mb-3" style={{ color: isHighlighted ? '#C8A45B' : '#999' }}>
+                      <p className="text-sm font-bold tracking-[3px] uppercase mb-3" style={{ color: isHighlighted ? '#E8D5A3' : '#666' }}>
                         {opt.label}
                         {(opt.discountPercent || 0) > 0 && (
                           <span className="block text-[10px] mt-1" style={{ color: isHighlighted ? 'rgba(255,255,255,0.5)' : '#bbb' }}>
@@ -629,21 +629,21 @@ export default function PropostaPublicPage() {
             })() : (
               <div className="mt-8 p-6 rounded-2xl" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
                 <div className="flex items-center gap-4 mb-5">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
-                    <span className="text-white text-sm font-bold">$</span>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0D1B2A, #1B3A4B)' }}>
+                    <span className="text-white text-base font-bold">$</span>
                   </div>
-                  <div>
-                    <p className="font-bold text-sm" style={{ color: '#0D1B2A' }}>{methodLabels[sale.payment_method || ''] || sale.payment_method}</p>
+                  <div className="flex-1">
+                    <p className="font-bold text-base" style={{ color: '#0D1B2A' }}>{methodLabels[sale.payment_method || ''] || sale.payment_method}</p>
                   </div>
                 </div>
 
                 {receivables.length > 0 && (
-                  <div className="space-y-1.5 pt-4" style={{ borderTop: '1px solid #f0ede8' }}>
+                  <div className="space-y-2 pt-4" style={{ borderTop: '1px solid #f0ede8' }}>
                     {receivables.map((r, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg" style={{ background: idx % 2 === 0 ? '#faf9f6' : 'transparent' }}>
-                        <span className="font-medium" style={{ color: '#555' }}>Parcela {r.installment_number}</span>
-                        <span className="font-bold tabular-nums" style={{ color: '#2d2d2d' }}>{fmt(r.amount)}</span>
-                        {r.due_date && <span className="text-xs" style={{ color: '#aaa' }}>{formatDateBR(r.due_date)}</span>}
+                      <div key={idx} className="flex items-center justify-between text-base py-3 px-4 rounded-lg" style={{ background: idx % 2 === 0 ? '#faf9f6' : 'transparent' }}>
+                        <span className="font-semibold" style={{ color: '#2d2d2d' }}>Parcela {r.installment_number}</span>
+                        <span className="font-bold tabular-nums" style={{ color: '#0D1B2A' }}>{fmt(r.amount)}</span>
+                        {r.due_date && <span className="text-sm font-medium" style={{ color: '#666' }}>{formatDateBR(r.due_date)}</span>}
                       </div>
                     ))}
                   </div>
@@ -656,7 +656,7 @@ export default function PropostaPublicPage() {
           {sale.notes && (
             <section>
               <SectionTitle>Observações</SectionTitle>
-              <div className="mt-8 p-6 rounded-2xl text-sm leading-relaxed" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', color: '#666', whiteSpace: 'pre-wrap' }}>
+              <div className="mt-8 p-8 rounded-2xl text-base font-medium leading-relaxed" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)', color: '#2d2d2d', whiteSpace: 'pre-wrap' }}>
                 {sale.notes}
               </div>
             </section>
@@ -668,13 +668,13 @@ export default function PropostaPublicPage() {
       <footer className="py-12 px-6" style={{ background: '#0D1B2A' }}>
         <div className="max-w-5xl mx-auto text-center">
           <div className="w-20 h-[2px] mx-auto mb-8" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
-          <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-48 mx-auto mb-5 opacity-50" />
+          <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-48 mx-auto mb-5 opacity-70" />
           {agency && (
-            <div className="text-xs text-white/25 space-y-1">
+            <div className="text-sm font-medium text-white/40 space-y-1">
               <p>{[agency.whatsapp, agency.email, agency.website].filter(Boolean).join('  ·  ')}</p>
             </div>
           )}
-          <p className="text-[10px] mt-6 text-white/10">Valores sujeitos a disponibilidade e alterações sem aviso prévio.</p>
+          <p className="text-xs mt-6 text-white/20 font-medium">Valores sujeitos a disponibilidade e alterações sem aviso prévio.</p>
         </div>
       </footer>
 
@@ -704,7 +704,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3">
       <div className="w-1 h-8 rounded-full" style={{ background: 'linear-gradient(to bottom, #C8A45B, #E8D5A3)' }} />
-      <h2 className="text-2xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>{children}</h2>
+      <h2 className="text-3xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>{children}</h2>
     </div>
   );
 }
@@ -719,9 +719,9 @@ function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: numbe
     <div className="mt-2">
       {isHtml ? (
         <div
-          className="text-sm leading-relaxed [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic"
+          className="text-base leading-relaxed font-medium [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic"
           style={{
-            color: '#888',
+            color: '#2d2d2d',
             ...(needsTruncate && !expanded ? {
               display: '-webkit-box',
               WebkitLineClamp: maxLines,
@@ -733,9 +733,9 @@ function ExpandableText({ text, maxLines = 4 }: { text: string; maxLines?: numbe
         />
       ) : (
         <p
-          className="text-sm leading-relaxed whitespace-pre-line"
+          className="text-base leading-relaxed font-medium whitespace-pre-line"
           style={{
-            color: '#888',
+            color: '#2d2d2d',
             ...(needsTruncate && !expanded ? {
               display: '-webkit-box',
               WebkitLineClamp: maxLines,
@@ -800,7 +800,7 @@ function ServiceCard({
               </>
             )}
             {images.length > 1 && (
-              <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: 'rgba(0,0,0,0.5)' }}>
+              <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: 'rgba(0,0,0,0.7)' }}>
                 {currentImg + 1}/{images.length}
               </div>
             )}
@@ -832,12 +832,12 @@ function ServiceCard({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="font-bold text-lg" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
+              <h3 className="font-bold text-2xl" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>
                 {metadata?.hotel?.hotelName || name}
               </h3>
               {metadata?.hotel?.city && (
-                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full" style={{ background: '#f5f0e8', color: '#666' }}>
-                  <MapPin className="h-3 w-3" style={{ color: '#C8A45B' }} /> {metadata.hotel.city}
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full" style={{ background: '#f5f0e8', color: '#0D1B2A' }}>
+                  <MapPin className="h-3.5 w-3.5" style={{ color: '#C8A45B' }} /> {metadata.hotel.city}
                 </span>
               )}
             </div>
@@ -866,7 +866,7 @@ function ServiceCard({
           <div className="mt-5 pt-5" style={{ borderTop: '1px solid #f0ede8' }}>
             <div className="flex items-center gap-2 mb-4">
               <Plane className="h-4 w-4" style={{ color: '#C8A45B' }} />
-              <span className="text-xs font-semibold tracking-[2px] uppercase" style={{ color: '#C8A45B' }}>Itinerário</span>
+              <span className="text-sm font-bold tracking-[2px] uppercase" style={{ color: '#C8A45B' }}>Itinerário</span>
             </div>
             <div className="space-y-3">
               {(() => {
