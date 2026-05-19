@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import AppLayout from '@/components/AppLayout';
@@ -36,6 +36,7 @@ export default function ProductImagesPage() {
   const [keywords, setKeywords] = useState('');
   const [search, setSearch] = useState('');
   const [uploading, setUploading] = useState(false);
+  const productNameRef = useRef<HTMLInputElement>(null);
 
   const fetch = async () => {
     if (!activeCompany?.id) return;
@@ -69,6 +70,9 @@ export default function ProductImagesPage() {
       }
       toast.success('Imagens salvas!');
       fetch();
+      setProductName('');
+      setKeywords('');
+      setTimeout(() => productNameRef.current?.focus(), 0);
     } finally { setUploading(false); e.target.value = ''; }
   };
 
@@ -109,7 +113,7 @@ export default function ProductImagesPage() {
               </div>
               <div>
                 <Label>Nome do produto</Label>
-                <Input value={productName} onChange={e => setProductName(e.target.value)} placeholder="Ex: Hotel Copacabana Palace" />
+                <Input ref={productNameRef} value={productName} onChange={e => setProductName(e.target.value)} placeholder="Ex: Hotel Copacabana Palace" />
               </div>
               <div>
                 <Label>Palavras-chave (opcional)</Label>
