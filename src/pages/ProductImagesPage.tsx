@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, Trash2, Search, ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface ProductImage {
   id: string;
@@ -37,6 +38,7 @@ export default function ProductImagesPage() {
   const [search, setSearch] = useState('');
   const [uploading, setUploading] = useState(false);
   const productNameRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const fetch = async () => {
     if (!activeCompany?.id) return;
@@ -151,7 +153,12 @@ export default function ProductImagesPage() {
                   <div className="flex flex-wrap gap-2">
                     {imgs.map(img => (
                       <div key={img.id} className="relative group">
-                        <img src={img.image_url} alt={name} className="h-24 w-32 object-cover rounded border"/>
+                        <img
+                          src={img.image_url}
+                          alt={name}
+                          onClick={() => setPreviewUrl(img.image_url)}
+                          className="h-24 w-32 object-cover rounded border cursor-zoom-in hover:opacity-90 transition-opacity"
+                        />
                         <button onClick={() => handleDelete(img)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="h-3 w-3"/>
                         </button>
@@ -164,6 +171,13 @@ export default function ProductImagesPage() {
           </CardContent>
         </Card>
       </div>
+      <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl(null)}>
+        <DialogContent className="max-w-5xl p-2 bg-background">
+          {previewUrl && (
+            <img src={previewUrl} alt="Visualização" className="w-full h-auto max-h-[85vh] object-contain rounded" />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
