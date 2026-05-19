@@ -55,6 +55,12 @@ export default function SalesPage() {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [visibleCount, setVisibleCount] = useState(20);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalFilteredAmount, setTotalFilteredAmount] = useState(0);
+  const [totalFilteredCount, setTotalFilteredCount] = useState(0);
+  const [pendingPrevMonthsAgg, setPendingPrevMonthsAgg] = useState<{ count: number; total: number }>({ count: 0, total: 0 });
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
 
