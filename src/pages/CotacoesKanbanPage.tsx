@@ -153,8 +153,8 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
       if (!salesData) { if (!append) setSales([]); setHasMore(false); return; }
 
       // Fetch sellers and sale items in parallel (avoid sequential round trips)
-      const sellerIds = [...new Set(salesData.filter((s: any) => s.seller_id).map((s: any) => s.seller_id!))];
-      const saleIds = salesData.map((s: any) => s.id);
+      const sellerIds: string[] = Array.from(new Set(salesData.filter((s: any) => s.seller_id).map((s: any) => s.seller_id as string)));
+      const saleIds: string[] = salesData.map((s: any) => s.id as string);
 
       const [sellersRes, itemsRes] = await Promise.all([
         sellerIds.length > 0
