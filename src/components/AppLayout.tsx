@@ -292,7 +292,7 @@ function AppSidebar({ favorites, toggleFavorite }: {
                     >
                       <button onClick={() => navigate(item.url)} className="flex items-center gap-2 w-full">
                         <Star className="h-4 w-4 fill-sidebar-primary text-sidebar-primary shrink-0" />
-                        <span className="truncate text-[15px] font-bold text-sidebar-foreground">{item.title}</span>
+                        <span className="whitespace-pre-line text-[15px] font-bold text-sidebar-foreground">{item.title}</span>
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
