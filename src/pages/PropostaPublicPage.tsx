@@ -447,7 +447,7 @@ export default function PropostaPublicPage() {
             {/* Prominent per-person installment hero */}
             {sale.installments > 1 && receivables.length > 0 && !showIndividual && (
               <div className="text-center py-12 px-8" style={{ background: 'linear-gradient(135deg, #0F1A2A 0%, #15233A 50%, #0B1422 100%)' }}>
-                <p className="text-[11px] font-semibold tracking-[6px] uppercase mb-6" style={{ color: '#C8A45B' }}>
+                <p className="text-sm font-bold tracking-[6px] uppercase mb-6" style={{ color: '#E8D5A3' }}>
                   {showPerPassenger ? 'Investimento por pessoa' : 'Investimento total'}
                 </p>
                 <div className="flex items-baseline justify-center gap-2">
