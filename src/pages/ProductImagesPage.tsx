@@ -23,6 +23,9 @@ const TYPES = [
   { value: 'cidade', label: 'Cidade' },
   { value: 'hospedagem', label: 'Hospedagem' },
   { value: 'servico', label: 'Serviço' },
+  { value: 'carro', label: 'Carro' },
+  { value: 'passeio', label: 'Passeio' },
+  { value: 'experiencia', label: 'Experiência' },
 ];
 
 export default function ProductImagesPage() {

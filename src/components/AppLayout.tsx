@@ -168,7 +168,6 @@ function buildMenus(isVistos: boolean, isAdmin: boolean, userRole: string): Menu
       { title: "Usuários", url: "/users" },
       { title: "Cias aéreas", url: "/airlines" },
       { title: "Status cotações", url: "/cadastros/quote-statuses" },
-      { title: "Imagens", url: "/product-images" },
       { title: "Contratos", url: "/contracts/templates" },
       { title: "Centro de Custo", url: "/financial/cost-centers", permKey: "financial_cashflow" },
       { title: "Conta-corrente", url: "/financial/bank-accounts", permKey: "financial_bank_accounts" },
@@ -198,6 +197,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean, userRole: string): Menu
     { label: "Marketing", icon: <Megaphone className="h-4 w-4 text-white" />, items: [
       { title: "Lâminas de promoções", url: "/promo-maker" },
       { title: "Roteiros", url: "/itineraries" },
+      { title: "Banco de Imagens", url: "/product-images" },
     ]},
     { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4 text-white" />, url: "/whatsapp", items: [
       { title: "Conversas", url: "/whatsapp" },

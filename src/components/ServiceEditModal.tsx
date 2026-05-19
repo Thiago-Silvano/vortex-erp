@@ -159,6 +159,13 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [taImagesOpen, setTaImagesOpen] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  // Library picker
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState('');
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryResults, setLibraryResults] = useState<any[]>([]);
+  const [librarySelected, setLibrarySelected] = useState<Set<string>>(new Set());
+  const [libraryTypeFilter, setLibraryTypeFilter] = useState<string>('all');
   const [experience, setExperience] = useState<ExperienceInfo>(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
   const [generatingItinerary, setGeneratingItinerary] = useState(false);
   const [isAirService, setIsAirService] = useState(metadata.isAirService || false);
@@ -279,6 +286,65 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setSelectedImages(prev => { const n = new Set(prev); dataUrls.forEach(u => n.add(u)); return n; });
       toast.success(`${dataUrls.length} imagem(ns) adicionada(s)`);
     }
+  };
+
+  const inferLibraryType = (): string => {
+    if (type === 'hotel') return 'hospedagem';
+    if (type === 'carro') return 'carro';
+    if (type === 'experiencia') return 'experiencia';
+    return 'servico';
+  };
+
+  const openLibrary = () => {
+    setLibrarySelected(new Set());
+    const defaultName = type === 'hotel'
+      ? (hotel.hotelName || '')
+      : (desc || '');
+    setLibrarySearch(defaultName.trim());
+    setLibraryTypeFilter(inferLibraryType());
+    setLibraryOpen(true);
+    // Run initial search with current filter
+    setTimeout(() => runLibrarySearch(defaultName.trim(), inferLibraryType()), 0);
+  };
+
+  const runLibrarySearch = async (q?: string, typeFilter?: string) => {
+    if (!activeCompany?.id) return;
+    setLibraryLoading(true);
+    try {
+      const term = (q ?? librarySearch).trim();
+      const tf = typeFilter ?? libraryTypeFilter;
+      let query: any = (supabase.from('product_images' as any) as any)
+        .select('*').eq('empresa_id', activeCompany.id);
+      if (tf && tf !== 'all') query = query.eq('product_type', tf);
+      if (term) query = query.or(`product_name.ilike.%${term}%,keywords.ilike.%${term}%`);
+      const { data } = await query.order('product_name').limit(120);
+      setLibraryResults((data || []) as any[]);
+    } finally { setLibraryLoading(false); }
+  };
+
+  const toggleLibrarySelected = (url: string) => {
+    setLibrarySelected(prev => {
+      const n = new Set(prev);
+      if (n.has(url)) n.delete(url); else n.add(url);
+      return n;
+    });
+  };
+
+  const addSelectedFromLibrary = () => {
+    const urls = Array.from(librarySelected);
+    if (urls.length === 0) { toast.info('Selecione ao menos uma imagem'); return; }
+    setHotelImages(prev => {
+      const merged = [...prev];
+      urls.forEach(u => { if (!merged.includes(u)) merged.push(u); });
+      return merged;
+    });
+    setSelectedImages(prev => {
+      const n = new Set(prev);
+      urls.forEach(u => n.add(u));
+      return n;
+    });
+    toast.success(`${urls.length} imagem(ns) adicionada(s) do banco`);
+    setLibraryOpen(false);
   };
 
   // Fallback AI search
@@ -599,6 +665,9 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   />
                   <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
                     <Upload className="h-3 w-3 mr-1" /> Importar do Arquivo
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={openLibrary}>
+                    <Images className="h-3 w-3 mr-1" /> Banco de Imagens
                   </Button>
                 </div>
               </div>
@@ -945,6 +1014,9 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     <Button size="sm" variant="outline" onClick={() => setTaImagesOpen(true)}>
                       <Images className="h-3 w-3 mr-1" /> Buscar imagens TripAdvisor
                     </Button>
+                    <Button size="sm" variant="outline" onClick={openLibrary}>
+                      <Images className="h-3 w-3 mr-1" /> Banco de Imagens
+                    </Button>
                   </div>
                 </div>
                 {hotelImages.length === 0 ? (
@@ -1081,6 +1153,69 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             toast.success('Imagem adicionada');
           }}
         />
+
+        <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Banco de Imagens</DialogTitle>
+            </DialogHeader>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={libraryTypeFilter} onValueChange={(v) => { setLibraryTypeFilter(v); runLibrarySearch(undefined, v); }}>
+                <SelectTrigger className="w-40"><SelectValue/></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  <SelectItem value="cidade">Cidade</SelectItem>
+                  <SelectItem value="hospedagem">Hospedagem</SelectItem>
+                  <SelectItem value="servico">Serviço</SelectItem>
+                  <SelectItem value="carro">Carro</SelectItem>
+                  <SelectItem value="passeio">Passeio</SelectItem>
+                  <SelectItem value="experiencia">Experiência</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                className="flex-1 min-w-[200px]"
+                value={librarySearch}
+                onChange={e => setLibrarySearch(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); runLibrarySearch(); } }}
+                placeholder="Nome ou palavra-chave"
+              />
+              <Button onClick={() => runLibrarySearch()} disabled={libraryLoading} className="gap-1">
+                <Search className="h-4 w-4"/>Buscar
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Clique para selecionar várias imagens.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-[55vh] overflow-y-auto">
+              {libraryResults.length === 0 && !libraryLoading && (
+                <p className="col-span-full text-sm text-muted-foreground text-center py-8">Nenhuma imagem encontrada</p>
+              )}
+              {libraryResults.map((img: any) => {
+                const isSel = librarySelected.has(img.image_url);
+                return (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => toggleLibrarySelected(img.image_url)}
+                    className={`group relative rounded overflow-hidden border-2 text-left transition-all ${isSel ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-primary/50'}`}
+                  >
+                    <img src={img.image_url} alt={img.product_name} className="h-32 w-full object-cover"/>
+                    <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-0.5 truncate">{img.product_name}</span>
+                    {isSel && (
+                      <span className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center">
+                        <Check className="h-3 w-3"/>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setLibraryOpen(false)}>Cancelar</Button>
+              <Button onClick={addSelectedFromLibrary} disabled={librarySelected.size === 0}>
+                Adicionar {librarySelected.size > 0 ? `(${librarySelected.size})` : ''}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
