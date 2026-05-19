@@ -638,12 +638,12 @@ export default function PropostaPublicPage() {
                 </div>
 
                 {receivables.length > 0 && (
-                  <div className="space-y-1.5 pt-4" style={{ borderTop: '1px solid #f0ede8' }}>
+                  <div className="space-y-2 pt-4" style={{ borderTop: '1px solid #f0ede8' }}>
                     {receivables.map((r, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg" style={{ background: idx % 2 === 0 ? '#faf9f6' : 'transparent' }}>
-                        <span className="font-medium" style={{ color: '#555' }}>Parcela {r.installment_number}</span>
-                        <span className="font-bold tabular-nums" style={{ color: '#2d2d2d' }}>{fmt(r.amount)}</span>
-                        {r.due_date && <span className="text-xs" style={{ color: '#aaa' }}>{formatDateBR(r.due_date)}</span>}
+                      <div key={idx} className="flex items-center justify-between text-base py-3 px-4 rounded-lg" style={{ background: idx % 2 === 0 ? '#faf9f6' : 'transparent' }}>
+                        <span className="font-semibold" style={{ color: '#2d2d2d' }}>Parcela {r.installment_number}</span>
+                        <span className="font-bold tabular-nums" style={{ color: '#0D1B2A' }}>{fmt(r.amount)}</span>
+                        {r.due_date && <span className="text-sm font-medium" style={{ color: '#666' }}>{formatDateBR(r.due_date)}</span>}
                       </div>
                     ))}
                   </div>
