@@ -54,7 +54,6 @@ export default function SalesPage() {
   const [datePeriod, setDatePeriod] = useState<DateFilterPeriod>('month');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-  const [visibleCount, setVisibleCount] = useState(20);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalFilteredAmount, setTotalFilteredAmount] = useState(0);
