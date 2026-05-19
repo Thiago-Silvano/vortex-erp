@@ -325,7 +325,7 @@ export default function PropostaPublicPage() {
               {/* Logo tripled */}
               <img src="/images/vortex-logo-white.png" alt="Vortex" className="h-[252px] opacity-90" />
             </div>
-            <div className="text-right text-xs text-white/40">
+            <div className="text-right text-sm font-medium text-white/60">
               {agency && (
                 <>
                   {agency.whatsapp && <p>{agency.whatsapp}</p>}
