@@ -704,7 +704,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3">
       <div className="w-1 h-8 rounded-full" style={{ background: 'linear-gradient(to bottom, #C8A45B, #E8D5A3)' }} />
-      <h2 className="text-2xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>{children}</h2>
+      <h2 className="text-3xl font-bold" style={{ color: '#0D1B2A', fontFamily: "'Georgia', serif" }}>{children}</h2>
     </div>
   );
 }
