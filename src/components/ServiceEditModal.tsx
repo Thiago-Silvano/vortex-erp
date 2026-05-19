@@ -666,6 +666,9 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
                     <Upload className="h-3 w-3 mr-1" /> Importar do Arquivo
                   </Button>
+                  <Button size="sm" variant="outline" onClick={openLibrary}>
+                    <Images className="h-3 w-3 mr-1" /> Banco de Imagens
+                  </Button>
                 </div>
               </div>
               {hotelImages.length === 0 ? (
@@ -1010,6 +1013,9 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setTaImagesOpen(true)}>
                       <Images className="h-3 w-3 mr-1" /> Buscar imagens TripAdvisor
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={openLibrary}>
+                      <Images className="h-3 w-3 mr-1" /> Banco de Imagens
                     </Button>
                   </div>
                 </div>
