@@ -100,7 +100,7 @@ export default function ProductImagesPage() {
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">Biblioteca de Imagens</h1>
+        <h1 className="text-2xl font-bold text-foreground">Banco de Imagens</h1>
 
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><ImagePlus className="h-4 w-4"/> Cadastrar imagens</CardTitle></CardHeader>
