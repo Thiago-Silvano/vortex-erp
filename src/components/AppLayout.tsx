@@ -197,7 +197,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean, userRole: string): Menu
     { label: "Marketing", icon: <Megaphone className="h-4 w-4 text-white" />, items: [
       { title: "Lâminas de promoções", url: "/promo-maker" },
       { title: "Roteiros", url: "/itineraries" },
-      { title: "Banco\nde\nImagens", url: "/product-images" },
+      { title: "Banco de Imagens", url: "/product-images" },
     ]},
     { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4 text-white" />, url: "/whatsapp", items: [
       { title: "Conversas", url: "/whatsapp" },
