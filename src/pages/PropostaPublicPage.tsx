@@ -866,7 +866,7 @@ function ServiceCard({
           <div className="mt-5 pt-5" style={{ borderTop: '1px solid #f0ede8' }}>
             <div className="flex items-center gap-2 mb-4">
               <Plane className="h-4 w-4" style={{ color: '#C8A45B' }} />
-              <span className="text-xs font-semibold tracking-[2px] uppercase" style={{ color: '#C8A45B' }}>Itinerário</span>
+              <span className="text-sm font-bold tracking-[2px] uppercase" style={{ color: '#C8A45B' }}>Itinerário</span>
             </div>
             <div className="space-y-3">
               {(() => {
