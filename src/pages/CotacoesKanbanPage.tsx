@@ -551,7 +551,7 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
           <TableLoadingRow colSpan={10} />
         ) : sortedSales.length === 0 ? (
                       <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma cotação encontrada</TableCell></TableRow>
-                    ) : sortedSales.map(s => {
+                    ) : visibleSortedSales.map(s => {
                       const col = columns.find(c => c.statusKey === s.sale_workflow_status) || columns[0];
                       const daysSince = differenceInDays(new Date(), new Date(s.updated_at));
                       return (
@@ -593,11 +593,19 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
               </CardContent>
             </Card>
 
+            {sortedSales.length > visibleCount && (
+              <div className="hidden sm:flex justify-center mt-3">
+                <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
+                  Carregar mais 20 ({sortedSales.length - visibleCount} restantes)
+                </Button>
+              </div>
+            )}
+
             {/* Mobile Cards */}
             <div className="sm:hidden space-y-3">
               {filteredSales.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Nenhuma cotação encontrada</p>
-              ) : filteredSales.map(s => {
+              ) : visibleFilteredSales.map(s => {
                 const col = columns.find(c => c.statusKey === s.sale_workflow_status) || columns[0];
                 return (
                   <Card key={s.id} className="p-4 cursor-pointer border-l-4" style={{ borderLeftColor: col.color }} onClick={() => handleViewSale(s.id)}>
@@ -617,6 +625,13 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                   </Card>
                 );
               })}
+              {filteredSales.length > visibleCount && (
+                <div className="flex justify-center pt-2">
+                  <Button variant="outline" onClick={() => setVisibleCount(v => v + 20)}>
+                    Carregar mais 20 ({filteredSales.length - visibleCount} restantes)
+                  </Button>
+                </div>
+              )}
             </div>
           </>
         )}
