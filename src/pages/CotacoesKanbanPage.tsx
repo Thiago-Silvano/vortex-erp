@@ -196,6 +196,11 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
     created_at: (s) => s.created_at,
   });
 
+  // Pagination (list/mobile views): reset to 20 when filters/search change
+  useEffect(() => { setVisibleCount(20); }, [search, filterSeller, filterDestination, filterStatus, archivedView, activeCompany?.id]);
+  const visibleSortedSales = useMemo(() => sortedSales.slice(0, visibleCount), [sortedSales, visibleCount]);
+  const visibleFilteredSales = useMemo(() => filteredSales.slice(0, visibleCount), [filteredSales, visibleCount]);
+
   // Move card handler
   const handleMoveCard = async (saleId: string, newStatus: string) => {
     const sale = sales.find(s => s.id === saleId);
