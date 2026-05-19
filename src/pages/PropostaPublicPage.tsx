@@ -51,6 +51,7 @@ interface QuoteOptionData {
   id: string;
   name: string;
   order_index: number;
+  display_mode?: 'individual' | 'total' | null;
 }
 
 interface PassengerData { first_name: string; last_name: string; is_main: boolean; }
@@ -178,7 +179,7 @@ export default function PropostaPublicPage() {
 
     // Load quote options
     const { data: optionsData } = await (supabase.from('sale_quote_options' as any) as any).select('*').eq('sale_id', saleId).order('order_index');
-    if (optionsData && optionsData.length > 1) {
+    if (optionsData && optionsData.length > 0) {
       setQuoteOptions(optionsData);
       setSelectedOptionId(optionsData[0].id);
     }
@@ -223,6 +224,13 @@ export default function PropostaPublicPage() {
   const rawFilteredItems = quoteOptions.length > 1 && selectedOptionId
     ? items.filter(i => i.quote_option_id === selectedOptionId)
     : items;
+
+  // Determine display mode based on the currently selected quote option,
+  // falling back to the sale-level flag for legacy sales without options.
+  const selectedOption = quoteOptions.find(o => o.id === selectedOptionId) || quoteOptions[0];
+  const showIndividual = selectedOption
+    ? selectedOption.display_mode === 'individual'
+    : (sale as any).show_individual_values === true;
   
   // Deduplicate items that may have been saved multiple times for the same option
   const filteredItems = (() => {
@@ -422,7 +430,7 @@ export default function PropostaPublicPage() {
                     images={item.images}
                     metadata={item.metadata}
                     passengersCount={passengersCount}
-                    showValue={(sale as any).show_individual_values !== false}
+                    showValue={showIndividual}
                     onImageClick={(imgIdx) => setLightbox({ images: item.images, index: imgIdx })}
                   />
                 );
@@ -437,7 +445,7 @@ export default function PropostaPublicPage() {
           <div className="mt-8 rounded-2xl overflow-hidden" style={{ background: 'transparent', boxShadow: '0 12px 40px rgba(13,27,42,0.18)', border: '1px solid rgba(200,164,91,0.15)' }}>
 
             {/* Prominent per-person installment hero */}
-            {sale.installments > 1 && receivables.length > 0 && !((sale as any).show_individual_values === true) && (
+            {sale.installments > 1 && receivables.length > 0 && !showIndividual && (
               <div className="text-center py-12 px-8" style={{ background: 'linear-gradient(135deg, #0F1A2A 0%, #15233A 50%, #0B1422 100%)' }}>
                 <p className="text-[11px] font-semibold tracking-[6px] uppercase mb-6" style={{ color: '#C8A45B' }}>
                   {showPerPassenger ? 'Investimento por pessoa' : 'Investimento total'}
@@ -468,7 +476,7 @@ export default function PropostaPublicPage() {
             )}
 
             {/* Single payment (no installments) hero */}
-            {(sale.installments <= 1 || receivables.length === 0) && !((sale as any).show_individual_values === true) && (
+            {(sale.installments <= 1 || receivables.length === 0) && !showIndividual && (
               <div className="text-center py-12 px-8" style={{ background: 'linear-gradient(135deg, #0F1A2A 0%, #15233A 50%, #0B1422 100%)' }}>
                 <p className="text-[11px] font-semibold tracking-[6px] uppercase mb-6" style={{ color: '#C8A45B' }}>
                   {showPerPassenger ? 'Investimento por pessoa' : 'Investimento total'}
@@ -488,8 +496,8 @@ export default function PropostaPublicPage() {
               </div>
             )}
 
-            {/* Items breakdown - show service names when show_individual_values is true */}
-            {(sale as any).show_individual_values === true && filteredItems.map((item, idx) => {
+            {/* Items breakdown - show service names when individual mode is active */}
+            {showIndividual && filteredItems.map((item, idx) => {
               const meta = item.metadata as any;
               const title = meta?.hotelName || meta?.name || item.description || (item.service_catalog_id ? catalogNames[item.service_catalog_id] : null) || `Serviço ${idx + 1}`;
               const subtitle = meta?.detailedDescription || null;
