@@ -1300,6 +1300,7 @@ export type Database = {
           client_id: string
           created_at: string
           current_step: number
+          ds160_application_id: string | null
           empresa_id: string | null
           expires_at: string | null
           form_data: Json
@@ -1308,6 +1309,9 @@ export type Database = {
           ip_address: string | null
           last_saved_at: string | null
           pdf_url: string | null
+          robot_errors: string | null
+          robot_result: Json | null
+          screenshot_url: string | null
           sent_at: string | null
           sent_by: string | null
           status: string
@@ -1319,6 +1323,7 @@ export type Database = {
           client_id: string
           created_at?: string
           current_step?: number
+          ds160_application_id?: string | null
           empresa_id?: string | null
           expires_at?: string | null
           form_data?: Json
@@ -1327,6 +1332,9 @@ export type Database = {
           ip_address?: string | null
           last_saved_at?: string | null
           pdf_url?: string | null
+          robot_errors?: string | null
+          robot_result?: Json | null
+          screenshot_url?: string | null
           sent_at?: string | null
           sent_by?: string | null
           status?: string
@@ -1338,6 +1346,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           current_step?: number
+          ds160_application_id?: string | null
           empresa_id?: string | null
           expires_at?: string | null
           form_data?: Json
@@ -1346,6 +1355,9 @@ export type Database = {
           ip_address?: string | null
           last_saved_at?: string | null
           pdf_url?: string | null
+          robot_errors?: string | null
+          robot_result?: Json | null
+          screenshot_url?: string | null
           sent_at?: string | null
           sent_by?: string | null
           status?: string
@@ -5821,7 +5833,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_ds160_status: {
+        Row: {
+          client_id: string | null
+          ds160_application_id: string | null
+          empresa_id: string | null
+          id: string | null
+          robot_errors: string | null
+          screenshot_url: string | null
+          status: string | null
+          status_label: string | null
+          submitted_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          ds160_application_id?: string | null
+          empresa_id?: string | null
+          id?: string | null
+          robot_errors?: string | null
+          screenshot_url?: string | null
+          status?: string | null
+          status_label?: never
+          submitted_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          ds160_application_id?: string | null
+          empresa_id?: string | null
+          id?: string | null
+          robot_errors?: string | null
+          screenshot_url?: string | null
+          status?: string | null
+          status_label?: never
+          submitted_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds160_forms_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ds160_forms_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       find_or_create_conversation: {
