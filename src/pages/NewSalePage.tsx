@@ -3283,7 +3283,10 @@ export default function NewSalePage() {
           const activeIdx = optionColumns.findIndex(c => c.id === activeCol?.id);
           const optItems = activeCol ? itemsForOption(activeCol.id) : [];
           const totalCost = optItems.reduce((s, { it }) => s + (it.cost_price || 0), 0);
-          const totalRav = optItems.reduce((s, { it }) => s + (it.rav || 0), 0);
+          const baseRav = optItems.reduce((s, { it }) => s + (it.rav || 0), 0);
+          // Include sale-wide surcharges (juros e acréscimos de comissão) so o RAV total
+          // exibido bata com o RAV/Comissão calculado no rodapé de pagamentos.
+          const totalRav = baseRav + (saleInterest || 0) + (commissionSurcharge || 0);
           const avgMarkup = optItems.length > 0 ? (optItems.reduce((s, { it }) => s + (it.markup_percent || 0), 0) / optItems.length) : 0;
           const totalOption = optItems.reduce((s, { it }) => s + (it.total_value || 0), 0);
           return (
