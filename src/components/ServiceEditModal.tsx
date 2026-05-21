@@ -510,7 +510,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     onSave(
       finalDesc,
       meta,
-      type === 'aereo' ? (mainReservation || '') : undefined,
+      mainReservation || undefined,
       parseCurrency(costPriceStr),
       parseCurrency(ravStr),
     );
@@ -555,6 +555,18 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
               </Button>
             ))}
           </div>
+
+          {/* Número da Reserva (todos os tipos exceto aéreo, que tem campo próprio) */}
+          {type !== 'aereo' && (
+            <div>
+              <Label className="text-xs">Número da Reserva / Localizador</Label>
+              <Input
+                value={mainReservation}
+                onChange={e => setMainReservation(e.target.value.toUpperCase())}
+                placeholder="Ex: ABC123"
+              />
+            </div>
+          )}
 
           {/* Description (oculto para hotel — usa hotelName) */}
           {type !== 'hotel' && (
