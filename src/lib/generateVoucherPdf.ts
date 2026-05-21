@@ -879,7 +879,7 @@ function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: n
     doc.setFontSize(9);
     doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
     doc.text(`Reserva: ${s(service.reservationNumber)}`, m + cw - 7, startY + 6, { align: "right" });
-  } else if (service.value > 0) {
+  } else if (service.value > 0 && service.type !== "carro") {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
