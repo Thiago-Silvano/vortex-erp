@@ -65,6 +65,8 @@ interface HotelInfo {
   totalPrice?: number;
   observations?: string;
   tripadvisorRating?: number;
+  accessNumber?: string;
+  showAccessNumber?: boolean;
   tripadvisorReviewsCount?: number;
   tripadvisorRanking?: string;
   tripadvisorBadges?: string[];
