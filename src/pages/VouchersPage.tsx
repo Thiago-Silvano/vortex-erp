@@ -307,6 +307,8 @@ export default function VouchersPage() {
               room: h.roomType || '',
               meal: Array.isArray(h.amenities) && h.amenities.length > 0 ? h.amenities[0] : '',
               reservationNumber: item.reservation_number || '',
+              accessNumber: h.accessNumber || '',
+              showAccessNumber: !!h.showAccessNumber,
               address: h.address || [h.address, h.city, h.country].filter(Boolean).join(', '),
               phone: h.phone || '',
               checkInTime: h.checkInTime || '',
