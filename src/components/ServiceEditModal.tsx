@@ -142,6 +142,7 @@ const emptyHotel = (): HotelInfo => ({
   checkInDate: '', checkOutDate: '', category: '', highlights: [], images: [],
   phone: '', website: '', rating: 0, reviewsTotal: 0,
   roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
+  accessNumber: '', showAccessNumber: false,
 });
 
 export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages }: Props) {
