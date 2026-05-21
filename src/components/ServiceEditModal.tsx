@@ -510,7 +510,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     onSave(
       finalDesc,
       meta,
-      type === 'aereo' ? (mainReservation || '') : undefined,
+      mainReservation || undefined,
       parseCurrency(costPriceStr),
       parseCurrency(ravStr),
     );
