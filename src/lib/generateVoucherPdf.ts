@@ -837,14 +837,6 @@ function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: n
   doc.text(s(service.name), m + 7, y + 6);
   y += 9;
 
-  if (service.reservationNumber) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-    doc.text(`Reserva: ${s(service.reservationNumber)}`, m + 7, y);
-    y += 4;
-  }
-
   if (service.date) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
@@ -853,7 +845,14 @@ function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: n
     y += 4;
   }
 
-  if (service.value > 0) {
+  // Top-right: prioriza Nº da Reserva (mais útil no voucher do cliente).
+  // Se não houver reserva, mostra o valor do serviço.
+  if (service.reservationNumber) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+    doc.text(`Reserva: ${s(service.reservationNumber)}`, m + cw - 7, startY + 6, { align: "right" });
+  } else if (service.value > 0) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
