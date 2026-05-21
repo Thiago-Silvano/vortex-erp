@@ -35,6 +35,8 @@ export interface HotelVoucher {
   detailedDescription?: string;
   address?: string;
   reservationNumber?: string;
+  accessNumber?: string;
+  showAccessNumber?: boolean;
   phone?: string;
   checkInTime?: string;
   checkOutTime?: string;
@@ -295,6 +297,9 @@ function drawHotelContent(
   if (hotel.reservationNumber) {
     const codeStr = s(hotel.reservationNumber);
     const labelStr = "Reserva";
+    const showAccess = !!hotel.showAccessNumber && !!hotel.accessNumber;
+    const accessLabel = "Acesso";
+    const accessStr = showAccess ? s(hotel.accessNumber!) : "";
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
@@ -302,7 +307,16 @@ function drawHotelContent(
     doc.setFontSize(11);
     const codeW = doc.getTextWidth(codeStr);
 
-    const groupW = labelW + 3 + codeW;
+    let accessLabelW = 0;
+    let accessCodeW = 0;
+    if (showAccess) {
+      doc.setFontSize(13);
+      accessLabelW = doc.getTextWidth(accessLabel);
+      doc.setFontSize(11);
+      accessCodeW = doc.getTextWidth(accessStr);
+    }
+    const accessGroupW = showAccess ? 6 + accessLabelW + 3 + accessCodeW : 0;
+    const groupW = labelW + 3 + codeW + accessGroupW;
     const groupX = m + cw - groupW;
     const baselineY = y + 4;
 
@@ -315,6 +329,19 @@ function drawHotelContent(
     doc.setFontSize(11);
     doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
     doc.text(codeStr, groupX + labelW + 3, baselineY);
+
+    if (showAccess) {
+      const accessX = groupX + labelW + 3 + codeW + 6;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
+      doc.text(accessLabel, accessX, baselineY);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
+      doc.text(accessStr, accessX + accessLabelW + 3, baselineY);
+    }
     y += 8;
   }
 

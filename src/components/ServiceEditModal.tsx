@@ -65,6 +65,8 @@ interface HotelInfo {
   totalPrice?: number;
   observations?: string;
   tripadvisorRating?: number;
+  accessNumber?: string;
+  showAccessNumber?: boolean;
   tripadvisorReviewsCount?: number;
   tripadvisorRanking?: string;
   tripadvisorBadges?: string[];
@@ -140,6 +142,7 @@ const emptyHotel = (): HotelInfo => ({
   checkInDate: '', checkOutDate: '', category: '', highlights: [], images: [],
   phone: '', website: '', rating: 0, reviewsTotal: 0,
   roomType: '', roomCount: 1, guestCount: 2, nightsCount: 0, pricePerNight: 0, totalPrice: 0, observations: '',
+  accessNumber: '', showAccessNumber: false,
 });
 
 export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages }: Props) {
@@ -1141,6 +1144,29 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   <div><Label className="text-xs">Check-out</Label><Input type="date" min={hotel.checkInDate || undefined} value={hotel.checkOutDate} onChange={e => setHotel(p => ({ ...p, checkOutDate: e.target.value }))} /></div>
                   <div><Label className="text-xs">Hora Check-in</Label><Input type="time" value={hotel.checkInTime} onChange={e => setHotel(p => ({ ...p, checkInTime: e.target.value }))} /></div>
                   <div><Label className="text-xs">Hora Check-out</Label><Input type="time" value={hotel.checkOutTime} onChange={e => setHotel(p => ({ ...p, checkOutTime: e.target.value }))} /></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+                <div>
+                  <Label className="text-xs">Número de Acesso</Label>
+                  <Input
+                    value={hotel.accessNumber || ''}
+                    onChange={e => setHotel(p => ({ ...p, accessNumber: e.target.value.toUpperCase() }))}
+                    placeholder="Ex: 1234"
+                  />
+                </div>
+                <div className="flex items-center gap-2 pb-2">
+                  <input
+                    type="checkbox"
+                    id="showAccessNumber"
+                    className="h-4 w-4"
+                    checked={!!hotel.showAccessNumber}
+                    onChange={e => setHotel(p => ({ ...p, showAccessNumber: e.target.checked }))}
+                  />
+                  <Label htmlFor="showAccessNumber" className="text-xs cursor-pointer">
+                    Exibir Nº de Acesso ao lado do Nº da Reserva no voucher PDF
+                  </Label>
                 </div>
               </div>
 
