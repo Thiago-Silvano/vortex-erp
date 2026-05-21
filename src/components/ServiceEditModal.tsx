@@ -1147,6 +1147,29 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+                <div>
+                  <Label className="text-xs">Número de Acesso</Label>
+                  <Input
+                    value={hotel.accessNumber || ''}
+                    onChange={e => setHotel(p => ({ ...p, accessNumber: e.target.value.toUpperCase() }))}
+                    placeholder="Ex: 1234"
+                  />
+                </div>
+                <div className="flex items-center gap-2 pb-2">
+                  <input
+                    type="checkbox"
+                    id="showAccessNumber"
+                    className="h-4 w-4"
+                    checked={!!hotel.showAccessNumber}
+                    onChange={e => setHotel(p => ({ ...p, showAccessNumber: e.target.checked }))}
+                  />
+                  <Label htmlFor="showAccessNumber" className="text-xs cursor-pointer">
+                    Exibir Nº de Acesso ao lado do Nº da Reserva no voucher PDF
+                  </Label>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div><Label className="text-xs">Tipo de Quarto</Label><Input value={hotel.roomType || ''} onChange={e => setHotel(p => ({ ...p, roomType: e.target.value }))} placeholder="Deluxe Suite" /></div>
                 <div><Label className="text-xs">Qtd. Quartos</Label><Input type="number" min="1" value={hotel.roomCount || 1} onChange={e => setHotel(p => ({ ...p, roomCount: parseInt(e.target.value) || 1 }))} /></div>
