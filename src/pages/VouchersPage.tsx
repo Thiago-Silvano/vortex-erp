@@ -389,7 +389,8 @@ export default function VouchersPage() {
         },
         notes: sale.notes || undefined,
         saleDate: sale.sale_date,
-        shortId: items.find((i: any) => i.purchase_number)?.purchase_number || sale.short_id,
+        shortId: items.find((i: any) => i.show_purchase_number && i.purchase_number)?.purchase_number || undefined,
+        hideReference: !items.some((i: any) => i.show_purchase_number && i.purchase_number),
       };
 
       const doc = generateVoucherPdf(voucherData);
