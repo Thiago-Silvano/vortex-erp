@@ -325,8 +325,11 @@ export default function NewSalePage() {
     setClientName(sale.client_name);
     // Resolve client ID from name
     if (sale.client_name) {
-      const { data: foundClient } = await supabase.from('clients').select('id').eq('full_name', sale.client_name).eq('empresa_id', activeCompany?.id).limit(1).single();
-      if (foundClient) setSelectedClientId(foundClient.id);
+      const { data: foundClient } = await supabase.from('clients').select('id, cpf').eq('full_name', sale.client_name).eq('empresa_id', activeCompany?.id).limit(1).single();
+      if (foundClient) {
+        setSelectedClientId(foundClient.id);
+        setSelectedClientCpf((foundClient as any).cpf || '');
+      }
     }
     setSaleDate(sale.sale_date);
     const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
