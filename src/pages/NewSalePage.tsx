@@ -2882,6 +2882,7 @@ export default function NewSalePage() {
                               <CommandItem key={c.id} value={c.full_name} onSelect={() => { 
                                 setClientName(c.full_name); 
                                 setSelectedClientId(c.id);
+                                setSelectedClientCpf(c.cpf || '');
                                 setClientPopoverOpen(false); 
                                 setAskAddClientAsPassenger(c);
                               }}>
@@ -2895,9 +2896,10 @@ export default function NewSalePage() {
                   </Popover>
                   {selectedClientId && (() => {
                     const c = allClients.find(c => c.id === selectedClientId);
-                    return c?.cpf ? (
+                    const cpf = c?.cpf || selectedClientCpf;
+                    return cpf ? (
                       <span className="px-2 py-1 rounded-md border bg-muted text-xs font-medium whitespace-nowrap">
-                        CPF: {c.cpf}
+                        CPF: {cpf}
                       </span>
                     ) : null;
                   })()}
