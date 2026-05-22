@@ -219,6 +219,7 @@ export default function NewSalePage() {
   const [forceImportOptionId, setForceImportOptionId] = useState<string | null>(null);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
+  const [selectedClientCpf, setSelectedClientCpf] = useState<string>('');
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [passengerClientResults, setPassengerClientResults] = useState<ClientOption[]>([]);
   const [passengerSearchLoading, setPassengerSearchLoading] = useState(false);
