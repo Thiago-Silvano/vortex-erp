@@ -1151,6 +1151,12 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                             >
                               <X className="h-3 w-3" />
                             </button>
+                            <button
+                              type="button"
+                              className="inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0 hover:bg-accent px-2 h-7 gap-1 text-muted-foreground hover:text-foreground bg-blue-500 text-slate-50 text-base border-4"
+                            >
+                              Exemplo
+                            </button>
                           </div>
                         );
                       })}
