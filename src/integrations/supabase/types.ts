@@ -3892,6 +3892,7 @@ export type Database = {
           reservation_number: string | null
           sale_id: string
           service_catalog_id: string | null
+          show_purchase_number: boolean
           sort_order: number | null
           total_value: number | null
         }
@@ -3909,6 +3910,7 @@ export type Database = {
           reservation_number?: string | null
           sale_id: string
           service_catalog_id?: string | null
+          show_purchase_number?: boolean
           sort_order?: number | null
           total_value?: number | null
         }
@@ -3926,6 +3928,7 @@ export type Database = {
           reservation_number?: string | null
           sale_id?: string
           service_catalog_id?: string | null
+          show_purchase_number?: boolean
           sort_order?: number | null
           total_value?: number | null
         }
