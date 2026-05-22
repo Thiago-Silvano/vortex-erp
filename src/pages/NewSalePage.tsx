@@ -2268,8 +2268,9 @@ export default function NewSalePage() {
       if (saleData) saleShortId = saleData.short_id;
     }
 
-    const firstPurchaseNumber = items.find(item => (item.purchase_number || '').trim())?.purchase_number?.trim();
+    const firstPurchaseNumber = items.find(item => item.show_purchase_number && (item.purchase_number || '').trim())?.purchase_number?.trim();
     const voucherReference = firstPurchaseNumber || saleShortId;
+    const hidePurchaseRef = !firstPurchaseNumber;
 
     const voucherData: VoucherPdfData = {
       agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
@@ -2317,7 +2318,7 @@ export default function NewSalePage() {
       notes: notes || undefined,
       saleDate,
       shortId: voucherReference,
-      hideReference: isQuoteMode,
+      hideReference: isQuoteMode || hidePurchaseRef,
     };
 
     return { voucherData, logoBase64, shortId: saleShortId };
