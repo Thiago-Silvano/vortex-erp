@@ -536,6 +536,7 @@ export default function NewSalePage() {
             metadata: si.metadata || {},
             reservation_number: si.reservation_number || '',
             purchase_number: (si as any).purchase_number || '',
+            show_purchase_number: !!(si as any).show_purchase_number,
             quote_option_id: optionIds[0] || undefined,
             quote_option_ids: optionIds.length > 0 ? optionIds : undefined,
           });
