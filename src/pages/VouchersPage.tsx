@@ -389,7 +389,8 @@ export default function VouchersPage() {
         },
         notes: sale.notes || undefined,
         saleDate: sale.sale_date,
-        shortId: items.find((i: any) => i.purchase_number)?.purchase_number || sale.short_id,
+        shortId: items.find((i: any) => i.show_purchase_number && i.purchase_number)?.purchase_number || undefined,
+        hideReference: !items.some((i: any) => i.show_purchase_number && i.purchase_number),
       };
 
       const doc = generateVoucherPdf(voucherData);
@@ -433,7 +434,8 @@ export default function VouchersPage() {
         const airVoucherData: AirlineVoucherData = {
           agencyLogoBase64: vortexLogo,
           airlineName: '',
-          shortId: sale.short_id || undefined,
+          shortId: undefined,
+          hideReference: true,
           saleDate: (sale as any).sale_date || undefined,
           clientName: sale.client_name,
           localizador: '',
@@ -484,7 +486,8 @@ export default function VouchersPage() {
           const airVoucherData: AirlineVoucherData = {
             agencyLogoBase64: vortexLogo,
             airlineName,
-            shortId: airItem.purchase_number || sale.short_id || undefined,
+            shortId: (airItem.show_purchase_number && airItem.purchase_number) ? airItem.purchase_number : undefined,
+            hideReference: !(airItem.show_purchase_number && airItem.purchase_number),
             saleDate: (sale as any).sale_date || undefined,
             clientName: sale.client_name,
             localizador: airItem.reservation_number || '',

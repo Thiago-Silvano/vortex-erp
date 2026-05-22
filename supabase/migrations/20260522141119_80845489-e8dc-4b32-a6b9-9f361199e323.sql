@@ -1,0 +1,1 @@
+ALTER TABLE public.sale_items ADD COLUMN IF NOT EXISTS show_purchase_number boolean NOT NULL DEFAULT false;

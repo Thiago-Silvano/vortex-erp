@@ -50,6 +50,7 @@ interface SaleItem {
   metadata?: ServiceMetadata;
   reservation_number?: string;
   purchase_number?: string;
+  show_purchase_number?: boolean;
   quote_option_id?: string;
   quote_option_ids?: string[];
 }
@@ -406,6 +407,7 @@ export default function NewSalePage() {
         metadata: (i as any).metadata || {},
         reservation_number: (i as any).reservation_number || '',
         purchase_number: (i as any).purchase_number || '',
+        show_purchase_number: !!(i as any).show_purchase_number,
         quote_option_id: (i as any).quote_option_id || undefined,
         quote_option_ids: (i as any).quote_option_id ? [(i as any).quote_option_id] : undefined,
       })));
@@ -534,6 +536,7 @@ export default function NewSalePage() {
             metadata: si.metadata || {},
             reservation_number: si.reservation_number || '',
             purchase_number: (si as any).purchase_number || '',
+            show_purchase_number: !!(si as any).show_purchase_number,
             quote_option_id: optionIds[0] || undefined,
             quote_option_ids: optionIds.length > 0 ? optionIds : undefined,
           });
@@ -1071,6 +1074,7 @@ export default function NewSalePage() {
       metadata: original.metadata ? JSON.parse(JSON.stringify(original.metadata)) : {},
       reservation_number: original.reservation_number,
       purchase_number: original.purchase_number,
+      show_purchase_number: original.show_purchase_number,
       quote_option_id: original.quote_option_id,
       quote_option_ids: original.quote_option_ids ? [...original.quote_option_ids] : undefined,
     };
@@ -1801,7 +1805,7 @@ export default function NewSalePage() {
           sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
           markup_percent: item.markup_percent || 0, total_value: item.total_value, sort_order: sortIdx,
           service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
-          metadata: item.metadata || {}, reservation_number: item.reservation_number || '', purchase_number: item.purchase_number || '',
+          metadata: item.metadata || {}, reservation_number: item.reservation_number || '', purchase_number: item.purchase_number || '', show_purchase_number: !!item.show_purchase_number,
           quote_option_id: resolvedOptionId,
         };
       }) as any).select('id');
@@ -2264,8 +2268,9 @@ export default function NewSalePage() {
       if (saleData) saleShortId = saleData.short_id;
     }
 
-    const firstPurchaseNumber = items.find(item => (item.purchase_number || '').trim())?.purchase_number?.trim();
+    const firstPurchaseNumber = items.find(item => item.show_purchase_number && (item.purchase_number || '').trim())?.purchase_number?.trim();
     const voucherReference = firstPurchaseNumber || saleShortId;
+    const hidePurchaseRef = !firstPurchaseNumber;
 
     const voucherData: VoucherPdfData = {
       agency: { name: agency.name, whatsapp: agency.whatsapp || '', email: agency.email || '', website: agency.website || '', logoBase64 },
@@ -2313,7 +2318,7 @@ export default function NewSalePage() {
       notes: notes || undefined,
       saleDate,
       shortId: voucherReference,
-      hideReference: isQuoteMode,
+      hideReference: isQuoteMode || hidePurchaseRef,
     };
 
     return { voucherData, logoBase64, shortId: saleShortId };
@@ -2500,7 +2505,7 @@ export default function NewSalePage() {
         agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
         airlineName,
         clientName: clientName,
-        shortId: shortId || undefined,
+        shortId: (airlineItems.find(it => it.show_purchase_number && (it.purchase_number || '').trim())?.purchase_number?.trim()) || undefined,
         saleDate,
         localizador: '',
         passengers: airPax,
@@ -2512,7 +2517,7 @@ export default function NewSalePage() {
         agencyWhatsapp: agency.whatsapp || '',
         agencyEmail: agency.email || '',
         agencyWebsite: agency.website || '',
-        hideReference: isQuoteMode,
+        hideReference: isQuoteMode || !airlineItems.some(it => it.show_purchase_number && (it.purchase_number || '').trim()),
       };
 
     const combinedDoc: any = generateAirlineVoucherPdf(airVoucherData, appendTo);
@@ -4909,6 +4914,8 @@ export default function NewSalePage() {
             description={items[editingItemIdx]?.description || ''}
             metadata={items[editingItemIdx]?.metadata || {}}
             reservationNumber={items[editingItemIdx]?.reservation_number || ''}
+            purchaseNumber={items[editingItemIdx]?.purchase_number || ''}
+            showPurchaseNumber={items[editingItemIdx]?.show_purchase_number || false}
             costPrice={items[editingItemIdx]?.cost_price || 0}
             rav={items[editingItemIdx]?.rav || 0}
             existingImages={itemImages[editingItemIdx] || []}
@@ -4933,7 +4940,7 @@ export default function NewSalePage() {
               }
               setTimeout(() => setPdfImportOpen(true), 100);
             }}
-            onSave={(desc, meta, resNumber, newCost, newRav) => {
+            onSave={(desc, meta, resNumber, newCost, newRav, purchNumber, showPurch) => {
               setItems(prev => {
                 const editedItem = prev[editingItemIdx];
                 const updated = prev.map((item, i) => {
@@ -4951,6 +4958,8 @@ export default function NewSalePage() {
                       total_value: total,
                       markup_percent: markup,
                       ...(resNumber !== undefined ? { reservation_number: resNumber } : {}),
+                      purchase_number: purchNumber || '',
+                      show_purchase_number: !!showPurch,
                     };
                   }
                   return item;

@@ -123,9 +123,11 @@ interface Props {
   description: string;
   metadata: ServiceMetadata;
   reservationNumber?: string;
+  purchaseNumber?: string;
+  showPurchaseNumber?: boolean;
   costPrice?: number;
   rav?: number;
-  onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string, costPrice?: number, rav?: number) => void;
+  onSave: (description: string, metadata: ServiceMetadata, reservationNumber?: string, costPrice?: number, rav?: number, purchaseNumber?: string, showPurchaseNumber?: boolean) => void;
   onHotelImagesFound?: (images: string[]) => void;
   onImportPdf?: () => void;
   existingImages?: string[];
@@ -145,7 +147,7 @@ const emptyHotel = (): HotelInfo => ({
   accessNumber: '', showAccessNumber: false,
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, purchaseNumber, showPurchaseNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
@@ -175,6 +177,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [airlineId, setAirlineId] = useState(metadata.airlineId || '');
   const [airlinesList, setAirlinesList] = useState<any[]>([]);
   const [mainReservation, setMainReservation] = useState(reservationNumber || '');
+  const [mainPurchase, setMainPurchase] = useState(purchaseNumber || '');
+  const [showPurchase, setShowPurchase] = useState<boolean>(!!showPurchaseNumber);
   const [costPriceStr, setCostPriceStr] = useState<string>(costPrice ? maskCurrencyInput(costPrice) : '');
   const [ravStr, setRavStr] = useState<string>(rav ? maskCurrencyInput(rav) : '');
 
@@ -203,11 +207,13 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       setExperience(metadata.experience || { startDate: '', endDate: '', freeDays: 0, aiTips: '' });
       setAirlineId(mainAirline);
       setMainReservation(reservationNumber || '');
+      setMainPurchase(purchaseNumber || '');
+      setShowPurchase(!!showPurchaseNumber);
       setCostPriceStr(costPrice ? maskCurrencyInput(costPrice) : '');
       setRavStr(rav ? maskCurrencyInput(rav) : '');
       loadAirlines();
     }
-  }, [open, metadata, description, reservationNumber, costPrice, rav]);
+  }, [open, metadata, description, reservationNumber, purchaseNumber, showPurchaseNumber, costPrice, rav]);
 
   const loadAirlines = async () => {
     if (!activeCompany) return;
@@ -516,6 +522,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       mainReservation || undefined,
       parseCurrency(costPriceStr),
       parseCurrency(ravStr),
+      mainPurchase || undefined,
+      showPurchase,
     );
     if (onHotelImagesFound) {
       onHotelImagesFound(orderedSelectedImages);
@@ -806,6 +814,27 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                     onChange={e => setMainReservation(e.target.value.toUpperCase())}
                     placeholder="ABC123"
                   />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <Label className="text-xs">Número da Compra</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      value={mainPurchase}
+                      onChange={e => setMainPurchase(e.target.value.toUpperCase())}
+                      placeholder="Ex: 253C765E"
+                      className="flex-1"
+                    />
+                    <label className="flex items-center gap-2 text-xs whitespace-nowrap cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showPurchase}
+                        onChange={e => setShowPurchase(e.target.checked)}
+                      />
+                      Exibir no voucher
+                    </label>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center justify-between">
