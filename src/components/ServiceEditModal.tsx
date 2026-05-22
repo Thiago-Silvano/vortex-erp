@@ -479,6 +479,10 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   };
 
   const handleSave = () => {
+    if (type === 'aereo' && showPurchase && !mainPurchase.trim()) {
+      toast.error('Preencha o Número da Compra ou desmarque "Exibir no voucher"');
+      return;
+    }
     const orderedSelectedImages = hotelImages.filter((u) => selectedImages.has(u));
     const meta: ServiceMetadata = { type, detailedDescription: detailedDesc, isAirService: type === 'adicional' ? isAirService : undefined };
     if (type === 'aereo') {
@@ -825,6 +829,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                       onChange={e => setMainPurchase(e.target.value.toUpperCase())}
                       placeholder="Ex: 253C765E"
                       className="flex-1"
+                      disabled={!showPurchase}
                     />
                     <label className="flex items-center gap-2 text-xs whitespace-nowrap cursor-pointer">
                       <input
