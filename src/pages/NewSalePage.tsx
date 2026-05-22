@@ -2505,7 +2505,7 @@ export default function NewSalePage() {
         agencyLogoBase64: vortexWhiteLogoBase64 || logoBase64,
         airlineName,
         clientName: clientName,
-        shortId: shortId || undefined,
+        shortId: (airlineItems.find(it => it.show_purchase_number && (it.purchase_number || '').trim())?.purchase_number?.trim()) || undefined,
         saleDate,
         localizador: '',
         passengers: airPax,
@@ -2517,7 +2517,7 @@ export default function NewSalePage() {
         agencyWhatsapp: agency.whatsapp || '',
         agencyEmail: agency.email || '',
         agencyWebsite: agency.website || '',
-        hideReference: isQuoteMode,
+        hideReference: isQuoteMode || !airlineItems.some(it => it.show_purchase_number && (it.purchase_number || '').trim()),
       };
 
     const combinedDoc: any = generateAirlineVoucherPdf(airVoucherData, appendTo);
