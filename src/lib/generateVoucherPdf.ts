@@ -182,12 +182,12 @@ function drawPageHeader(
     }
   }
 
-  // Ref + Date (center-right) — Referencia oculta em proposta/cotação
+  // Ref + Date (center-right) — Numero da Compra oculto em proposta/cotação
   const infoX = pw - m - 60;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(180, 180, 180);
-  if (!data.hideReference) doc.text("Referencia", infoX, 7);
+  if (!data.hideReference) doc.text("Numero da Compra", infoX, 7);
   doc.text("Data", infoX + 32, 7);
 
   doc.setFont("helvetica", "bold");
