@@ -4914,6 +4914,8 @@ export default function NewSalePage() {
             description={items[editingItemIdx]?.description || ''}
             metadata={items[editingItemIdx]?.metadata || {}}
             reservationNumber={items[editingItemIdx]?.reservation_number || ''}
+            purchaseNumber={items[editingItemIdx]?.purchase_number || ''}
+            showPurchaseNumber={items[editingItemIdx]?.show_purchase_number || false}
             costPrice={items[editingItemIdx]?.cost_price || 0}
             rav={items[editingItemIdx]?.rav || 0}
             existingImages={itemImages[editingItemIdx] || []}
