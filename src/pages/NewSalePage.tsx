@@ -2860,10 +2860,10 @@ export default function NewSalePage() {
               )}
               <div className="md:col-span-2">
                 <Label>Nome do Cliente *</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   <Popover open={clientPopoverOpen} onOpenChange={setClientPopoverOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" role="combobox" aria-expanded={clientPopoverOpen} className="flex-1 justify-between font-normal">
+                      <Button variant="outline" role="combobox" aria-expanded={clientPopoverOpen} className="md:w-1/2 flex-1 justify-between font-normal">
                         {clientName || 'Selecione ou digite o cliente...'}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -2889,6 +2889,14 @@ export default function NewSalePage() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {selectedClientId && (() => {
+                    const c = allClients.find(c => c.id === selectedClientId);
+                    return c?.cpf ? (
+                      <span className="px-2 py-1 rounded-md border bg-muted text-xs font-medium whitespace-nowrap">
+                        CPF: {c.cpf}
+                      </span>
+                    ) : null;
+                  })()}
                   {selectedClientId && (
                     <Button type="button" size="icon" variant="outline" onClick={() => navigate('/clients', { state: { openEditId: selectedClientId, returnTo: '/sales/new', returnState: editSaleId ? { editSaleId } : undefined } })} title="Editar cliente">
                       <UserPen className="h-4 w-4" />
