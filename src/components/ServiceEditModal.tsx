@@ -522,6 +522,8 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
       mainReservation || undefined,
       parseCurrency(costPriceStr),
       parseCurrency(ravStr),
+      mainPurchase || undefined,
+      showPurchase,
     );
     if (onHotelImagesFound) {
       onHotelImagesFound(orderedSelectedImages);
