@@ -816,6 +816,27 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <Label className="text-xs">Número da Compra</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      value={mainPurchase}
+                      onChange={e => setMainPurchase(e.target.value.toUpperCase())}
+                      placeholder="Ex: 253C765E"
+                      className="flex-1"
+                    />
+                    <label className="flex items-center gap-2 text-xs whitespace-nowrap cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showPurchase}
+                        onChange={e => setShowPurchase(e.target.checked)}
+                      />
+                      Exibir no voucher
+                    </label>
+                  </div>
+                </div>
+              </div>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-sm">Trechos do Voo</h3>
                 <Button size="sm" variant="outline" onClick={addFlightLeg}><Plus className="h-3 w-3 mr-1" />Trecho</Button>
