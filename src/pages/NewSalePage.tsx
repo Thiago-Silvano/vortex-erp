@@ -1074,6 +1074,7 @@ export default function NewSalePage() {
       metadata: original.metadata ? JSON.parse(JSON.stringify(original.metadata)) : {},
       reservation_number: original.reservation_number,
       purchase_number: original.purchase_number,
+      show_purchase_number: original.show_purchase_number,
       quote_option_id: original.quote_option_id,
       quote_option_ids: original.quote_option_ids ? [...original.quote_option_ids] : undefined,
     };
