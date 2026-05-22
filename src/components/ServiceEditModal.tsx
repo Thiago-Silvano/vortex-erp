@@ -829,6 +829,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                       onChange={e => setMainPurchase(e.target.value.toUpperCase())}
                       placeholder="Ex: 253C765E"
                       className="flex-1"
+                      disabled={!showPurchase}
                     />
                     <label className="flex items-center gap-2 text-xs whitespace-nowrap cursor-pointer">
                       <input
