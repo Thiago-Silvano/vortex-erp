@@ -485,7 +485,8 @@ export default function VouchersPage() {
           const airVoucherData: AirlineVoucherData = {
             agencyLogoBase64: vortexLogo,
             airlineName,
-            shortId: airItem.purchase_number || sale.short_id || undefined,
+            shortId: (airItem.show_purchase_number && airItem.purchase_number) ? airItem.purchase_number : undefined,
+            hideReference: !(airItem.show_purchase_number && airItem.purchase_number),
             saleDate: (sale as any).sale_date || undefined,
             clientName: sale.client_name,
             localizador: airItem.reservation_number || '',
