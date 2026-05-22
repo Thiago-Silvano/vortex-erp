@@ -4940,7 +4940,7 @@ export default function NewSalePage() {
               }
               setTimeout(() => setPdfImportOpen(true), 100);
             }}
-            onSave={(desc, meta, resNumber, newCost, newRav) => {
+            onSave={(desc, meta, resNumber, newCost, newRav, purchNumber, showPurch) => {
               setItems(prev => {
                 const editedItem = prev[editingItemIdx];
                 const updated = prev.map((item, i) => {
@@ -4958,6 +4958,8 @@ export default function NewSalePage() {
                       total_value: total,
                       markup_percent: markup,
                       ...(resNumber !== undefined ? { reservation_number: resNumber } : {}),
+                      purchase_number: purchNumber || '',
+                      show_purchase_number: !!showPurch,
                     };
                   }
                   return item;
