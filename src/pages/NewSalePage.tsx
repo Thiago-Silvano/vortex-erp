@@ -1805,7 +1805,7 @@ export default function NewSalePage() {
           sale_id: saleId, description: item.description, cost_price: item.cost_price, rav: item.rav,
           markup_percent: item.markup_percent || 0, total_value: item.total_value, sort_order: sortIdx,
           service_catalog_id: item.service_catalog_id || null, cost_center_id: item.cost_center_id || null,
-          metadata: item.metadata || {}, reservation_number: item.reservation_number || '', purchase_number: item.purchase_number || '',
+          metadata: item.metadata || {}, reservation_number: item.reservation_number || '', purchase_number: item.purchase_number || '', show_purchase_number: !!item.show_purchase_number,
           quote_option_id: resolvedOptionId,
         };
       }) as any).select('id');
