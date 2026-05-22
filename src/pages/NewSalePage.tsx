@@ -219,6 +219,7 @@ export default function NewSalePage() {
   const [forceImportOptionId, setForceImportOptionId] = useState<string | null>(null);
   const [quickClientOpen, setQuickClientOpen] = useState(false);
   const [allClients, setAllClients] = useState<ClientOption[]>([]);
+  const [selectedClientCpf, setSelectedClientCpf] = useState<string>('');
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const [passengerClientResults, setPassengerClientResults] = useState<ClientOption[]>([]);
   const [passengerSearchLoading, setPassengerSearchLoading] = useState(false);
@@ -324,8 +325,11 @@ export default function NewSalePage() {
     setClientName(sale.client_name);
     // Resolve client ID from name
     if (sale.client_name) {
-      const { data: foundClient } = await supabase.from('clients').select('id').eq('full_name', sale.client_name).eq('empresa_id', activeCompany?.id).limit(1).single();
-      if (foundClient) setSelectedClientId(foundClient.id);
+      const { data: foundClient } = await supabase.from('clients').select('id, cpf').eq('full_name', sale.client_name).eq('empresa_id', activeCompany?.id).limit(1).single();
+      if (foundClient) {
+        setSelectedClientId(foundClient.id);
+        setSelectedClientCpf((foundClient as any).cpf || '');
+      }
     }
     setSaleDate(sale.sale_date);
     const savedMethods = (sale.payment_method || 'pix').split(',').map((m: string) => m.trim()).filter(Boolean);
@@ -2878,6 +2882,7 @@ export default function NewSalePage() {
                               <CommandItem key={c.id} value={c.full_name} onSelect={() => { 
                                 setClientName(c.full_name); 
                                 setSelectedClientId(c.id);
+                                setSelectedClientCpf(c.cpf || '');
                                 setClientPopoverOpen(false); 
                                 setAskAddClientAsPassenger(c);
                               }}>
@@ -2891,9 +2896,10 @@ export default function NewSalePage() {
                   </Popover>
                   {selectedClientId && (() => {
                     const c = allClients.find(c => c.id === selectedClientId);
-                    return c?.cpf ? (
+                    const cpf = c?.cpf || selectedClientCpf;
+                    return cpf ? (
                       <span className="px-2 py-1 rounded-md border bg-muted text-xs font-medium whitespace-nowrap">
-                        CPF: {c.cpf}
+                        CPF: {cpf}
                       </span>
                     ) : null;
                   })()}
