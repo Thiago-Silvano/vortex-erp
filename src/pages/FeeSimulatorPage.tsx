@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calculator } from 'lucide-react';
 
 interface Fee {
@@ -39,6 +40,7 @@ export default function FeeSimulatorPage() {
   const [institutionId, setInstitutionId] = useState<string>('');
   const [installments, setInstallments] = useState<number>(1);
   const [valueStr, setValueStr] = useState('');
+  const [feeMode, setFeeMode] = useState<'repassar' | 'empresa'>('repassar');
   const valueInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -99,8 +101,9 @@ export default function FeeSimulatorPage() {
   const step3 = step2 - 1;
   const maxFeePct = step3 * 100;
 
-  const surcharge = value * (maxFeePct / 100);
-  const totalCharged = value + surcharge;
+  const repassar = feeMode === 'repassar';
+  const surcharge = repassar ? value * (maxFeePct / 100) : 0;
+  const totalCharged = repassar ? value + surcharge : value;
   const bankCost = totalCharged * (bankFee / 100);
   const netReceived = totalCharged - bankCost;
   const installmentValue = installments > 0 ? totalCharged / installments : 0;
@@ -115,7 +118,29 @@ export default function FeeSimulatorPage() {
 
         <Card>
           <CardHeader><CardTitle className="text-base">Parâmetros</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-5">
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <Label className="text-base">Quem paga a taxa?</Label>
+              <RadioGroup
+                value={feeMode}
+                onValueChange={(v: any) => setFeeMode(v)}
+                className="flex flex-wrap gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="repassar" id="fee-repassar" />
+                  <Label htmlFor="fee-repassar" className="text-base font-normal cursor-pointer">
+                    Repassar a taxa ao cliente
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="empresa" id="fee-empresa" />
+                  <Label htmlFor="fee-empresa" className="text-base font-normal cursor-pointer">
+                    Empresa paga a taxa
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
             <div className="space-y-2">
               <Label className="text-base">Método</Label>
               <Select value={method} onValueChange={(v: any) => setMethod(v)}>
@@ -164,13 +189,14 @@ export default function FeeSimulatorPage() {
                 className="h-12 text-base"
               />
             </div>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              Resultado {matched ? `— ${matched.institution} (${matched.method === 'link' ? 'Link' : 'Maquininha'}) ${installments}x` : ''}
+              Resultado {matched ? `— ${matched.institution} (${matched.method === 'link' ? 'Link' : 'Maquininha'}) ${installments}x — ${repassar ? 'Taxa repassada' : 'Empresa paga'}` : ''}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -181,13 +207,17 @@ export default function FeeSimulatorPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Box label="Taxa do banco" value={`${bankFee.toFixed(2).replace('.', ',')} %`} />
-                <Box label="Taxa maximizada (a repassar)" value={`${maxFeePct.toFixed(2).replace('.', ',')} %`} highlight />
+                <Box
+                  label={repassar ? 'Taxa maximizada (a repassar)' : 'Taxa absorvida pela empresa'}
+                  value={`${(repassar ? maxFeePct : bankFee).toFixed(2).replace('.', ',')} %`}
+                  highlight
+                />
                 <Box label="Valor original" value={fmtBRL(value)} />
-                <Box label="Acréscimo" value={fmtBRL(surcharge)} />
+                <Box label="Acréscimo ao cliente" value={fmtBRL(surcharge)} />
                 <Box label="Total a cobrar do cliente" value={fmtBRL(totalCharged)} highlight />
                 <Box label="Valor por parcela" value={`${installments}x de ${fmtBRL(installmentValue)}`} />
                 <Box label="Custo bancário" value={fmtBRL(bankCost)} />
-                <Box label="Líquido recebido" value={fmtBRL(netReceived)} />
+                <Box label={repassar ? 'Líquido recebido' : 'Líquido recebido (após custo)'} value={fmtBRL(netReceived)} />
               </div>
             )}
           </CardContent>
