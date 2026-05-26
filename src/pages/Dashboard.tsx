@@ -144,12 +144,12 @@ export default function Dashboard() {
     // Current and previous sales
     const [currRes, prevRes] = await Promise.all([
       supabase.from('sales')
-        .select('id, total_sale, net_profit, passengers_count, sale_date, status')
+        .select('id, total_sale, net_profit, total_supplier_cost, passengers_count, sale_date, status')
         .eq('empresa_id', empresaId)
         .eq('status', 'active')
         .gte('sale_date', startStr).lte('sale_date', endStr),
       supabase.from('sales')
-        .select('id, total_sale, net_profit, passengers_count, status')
+        .select('id, total_sale, net_profit, total_supplier_cost, passengers_count, status')
         .eq('empresa_id', empresaId)
         .eq('status', 'active')
         .gte('sale_date', prevStartStr).lte('sale_date', prevEndStr),
@@ -160,8 +160,8 @@ export default function Dashboard() {
 
     const sumCurrFat = curr.reduce((s, v) => s + Number(v.total_sale || 0), 0);
     const sumPrevFat = prev.reduce((s, v) => s + Number(v.total_sale || 0), 0);
-    const sumCurrLucro = curr.reduce((s, v) => s + Number(v.net_profit || 0), 0);
-    const sumPrevLucro = prev.reduce((s, v) => s + Number(v.net_profit || 0), 0);
+    const sumCurrLucro = curr.reduce((s, v) => s + (Number(v.total_sale || 0) - Number(v.total_supplier_cost || 0)), 0);
+    const sumPrevLucro = prev.reduce((s, v) => s + (Number(v.total_sale || 0) - Number(v.total_supplier_cost || 0)), 0);
     const cliCurr = curr.reduce((s, v) => s + Number(v.passengers_count || 0), 0);
     const cliPrev = prev.reduce((s, v) => s + Number(v.passengers_count || 0), 0);
     const ticketCurr = curr.length > 0 ? sumCurrFat / curr.length : 0;
@@ -186,7 +186,7 @@ export default function Dashboard() {
     curr.forEach((s) => {
       const k = String(s.sale_date);
       recByDay[k] = (recByDay[k] || 0) + Number(s.total_sale || 0);
-      desByDay[k] = (desByDay[k] || 0) + (Number(s.total_sale || 0) - Number(s.net_profit || 0));
+      desByDay[k] = (desByDay[k] || 0) + Number(s.total_supplier_cost || 0);
     });
     const labelFmt = period === 'month' ? 'dd' : 'EEE';
     setSeries(days.map(d => {
