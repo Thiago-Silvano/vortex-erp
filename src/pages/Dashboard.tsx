@@ -4,6 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DollarSign, ShoppingCart, Users, Target, TrendingUp, TrendingDown, AlertTriangle, FileWarning, CalendarClock, Plane } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import AppLayout from '@/components/AppLayout';
@@ -35,6 +36,14 @@ interface UpcomingReservation {
   check_in: string;
   service_type: string | null;
   daysUntil: number;
+}
+interface ProfitSaleRow {
+  id: string;
+  client_name: string;
+  sale_date: string;
+  total_supplier_cost: number;
+  rav: number;
+  total_sale: number;
 }
 
 const COLORS = ['hsl(var(--primary))', '#22c55e', '#f59e0b', '#a855f7', '#ef4444', '#06b6d4', '#ec4899', '#8b5cf6'];
@@ -97,6 +106,8 @@ export default function Dashboard() {
   const [topProducts, setTopProducts] = useState<ProductRow[]>([]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [upcomingReservations, setUpcomingReservations] = useState<UpcomingReservation[]>([]);
+  const [profitModalOpen, setProfitModalOpen] = useState(false);
+  const [profitSales, setProfitSales] = useState<ProfitSaleRow[]>([]);
 
   const isVistos = activeCompany?.slug === 'vortex-vistos';
   const empresaName = activeCompany?.name || 'Vortex';
@@ -144,7 +155,7 @@ export default function Dashboard() {
     // Current and previous sales
     const [currRes, prevRes] = await Promise.all([
       supabase.from('sales')
-        .select('id, total_sale, net_profit, total_supplier_cost, passengers_count, sale_date, status')
+        .select('id, client_name, total_sale, net_profit, total_supplier_cost, passengers_count, sale_date, status')
         .eq('empresa_id', empresaId)
         .eq('status', 'active')
         .gte('sale_date', startStr).lte('sale_date', endStr),
@@ -157,6 +168,21 @@ export default function Dashboard() {
 
     const curr = currRes.data || [];
     const prev = prevRes.data || [];
+
+    setProfitSales(
+      curr.map((s: any) => {
+        const total = Number(s.total_sale || 0);
+        const cost = Number(s.total_supplier_cost || 0);
+        return {
+          id: s.id,
+          client_name: s.client_name || '—',
+          sale_date: s.sale_date,
+          total_supplier_cost: cost,
+          rav: total - cost,
+          total_sale: total,
+        };
+      }).sort((a, b) => (a.sale_date < b.sale_date ? 1 : -1))
+    );
 
     const sumCurrFat = curr.reduce((s, v) => s + Number(v.total_sale || 0), 0);
     const sumPrevFat = prev.reduce((s, v) => s + Number(v.total_sale || 0), 0);
@@ -521,7 +547,11 @@ export default function Dashboard() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {kpiCards.map((c, idx) => (
-            <Card key={c.label} className="overflow-hidden">
+            <Card
+              key={c.label}
+              className={`overflow-hidden ${c.label === 'LUCRO BRUTO' ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+              onClick={() => { if (c.label === 'LUCRO BRUTO') setProfitModalOpen(true); }}
+            >
               <CardContent className="p-3">
                 <div className="flex items-start gap-2">
                   <div className={c.accent}>
@@ -754,6 +784,51 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Modal: Detalhamento Lucro Bruto */}
+        <Dialog open={profitModalOpen} onOpenChange={setProfitModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Vendas do período — Lucro Bruto</DialogTitle>
+            </DialogHeader>
+            <div className="overflow-auto">
+              {profitSales.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">Sem vendas no período.</p>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-background">
+                    <tr className="border-b text-[10px] text-muted-foreground uppercase">
+                      <th className="text-left py-2 px-2 font-semibold">Cliente</th>
+                      <th className="text-left py-2 px-2 font-semibold">Data Venda</th>
+                      <th className="text-right py-2 px-2 font-semibold">Custo Total</th>
+                      <th className="text-right py-2 px-2 font-semibold">RAV</th>
+                      <th className="text-right py-2 px-2 font-semibold">Total Venda</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profitSales.map((s) => (
+                      <tr key={s.id} className="border-b hover:bg-muted/40">
+                        <td className="py-1.5 px-2 truncate max-w-[260px]" title={s.client_name}>{s.client_name}</td>
+                        <td className="py-1.5 px-2">{format(parseISO(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy')}</td>
+                        <td className="py-1.5 px-2 text-right">{fmtFull(s.total_supplier_cost)}</td>
+                        <td className="py-1.5 px-2 text-right text-emerald-600 font-semibold">{fmtFull(s.rav)}</td>
+                        <td className="py-1.5 px-2 text-right font-semibold">{fmtFull(s.total_sale)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="sticky bottom-0 bg-muted/60 font-bold">
+                    <tr className="border-t-2">
+                      <td className="py-2 px-2" colSpan={2}>TOTAL ({profitSales.length} vendas)</td>
+                      <td className="py-2 px-2 text-right">{fmtFull(profitSales.reduce((a, s) => a + s.total_supplier_cost, 0))}</td>
+                      <td className="py-2 px-2 text-right text-emerald-700">{fmtFull(profitSales.reduce((a, s) => a + s.rav, 0))}</td>
+                      <td className="py-2 px-2 text-right">{fmtFull(profitSales.reduce((a, s) => a + s.total_sale, 0))}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
