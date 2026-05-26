@@ -668,7 +668,9 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
             >
               <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
               <p className="text-sm text-muted-foreground">
-                {file ? file.name : 'Clique, arraste ou cole (Ctrl+V) um PDF ou imagem'}
+                {pendingFiles.length > 0
+                  ? `${pendingFiles.length} arquivo(s) selecionado(s) — clique para adicionar mais`
+                  : 'Clique, arraste ou cole (Ctrl+V) um ou mais PDFs/imagens'}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Aceita PDF, JPG, PNG ou WEBP (máx 20MB) — passagens, hospedagem, carro, seguro e outros
@@ -676,17 +678,60 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
               <p className="text-xs text-primary mt-2 inline-flex items-center gap-1">
                 <ClipboardPaste className="h-3 w-3" /> Dica: copie um print e pressione Ctrl+V aqui
               </p>
-              <input ref={fileRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleFileChange} />
+              <input ref={fileRef} type="file" accept=".pdf,image/*" multiple className="hidden" onChange={handleFileChange} />
             </div>
 
-            {pdfUrl && !isImage && (
-              <div className="border rounded-lg overflow-hidden">
-                <iframe src={pdfUrl} className="w-full h-[300px]" title="PDF Preview" />
-              </div>
-            )}
-            {pdfUrl && isImage && (
-              <div className="border rounded-lg overflow-hidden bg-muted/30 flex items-center justify-center">
-                <img src={pdfUrl} alt="Preview" className="max-h-[300px] object-contain" />
+            {pendingFiles.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Arquivos para análise
+                </p>
+                {pendingFiles.map((p) => {
+                  const Icon = getServiceIcon(p.serviceType);
+                  return (
+                    <div key={p.id} className="flex items-center gap-2 border rounded-lg p-2">
+                      <div className="h-12 w-12 shrink-0 rounded-md bg-muted/40 overflow-hidden flex items-center justify-center border">
+                        {p.isImage ? (
+                          <img src={p.url} alt={p.file.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <FileText className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate" title={p.file.name}>{p.file.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{(p.file.size / 1024).toFixed(0)} KB</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Select value={p.serviceType || 'auto'} onValueChange={(v) => updatePendingFile(p.id, { serviceType: v === 'auto' ? '' : v })}>
+                          <SelectTrigger className="h-8 text-xs w-[150px]">
+                            <SelectValue placeholder="Tipo..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="auto">Auto-detectar</SelectItem>
+                            <SelectItem value="Aéreo">Aéreo</SelectItem>
+                            <SelectItem value="Hospedagem">Hospedagem</SelectItem>
+                            <SelectItem value="Aluguel de carro">Aluguel de carro</SelectItem>
+                            <SelectItem value="Seguro viagem">Seguro viagem</SelectItem>
+                            <SelectItem value="Experiência/Passeio">Experiência/Passeio</SelectItem>
+                            <SelectItem value="Transfer">Transfer</SelectItem>
+                            <SelectItem value="Outros">Outros</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Input
+                        value={p.optionTitle}
+                        onChange={(e) => updatePendingFile(p.id, { optionTitle: e.target.value })}
+                        placeholder="Opção 1"
+                        className="h-8 text-xs w-[130px]"
+                        title="Opção da cotação (ex: Opção 1, Opção Econômica)"
+                      />
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removePendingFile(p.id)}>
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -714,7 +759,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Analisando PDF com IA... Identificando passagens, hospedagem, seguros e outros serviços
+                  Analisando {pendingFiles.length} arquivo(s) com IA... Identificando passagens, hospedagem, seguros e outros serviços
                 </div>
                 <Progress value={progress} />
               </div>
@@ -722,8 +767,8 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => { handleReset(); onClose(); }}>Cancelar</Button>
-              <Button onClick={handleAnalyze} disabled={!file || analyzing}>
-                {analyzing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analisando...</> : <><Plane className="h-4 w-4 mr-2" />Analisar Documento</>}
+              <Button onClick={handleAnalyze} disabled={pendingFiles.length === 0 || analyzing}>
+                {analyzing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analisando...</> : <><Plane className="h-4 w-4 mr-2" />Analisar {pendingFiles.length > 0 ? `${pendingFiles.length} arquivo(s)` : 'Documento'}</>}
               </Button>
             </div>
           </div>
