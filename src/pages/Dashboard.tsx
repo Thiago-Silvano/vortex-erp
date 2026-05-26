@@ -540,6 +540,11 @@ export default function Dashboard() {
                         {c.delta.up ? '+' : '-'}{c.delta.value}% vs {c.periodLabel}
                       </span>
                     </div>
+                    {(c as any).subtitle && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                        {(c as any).subtitle}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
