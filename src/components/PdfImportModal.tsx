@@ -147,9 +147,14 @@ function getServiceColor(serviceType: string): string {
 export default function PdfImportModal({ open, onClose, serviceCatalog, onImport, marginMode: initialMarginMode, marginPercent: initialMarginPercent }: PdfImportModalProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const { activeCompany } = useCompany();
-  const [file, setFile] = useState<File | null>(null);
-  const [pdfUrl, setPdfUrl] = useState('');
-  const [isImage, setIsImage] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<Array<{
+    id: string;
+    file: File;
+    url: string;
+    isImage: boolean;
+    serviceType: string; // '' = auto
+    optionTitle: string;
+  }>>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState<'upload' | 'review'>('upload');
@@ -173,9 +178,9 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   }, [open, activeCompany?.id]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    acceptFile(f);
+    const fs = Array.from(e.target.files || []);
+    fs.forEach(acceptFile);
+    if (fileRef.current) fileRef.current.value = '';
   };
 
   const acceptFile = (f: File) => {
@@ -183,9 +188,26 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
     const isImg = f.type.startsWith('image/');
     if (!isPdf && !isImg) { toast.error('Envie um PDF ou uma imagem (JPG/PNG/WEBP).'); return; }
     if (f.size > 20 * 1024 * 1024) { toast.error('Arquivo muito grande (máx 20MB).'); return; }
-    setFile(f);
-    setIsImage(isImg);
-    setPdfUrl(URL.createObjectURL(f));
+    setPendingFiles(prev => [...prev, {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      file: f,
+      url: URL.createObjectURL(f),
+      isImage: isImg,
+      serviceType: '',
+      optionTitle: 'Opção 1',
+    }]);
+  };
+
+  const updatePendingFile = (id: string, patch: Partial<{ serviceType: string; optionTitle: string }>) => {
+    setPendingFiles(prev => prev.map(p => p.id === id ? { ...p, ...patch } : p));
+  };
+
+  const removePendingFile = (id: string) => {
+    setPendingFiles(prev => {
+      const target = prev.find(p => p.id === id);
+      if (target) try { URL.revokeObjectURL(target.url); } catch {}
+      return prev.filter(p => p.id !== id);
+    });
   };
 
   // Permite colar imagem direto da área de transferência (Ctrl+V) enquanto o modal está aberto
@@ -194,16 +216,19 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
     const onPaste = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items) return;
+      let pasted = 0;
       for (const item of Array.from(items)) {
         if (item.kind === 'file') {
           const f = item.getAsFile();
           if (f) {
-            e.preventDefault();
             acceptFile(f);
-            toast.success('Imagem colada da área de transferência.');
-            return;
+            pasted++;
           }
         }
+      }
+      if (pasted > 0) {
+        e.preventDefault();
+        toast.success(`${pasted} arquivo(s) colado(s) da área de transferência.`);
       }
     };
     window.addEventListener('paste', onPaste);
@@ -212,39 +237,18 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const f = e.dataTransfer.files?.[0];
-    if (f) acceptFile(f);
+    const fs = Array.from(e.dataTransfer.files || []);
+    fs.forEach(acceptFile);
   };
 
   const handleAnalyze = async () => {
-    if (!file) return;
+    if (pendingFiles.length === 0) return;
     setAnalyzing(true);
     setProgress(10);
 
     try {
-      const buffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-      const base64 = btoa(binary);
-
-      setProgress(30);
-
-      const { data, error } = await supabase.functions.invoke('analyze-quote-pdf', {
-        body: {
-          pdfBase64: base64,
-          mimeType: file.type || (isImage ? 'image/png' : 'application/pdf'),
-          serviceCatalog: serviceCatalog.map(s => ({ name: s.name })),
-        },
-      });
-
-      setProgress(80);
-
-      if (error) { toast.error('Erro ao analisar PDF.'); setAnalyzing(false); setProgress(0); return; }
-      if (data?.error) { toast.error(data.error); setAnalyzing(false); setProgress(0); return; }
-
-      const normalizeService = (s: any, quoteOptionKey?: string): ExtractedService => ({
-        service_type: s.service_type || '',
+      const normalizeService = (s: any, quoteOptionKey?: string, forcedType?: string): ExtractedService => ({
+        service_type: forcedType || s.service_type || '',
         description: s.description || '',
         cost_price: Number(s.cost_price) || 0,
         quantity: Number(s.quantity) || 1,
@@ -260,27 +264,81 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
         quote_option_key: quoteOptionKey,
       });
 
-      const extractedQuoteOptions: ExtractedQuoteOption[] = (data?.quote_options || []).map((option: any, index: number) => ({
-        title: option.title || `Opção ${index + 1}`,
-        services: (option.services || []).map((service: any) => normalizeService(service, String(index))),
+      // Build unique ordered list of option titles from the user selections
+      const uniqueOptionTitles: string[] = [];
+      for (const p of pendingFiles) {
+        const t = (p.optionTitle || 'Opção 1').trim() || 'Opção 1';
+        if (!uniqueOptionTitles.includes(t)) uniqueOptionTitles.push(t);
+      }
+      const optionKeyByTitle: Record<string, string> = {};
+      uniqueOptionTitles.forEach((t, i) => { optionKeyByTitle[t] = String(i); });
+
+      const fileToBase64 = async (f: File) => {
+        const buffer = await f.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+      };
+
+      const allServices: ExtractedService[] = [];
+      let mergedPaymentTerms: ExtractedPaymentTerm[] = [];
+      let mergedNotes = '';
+      let mergedTrip: any = {};
+
+      for (let i = 0; i < pendingFiles.length; i++) {
+        const p = pendingFiles[i];
+        setProgress(10 + Math.round((i / pendingFiles.length) * 80));
+        const base64 = await fileToBase64(p.file);
+        const { data, error } = await supabase.functions.invoke('analyze-quote-pdf', {
+          body: {
+            pdfBase64: base64,
+            mimeType: p.file.type || (p.isImage ? 'image/png' : 'application/pdf'),
+            serviceCatalog: serviceCatalog.map(s => ({ name: s.name })),
+            hintServiceType: p.serviceType || undefined,
+          },
+        });
+        if (error || data?.error) {
+          toast.error(`Erro ao analisar "${p.file.name}".`);
+          continue;
+        }
+        const title = (p.optionTitle || 'Opção 1').trim() || 'Opção 1';
+        const quoteKey = optionKeyByTitle[title];
+        const forcedType = p.serviceType || undefined;
+
+        const rawServices: any[] = (data?.quote_options || []).length > 0
+          ? (data.quote_options as any[]).flatMap(o => o.services || [])
+          : (data?.services || []);
+
+        rawServices.forEach(s => allServices.push(normalizeService(s, quoteKey, forcedType)));
+
+        if (data?.payment_info?.payment_terms?.length) {
+          mergedPaymentTerms = mergedPaymentTerms.concat(
+            data.payment_info.payment_terms.map((term: any) => ({
+              label: term.label || '',
+              installments: Number(term.installments) || 1,
+              notes: term.notes || '',
+            }))
+          );
+        }
+        if (data?.payment_info?.general_notes) {
+          mergedNotes = mergedNotes ? `${mergedNotes}\n${data.payment_info.general_notes}` : data.payment_info.general_notes;
+        }
+        if (data?.trip_info && !mergedTrip.client_name) {
+          mergedTrip = data.trip_info;
+        }
+      }
+
+      const extractedQuoteOptions: ExtractedQuoteOption[] = uniqueOptionTitles.map((title, index) => ({
+        title,
+        services: allServices.filter(s => s.quote_option_key === String(index)),
       }));
+      const extractedTrip = mergedTrip || {};
 
-      const extractedServices: ExtractedService[] = extractedQuoteOptions.length > 0
-        ? extractedQuoteOptions.flatMap(option => option.services)
-        : (data?.services || []).map((s: any) => normalizeService(s));
-
-      const extractedPaymentTerms: ExtractedPaymentTerm[] = (data?.payment_info?.payment_terms || []).map((term: any) => ({
-        label: term.label || '',
-        installments: Number(term.installments) || 1,
-        notes: term.notes || '',
-      }));
-
-      const extractedTrip = data?.trip_info || {};
-
-      setServices(extractedServices);
+      setServices(allServices);
       setQuoteOptions(extractedQuoteOptions);
-      setPaymentTerms(extractedPaymentTerms);
-      setGeneralNotes(data?.payment_info?.general_notes || '');
+      setPaymentTerms(mergedPaymentTerms);
+      setGeneralNotes(mergedNotes);
       setTripInfo({
         client_name: extractedTrip.client_name || '',
         origin: extractedTrip.origin || '',
@@ -292,7 +350,7 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
 
       setProgress(100);
       setStep('review');
-      toast.success(`${extractedServices.length} serviço(s) identificado(s) no PDF!`);
+      toast.success(`${allServices.length} serviço(s) identificado(s) em ${pendingFiles.length} arquivo(s)!`);
     } catch (err) {
       console.error(err);
       toast.error('Erro ao processar o arquivo.');
@@ -416,9 +474,8 @@ export default function PdfImportModal({ open, onClose, serviceCatalog, onImport
   };
 
   const handleReset = () => {
-    setFile(null);
-    setPdfUrl('');
-    setIsImage(false);
+    pendingFiles.forEach(p => { try { URL.revokeObjectURL(p.url); } catch {} });
+    setPendingFiles([]);
     setStep('upload');
     setServices([]);
     setQuoteOptions([]);
