@@ -3427,7 +3427,7 @@ export default function NewSalePage() {
                     if (it.purchase_number) metaParts.push(`Compra: ${it.purchase_number}`);
                     if (it.metadata?.type === 'hotel' && it.metadata?.hotel?.checkInDate) {
                       const ci = it.metadata.hotel.checkInDate; const co = it.metadata.hotel.checkOutDate;
-                      const fmt = (d: string) => { const p = (d || '').split('-'); return p.length === 3 ? `${p[2]}/${p[1]}` : ''; };
+                      const fmt = (d: string) => { const p = (d || '').split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : ''; };
                       if (ci) metaParts.push(`Check-in ${fmt(ci)}`);
                       if (co) metaParts.push(`Check-out ${fmt(co)}`);
                     }
