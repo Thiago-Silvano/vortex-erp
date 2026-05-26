@@ -253,7 +253,15 @@ export default function PropostaPublicPage() {
     };
     return deduped
       .map((item, idx) => ({ item, idx, rank: categoryRank(item) }))
-      .sort((a, b) => a.rank - b.rank || a.idx - b.idx)
+      .sort((a, b) => {
+        if (a.rank !== b.rank) return a.rank - b.rank;
+        if (a.rank === 1) {
+          const ad = a.item?.metadata?.hotel?.checkInDate || a.item?.metadata?.startDate || '';
+          const bd = b.item?.metadata?.hotel?.checkInDate || b.item?.metadata?.startDate || '';
+          if (ad !== bd) return ad < bd ? -1 : 1;
+        }
+        return a.idx - b.idx;
+      })
       .map(x => x.item);
   })();
 
