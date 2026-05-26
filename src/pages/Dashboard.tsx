@@ -4,6 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DollarSign, ShoppingCart, Users, Target, TrendingUp, TrendingDown, AlertTriangle, FileWarning, CalendarClock, Plane } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 import AppLayout from '@/components/AppLayout';
@@ -35,6 +36,14 @@ interface UpcomingReservation {
   check_in: string;
   service_type: string | null;
   daysUntil: number;
+}
+interface ProfitSaleRow {
+  id: string;
+  client_name: string;
+  sale_date: string;
+  total_supplier_cost: number;
+  rav: number;
+  total_sale: number;
 }
 
 const COLORS = ['hsl(var(--primary))', '#22c55e', '#f59e0b', '#a855f7', '#ef4444', '#06b6d4', '#ec4899', '#8b5cf6'];
@@ -97,6 +106,8 @@ export default function Dashboard() {
   const [topProducts, setTopProducts] = useState<ProductRow[]>([]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [upcomingReservations, setUpcomingReservations] = useState<UpcomingReservation[]>([]);
+  const [profitModalOpen, setProfitModalOpen] = useState(false);
+  const [profitSales, setProfitSales] = useState<ProfitSaleRow[]>([]);
 
   const isVistos = activeCompany?.slug === 'vortex-vistos';
   const empresaName = activeCompany?.name || 'Vortex';
@@ -144,7 +155,7 @@ export default function Dashboard() {
     // Current and previous sales
     const [currRes, prevRes] = await Promise.all([
       supabase.from('sales')
-        .select('id, total_sale, net_profit, total_supplier_cost, passengers_count, sale_date, status')
+        .select('id, client_name, total_sale, net_profit, total_supplier_cost, passengers_count, sale_date, status')
         .eq('empresa_id', empresaId)
         .eq('status', 'active')
         .gte('sale_date', startStr).lte('sale_date', endStr),
@@ -157,6 +168,21 @@ export default function Dashboard() {
 
     const curr = currRes.data || [];
     const prev = prevRes.data || [];
+
+    setProfitSales(
+      curr.map((s: any) => {
+        const total = Number(s.total_sale || 0);
+        const cost = Number(s.total_supplier_cost || 0);
+        return {
+          id: s.id,
+          client_name: s.client_name || '—',
+          sale_date: s.sale_date,
+          total_supplier_cost: cost,
+          rav: total - cost,
+          total_sale: total,
+        };
+      }).sort((a, b) => (a.sale_date < b.sale_date ? 1 : -1))
+    );
 
     const sumCurrFat = curr.reduce((s, v) => s + Number(v.total_sale || 0), 0);
     const sumPrevFat = prev.reduce((s, v) => s + Number(v.total_sale || 0), 0);
