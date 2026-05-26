@@ -3306,7 +3306,7 @@ export default function NewSalePage() {
           // Include sale-wide surcharges (juros e acréscimos de comissão) so o RAV total
           // exibido bata com o RAV/Comissão calculado no rodapé de pagamentos.
           const totalRav = baseRav + (saleInterest || 0) + (commissionSurcharge || 0);
-          const avgMarkup = optItems.length > 0 ? (optItems.reduce((s, { it }) => s + (it.markup_percent || 0), 0) / optItems.length) : 0;
+          const avgMarkup = totalCost > 0 ? (totalRav / totalCost) * 100 : 0;
           const totalOption = optItems.reduce((s, { it }) => s + (it.total_value || 0), 0);
           return (
             <Card className="border-border/60">
