@@ -478,9 +478,12 @@ export default function Dashboard() {
         accent: 'rounded-lg p-2 text-xl leading-none text-slate-200 bg-slate-100',
       },
       {
-        label: 'LUCRO LÍQUIDO',
+        label: 'LUCRO BRUTO',
         value: fmt(stats.lucro),
         delta: lucroPct, periodLabel,
+        subtitle: stats.faturamento > 0
+          ? `${((stats.lucro / stats.faturamento) * 100).toFixed(1).replace('.', ',')}% sobre a venda`
+          : undefined,
         emoji: '📈',
         accent: 'rounded-lg p-2 text-xl leading-none text-rose-700 dark:text-rose-300 bg-slate-100',
       },
