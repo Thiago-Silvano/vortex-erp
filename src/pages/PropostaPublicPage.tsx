@@ -243,6 +243,9 @@ export default function PropostaPublicPage() {
     });
     // Sort by category: Aéreo → Hospedagem → Serviços/Experiências/Passeios → Outros
     const categoryRank = (item: any): number => {
+      const metaType = item?.metadata?.type;
+      if (metaType === 'aereo') return 0;
+      if (metaType === 'hotel') return 1;
       const catName = (item.service_catalog_id ? catalogNames[item.service_catalog_id] : '') || '';
       const desc = (item.description || '') + ' ' + catName;
       const s = desc.toLowerCase();
