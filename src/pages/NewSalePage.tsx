@@ -3526,9 +3526,102 @@ export default function NewSalePage() {
                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${tm.pill}`}>{tm.label}</span>
                         <span className="text-sm font-semibold tabular-nums w-[110px] text-right text-inherit">{maskCurrency(it.total_value)}</span>
                         <div className="flex items-center gap-0.5">
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingItemIdx(idx)} title="Editar"><Edit className="h-3.5 w-3.5" /></Button>
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeItem(idx)} title="Excluir"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                         </div>
+                      </div>
+                      {editingItemIdx === idx && (
+                        <ServiceEditModal
+                          inline
+                          key={`inline-${idx}`}
+                          open={true}
+                          onClose={() => setEditingItemIdx(null)}
+                          description={items[idx]?.description || ''}
+                          metadata={items[idx]?.metadata || {}}
+                          reservationNumber={items[idx]?.reservation_number || ''}
+                          purchaseNumber={items[idx]?.purchase_number || ''}
+                          showPurchaseNumber={items[idx]?.show_purchase_number || false}
+                          costPrice={items[idx]?.cost_price || 0}
+                          rav={items[idx]?.rav || 0}
+                          existingImages={itemImages[idx] || []}
+                          onImportPdf={() => {
+                            const current = items[idx];
+                            const optId = current?.quote_option_id
+                              || (current?.quote_option_ids && current.quote_option_ids[0])
+                              || activeOptionId
+                              || quoteOptions[0]?.id
+                              || String(quoteOptions[0]?.order_index ?? 0);
+                            setForceImportOptionId(optId);
+                            const isEmpty = !current?.description
+                              && !(current?.cost_price)
+                              && !(current?.rav)
+                              && !(current?.metadata && Object.keys(current.metadata).length > 0);
+                            const idxToRemove = idx;
+                            setEditingItemIdx(null);
+                            if (isEmpty) {
+                              setItems(prev => prev.filter((_, i) => i !== idxToRemove));
+                            }
+                            setTimeout(() => setPdfImportOpen(true), 100);
+                          }}
+                          onSave={(desc, meta, resNumber, newCost, newRav, purchNumber, showPurch) => {
+                            setItems(prev => {
+                              const editedItem = prev[idx];
+                              const updated = prev.map((item, i) => {
+                                if (i === idx) {
+                                  const cost = newCost ?? item.cost_price ?? 0;
+                                  const ravVal = newRav ?? item.rav ?? 0;
+                                  const total = cost + ravVal;
+                                  const markup = cost > 0 ? (ravVal / cost) * 100 : 0;
+                                  return {
+                                    ...item,
+                                    description: desc,
+                                    metadata: meta,
+                                    cost_price: cost,
+                                    rav: ravVal,
+                                    total_value: total,
+                                    markup_percent: markup,
+                                    ...(resNumber !== undefined ? { reservation_number: resNumber } : {}),
+                                    purchase_number: purchNumber || '',
+                                    show_purchase_number: !!showPurch,
+                                  };
+                                }
+                                return item;
+                              });
+                              if (editedItem?.service_catalog_id) {
+                                return updated.filter((item, i) => {
+                                  if (i === idx) return true;
+                                  if (item.service_catalog_id === editedItem.service_catalog_id && (!item.metadata?.type && meta.type)) {
+                                    return false;
+                                  }
+                                  return true;
+                                });
+                              }
+                              return updated;
+                            });
+                            if (meta.type === 'aereo' && meta.airlineId) {
+                              const existing = itemImages[idx] || [];
+                              if (existing.length === 0) {
+                                (async () => {
+                                  try {
+                                    const { data: airline } = await (supabase.from('airlines' as any).select('cover_image_url').eq('id', meta.airlineId).maybeSingle() as any);
+                                    if (airline?.cover_image_url) {
+                                      setItemImages(prev => ({ ...prev, [idx]: [airline.cover_image_url, ...(prev[idx] || [])] }));
+                                    }
+                                  } catch {}
+                                })();
+                              }
+                            }
+                            if (saleStatus !== 'active') {
+                              setTimeout(() => handleSilentSaveDraft(), 300);
+                            }
+                          }}
+                          onHotelImagesFound={(images) => {
+                            setItemImages(prev => ({
+                              ...prev,
+                              [idx]: images,
+                            }));
+                          }}
+                        />
+                      )}
                       </div>
                     );
                   })}
