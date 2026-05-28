@@ -131,6 +131,11 @@ interface Props {
   onHotelImagesFound?: (images: string[]) => void;
   onImportPdf?: () => void;
   existingImages?: string[];
+  /**
+   * When true, renders the editor inline (no Dialog wrapper) so it can be
+   * embedded directly under a service card.
+   */
+  inline?: boolean;
 }
 
 const emptyLeg = (): FlightLeg => ({
@@ -147,7 +152,7 @@ const emptyHotel = (): HotelInfo => ({
   accessNumber: '', showAccessNumber: false,
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, purchaseNumber, showPurchaseNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, purchaseNumber, showPurchaseNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages, inline }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
@@ -535,25 +540,28 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     onClose();
   };
 
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between gap-3 pr-6">
-            <DialogTitle>Editar Detalhes do Serviço</DialogTitle>
-            {onImportPdf && (
-              <Button
-                size="sm"
-                onClick={onImportPdf}
-                className="gap-2 bg-orange-500 hover:bg-orange-600 text-white mx-[10px]"
-              >
-                <FileUp className="h-4 w-4" /> Importar PDF
-              </Button>
-            )}
-          </div>
-        </DialogHeader>
+  const headerInner = (
+    <div className="flex items-center justify-between gap-3 pr-6">
+      {inline ? (
+        <h3 className="text-sm font-semibold">Editar Detalhes do Serviço</h3>
+      ) : (
+        <DialogTitle>Editar Detalhes do Serviço</DialogTitle>
+      )}
+      {onImportPdf && (
+        <Button
+          size="sm"
+          onClick={onImportPdf}
+          className="gap-2 bg-orange-500 hover:bg-orange-600 text-white mx-[10px]"
+        >
+          <FileUp className="h-4 w-4" /> Importar PDF
+        </Button>
+      )}
+    </div>
+  );
 
-        <div className="space-y-6">
+  const bodyMarkup = (
+    <>
+      <div className="space-y-6">
           {/* Type selector */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
             {([
@@ -1324,7 +1332,27 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             </DialogFooter>
           </DialogContent>
         </Dialog>
+    </>
+  );
 
+  if (inline) {
+    return (
+      <div className="rounded-lg border bg-muted/20 p-4 space-y-4 mt-1">
+        {headerInner}
+        {bodyMarkup}
+        <div className="flex justify-end gap-2 pt-3 border-t">
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <Button onClick={handleSave}>Salvar Detalhes</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>{headerInner}</DialogHeader>
+        {bodyMarkup}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSave}>Salvar Detalhes</Button>
