@@ -3426,11 +3426,12 @@ export default function NewSalePage() {
                   const shortLabel = (it: SaleItem) => {
                     if (!it) return 'Serviço';
                     if (it.metadata?.type === 'aereo') {
-                      const segs = it.metadata?.aereo?.segments || [];
-                      const first = segs[0];
-                      if (first?.origin && first?.destination) return `${first.origin} → ${first.destination}`;
+                      const legs = it.metadata?.flightLegs || [];
+                      const first = legs[0];
+                      const last = legs[legs.length - 1];
+                      if (first?.origin && last?.destination) return `${first.origin} → ${last.destination}`;
                     }
-                    if (it.metadata?.type === 'hotel' && it.metadata?.hotel?.name) return it.metadata.hotel.name;
+                    if (it.metadata?.type === 'hotel' && it.metadata?.hotel?.hotelName) return it.metadata.hotel.hotelName;
                     return it.description || 'Editar serviço…';
                   };
                   return (
