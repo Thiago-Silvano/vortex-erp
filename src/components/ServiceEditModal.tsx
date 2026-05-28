@@ -540,25 +540,28 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
     onClose();
   };
 
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between gap-3 pr-6">
-            <DialogTitle>Editar Detalhes do Serviço</DialogTitle>
-            {onImportPdf && (
-              <Button
-                size="sm"
-                onClick={onImportPdf}
-                className="gap-2 bg-orange-500 hover:bg-orange-600 text-white mx-[10px]"
-              >
-                <FileUp className="h-4 w-4" /> Importar PDF
-              </Button>
-            )}
-          </div>
-        </DialogHeader>
+  const headerInner = (
+    <div className="flex items-center justify-between gap-3 pr-6">
+      {inline ? (
+        <h3 className="text-sm font-semibold">Editar Detalhes do Serviço</h3>
+      ) : (
+        <DialogTitle>Editar Detalhes do Serviço</DialogTitle>
+      )}
+      {onImportPdf && (
+        <Button
+          size="sm"
+          onClick={onImportPdf}
+          className="gap-2 bg-orange-500 hover:bg-orange-600 text-white mx-[10px]"
+        >
+          <FileUp className="h-4 w-4" /> Importar PDF
+        </Button>
+      )}
+    </div>
+  );
 
-        <div className="space-y-6">
+  const bodyMarkup = (
+    <>
+      <div className="space-y-6">
           {/* Type selector */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
             {([
