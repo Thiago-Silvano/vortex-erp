@@ -1332,7 +1332,27 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
             </DialogFooter>
           </DialogContent>
         </Dialog>
+    </>
+  );
 
+  if (inline) {
+    return (
+      <div className="rounded-lg border bg-muted/20 p-4 space-y-4 mt-1">
+        {headerInner}
+        {bodyMarkup}
+        <div className="flex justify-end gap-2 pt-3 border-t">
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <Button onClick={handleSave}>Salvar Detalhes</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>{headerInner}</DialogHeader>
+        {bodyMarkup}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSave}>Salvar Detalhes</Button>
