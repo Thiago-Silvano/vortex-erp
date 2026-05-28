@@ -131,6 +131,11 @@ interface Props {
   onHotelImagesFound?: (images: string[]) => void;
   onImportPdf?: () => void;
   existingImages?: string[];
+  /**
+   * When true, renders the editor inline (no Dialog wrapper) so it can be
+   * embedded directly under a service card.
+   */
+  inline?: boolean;
 }
 
 const emptyLeg = (): FlightLeg => ({
@@ -147,7 +152,7 @@ const emptyHotel = (): HotelInfo => ({
   accessNumber: '', showAccessNumber: false,
 });
 
-export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, purchaseNumber, showPurchaseNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages }: Props) {
+export default function ServiceEditModal({ open, onClose, description, metadata, reservationNumber, purchaseNumber, showPurchaseNumber, costPrice, rav, onSave, onHotelImagesFound, onImportPdf, existingImages, inline }: Props) {
   const { activeCompany } = useCompany();
   const [type, setType] = useState<ServiceMetadata['type']>(metadata.type || 'adicional');
   const [desc, setDesc] = useState(description);
