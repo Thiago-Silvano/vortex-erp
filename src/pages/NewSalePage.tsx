@@ -3416,121 +3416,141 @@ export default function NewSalePage() {
                   </div>
                 </div>
 
-                {/* Service rows */}
-                <div className="flex flex-col gap-2">
-                  {optItems.map(({ it, i: idx }) => {
-                    const Icon = typeIcon(it.metadata?.type);
-                    const tm = typeMeta(it.metadata?.type);
-                    const sup = supplierFor(it);
-                    const metaParts: string[] = [tm.label];
-                    if (sup) metaParts.push(sup);
-                    if (it.purchase_number) metaParts.push(`Compra: ${it.purchase_number}`);
-                    if (it.metadata?.type === 'hotel' && it.metadata?.hotel?.checkInDate) {
-                      const ci = it.metadata.hotel.checkInDate; const co = it.metadata.hotel.checkOutDate;
-                      const fmt = (d: string) => { const p = (d || '').split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : ''; };
-                      if (ci) metaParts.push(`Check-in ${fmt(ci)}`);
-                      if (co) metaParts.push(`Check-out ${fmt(co)}`);
+                {/* Service tabs */}
+                {(() => {
+                  const activeServiceIdx = (() => {
+                    if (editingItemIdx !== null && optItems.some(o => o.i === editingItemIdx)) return editingItemIdx;
+                    return optItems[0]?.i ?? null;
+                  })();
+                  const activeItem = activeServiceIdx !== null ? items[activeServiceIdx] : null;
+                  const shortLabel = (it: SaleItem) => {
+                    if (!it) return 'Serviço';
+                    if (it.metadata?.type === 'aereo') {
+                      const segs = it.metadata?.aereo?.segments || [];
+                      const first = segs[0];
+                      if (first?.origin && first?.destination) return `${first.origin} → ${first.destination}`;
                     }
-                    if (it.markup_percent) metaParts.push(`Acrésc: ${Number(it.markup_percent).toFixed(2).replace('.', ',')}%`);
-                    return (
-                      <div key={idx} className="space-y-0">
-                      <div className={`group flex items-center gap-3 bg-card hover:bg-muted/40 border ${editingItemIdx === idx ? 'border-primary ring-1 ring-primary/40' : 'border-border/60'} rounded-lg px-3 py-2.5 transition-colors`}>
-                        <div className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${tm.iconBg}`}>
-                          <Icon className={`h-4 w-4 ${it.metadata?.type === 'aereo' ? 'text-slate-600' : ''}`} />
-                        </div>
+                    if (it.metadata?.type === 'hotel' && it.metadata?.hotel?.name) return it.metadata.hotel.name;
+                    return it.description || 'Editar serviço…';
+                  };
+                  return (
+                    <div className="space-y-3">
+                      {/* Tabs row */}
+                      <div className="flex items-end gap-1 flex-wrap border-b border-border pb-0">
+                        {optItems.map(({ it, i: idx }) => {
+                          const Icon = typeIcon(it.metadata?.type);
+                          const tm = typeMeta(it.metadata?.type);
+                          const isActive = idx === activeServiceIdx;
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setEditingItemIdx(idx)}
+                              className={`relative -mb-px px-3 py-1.5 text-xs font-medium rounded-t-md border border-b-0 transition-colors max-w-[260px] ${
+                                isActive
+                                  ? 'bg-card text-foreground border-border z-10 shadow-[0_-1px_0_0_hsl(var(--border))]'
+                                  : 'bg-muted/40 text-muted-foreground border-transparent hover:bg-muted/70 hover:text-foreground'
+                              }`}
+                              title={it.description || tm.label}
+                            >
+                              <span className="inline-flex items-center gap-1.5 max-w-full">
+                                <Icon className={`h-3 w-3 flex-shrink-0 ${isActive ? '' : 'opacity-60'}`} />
+                                <span className="truncate">{shortLabel(it)}</span>
+                                <span className="text-[10px] text-muted-foreground tabular-nums flex-shrink-0">{maskCurrency(it.total_value)}</span>
+                              </span>
+                            </button>
+                          );
+                        })}
                         <button
                           type="button"
-                          onClick={() => setEditingItemIdx(editingItemIdx === idx ? null : idx)}
-                          className="flex-1 min-w-0 text-left cursor-pointer"
+                          onClick={() => addServiceToOption(activeCol?.id || '')}
+                          className="ml-1 mb-0.5 inline-flex items-center gap-1 text-[11px] text-primary hover:underline px-2 py-1"
+                          title="Adicionar serviço"
                         >
-                          <div className="text-sm font-semibold text-foreground flex items-center gap-2">
-                            <span className="truncate">{it.description || <span className="text-muted-foreground italic font-normal">Editar serviço…</span>}</span>
-                            {it.metadata?.type === 'hotel' && it.metadata?.hotel?.city && (
-                              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium flex-shrink-0">
-                                <MapPin className="h-2.5 w-2.5" />
-                                {it.metadata.hotel.city}
-                              </span>
-                            )}
-                            {it.metadata?.type === 'hotel' && (
-                              <span
-                                className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                                  (itemImages[idx]?.length || 0) > 0 || (it.metadata?.hotel?.images?.length || 0) > 0
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-red-100 text-red-700'
-                                }`}
-                                title={
-                                  (itemImages[idx]?.length || 0) > 0 || (it.metadata?.hotel?.images?.length || 0) > 0
-                                    ? 'Imagens do hotel adicionadas'
-                                    : 'Nenhuma imagem do hotel adicionada'
-                                }
-                              >
-                                <ImageIcon className="h-2.5 w-2.5" />
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground truncate">{metaParts.join(' · ')}</div>
+                          <Plus className="h-3.5 w-3.5" /> Serviço
                         </button>
-                        {isQuoteMode && quoteOptions.length > 1 && (() => {
-                          const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
-                          const selectedCount = quoteOptions.filter(opt => ids.includes(opt.id || String(opt.order_index))).length;
-                          return (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="hidden md:inline-flex h-7 px-2 text-[10px] font-medium gap-1"
-                                  title="Opções da cotação que incluem este serviço"
-                                >
-                                  <span className="text-muted-foreground">Opções:</span>
-                                  <span className="text-foreground">{selectedCount}/{quoteOptions.length}</span>
-                                  <ChevronDown className="h-3 w-3 opacity-60" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-64 p-2" align="end">
-                                <div className="text-[11px] font-medium text-muted-foreground px-1 pb-1.5">
-                                  Aparece nas opções:
-                                </div>
-                                <div className="space-y-0.5 max-h-60 overflow-y-auto">
-                                  {quoteOptions.map((opt, oi) => {
-                                    const optId = opt.id || String(oi);
-                                    const checked = ids.includes(optId);
-                                    return (
-                                      <button
-                                        key={oi}
-                                        type="button"
-                                        onClick={() => {
-                                          setItems(prev => prev.map((x, j) => {
-                                            if (j !== idx) return x;
-                                            const cur = x.quote_option_ids || (x.quote_option_id ? [x.quote_option_id] : []);
-                                            const isOn = cur.includes(optId);
-                                            const newIds = isOn ? cur.filter(id => id !== optId) : [...cur, optId];
-                                            const finalIds = newIds.length === 0 ? [optId] : newIds;
-                                            return { ...x, quote_option_ids: finalIds, quote_option_id: finalIds[0] };
-                                          }));
-                                        }}
-                                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-colors ${checked ? 'bg-primary/10 text-foreground' : 'text-muted-foreground hover:bg-muted'}`}
-                                      >
-                                        <span className={`flex h-3.5 w-3.5 items-center justify-center rounded border ${checked ? 'bg-primary border-primary text-primary-foreground' : 'border-border'}`}>
-                                          {checked && <Check className="h-2.5 w-2.5" />}
-                                        </span>
-                                        <span className="truncate">{opt.name}</span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          );
-                        })()}
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${tm.pill}`}>{tm.label}</span>
-                        <span className="text-sm font-semibold tabular-nums w-[110px] text-right text-inherit">{maskCurrency(it.total_value)}</span>
-                        <div className="flex items-center gap-0.5">
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeItem(idx)} title="Excluir"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
-                        </div>
                       </div>
-                      {editingItemIdx === idx && (
-                        <ServiceEditModal
+
+                      {/* Active service toolbar */}
+                      {activeItem && activeServiceIdx !== null && (() => {
+                        const idx = activeServiceIdx;
+                        const it = activeItem;
+                        const tm = typeMeta(it.metadata?.type);
+                        return (
+                          <div className="flex items-center justify-between gap-2 px-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${tm.pill}`}>{tm.label}</span>
+                              {it.metadata?.type === 'hotel' && it.metadata?.hotel?.city && (
+                                <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                                  <MapPin className="h-2.5 w-2.5" />
+                                  {it.metadata.hotel.city}
+                                </span>
+                              )}
+                              <span className="text-sm font-semibold tabular-nums">{maskCurrency(it.total_value)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isQuoteMode && quoteOptions.length > 1 && (() => {
+                                const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
+                                const selectedCount = quoteOptions.filter(opt => ids.includes(opt.id || String(opt.order_index))).length;
+                                return (
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] font-medium gap-1">
+                                        <span className="text-muted-foreground">Opções:</span>
+                                        <span className="text-foreground">{selectedCount}/{quoteOptions.length}</span>
+                                        <ChevronDown className="h-3 w-3 opacity-60" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-2" align="end">
+                                      <div className="text-[11px] font-medium text-muted-foreground px-1 pb-1.5">Aparece nas opções:</div>
+                                      <div className="space-y-0.5 max-h-60 overflow-y-auto">
+                                        {quoteOptions.map((opt, oi) => {
+                                          const optId = opt.id || String(oi);
+                                          const checked = ids.includes(optId);
+                                          return (
+                                            <button
+                                              key={oi}
+                                              type="button"
+                                              onClick={() => {
+                                                setItems(prev => prev.map((x, j) => {
+                                                  if (j !== idx) return x;
+                                                  const cur = x.quote_option_ids || (x.quote_option_id ? [x.quote_option_id] : []);
+                                                  const isOn = cur.includes(optId);
+                                                  const newIds = isOn ? cur.filter(id => id !== optId) : [...cur, optId];
+                                                  const finalIds = newIds.length === 0 ? [optId] : newIds;
+                                                  return { ...x, quote_option_ids: finalIds, quote_option_id: finalIds[0] };
+                                                }));
+                                              }}
+                                              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-left transition-colors ${checked ? 'bg-primary/10 text-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                                            >
+                                              <span className={`flex h-3.5 w-3.5 items-center justify-center rounded border ${checked ? 'bg-primary border-primary text-primary-foreground' : 'border-border'}`}>
+                                                {checked && <Check className="h-2.5 w-2.5" />}
+                                              </span>
+                                              <span className="truncate">{opt.name}</span>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                );
+                              })()}
+                              <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => {
+                                removeItem(idx);
+                                setEditingItemIdx(null);
+                              }} title="Excluir serviço">
+                                <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Inline editor for active service */}
+                      {activeItem && activeServiceIdx !== null && (() => {
+                        const idx = activeServiceIdx;
+                        return (
+                          <ServiceEditModal
                           inline
                           key={`inline-${idx}`}
                           open={true}
@@ -3620,21 +3640,18 @@ export default function NewSalePage() {
                               [idx]: images,
                             }));
                           }}
-                        />
-                      )}
-                      </div>
-                    );
-                  })}
+                          />
+                        );
+                      })()}
 
-                  {/* Add service link */}
-                  <button
-                    type="button"
-                    onClick={() => addServiceToOption(activeCol?.id || '')}
-                    className="text-xs text-primary hover:underline flex items-center gap-1 px-3 py-2 self-start"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> Adicionar serviço
-                  </button>
-                </div>
+                      {optItems.length === 0 && (
+                        <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-lg">
+                          Nenhum serviço adicionado. Clique em <button type="button" onClick={() => addServiceToOption(activeCol?.id || '')} className="text-primary hover:underline">+ Serviço</button> para começar.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Footer: New option + Total */}
                 <div className="flex items-center justify-between border-t pt-3">
