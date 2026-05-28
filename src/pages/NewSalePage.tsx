@@ -3433,11 +3433,14 @@ export default function NewSalePage() {
                     }
                     if (it.markup_percent) metaParts.push(`Acrésc: ${Number(it.markup_percent).toFixed(2).replace('.', ',')}%`);
                     return (
-                      <div key={idx} className="group flex items-center gap-3 bg-card hover:bg-muted/40 border border-border/60 rounded-lg px-3 py-2.5 transition-colors">
+                      <div key={idx} className="space-y-0">
+                      <div className={`group flex items-center gap-3 bg-card hover:bg-muted/40 border ${editingItemIdx === idx ? 'border-primary ring-1 ring-primary/40' : 'border-border/60'} rounded-lg px-3 py-2.5 transition-colors cursor-pointer`}
+                        onClick={() => setEditingItemIdx(editingItemIdx === idx ? null : idx)}
+                      >
                         <div className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${tm.iconBg}`}>
                           <Icon className={`h-4 w-4 ${it.metadata?.type === 'aereo' ? 'text-slate-600' : ''}`} />
                         </div>
-                        <button type="button" onClick={() => setEditingItemIdx(idx)} className="flex-1 min-w-0 text-left">
+                        <div className="flex-1 min-w-0 text-left">
                           <div className="text-sm font-semibold text-foreground flex items-center gap-2">
                             <span className="truncate">{it.description || <span className="text-muted-foreground italic font-normal">Editar serviço…</span>}</span>
                             {it.metadata?.type === 'hotel' && it.metadata?.hotel?.city && (
@@ -3464,7 +3467,7 @@ export default function NewSalePage() {
                             )}
                           </div>
                           <div className="text-[11px] text-muted-foreground truncate">{metaParts.join(' · ')}</div>
-                        </button>
+                        </div>
                         {isQuoteMode && quoteOptions.length > 1 && (() => {
                           const ids = it.quote_option_ids || (it.quote_option_id ? [it.quote_option_id] : []);
                           const selectedCount = quoteOptions.filter(opt => ids.includes(opt.id || String(opt.order_index))).length;
