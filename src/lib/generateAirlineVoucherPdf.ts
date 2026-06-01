@@ -141,7 +141,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
     doc.setFontSize(7);
     doc.setTextColor(180, 180, 180);
     if (!data.hideReference) doc.text("Numero da Compra", infoX, 7);
-    doc.text("Localizador", infoX + 32, 7);
+    doc.text("Localizador da Reserva", infoX + 32, 7);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
@@ -544,7 +544,7 @@ function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-    doc.text(s(`Localizador: ${legLoc}`), midX, y + (hasAirlineLogo ? 24 : 20), { align: "center" });
+    doc.text(s(`Localizador da Cia Aérea: ${legLoc}`), midX, y + (hasAirlineLogo ? 24 : 20), { align: "center" });
   }
 
   return y + rowH + 2;
