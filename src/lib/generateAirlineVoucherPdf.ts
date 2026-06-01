@@ -544,7 +544,7 @@ function drawLegRow(doc: jsPDF, leg: AirlineVoucherLeg, y: number, m: number, pw
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-    doc.text(s(`Localizador: ${legLoc}`), midX, y + (hasAirlineLogo ? 24 : 20), { align: "center" });
+    doc.text(s(`Localizador da Cia Aérea: ${legLoc}`), midX, y + (hasAirlineLogo ? 24 : 20), { align: "center" });
   }
 
   return y + rowH + 2;
