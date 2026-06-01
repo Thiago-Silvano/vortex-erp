@@ -141,7 +141,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
     doc.setFontSize(7);
     doc.setTextColor(180, 180, 180);
     if (!data.hideReference) doc.text("Numero da Compra", infoX, 7);
-    doc.text("Localizador", infoX + 32, 7);
+    doc.text("Localizador da Reserva", infoX + 32, 7);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
