@@ -856,11 +856,29 @@ function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: n
   const startY = y;
   doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
 
+  // Texto da direita (reserva ou valor) — calcula a largura para reservar espaço
+  // e evitar que o título sobreponha esta informação.
+  let rightText = "";
+  if (service.reservationNumber) {
+    rightText = `Reserva: ${s(service.reservationNumber)}`;
+  } else if (service.value > 0 && service.type !== "carro") {
+    rightText = fmt(service.value);
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  const rightW = rightText ? doc.getTextWidth(rightText) : 0;
+
+  // Título do serviço — quebra em múltiplas linhas e respeita o espaço reservado
+  // à direita na primeira linha.
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-  doc.text(s(service.name), m + 7, y + 6);
-  y += 9;
+  const titleMaxW = cw - 14 - (rightW > 0 ? rightW + 6 : 0);
+  const titleLines: string[] = doc.splitTextToSize(s(service.name), Math.max(titleMaxW, 20));
+  titleLines.forEach((line: string, i: number) => {
+    doc.text(line, m + 7, y + 6 + i * 5);
+  });
+  y += 6 + (titleLines.length - 1) * 5 + 3;
 
   if (service.date) {
     doc.setFont("helvetica", "normal");
@@ -872,16 +890,11 @@ function drawServiceContent(doc: jsPDF, service: ServiceVoucher, y: number, m: n
 
   // Top-right: prioriza Nº da Reserva (mais útil no voucher do cliente).
   // Se não houver reserva, mostra o valor do serviço.
-  if (service.reservationNumber) {
+  if (rightText) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-    doc.text(`Reserva: ${s(service.reservationNumber)}`, m + cw - 7, startY + 6, { align: "right" });
-  } else if (service.value > 0 && service.type !== "carro") {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-    doc.text(fmt(service.value), m + cw - 7, startY + 6, { align: "right" });
+    doc.text(rightText, m + cw - 7, startY + 6, { align: "right" });
   }
 
   if (service.description) {
