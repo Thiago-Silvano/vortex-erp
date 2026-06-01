@@ -141,35 +141,15 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
     doc.setFontSize(7);
     doc.setTextColor(180, 180, 180);
     if (!data.hideReference) doc.text("Numero da Compra", infoX, 7);
-    doc.text("Data", infoX + 32, 7);
+    doc.text("Localizador", infoX + 32, 7);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
     if (!data.hideReference) doc.text(s((data.shortId || "-").toUpperCase()), infoX, 14);
-    doc.text(s(formatDateBR(data.saleDate) || "-"), infoX + 32, 14);
+    doc.text(s((data.localizador || "-").toUpperCase()), infoX + 32, 14);
 
     y = headerH + 6;
-
-    if (data.clientName) {
-      const clientCardH = 14;
-      doc.setFillColor(WHITE[0], WHITE[1], WHITE[2]);
-      doc.rect(m, y, cw, clientCardH, "F");
-      doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
-      doc.setLineWidth(0.2);
-      doc.rect(m, y, cw, clientCardH, "S");
-      doc.setFillColor(ACCENT_PURPLE[0], ACCENT_PURPLE[1], ACCENT_PURPLE[2]);
-      doc.rect(m, y, 2.5, clientCardH, "F");
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-      doc.text("CLIENTE", m + 7, y + 5);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-      doc.text(s(data.clientName.toUpperCase()), m + 7, y + 11);
-      y += clientCardH + 5;
-    }
   }
 
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
