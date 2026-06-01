@@ -188,13 +188,11 @@ function drawPageHeader(
   doc.setFontSize(7);
   doc.setTextColor(180, 180, 180);
   if (!data.hideReference) doc.text("Numero da Compra", infoX, 7);
-  doc.text("Data", infoX + 32, 7);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
   if (!data.hideReference) doc.text(s(data.shortId?.toUpperCase() || "-"), infoX, 14);
-  doc.text(s(formatDateBR(data.saleDate) || "-"), infoX + 32, 14);
 
   let y = headerH + 6;
 
