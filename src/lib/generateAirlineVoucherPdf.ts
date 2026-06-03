@@ -236,22 +236,13 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
   y += discLines.length * 3.5 + 4;
 
   // ─── NOTES ────────────────────────────────────────────────
-  if (data.airlineName || data.notes) {
+  if (data.notes) {
     y = checkPage(doc, y, 15);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
     doc.text("Obs:", m, y);
     y += 5;
-
-    // Main airline name in bold
-    if (data.airlineName) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-      doc.text(s(`Cia Aerea principal: ${data.airlineName}`), m, y);
-      y += 5;
-    }
 
     // Detailed description
     if (data.notes) {
