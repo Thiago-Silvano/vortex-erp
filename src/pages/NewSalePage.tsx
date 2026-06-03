@@ -3066,6 +3066,16 @@ export default function NewSalePage() {
               onSave={(config) => setDestinationImageConfig(config)}
             />
 
+            {/* Destination Image Preview */}
+            <Dialog open={destImagePreviewOpen} onOpenChange={setDestImagePreviewOpen}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Imagem do Destino</DialogTitle></DialogHeader>
+                {destinationImageUrl && (
+                  <img src={destinationImageUrl} alt="Destino" className="w-full max-h-[70vh] object-contain rounded" />
+                )}
+              </DialogContent>
+            </Dialog>
+
             <Dialog open={destLibraryOpen} onOpenChange={setDestLibraryOpen}>
               <DialogContent className="max-w-3xl">
                 <DialogHeader><DialogTitle>Biblioteca de imagens — Cidade</DialogTitle></DialogHeader>
