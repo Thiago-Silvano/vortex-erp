@@ -4350,8 +4350,34 @@ export default function NewSalePage() {
                             </div>
                           )}
                           {isExpanded && isOpOnly && (
-                            <div className="px-4 pb-4 pt-1 bg-muted/10 text-xs text-muted-foreground italic">
-                              Pagamento direto ao fornecedor (Operadora)
+                            <div className="px-4 pb-4 pt-1 bg-muted/10 space-y-3">
+                              <p className="text-xs text-muted-foreground italic">Pagamento direto ao fornecedor (Operadora)</p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-xs">Descrição</Label>
+                                  <Input value={sp.description} onChange={e => setSupplierPayments(prev => prev.map(s => s.supplier_id === sp.supplier_id ? { ...s, description: e.target.value } : s))} placeholder="Pagamento de operadoras" />
+                                </div>
+                                <div>
+                                  <Label className="text-xs">Valor</Label>
+                                  <Input
+                                    value={sp.amount ? `R$ ${sp.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                                    onChange={e => {
+                                      const digits = e.target.value.replace(/[^\d]/g, '');
+                                      const newAmount = parseInt(digits || '0', 10) / 100;
+                                      setSupplierPayments(prev => prev.map(s => {
+                                        if (s.supplier_id !== sp.supplier_id) return s;
+                                        return { ...s, amount: newAmount, installment_dates: [{ date: s.installment_dates[0]?.date || s.payment_date, amount: newAmount }] };
+                                      }));
+                                    }}
+                                    placeholder="R$ 0,00"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex justify-end">
+                                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setSelectedSupplierIds(prev => prev.filter(s => s !== sp.supplier_id))}>
+                                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Remover
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>
