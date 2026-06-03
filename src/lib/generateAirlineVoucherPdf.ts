@@ -380,7 +380,9 @@ function drawFlightSection(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
-    const durations = legs.map((l) => (l.connectionDuration || "").trim()).filter(Boolean);
+    const durations = legs
+      .map((l) => (l.connectionDuration || "").trim())
+      .filter((d) => d && d !== "00:00");
     let escalaText = `${connections} Escala${connections > 1 ? "s" : ""}`;
     if (durations.length > 0) escalaText += ` - Conexao ${durations.join(" / ")}`;
     doc.text(s(escalaText), rightAnchor, y + 6.5, { align: "right" });
