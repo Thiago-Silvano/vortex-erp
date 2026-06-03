@@ -147,7 +147,11 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
     doc.setFontSize(11);
     doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
     if (!data.hideReference) doc.text(s((data.shortId || "-").toUpperCase()), infoX, 14);
-    doc.text(s((data.localizador || "-").toUpperCase()), infoX + 32, 14);
+    const headerLoc =
+      data.localizador ||
+      (data.flightGroups && data.flightGroups.find((g) => (g.localizador || "").trim())?.localizador) ||
+      "-";
+    doc.text(s(headerLoc.toUpperCase()), infoX + 32, 14);
 
     y = headerH + 6;
   }
@@ -232,22 +236,13 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
   y += discLines.length * 3.5 + 4;
 
   // ─── NOTES ────────────────────────────────────────────────
-  if (data.airlineName || data.notes) {
+  if (data.notes) {
     y = checkPage(doc, y, 15);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
     doc.text("Obs:", m, y);
     y += 5;
-
-    // Main airline name in bold
-    if (data.airlineName) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.setTextColor(TEXT_MAIN[0], TEXT_MAIN[1], TEXT_MAIN[2]);
-      doc.text(s(`Cia Aerea principal: ${data.airlineName}`), m, y);
-      y += 5;
-    }
 
     // Detailed description
     if (data.notes) {
@@ -385,7 +380,10 @@ function drawFlightSection(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
-    doc.text(`${connections} Escala${connections > 1 ? "s" : ""}`, rightAnchor, y + 6.5, { align: "right" });
+    const durations = legs.map((l) => (l.connectionDuration || "").trim()).filter(Boolean);
+    let escalaText = `${connections} Escala${connections > 1 ? "s" : ""}`;
+    if (durations.length > 0) escalaText += ` - Conexao ${durations.join(" / ")}`;
+    doc.text(s(escalaText), rightAnchor, y + 6.5, { align: "right" });
   } else {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
