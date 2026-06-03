@@ -147,7 +147,11 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
     doc.setFontSize(11);
     doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
     if (!data.hideReference) doc.text(s((data.shortId || "-").toUpperCase()), infoX, 14);
-    doc.text(s((data.localizador || "-").toUpperCase()), infoX + 32, 14);
+    const headerLoc =
+      data.localizador ||
+      (data.flightGroups && data.flightGroups.find((g) => (g.localizador || "").trim())?.localizador) ||
+      "-";
+    doc.text(s(headerLoc.toUpperCase()), infoX + 32, 14);
 
     y = headerH + 6;
   }
