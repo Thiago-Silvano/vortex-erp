@@ -224,6 +224,7 @@ export default function NewSalePage() {
   const [passengerSearchLoading, setPassengerSearchLoading] = useState(false);
   const [destinationImageUrl, setDestinationImageUrl] = useState('');
   const [destinationImageConfig, setDestinationImageConfig] = useState<ImagePositionConfig | null>(null);
+  const [destImagePreviewOpen, setDestImagePreviewOpen] = useState(false);
   const [imagePositionEditorOpen, setImagePositionEditorOpen] = useState(false);
   const [itemImages, setItemImages] = useState<Record<number, string[]>>({});
   const [uploadingItemImages, setUploadingItemImages] = useState<Record<number, boolean>>({});
@@ -3014,14 +3015,18 @@ export default function NewSalePage() {
               <div className="mt-1 flex items-center gap-3 flex-wrap">
                 {destinationImageUrl ? (
                   <>
-                    <div className="relative">
-                      <img src={destinationImageUrl} alt="Destino" className="h-20 w-32 object-cover rounded border" />
-                      <Button size="icon" variant="destructive" className="absolute -top-2 -right-2 h-5 w-5" onClick={() => { setDestinationImageUrl(''); setDestinationImageConfig(null); }}>
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDestImagePreviewOpen(true)}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700 underline underline-offset-2 inline-flex items-center gap-1"
+                    >
+                      <ImagePlus className="h-3.5 w-3.5" /> Imagem inserida — visualizar
+                    </button>
                     <Button type="button" variant="outline" size="sm" onClick={() => setImagePositionEditorOpen(true)} className="gap-1">
                       <Move className="h-3.5 w-3.5" /> Ajustar Posição
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => { setDestinationImageUrl(''); setDestinationImageConfig(null); }} className="gap-1 text-destructive hover:text-destructive">
+                      <X className="h-3.5 w-3.5" /> Excluir
                     </Button>
                   </>
                 ) : uploadingDestImage ? (
@@ -3060,6 +3065,16 @@ export default function NewSalePage() {
               initialConfig={destinationImageConfig}
               onSave={(config) => setDestinationImageConfig(config)}
             />
+
+            {/* Destination Image Preview */}
+            <Dialog open={destImagePreviewOpen} onOpenChange={setDestImagePreviewOpen}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Imagem do Destino</DialogTitle></DialogHeader>
+                {destinationImageUrl && (
+                  <img src={destinationImageUrl} alt="Destino" className="w-full max-h-[70vh] object-contain rounded" />
+                )}
+              </DialogContent>
+            </Dialog>
 
             <Dialog open={destLibraryOpen} onOpenChange={setDestLibraryOpen}>
               <DialogContent className="max-w-3xl">
