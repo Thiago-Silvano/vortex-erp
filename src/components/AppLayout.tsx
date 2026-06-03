@@ -206,14 +206,6 @@ function buildMenus(isVistos: boolean, isAdmin: boolean, userRole: string): Menu
       { title: "Respostas Rápidas", url: "/whatsapp/quick-replies" },
       { title: "Configuração", url: "/whatsapp/settings" },
     ]},
-    { label: "Fiscal", icon: <FileText className="h-4 w-4 text-white" />, items: [
-      { title: "Dashboard Fiscal", url: "/nfse" },
-      { title: "Emitir NFS-e", url: "/nfse/emit" },
-      { title: "Notas Emitidas", url: "/nfse/list" },
-      { title: "Serviços Fiscais", url: "/nfse/services" },
-      { title: "Certificado Digital", url: "/nfse/certificate" },
-      { title: "Configurações", url: "/nfse/settings" },
-    ]},
     { label: "Sistema", icon: <Settings className="h-4 w-4 text-white" />, items: [
       ...(isAdmin ? [
         { title: "Configurações", url: "/settings", permKey: "settings_access" },
