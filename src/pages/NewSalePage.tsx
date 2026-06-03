@@ -2841,7 +2841,6 @@ export default function NewSalePage() {
             <TabsTrigger value="financeiro">💰 Financeiro</TabsTrigger>
             <TabsTrigger value="custo_financeiro">💸 Custo Financeiro</TabsTrigger>
             <TabsTrigger value="documentos">📄 Documentos</TabsTrigger>
-            <TabsTrigger value="fiscal">🧾 Fiscal</TabsTrigger>
           </TabsList>
 
           {/* TAB: Dados */}
@@ -4740,62 +4739,6 @@ export default function NewSalePage() {
           </Card>
         )}
 
-          </TabsContent>
-
-          <TabsContent value="fiscal" className="space-y-4">
-            {!isQuoteMode ? (
-              <>
-              <Card>
-                <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Nota Fiscal</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
-                  {editSaleId && (
-                    <Button
-                      className="w-full justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => navigate('/nfse/emit', { state: { saleId: editSaleId } })}
-                    >
-                      <Send className="h-4 w-4" /> Emitir NFS-e
-                    </Button>
-                  )}
-                  <div>
-                    <Label className="text-sm">Enviar PDF da Nota Fiscal</Label>
-                    <Input type="file" accept="application/pdf" onChange={handleInvoiceUpload} disabled={uploadingInvoice} />
-                    {uploadingInvoice && <p className="text-xs text-muted-foreground mt-1">Enviando...</p>}
-                  </div>
-                  {invoiceUrl && (
-                    <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
-                      <FileText className="h-4 w-4 text-primary shrink-0" />
-                      <a href={invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline hover:text-primary/80 truncate flex items-center gap-1">
-                        {invoiceFileName || 'nota-fiscal.pdf'}<ExternalLink className="h-3 w-3 shrink-0" />
-                      </a>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 ml-auto" onClick={() => { setInvoiceUrl(''); setInvoiceFileName(''); }}>
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              <NfseModulo
-                venda={{
-                  id: editSaleId,
-                  empresa_id: activeCompany?.id,
-                  cliente: {
-                    nome: clientName,
-                    cpf: (() => {
-                      const mainP = passengers.find(p => p.is_main) || passengers[0];
-                      if (mainP?.document_type === 'cpf') return mainP.document_number || '';
-                      const cpfPax = passengers.find(p => p.document_type === 'cpf');
-                      return cpfPax?.document_number || '';
-                    })(),
-                  },
-                  valor_comissao: grossProfit,
-                  descricao: `Comissão sobre venda turística — ${destinationName || ''}`,
-                  data: saleDate,
-                }}
-              />
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">Disponível apenas em vendas confirmadas.</p>
-            )}
           </TabsContent>
         </Tabs>
 
