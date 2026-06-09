@@ -448,7 +448,7 @@ export default function SalesPage() {
                 <div className="flex gap-3 text-sm items-center flex-wrap">
                   <span>Total: <strong>{fmt(Number(s.total_sale))}</strong></span>
                   <span>Lucro: <strong>{fmt(Number(s.net_profit))}</strong></span>
-                  {s.invoice_url ? (
+                  {(s.invoice_issued || s.invoice_url) ? (
                     <Badge className="bg-emerald-600/20 text-white border-emerald-500/50 border gap-1 text-xs" variant="outline">
                       <FileCheck className="h-3 w-3" /> NF Emitida
                     </Badge>
