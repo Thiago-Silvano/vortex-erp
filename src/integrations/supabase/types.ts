@@ -5298,6 +5298,7 @@ export type Database = {
           empresa_id: string | null
           id: string
           installments: number | null
+          invoice_issued: boolean
           notes: string | null
           payment_method: string | null
           product_id: string | null
@@ -5316,6 +5317,7 @@ export type Database = {
           empresa_id?: string | null
           id?: string
           installments?: number | null
+          invoice_issued?: boolean
           notes?: string | null
           payment_method?: string | null
           product_id?: string | null
@@ -5334,6 +5336,7 @@ export type Database = {
           empresa_id?: string | null
           id?: string
           installments?: number | null
+          invoice_issued?: boolean
           notes?: string | null
           payment_method?: string | null
           product_id?: string | null

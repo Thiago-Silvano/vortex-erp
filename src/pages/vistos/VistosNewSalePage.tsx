@@ -83,6 +83,7 @@ export default function VistosNewSalePage() {
   const [payerIsApplicant, setPayerIsApplicant] = useState(false);
   const [cardFeeValue, setCardFeeValue] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [invoiceIssued, setInvoiceIssued] = useState(false);
   const [allClients, setAllClients] = useState<{ id: string; full_name: string; phone?: string; email?: string }[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
@@ -133,6 +134,7 @@ export default function VistosNewSalePage() {
     setNotes(sale.notes || '');
     setSaleDate(sale.sale_date);
     setCardFeeValue(Number(sale.card_fee_value) || 0);
+    setInvoiceIssued((sale as any).invoice_issued || false);
 
     // Load sale items
     const { data: items } = await (supabase.from('visa_sale_items' as any) as any).select('*').eq('visa_sale_id', id).order('sort_order');
@@ -353,7 +355,7 @@ export default function VistosNewSalePage() {
     // Use first non-fee product for legacy product_id
     const mainItem = saleItems.find(i => !i.is_supplier_fee) || saleItems[0];
 
-    const salePayload = {
+    const salePayload: any = {
       empresa_id: activeCompany?.id,
       client_name: clientName.trim(),
       client_phone: clientPhone,
@@ -366,6 +368,7 @@ export default function VistosNewSalePage() {
       notes,
       sale_date: saleDate,
       created_by: user?.email || '',
+      invoice_issued: invoiceIssued,
     };
 
     let saleId = editSaleId;
@@ -959,6 +962,14 @@ export default function VistosNewSalePage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => navigate('/vistos/sales')}>Cancelar</Button>
+          <Button
+            type="button"
+            variant={invoiceIssued ? 'default' : 'outline'}
+            onClick={() => setInvoiceIssued(v => !v)}
+            className={invoiceIssued ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}
+          >
+            {invoiceIssued ? 'Nota-Fiscal Emitida ✓' : 'Nota-Fiscal: A Emitir'}
+          </Button>
           <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar Venda'}</Button>
         </div>
       </div>
