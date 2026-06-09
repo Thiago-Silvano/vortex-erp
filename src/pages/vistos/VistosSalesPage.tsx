@@ -215,9 +215,9 @@ export default function VistosSalesPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-          <TableLoadingRow colSpan={8} />
+          <TableLoadingRow colSpan={9} />
         ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhuma venda encontrada</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhuma venda encontrada</TableCell></TableRow>
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/vistos/sales/edit', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
@@ -229,6 +229,11 @@ export default function VistosSalesPage() {
                     <TableCell>
                       <Badge variant={s.status === 'active' ? 'default' : 'secondary'}>
                         {s.status === 'active' ? 'Ativa' : s.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={s.invoice_issued ? 'border-emerald-500 text-emerald-600' : 'border-amber-500 text-amber-600'}>
+                        {s.invoice_issued ? 'Emitida' : 'A Emitir'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
