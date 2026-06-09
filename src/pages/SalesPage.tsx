@@ -37,6 +37,7 @@ interface SaleRow {
   created_at: string;
   sale_workflow_status: string;
   invoice_url: string | null;
+  invoice_issued?: boolean | null;
   commission_invoice_status: string | null;
   commission_value?: number;
   suppliers_summary?: string;
@@ -368,7 +369,7 @@ export default function SalesPage() {
                      <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Venda' : s.status === 'draft' ? 'Cotação' : s.status}</Badge></TableCell>
                      <TableCell>
                        <div className="flex items-center gap-1.5 flex-wrap">
-                         {s.invoice_url ? (
+                         {(s.invoice_issued || s.invoice_url) ? (
                            <Badge className="bg-emerald-600/20 text-white border-emerald-500/50 border gap-1" variant="outline">
                              <FileCheck className="h-3 w-3" /> Emitida
                            </Badge>
@@ -447,7 +448,7 @@ export default function SalesPage() {
                 <div className="flex gap-3 text-sm items-center flex-wrap">
                   <span>Total: <strong>{fmt(Number(s.total_sale))}</strong></span>
                   <span>Lucro: <strong>{fmt(Number(s.net_profit))}</strong></span>
-                  {s.invoice_url ? (
+                  {(s.invoice_issued || s.invoice_url) ? (
                     <Badge className="bg-emerald-600/20 text-white border-emerald-500/50 border gap-1 text-xs" variant="outline">
                       <FileCheck className="h-3 w-3" /> NF Emitida
                     </Badge>
