@@ -209,6 +209,7 @@ export default function VistosSalesPage() {
                     <span className="inline-flex items-center">Pagamento <SortIcon col="payment_method" /></span>
                   </TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Nota Fiscal</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
