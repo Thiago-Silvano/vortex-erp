@@ -26,6 +26,7 @@ interface VisaSale {
   status: string;
   product_name?: string;
   services_summary?: string;
+  client_document?: string;
 }
 
 export default function VistosSalesPage() {
@@ -89,11 +90,24 @@ export default function VistosSalesPage() {
           }
         }
 
+        // Fetch clients to map name -> CPF/CNPJ
+        let docMap: Record<string, string> = {};
+        const { data: clients } = await supabase
+          .from('clients')
+          .select('full_name, cpf')
+          .eq('empresa_id', activeCompany.id);
+        if (clients) {
+          clients.forEach((c: any) => {
+            if (c.full_name) docMap[c.full_name.trim().toUpperCase()] = c.cpf || '';
+          });
+        }
+
         setSales(data.map((s: any) => ({
           ...s,
           product_name: s.visa_products?.name || '',
           services_summary: itemsMap[s.id]?.join(', ') || s.visa_products?.name || '',
           assessorias_value: assessoriasMap[s.id] || 0,
+          client_document: docMap[(s.client_name || '').trim().toUpperCase()] || '',
         })));
       }
     } finally {
@@ -181,9 +195,7 @@ export default function VistosSalesPage() {
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('client_name')}>
                     <span className="inline-flex items-center">Cliente <SortIcon col="client_name" /></span>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('product_name')}>
-                    <span className="inline-flex items-center">Serviços <SortIcon col="product_name" /></span>
-                  </TableHead>
+                  <TableHead>CPF / CNPJ</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_date')}>
                     <span className="inline-flex items-center">Data <SortIcon col="sale_date" /></span>
                   </TableHead>
@@ -206,7 +218,7 @@ export default function VistosSalesPage() {
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/vistos/sales/edit', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">{s.services_summary}</TableCell>
+                    <TableCell className="text-muted-foreground">{s.client_document || '—'}</TableCell>
                     <TableCell>{format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy')}</TableCell>
                     <TableCell className="text-right">R$ {(s.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell className="text-right text-muted-foreground">R$ {(s.assessorias_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
