@@ -199,6 +199,18 @@ function buildMenus(isVistos: boolean, isAdmin: boolean, userRole: string): Menu
       { title: "Roteiros", url: "/itineraries" },
       { title: "Banco de Imagens", url: "/product-images" },
     ]},
+    { label: "Relatórios", icon: <BarChart3 className="h-4 w-4 text-white" />, items: [
+      { title: "Dashboard", url: "/reports/dashboard" },
+      { title: "Vendas", url: "/reports/sales" },
+      { title: "Financeiro", url: "/reports/financial" },
+      { title: "Fluxo de Caixa", url: "/reports/cashflow" },
+      { title: "Clientes", url: "/reports/clients" },
+      { title: "Fornecedores", url: "/reports/suppliers" },
+      { title: "Centros de Custo", url: "/reports/cost-centers" },
+      { title: "Produtos", url: "/reports/products" },
+      { title: "Check-ins", url: "/reports/checkins" },
+      { title: "Lucratividade", url: "/reports/profit" },
+    ]},
     { label: "WhatsApp", icon: <MessageSquare className="h-4 w-4 text-white" />, url: "/whatsapp", items: [
       { title: "Conversas", url: "/whatsapp" },
       { title: "Contatos Whatsapp", url: "/whatsapp/contacts" },
