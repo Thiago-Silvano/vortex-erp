@@ -27,6 +27,7 @@ interface VisaSale {
   product_name?: string;
   services_summary?: string;
   client_document?: string;
+  invoice_issued?: boolean;
 }
 
 export default function VistosSalesPage() {
@@ -108,6 +109,7 @@ export default function VistosSalesPage() {
           services_summary: itemsMap[s.id]?.join(', ') || s.visa_products?.name || '',
           assessorias_value: assessoriasMap[s.id] || 0,
           client_document: docMap[(s.client_name || '').trim().toUpperCase()] || '',
+          invoice_issued: !!s.invoice_issued,
         })));
       }
     } finally {
