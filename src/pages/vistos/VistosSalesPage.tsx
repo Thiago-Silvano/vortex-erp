@@ -195,9 +195,7 @@ export default function VistosSalesPage() {
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('client_name')}>
                     <span className="inline-flex items-center">Cliente <SortIcon col="client_name" /></span>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('product_name')}>
-                    <span className="inline-flex items-center">Serviços <SortIcon col="product_name" /></span>
-                  </TableHead>
+                  <TableHead>CPF / CNPJ</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sale_date')}>
                     <span className="inline-flex items-center">Data <SortIcon col="sale_date" /></span>
                   </TableHead>
