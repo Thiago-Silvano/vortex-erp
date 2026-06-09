@@ -190,6 +190,7 @@ export default function VistosSalesPage() {
                   <TableHead className="cursor-pointer select-none text-right" onClick={() => toggleSort('total_value')}>
                     <span className="inline-flex items-center justify-end w-full">Valor <SortIcon col="total_value" /></span>
                   </TableHead>
+                  <TableHead className="text-right">Assessorias</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('payment_method')}>
                     <span className="inline-flex items-center">Pagamento <SortIcon col="payment_method" /></span>
                   </TableHead>
@@ -199,15 +200,16 @@ export default function VistosSalesPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-          <TableLoadingRow colSpan={7} />
+          <TableLoadingRow colSpan={8} />
         ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma venda encontrada</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhuma venda encontrada</TableCell></TableRow>
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/vistos/sales/edit', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
                     <TableCell className="max-w-[200px] truncate text-muted-foreground">{s.services_summary}</TableCell>
                     <TableCell>{format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy')}</TableCell>
                     <TableCell className="text-right">R$ {(s.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">R$ {(s.assessorias_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>{paymentLabels[s.payment_method] || s.payment_method}</TableCell>
                     <TableCell>
                       <Badge variant={s.status === 'active' ? 'default' : 'secondary'}>
