@@ -26,6 +26,7 @@ interface VisaSale {
   status: string;
   product_name?: string;
   services_summary?: string;
+  client_document?: string;
 }
 
 export default function VistosSalesPage() {
