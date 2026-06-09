@@ -70,17 +70,21 @@ export default function VistosSalesPage() {
         .order('sale_date', { ascending: false });
 
       if (data) {
-        // Fetch sale items for summaries
+        // Fetch sale items for summaries and assessorias totals
         const saleIds = data.map((s: any) => s.id);
         let itemsMap: Record<string, string[]> = {};
+        let assessoriasMap: Record<string, number> = {};
         if (saleIds.length > 0) {
           const { data: items } = await (supabase.from('visa_sale_items' as any) as any)
-            .select('visa_sale_id, product_name')
+            .select('visa_sale_id, product_name, total_value, is_supplier_fee')
             .in('visa_sale_id', saleIds);
           if (items) {
             items.forEach((item: any) => {
               if (!itemsMap[item.visa_sale_id]) itemsMap[item.visa_sale_id] = [];
               itemsMap[item.visa_sale_id].push(item.product_name);
+              if (!item.is_supplier_fee) {
+                assessoriasMap[item.visa_sale_id] = (assessoriasMap[item.visa_sale_id] || 0) + Number(item.total_value || 0);
+              }
             });
           }
         }
@@ -89,6 +93,7 @@ export default function VistosSalesPage() {
           ...s,
           product_name: s.visa_products?.name || '',
           services_summary: itemsMap[s.id]?.join(', ') || s.visa_products?.name || '',
+          assessorias_value: assessoriasMap[s.id] || 0,
         })));
       }
     } finally {
