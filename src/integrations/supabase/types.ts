@@ -4131,6 +4131,7 @@ export type Database = {
           gross_profit: number | null
           id: string
           installments: number | null
+          invoice_issued: boolean
           invoice_url: string | null
           machine_fee: number | null
           machine_fee_supplier_id: string | null
@@ -4187,6 +4188,7 @@ export type Database = {
           gross_profit?: number | null
           id?: string
           installments?: number | null
+          invoice_issued?: boolean
           invoice_url?: string | null
           machine_fee?: number | null
           machine_fee_supplier_id?: string | null
@@ -4243,6 +4245,7 @@ export type Database = {
           gross_profit?: number | null
           id?: string
           installments?: number | null
+          invoice_issued?: boolean
           invoice_url?: string | null
           machine_fee?: number | null
           machine_fee_supplier_id?: string | null
