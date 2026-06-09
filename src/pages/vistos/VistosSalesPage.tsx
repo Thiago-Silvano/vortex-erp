@@ -21,6 +21,7 @@ interface VisaSale {
   client_name: string;
   sale_date: string;
   total_value: number;
+  assessorias_value: number;
   payment_method: string;
   status: string;
   product_name?: string;
