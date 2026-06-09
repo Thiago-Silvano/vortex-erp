@@ -369,7 +369,7 @@ export default function SalesPage() {
                      <TableCell><Badge variant={s.status === 'active' ? 'default' : s.status === 'draft' ? 'outline' : 'secondary'}>{s.status === 'active' ? 'Venda' : s.status === 'draft' ? 'Cotação' : s.status}</Badge></TableCell>
                      <TableCell>
                        <div className="flex items-center gap-1.5 flex-wrap">
-                         {s.invoice_url ? (
+                         {(s.invoice_issued || s.invoice_url) ? (
                            <Badge className="bg-emerald-600/20 text-white border-emerald-500/50 border gap-1" variant="outline">
                              <FileCheck className="h-3 w-3" /> Emitida
                            </Badge>
