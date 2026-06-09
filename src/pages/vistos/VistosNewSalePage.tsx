@@ -355,7 +355,7 @@ export default function VistosNewSalePage() {
     // Use first non-fee product for legacy product_id
     const mainItem = saleItems.find(i => !i.is_supplier_fee) || saleItems[0];
 
-    const salePayload = {
+    const salePayload: any = {
       empresa_id: activeCompany?.id,
       client_name: clientName.trim(),
       client_phone: clientPhone,
