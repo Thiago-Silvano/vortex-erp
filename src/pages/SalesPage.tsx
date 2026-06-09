@@ -37,6 +37,7 @@ interface SaleRow {
   created_at: string;
   sale_workflow_status: string;
   invoice_url: string | null;
+  invoice_issued?: boolean | null;
   commission_invoice_status: string | null;
   commission_value?: number;
   suppliers_summary?: string;
