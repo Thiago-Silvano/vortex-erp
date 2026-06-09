@@ -218,7 +218,7 @@ export default function VistosSalesPage() {
                  ) : filtered.map(s => (
                   <TableRow key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate('/vistos/sales/edit', { state: { editSaleId: s.id } })}>
                     <TableCell className="font-medium">{s.client_name}</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">{s.services_summary}</TableCell>
+                    <TableCell className="text-muted-foreground">{s.client_document || '—'}</TableCell>
                     <TableCell>{format(new Date(s.sale_date + 'T12:00:00'), 'dd/MM/yyyy')}</TableCell>
                     <TableCell className="text-right">R$ {(s.total_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell className="text-right text-muted-foreground">R$ {(s.assessorias_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
