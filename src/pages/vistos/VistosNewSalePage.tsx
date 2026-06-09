@@ -962,6 +962,14 @@ export default function VistosNewSalePage() {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => navigate('/vistos/sales')}>Cancelar</Button>
+          <Button
+            type="button"
+            variant={invoiceIssued ? 'default' : 'outline'}
+            onClick={() => setInvoiceIssued(v => !v)}
+            className={invoiceIssued ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}
+          >
+            {invoiceIssued ? 'Nota-Fiscal Emitida ✓' : 'Nota-Fiscal: A Emitir'}
+          </Button>
           <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar Venda'}</Button>
         </div>
       </div>
