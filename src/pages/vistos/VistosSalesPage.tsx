@@ -90,11 +90,24 @@ export default function VistosSalesPage() {
           }
         }
 
+        // Fetch clients to map name -> CPF/CNPJ
+        let docMap: Record<string, string> = {};
+        const { data: clients } = await supabase
+          .from('clients')
+          .select('full_name, cpf')
+          .eq('empresa_id', activeCompany.id);
+        if (clients) {
+          clients.forEach((c: any) => {
+            if (c.full_name) docMap[c.full_name.trim().toUpperCase()] = c.cpf || '';
+          });
+        }
+
         setSales(data.map((s: any) => ({
           ...s,
           product_name: s.visa_products?.name || '',
           services_summary: itemsMap[s.id]?.join(', ') || s.visa_products?.name || '',
           assessorias_value: assessoriasMap[s.id] || 0,
+          client_document: docMap[(s.client_name || '').trim().toUpperCase()] || '',
         })));
       }
     } finally {
