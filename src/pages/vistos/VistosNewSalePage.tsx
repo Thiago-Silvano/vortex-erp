@@ -368,6 +368,7 @@ export default function VistosNewSalePage() {
       notes,
       sale_date: saleDate,
       created_by: user?.email || '',
+      invoice_issued: invoiceIssued,
     };
 
     let saleId = editSaleId;
