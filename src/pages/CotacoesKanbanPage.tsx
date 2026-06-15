@@ -678,7 +678,7 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                     </div>
                     <div className="flex items-center justify-between mt-2 text-sm">
                       <strong>{fmt(Number(s.total_sale))}</strong>
-                      <span className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'dd/MM/yy')}</span>
+                      <span className="text-xs text-muted-foreground">{safeFormat(s.created_at, 'dd/MM/yy')}</span>
                     </div>
                   </Card>
                 );
