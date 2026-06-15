@@ -1068,7 +1068,7 @@ export function generateVoucherPdf(data: VoucherPdfData, existingDoc?: jsPDF) {
       }
 
       if (page.type === "hotel" && page.hotel) {
-        y = drawHotelContent(doc, page.hotel, data.passengers, y, m, cw);
+        y = drawHotelContent(doc, page.hotel, data.passengers, y, m, cw, data.showIndividualValues);
         serviceCountOnPage = SERVICES_PER_PAGE; // força nova página depois
       } else if (page.type === "service" && page.service) {
         y = drawServiceContent(doc, page.service, y, m, cw);
