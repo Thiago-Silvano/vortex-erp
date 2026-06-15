@@ -21,7 +21,13 @@ import {
   Plane, Hotel, Car, Ticket, FileText, Link2, MessageCircle, Copy, Archive, ArchiveRestore,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, isValid } from 'date-fns';
+
+const safeFormat = (value: string | null | undefined, fmt: string, suffix = ''): string => {
+  if (!value) return '-';
+  const d = new Date(suffix ? value + suffix : value);
+  return isValid(d) ? format(d, fmt) : '-';
+};
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
