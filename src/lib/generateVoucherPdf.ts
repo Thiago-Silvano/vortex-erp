@@ -291,6 +291,7 @@ function drawHotelContent(
   y: number,
   m: number,
   cw: number,
+  showIndividualValues = false,
 ): number {
   // ── Top row: Reserva (right, stylized) ────────────────────
   if (hotel.reservationNumber) {
