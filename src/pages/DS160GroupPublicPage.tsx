@@ -60,13 +60,8 @@ export default function DS160GroupPublicPage() {
   }, [token]);
 
   const loadGroup = async () => {
-    // Find group by token
-    const { data: group, error } = await supabase
-      .from('ds160_group_forms')
-      .select('*')
-      .eq('token', token!)
-      .single();
-
+    const { data: payload, error } = await (supabase as any).rpc('get_public_ds160_group', { p_token: token! });
+    const group = (payload as any)?.group;
     if (error || !group) {
       setNotFound(true);
       setLoading(false);
@@ -81,13 +76,7 @@ export default function DS160GroupPublicPage() {
 
     setGroupId((group as any).id);
 
-    // Load all forms in this group
-    const { data: forms } = await supabase
-      .from('ds160_forms')
-      .select('*, clients(full_name)')
-      .eq('group_id', (group as any).id)
-      .order('created_at');
-
+    const forms = (payload as any)?.forms || [];
     if (!forms || forms.length === 0) {
       setNotFound(true);
       setLoading(false);
@@ -95,11 +84,11 @@ export default function DS160GroupPublicPage() {
     }
 
     setApplicants(forms.map((f: any) => ({
-      formId: f.id,
-      clientName: f.clients?.full_name || 'Aplicante',
+      formId: f.formId,
+      clientName: f.clientName || 'Aplicante',
       status: f.status,
-      currentStep: f.current_step || 0,
-      formData: (f.form_data as Record<string, any>) || {},
+      currentStep: f.currentStep || 0,
+      formData: (f.formData as Record<string, any>) || {},
     })));
 
     setLoading(false);
@@ -137,12 +126,13 @@ export default function DS160GroupPublicPage() {
     if (activeApplicantIdx === null) return;
     const app = applicants[activeApplicantIdx];
     setSaving(true);
-    await supabase.from('ds160_forms').update({
-      form_data: formData as any,
-      current_step: currentStep,
-      status: app.status === 'submitted' ? 'submitted' : 'in_progress',
-      last_saved_at: new Date().toISOString(),
-    }).eq('id', app.formId);
+    await (supabase as any).rpc('save_public_ds160_group_form', {
+      p_token: token!,
+      p_form_id: app.formId,
+      p_form_data: formData,
+      p_current_step: currentStep,
+      p_status: 'in_progress',
+    });
     setSaving(false);
   };
 
@@ -156,33 +146,17 @@ export default function DS160GroupPublicPage() {
     setSubmitting(true);
     const app = applicants[activeApplicantIdx];
 
-    await supabase.from('ds160_forms').update({
-      form_data: formData as any,
-      current_step: 10,
-      status: 'submitted',
-      submitted_at: new Date().toISOString(),
-      last_saved_at: new Date().toISOString(),
-    }).eq('id', app.formId);
+    await (supabase as any).rpc('submit_public_ds160_group_form', {
+      p_token: token!,
+      p_form_id: app.formId,
+      p_form_data: formData,
+    });
 
     // Update local state
     const newApplicants = applicants.map((a, i) =>
       i === activeApplicantIdx ? { ...a, status: 'submitted', formData, currentStep: 10 } : a
     );
     setApplicants(newApplicants);
-
-    // Check if all are submitted
-    const allDone = newApplicants.every(a => a.status === 'submitted');
-    if (allDone && groupId) {
-      await supabase.from('ds160_group_forms').update({
-        status: 'submitted',
-        updated_at: new Date().toISOString(),
-      } as any).eq('id', groupId);
-    } else if (groupId) {
-      await supabase.from('ds160_group_forms').update({
-        status: 'in_progress',
-        updated_at: new Date().toISOString(),
-      } as any).eq('id', groupId);
-    }
 
     setSubmitting(false);
     setActiveApplicantIdx(null);
@@ -196,12 +170,13 @@ export default function DS160GroupPublicPage() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (activeApplicantIdx !== null) {
         const app = applicants[activeApplicantIdx];
-        await supabase.from('ds160_forms').update({
-          form_data: formData as any,
-          current_step: currentStep + 1,
-          status: 'in_progress',
-          last_saved_at: new Date().toISOString(),
-        }).eq('id', app.formId);
+        await (supabase as any).rpc('save_public_ds160_group_form', {
+          p_token: token!,
+          p_form_id: app.formId,
+          p_form_data: formData,
+          p_current_step: currentStep + 1,
+          p_status: 'in_progress',
+        });
       }
     }
   };
