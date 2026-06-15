@@ -855,7 +855,7 @@ function drawHotelContent(
     const boxH = 14;
     y = checkPage(doc, y, boxH + 6);
 
-    setFill(doc, DARK_HEADER);
+    doc.setFillColor(DARK_HEADER[0], DARK_HEADER[1], DARK_HEADER[2]);
     doc.roundedRect(m, y, cw, boxH, 1.5, 1.5, "F");
     doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
     doc.rect(m, y, 3, boxH, "F");
