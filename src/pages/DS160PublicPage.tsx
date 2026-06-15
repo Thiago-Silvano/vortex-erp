@@ -51,12 +51,8 @@ export default function DS160PublicPage() {
   }, [token]);
 
   const loadForm = async () => {
-    const { data, error } = await supabase
-      .from('ds160_forms')
-      .select('*, clients(full_name)')
-      .eq('token', token!)
-      .single();
-
+    const { data: payload, error } = await (supabase as any).rpc('get_public_ds160', { p_token: token! });
+    const data = (payload as any)?.form;
     if (error || !data) {
       setNotFound(true);
       setLoading(false);
@@ -76,7 +72,7 @@ export default function DS160PublicPage() {
     }
 
     setFormId(data.id);
-    setClientName((data as any).clients?.full_name || '');
+    setClientName((payload as any)?.client_name || '');
     setFormData((data.form_data as Record<string, any>) || {});
     setCurrentStep(data.current_step || 0);
     setLoading(false);
@@ -89,12 +85,11 @@ export default function DS160PublicPage() {
   const handleSave = async () => {
     if (!formId) return;
     setSaving(true);
-    const { error } = await supabase.from('ds160_forms').update({
-      form_data: formData as any,
-      current_step: currentStep,
-      status: 'in_progress',
-      last_saved_at: new Date().toISOString(),
-    }).eq('id', formId);
+    const { error } = await (supabase as any).rpc('save_public_ds160', {
+      p_token: token!,
+      p_form_data: formData,
+      p_current_step: currentStep,
+    });
     setSaving(false);
     if (error) {
       toast.error('Erro ao salvar. Tente novamente.');
@@ -106,77 +101,14 @@ export default function DS160PublicPage() {
   const handleSubmit = async () => {
     if (!formId) return;
     setSubmitting(true);
-    
-    const { data: formRecord } = await supabase
-      .from('ds160_forms')
-      .select('client_id, empresa_id')
-      .eq('id', formId)
-      .single();
-
-    const { error } = await supabase.from('ds160_forms').update({
-      form_data: formData as any,
-      current_step: 10,
-      status: 'submitted',
-      submitted_at: new Date().toISOString(),
-      last_saved_at: new Date().toISOString(),
-    }).eq('id', formId);
-    
-    // Update visa_processes for this client to "produzindo"
-    if (!error && formRecord) {
-      const { data: client } = await supabase
-        .from('clients')
-        .select('full_name')
-        .eq('id', formRecord.client_id)
-        .single();
-      
-      if (client) {
-        // Try matching by client_name first
-        let baseFilter = formRecord.empresa_id 
-          ? supabase.from('visa_processes').select('id').eq('empresa_id', formRecord.empresa_id)
-          : supabase.from('visa_processes').select('id');
-        
-        const { data: byClientName } = await (baseFilter as any)
-          .or(`client_name.eq.${client.full_name},applicant_name.eq.${client.full_name}`)
-          .in('status', ['falta_passaporte', 'produzindo'] as any[]);
-        
-        if (byClientName && byClientName.length > 0) {
-          const ids = byClientName.map((r: any) => r.id);
-          const { error: vpError } = await supabase
-            .from('visa_processes')
-            .update({ status: 'produzindo' as any })
-            .in('id', ids);
-          console.log('visa_processes updated:', { error: vpError, count: ids.length, clientName: client.full_name });
-        } else {
-          console.log('No visa_processes found for client:', client.full_name);
-        }
-      }
-    }
-    
+    const { error } = await (supabase as any).rpc('submit_public_ds160', {
+      p_token: token!,
+      p_form_data: formData,
+    });
     setSubmitting(false);
     if (error) {
       toast.error('Erro ao enviar formulário.');
     } else {
-      // Create notification for the ERP users
-      if (formRecord) {
-        const clientName = (await supabase.from('clients').select('full_name').eq('id', formRecord.client_id).single()).data?.full_name || 'Cliente';
-        
-        // Get all users of this company to notify
-        const { data: companyUsers } = await (supabase.from('user_permissions' as any).select('user_id').eq('empresa_id', formRecord.empresa_id) as any);
-        const userIds = (companyUsers || []).map((u: any) => u.user_id).filter(Boolean);
-        
-        if (userIds.length > 0) {
-          const notifRows = userIds.map((uid: string) => ({
-            empresa_id: formRecord.empresa_id,
-            user_id: uid,
-            type: 'ds160_submitted',
-            title: 'DS-160 preenchido',
-            message: `${clientName} concluiu o formulário DS-160`,
-            reference_id: formId,
-            reference_type: 'ds160_form',
-          }));
-          await (supabase.from('notifications' as any).insert(notifRows) as any);
-        }
-      }
       setSubmitted(true);
     }
   };
@@ -187,12 +119,11 @@ export default function DS160PublicPage() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       // auto-save
       if (formId) {
-        await supabase.from('ds160_forms').update({
-          form_data: formData as any,
-          current_step: currentStep + 1,
-          status: 'in_progress',
-          last_saved_at: new Date().toISOString(),
-        }).eq('id', formId);
+        await (supabase as any).rpc('save_public_ds160', {
+          p_token: token!,
+          p_form_data: formData,
+          p_current_step: currentStep + 1,
+        });
       }
     }
   };
