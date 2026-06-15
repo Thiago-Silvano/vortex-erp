@@ -1,9 +1,11 @@
-RewriteEngine On
-RewriteBase /
-RewriteRule ^index\.html$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
 
 # Nunca cachear o index.html (evita apontar para assets antigos apos deploy)
 <FilesMatch "(^index\.html$|service-worker\.js$|sw\.js$)">
@@ -11,6 +13,8 @@ RewriteRule . /index.html [L]
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"
+    Header unset ETag
+    Header set Vary "*"
   </IfModule>
 </FilesMatch>
 
@@ -18,5 +22,6 @@ RewriteRule . /index.html [L]
 <FilesMatch "\.(js|css|woff2?|ttf|otf|eot|svg|png|jpg|jpeg|gif|webp|ico)$">
   <IfModule mod_headers.c>
     Header set Cache-Control "public, max-age=31536000, immutable"
+    Header unset Vary
   </IfModule>
 </FilesMatch>
