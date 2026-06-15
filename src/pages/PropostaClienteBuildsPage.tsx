@@ -141,35 +141,21 @@ export default function PropostaClienteBuildsPage() {
 
   const loadProposal = async () => {
     setLoading(true);
-    const { data: saleData, error } = await (supabase.from('sales').select('*') as any).eq('short_id', shortId).single();
-    if (error || !saleData) { setNotFound(true); setLoading(false); return; }
-    setSale(saleData as any);
-
-    const saleId = saleData.id;
-    const empresaId = (saleData as any).empresa_id;
-
-    const [itemsRes, agencyRes, catalogRes] = await Promise.all([
-      supabase.from('sale_items').select('*').eq('sale_id', saleId).order('sort_order'),
-      empresaId ? supabase.from('agency_settings').select('*').eq('empresa_id', empresaId).limit(1) : supabase.from('agency_settings').select('*').limit(1),
-      supabase.from('services_catalog').select('id, name'),
-    ]);
+    const { data, error } = await (supabase as any).rpc('get_public_proposal', { p_short_id: shortId });
+    const payload = data as any;
+    if (error || !payload || !payload.sale) { setNotFound(true); setLoading(false); return; }
+    setSale(payload.sale);
 
     const nameMap: Record<string, string> = {};
-    if (catalogRes.data) catalogRes.data.forEach((c: any) => { nameMap[c.id] = c.name; });
+    (payload.catalog || []).forEach((c: any) => { nameMap[c.id] = c.name; });
     setCatalogNames(nameMap);
 
-    const loadedItems: SaleItemData[] = [];
-    if (itemsRes.data) {
-      for (const item of itemsRes.data) {
-        const { data: imgs } = await (supabase.from('sale_item_images' as any) as any).select('image_url').eq('sale_item_id', item.id).order('sort_order');
-        loadedItems.push({
-          id: item.id, description: item.description, total_value: Number(item.total_value),
-          service_catalog_id: item.service_catalog_id, images: imgs?.map((i: any) => i.image_url) || [],
-          metadata: (item as any).metadata || {},
-          quote_option_id: (item as any).quote_option_id || null,
-        });
-      }
-    }
+    const loadedItems: SaleItemData[] = (payload.items || []).map((item: any) => ({
+      id: item.id, description: item.description, total_value: Number(item.total_value),
+      service_catalog_id: item.service_catalog_id, images: item.images || [],
+      metadata: item.metadata || {},
+      quote_option_id: item.quote_option_id || null,
+    }));
     // Deduplicate
     const seen = new Set<string>();
     const dedupedItems = loadedItems.filter(item => {
@@ -180,26 +166,14 @@ export default function PropostaClienteBuildsPage() {
     });
     setItems(dedupedItems);
 
-    if (agencyRes.data && agencyRes.data.length > 0) setAgency(agencyRes.data[0] as any);
+    if (payload.agency) setAgency(payload.agency as any);
+    if (payload.quote) setQuoteData(payload.quote);
 
-    if ((saleData as any).quote_id) {
-      const { data: qData } = await supabase.from('quotes').select('*').eq('id', (saleData as any).quote_id).single();
-      if (qData) setQuoteData(qData);
-    }
-
-    // Load previous choices
-    const { data: prevChoices } = await (supabase.from('client_proposal_choices' as any) as any)
-      .select('*')
-      .eq('sale_id', saleId)
-      .order('submitted_at', { ascending: false })
-      .limit(1);
-
-    if (prevChoices && prevChoices.length > 0) {
-      const ids = prevChoices[0].selected_item_ids as string[];
-      if (ids && ids.length > 0) {
-        setSelectedIds(new Set(ids));
-        setPreviousChoices(ids);
-      }
+    // Previous choices
+    const ids = (payload.previous_choices || []) as string[];
+    if (ids && ids.length > 0) {
+      setSelectedIds(new Set(ids));
+      setPreviousChoices(ids);
     }
 
     setLoading(false);
@@ -251,11 +225,10 @@ export default function PropostaClienteBuildsPage() {
     if (selectedIds.size === 0 || !sale) return;
     setSubmitting(true);
     try {
-      await (supabase.from('client_proposal_choices' as any) as any).insert({
-        sale_id: sale.id,
-        client_name: sale.client_name,
-        selected_item_ids: Array.from(selectedIds),
-        total_value: selectedTotal,
+      await (supabase as any).rpc('save_proposal_choice', {
+        p_short_id: shortId,
+        p_selected_item_ids: Array.from(selectedIds),
+        p_total: selectedTotal,
       });
       setSubmitted(true);
       setPreviousChoices(Array.from(selectedIds));

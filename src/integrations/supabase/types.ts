@@ -5898,6 +5898,41 @@ export type Database = {
       }
     }
     Functions: {
+      finalize_bundle_signatures: {
+        Args: {
+          p_device_info: string
+          p_docs: Json
+          p_geo_city: string
+          p_geo_country: string
+          p_geo_state: string
+          p_geolocation: Json
+          p_ip: string
+          p_selfie_url: string
+          p_signature_data: string
+          p_signature_type: string
+          p_signer_name: string
+          p_token: string
+        }
+        Returns: undefined
+      }
+      finalize_contract_signature: {
+        Args: {
+          p_device_info: string
+          p_document_hash: string
+          p_geo_city: string
+          p_geo_country: string
+          p_geo_state: string
+          p_geolocation: Json
+          p_ip: string
+          p_selfie_url: string
+          p_signature_data: string
+          p_signature_id: string
+          p_signature_type: string
+          p_signer_name: string
+          p_token: string
+        }
+        Returns: undefined
+      }
       find_or_create_conversation: {
         Args: {
           p_client_id?: string
@@ -5910,11 +5945,80 @@ export type Database = {
         }
         Returns: string
       }
+      get_public_bundle: { Args: { p_token: string }; Returns: Json }
+      get_public_contract: { Args: { p_token: string }; Returns: Json }
+      get_public_ds160: { Args: { p_token: string }; Returns: Json }
+      get_public_ds160_group: { Args: { p_token: string }; Returns: Json }
+      get_public_proposal: { Args: { p_short_id: string }; Returns: Json }
       has_company_access: { Args: { _empresa_id: string }; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
       is_company_admin: {
         Args: { _empresa_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_bundle_view: {
+        Args: { p_ip: string; p_token: string; p_user_agent: string }
+        Returns: undefined
+      }
+      log_contract_view: {
+        Args: { p_ip: string; p_token: string; p_user_agent: string }
+        Returns: undefined
+      }
+      save_proposal_choice: {
+        Args: {
+          p_selected_item_ids: string[]
+          p_short_id: string
+          p_total: number
+        }
+        Returns: undefined
+      }
+      save_public_ds160: {
+        Args: { p_current_step: number; p_form_data: Json; p_token: string }
+        Returns: undefined
+      }
+      save_public_ds160_group_form: {
+        Args: {
+          p_current_step: number
+          p_form_data: Json
+          p_form_id: string
+          p_status: string
+          p_token: string
+        }
+        Returns: undefined
+      }
+      start_bundle_signatures: {
+        Args: {
+          p_geo_city: string
+          p_geo_country: string
+          p_geo_state: string
+          p_geolocation: Json
+          p_ip: string
+          p_signer_name: string
+          p_token: string
+          p_user_agent: string
+        }
+        Returns: Json
+      }
+      start_contract_signature: {
+        Args: {
+          p_geo_city: string
+          p_geo_country: string
+          p_geo_state: string
+          p_geolocation: Json
+          p_ip: string
+          p_signer_name: string
+          p_token: string
+          p_user_agent: string
+        }
+        Returns: string
+      }
+      submit_public_ds160: {
+        Args: { p_form_data: Json; p_token: string }
+        Returns: undefined
+      }
+      submit_public_ds160_group_form: {
+        Args: { p_form_data: Json; p_form_id: string; p_token: string }
+        Returns: undefined
       }
     }
     Enums: {
