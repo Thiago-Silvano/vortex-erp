@@ -850,6 +850,29 @@ function drawHotelContent(
     y += 4;
   }
 
+  // ── Valor (individual) ─────────────────────────────────────
+  if (showIndividualValues && typeof hotel.value === "number" && hotel.value > 0) {
+    const boxH = 14;
+    y = checkPage(doc, y, boxH + 6);
+
+    setFill(doc, DARK_HEADER);
+    doc.roundedRect(m, y, cw, boxH, 1.5, 1.5, "F");
+    doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+    doc.rect(m, y, 3, boxH, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    doc.text("VALOR DA HOSPEDAGEM", m + 7, y + boxH / 2 + 1);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+    doc.text(fmt(hotel.value), m + cw - 4, y + boxH / 2 + 1.5, { align: "right" });
+
+    y += boxH + 4;
+  }
+
   return y;
 }
 
