@@ -69,6 +69,7 @@ export interface AirlineVoucherData {
   agencyEmail?: string;
   agencyWebsite?: string;
   hideReference?: boolean;
+  showIndividualValues?: boolean;
 }
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -81,6 +82,9 @@ const sanitize = (text: string): string =>
     .replace(/[^\x00-\xFF]/g, "");
 
 const s = sanitize;
+
+const fmt = (v: number) =>
+  s(`R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 
 const formatDateBR = (d?: string) => {
   if (!d) return "";
