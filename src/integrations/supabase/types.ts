@@ -5910,6 +5910,8 @@ export type Database = {
         }
         Returns: string
       }
+      has_company_access: { Args: { _empresa_id: string }; Returns: boolean }
+      is_admin_user: { Args: never; Returns: boolean }
       is_company_admin: {
         Args: { _empresa_id: string; _user_id: string }
         Returns: boolean
