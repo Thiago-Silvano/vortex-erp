@@ -317,7 +317,15 @@ export default function NewSalePage() {
   const loadSale = async (id: string) => {
     setLoadingSale(true);
     try {
-    const { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
+    // Ensure the auth session is fully restored before querying RLS-protected
+    // rows; otherwise the query returns nothing and every field stays blank.
+    await supabase.auth.getSession();
+    let { data: sale } = await supabase.from('sales').select('*').eq('id', id).single();
+    if (!sale) {
+      // Session may not be ready on first navigation — wait briefly and retry.
+      await new Promise((r) => setTimeout(r, 400));
+      ({ data: sale } = await supabase.from('sales').select('*').eq('id', id).single());
+    }
     if (!sale) return;
     setSaleStatus(sale.status === 'active' ? 'active' : 'draft');
     setSaleWorkflowStatus((sale as any).sale_workflow_status || 'em_aberto');
