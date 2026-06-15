@@ -116,28 +116,16 @@ export default function BundleSignPage() {
   const loadBundle = async () => {
     if (!token) { setStep('error'); return; }
 
-    const { data: bundleRow, error } = await (supabase
-      .from('contract_bundles' as any)
-      .select('*')
-      .eq('token', token)
-      .single() as any);
+    const { data: payload, error } = await (supabase as any).rpc('get_public_bundle', { p_token: token });
+    const b = (payload as any)?.bundle;
+    if (error || !b) { setStep('error'); return; }
 
-    if (error || !bundleRow) { setStep('error'); return; }
-    const b = bundleRow as any;
+    const ag = (payload as any)?.agency;
+    if (ag) setAgencyInfo({ name: ag.name || '', email: ag.email || '', whatsapp: ag.whatsapp || '', logo_url: ag.logo_url || '' });
 
-    if (b.empresa_id) await loadAgencyInfo(b.empresa_id);
+    const contractsList = ((payload as any)?.contracts || []) as ContractData[];
 
-    if (b.status === 'signed') { setBundle(b); setStep('already_signed'); return; }
-
-    const { data: contractsData } = await (supabase as any)
-      .from('contracts')
-      .select('id, title, body_html, status, signed_at')
-      .eq('bundle_id', b.id)
-      .order('created_at', { ascending: true });
-
-    const contractsList = (contractsData || []) as ContractData[];
-    
-    if (contractsList.every(c => c.status === 'signed')) {
+    if (b.status === 'signed' || (contractsList.length > 0 && contractsList.every(c => c.status === 'signed'))) {
       setBundle(b); setContracts(contractsList); setStep('already_signed'); return;
     }
 
@@ -145,18 +133,11 @@ export default function BundleSignPage() {
     setContracts(contractsList);
     setSignerName(b.client_name || '');
 
-    if (b.status !== 'viewed') {
-      await (supabase.from('contract_bundles' as any).update({ status: 'viewed', viewed_at: new Date().toISOString() } as any).eq('id', b.id) as any);
-    }
-    for (const c of contractsList) {
-      if (c.status !== 'viewed' && c.status !== 'signed') {
-        await supabase.from('contracts').update({ status: 'viewed', viewed_at: new Date().toISOString() } as any).eq('id', c.id);
-      }
-      await supabase.from('contract_audit_log').insert({
-        contract_id: c.id, action: 'viewed', actor: b.client_name || 'Cliente', actor_type: 'client',
-        ip_address: signingContext?.ip_address || '', details: { user_agent: navigator.userAgent, bundle_id: b.id }
-      } as any);
-    }
+    await (supabase as any).rpc('log_bundle_view', {
+      p_token: token,
+      p_ip: signingContext?.ip_address || '',
+      p_user_agent: navigator.userAgent,
+    });
 
     setStep('view');
   };
@@ -193,51 +174,27 @@ export default function BundleSignPage() {
     if (!bundle) return;
     setOtpSending(true);
 
-    const sigIds: Record<string, string> = {};
-    const firstContract = contracts[0];
-    
-    const { data: sig, error: sigErr } = await supabase.from('contract_signatures').insert({
-      contract_id: firstContract.id,
-      signer_name: signerName || bundle.client_name,
-      signer_email: bundle.client_email,
-      signer_phone: bundle.client_phone,
-      signer_cpf: bundle.client_cpf,
-      verification_method: 'email_otp',
-      status: 'pending',
-      user_agent: signingContext?.user_agent || navigator.userAgent,
-      ip_address: signingContext?.ip_address || '',
-      geo_city: signingContext?.geo_city || '',
-      geo_state: signingContext?.geo_state || '',
-      geo_country: signingContext?.geo_country || '',
-      geolocation: signingContext?.geolocation || {},
-    } as any).select().single();
+    const { data: sigMap, error: sigErr } = await (supabase as any).rpc('start_bundle_signatures', {
+      p_token: token,
+      p_signer_name: signerName || bundle.client_name,
+      p_user_agent: signingContext?.user_agent || navigator.userAgent,
+      p_ip: signingContext?.ip_address || '',
+      p_geo_city: signingContext?.geo_city || '',
+      p_geo_state: signingContext?.geo_state || '',
+      p_geo_country: signingContext?.geo_country || '',
+      p_geolocation: signingContext?.geolocation || {},
+    });
 
-    if (sigErr || !sig) { toast.error('Erro ao iniciar verificação'); setOtpSending(false); return; }
-    sigIds[firstContract.id] = (sig as any).id;
-
-    for (const c of contracts.slice(1)) {
-      const { data: s } = await supabase.from('contract_signatures').insert({
-        contract_id: c.id,
-        signer_name: signerName || bundle.client_name,
-        signer_email: bundle.client_email,
-        signer_phone: bundle.client_phone,
-        signer_cpf: bundle.client_cpf,
-        verification_method: 'email_otp',
-        status: 'pending',
-        user_agent: signingContext?.user_agent || navigator.userAgent,
-        ip_address: signingContext?.ip_address || '',
-        geo_city: signingContext?.geo_city || '',
-        geo_state: signingContext?.geo_state || '',
-        geo_country: signingContext?.geo_country || '',
-        geolocation: signingContext?.geolocation || {},
-      } as any).select().single();
-      if (s) sigIds[c.id] = (s as any).id;
-    }
+    if (sigErr || !sigMap) { toast.error('Erro ao iniciar verificação'); setOtpSending(false); return; }
+    const sigIds = sigMap as Record<string, string>;
     setSignatureIds(sigIds);
+
+    const firstContract = contracts[0];
+    const firstSigId = sigIds[firstContract.id];
 
     try {
       const { error: fnErr } = await supabase.functions.invoke('send-contract-otp', {
-        body: { signature_id: (sig as any).id, contract_id: firstContract.id, email: bundle.client_email, name: signerName || bundle.client_name },
+        body: { signature_id: firstSigId, contract_id: firstContract.id, email: bundle.client_email, name: signerName || bundle.client_name },
       });
       if (fnErr) throw fnErr;
       setOtpSent(true);
@@ -260,14 +217,6 @@ export default function BundleSignPage() {
       toast.error('Código inválido ou expirado');
       setSigning(false);
       return;
-    }
-
-    for (const sigId of Object.values(signatureIds)) {
-      if (sigId !== firstSigId) {
-        await supabase.from('contract_signatures').update({
-          verification_confirmed_at: new Date().toISOString(),
-        } as any).eq('id', sigId);
-      }
     }
 
     toast.success('Identidade verificada!');
