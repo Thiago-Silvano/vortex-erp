@@ -225,11 +225,10 @@ export default function PropostaClienteBuildsPage() {
     if (selectedIds.size === 0 || !sale) return;
     setSubmitting(true);
     try {
-      await (supabase.from('client_proposal_choices' as any) as any).insert({
-        sale_id: sale.id,
-        client_name: sale.client_name,
-        selected_item_ids: Array.from(selectedIds),
-        total_value: selectedTotal,
+      await (supabase as any).rpc('save_proposal_choice', {
+        p_short_id: shortId,
+        p_selected_item_ids: Array.from(selectedIds),
+        p_total: selectedTotal,
       });
       setSubmitted(true);
       setPreviousChoices(Array.from(selectedIds));
