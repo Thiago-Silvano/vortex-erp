@@ -220,7 +220,7 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8.5);
       doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-      doc.text("VALOR DO AEREO", m + 7, y + boxH / 2 + 1);
+      doc.text("VALOR", m + 7, y + boxH / 2 + 1);
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
