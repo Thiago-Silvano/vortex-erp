@@ -59,9 +59,9 @@ export interface HotelVoucher {
     rooms?: number;
   };
   tripadvisorPopularMentions?: string[];
+  value?: number;
 }
 
-  value?: number;
 export interface ServiceVoucher {
   name: string;
   description?: string;
