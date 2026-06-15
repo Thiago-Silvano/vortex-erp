@@ -21,7 +21,13 @@ import {
   Plane, Hotel, Car, Ticket, FileText, Link2, MessageCircle, Copy, Archive, ArchiveRestore,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, isValid } from 'date-fns';
+
+const safeFormat = (value: string | null | undefined, fmt: string, suffix = ''): string => {
+  if (!value) return '-';
+  const d = new Date(suffix ? value + suffix : value);
+  return isValid(d) ? format(d, fmt) : '-';
+};
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
@@ -617,8 +623,8 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                           <TableCell className="font-medium">{s.client_name}</TableCell>
                           <TableCell>{s.destination_name || '-'}</TableCell>
                           <TableCell>
-                            {s.trip_start_date ? format(new Date(s.trip_start_date + 'T12:00:00'), 'dd/MM') : '-'}
-                            {s.trip_end_date && ` - ${format(new Date(s.trip_end_date + 'T12:00:00'), 'dd/MM')}`}
+                            {safeFormat(s.trip_start_date, 'dd/MM', 'T12:00:00')}
+                            {s.trip_end_date && ` - ${safeFormat(s.trip_end_date, 'dd/MM', 'T12:00:00')}`}
                           </TableCell>
                           <TableCell>{fmt(Number(s.total_sale))}</TableCell>
                           <TableCell>{s.passengers_count || 1}</TableCell>
@@ -628,7 +634,7 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                               {col.name}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'dd/MM/yy')}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{safeFormat(s.created_at, 'dd/MM/yy')}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleViewSale(s.id); }}><Eye className="h-4 w-4" /></Button>
@@ -672,7 +678,7 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                     </div>
                     <div className="flex items-center justify-between mt-2 text-sm">
                       <strong>{fmt(Number(s.total_sale))}</strong>
-                      <span className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'dd/MM/yy')}</span>
+                      <span className="text-xs text-muted-foreground">{safeFormat(s.created_at, 'dd/MM/yy')}</span>
                     </div>
                   </Card>
                 );
