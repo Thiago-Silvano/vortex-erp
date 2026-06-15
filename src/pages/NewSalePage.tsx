@@ -2211,6 +2211,7 @@ export default function NewSalePage() {
         hotels.push({
           name: h.hotelName,
           description: h.observations || '',
+          value: Number(item.total_value) || 0,
           detailedDescription: item.metadata?.detailedDescription || '',
           checkIn: h.checkInDate,
           checkOut: h.checkOutDate,
