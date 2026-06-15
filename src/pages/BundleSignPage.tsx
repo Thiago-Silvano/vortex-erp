@@ -395,51 +395,30 @@ export default function BundleSignPage() {
 
     let signatureData = sigType === 'draw' && canvasRef.current ? canvasRef.current.toDataURL('image/png') : signerName;
 
+    const docs: { contract_id: string; signature_id: string; document_hash: string }[] = [];
     for (const c of contracts) {
       const sigId = signatureIds[c.id];
       if (!sigId) continue;
-
       const encoder = new TextEncoder();
       const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(c.body_html));
       const docHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-      await supabase.from('contract_signatures').update({
-        signature_type: sigType,
-        signature_data: signatureData,
-        document_hash: docHash,
-        status: 'signed',
-        signed_at: new Date().toISOString(),
-        device_info: signingContext?.device_info || `${navigator.platform} | ${navigator.language}`,
-        ip_address: signingContext?.ip_address || '',
-        selfie_url: selfieUrl || '',
-        geo_city: signingContext?.geo_city || '',
-        geo_state: signingContext?.geo_state || '',
-        geo_country: signingContext?.geo_country || '',
-        geolocation: signingContext?.geolocation || {},
-      } as any).eq('id', sigId);
-
-      await supabase.from('contracts').update({
-        status: 'signed',
-        signed_at: new Date().toISOString(),
-      } as any).eq('id', c.id);
-
-      await supabase.from('contract_audit_log').insert({
-        contract_id: c.id, action: 'signed', actor: signerName || bundle.client_name, actor_type: 'client',
-        ip_address: signingContext?.ip_address || '',
-        details: {
-          signature_type: sigType,
-          document_hash: docHash,
-          verification_method: 'email_otp',
-          bundle_id: bundle.id,
-          selfie_url: selfieUrl,
-          geo_city: signingContext?.geo_city,
-          geo_state: signingContext?.geo_state,
-          geo_country: signingContext?.geo_country,
-        }
-      } as any);
+      docs.push({ contract_id: c.id, signature_id: sigId, document_hash: docHash });
     }
 
-    await (supabase.from('contract_bundles' as any).update({ status: 'signed', signed_at: new Date().toISOString() } as any).eq('id', bundle.id) as any);
+    await (supabase as any).rpc('finalize_bundle_signatures', {
+      p_token: token,
+      p_signature_type: sigType,
+      p_signature_data: signatureData,
+      p_device_info: signingContext?.device_info || `${navigator.platform} | ${navigator.language}`,
+      p_ip: signingContext?.ip_address || '',
+      p_selfie_url: selfieUrl || '',
+      p_geo_city: signingContext?.geo_city || '',
+      p_geo_state: signingContext?.geo_state || '',
+      p_geo_country: signingContext?.geo_country || '',
+      p_geolocation: signingContext?.geolocation || {},
+      p_signer_name: signerName || bundle.client_name,
+      p_docs: docs,
+    });
 
     await sendSignedContractsEmail();
 
