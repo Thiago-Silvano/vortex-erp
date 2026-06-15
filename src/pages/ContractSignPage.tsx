@@ -105,16 +105,12 @@ export default function ContractSignPage() {
 
   const loadContract = async () => {
     if (!token) { setStep('error'); return; }
-    const { data, error } = await supabase
-      .from('contracts')
-      .select('*')
-      .eq('token', token)
-      .single();
+    const { data: payload, error } = await (supabase as any).rpc('get_public_contract', { p_token: token });
+    const c = (payload as any)?.contract;
+    if (error || !c) { setStep('error'); return; }
 
-    if (error || !data) { setStep('error'); return; }
-    const c = data as any;
-
-    if (c.empresa_id) await loadAgencyInfo(c.empresa_id);
+    const ag = (payload as any)?.agency;
+    if (ag) setAgencyInfo({ name: ag.name || '', logo_url: ag.logo_url || '' });
 
     if (c.status === 'signed') { setContract(c); setStep('already_signed'); return; }
     if (c.expires_at && new Date(c.expires_at) < new Date()) { setStep('expired'); return; }
@@ -122,14 +118,12 @@ export default function ContractSignPage() {
     setContract(c);
     setSignerName(c.client_name || '');
 
-    // Log view
-    if (c.status !== 'viewed') {
-      await supabase.from('contracts').update({ status: 'viewed', viewed_at: new Date().toISOString() } as any).eq('id', c.id);
-    }
-    await supabase.from('contract_audit_log').insert({
-      contract_id: c.id, action: 'viewed', actor: c.client_name || 'Cliente', actor_type: 'client',
-      ip_address: signingContext?.ip_address || '', details: { user_agent: navigator.userAgent }
-    } as any);
+    // Log view (token-scoped, server-side)
+    await (supabase as any).rpc('log_contract_view', {
+      p_token: token,
+      p_ip: signingContext?.ip_address || '',
+      p_user_agent: navigator.userAgent,
+    });
 
     setStep('view');
   };
@@ -158,28 +152,23 @@ export default function ContractSignPage() {
     if (!contract) return;
     setOtpSending(true);
 
-    const { data: sig, error: sigErr } = await supabase.from('contract_signatures').insert({
-      contract_id: contract.id,
-      signer_name: signerName || contract.client_name,
-      signer_email: contract.client_email,
-      signer_phone: contract.client_phone,
-      signer_cpf: contract.client_cpf,
-      verification_method: 'email_otp',
-      status: 'pending',
-      user_agent: signingContext?.user_agent || navigator.userAgent,
-      ip_address: signingContext?.ip_address || '',
-      geo_city: signingContext?.geo_city || '',
-      geo_state: signingContext?.geo_state || '',
-      geo_country: signingContext?.geo_country || '',
-      geolocation: signingContext?.geolocation || {},
-    } as any).select().single();
+    const { data: sigId, error: sigErr } = await (supabase as any).rpc('start_contract_signature', {
+      p_token: token,
+      p_signer_name: signerName || contract.client_name,
+      p_user_agent: signingContext?.user_agent || navigator.userAgent,
+      p_ip: signingContext?.ip_address || '',
+      p_geo_city: signingContext?.geo_city || '',
+      p_geo_state: signingContext?.geo_state || '',
+      p_geo_country: signingContext?.geo_country || '',
+      p_geolocation: signingContext?.geolocation || {},
+    });
 
-    if (sigErr || !sig) { toast.error('Erro ao iniciar verificação'); setOtpSending(false); return; }
-    setSignatureId((sig as any).id);
+    if (sigErr || !sigId) { toast.error('Erro ao iniciar verificação'); setOtpSending(false); return; }
+    setSignatureId(sigId as string);
 
     try {
       const { error } = await supabase.functions.invoke('send-contract-otp', {
-        body: { signature_id: (sig as any).id, contract_id: contract.id, email: contract.client_email, name: signerName || contract.client_name },
+        body: { signature_id: sigId, contract_id: contract.id, email: contract.client_email, name: signerName || contract.client_name },
       });
       if (error) throw error;
       setOtpSent(true);
@@ -260,42 +249,22 @@ export default function ContractSignPage() {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const docHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // Update signature with all anti-fraud data
-    await supabase.from('contract_signatures').update({
-      signature_type: sigType,
-      signature_data: signatureData,
-      document_hash: docHash,
-      status: 'signed',
-      signed_at: new Date().toISOString(),
-      device_info: signingContext?.device_info || `${navigator.platform} | ${navigator.language}`,
-      ip_address: signingContext?.ip_address || '',
-      selfie_url: selfieUrl || '',
-      geo_city: signingContext?.geo_city || '',
-      geo_state: signingContext?.geo_state || '',
-      geo_country: signingContext?.geo_country || '',
-      geolocation: signingContext?.geolocation || {},
-    } as any).eq('id', signatureId);
-
-    // Update contract
-    await supabase.from('contracts').update({
-      status: 'signed',
-      signed_at: new Date().toISOString(),
-    } as any).eq('id', contract.id);
-
-    // Audit log with geo data
-    await supabase.from('contract_audit_log').insert({
-      contract_id: contract.id, action: 'signed', actor: signerName || contract.client_name, actor_type: 'client',
-      ip_address: signingContext?.ip_address || '',
-      details: {
-        signature_type: sigType,
-        document_hash: docHash,
-        verification_method: 'email_otp',
-        selfie_url: selfieUrl,
-        geo_city: signingContext?.geo_city,
-        geo_state: signingContext?.geo_state,
-        geo_country: signingContext?.geo_country,
-      }
-    } as any);
+    // Finalize signature, contract status and audit log server-side (token-scoped)
+    await (supabase as any).rpc('finalize_contract_signature', {
+      p_token: token,
+      p_signature_id: signatureId,
+      p_signature_type: sigType,
+      p_signature_data: signatureData,
+      p_document_hash: docHash,
+      p_device_info: signingContext?.device_info || `${navigator.platform} | ${navigator.language}`,
+      p_ip: signingContext?.ip_address || '',
+      p_selfie_url: selfieUrl || '',
+      p_geo_city: signingContext?.geo_city || '',
+      p_geo_state: signingContext?.geo_state || '',
+      p_geo_country: signingContext?.geo_country || '',
+      p_geolocation: signingContext?.geolocation || {},
+      p_signer_name: signerName || contract.client_name,
+    });
 
     setSigning(false);
     setStep('done');
