@@ -161,21 +161,37 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
   }
 
   // ─── FLIGHT ITINERARY ─────────────────────────────────────
-  // Rule: max 18 legs per page. Each group has its own title (separator).
-  const MAX_LEGS_PER_PAGE = 18;
-  let legsOnCurrentPage = 0;
-
+  // Rule: each flight group (IDA + VOLTA + value) must stay together on a single
+  // page — never split a flight's information across a page break.
   const groups = (data.flightGroups && data.flightGroups.length > 0)
     ? data.flightGroups
     : [{ title: "", totalValue: undefined as number | undefined, legs: data.flightLegs, localizador: data.localizador }];
+
+  const PAGE_BOTTOM = 275;
 
   groups.forEach((group, gIdx) => {
     const outbound = group.legs.filter((l) => l.direction !== "volta");
     const returnLegs = group.legs.filter((l) => l.direction === "volta");
 
+    // Estimate the full height needed for this group so we can keep it together.
+    const sectionHeight = (legs: AirlineVoucherLeg[]) =>
+      legs.length === 0 ? 0 : 13 + legs.length * 30 + Math.max(0, legs.length - 1) * 3 + 4;
+    const showValue =
+      !!data.showIndividualValues && typeof group.totalValue === "number" && group.totalValue > 0;
+    const groupHeight =
+      (gIdx > 0 ? 5 : 0) +
+      sectionHeight(outbound) +
+      sectionHeight(returnLegs) +
+      (showValue ? 18 : 0);
+
+    // If the whole group won't fit on the current page, move it to a new page.
+    if (y + groupHeight > PAGE_BOTTOM) {
+      doc.addPage();
+      y = 15;
+    }
+
     // Gold separator bar between flights (not before the first)
     if (gIdx > 0) {
-      y = checkPage(doc, y, 8);
       doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
       doc.rect(m, y, cw, 1.2, "F");
       y += 5;
@@ -185,31 +201,34 @@ export function generateAirlineVoucherPdf(data: AirlineVoucherData, existingDoc?
 
     const renderSection = (label: "IDA" | "VOLTA", legs: AirlineVoucherLeg[]) => {
       if (legs.length === 0) return;
-      // Break the legs across pages of 18
-      let i = 0;
-      while (i < legs.length) {
-        const remaining = MAX_LEGS_PER_PAGE - legsOnCurrentPage;
-        if (remaining <= 0) {
-          doc.addPage();
-          y = 15;
-          legsOnCurrentPage = 0;
-          continue;
-        }
-        const slice = legs.slice(i, i + remaining);
-        y = drawFlightSection(doc, label, slice, y, m, pw, cw, "", group.totalValue && i === 0 && label === "IDA" ? group.totalValue : undefined, group.localizador);
-        legsOnCurrentPage += slice.length;
-        i += slice.length;
-        y += 4;
-        if (i < legs.length) {
-          doc.addPage();
-          y = 15;
-          legsOnCurrentPage = 0;
-        }
-      }
+      // Render the whole section without internal page breaks.
+      y = drawFlightSection(doc, label, legs, y, m, pw, cw, "", undefined, group.localizador);
+      y += 4;
     };
 
     renderSection("IDA", outbound);
     renderSection("VOLTA", returnLegs);
+
+    // ─── Value box (per flight) ─────────────────────────────
+    if (showValue) {
+      const boxH = 14;
+      doc.setFillColor(DARK_HEADER[0], DARK_HEADER[1], DARK_HEADER[2]);
+      doc.roundedRect(m, y, cw, boxH, 1.5, 1.5, "F");
+      doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+      doc.rect(m, y, 3, boxH, "F");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+      doc.text("VALOR DO AEREO", m + 7, y + boxH / 2 + 1);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+      doc.text(fmt(group.totalValue as number), m + cw - 4, y + boxH / 2 + 1.5, { align: "right" });
+
+      y += boxH + 4;
+    }
 
     if (gIdx < groups.length - 1) y += 2;
   });
