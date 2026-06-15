@@ -59,6 +59,7 @@ export interface HotelVoucher {
     rooms?: number;
   };
   tripadvisorPopularMentions?: string[];
+  value?: number;
 }
 
 export interface ServiceVoucher {
@@ -290,6 +291,7 @@ function drawHotelContent(
   y: number,
   m: number,
   cw: number,
+  showIndividualValues = false,
 ): number {
   // ── Top row: Reserva (right, stylized) ────────────────────
   if (hotel.reservationNumber) {
@@ -848,6 +850,29 @@ function drawHotelContent(
     y += 4;
   }
 
+  // ── Valor (individual) ─────────────────────────────────────
+  if (showIndividualValues && typeof hotel.value === "number" && hotel.value > 0) {
+    const boxH = 14;
+    y = checkPage(doc, y, boxH + 6);
+
+    doc.setFillColor(DARK_HEADER[0], DARK_HEADER[1], DARK_HEADER[2]);
+    doc.roundedRect(m, y, cw, boxH, 1.5, 1.5, "F");
+    doc.setFillColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+    doc.rect(m, y, 3, boxH, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    doc.text("VALOR DA HOSPEDAGEM", m + 7, y + boxH / 2 + 1);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(GOLD_ACCENT[0], GOLD_ACCENT[1], GOLD_ACCENT[2]);
+    doc.text(fmt(hotel.value), m + cw - 4, y + boxH / 2 + 1.5, { align: "right" });
+
+    y += boxH + 4;
+  }
+
   return y;
 }
 
@@ -1043,7 +1068,7 @@ export function generateVoucherPdf(data: VoucherPdfData, existingDoc?: jsPDF) {
       }
 
       if (page.type === "hotel" && page.hotel) {
-        y = drawHotelContent(doc, page.hotel, data.passengers, y, m, cw);
+        y = drawHotelContent(doc, page.hotel, data.passengers, y, m, cw, data.showIndividualValues);
         serviceCountOnPage = SERVICES_PER_PAGE; // força nova página depois
       } else if (page.type === "service" && page.service) {
         y = drawServiceContent(doc, page.service, y, m, cw);
