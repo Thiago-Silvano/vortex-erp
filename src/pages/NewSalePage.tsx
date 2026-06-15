@@ -2523,6 +2523,7 @@ export default function NewSalePage() {
         agencyEmail: agency.email || '',
         agencyWebsite: agency.website || '',
         hideReference: isQuoteMode || !airlineItems.some(it => it.show_purchase_number && (it.purchase_number || '').trim()),
+        showIndividualValues,
       };
 
     const combinedDoc: any = generateAirlineVoucherPdf(airVoucherData, appendTo);
