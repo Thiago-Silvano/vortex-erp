@@ -71,6 +71,15 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
+  const location = useLocation();
+
+  // Sync view mode with the current route (component is shared between
+  // /cotacoes and /cotacoes/lista, so it does not remount on navigation)
+  useEffect(() => {
+    const p = location.pathname;
+    if (p === '/cotacoes/lista' || p === '/cotacoes/arquivadas') setViewMode('list');
+    else if (p === '/cotacoes') setViewMode('kanban');
+  }, [location.pathname]);
 
   // Load user
   useEffect(() => {
