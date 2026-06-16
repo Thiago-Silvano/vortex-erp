@@ -18,11 +18,12 @@ interface KanbanColumnProps {
   onDuplicate?: (sale: KanbanSale) => void;
   onWhatsApp?: (sale: KanbanSale) => void;
   onConvert?: (sale: KanbanSale) => void;
+  onDelete?: (sale: KanbanSale) => void;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
 }
 
-export default function KanbanColumn({ column, sales, onViewSale, onDuplicate, onWhatsApp, onConvert, selectedIds, onToggleSelect }: KanbanColumnProps) {
+export default function KanbanColumn({ column, sales, onViewSale, onDuplicate, onWhatsApp, onConvert, onDelete, selectedIds, onToggleSelect }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.statusKey });
 
   const totalValue = sales.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
@@ -63,6 +64,7 @@ export default function KanbanColumn({ column, sales, onViewSale, onDuplicate, o
               onDuplicate={onDuplicate}
               onWhatsApp={onWhatsApp}
               onConvert={onConvert}
+              onDelete={onDelete}
               selected={selectedIds?.has(sale.id)}
               onToggleSelect={onToggleSelect}
             />

@@ -551,6 +551,7 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
               onMoveCard={handleMoveCard}
               onViewSale={handleViewSale}
               onDuplicate={handleDuplicate}
+              onDelete={(s) => setDeleteTarget(s)}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
             />

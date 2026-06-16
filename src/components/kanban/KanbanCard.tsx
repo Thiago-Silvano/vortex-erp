@@ -9,7 +9,7 @@ import { format, differenceInDays } from 'date-fns';
 import {
   Plane, Hotel, Car, Ticket, Eye, FileText, Link2,
   MessageCircle, DollarSign, AlertTriangle, Users, MapPin,
-  Calendar, Clock, Copy,
+  Calendar, Clock, Copy, Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -40,11 +40,12 @@ interface KanbanCardProps {
   onDuplicate?: (sale: KanbanSale) => void;
   onWhatsApp?: (sale: KanbanSale) => void;
   onConvert?: (sale: KanbanSale) => void;
+  onDelete?: (sale: KanbanSale) => void;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
 }
 
-export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onWhatsApp, onConvert, selected, onToggleSelect }: KanbanCardProps) {
+export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onWhatsApp, onConvert, onDelete, selected, onToggleSelect }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sale.id,
     data: { type: 'card', sale },
@@ -206,6 +207,16 @@ export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onW
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Converter em venda</TooltipContent>
+            </Tooltip>
+          )}
+          {onDelete && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(sale); }}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Excluir</TooltipContent>
             </Tooltip>
           )}
         </div>
