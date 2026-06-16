@@ -28,6 +28,14 @@ const safeFormat = (value: string | null | undefined, fmt: string, suffix = ''):
   const d = new Date(suffix ? value + suffix : value);
   return isValid(d) ? format(d, fmt) : '-';
 };
+
+const safeDate = (value: string | null | undefined, suffix = ''): Date | null => {
+  if (!value) return null;
+  const d = new Date(suffix ? value + suffix : value);
+  return isValid(d) ? d : null;
+};
+
+const safeText = (value: unknown): string => String(value ?? '').trim();
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
@@ -163,7 +171,14 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
         q = q.limit(500);
       }
 
-      const { data: salesData } = await q;
+      const { data: salesData, error: salesError } = await q;
+      if (salesError) {
+        console.error('Erro ao carregar cotações:', salesError);
+        toast.error('Erro ao carregar cotações');
+        if (!append) setSales([]);
+        setHasMore(false);
+        return;
+      }
       if (!salesData) { if (!append) setSales([]); setHasMore(false); return; }
 
       // Fetch sellers and sale items in parallel (avoid sequential round trips)
@@ -198,7 +213,19 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
 
       const enriched = salesData.map((s: any) => ({
         ...s,
-        seller_name: s.seller_id ? sellerMap[s.seller_id] : undefined,
+        id: safeText(s.id),
+        client_name: safeText(s.client_name) || 'CLIENTE NÃO INFORMADO',
+        destination_name: safeText(s.destination_name),
+        trip_start_date: safeText(s.trip_start_date) || null,
+        trip_end_date: safeText(s.trip_end_date) || null,
+        total_sale: Number.isFinite(Number(s.total_sale)) ? Number(s.total_sale) : 0,
+        passengers_count: Number.isFinite(Number(s.passengers_count)) ? Number(s.passengers_count) : 1,
+        created_at: safeText(s.created_at),
+        updated_at: safeText(s.updated_at),
+        sale_workflow_status: safeText(s.sale_workflow_status) || 'em_aberto',
+        status: safeText(s.status) || 'draft',
+        short_id: safeText(s.short_id),
+        seller_name: s.seller_id ? safeText(sellerMap[s.seller_id]) : undefined,
         ...itemsMap[s.id],
       })) as KanbanSale[];
 
