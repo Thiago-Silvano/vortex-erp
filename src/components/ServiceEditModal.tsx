@@ -158,7 +158,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [desc, setDesc] = useState(description);
   const [detailedDesc, setDetailedDesc] = useState(metadata.detailedDescription || '');
   const [flightLegs, setFlightLegs] = useState<FlightLeg[]>(metadata.flightLegs || []);
-  const [baggage, setBaggage] = useState<BaggageInfo>(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
+  const [baggage, setBaggage] = useState<BaggageInfo>(metadata.baggage || { personalItem: 0, carryOn: 0, checkedBag: 0 });
   const [hotel, setHotel] = useState<HotelInfo>(metadata.hotel || emptyHotel());
   const [searchingHotel, setSearchingHotel] = useState(false);
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
@@ -200,7 +200,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
         airlineId: l.airlineId || mainAirline || undefined,
       }));
       setFlightLegs(legs);
-      setBaggage(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
+      setBaggage(metadata.baggage || { personalItem: 0, carryOn: 0, checkedBag: 0 });
       setHotel(metadata.hotel || emptyHotel());
       const tp = metadata.type || 'adicional';
       const existingImgs = tp === 'hotel'
