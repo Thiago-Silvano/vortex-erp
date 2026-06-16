@@ -158,7 +158,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
   const [desc, setDesc] = useState(description);
   const [detailedDesc, setDetailedDesc] = useState(metadata.detailedDescription || '');
   const [flightLegs, setFlightLegs] = useState<FlightLeg[]>(metadata.flightLegs || []);
-  const [baggage, setBaggage] = useState<BaggageInfo>(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
+  const [baggage, setBaggage] = useState<BaggageInfo>(metadata.baggage || { personalItem: 0, carryOn: 0, checkedBag: 0 });
   const [hotel, setHotel] = useState<HotelInfo>(metadata.hotel || emptyHotel());
   const [searchingHotel, setSearchingHotel] = useState(false);
   const [hotelImages, setHotelImages] = useState<string[]>(metadata.hotel?.images || []);
@@ -200,7 +200,7 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
         airlineId: l.airlineId || mainAirline || undefined,
       }));
       setFlightLegs(legs);
-      setBaggage(metadata.baggage || { personalItem: 1, carryOn: 1, checkedBag: 1 });
+      setBaggage(metadata.baggage || { personalItem: 0, carryOn: 0, checkedBag: 0 });
       setHotel(metadata.hotel || emptyHotel());
       const tp = metadata.type || 'adicional';
       const existingImgs = tp === 'hotel'
@@ -848,6 +848,36 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                       Exibir no voucher
                     </label>
                   </div>
+                </div>
+              </div>
+              {/* Bagagem inclusa na tarifa */}
+              <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+                <Label className="text-xs font-semibold">Bagagem inclusa na tarifa</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={baggage.personalItem > 0}
+                      onChange={e => setBaggage(prev => ({ ...prev, personalItem: e.target.checked ? 1 : 0 }))}
+                    />
+                    🎒 Bolsa ou Mochila
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={baggage.carryOn > 0}
+                      onChange={e => setBaggage(prev => ({ ...prev, carryOn: e.target.checked ? 1 : 0 }))}
+                    />
+                    💼 Mala de 10Kg
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={baggage.checkedBag > 0}
+                      onChange={e => setBaggage(prev => ({ ...prev, checkedBag: e.target.checked ? 1 : 0 }))}
+                    />
+                    🧳 Mala despachada de 23kg
+                  </label>
                 </div>
               </div>
               <div className="flex items-center justify-between">

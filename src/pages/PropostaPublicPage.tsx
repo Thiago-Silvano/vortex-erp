@@ -985,9 +985,9 @@ function ServiceCard({
             {/* Baggage info */}
             {metadata.baggage && (
               <div className="flex gap-4 mt-3 text-xs" style={{ color: '#999' }}>
-                {metadata.baggage.personalItem > 0 && <span>🎒 Item pessoal: {metadata.baggage.personalItem}</span>}
-                {metadata.baggage.carryOn > 0 && <span>💼 Bagagem de mão: {metadata.baggage.carryOn}</span>}
-                {metadata.baggage.checkedBag > 0 && <span>🧳 Despachada: {metadata.baggage.checkedBag}</span>}
+                {metadata.baggage.personalItem > 0 && <span>🎒 Bolsa ou Mochila</span>}
+                {metadata.baggage.carryOn > 0 && <span>💼 Mala de 10Kg</span>}
+                {metadata.baggage.checkedBag > 0 && <span>🧳 Mala despachada de 23kg</span>}
               </div>
             )}
           </div>
