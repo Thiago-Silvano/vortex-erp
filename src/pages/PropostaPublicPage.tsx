@@ -351,15 +351,18 @@ export default function PropostaPublicPage() {
       {infoItems.length > 0 && (
         <div style={{ background: '#0D1B2A' }}>
           <div className="w-full max-w-5xl mx-auto px-6 md:px-10 py-6">
-            <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${infoItems.length}, 1fr)` }}>
+            <div
+              className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2"
+              style={{ ['--info-cols' as any]: infoItems.length }}
+            >
               {infoItems.map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(200,164,91,0.15)' }}>
                     <item.icon className="h-4 w-4" style={{ color: '#C8A45B' }} />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col min-w-0">
                     <p className="text-xs font-bold tracking-[2px] uppercase" style={{ color: '#E8D5A3' }}>{item.label}</p>
-                    <p className="text-base font-bold text-white whitespace-nowrap">{item.value}</p>
+                    <p className="text-base font-bold text-white break-words">{item.value}</p>
                   </div>
                 </div>
               ))}
