@@ -292,7 +292,7 @@ export default function PropostaPublicPage() {
   const perPersonTotal = passengersCount > 1 ? totalSale / passengersCount : totalSale;
 
   return (
-    <div className="min-h-screen" style={{ background: '#F5F0E8', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: '#F5F0E8', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
       {lightbox && <ImageLightbox images={lightbox.images} initialIndex={lightbox.index} onClose={() => setLightbox(null)} />}
 
       {/* ── Hero ── */}
@@ -351,15 +351,19 @@ export default function PropostaPublicPage() {
       {infoItems.length > 0 && (
         <div style={{ background: '#0D1B2A' }}>
           <div className="w-full max-w-5xl mx-auto px-6 md:px-10 py-6">
-            <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${infoItems.length}, 1fr)` }}>
+            <div
+              className={`grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 ${
+                infoItems.length >= 4 ? 'md:grid-cols-4' : infoItems.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'
+              }`}
+            >
               {infoItems.map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(200,164,91,0.15)' }}>
                     <item.icon className="h-4 w-4" style={{ color: '#C8A45B' }} />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col min-w-0">
                     <p className="text-xs font-bold tracking-[2px] uppercase" style={{ color: '#E8D5A3' }}>{item.label}</p>
-                    <p className="text-base font-bold text-white whitespace-nowrap">{item.value}</p>
+                    <p className="text-base font-bold text-white break-words">{item.value}</p>
                   </div>
                 </div>
               ))}
@@ -911,13 +915,13 @@ function ServiceCard({
                     )}
                     {group.legs.map((leg: any, idx: number) => (
                       <React.Fragment key={idx}>
-                        <div className="flex items-center gap-4 p-3 rounded-xl mb-2" style={{ background: '#faf9f6' }}>
-                          <div className="px-2 py-1 rounded text-[10px] font-bold uppercase" style={{ background: leg.direction === 'ida' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
+                        <div className="flex items-center gap-2 sm:gap-4 p-3 rounded-xl mb-2 flex-wrap" style={{ background: '#faf9f6' }}>
+                          <div className="px-2 py-1 rounded text-[10px] font-bold uppercase flex-shrink-0" style={{ background: leg.direction === 'ida' ? '#0D1B2A' : '#C8A45B', color: '#fff' }}>
                             {leg.direction === 'ida' ? 'IDA' : 'VOLTA'}
                           </div>
-                          <div className="flex-1 flex items-center gap-3 text-sm">
-                            <div className="text-center">
-                              <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.origin}</p>
+                          <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-3 text-sm">
+                            <div className="text-center min-w-0">
+                              <p className="font-bold break-words" style={{ color: '#0D1B2A' }}>{leg.origin}</p>
                               {leg.departureTime && <p className="text-xs" style={{ color: '#999' }}>{leg.departureTime}</p>}
                               {leg.departureDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.departureDate)}</p>}
                             </div>
@@ -926,14 +930,14 @@ function ServiceCard({
                               {leg.flightCode && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: '#f0ede8', color: '#999' }}>{leg.flightCode}</span>}
                               <div className="flex-1 h-[1px]" style={{ background: '#ddd' }} />
                             </div>
-                            <div className="text-center">
-                              <p className="font-bold" style={{ color: '#0D1B2A' }}>{leg.destination}</p>
+                            <div className="text-center min-w-0">
+                              <p className="font-bold break-words" style={{ color: '#0D1B2A' }}>{leg.destination}</p>
                               {leg.arrivalTime && <p className="text-xs" style={{ color: '#999' }}>{leg.arrivalTime}</p>}
                               {leg.arrivalDate && <p className="text-[10px]" style={{ color: '#bbb' }}>{formatDateBR(leg.arrivalDate)}</p>}
                             </div>
                           </div>
                           {leg.connectionDuration && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: '#fff3cd', color: '#856404' }}>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: '#fff3cd', color: '#856404' }}>
                               Conexão: {leg.connectionDuration}
                             </span>
                           )}
