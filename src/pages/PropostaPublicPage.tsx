@@ -471,17 +471,17 @@ export default function PropostaPublicPage() {
 
             {/* Single payment (no installments) hero */}
             {(sale.installments <= 1 || receivables.length === 0) && !showIndividual && (
-              <div className="text-center py-12 px-8" style={{ background: 'linear-gradient(135deg, #0F1A2A 0%, #15233A 50%, #0B1422 100%)' }}>
-                <p className="text-sm font-bold tracking-[6px] uppercase mb-6" style={{ color: '#E8D5A3' }}>
+              <div className="text-center py-10 sm:py-12 px-4 sm:px-8" style={{ background: 'linear-gradient(135deg, #0F1A2A 0%, #15233A 50%, #0B1422 100%)' }}>
+                <p className="text-xs sm:text-sm font-bold tracking-[4px] sm:tracking-[6px] uppercase mb-4 sm:mb-6" style={{ color: '#E8D5A3' }}>
                   {showPerPassenger ? 'Investimento por pessoa' : 'Investimento total'}
                 </p>
-                <span className="text-6xl md:text-7xl font-bold text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
                   {fmt(showPerPassenger ? perPersonTotal : totalSale)}
                 </span>
                 {showPerPassenger && passengersCount > 1 && (
                   <>
                     <p className="text-sm text-white/40 mt-2">por pessoa</p>
-                    <div className="w-16 h-[1px] mx-auto my-5" style={{ background: 'rgba(200,164,91,0.3)' }} />
+                    <div className="w-16 h-[1px] mx-auto my-4 sm:my-5" style={{ background: 'rgba(200,164,91,0.3)' }} />
                     <p className="text-sm text-white/30">
                       Valor total: <span className="font-semibold text-white/50">{fmt(totalSale)}</span> · {passengersCount} passageiros
                     </p>
