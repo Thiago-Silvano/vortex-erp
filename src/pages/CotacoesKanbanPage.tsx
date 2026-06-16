@@ -28,6 +28,14 @@ const safeFormat = (value: string | null | undefined, fmt: string, suffix = ''):
   const d = new Date(suffix ? value + suffix : value);
   return isValid(d) ? format(d, fmt) : '-';
 };
+
+const safeDate = (value: string | null | undefined, suffix = ''): Date | null => {
+  if (!value) return null;
+  const d = new Date(suffix ? value + suffix : value);
+  return isValid(d) ? d : null;
+};
+
+const safeText = (value: unknown): string => String(value ?? '').trim();
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
@@ -163,7 +171,14 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
         q = q.limit(500);
       }
 
-      const { data: salesData } = await q;
+      const { data: salesData, error: salesError } = await q;
+      if (salesError) {
+        console.error('Erro ao carregar cotações:', salesError);
+        toast.error('Erro ao carregar cotações');
+        if (!append) setSales([]);
+        setHasMore(false);
+        return;
+      }
       if (!salesData) { if (!append) setSales([]); setHasMore(false); return; }
 
       // Fetch sellers and sale items in parallel (avoid sequential round trips)
@@ -198,7 +213,19 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
 
       const enriched = salesData.map((s: any) => ({
         ...s,
-        seller_name: s.seller_id ? sellerMap[s.seller_id] : undefined,
+        id: safeText(s.id),
+        client_name: safeText(s.client_name) || 'CLIENTE NÃO INFORMADO',
+        destination_name: safeText(s.destination_name),
+        trip_start_date: safeText(s.trip_start_date) || null,
+        trip_end_date: safeText(s.trip_end_date) || null,
+        total_sale: Number.isFinite(Number(s.total_sale)) ? Number(s.total_sale) : 0,
+        passengers_count: Number.isFinite(Number(s.passengers_count)) ? Number(s.passengers_count) : 1,
+        created_at: safeText(s.created_at),
+        updated_at: safeText(s.updated_at),
+        sale_workflow_status: safeText(s.sale_workflow_status) || 'em_aberto',
+        status: safeText(s.status) || 'draft',
+        short_id: safeText(s.short_id),
+        seller_name: s.seller_id ? safeText(sellerMap[s.seller_id]) : undefined,
         ...itemsMap[s.id],
       })) as KanbanSale[];
 
@@ -224,11 +251,11 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   }, [activeCompany?.id, viewMode, archivedView, filterStatus, debouncedSearch]);
 
   // Filter logic
-  const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const normalize = (s: unknown) => safeText(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   
   const filteredSales = useMemo(() => {
     return sales.filter(s => {
-      if (search && !normalize(s.client_name).includes(normalize(search)) && !normalize(s.destination_name || '').includes(normalize(search))) return false;
+      if (search && !normalize(s.client_name).includes(normalize(search)) && !normalize(s.destination_name).includes(normalize(search))) return false;
       if (filterSeller !== 'all' && s.seller_name !== filterSeller) return false;
       if (filterDestination !== 'all' && s.destination_name !== filterDestination) return false;
       if (archivedView) {
@@ -423,7 +450,10 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   );
   const totalCotacoes = statsSales.length;
   const totalValor = statsSales.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
-  const staleCount = statsSales.filter(s => differenceInDays(new Date(), new Date(s.updated_at)) >= 3).length;
+  const staleCount = statsSales.filter(s => {
+    const updatedAt = safeDate(s.updated_at);
+    return updatedAt ? differenceInDays(new Date(), updatedAt) >= 3 : false;
+  }).length;
 
   return (
     <AppLayout>
@@ -612,7 +642,8 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                       <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma cotação encontrada</TableCell></TableRow>
                     ) : visibleSortedSales.map(s => {
                       const col = columns.find(c => c.statusKey === s.sale_workflow_status) || columns[0];
-                      const daysSince = differenceInDays(new Date(), new Date(s.updated_at));
+                      const updatedAt = safeDate(s.updated_at);
+                      const daysSince = updatedAt ? differenceInDays(new Date(), updatedAt) : 0;
                       return (
                         <TableRow key={s.id} className={cn('cursor-pointer hover:bg-muted/50', daysSince >= 3 && 'bg-destructive/5')} onClick={() => handleViewSale(s.id)}>
                           <TableCell onClick={(e) => e.stopPropagation()}>
