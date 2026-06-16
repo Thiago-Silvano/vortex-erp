@@ -332,16 +332,13 @@ export default function PropostaPublicPage() {
             <h1 className="text-5xl md:text-7xl font-bold mb-5 text-white" style={{ fontFamily: "'Georgia', serif", textShadow: '0 4px 24px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.7)', letterSpacing: '-0.02em' }}>
               {(sale as any).quote_title || sale.client_name}
             </h1>
-            <div className="w-20 h-[2px] mx-auto mb-5" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
-            {destination && (
-              <p className="text-2xl md:text-3xl font-semibold text-white mb-3" style={{ fontFamily: "'Georgia', serif", textShadow: '0 2px 14px rgba(0,0,0,0.85)' }}>
-                {destination}
-              </p>
-            )}
             {departureDate && returnDate && (
-              <p className="text-base md:text-lg font-semibold text-white tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.85)' }}>
-                {formatDateLong(departureDate)} — {formatDateLong(returnDate)}
-              </p>
+              <>
+                <div className="w-20 h-[2px] mx-auto mb-5" style={{ background: 'linear-gradient(90deg, transparent, #C8A45B, transparent)' }} />
+                <p className="text-base md:text-lg font-semibold text-white tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.85)' }}>
+                  {formatDateLong(departureDate)} — {formatDateLong(returnDate)}
+                </p>
+              </>
             )}
           </div>
         </div>
