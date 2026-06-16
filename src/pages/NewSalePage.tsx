@@ -3554,8 +3554,7 @@ export default function NewSalePage() {
                       </div>
                       {editingItemIdx === idx && (
                         <ServiceEditModal
-                          inline
-                          key={`inline-${idx}`}
+                          key={`modal-${idx}`}
                           open={true}
                           onClose={() => setEditingItemIdx(null)}
                           description={items[idx]?.description || ''}
