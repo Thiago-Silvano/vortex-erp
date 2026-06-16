@@ -352,8 +352,9 @@ export default function PropostaPublicPage() {
         <div style={{ background: '#0D1B2A' }}>
           <div className="w-full max-w-5xl mx-auto px-6 md:px-10 py-6">
             <div
-              className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2"
-              style={{ ['--info-cols' as any]: infoItems.length }}
+              className={`grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 ${
+                infoItems.length >= 4 ? 'md:grid-cols-4' : infoItems.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'
+              }`}
             >
               {infoItems.map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
