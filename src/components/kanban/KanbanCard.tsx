@@ -5,13 +5,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, isValid } from 'date-fns';
 import {
   Plane, Hotel, Car, Ticket, Eye, FileText, Link2,
   MessageCircle, DollarSign, AlertTriangle, Users, MapPin,
   Calendar, Clock, Copy, Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const safeFormat = (value: string | null | undefined, fmt: string, suffix = ''): string => {
+  if (!value) return '';
+  const d = new Date(suffix ? value + suffix : value);
+  return isValid(d) ? format(d, fmt) : '';
+};
 
 export interface KanbanSale {
   id: string;
@@ -56,7 +62,8 @@ export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onW
     transition,
   };
 
-  const daysSinceUpdate = differenceInDays(new Date(), new Date(sale.updated_at));
+  const updatedAt = sale.updated_at ? new Date(sale.updated_at) : null;
+  const daysSinceUpdate = updatedAt && isValid(updatedAt) ? differenceInDays(new Date(), updatedAt) : 0;
   const isStale = daysSinceUpdate >= 3;
   const isHot = daysSinceUpdate <= 1;
 
@@ -112,12 +119,12 @@ export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onW
           )}
 
           {/* Period */}
-          {sale.trip_start_date && (
+          {sale.trip_start_date && safeFormat(sale.trip_start_date, 'dd/MM', 'T12:00:00') && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Calendar className="h-3 w-3 shrink-0" />
               <span>
-                {format(new Date(sale.trip_start_date + 'T12:00:00'), 'dd/MM')}
-                {sale.trip_end_date && ` - ${format(new Date(sale.trip_end_date + 'T12:00:00'), 'dd/MM')}`}
+                {safeFormat(sale.trip_start_date, 'dd/MM', 'T12:00:00')}
+                {sale.trip_end_date && safeFormat(sale.trip_end_date, 'dd/MM', 'T12:00:00') && ` - ${safeFormat(sale.trip_end_date, 'dd/MM', 'T12:00:00')}`}
               </span>
             </div>
           )}
@@ -148,7 +155,7 @@ export default function KanbanCard({ sale, columnColor, onView, onDuplicate, onW
             )}
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {format(new Date(sale.created_at), 'dd/MM')}
+              {safeFormat(sale.created_at, 'dd/MM') || '-'}
             </div>
           </div>
         </div>
