@@ -251,11 +251,11 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   }, [activeCompany?.id, viewMode, archivedView, filterStatus, debouncedSearch]);
 
   // Filter logic
-  const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const normalize = (s: unknown) => safeText(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   
   const filteredSales = useMemo(() => {
     return sales.filter(s => {
-      if (search && !normalize(s.client_name).includes(normalize(search)) && !normalize(s.destination_name || '').includes(normalize(search))) return false;
+      if (search && !normalize(s.client_name).includes(normalize(search)) && !normalize(s.destination_name).includes(normalize(search))) return false;
       if (filterSeller !== 'all' && s.seller_name !== filterSeller) return false;
       if (filterDestination !== 'all' && s.destination_name !== filterDestination) return false;
       if (archivedView) {
@@ -450,7 +450,10 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
   );
   const totalCotacoes = statsSales.length;
   const totalValor = statsSales.reduce((sum, s) => sum + Number(s.total_sale || 0), 0);
-  const staleCount = statsSales.filter(s => differenceInDays(new Date(), new Date(s.updated_at)) >= 3).length;
+  const staleCount = statsSales.filter(s => {
+    const updatedAt = safeDate(s.updated_at);
+    return updatedAt ? differenceInDays(new Date(), updatedAt) >= 3 : false;
+  }).length;
 
   return (
     <AppLayout>
