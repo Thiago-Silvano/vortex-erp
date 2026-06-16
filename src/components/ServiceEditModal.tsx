@@ -850,6 +850,36 @@ export default function ServiceEditModal({ open, onClose, description, metadata,
                   </div>
                 </div>
               </div>
+              {/* Bagagem inclusa na tarifa */}
+              <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+                <Label className="text-xs font-semibold">Bagagem inclusa na tarifa</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={baggage.personalItem > 0}
+                      onChange={e => setBaggage(prev => ({ ...prev, personalItem: e.target.checked ? 1 : 0 }))}
+                    />
+                    🎒 Bolsa ou Mochila
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={baggage.carryOn > 0}
+                      onChange={e => setBaggage(prev => ({ ...prev, carryOn: e.target.checked ? 1 : 0 }))}
+                    />
+                    💼 Mala de 10Kg
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={baggage.checkedBag > 0}
+                      onChange={e => setBaggage(prev => ({ ...prev, checkedBag: e.target.checked ? 1 : 0 }))}
+                    />
+                    🧳 Mala despachada de 23kg
+                  </label>
+                </div>
+              </div>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-sm">Trechos do Voo</h3>
                 <Button size="sm" variant="outline" onClick={addFlightLeg}><Plus className="h-3 w-3 mr-1" />Trecho</Button>
