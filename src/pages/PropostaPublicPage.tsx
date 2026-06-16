@@ -292,7 +292,7 @@ export default function PropostaPublicPage() {
   const perPersonTotal = passengersCount > 1 ? totalSale / passengersCount : totalSale;
 
   return (
-    <div className="min-h-screen" style={{ background: '#F5F0E8', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: '#F5F0E8', fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
       {lightbox && <ImageLightbox images={lightbox.images} initialIndex={lightbox.index} onClose={() => setLightbox(null)} />}
 
       {/* ── Hero ── */}
