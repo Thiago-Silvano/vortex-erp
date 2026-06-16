@@ -642,7 +642,8 @@ export default function CotacoesKanbanPage({ archivedView = false }: CotacoesKan
                       <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhuma cotação encontrada</TableCell></TableRow>
                     ) : visibleSortedSales.map(s => {
                       const col = columns.find(c => c.statusKey === s.sale_workflow_status) || columns[0];
-                      const daysSince = differenceInDays(new Date(), new Date(s.updated_at));
+                      const updatedAt = safeDate(s.updated_at);
+                      const daysSince = updatedAt ? differenceInDays(new Date(), updatedAt) : 0;
                       return (
                         <TableRow key={s.id} className={cn('cursor-pointer hover:bg-muted/50', daysSince >= 3 && 'bg-destructive/5')} onClick={() => handleViewSale(s.id)}>
                           <TableCell onClick={(e) => e.stopPropagation()}>
