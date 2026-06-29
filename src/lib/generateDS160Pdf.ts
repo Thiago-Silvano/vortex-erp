@@ -215,6 +215,105 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
       y += Math.max(lines.length * 4, 6);
     }
 
+    // Special: visitas aos EUA in section 4
+    if (section.title.includes('4.') && Array.isArray(formData.visitas_eua) && formData.visitas_eua.length) {
+      checkPage(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Visitas aos EUA:', 15, y);
+      doc.setFont('helvetica', 'normal');
+      y += 5;
+      for (const v of formData.visitas_eua) {
+        if (!v || (!v.data_chegada && !v.duracao)) continue;
+        checkPage(6);
+        const txt = `${v.data_chegada || 'Nao informado'} - ${v.duracao || 'Nao informado'}`;
+        doc.text(sanitize(txt), 20, y);
+        y += 5;
+      }
+    }
+
+    // Special: empregos anteriores in section 7
+    if (section.title.includes('7.')) {
+      let empregos: any[] = Array.isArray(formData.empregos_anteriores) ? formData.empregos_anteriores : [];
+      if (!empregos.length) {
+        for (const n of [1, 2]) {
+          if (formData[`emprego_anterior_${n}_empresa`] || formData[`emprego_anterior_${n}_endereco`]) {
+            empregos.push({
+              empresa: formData[`emprego_anterior_${n}_empresa`], cep: formData[`emprego_anterior_${n}_cep`],
+              endereco: formData[`emprego_anterior_${n}_endereco`], telefone: formData[`emprego_anterior_${n}_telefone`],
+              supervisor: formData[`emprego_anterior_${n}_supervisor`], cargo: formData[`emprego_anterior_${n}_cargo`],
+              inicio: formData[`emprego_anterior_${n}_inicio`], termino: formData[`emprego_anterior_${n}_termino`],
+            });
+          }
+        }
+      }
+      empregos = empregos.filter((e: any) => e && Object.values(e).some(Boolean));
+      empregos.forEach((e: any, i: number) => {
+        checkPage(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 90, 140);
+        doc.text(sanitize(`- Emprego Anterior #${i + 1} -`), 15, y);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        y += 5;
+        const parts = [
+          ['Empresa', e.empresa], ['CEP', e.cep], ['Endereco', e.endereco], ['Telefone', e.telefone],
+          ['Supervisor', e.supervisor], ['Cargo', e.cargo], ['Inicio', e.inicio], ['Termino', e.termino],
+          ['Motivo de Saida', e.motivo_saida],
+        ];
+        for (const [lbl, val] of parts) {
+          if (!val) continue;
+          checkPage(6);
+          doc.setFont('helvetica', 'bold');
+          doc.text(sanitize(String(lbl)) + ':', 20, y);
+          doc.setFont('helvetica', 'normal');
+          const lines = doc.splitTextToSize(sanitize(String(val)), pageW - 85);
+          doc.text(lines, 75, y);
+          y += Math.max(lines.length * 4, 5);
+        }
+      });
+    }
+
+    // Special: formacoes in section 8
+    if (section.title.includes('8.')) {
+      let formacoes: any[] = Array.isArray(formData.formacoes) ? formData.formacoes : [];
+      if (!formacoes.length) {
+        for (const n of [1, 2, 3]) {
+          if (formData[`formacao_${n}_instituicao`] || formData[`formacao_${n}_curso`]) {
+            formacoes.push({
+              instituicao: formData[`formacao_${n}_instituicao`], cep: formData[`formacao_${n}_cep`],
+              endereco: formData[`formacao_${n}_endereco`], telefone: formData[`formacao_${n}_telefone`],
+              curso: formData[`formacao_${n}_curso`], pais: 'Brasil',
+              inicio: formData[`formacao_${n}_inicio`], termino: formData[`formacao_${n}_termino`],
+            });
+          }
+        }
+      }
+      formacoes = formacoes.filter((f: any) => f && Object.values(f).some(Boolean));
+      formacoes.forEach((f: any, i: number) => {
+        checkPage(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 90, 140);
+        doc.text(sanitize(`- Formacao #${i + 1} -`), 15, y);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        y += 5;
+        const parts = [
+          ['Instituicao', f.instituicao], ['Pais', f.pais], ['CEP', f.cep], ['Endereco', f.endereco],
+          ['Telefone', f.telefone], ['Curso', f.curso], ['Inicio', f.inicio], ['Termino', f.termino],
+        ];
+        for (const [lbl, val] of parts) {
+          if (!val) continue;
+          checkPage(6);
+          doc.setFont('helvetica', 'bold');
+          doc.text(sanitize(String(lbl)) + ':', 20, y);
+          doc.setFont('helvetica', 'normal');
+          const lines = doc.splitTextToSize(sanitize(String(val)), pageW - 85);
+          doc.text(lines, 75, y);
+          y += Math.max(lines.length * 4, 5);
+        }
+      });
+    }
+
     // Special: countries visited in section 9
     if (section.title.includes('9.') && formData.paises_visitados?.length) {
       checkPage(8);
