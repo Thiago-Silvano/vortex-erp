@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Plus, X } from 'lucide-react';
 import { DS160StepProps } from './types';
+import { FieldError, errClass } from './fieldError';
 
 interface Formacao {
   instituicao?: string; cep?: string; endereco?: string; telefone?: string;
@@ -29,7 +30,7 @@ function seedFormacoes(data: Record<string, any>): Formacao[] {
   return legacy.length ? legacy : [{}];
 }
 
-export default function DS160Step8({ data, onChange }: DS160StepProps) {
+export default function DS160Step8({ data, onChange, errors }: DS160StepProps) {
   const formacoes = seedFormacoes(data);
   const update = (idx: number, key: keyof Formacao, value: string) => {
     onChange('formacoes', formacoes.map((f, i) => (i === idx ? { ...f, [key]: value } : f)));
@@ -48,13 +49,13 @@ export default function DS160Step8({ data, onChange }: DS160StepProps) {
               <Button type="button" variant="outline" size="sm" onClick={() => removeFormacao(i)} className="gap-1.5"><X className="h-4 w-4" /> Remover</Button>
             )}
           </div>
-          <div><Label>Nome da Instituição</Label><Input value={f.instituicao || ''} onChange={e => update(i, 'instituicao', e.target.value)} /></div>
+          <div><Label>Nome da Instituição</Label><Input className={errClass(errors?.[`formacoes.${i}.instituicao`])} value={f.instituicao || ''} onChange={e => update(i, 'instituicao', e.target.value)} /><FieldError msg={errors?.[`formacoes.${i}.instituicao`]} /></div>
           <div><Label>País da Instituição</Label><Input value={f.pais ?? 'Brasil'} onChange={e => update(i, 'pais', e.target.value)} placeholder="Ex: Brasil" /></div>
           <div><Label>CEP</Label><Input value={f.cep || ''} onChange={e => update(i, 'cep', e.target.value)} placeholder="00000-000" maxLength={9} /></div>
           <div><Label>Endereço Completo</Label><Input value={f.endereco || ''} onChange={e => update(i, 'endereco', e.target.value)} /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Telefone</Label><Input value={f.telefone || ''} onChange={e => update(i, 'telefone', e.target.value)} /></div>
-            <div><Label>Curso</Label><Input value={f.curso || ''} onChange={e => update(i, 'curso', e.target.value)} /></div>
+            <div><Label>Curso</Label><Input className={errClass(errors?.[`formacoes.${i}.curso`])} value={f.curso || ''} onChange={e => update(i, 'curso', e.target.value)} /><FieldError msg={errors?.[`formacoes.${i}.curso`]} /></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Data de Início</Label><Input type="date" value={f.inicio || ''} onChange={e => update(i, 'inicio', e.target.value)} /></div>
