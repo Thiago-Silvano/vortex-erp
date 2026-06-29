@@ -46,6 +46,19 @@ const emptyDuties: DutiesState = {
   ant2Enabled: false, ant2: '',
 };
 
+interface DutiesAvail { atual: boolean; ant1: boolean; ant2: boolean; }
+
+// Descobre quais ocupações o cliente realmente preencheu no formulário.
+function computeAvailability(formData: Record<string, any>): DutiesAvail {
+  const fd = formData || {};
+  const has = (v: any) => typeof v === 'string' && v.trim().length > 0;
+  const atual = has(fd.empresa_atual) || has(fd.cargo_atual) || has(fd.descricao_funcoes) ||
+    (has(fd.status_profissional) && fd.status_profissional !== 'Desempregado');
+  const emp = Array.isArray(fd.empregos_anteriores) ? fd.empregos_anteriores : [];
+  const empHas = (e: any) => e && (has(e.empresa) || has(e.cargo) || has(e.endereco) || has(e.descricao_funcoes));
+  return { atual, ant1: empHas(emp[0]), ant2: empHas(emp[1]) };
+}
+
 // Aplica os textos de "duties" sobre os campos preenchidos pelo cliente.
 function applyDuties(formData: Record<string, any>, d: DutiesState): Record<string, any> {
   const fd: Record<string, any> = { ...formData };
