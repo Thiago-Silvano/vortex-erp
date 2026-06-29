@@ -3,8 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2 } from 'lucide-react';
+import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -38,6 +42,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [deleteFormId, setDeleteFormId] = useState<string | null>(null);
+  const [dutiesFormId, setDutiesFormId] = useState<string | null>(null);
+  const [duties, setDuties] = useState<DutiesState>(emptyDuties);
+  const [dutiesPdfLoading, setDutiesPdfLoading] = useState(false);
 
   const fetchForms = async () => {
     const { data } = await supabase
