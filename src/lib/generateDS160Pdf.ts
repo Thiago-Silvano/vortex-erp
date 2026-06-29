@@ -15,42 +15,61 @@ const sanitize = (text: string): string => {
 const SECTIONS = [
   { title: '1. Dados Pessoais', fields: [
     ['Sobrenome', 'sobrenome'], ['Nome', 'nome'], ['Nome Completo (Passaporte)', 'nome_completo_passaporte'],
+    ['Usou Outro Nome', 'usou_outro_nome'], ['Outro Nome', 'outro_nome'],
     ['CPF', 'cpf'], ['Sexo', 'sexo'], ['Estado Civil', 'estado_civil'], ['Data de Nascimento', 'data_nascimento'],
     ['Cidade de Nascimento', 'cidade_nascimento'], ['Estado de Nascimento', 'estado_nascimento'],
-    ['País de Nascimento', 'pais_nascimento'], ['Outra Nacionalidade', 'outra_nacionalidade'],
+    ['País de Nascimento', 'pais_nascimento'], ['Nacionalidade', 'nacionalidade'],
+    ['Outra Nacionalidade', 'outra_nacionalidade'],
     ['País da Outra Nacionalidade', 'pais_outra_nacionalidade'], ['ID Outra Nacionalidade', 'id_outra_nacionalidade'],
   ]},
   { title: '2. Informações de Passaporte', fields: [
     ['Nº Passaporte', 'passaporte_numero'], ['País Emissor', 'passaporte_pais_emissor'],
     ['Cidade de Emissão', 'passaporte_cidade_emissao'], ['Data de Emissão', 'passaporte_data_emissao'],
+    ['Estado/Província de Emissão', 'passaporte_estado_emissao'],
     ['Data de Expiração', 'passaporte_data_expiracao'], ['Passaporte Perdido/Roubado', 'passaporte_perdido_roubado'],
+    ['Passaporte Perdido/Roubado', 'passaporte_perdido'],
+    ['Nº do Passaporte Perdido', 'passaporte_perdido_numero'], ['País Emissor (Perdido)', 'passaporte_perdido_pais'],
   ]},
   { title: '3. Contatos', fields: [
     ['CEP', 'contato_cep'], ['Endereço', 'contato_endereco'], ['Número/Complemento', 'contato_numero'],
     ['Bairro', 'contato_bairro'], ['Cidade', 'contato_cidade'], ['Estado', 'contato_estado'],
     ['País', 'contato_pais'], ['Telefone', 'contato_telefone'], ['Email', 'contato_email'],
+    ['Telefone Residencial', 'contato_telefone_residencial'], ['Telefone Comercial', 'contato_telefone_comercial'],
   ]},
   { title: '4. Detalhes da Viagem', fields: [
     ['Motivo da Viagem', 'motivo_viagem'], ['Data de Ida', 'data_ida'], ['Data de Volta', 'data_volta'],
     ['Duração (dias)', 'duracao_viagem'], ['Cidade Destino EUA', 'cidade_destino_eua'],
     ['Hospedagem', 'local_hospedagem'], ['Pagador', 'pagador_viagem'],
-    ['Nome do Pagador (Terceiro)', 'pagador_nome'], ['Endereço do Pagador', 'pagador_endereco'],
+    ['Nome do Pagador', 'pagador_nome'], ['Parentesco do Pagador', 'pagador_parentesco'],
+    ['Endereço do Pagador', 'pagador_endereco'],
     ['Email do Pagador', 'pagador_email'], ['Telefone do Pagador', 'pagador_telefone'],
-    ['Histórico Viagens EUA', 'historico_viagens_eua'], ['Já teve visto americano', 'ja_teve_visto'],
+    ['Empresa Pagadora', 'pagador_empresa_nome'], ['Endereço da Empresa Pagadora', 'pagador_empresa_endereco'],
+    ['Email da Empresa Pagadora', 'pagador_empresa_email'], ['Telefone da Empresa Pagadora', 'pagador_empresa_telefone'],
+    ['Histórico Viagens EUA', 'historico_viagens_eua_tipo'],
+    ['Histórico Viagens EUA (legado)', 'historico_viagens_eua'], ['Já teve visto americano', 'ja_teve_visto'],
     ['Nº Visto Anterior', 'visto_anterior_numero'], ['Consulado Emissor', 'visto_anterior_consulado'],
     ['Visto Anterior - Emissão', 'visto_anterior_emissao'], ['Visto Anterior - Validade', 'visto_anterior_validade'],
-    ['Visto Negado', 'visto_negado'], ['Explicação da Negativa', 'visto_negado_explicacao'],
+    ['Visto Anterior - Ainda Válido', 'visto_anterior_valido'], ['Visto Anterior - Cancelado/Revogado', 'visto_anterior_cancelado'],
+    ['Explicação do Cancelamento', 'visto_anterior_cancelado_explicacao'],
+    ['Visto Negado', 'visto_negado'], ['Ano da Negativa', 'visto_negado_ano'],
+    ['Tipo de Visto Solicitado', 'visto_negado_tipo'], ['Motivo do Consulado', 'visto_negado_motivo'],
+    ['Explicação da Negativa', 'visto_negado_explicacao'],
+    ['Petição de Imigração Negada', 'peticao_imigracao_negada'], ['Explicação (Petição)', 'peticao_imigracao_negada_explicacao'],
   ]},
   { title: '5. Contato nos EUA', fields: [
-    ['Nome', 'contato_eua_nome'], ['Relação', 'contato_eua_relacao'],
+    ['Possui Contato nos EUA', 'possui_contato_eua'],
+    ['Nome', 'contato_eua_nome'], ['Organização/Empresa/Hotel', 'contato_eua_organizacao'], ['Relação', 'contato_eua_relacao'],
     ['Telefone', 'contato_eua_telefone'], ['Email', 'contato_eua_email'], ['Endereço', 'contato_eua_endereco'],
   ]},
   { title: '6. Informações de Família', fields: [
     ['Nome do Pai', 'pai_nome'], ['Nascimento do Pai', 'pai_nascimento'],
+    ['Pai mora nos EUA', 'pai_mora_eua'],
     ['Nome da Mãe', 'mae_nome'], ['Nascimento da Mãe', 'mae_nascimento'],
+    ['Mãe mora nos EUA', 'mae_mora_eua'],
     ['Parentes nos EUA', 'parentes_eua'],
     ['Nome do Cônjuge', 'conjuge_nome'], ['Nascimento Cônjuge', 'conjuge_nascimento'],
     ['Cidade Nascimento Cônjuge', 'conjuge_cidade_nascimento'],
+    ['País Nascimento Cônjuge', 'conjuge_pais_nascimento'],
     ['Início do Casamento', 'conjuge_casamento_inicio'], ['Fim do Casamento/Divórcio', 'conjuge_casamento_fim'],
     ['Detalhes do Divórcio', 'conjuge_divorcio'],
     ['Detalhes do Falecimento', 'conjuge_falecimento'], ['Data Falecimento Cônjuge', 'conjuge_falecimento_data'],
@@ -59,46 +78,48 @@ const SECTIONS = [
     ['Status Profissional', 'status_profissional'], ['Empresa/Instituição Atual', 'empresa_atual'],
     ['Cargo/Função/Curso', 'cargo_atual'], ['Renda Mensal (BRL)', 'renda_mensal'],
     ['CEP da Empresa', 'empresa_cep'], ['Endereço da Empresa', 'empresa_endereco'],
+    ['Telefone da Empresa', 'empresa_telefone'],
     ['Data de Início', 'empresa_data_inicio'], ['Idiomas', 'idiomas'],
     ['Descrição das Funções', 'descricao_funcoes'],
-    // Emprego anterior #1
-    ['— Emprego Anterior #1 —', '__sep_emp1'],
-    ['Empresa #1', 'emprego_anterior_1_empresa'], ['CEP #1', 'emprego_anterior_1_cep'],
-    ['Endereço #1', 'emprego_anterior_1_endereco'], ['Telefone #1', 'emprego_anterior_1_telefone'],
-    ['Supervisor #1', 'emprego_anterior_1_supervisor'], ['Cargo #1', 'emprego_anterior_1_cargo'],
-    ['Início #1', 'emprego_anterior_1_inicio'], ['Término #1', 'emprego_anterior_1_termino'],
-    // Emprego anterior #2
-    ['— Emprego Anterior #2 —', '__sep_emp2'],
-    ['Empresa #2', 'emprego_anterior_2_empresa'], ['CEP #2', 'emprego_anterior_2_cep'],
-    ['Endereço #2', 'emprego_anterior_2_endereco'], ['Telefone #2', 'emprego_anterior_2_telefone'],
-    ['Supervisor #2', 'emprego_anterior_2_supervisor'], ['Cargo #2', 'emprego_anterior_2_cargo'],
-    ['Início #2', 'emprego_anterior_2_inicio'], ['Término #2', 'emprego_anterior_2_termino'],
   ]},
-  { title: '8. Histórico Acadêmico', fields: [
-    ['— Formação #1 —', '__sep_form1'],
-    ['Instituição #1', 'formacao_1_instituicao'], ['CEP #1', 'formacao_1_cep'],
-    ['Endereço #1', 'formacao_1_endereco'], ['Telefone #1', 'formacao_1_telefone'],
-    ['Curso #1', 'formacao_1_curso'], ['Início #1', 'formacao_1_inicio'], ['Término #1', 'formacao_1_termino'],
-    ['— Formação #2 —', '__sep_form2'],
-    ['Instituição #2', 'formacao_2_instituicao'], ['CEP #2', 'formacao_2_cep'],
-    ['Endereço #2', 'formacao_2_endereco'], ['Telefone #2', 'formacao_2_telefone'],
-    ['Curso #2', 'formacao_2_curso'], ['Início #2', 'formacao_2_inicio'], ['Término #2', 'formacao_2_termino'],
-    ['— Formação #3 —', '__sep_form3'],
-    ['Instituição #3', 'formacao_3_instituicao'], ['CEP #3', 'formacao_3_cep'],
-    ['Endereço #3', 'formacao_3_endereco'], ['Telefone #3', 'formacao_3_telefone'],
-    ['Curso #3', 'formacao_3_curso'], ['Início #3', 'formacao_3_inicio'], ['Término #3', 'formacao_3_termino'],
-  ]},
+  { title: '8. Histórico Acadêmico', fields: [] },
   { title: '9. Viagens e Atividades', fields: [
     ['Organizações', 'organizacoes'],
+    ['Serviu nas Forças Armadas', 'serviu_forcas_armadas'],
+    ['País das Forças Armadas', 'militar_pais'], ['Ramo', 'militar_ramo'],
+    ['Posto/Graduação', 'militar_posto'], ['Especialidade/Função', 'militar_especialidade'],
+    ['Início (Militar)', 'militar_inicio'], ['Saída (Militar)', 'militar_saida'],
+    ['Serviu em Paramilitar/Guerrilha', 'serviu_paramilitar'], ['Explicação (Paramilitar)', 'serviu_paramilitar_explicacao'],
+    ['Habilidades com Armas/Explosivos', 'habilidades_armas'], ['Descrição (Habilidades)', 'habilidades_armas_descricao'],
   ]},
   { title: '10. Segurança e Antecedentes', fields: [
     ['Doença Contagiosa', 'seg_doenca_contagiosa'], ['Explicação Doença', 'seg_doenca_contagiosa_explicacao'],
+    ['Transtorno Mental/Comportamental', 'seg_transtorno_mental'], ['Explicação', 'seg_transtorno_mental_explicacao'],
+    ['Dependência de Drogas/Álcool', 'seg_dependente_drogas'], ['Explicação', 'seg_dependente_drogas_explicacao'],
     ['Preso/Condenado', 'seg_preso_condenado'], ['Explicação Crime', 'seg_preso_condenado_explicacao'],
+    ['Tráfico de Drogas', 'seg_trafico_drogas'], ['Explicação', 'seg_trafico_drogas_explicacao'],
+    ['Lavagem de Dinheiro', 'seg_lavagem_dinheiro'], ['Explicação', 'seg_lavagem_dinheiro_explicacao'],
+    ['Prostituição', 'seg_prostituicao'], ['Explicação', 'seg_prostituicao_explicacao'],
+    ['Tráfico de Pessoas', 'seg_trafico_pessoas'], ['Explicação', 'seg_trafico_pessoas_explicacao'],
+    ['Auxílio ao Tráfico de Pessoas', 'seg_auxilio_trafico_pessoas'], ['Explicação', 'seg_auxilio_trafico_pessoas_explicacao'],
+    ['Atividade Terrorista', 'seg_atividade_terrorista'], ['Explicação', 'seg_atividade_terrorista_explicacao'],
+    ['Apoio a Terrorismo', 'seg_apoio_terrorismo'], ['Explicação', 'seg_apoio_terrorismo_explicacao'],
+    ['Membro de Org. Terrorista', 'seg_membro_org_terrorista'], ['Explicação', 'seg_membro_org_terrorista_explicacao'],
+    ['Genocídio', 'seg_genocidio'], ['Explicação', 'seg_genocidio_explicacao'],
+    ['Tortura', 'seg_tortura'], ['Explicação', 'seg_tortura_explicacao'],
+    ['Violência Extrajudicial', 'seg_violencia_extrajudicial'], ['Explicação', 'seg_violencia_extrajudicial_explicacao'],
+    ['Crianças como Soldados', 'seg_crianca_soldado'], ['Explicação', 'seg_crianca_soldado_explicacao'],
+    ['Violou Liberdade Religiosa', 'seg_violou_liberdade_religiosa'], ['Explicação', 'seg_violou_liberdade_religiosa_explicacao'],
+    ['Controle Populacional Coercitivo', 'seg_controle_populacional'], ['Explicação', 'seg_controle_populacional_explicacao'],
+    ['Transplante de Órgãos Coercitivo', 'seg_transplante_orgaos'], ['Explicação', 'seg_transplante_orgaos_explicacao'],
     ['Visto Cancelado', 'seg_visto_cancelado'], ['Explicação Cancelamento', 'seg_visto_cancelado_explicacao'],
     ['Deportação', 'seg_deportacao'], ['Explicação Deportação', 'seg_deportacao_explicacao'],
     ['Fraude', 'seg_fraude'], ['Explicação Fraude', 'seg_fraude_explicacao'],
     ['Excedeu Prazo', 'seg_excedeu_prazo'], ['Explicação Prazo', 'seg_excedeu_prazo_explicacao'],
     ['ESTA Negado', 'seg_esta_negado'], ['Explicação ESTA', 'seg_esta_negado_explicacao'],
+    ['Renunciou Cidadania (Impostos)', 'seg_renunciou_cidadania_impostos'], ['Explicação', 'seg_renunciou_cidadania_impostos_explicacao'],
+    ['Violou Guarda de Crianças', 'seg_violou_guarda_criancas'], ['Explicação', 'seg_violou_guarda_criancas_explicacao'],
+    ['Votou Ilegalmente nos EUA', 'seg_votou_ilegalmente'], ['Explicação', 'seg_votou_ilegalmente_explicacao'],
   ]},
   { title: '11. Declaração Final', fields: [
     ['Declaração Aceita', 'declaracao_aceita'],
@@ -192,6 +213,105 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
       const lines = doc.splitTextToSize(sanitize(list), pageW - 80);
       doc.text(lines, 70, y);
       y += Math.max(lines.length * 4, 6);
+    }
+
+    // Special: visitas aos EUA in section 4
+    if (section.title.includes('4.') && Array.isArray(formData.visitas_eua) && formData.visitas_eua.length) {
+      checkPage(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Visitas aos EUA:', 15, y);
+      doc.setFont('helvetica', 'normal');
+      y += 5;
+      for (const v of formData.visitas_eua) {
+        if (!v || (!v.data_chegada && !v.duracao)) continue;
+        checkPage(6);
+        const txt = `${v.data_chegada || 'Nao informado'} - ${v.duracao || 'Nao informado'}`;
+        doc.text(sanitize(txt), 20, y);
+        y += 5;
+      }
+    }
+
+    // Special: empregos anteriores in section 7
+    if (section.title.includes('7.')) {
+      let empregos: any[] = Array.isArray(formData.empregos_anteriores) ? formData.empregos_anteriores : [];
+      if (!empregos.length) {
+        for (const n of [1, 2]) {
+          if (formData[`emprego_anterior_${n}_empresa`] || formData[`emprego_anterior_${n}_endereco`]) {
+            empregos.push({
+              empresa: formData[`emprego_anterior_${n}_empresa`], cep: formData[`emprego_anterior_${n}_cep`],
+              endereco: formData[`emprego_anterior_${n}_endereco`], telefone: formData[`emprego_anterior_${n}_telefone`],
+              supervisor: formData[`emprego_anterior_${n}_supervisor`], cargo: formData[`emprego_anterior_${n}_cargo`],
+              inicio: formData[`emprego_anterior_${n}_inicio`], termino: formData[`emprego_anterior_${n}_termino`],
+            });
+          }
+        }
+      }
+      empregos = empregos.filter((e: any) => e && Object.values(e).some(Boolean));
+      empregos.forEach((e: any, i: number) => {
+        checkPage(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 90, 140);
+        doc.text(sanitize(`- Emprego Anterior #${i + 1} -`), 15, y);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        y += 5;
+        const parts = [
+          ['Empresa', e.empresa], ['CEP', e.cep], ['Endereco', e.endereco], ['Telefone', e.telefone],
+          ['Supervisor', e.supervisor], ['Cargo', e.cargo], ['Inicio', e.inicio], ['Termino', e.termino],
+          ['Motivo de Saida', e.motivo_saida],
+        ];
+        for (const [lbl, val] of parts) {
+          if (!val) continue;
+          checkPage(6);
+          doc.setFont('helvetica', 'bold');
+          doc.text(sanitize(String(lbl)) + ':', 20, y);
+          doc.setFont('helvetica', 'normal');
+          const lines = doc.splitTextToSize(sanitize(String(val)), pageW - 85);
+          doc.text(lines, 75, y);
+          y += Math.max(lines.length * 4, 5);
+        }
+      });
+    }
+
+    // Special: formacoes in section 8
+    if (section.title.includes('8.')) {
+      let formacoes: any[] = Array.isArray(formData.formacoes) ? formData.formacoes : [];
+      if (!formacoes.length) {
+        for (const n of [1, 2, 3]) {
+          if (formData[`formacao_${n}_instituicao`] || formData[`formacao_${n}_curso`]) {
+            formacoes.push({
+              instituicao: formData[`formacao_${n}_instituicao`], cep: formData[`formacao_${n}_cep`],
+              endereco: formData[`formacao_${n}_endereco`], telefone: formData[`formacao_${n}_telefone`],
+              curso: formData[`formacao_${n}_curso`], pais: 'Brasil',
+              inicio: formData[`formacao_${n}_inicio`], termino: formData[`formacao_${n}_termino`],
+            });
+          }
+        }
+      }
+      formacoes = formacoes.filter((f: any) => f && Object.values(f).some(Boolean));
+      formacoes.forEach((f: any, i: number) => {
+        checkPage(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 90, 140);
+        doc.text(sanitize(`- Formacao #${i + 1} -`), 15, y);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        y += 5;
+        const parts = [
+          ['Instituicao', f.instituicao], ['Pais', f.pais], ['CEP', f.cep], ['Endereco', f.endereco],
+          ['Telefone', f.telefone], ['Curso', f.curso], ['Inicio', f.inicio], ['Termino', f.termino],
+        ];
+        for (const [lbl, val] of parts) {
+          if (!val) continue;
+          checkPage(6);
+          doc.setFont('helvetica', 'bold');
+          doc.text(sanitize(String(lbl)) + ':', 20, y);
+          doc.setFont('helvetica', 'normal');
+          const lines = doc.splitTextToSize(sanitize(String(val)), pageW - 85);
+          doc.text(lines, 75, y);
+          y += Math.max(lines.length * 4, 5);
+        }
+      });
     }
 
     // Special: countries visited in section 9

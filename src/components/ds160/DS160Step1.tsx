@@ -14,6 +14,16 @@ export default function DS160Step1({ data, onChange }: DS160StepProps) {
         <div><Label>Nome</Label><Input value={data.nome || ''} onChange={e => onChange('nome', e.target.value)} placeholder="Seu Nome" /></div>
       </div>
       <div><Label>Nome Completo (como no passaporte)</Label><Input value={data.nome_completo_passaporte || ''} onChange={e => onChange('nome_completo_passaporte', e.target.value)} placeholder="Ex: SILVA, JOSÉ DA" /></div>
+      <div>
+        <Label>Já usou outro nome? (nome de solteira, religioso, profissional ou apelido)</Label>
+        <RadioGroup value={data.usou_outro_nome || 'Não'} onValueChange={v => onChange('usou_outro_nome', v)} className="flex gap-4 mt-1">
+          <div className="flex items-center gap-2"><RadioGroupItem value="Não" id="outro_nome_nao" /><Label htmlFor="outro_nome_nao">Não</Label></div>
+          <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="outro_nome_sim" /><Label htmlFor="outro_nome_sim">Sim</Label></div>
+        </RadioGroup>
+      </div>
+      {data.usou_outro_nome === 'Sim' && (
+        <div><Label>Qual outro nome?</Label><Input value={data.outro_nome || ''} onChange={e => onChange('outro_nome', e.target.value)} placeholder="Informe o outro nome utilizado" /></div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div><Label>CPF</Label><Input value={data.cpf || ''} onChange={e => onChange('cpf', maskCpf(e.target.value))} placeholder="000.000.000-00" /></div>
         <div>
@@ -41,6 +51,11 @@ export default function DS160Step1({ data, onChange }: DS160StepProps) {
         <div><Label>Estado de Nascimento (UF/Província)</Label><Input value={data.estado_nascimento || ''} onChange={e => onChange('estado_nascimento', e.target.value)} placeholder="Ex: SP" /></div>
       </div>
       <div><Label>País de Nascimento</Label><Input value={data.pais_nascimento || ''} onChange={e => onChange('pais_nascimento', e.target.value)} placeholder="Ex: Brasil" /></div>
+      <div>
+        <Label>Nacionalidade</Label>
+        <Input value={data.nacionalidade ?? 'Brasil'} onChange={e => onChange('nacionalidade', e.target.value)} placeholder="Ex: Brasil" />
+        <p className="text-xs text-slate-400 mt-1">Informe sua nacionalidade atual conforme consta no passaporte.</p>
+      </div>
       <div>
         <Label>Possui outra nacionalidade?</Label>
         <RadioGroup value={data.outra_nacionalidade || 'Não'} onValueChange={v => onChange('outra_nacionalidade', v)} className="flex gap-4 mt-1">
