@@ -171,6 +171,27 @@ export default function DS160PublicPage() {
 
   const progress = ((currentStep + 1) / 11) * 100;
 
+  // Maior etapa acessível: só libera o clique numa etapa se todas as anteriores
+  // estiverem com os campos obrigatórios completos.
+  let maxReachable = 0;
+  for (let i = 0; i < 10; i++) {
+    if (Object.keys(validateStep(i, formData)).length === 0) maxReachable = i + 1;
+    else break;
+  }
+  const goToStep = (idx: number) => {
+    if (idx > maxReachable) {
+      setErrors(validateStep(currentStep, formData));
+      setValidateActive(true);
+      scrollToFirstError();
+      toast.error('Complete os campos obrigatórios das etapas anteriores para avançar.');
+      return;
+    }
+    setErrors({});
+    setValidateActive(false);
+    setCurrentStep(idx);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
