@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Plus, X } from 'lucide-react';
 import { DS160StepProps } from './types';
 import { maskPhone } from '@/lib/masks';
+import { FieldError, errClass } from './fieldError';
 
-export default function DS160Step3({ data, onChange }: DS160StepProps) {
+export default function DS160Step3({ data, onChange, errors }: DS160StepProps) {
   const socialMedias: string[] = data.redes_sociais || [];
 
   const [newSocial, setNewSocial] = useState('');
@@ -41,25 +42,25 @@ export default function DS160Step3({ data, onChange }: DS160StepProps) {
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">3. Contatos</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex gap-2 items-end">
-          <div className="flex-1"><Label>CEP (8 dígitos)</Label><Input value={data.contato_cep || ''} onChange={e => onChange('contato_cep', e.target.value.replace(/\D/g, '').slice(0,8))} placeholder="00000000" /></div>
+          <div className="flex-1"><Label>CEP (8 dígitos)</Label><Input className={errClass(errors?.contato_cep)} value={data.contato_cep || ''} onChange={e => onChange('contato_cep', e.target.value.replace(/\D/g, '').slice(0,8))} placeholder="00000000" /><FieldError msg={errors?.contato_cep} /></div>
           <Button type="button" onClick={fetchCep} variant="outline" size="sm" className="mb-0.5">Buscar</Button>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Endereço (Rua/Av)</Label><Input value={data.contato_endereco || ''} onChange={e => onChange('contato_endereco', e.target.value)} /></div>
-        <div><Label>Número / Complemento</Label><Input value={data.contato_numero || ''} onChange={e => onChange('contato_numero', e.target.value)} /></div>
+        <div><Label>Endereço (Rua/Av)</Label><Input className={errClass(errors?.contato_endereco)} value={data.contato_endereco || ''} onChange={e => onChange('contato_endereco', e.target.value)} /><FieldError msg={errors?.contato_endereco} /></div>
+        <div><Label>Número / Complemento</Label><Input className={errClass(errors?.contato_numero)} value={data.contato_numero || ''} onChange={e => onChange('contato_numero', e.target.value)} /><FieldError msg={errors?.contato_numero} /></div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Bairro</Label><Input value={data.contato_bairro || ''} onChange={e => onChange('contato_bairro', e.target.value)} /></div>
-        <div><Label>Cidade</Label><Input value={data.contato_cidade || ''} onChange={e => onChange('contato_cidade', e.target.value)} /></div>
+        <div><Label>Bairro</Label><Input className={errClass(errors?.contato_bairro)} value={data.contato_bairro || ''} onChange={e => onChange('contato_bairro', e.target.value)} /><FieldError msg={errors?.contato_bairro} /></div>
+        <div><Label>Cidade</Label><Input className={errClass(errors?.contato_cidade)} value={data.contato_cidade || ''} onChange={e => onChange('contato_cidade', e.target.value)} /><FieldError msg={errors?.contato_cidade} /></div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Estado (UF)</Label><Input value={data.contato_estado || ''} onChange={e => onChange('contato_estado', e.target.value)} /></div>
-        <div><Label>País</Label><Input value={data.contato_pais || 'Brasil'} onChange={e => onChange('contato_pais', e.target.value)} /></div>
+        <div><Label>Estado (UF)</Label><Input className={errClass(errors?.contato_estado)} value={data.contato_estado || ''} onChange={e => onChange('contato_estado', e.target.value)} /><FieldError msg={errors?.contato_estado} /></div>
+        <div><Label>País</Label><Input className={errClass(errors?.contato_pais)} value={data.contato_pais || 'Brasil'} onChange={e => onChange('contato_pais', e.target.value)} /><FieldError msg={errors?.contato_pais} /></div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Telefone Celular</Label><Input value={data.contato_telefone || ''} onChange={e => onChange('contato_telefone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
-        <div><Label>Email Atual</Label><Input type="email" value={data.contato_email || ''} onChange={e => onChange('contato_email', e.target.value.toLowerCase())} placeholder="exemplo@email.com" /></div>
+        <div><Label>Telefone Celular</Label><Input className={errClass(errors?.contato_telefone)} value={data.contato_telefone || ''} onChange={e => onChange('contato_telefone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /><FieldError msg={errors?.contato_telefone} /></div>
+        <div><Label>Email Atual</Label><Input type="email" className={errClass(errors?.contato_email)} value={data.contato_email || ''} onChange={e => onChange('contato_email', e.target.value.toLowerCase())} placeholder="exemplo@email.com" /><FieldError msg={errors?.contato_email} /></div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div><Label>Telefone Residencial (fixo) — opcional</Label><Input value={data.contato_telefone_residencial || ''} onChange={e => onChange('contato_telefone_residencial', maskPhone(e.target.value))} placeholder="(00) 0000-0000" /></div>
