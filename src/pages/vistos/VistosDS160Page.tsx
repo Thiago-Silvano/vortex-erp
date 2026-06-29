@@ -297,10 +297,10 @@ export default function VistosDS160Page() {
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <FileText className="h-6 w-6" />
-              DS-160 em Grupo
+              DS-160
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Selecione clientes para enviar um link de preenchimento múltiplo
+              Gere e administre links de preenchimento — selecione 1 cliente para um link individual ou vários para um link em grupo
             </p>
           </div>
         </div>
@@ -316,7 +316,6 @@ export default function VistosDS160Page() {
               <Button onClick={openSendModal} disabled={selected.size === 0} className="gap-1.5">
                 <Link2 className="h-4 w-4" />
                 Gerar Link ({selected.size})
-                Enviar Link ({selected.size})
               </Button>
             </div>
             <div className="relative mt-2">
