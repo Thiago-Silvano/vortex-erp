@@ -258,7 +258,7 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
         const parts = [
           ['Empresa', e.empresa], ['CEP', e.cep], ['Endereco', e.endereco], ['Telefone', e.telefone],
           ['Supervisor', e.supervisor], ['Cargo', e.cargo], ['Inicio', e.inicio], ['Termino', e.termino],
-          ['Motivo de Saida', e.motivo_saida],
+          ['Motivo de Saida', e.motivo_saida], ['Descricao das Funcoes', e.descricao_funcoes],
         ];
         for (const [lbl, val] of parts) {
           if (!val) continue;

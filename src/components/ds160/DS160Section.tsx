@@ -3,8 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2 } from 'lucide-react';
+import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -30,6 +34,34 @@ interface Props {
   isMaster?: boolean;
 }
 
+interface DutiesState {
+  atualEnabled: boolean; atual: string;
+  ant1Enabled: boolean; ant1: string;
+  ant2Enabled: boolean; ant2: string;
+}
+
+const emptyDuties: DutiesState = {
+  atualEnabled: false, atual: '',
+  ant1Enabled: false, ant1: '',
+  ant2Enabled: false, ant2: '',
+};
+
+// Aplica os textos de "duties" sobre os campos preenchidos pelo cliente.
+function applyDuties(formData: Record<string, any>, d: DutiesState): Record<string, any> {
+  const fd: Record<string, any> = { ...formData };
+  if (d.atualEnabled && d.atual.trim()) fd.descricao_funcoes = d.atual.trim();
+  if (d.ant1Enabled || d.ant2Enabled) {
+    const emp = Array.isArray(fd.empregos_anteriores)
+      ? fd.empregos_anteriores.map((x: any) => ({ ...x }))
+      : [];
+    while (emp.length < 2) emp.push({});
+    if (d.ant1Enabled && d.ant1.trim()) emp[0].descricao_funcoes = d.ant1.trim();
+    if (d.ant2Enabled && d.ant2.trim()) emp[1].descricao_funcoes = d.ant2.trim();
+    fd.empregos_anteriores = emp;
+  }
+  return fd;
+}
+
 export default function DS160Section({ clientId, clientName, clientEmail, isMaster }: Props) {
   const { activeCompany } = useCompany();
   const [forms, setForms] = useState<DS160Form[]>([]);
@@ -38,6 +70,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [deleteFormId, setDeleteFormId] = useState<string | null>(null);
+  const [dutiesFormId, setDutiesFormId] = useState<string | null>(null);
+  const [duties, setDuties] = useState<DutiesState>(emptyDuties);
+  const [dutiesPdfLoading, setDutiesPdfLoading] = useState(false);
 
   const fetchForms = async () => {
     const { data } = await supabase
@@ -121,6 +156,43 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     setDeleteFormId(null);
   };
 
+  const openDuties = (form: DS160Form) => {
+    const saved = (form.form_data?.duties_override as DutiesState) || emptyDuties;
+    setDuties({ ...emptyDuties, ...saved });
+    setDutiesFormId(form.id);
+  };
+
+  const persistDuties = async (next: DutiesState) => {
+    const fid = dutiesFormId;
+    if (!fid) return;
+    const form = forms.find(f => f.id === fid);
+    if (!form) return;
+    const merged = { ...(form.form_data || {}), duties_override: next };
+    const { error } = await supabase.from('ds160_forms')
+      .update({ form_data: merged } as any).eq('id', fid);
+    if (error) {
+      toast.error('Erro ao salvar duties');
+      return;
+    }
+    setForms(prev => prev.map(f => f.id === fid ? { ...f, form_data: merged } : f));
+  };
+
+  const handleDutiesToPdf = async () => {
+    const form = forms.find(f => f.id === dutiesFormId);
+    if (!form) return;
+    setDutiesPdfLoading(true);
+    try {
+      await persistDuties(duties);
+      const fd = applyDuties(form.form_data || {}, duties);
+      await generateDS160Pdf(fd, clientName);
+      toast.success('PDF gerado com as duties atualizadas!');
+      setDutiesFormId(null);
+    } catch {
+      toast.error('Erro ao gerar PDF');
+    }
+    setDutiesPdfLoading(false);
+  };
+
   // Check for newly submitted forms (notification)
   const submittedNotDismissed = forms.filter(f => f.status === 'submitted' && !dismissed.has(f.id));
 
@@ -145,6 +217,10 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
             <p className="text-sm font-medium text-emerald-800">Formulário DS-160 preenchido!</p>
             <p className="text-xs text-emerald-600">Enviado em {formatDate(f.submitted_at)}</p>
           </div>
+          <Button size="sm" variant="outline" onClick={() => openDuties(f)} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
+            <Briefcase className="h-3.5 w-3.5" />
+            Adicionar Duties
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => setDismissed(prev => new Set(prev).add(f.id))} className="text-emerald-600">
             Fechar
           </Button>
@@ -212,6 +288,67 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!dutiesFormId} onOpenChange={(o) => !o && setDutiesFormId(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4" /> Adicionar Duties
+            </DialogTitle>
+            <DialogDescription>
+              Substitua a descrição das funções enviada pelo cliente. Os textos são salvos automaticamente ao sair do campo (máx. 250 caracteres cada).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {([
+              { key: 'atual', enabledKey: 'atualEnabled', label: 'Ocupação Atual' },
+              { key: 'ant1', enabledKey: 'ant1Enabled', label: 'Anterior 1' },
+              { key: 'ant2', enabledKey: 'ant2Enabled', label: 'Anterior 2' },
+            ] as const).map(({ key, enabledKey, label }) => {
+              const enabled = duties[enabledKey] as boolean;
+              const text = duties[key] as string;
+              return (
+                <div key={key} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id={`duty-${key}`}
+                      checked={enabled}
+                      onCheckedChange={(c) => {
+                        const next = { ...duties, [enabledKey]: !!c };
+                        setDuties(next);
+                        persistDuties(next);
+                      }}
+                    />
+                    <Label htmlFor={`duty-${key}`} className="font-medium cursor-pointer">{label}</Label>
+                  </div>
+                  {enabled && (
+                    <div>
+                      <Textarea
+                        rows={3}
+                        maxLength={250}
+                        value={text}
+                        placeholder="Descreva as funções..."
+                        onChange={(e) => setDuties({ ...duties, [key]: e.target.value })}
+                        onBlur={() => persistDuties(duties)}
+                      />
+                      <p className="text-xs text-muted-foreground text-right mt-1">{text.length}/250</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDutiesFormId(null)}>Fechar</Button>
+            <Button onClick={handleDutiesToPdf} disabled={dutiesPdfLoading} className="gap-1.5">
+              {dutiesPdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              Adicionar no PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
