@@ -528,18 +528,22 @@ export default function VistosDS160Page() {
       <Dialog open={showSendModal} onOpenChange={setShowSendModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Gerar Link DS-160 em Grupo</DialogTitle>
+            <DialogTitle>{selected.size === 1 ? 'Gerar Link DS-160 Individual' : 'Gerar Link DS-160 em Grupo'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {selected.size} cliente(s) selecionado(s). Um link será gerado e copiado para você enviar ao responsável pelo preenchimento.
+              {selected.size === 1
+                ? 'Um link individual será gerado e copiado para você enviar ao cliente.'
+                : `${selected.size} cliente(s) selecionado(s). Um link em grupo será gerado e copiado para você enviar ao responsável pelo preenchimento.`}
             </p>
-            <div>
-              <Label>Nome do responsável</Label>
-              <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder="Nome de quem vai preencher" />
-            </div>
+            {selected.size > 1 && (
+              <div>
+                <Label>Nome do responsável</Label>
+                <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder="Nome de quem vai preencher" />
+              </div>
+            )}
             <div className="border rounded-lg p-3">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Aplicantes selecionados:</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">{selected.size === 1 ? 'Aplicante selecionado:' : 'Aplicantes selecionados:'}</p>
               <div className="flex flex-wrap gap-1.5">
                 {clients.filter(c => selected.has(c.id)).map(c => (
                   <Badge key={c.id} variant="outline">{c.full_name}</Badge>
@@ -569,6 +573,24 @@ export default function VistosDS160Page() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete individual confirmation */}
+      <AlertDialog open={!!deleteIndividualId} onOpenChange={o => !o && setDeleteIndividualId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir link DS-160?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Este formulário será desativado. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteIndividual} className="bg-destructive hover:bg-destructive/90">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
