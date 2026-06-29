@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase } from 'lucide-react';
+import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase, UserPlus } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -75,6 +75,32 @@ function applyDuties(formData: Record<string, any>, d: DutiesState): Record<stri
   return fd;
 }
 
+// Mapeia campos do formulário DS-160 para colunas do cadastro do cliente.
+function mapFormToClient(fd: Record<string, any>): Record<string, string> {
+  const s = (v: any) => (typeof v === 'string' ? v.trim() : v == null ? '' : String(v));
+  const fullName = s(fd.nome_completo_passaporte) ||
+    [s(fd.nome), s(fd.sobrenome)].filter(Boolean).join(' ').trim();
+  return {
+    full_name: fullName,
+    birth_date: s(fd.data_nascimento),
+    cpf: s(fd.cpf),
+    passport_number: s(fd.passaporte_numero),
+    passport_issue_date: s(fd.passaporte_data_emissao),
+    passport_expiry_date: s(fd.passaporte_data_expiracao),
+    email: s(fd.contato_email),
+    phone: s(fd.contato_telefone),
+    cep: s(fd.contato_cep),
+    address: s(fd.contato_endereco),
+    address_number: s(fd.contato_numero),
+    neighborhood: s(fd.contato_bairro),
+    city: s(fd.contato_cidade),
+    state: s(fd.contato_estado),
+  };
+}
+
+// Colunas de data (não aceitam string vazia no banco).
+const DATE_FIELDS = new Set(['birth_date', 'passport_issue_date', 'passport_expiry_date']);
+
 export default function DS160Section({ clientId, clientName, clientEmail, isMaster }: Props) {
   const { activeCompany } = useCompany();
   const [forms, setForms] = useState<DS160Form[]>([]);
@@ -87,6 +113,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [duties, setDuties] = useState<DutiesState>(emptyDuties);
   const [dutiesAvail, setDutiesAvail] = useState<DutiesAvail>({ atual: false, ant1: false, ant2: false });
   const [dutiesPdfLoading, setDutiesPdfLoading] = useState(false);
+  const [fillingClientId, setFillingClientId] = useState<string | null>(null);
 
   const fetchForms = async () => {
     const { data } = await supabase
@@ -214,6 +241,46 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     setDutiesPdfLoading(false);
   };
 
+  // Preenche apenas os campos vazios do cadastro do cliente com os dados do formulário.
+  const handleFillClient = async (form: DS160Form) => {
+    setFillingClientId(form.id);
+    try {
+      const { data: client, error: fetchErr } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', clientId)
+        .single();
+      if (fetchErr || !client) {
+        toast.error('Erro ao carregar cadastro do cliente');
+        setFillingClientId(null);
+        return;
+      }
+      const mapped = mapFormToClient(form.form_data || {});
+      const updates: Record<string, any> = {};
+      for (const [key, value] of Object.entries(mapped)) {
+        if (!value) continue;
+        const current = (client as any)[key];
+        const isEmpty = current == null || (typeof current === 'string' && current.trim() === '');
+        if (isEmpty) updates[key] = value;
+      }
+      const count = Object.keys(updates).length;
+      if (count === 0) {
+        toast.info('Nenhum campo vazio para preencher — cadastro já está completo.');
+        setFillingClientId(null);
+        return;
+      }
+      const { error: updErr } = await supabase.from('clients').update(updates as any).eq('id', clientId);
+      if (updErr) {
+        toast.error('Erro ao atualizar cadastro');
+      } else {
+        toast.success(`${count} campo(s) preenchido(s) no cadastro do cliente.`);
+      }
+    } catch {
+      toast.error('Erro ao preencher cadastro');
+    }
+    setFillingClientId(null);
+  };
+
   // Check for newly submitted forms (notification)
   const submittedNotDismissed = forms.filter(f => f.status === 'submitted' && !dismissed.has(f.id));
 
@@ -241,6 +308,10 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           <Button size="sm" variant="outline" onClick={() => openDuties(f)} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
             <Briefcase className="h-3.5 w-3.5" />
             Adicionar Duties
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleFillClient(f)} disabled={fillingClientId === f.id} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
+            {fillingClientId === f.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserPlus className="h-3.5 w-3.5" />}
+            Adicionar dados ao cadastro
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setDismissed(prev => new Set(prev).add(f.id))} className="text-emerald-600">
             Fechar
