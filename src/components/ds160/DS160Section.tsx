@@ -34,6 +34,34 @@ interface Props {
   isMaster?: boolean;
 }
 
+interface DutiesState {
+  atualEnabled: boolean; atual: string;
+  ant1Enabled: boolean; ant1: string;
+  ant2Enabled: boolean; ant2: string;
+}
+
+const emptyDuties: DutiesState = {
+  atualEnabled: false, atual: '',
+  ant1Enabled: false, ant1: '',
+  ant2Enabled: false, ant2: '',
+};
+
+// Aplica os textos de "duties" sobre os campos preenchidos pelo cliente.
+function applyDuties(formData: Record<string, any>, d: DutiesState): Record<string, any> {
+  const fd: Record<string, any> = { ...formData };
+  if (d.atualEnabled && d.atual.trim()) fd.descricao_funcoes = d.atual.trim();
+  if (d.ant1Enabled || d.ant2Enabled) {
+    const emp = Array.isArray(fd.empregos_anteriores)
+      ? fd.empregos_anteriores.map((x: any) => ({ ...x }))
+      : [];
+    while (emp.length < 2) emp.push({});
+    if (d.ant1Enabled && d.ant1.trim()) emp[0].descricao_funcoes = d.ant1.trim();
+    if (d.ant2Enabled && d.ant2.trim()) emp[1].descricao_funcoes = d.ant2.trim();
+    fd.empregos_anteriores = emp;
+  }
+  return fd;
+}
+
 export default function DS160Section({ clientId, clientName, clientEmail, isMaster }: Props) {
   const { activeCompany } = useCompany();
   const [forms, setForms] = useState<DS160Form[]>([]);
