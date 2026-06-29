@@ -46,6 +46,19 @@ const emptyDuties: DutiesState = {
   ant2Enabled: false, ant2: '',
 };
 
+interface DutiesAvail { atual: boolean; ant1: boolean; ant2: boolean; }
+
+// Descobre quais ocupações o cliente realmente preencheu no formulário.
+function computeAvailability(formData: Record<string, any>): DutiesAvail {
+  const fd = formData || {};
+  const has = (v: any) => typeof v === 'string' && v.trim().length > 0;
+  const atual = has(fd.empresa_atual) || has(fd.cargo_atual) || has(fd.descricao_funcoes) ||
+    (has(fd.status_profissional) && fd.status_profissional !== 'Desempregado');
+  const emp = Array.isArray(fd.empregos_anteriores) ? fd.empregos_anteriores : [];
+  const empHas = (e: any) => e && (has(e.empresa) || has(e.cargo) || has(e.endereco) || has(e.descricao_funcoes));
+  return { atual, ant1: empHas(emp[0]), ant2: empHas(emp[1]) };
+}
+
 // Aplica os textos de "duties" sobre os campos preenchidos pelo cliente.
 function applyDuties(formData: Record<string, any>, d: DutiesState): Record<string, any> {
   const fd: Record<string, any> = { ...formData };
@@ -72,6 +85,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [deleteFormId, setDeleteFormId] = useState<string | null>(null);
   const [dutiesFormId, setDutiesFormId] = useState<string | null>(null);
   const [duties, setDuties] = useState<DutiesState>(emptyDuties);
+  const [dutiesAvail, setDutiesAvail] = useState<DutiesAvail>({ atual: false, ant1: false, ant2: false });
   const [dutiesPdfLoading, setDutiesPdfLoading] = useState(false);
 
   const fetchForms = async () => {
@@ -158,7 +172,14 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   const openDuties = (form: DS160Form) => {
     const saved = (form.form_data?.duties_override as DutiesState) || emptyDuties;
-    setDuties({ ...emptyDuties, ...saved });
+    const avail = computeAvailability(form.form_data || {});
+    const merged = { ...emptyDuties, ...saved };
+    // Garante que checkboxes de ocupações inexistentes fiquem desmarcados.
+    if (!avail.atual) merged.atualEnabled = false;
+    if (!avail.ant1) merged.ant1Enabled = false;
+    if (!avail.ant2) merged.ant2Enabled = false;
+    setDutiesAvail(avail);
+    setDuties(merged);
     setDutiesFormId(form.id);
   };
 
@@ -308,19 +329,25 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
             ] as const).map(({ key, enabledKey, label }) => {
               const enabled = duties[enabledKey] as boolean;
               const text = duties[key] as string;
+              const available = dutiesAvail[key as keyof DutiesAvail];
               return (
-                <div key={key} className="border rounded-lg p-3 space-y-2">
+                <div key={key} className={`border rounded-lg p-3 space-y-2 ${!available ? 'opacity-50 bg-muted/40' : ''}`}>
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id={`duty-${key}`}
                       checked={enabled}
+                      disabled={!available}
                       onCheckedChange={(c) => {
+                        if (!available) return;
                         const next = { ...duties, [enabledKey]: !!c };
                         setDuties(next);
                         persistDuties(next);
                       }}
                     />
-                    <Label htmlFor={`duty-${key}`} className="font-medium cursor-pointer">{label}</Label>
+                    <Label htmlFor={`duty-${key}`} className={`font-medium ${available ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
+                      {label}
+                      {!available && <span className="ml-2 text-xs font-normal text-muted-foreground">(não preenchida)</span>}
+                    </Label>
                   </div>
                   {enabled && (
                     <div>
