@@ -287,21 +287,27 @@ export default function DS160PublicPage() {
       <div className="bg-white/80 backdrop-blur border-b border-slate-100">
         <div className="max-w-3xl mx-auto px-4 py-2 overflow-x-auto">
           <div className="flex gap-1 min-w-max">
-            {STEPS.map((step, idx) => (
-              <button
-                key={idx}
-                onClick={() => { setErrors({}); setValidateActive(false); setCurrentStep(idx); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                  idx === currentStep
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : idx < currentStep
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                }`}
-              >
-                {step.num}. {step.label}
-              </button>
-            ))}
+            {STEPS.map((step, idx) => {
+              const locked = idx > maxReachable;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => goToStep(idx)}
+                  disabled={locked}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                    idx === currentStep
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : idx < currentStep
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : locked
+                      ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
+                >
+                  {step.num}. {step.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
