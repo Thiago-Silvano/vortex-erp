@@ -61,6 +61,10 @@ export default function DS160Step3({ data, onChange }: DS160StepProps) {
         <div><Label>Telefone Celular</Label><Input value={data.contato_telefone || ''} onChange={e => onChange('contato_telefone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /></div>
         <div><Label>Email Atual</Label><Input type="email" value={data.contato_email || ''} onChange={e => onChange('contato_email', e.target.value.toLowerCase())} placeholder="exemplo@email.com" /></div>
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><Label>Telefone Residencial (fixo) — opcional</Label><Input value={data.contato_telefone_residencial || ''} onChange={e => onChange('contato_telefone_residencial', maskPhone(e.target.value))} placeholder="(00) 0000-0000" /></div>
+        <div><Label>Telefone Comercial — opcional</Label><Input value={data.contato_telefone_comercial || ''} onChange={e => onChange('contato_telefone_comercial', maskPhone(e.target.value))} placeholder="(00) 0000-0000" /></div>
+      </div>
       <div>
         <Label>Redes Sociais</Label>
         <div className="flex gap-2 mt-1">
