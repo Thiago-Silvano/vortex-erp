@@ -85,6 +85,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [deleteFormId, setDeleteFormId] = useState<string | null>(null);
   const [dutiesFormId, setDutiesFormId] = useState<string | null>(null);
   const [duties, setDuties] = useState<DutiesState>(emptyDuties);
+  const [dutiesAvail, setDutiesAvail] = useState<DutiesAvail>({ atual: false, ant1: false, ant2: false });
   const [dutiesPdfLoading, setDutiesPdfLoading] = useState(false);
 
   const fetchForms = async () => {
@@ -171,7 +172,14 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   const openDuties = (form: DS160Form) => {
     const saved = (form.form_data?.duties_override as DutiesState) || emptyDuties;
-    setDuties({ ...emptyDuties, ...saved });
+    const avail = computeAvailability(form.form_data || {});
+    const merged = { ...emptyDuties, ...saved };
+    // Garante que checkboxes de ocupações inexistentes fiquem desmarcados.
+    if (!avail.atual) merged.atualEnabled = false;
+    if (!avail.ant1) merged.ant1Enabled = false;
+    if (!avail.ant2) merged.ant2Enabled = false;
+    setDutiesAvail(avail);
+    setDuties(merged);
     setDutiesFormId(form.id);
   };
 
