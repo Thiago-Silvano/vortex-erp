@@ -145,23 +145,42 @@ export default function DS160GroupPublicPage() {
     if (activeApplicantIdx === null) return;
     setSubmitting(true);
     const app = applicants[activeApplicantIdx];
+    try {
+      // Salva antes de enviar para não perder dados em caso de falha.
+      await (supabase as any).rpc('save_public_ds160_group_form', {
+        p_token: token!,
+        p_form_id: app.formId,
+        p_form_data: formData,
+        p_current_step: currentStep,
+        p_status: 'in_progress',
+      });
 
-    await (supabase as any).rpc('submit_public_ds160_group_form', {
-      p_token: token!,
-      p_form_id: app.formId,
-      p_form_data: formData,
-    });
+      const { error } = await (supabase as any).rpc('submit_public_ds160_group_form', {
+        p_token: token!,
+        p_form_id: app.formId,
+        p_form_data: formData,
+      });
 
-    // Update local state
-    const newApplicants = applicants.map((a, i) =>
-      i === activeApplicantIdx ? { ...a, status: 'submitted', formData, currentStep: 10 } : a
-    );
-    setApplicants(newApplicants);
+      if (error) {
+        console.error('[DS160 group] submit error:', error);
+        toast.error(`Não foi possível enviar: ${error.message || 'erro desconhecido'}. Seu progresso foi salvo, tente novamente.`);
+        return;
+      }
 
-    setSubmitting(false);
-    setActiveApplicantIdx(null);
-    setShowConfirmSubmit(false);
-    toast.success(`Formulário de ${app.clientName} enviado!`);
+      // Update local state
+      const newApplicants = applicants.map((a, i) =>
+        i === activeApplicantIdx ? { ...a, status: 'submitted', formData, currentStep: 10 } : a
+      );
+      setApplicants(newApplicants);
+      setActiveApplicantIdx(null);
+      setShowConfirmSubmit(false);
+      toast.success(`Formulário de ${app.clientName} enviado!`);
+    } catch (err: any) {
+      console.error('[DS160 group] submit exception:', err);
+      toast.error('Falha de conexão ao enviar. Seu progresso foi salvo — verifique a internet e tente novamente.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const goNext = async () => {
