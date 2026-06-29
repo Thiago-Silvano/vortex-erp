@@ -36,6 +36,20 @@ interface GroupForm {
   applicants: { client_id: string; client_name: string; status: string }[];
 }
 
+interface IndividualForm {
+  id: string;
+  token: string;
+  status: string;
+  sent_at: string | null;
+  sent_by: string;
+  created_at: string;
+  client_name: string;
+}
+
+type LinkEntry =
+  | ({ kind: 'group' } & GroupForm)
+  | ({ kind: 'individual' } & IndividualForm);
+
 export default function VistosDS160Page() {
   const { activeCompany } = useCompany();
   const [clients, setClients] = useState<Client[]>([]);
@@ -44,11 +58,13 @@ export default function VistosDS160Page() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [groups, setGroups] = useState<GroupForm[]>([]);
+  const [individuals, setIndividuals] = useState<IndividualForm[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendEmail, setSendEmail] = useState('');
   const [sendName, setSendName] = useState('');
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
+  const [deleteIndividualId, setDeleteIndividualId] = useState<string | null>(null);
 
   const baseUrl = window.location.origin;
 
@@ -71,11 +87,19 @@ export default function VistosDS160Page() {
 
   const fetchGroups = async () => {
     setLoadingGroups(true);
-    const { data: groupsData } = await supabase
-      .from('ds160_group_forms')
-      .select('*')
-      .eq('empresa_id', activeCompany!.id)
-      .order('created_at', { ascending: false });
+    const [{ data: groupsData }, { data: indivData }] = await Promise.all([
+      supabase
+        .from('ds160_group_forms')
+        .select('*')
+        .eq('empresa_id', activeCompany!.id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('ds160_forms')
+        .select('id, token, status, sent_at, sent_by, created_at, clients(full_name)')
+        .eq('empresa_id', activeCompany!.id)
+        .is('group_id', null)
+        .order('created_at', { ascending: false }),
+    ]);
 
     if (groupsData) {
       const enriched: GroupForm[] = [];
@@ -94,6 +118,20 @@ export default function VistosDS160Page() {
         });
       }
       setGroups(enriched);
+    }
+
+    if (indivData) {
+      setIndividuals(
+        (indivData as any[]).map((f) => ({
+          id: f.id,
+          token: f.token,
+          status: f.status,
+          sent_at: f.sent_at,
+          sent_by: f.sent_by,
+          created_at: f.created_at,
+          client_name: f.clients?.full_name || 'Cliente',
+        }))
+      );
     }
     setLoadingGroups(false);
   };
@@ -129,6 +167,35 @@ export default function VistosDS160Page() {
 
     const { data: user } = await supabase.auth.getUser();
 
+    const selectedClients = clients.filter(c => selected.has(c.id));
+
+    // Individual link (single applicant) — no group
+    if (selectedClients.length === 1) {
+      const c = selectedClients[0];
+      const { data: newForm, error } = await supabase.from('ds160_forms').insert({
+        client_id: c.id,
+        empresa_id: activeCompany!.id,
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        sent_by: user.user?.email || '',
+      } as any).select().single();
+
+      if (error || !newForm) {
+        toast.error('Erro ao criar formulário');
+        setSending(false);
+        return;
+      }
+
+      const formLink = `${baseUrl}/ds160/${(newForm as any).token}`;
+      navigator.clipboard.writeText(formLink);
+      toast.success('Link individual gerado e copiado!');
+      setSending(false);
+      setShowSendModal(false);
+      setSelected(new Set());
+      fetchGroups();
+      return;
+    }
+
     // Create group
     const { data: group, error: gErr } = await supabase
       .from('ds160_group_forms')
@@ -149,7 +216,6 @@ export default function VistosDS160Page() {
     }
 
     // Create individual ds160_forms for each selected client
-    const selectedClients = clients.filter(c => selected.has(c.id));
     const formsToInsert = selectedClients.map(c => ({
       client_id: c.id,
       empresa_id: activeCompany!.id,
@@ -168,7 +234,7 @@ export default function VistosDS160Page() {
 
     const formLink = `${baseUrl}/ds160/group/${(group as any).token}`;
     navigator.clipboard.writeText(formLink);
-    toast.success('Link gerado e copiado para a área de transferência!');
+    toast.success('Link em grupo gerado e copiado!');
 
     setSending(false);
     setShowSendModal(false);
@@ -181,12 +247,6 @@ export default function VistosDS160Page() {
     toast.success('Link copiado!');
   };
 
-  const resendCopyLink = (group: GroupForm) => {
-    const formLink = `${baseUrl}/ds160/group/${group.token}`;
-    navigator.clipboard.writeText(formLink);
-    toast.success('Link copiado!');
-  };
-
   const handleDeleteGroup = async () => {
     if (!deleteGroupId) return;
     // Mark all forms in group as deleted
@@ -194,6 +254,14 @@ export default function VistosDS160Page() {
     await supabase.from('ds160_group_forms').update({ status: 'deleted' } as any).eq('id', deleteGroupId);
     toast.success('Grupo excluído');
     setDeleteGroupId(null);
+    fetchGroups();
+  };
+
+  const handleDeleteIndividual = async () => {
+    if (!deleteIndividualId) return;
+    await supabase.from('ds160_forms').update({ status: 'deleted' } as any).eq('id', deleteIndividualId);
+    toast.success('Link excluído');
+    setDeleteIndividualId(null);
     fetchGroups();
   };
 
@@ -223,10 +291,10 @@ export default function VistosDS160Page() {
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <FileText className="h-6 w-6" />
-              DS-160 em Grupo
+              DS-160
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Selecione clientes para enviar um link de preenchimento múltiplo
+              Gere e administre links de preenchimento — selecione 1 cliente para um link individual ou vários para um link em grupo
             </p>
           </div>
         </div>
@@ -242,7 +310,6 @@ export default function VistosDS160Page() {
               <Button onClick={openSendModal} disabled={selected.size === 0} className="gap-1.5">
                 <Link2 className="h-4 w-4" />
                 Gerar Link ({selected.size})
-                Enviar Link ({selected.size})
               </Button>
             </div>
             <div className="relative mt-2">
@@ -314,19 +381,69 @@ export default function VistosDS160Page() {
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : groups.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                Nenhum link de grupo enviado ainda.
-              </p>
-            ) : (
+            ) : (() => {
+              const visibleGroups = groups.filter(g => g.status !== 'deleted');
+              const visibleIndividuals = individuals.filter(f => f.status !== 'deleted');
+              if (visibleGroups.length === 0 && visibleIndividuals.length === 0) {
+                return (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Nenhum link enviado ainda.
+                  </p>
+                );
+              }
+              const entries: LinkEntry[] = [
+                ...visibleGroups.map(g => ({ kind: 'group' as const, ...g })),
+                ...visibleIndividuals.map(f => ({ kind: 'individual' as const, ...f })),
+              ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+              return (
               <div className="space-y-4">
-                {groups.filter(g => g.status !== 'deleted').map(group => {
+                {entries.map(entry => {
+                  if (entry.kind === 'individual') {
+                    const st = statusLabel(entry.status);
+                    return (
+                      <div key={`i-${entry.id}`} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">Individual</Badge>
+                            <Badge
+                              variant={entry.status === 'submitted' ? 'default' : st.variant}
+                              className={entry.status === 'submitted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : ''}
+                            >
+                              {st.label}
+                            </Badge>
+                            <span className="text-sm font-medium">{entry.client_name}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(entry.sent_at)}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => { navigator.clipboard.writeText(`${baseUrl}/ds160/${entry.token}`); toast.success('Link copiado!'); }}>
+                            <Copy className="h-3 w-3" /> Copiar Link
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/${entry.token}`, '_blank')}>
+                            <ExternalLink className="h-3 w-3" /> Abrir
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1 text-destructive hover:bg-destructive/10 border-destructive/30"
+                            onClick={() => setDeleteIndividualId(entry.id)}
+                          >
+                            <Trash2 className="h-3 w-3" /> Excluir
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  const group = entry;
                   const st = statusLabel(group.status);
                   const allSubmitted = group.applicants.length > 0 && group.applicants.every(a => a.status === 'submitted');
                   return (
                     <div key={group.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
+                          <Badge variant="secondary" className="mr-2">Grupo</Badge>
                           <Badge
                             variant={allSubmitted ? 'default' : st.variant}
                             className={allSubmitted ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : ''}
@@ -379,9 +496,6 @@ export default function VistosDS160Page() {
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => copyLink(group.token)}>
                           <Copy className="h-3 w-3" /> Copiar Link
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => resendCopyLink(group)}>
-                          <Copy className="h-3 w-3" /> Copiar Link
-                        </Button>
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/group/${group.token}`, '_blank')}>
                           <ExternalLink className="h-3 w-3" /> Abrir
                         </Button>
@@ -398,7 +512,8 @@ export default function VistosDS160Page() {
                   );
                 })}
               </div>
-            )}
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
@@ -407,18 +522,22 @@ export default function VistosDS160Page() {
       <Dialog open={showSendModal} onOpenChange={setShowSendModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Gerar Link DS-160 em Grupo</DialogTitle>
+            <DialogTitle>{selected.size === 1 ? 'Gerar Link DS-160 Individual' : 'Gerar Link DS-160 em Grupo'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {selected.size} cliente(s) selecionado(s). Um link será gerado e copiado para você enviar ao responsável pelo preenchimento.
+              {selected.size === 1
+                ? 'Um link individual será gerado e copiado para você enviar ao cliente.'
+                : `${selected.size} cliente(s) selecionado(s). Um link em grupo será gerado e copiado para você enviar ao responsável pelo preenchimento.`}
             </p>
-            <div>
-              <Label>Nome do responsável</Label>
-              <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder="Nome de quem vai preencher" />
-            </div>
+            {selected.size > 1 && (
+              <div>
+                <Label>Nome do responsável</Label>
+                <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder="Nome de quem vai preencher" />
+              </div>
+            )}
             <div className="border rounded-lg p-3">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Aplicantes selecionados:</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">{selected.size === 1 ? 'Aplicante selecionado:' : 'Aplicantes selecionados:'}</p>
               <div className="flex flex-wrap gap-1.5">
                 {clients.filter(c => selected.has(c.id)).map(c => (
                   <Badge key={c.id} variant="outline">{c.full_name}</Badge>
@@ -448,6 +567,24 @@ export default function VistosDS160Page() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete individual confirmation */}
+      <AlertDialog open={!!deleteIndividualId} onOpenChange={o => !o && setDeleteIndividualId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir link DS-160?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Este formulário será desativado. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteIndividual} className="bg-destructive hover:bg-destructive/90">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
