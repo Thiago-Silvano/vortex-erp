@@ -115,6 +115,14 @@ export default function DS160PublicPage() {
 
   const handleSubmit = async () => {
     if (!formId) return;
+    const stepErrors = validateStep(10, formData);
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors);
+      setValidateActive(true);
+      setShowConfirmSubmit(false);
+      scrollToFirstError();
+      return;
+    }
     setSubmitting(true);
     const { error } = await (supabase as any).rpc('submit_public_ds160', {
       p_token: token!,
