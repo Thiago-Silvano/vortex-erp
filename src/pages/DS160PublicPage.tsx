@@ -124,15 +124,32 @@ export default function DS160PublicPage() {
       return;
     }
     setSubmitting(true);
-    const { error } = await (supabase as any).rpc('submit_public_ds160', {
-      p_token: token!,
-      p_form_data: formData,
-    });
-    setSubmitting(false);
-    if (error) {
-      toast.error('Erro ao enviar formulário.');
-    } else {
+    try {
+      // Garante que o último estado do formulário esteja salvo antes do envio.
+      await (supabase as any).rpc('save_public_ds160', {
+        p_token: token!,
+        p_form_data: formData,
+        p_current_step: 10,
+      });
+
+      const { error } = await (supabase as any).rpc('submit_public_ds160', {
+        p_token: token!,
+        p_form_data: formData,
+      });
+
+      if (error) {
+        console.error('[DS160] submit error:', error);
+        toast.error(`Não foi possível enviar: ${error.message || 'erro desconhecido'}. Seu progresso foi salvo, tente novamente.`);
+        setShowConfirmSubmit(true);
+        return;
+      }
       setSubmitted(true);
+    } catch (err: any) {
+      console.error('[DS160] submit exception:', err);
+      toast.error('Falha de conexão ao enviar. Seu progresso foi salvo — verifique a internet e tente novamente.');
+      setShowConfirmSubmit(true);
+    } finally {
+      setSubmitting(false);
     }
   };
 
