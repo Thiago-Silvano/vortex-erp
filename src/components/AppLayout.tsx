@@ -116,7 +116,7 @@ function buildMenus(isVistos: boolean, isAdmin: boolean, userRole: string): Menu
       ]},
       { label: "Comercial", icon: <ShoppingCart className="h-4 w-4 text-white" />, items: [
         { title: "Produção", url: "/vistos/production" },
-        { title: "DS-160 Grupo", url: "/vistos/ds160" },
+        { title: "DS-160", url: "/vistos/ds160" },
         { title: "Serviços", url: "/vistos/products" },
       ]},
       { label: "Financeiro", icon: <DollarSign className="h-4 w-4 text-white" />, items: [
