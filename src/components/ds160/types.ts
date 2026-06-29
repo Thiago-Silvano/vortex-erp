@@ -1,6 +1,7 @@
 export interface DS160StepProps {
   data: Record<string, any>;
   onChange: (key: string, value: any) => void;
+  errors?: Record<string, string>;
 }
 
 export const COUNTRIES = [
