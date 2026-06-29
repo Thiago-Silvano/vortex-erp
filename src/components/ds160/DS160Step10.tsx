@@ -2,6 +2,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DS160StepProps } from './types';
+import { FieldError, errClass } from './fieldError';
 
 const SECURITY_GROUPS: { title: string; questions: { key: string; label: string }[] }[] = [
   {
@@ -63,7 +64,7 @@ const SECURITY_GROUPS: { title: string; questions: { key: string; label: string 
   },
 ];
 
-export default function DS160Step10({ data, onChange }: DS160StepProps) {
+export default function DS160Step10({ data, onChange, errors }: DS160StepProps) {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">10. Segurança e Antecedentes</h2>
@@ -79,13 +80,16 @@ export default function DS160Step10({ data, onChange }: DS160StepProps) {
                 <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id={`${q.key}_sim`} /><Label htmlFor={`${q.key}_sim`}>Sim</Label></div>
               </RadioGroup>
               {data[`seg_${q.key}`] === 'Sim' && (
-                <Textarea
-                  value={data[`seg_${q.key}_explicacao`] || ''}
-                  onChange={e => onChange(`seg_${q.key}_explicacao`, e.target.value)}
-                  placeholder="Explicação obrigatória"
-                  rows={2}
-                  className="border-amber-300 bg-amber-50/50"
-                />
+                <>
+                  <Textarea
+                    value={data[`seg_${q.key}_explicacao`] || ''}
+                    onChange={e => onChange(`seg_${q.key}_explicacao`, e.target.value)}
+                    placeholder="Explicação obrigatória"
+                    rows={2}
+                    className={errClass(errors?.[`seg_${q.key}_explicacao`], 'border-amber-300 bg-amber-50/50')}
+                  />
+                  <FieldError msg={errors?.[`seg_${q.key}_explicacao`]} />
+                </>
               )}
             </div>
           ))}
