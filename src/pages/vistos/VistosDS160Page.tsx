@@ -167,6 +167,35 @@ export default function VistosDS160Page() {
 
     const { data: user } = await supabase.auth.getUser();
 
+    const selectedClients = clients.filter(c => selected.has(c.id));
+
+    // Individual link (single applicant) — no group
+    if (selectedClients.length === 1) {
+      const c = selectedClients[0];
+      const { data: newForm, error } = await supabase.from('ds160_forms').insert({
+        client_id: c.id,
+        empresa_id: activeCompany!.id,
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        sent_by: user.user?.email || '',
+      } as any).select().single();
+
+      if (error || !newForm) {
+        toast.error('Erro ao criar formulário');
+        setSending(false);
+        return;
+      }
+
+      const formLink = `${baseUrl}/ds160/${(newForm as any).token}`;
+      navigator.clipboard.writeText(formLink);
+      toast.success('Link individual gerado e copiado!');
+      setSending(false);
+      setShowSendModal(false);
+      setSelected(new Set());
+      fetchGroups();
+      return;
+    }
+
     // Create group
     const { data: group, error: gErr } = await supabase
       .from('ds160_group_forms')
@@ -187,7 +216,6 @@ export default function VistosDS160Page() {
     }
 
     // Create individual ds160_forms for each selected client
-    const selectedClients = clients.filter(c => selected.has(c.id));
     const formsToInsert = selectedClients.map(c => ({
       client_id: c.id,
       empresa_id: activeCompany!.id,
@@ -206,7 +234,7 @@ export default function VistosDS160Page() {
 
     const formLink = `${baseUrl}/ds160/group/${(group as any).token}`;
     navigator.clipboard.writeText(formLink);
-    toast.success('Link gerado e copiado para a área de transferência!');
+    toast.success('Link em grupo gerado e copiado!');
 
     setSending(false);
     setShowSendModal(false);
@@ -232,6 +260,14 @@ export default function VistosDS160Page() {
     await supabase.from('ds160_group_forms').update({ status: 'deleted' } as any).eq('id', deleteGroupId);
     toast.success('Grupo excluído');
     setDeleteGroupId(null);
+    fetchGroups();
+  };
+
+  const handleDeleteIndividual = async () => {
+    if (!deleteIndividualId) return;
+    await supabase.from('ds160_forms').update({ status: 'deleted' } as any).eq('id', deleteIndividualId);
+    toast.success('Link excluído');
+    setDeleteIndividualId(null);
     fetchGroups();
   };
 
