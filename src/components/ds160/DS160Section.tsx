@@ -156,6 +156,43 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     setDeleteFormId(null);
   };
 
+  const openDuties = (form: DS160Form) => {
+    const saved = (form.form_data?.duties_override as DutiesState) || emptyDuties;
+    setDuties({ ...emptyDuties, ...saved });
+    setDutiesFormId(form.id);
+  };
+
+  const persistDuties = async (next: DutiesState) => {
+    const fid = dutiesFormId;
+    if (!fid) return;
+    const form = forms.find(f => f.id === fid);
+    if (!form) return;
+    const merged = { ...(form.form_data || {}), duties_override: next };
+    const { error } = await supabase.from('ds160_forms')
+      .update({ form_data: merged } as any).eq('id', fid);
+    if (error) {
+      toast.error('Erro ao salvar duties');
+      return;
+    }
+    setForms(prev => prev.map(f => f.id === fid ? { ...f, form_data: merged } : f));
+  };
+
+  const handleDutiesToPdf = async () => {
+    const form = forms.find(f => f.id === dutiesFormId);
+    if (!form) return;
+    setDutiesPdfLoading(true);
+    try {
+      await persistDuties(duties);
+      const fd = applyDuties(form.form_data || {}, duties);
+      await generateDS160Pdf(fd, clientName);
+      toast.success('PDF gerado com as duties atualizadas!');
+      setDutiesFormId(null);
+    } catch {
+      toast.error('Erro ao gerar PDF');
+    }
+    setDutiesPdfLoading(false);
+  };
+
   // Check for newly submitted forms (notification)
   const submittedNotDismissed = forms.filter(f => f.status === 'submitted' && !dismissed.has(f.id));
 
