@@ -345,7 +345,7 @@ export default function ClientsPage() {
               {editingId && <ClientPhotosSection clientId={editingId} />}
               <ClientFilesSection ref={filesRef} clientId={editingId || undefined} />
               {editingId && activeCompany?.slug === 'vortex-vistos' && (
-                <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} isMaster={isMaster} />
+                <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} isMaster={isMaster} onClientDataFilled={(updates) => setForm(p => ({ ...p, ...updates }))} />
               )}
 
               {/* Row 1: CPF, Nascimento, Nome */}
