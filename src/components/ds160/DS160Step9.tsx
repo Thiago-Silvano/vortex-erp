@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, X } from 'lucide-react';
 import { DS160StepProps, COUNTRIES } from './types';
+import { FieldError, errClass } from './fieldError';
 
-export default function DS160Step9({ data, onChange }: DS160StepProps) {
+export default function DS160Step9({ data, onChange, errors }: DS160StepProps) {
   const countries: string[] = data.paises_visitados || [];
   const [selectedCountry, setSelectedCountry] = useState('');
 
@@ -53,15 +54,15 @@ export default function DS160Step9({ data, onChange }: DS160StepProps) {
       </div>
       {data.serviu_forcas_armadas === 'Sim' && (
         <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
-          <div><Label>País das Forças Armadas</Label><Input value={data.militar_pais || ''} onChange={e => onChange('militar_pais', e.target.value)} /></div>
-          <div><Label>Ramo (Exército, Marinha, Aeronáutica, etc.)</Label><Input value={data.militar_ramo || ''} onChange={e => onChange('militar_ramo', e.target.value)} /></div>
+          <div><Label>País das Forças Armadas</Label><Input className={errClass(errors?.militar_pais)} value={data.militar_pais || ''} onChange={e => onChange('militar_pais', e.target.value)} /><FieldError msg={errors?.militar_pais} /></div>
+          <div><Label>Ramo (Exército, Marinha, Aeronáutica, etc.)</Label><Input className={errClass(errors?.militar_ramo)} value={data.militar_ramo || ''} onChange={e => onChange('militar_ramo', e.target.value)} /><FieldError msg={errors?.militar_ramo} /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Posto/Graduação</Label><Input value={data.militar_posto || ''} onChange={e => onChange('militar_posto', e.target.value)} /></div>
             <div><Label>Especialidade/Função</Label><Input value={data.militar_especialidade || ''} onChange={e => onChange('militar_especialidade', e.target.value)} /></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><Label>Data de início</Label><Input type="date" value={data.militar_inicio || ''} onChange={e => onChange('militar_inicio', e.target.value)} /></div>
-            <div><Label>Data de saída</Label><Input type="date" value={data.militar_saida || ''} onChange={e => onChange('militar_saida', e.target.value)} /></div>
+            <div><Label>Data de início</Label><Input type="date" className={errClass(errors?.militar_inicio)} value={data.militar_inicio || ''} onChange={e => onChange('militar_inicio', e.target.value)} /><FieldError msg={errors?.militar_inicio} /></div>
+            <div><Label>Data de saída</Label><Input type="date" className={errClass(errors?.militar_saida)} value={data.militar_saida || ''} onChange={e => onChange('militar_saida', e.target.value)} /><FieldError msg={errors?.militar_saida} /></div>
           </div>
         </div>
       )}
@@ -84,7 +85,10 @@ export default function DS160Step9({ data, onChange }: DS160StepProps) {
           <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="armas_sim" /><Label htmlFor="armas_sim">Sim</Label></div>
         </RadioGroup>
         {data.habilidades_armas === 'Sim' && (
-          <Textarea value={data.habilidades_armas_descricao || ''} onChange={e => onChange('habilidades_armas_descricao', e.target.value)} placeholder="Descreva brevemente" rows={2} className="border-amber-300 bg-amber-50/50" />
+          <>
+            <Textarea value={data.habilidades_armas_descricao || ''} onChange={e => onChange('habilidades_armas_descricao', e.target.value)} placeholder="Descreva brevemente" rows={2} className={errClass(errors?.habilidades_armas_descricao, 'border-amber-300 bg-amber-50/50')} />
+            <FieldError msg={errors?.habilidades_armas_descricao} />
+          </>
         )}
       </div>
     </div>

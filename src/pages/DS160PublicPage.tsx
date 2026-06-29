@@ -16,6 +16,7 @@ import DS160Step8 from '@/components/ds160/DS160Step8';
 import DS160Step9 from '@/components/ds160/DS160Step9';
 import DS160Step10 from '@/components/ds160/DS160Step10';
 import DS160Step11 from '@/components/ds160/DS160Step11';
+import { validateStep } from '@/components/ds160/validation';
 
 const STEPS = [
   { label: 'Dados Pessoais', num: 1 },
@@ -44,6 +45,20 @@ export default function DS160PublicPage() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [validateActive, setValidateActive] = useState(false);
+
+  // Revalida em tempo real após a primeira tentativa de avançar (limpa erros corrigidos)
+  useEffect(() => {
+    if (validateActive) setErrors(validateStep(currentStep, formData));
+  }, [formData, validateActive, currentStep]);
+
+  const scrollToFirstError = () => {
+    setTimeout(() => {
+      const el = document.querySelector('[data-ds160-error]');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -100,6 +115,14 @@ export default function DS160PublicPage() {
 
   const handleSubmit = async () => {
     if (!formId) return;
+    const stepErrors = validateStep(10, formData);
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors);
+      setValidateActive(true);
+      setShowConfirmSubmit(false);
+      scrollToFirstError();
+      return;
+    }
     setSubmitting(true);
     const { error } = await (supabase as any).rpc('submit_public_ds160', {
       p_token: token!,
@@ -115,6 +138,15 @@ export default function DS160PublicPage() {
 
   const goNext = async () => {
     if (currentStep < 10) {
+      const stepErrors = validateStep(currentStep, formData);
+      if (Object.keys(stepErrors).length > 0) {
+        setErrors(stepErrors);
+        setValidateActive(true);
+        scrollToFirstError();
+        return;
+      }
+      setErrors({});
+      setValidateActive(false);
       setCurrentStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       // auto-save
@@ -130,6 +162,8 @@ export default function DS160PublicPage() {
 
   const goBack = () => {
     if (currentStep > 0) {
+      setErrors({});
+      setValidateActive(false);
       setCurrentStep(prev => prev - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -185,17 +219,17 @@ export default function DS160PublicPage() {
   }
 
   const stepComponents = [
-    <DS160Step1 data={formData} onChange={updateField} />,
-    <DS160Step2 data={formData} onChange={updateField} />,
-    <DS160Step3 data={formData} onChange={updateField} />,
-    <DS160Step4 data={formData} onChange={updateField} />,
-    <DS160Step5 data={formData} onChange={updateField} />,
-    <DS160Step6 data={formData} onChange={updateField} />,
-    <DS160Step7 data={formData} onChange={updateField} />,
-    <DS160Step8 data={formData} onChange={updateField} />,
-    <DS160Step9 data={formData} onChange={updateField} />,
-    <DS160Step10 data={formData} onChange={updateField} />,
-    <DS160Step11 data={formData} onChange={updateField} />,
+    <DS160Step1 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step2 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step3 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step4 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step5 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step6 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step7 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step8 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step9 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step10 data={formData} onChange={updateField} errors={errors} />,
+    <DS160Step11 data={formData} onChange={updateField} errors={errors} />,
   ];
 
   return (
@@ -235,7 +269,7 @@ export default function DS160PublicPage() {
             {STEPS.map((step, idx) => (
               <button
                 key={idx}
-                onClick={() => { setCurrentStep(idx); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                onClick={() => { setErrors({}); setValidateActive(false); setCurrentStep(idx); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                   idx === currentStep
                     ? 'bg-blue-600 text-white shadow-sm'
@@ -266,6 +300,13 @@ export default function DS160PublicPage() {
       {/* Form content */}
       <div className="max-w-3xl mx-auto px-4 py-6">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-5 md:p-8">
+          {Object.keys(errors).length > 0 && (
+            <div className="mb-5 rounded-lg bg-[#fff5f5] border-l-4 border-[#e53e3e] px-4 py-3">
+              <p className="text-sm font-medium text-[#c53030]">
+                ⚠️ Corrija os campos destacados em vermelho para continuar
+              </p>
+            </div>
+          )}
           {stepComponents[currentStep]}
         </div>
       </div>
