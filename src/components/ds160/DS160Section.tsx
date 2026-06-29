@@ -98,9 +98,6 @@ function mapFormToClient(fd: Record<string, any>): Record<string, string> {
   };
 }
 
-// Colunas de data (não aceitam string vazia no banco).
-const DATE_FIELDS = new Set(['birth_date', 'passport_issue_date', 'passport_expiry_date']);
-
 export default function DS160Section({ clientId, clientName, clientEmail, isMaster }: Props) {
   const { activeCompany } = useCompany();
   const [forms, setForms] = useState<DS160Form[]>([]);
