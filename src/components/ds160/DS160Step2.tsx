@@ -3,26 +3,28 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DS160StepProps, COUNTRIES } from './types';
+import { FieldError, errClass } from './fieldError';
 
-export default function DS160Step2({ data, onChange }: DS160StepProps) {
+export default function DS160Step2({ data, onChange, errors }: DS160StepProps) {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">2. Informações de Passaporte</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Nº Passaporte</Label><Input value={data.passaporte_numero || ''} onChange={e => onChange('passaporte_numero', e.target.value)} placeholder="Número do Passaporte" /></div>
+        <div><Label>Nº Passaporte</Label><Input className={errClass(errors?.passaporte_numero)} value={data.passaporte_numero || ''} onChange={e => onChange('passaporte_numero', e.target.value)} placeholder="Número do Passaporte" /><FieldError msg={errors?.passaporte_numero} /></div>
         <div>
           <Label>País Emissor</Label>
           <Select value={data.passaporte_pais_emissor || undefined} onValueChange={v => onChange('passaporte_pais_emissor', v)}>
-            <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
+            <SelectTrigger className={errClass(errors?.passaporte_pais_emissor)}><SelectValue placeholder="Selecione o país" /></SelectTrigger>
             <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
           </Select>
+          <FieldError msg={errors?.passaporte_pais_emissor} />
         </div>
       </div>
-      <div><Label>Cidade Onde o Passaporte Foi Emitido</Label><Input value={data.passaporte_cidade_emissao || ''} onChange={e => onChange('passaporte_cidade_emissao', e.target.value)} /></div>
+      <div><Label>Cidade Onde o Passaporte Foi Emitido</Label><Input className={errClass(errors?.passaporte_cidade_emissao)} value={data.passaporte_cidade_emissao || ''} onChange={e => onChange('passaporte_cidade_emissao', e.target.value)} /><FieldError msg={errors?.passaporte_cidade_emissao} /></div>
       <div><Label>Estado/Província de Emissão do Passaporte (opcional)</Label><Input value={data.passaporte_estado_emissao || ''} onChange={e => onChange('passaporte_estado_emissao', e.target.value)} /></div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Data de Emissão</Label><Input type="date" value={data.passaporte_data_emissao || ''} onChange={e => onChange('passaporte_data_emissao', e.target.value)} /></div>
-        <div><Label>Data de Expiração</Label><Input type="date" value={data.passaporte_data_expiracao || ''} onChange={e => onChange('passaporte_data_expiracao', e.target.value)} /></div>
+        <div><Label>Data de Emissão</Label><Input type="date" className={errClass(errors?.passaporte_data_emissao)} value={data.passaporte_data_emissao || ''} onChange={e => onChange('passaporte_data_emissao', e.target.value)} /><FieldError msg={errors?.passaporte_data_emissao} /></div>
+        <div><Label>Data de Expiração</Label><Input type="date" className={errClass(errors?.passaporte_data_expiracao)} value={data.passaporte_data_expiracao || ''} onChange={e => onChange('passaporte_data_expiracao', e.target.value)} /><FieldError msg={errors?.passaporte_data_expiracao} /></div>
       </div>
       <div>
         <Label>Já teve um passaporte perdido ou roubado?</Label>
@@ -33,7 +35,7 @@ export default function DS160Step2({ data, onChange }: DS160StepProps) {
       </div>
       {data.passaporte_perdido === 'Sim' && (
         <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
-          <div><Label>Número do passaporte perdido/roubado</Label><Input value={data.passaporte_perdido_numero || ''} onChange={e => onChange('passaporte_perdido_numero', e.target.value)} /></div>
+          <div><Label>Número do passaporte perdido/roubado</Label><Input className={errClass(errors?.passaporte_perdido_numero)} value={data.passaporte_perdido_numero || ''} onChange={e => onChange('passaporte_perdido_numero', e.target.value)} /><FieldError msg={errors?.passaporte_perdido_numero} /></div>
           <div><Label>País emissor do passaporte perdido/roubado</Label><Input value={data.passaporte_perdido_pais || ''} onChange={e => onChange('passaporte_perdido_pais', e.target.value)} /></div>
         </div>
       )}
