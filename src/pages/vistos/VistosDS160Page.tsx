@@ -36,6 +36,20 @@ interface GroupForm {
   applicants: { client_id: string; client_name: string; status: string }[];
 }
 
+interface IndividualForm {
+  id: string;
+  token: string;
+  status: string;
+  sent_at: string | null;
+  sent_by: string;
+  created_at: string;
+  client_name: string;
+}
+
+type LinkEntry =
+  | ({ kind: 'group' } & GroupForm)
+  | ({ kind: 'individual' } & IndividualForm);
+
 export default function VistosDS160Page() {
   const { activeCompany } = useCompany();
   const [clients, setClients] = useState<Client[]>([]);
@@ -44,11 +58,13 @@ export default function VistosDS160Page() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [groups, setGroups] = useState<GroupForm[]>([]);
+  const [individuals, setIndividuals] = useState<IndividualForm[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendEmail, setSendEmail] = useState('');
   const [sendName, setSendName] = useState('');
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
+  const [deleteIndividualId, setDeleteIndividualId] = useState<string | null>(null);
 
   const baseUrl = window.location.origin;
 
@@ -71,11 +87,19 @@ export default function VistosDS160Page() {
 
   const fetchGroups = async () => {
     setLoadingGroups(true);
-    const { data: groupsData } = await supabase
-      .from('ds160_group_forms')
-      .select('*')
-      .eq('empresa_id', activeCompany!.id)
-      .order('created_at', { ascending: false });
+    const [{ data: groupsData }, { data: indivData }] = await Promise.all([
+      supabase
+        .from('ds160_group_forms')
+        .select('*')
+        .eq('empresa_id', activeCompany!.id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('ds160_forms')
+        .select('id, token, status, sent_at, sent_by, created_at, clients(full_name)')
+        .eq('empresa_id', activeCompany!.id)
+        .is('group_id', null)
+        .order('created_at', { ascending: false }),
+    ]);
 
     if (groupsData) {
       const enriched: GroupForm[] = [];
@@ -94,6 +118,20 @@ export default function VistosDS160Page() {
         });
       }
       setGroups(enriched);
+    }
+
+    if (indivData) {
+      setIndividuals(
+        (indivData as any[]).map((f) => ({
+          id: f.id,
+          token: f.token,
+          status: f.status,
+          sent_at: f.sent_at,
+          sent_by: f.sent_by,
+          created_at: f.created_at,
+          client_name: f.clients?.full_name || 'Cliente',
+        }))
+      );
     }
     setLoadingGroups(false);
   };
