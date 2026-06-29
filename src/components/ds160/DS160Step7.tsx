@@ -1,10 +1,48 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Plus, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DS160StepProps } from './types';
 
+interface EmpregoAnterior {
+  empresa?: string; cep?: string; endereco?: string; telefone?: string;
+  supervisor?: string; cargo?: string; inicio?: string; termino?: string; motivo_saida?: string;
+}
+
+function seedEmpregos(data: Record<string, any>): EmpregoAnterior[] {
+  if (Array.isArray(data.empregos_anteriores)) return data.empregos_anteriores;
+  const legacy: EmpregoAnterior[] = [];
+  for (const n of [1, 2]) {
+    const empresa = data[`emprego_anterior_${n}_empresa`];
+    if (
+      empresa || data[`emprego_anterior_${n}_endereco`] || data[`emprego_anterior_${n}_cargo`]
+    ) {
+      legacy.push({
+        empresa: data[`emprego_anterior_${n}_empresa`] || '',
+        cep: data[`emprego_anterior_${n}_cep`] || '',
+        endereco: data[`emprego_anterior_${n}_endereco`] || '',
+        telefone: data[`emprego_anterior_${n}_telefone`] || '',
+        supervisor: data[`emprego_anterior_${n}_supervisor`] || '',
+        cargo: data[`emprego_anterior_${n}_cargo`] || '',
+        inicio: data[`emprego_anterior_${n}_inicio`] || '',
+        termino: data[`emprego_anterior_${n}_termino`] || '',
+        motivo_saida: '',
+      });
+    }
+  }
+  return legacy.length ? legacy : [{}];
+}
+
 export default function DS160Step7({ data, onChange }: DS160StepProps) {
+  const empregos = seedEmpregos(data);
+  const update = (idx: number, key: keyof EmpregoAnterior, value: string) => {
+    onChange('empregos_anteriores', empregos.map((e, i) => (i === idx ? { ...e, [key]: value } : e)));
+  };
+  const addEmprego = () => onChange('empregos_anteriores', [...empregos, {}]);
+  const removeEmprego = (idx: number) => onChange('empregos_anteriores', empregos.filter((_, i) => i !== idx));
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">7. Histórico Profissional Atual</h2>
@@ -22,27 +60,38 @@ export default function DS160Step7({ data, onChange }: DS160StepProps) {
       <div><Label>Renda Mensal Estimada (BRL)</Label><Input value={data.renda_mensal || ''} onChange={e => onChange('renda_mensal', e.target.value)} /></div>
       <div><Label>CEP</Label><Input value={data.empresa_cep || ''} onChange={e => onChange('empresa_cep', e.target.value)} placeholder="00000-000" maxLength={9} /></div>
       <div><Label>Endereço Completo</Label><Input value={data.empresa_endereco || ''} onChange={e => onChange('empresa_endereco', e.target.value)} /></div>
+      <div><Label>Telefone da Empresa/Instituição Atual</Label><Input value={data.empresa_telefone || ''} onChange={e => onChange('empresa_telefone', e.target.value)} /></div>
       <div><Label>Data de Início</Label><Input type="date" value={data.empresa_data_inicio || ''} onChange={e => onChange('empresa_data_inicio', e.target.value)} /></div>
       <div><Label>Idiomas que fala fluentemente</Label><Input value={data.idiomas || ''} onChange={e => onChange('idiomas', e.target.value)} /></div>
       <div><Label>Descrição Detalhada das Funções Atuais</Label><Textarea value={data.descricao_funcoes || ''} onChange={e => onChange('descricao_funcoes', e.target.value)} rows={3} /></div>
 
-      {[1, 2].map(n => (
-        <div key={n} className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
-          <h3 className="font-semibold text-sm text-slate-700">Emprego Anterior #{n}</h3>
-          <div><Label>Nome da Empresa</Label><Input value={data[`emprego_anterior_${n}_empresa`] || ''} onChange={e => onChange(`emprego_anterior_${n}_empresa`, e.target.value)} /></div>
-          <div><Label>CEP</Label><Input value={data[`emprego_anterior_${n}_cep`] || ''} onChange={e => onChange(`emprego_anterior_${n}_cep`, e.target.value)} placeholder="00000-000" maxLength={9} /></div>
-          <div><Label>Endereço Completo</Label><Input value={data[`emprego_anterior_${n}_endereco`] || ''} onChange={e => onChange(`emprego_anterior_${n}_endereco`, e.target.value)} /></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><Label>Telefone</Label><Input value={data[`emprego_anterior_${n}_telefone`] || ''} onChange={e => onChange(`emprego_anterior_${n}_telefone`, e.target.value)} /></div>
-            <div><Label>Nome do Supervisor</Label><Input value={data[`emprego_anterior_${n}_supervisor`] || ''} onChange={e => onChange(`emprego_anterior_${n}_supervisor`, e.target.value)} /></div>
+      <div className="space-y-4">
+        <h3 className="font-semibold text-sm text-slate-700">Empregos Anteriores</h3>
+        {empregos.map((emp, i) => (
+          <div key={i} className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-sm text-slate-700">Emprego Anterior #{i + 1}</h4>
+              {empregos.length > 1 && (
+                <Button type="button" variant="outline" size="sm" onClick={() => removeEmprego(i)} className="gap-1.5"><X className="h-4 w-4" /> Remover</Button>
+              )}
+            </div>
+            <div><Label>Nome da Empresa</Label><Input value={emp.empresa || ''} onChange={e => update(i, 'empresa', e.target.value)} /></div>
+            <div><Label>CEP</Label><Input value={emp.cep || ''} onChange={e => update(i, 'cep', e.target.value)} placeholder="00000-000" maxLength={9} /></div>
+            <div><Label>Endereço Completo</Label><Input value={emp.endereco || ''} onChange={e => update(i, 'endereco', e.target.value)} /></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><Label>Telefone</Label><Input value={emp.telefone || ''} onChange={e => update(i, 'telefone', e.target.value)} /></div>
+              <div><Label>Nome do Supervisor</Label><Input value={emp.supervisor || ''} onChange={e => update(i, 'supervisor', e.target.value)} /></div>
+            </div>
+            <div><Label>Cargo que Ocupava</Label><Input value={emp.cargo || ''} onChange={e => update(i, 'cargo', e.target.value)} /></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><Label>Data de Início</Label><Input type="date" value={emp.inicio || ''} onChange={e => update(i, 'inicio', e.target.value)} /></div>
+              <div><Label>Data de Término</Label><Input type="date" value={emp.termino || ''} onChange={e => update(i, 'termino', e.target.value)} /></div>
+            </div>
+            <div><Label>Motivo de Saída</Label><Input value={emp.motivo_saida || ''} onChange={e => update(i, 'motivo_saida', e.target.value)} /></div>
           </div>
-          <div><Label>Cargo que Ocupava</Label><Input value={data[`emprego_anterior_${n}_cargo`] || ''} onChange={e => onChange(`emprego_anterior_${n}_cargo`, e.target.value)} /></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><Label>Data de Início</Label><Input type="date" value={data[`emprego_anterior_${n}_inicio`] || ''} onChange={e => onChange(`emprego_anterior_${n}_inicio`, e.target.value)} /></div>
-            <div><Label>Data de Término</Label><Input type="date" value={data[`emprego_anterior_${n}_termino`] || ''} onChange={e => onChange(`emprego_anterior_${n}_termino`, e.target.value)} /></div>
-          </div>
-        </div>
-      ))}
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={addEmprego} className="gap-1.5"><Plus className="h-4 w-4" /> Adicionar emprego anterior</Button>
+      </div>
     </div>
   );
 }
