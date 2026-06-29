@@ -19,6 +19,14 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
     setCompNome(''); setCompParentesco('');
   };
 
+  const visitas: { data_chegada: string; duracao: string }[] = data.visitas_eua || [{ data_chegada: '', duracao: '' }];
+  const updateVisita = (idx: number, key: string, value: string) => {
+    const next = visitas.map((v, i) => (i === idx ? { ...v, [key]: value } : v));
+    onChange('visitas_eua', next);
+  };
+  const addVisita = () => onChange('visitas_eua', [...visitas, { data_chegada: '', duracao: '' }]);
+  const removeVisita = (idx: number) => onChange('visitas_eua', visitas.filter((_, i) => i !== idx));
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">4. Detalhes da Viagem</h2>
@@ -44,18 +52,38 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
         <Select value={data.pagador_viagem || undefined} onValueChange={v => onChange('pagador_viagem', v)}>
           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
           <SelectContent>
-            {['Eu mesmo','Pai/Mãe','Empregador atual','Outro'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+            {['Eu mesmo','Outra pessoa','Empresa','Outro'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
-      {data.pagador_viagem === 'Outro' && (
+      {(data.pagador_viagem === 'Outra pessoa' || data.pagador_viagem === 'Outro') && (
         <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
-          <h3 className="font-semibold text-sm text-slate-700">Dados do Pagador (Terceiro)</h3>
+          <h3 className="font-semibold text-sm text-slate-700">Dados do Pagador (Outra pessoa)</h3>
           <div><Label>Nome Completo do Pagador</Label><Input value={data.pagador_nome || ''} onChange={e => onChange('pagador_nome', e.target.value)} /></div>
+          <div>
+            <Label>Parentesco com o pagador</Label>
+            <Select value={data.pagador_parentesco || undefined} onValueChange={v => onChange('pagador_parentesco', v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {['Cônjuge','Filho(a)','Pai/Mãe','Irmão/Irmã','Amigo(a)','Outro'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <div><Label>Endereço Completo do Pagador</Label><Input value={data.pagador_endereco || ''} onChange={e => onChange('pagador_endereco', e.target.value)} /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Email do Pagador</Label><Input value={data.pagador_email || ''} onChange={e => onChange('pagador_email', e.target.value)} /></div>
             <div><Label>Telefone do Pagador</Label><Input value={data.pagador_telefone || ''} onChange={e => onChange('pagador_telefone', e.target.value)} /></div>
+          </div>
+        </div>
+      )}
+      {data.pagador_viagem === 'Empresa' && (
+        <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+          <h3 className="font-semibold text-sm text-slate-700">Dados da Empresa Pagadora</h3>
+          <div><Label>Nome da Empresa</Label><Input value={data.pagador_empresa_nome || ''} onChange={e => onChange('pagador_empresa_nome', e.target.value)} /></div>
+          <div><Label>Endereço da Empresa</Label><Input value={data.pagador_empresa_endereco || ''} onChange={e => onChange('pagador_empresa_endereco', e.target.value)} /></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><Label>Email da Empresa</Label><Input value={data.pagador_empresa_email || ''} onChange={e => onChange('pagador_empresa_email', e.target.value)} /></div>
+            <div><Label>Telefone da Empresa</Label><Input value={data.pagador_empresa_telefone || ''} onChange={e => onChange('pagador_empresa_telefone', e.target.value)} /></div>
           </div>
         </div>
       )}
@@ -77,7 +105,27 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
           </div>
         )}
       </div>
-      <div><Label>Histórico de Viagens Anteriores aos EUA (Datas e duração)</Label><Textarea value={data.historico_viagens_eua || ''} onChange={e => onChange('historico_viagens_eua', e.target.value)} rows={3} /></div>
+      <div>
+        <Label>Histórico de Viagens Anteriores aos EUA</Label>
+        <RadioGroup value={data.historico_viagens_eua_tipo || 'Não fui'} onValueChange={v => onChange('historico_viagens_eua_tipo', v)} className="flex gap-4 mt-1">
+          <div className="flex items-center gap-2"><RadioGroupItem value="Não fui" id="hist_nao" /><Label htmlFor="hist_nao">Não fui</Label></div>
+          <div className="flex items-center gap-2"><RadioGroupItem value="Já fui" id="hist_sim" /><Label htmlFor="hist_sim">Já fui</Label></div>
+        </RadioGroup>
+      </div>
+      {data.historico_viagens_eua_tipo === 'Já fui' && (
+        <div className="bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-200">
+          {visitas.map((v, i) => (
+            <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end border-b border-slate-200 last:border-0 pb-3 last:pb-0">
+              <div><Label>Data de chegada</Label><Input type="date" value={v.data_chegada || ''} onChange={e => updateVisita(i, 'data_chegada', e.target.value)} /></div>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1"><Label>Quanto tempo ficou?</Label><Input value={v.duracao || ''} onChange={e => updateVisita(i, 'duracao', e.target.value)} placeholder="Ex: 15 dias" /></div>
+                {visitas.length > 1 && <Button type="button" variant="outline" size="sm" onClick={() => removeVisita(i)}><X className="h-4 w-4" /></Button>}
+              </div>
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" onClick={addVisita} className="gap-1.5"><Plus className="h-4 w-4" /> Adicionar outra visita</Button>
+        </div>
+      )}
       <div>
         <Label>Já possuiu visto americano?</Label>
         <RadioGroup value={data.ja_teve_visto || 'Não'} onValueChange={v => onChange('ja_teve_visto', v)} className="flex gap-4 mt-1">
@@ -87,12 +135,29 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
       </div>
       {data.ja_teve_visto === 'Sim' && (
         <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
-          <div><Label>Número do Visto</Label><Input value={data.visto_anterior_numero || ''} onChange={e => onChange('visto_anterior_numero', e.target.value)} /></div>
+          <div><Label>Número do Visto (opcional)</Label><Input value={data.visto_anterior_numero || ''} onChange={e => onChange('visto_anterior_numero', e.target.value)} /></div>
           <div><Label>Consulado Emissor</Label><Input value={data.visto_anterior_consulado || ''} onChange={e => onChange('visto_anterior_consulado', e.target.value)} /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Data de Emissão</Label><Input type="date" value={data.visto_anterior_emissao || ''} onChange={e => onChange('visto_anterior_emissao', e.target.value)} /></div>
             <div><Label>Data de Validade</Label><Input type="date" value={data.visto_anterior_validade || ''} onChange={e => onChange('visto_anterior_validade', e.target.value)} /></div>
           </div>
+          <div>
+            <Label>O visto ainda está válido?</Label>
+            <RadioGroup value={data.visto_anterior_valido || 'Não'} onValueChange={v => onChange('visto_anterior_valido', v)} className="flex gap-4 mt-1">
+              <div className="flex items-center gap-2"><RadioGroupItem value="Não" id="valido_nao" /><Label htmlFor="valido_nao">Não</Label></div>
+              <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="valido_sim" /><Label htmlFor="valido_sim">Sim</Label></div>
+            </RadioGroup>
+          </div>
+          <div>
+            <Label>O visto foi cancelado ou revogado?</Label>
+            <RadioGroup value={data.visto_anterior_cancelado || 'Não'} onValueChange={v => onChange('visto_anterior_cancelado', v)} className="flex gap-4 mt-1">
+              <div className="flex items-center gap-2"><RadioGroupItem value="Não" id="cancelado_nao" /><Label htmlFor="cancelado_nao">Não</Label></div>
+              <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="cancelado_sim" /><Label htmlFor="cancelado_sim">Sim</Label></div>
+            </RadioGroup>
+          </div>
+          {data.visto_anterior_cancelado === 'Sim' && (
+            <div><Label>Explique brevemente</Label><Textarea value={data.visto_anterior_cancelado_explicacao || ''} onChange={e => onChange('visto_anterior_cancelado_explicacao', e.target.value)} rows={2} /></div>
+          )}
         </div>
       )}
       <div>
@@ -103,7 +168,24 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
         </RadioGroup>
       </div>
       {data.visto_negado === 'Sim' && (
-        <div><Label>Explique o motivo da negativa</Label><Textarea value={data.visto_negado_explicacao || ''} onChange={e => onChange('visto_negado_explicacao', e.target.value)} rows={3} placeholder="Descreva as circunstâncias da negativa..." /></div>
+        <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><Label>Ano em que foi negado</Label><Input value={data.visto_negado_ano || ''} onChange={e => onChange('visto_negado_ano', e.target.value)} placeholder="AAAA" /></div>
+            <div><Label>Tipo de visto solicitado</Label><Input value={data.visto_negado_tipo || ''} onChange={e => onChange('visto_negado_tipo', e.target.value)} /></div>
+          </div>
+          <div><Label>Motivo informado pelo consulado (se souber)</Label><Textarea value={data.visto_negado_motivo || ''} onChange={e => onChange('visto_negado_motivo', e.target.value)} rows={2} /></div>
+          <div><Label>Explique o motivo da negativa</Label><Textarea value={data.visto_negado_explicacao || ''} onChange={e => onChange('visto_negado_explicacao', e.target.value)} rows={3} placeholder="Descreva as circunstâncias da negativa..." /></div>
+        </div>
+      )}
+      <div>
+        <Label>Já teve alguma petição de imigração (Green Card ou similar) negada?</Label>
+        <RadioGroup value={data.peticao_imigracao_negada || 'Não'} onValueChange={v => onChange('peticao_imigracao_negada', v)} className="flex gap-4 mt-1">
+          <div className="flex items-center gap-2"><RadioGroupItem value="Não" id="peticao_nao" /><Label htmlFor="peticao_nao">Não</Label></div>
+          <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="peticao_sim" /><Label htmlFor="peticao_sim">Sim</Label></div>
+        </RadioGroup>
+      </div>
+      {data.peticao_imigracao_negada === 'Sim' && (
+        <div><Label>Explique brevemente</Label><Textarea value={data.peticao_imigracao_negada_explicacao || ''} onChange={e => onChange('peticao_imigracao_negada_explicacao', e.target.value)} rows={3} /></div>
       )}
     </div>
   );
