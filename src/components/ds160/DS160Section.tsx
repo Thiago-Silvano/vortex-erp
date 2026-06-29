@@ -217,6 +217,10 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
             <p className="text-sm font-medium text-emerald-800">Formulário DS-160 preenchido!</p>
             <p className="text-xs text-emerald-600">Enviado em {formatDate(f.submitted_at)}</p>
           </div>
+          <Button size="sm" variant="outline" onClick={() => openDuties(f)} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
+            <Briefcase className="h-3.5 w-3.5" />
+            Adicionar Duties
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => setDismissed(prev => new Set(prev).add(f.id))} className="text-emerald-600">
             Fechar
           </Button>
