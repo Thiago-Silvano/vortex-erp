@@ -288,6 +288,67 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!dutiesFormId} onOpenChange={(o) => !o && setDutiesFormId(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4" /> Adicionar Duties
+            </DialogTitle>
+            <DialogDescription>
+              Substitua a descrição das funções enviada pelo cliente. Os textos são salvos automaticamente ao sair do campo (máx. 250 caracteres cada).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {([
+              { key: 'atual', enabledKey: 'atualEnabled', label: 'Ocupação Atual' },
+              { key: 'ant1', enabledKey: 'ant1Enabled', label: 'Anterior 1' },
+              { key: 'ant2', enabledKey: 'ant2Enabled', label: 'Anterior 2' },
+            ] as const).map(({ key, enabledKey, label }) => {
+              const enabled = duties[enabledKey] as boolean;
+              const text = duties[key] as string;
+              return (
+                <div key={key} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id={`duty-${key}`}
+                      checked={enabled}
+                      onCheckedChange={(c) => {
+                        const next = { ...duties, [enabledKey]: !!c };
+                        setDuties(next);
+                        persistDuties(next);
+                      }}
+                    />
+                    <Label htmlFor={`duty-${key}`} className="font-medium cursor-pointer">{label}</Label>
+                  </div>
+                  {enabled && (
+                    <div>
+                      <Textarea
+                        rows={3}
+                        maxLength={250}
+                        value={text}
+                        placeholder="Descreva as funções..."
+                        onChange={(e) => setDuties({ ...duties, [key]: e.target.value })}
+                        onBlur={() => persistDuties(duties)}
+                      />
+                      <p className="text-xs text-muted-foreground text-right mt-1">{text.length}/250</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDutiesFormId(null)}>Fechar</Button>
+            <Button onClick={handleDutiesToPdf} disabled={dutiesPdfLoading} className="gap-1.5">
+              {dutiesPdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              Adicionar no PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
