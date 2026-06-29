@@ -329,19 +329,25 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
             ] as const).map(({ key, enabledKey, label }) => {
               const enabled = duties[enabledKey] as boolean;
               const text = duties[key] as string;
+              const available = dutiesAvail[key as keyof DutiesAvail];
               return (
-                <div key={key} className="border rounded-lg p-3 space-y-2">
+                <div key={key} className={`border rounded-lg p-3 space-y-2 ${!available ? 'opacity-50 bg-muted/40' : ''}`}>
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id={`duty-${key}`}
                       checked={enabled}
+                      disabled={!available}
                       onCheckedChange={(c) => {
+                        if (!available) return;
                         const next = { ...duties, [enabledKey]: !!c };
                         setDuties(next);
                         persistDuties(next);
                       }}
                     />
-                    <Label htmlFor={`duty-${key}`} className="font-medium cursor-pointer">{label}</Label>
+                    <Label htmlFor={`duty-${key}`} className={`font-medium ${available ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
+                      {label}
+                      {!available && <span className="ml-2 text-xs font-normal text-muted-foreground">(não preenchida)</span>}
+                    </Label>
                   </div>
                   {enabled && (
                     <div>
