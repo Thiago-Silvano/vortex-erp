@@ -32,6 +32,7 @@ interface Props {
   clientName: string;
   clientEmail: string;
   isMaster?: boolean;
+  onClientDataFilled?: (updates: Record<string, any>) => void;
 }
 
 interface DutiesState {
@@ -98,7 +99,7 @@ function mapFormToClient(fd: Record<string, any>): Record<string, string> {
   };
 }
 
-export default function DS160Section({ clientId, clientName, clientEmail, isMaster }: Props) {
+export default function DS160Section({ clientId, clientName, clientEmail, isMaster, onClientDataFilled }: Props) {
   const { activeCompany } = useCompany();
   const [forms, setForms] = useState<DS160Form[]>([]);
   const [loading, setLoading] = useState(true);
@@ -270,6 +271,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       if (updErr) {
         toast.error('Erro ao atualizar cadastro');
       } else {
+        onClientDataFilled?.(updates);
         toast.success(`${count} campo(s) preenchido(s) no cadastro do cliente.`);
       }
     } catch {
