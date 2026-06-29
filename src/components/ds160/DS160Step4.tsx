@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, X } from 'lucide-react';
 import { DS160StepProps } from './types';
+import { FieldError, errClass } from './fieldError';
 
-export default function DS160Step4({ data, onChange }: DS160StepProps) {
+export default function DS160Step4({ data, onChange, errors }: DS160StepProps) {
   const companions: { nome: string; parentesco: string }[] = data.acompanhantes || [];
   const [compNome, setCompNome] = useState('');
   const [compParentesco, setCompParentesco] = useState('');
@@ -34,56 +35,59 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
       <div>
         <Label>Motivo da Viagem</Label>
         <Select value={data.motivo_viagem || undefined} onValueChange={v => onChange('motivo_viagem', v)}>
-          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+          <SelectTrigger className={errClass(errors?.motivo_viagem)}><SelectValue placeholder="Selecione" /></SelectTrigger>
           <SelectContent>
             {['Turismo e Negócios B1/B2','Negócios B1','Turismo B2','Estudo F1'].map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
           </SelectContent>
         </Select>
+        <FieldError msg={errors?.motivo_viagem} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Data de Ida (Previsão)</Label><Input type="date" value={data.data_ida || ''} onChange={e => onChange('data_ida', e.target.value)} /></div>
-        <div><Label>Data de Volta (Previsão)</Label><Input type="date" value={data.data_volta || ''} onChange={e => onChange('data_volta', e.target.value)} /></div>
+        <div><Label>Data de Ida (Previsão)</Label><Input type="date" className={errClass(errors?.data_ida)} value={data.data_ida || ''} onChange={e => onChange('data_ida', e.target.value)} /><FieldError msg={errors?.data_ida} /></div>
+        <div><Label>Data de Volta (Previsão)</Label><Input type="date" className={errClass(errors?.data_volta)} value={data.data_volta || ''} onChange={e => onChange('data_volta', e.target.value)} /><FieldError msg={errors?.data_volta} /></div>
       </div>
-      <div><Label>Duração Estimada da Viagem (em dias)</Label><Input type="number" value={data.duracao_viagem || ''} onChange={e => onChange('duracao_viagem', e.target.value)} /></div>
-      <div><Label>Cidade Principal de Destino nos EUA</Label><Input value={data.cidade_destino_eua || ''} onChange={e => onChange('cidade_destino_eua', e.target.value)} /></div>
+      <div><Label>Duração Estimada da Viagem (em dias)</Label><Input type="number" className={errClass(errors?.duracao_viagem)} value={data.duracao_viagem || ''} onChange={e => onChange('duracao_viagem', e.target.value)} /><FieldError msg={errors?.duracao_viagem} /></div>
+      <div><Label>Cidade Principal de Destino nos EUA</Label><Input className={errClass(errors?.cidade_destino_eua)} value={data.cidade_destino_eua || ''} onChange={e => onChange('cidade_destino_eua', e.target.value)} /><FieldError msg={errors?.cidade_destino_eua} /></div>
       <div><Label>Local de Hospedagem (Nome do Hotel ou Endereço)</Label><Input value={data.local_hospedagem || ''} onChange={e => onChange('local_hospedagem', e.target.value)} /></div>
       <div>
         <Label>Quem pagará a viagem?</Label>
         <Select value={data.pagador_viagem || undefined} onValueChange={v => onChange('pagador_viagem', v)}>
-          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+          <SelectTrigger className={errClass(errors?.pagador_viagem)}><SelectValue placeholder="Selecione" /></SelectTrigger>
           <SelectContent>
             {['Eu mesmo','Outra pessoa','Empresa','Outro'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
           </SelectContent>
         </Select>
+        <FieldError msg={errors?.pagador_viagem} />
       </div>
       {(data.pagador_viagem === 'Outra pessoa' || data.pagador_viagem === 'Outro') && (
         <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
           <h3 className="font-semibold text-sm text-slate-700">Dados do Pagador (Outra pessoa)</h3>
-          <div><Label>Nome Completo do Pagador</Label><Input value={data.pagador_nome || ''} onChange={e => onChange('pagador_nome', e.target.value)} /></div>
+          <div><Label>Nome Completo do Pagador</Label><Input className={errClass(errors?.pagador_nome)} value={data.pagador_nome || ''} onChange={e => onChange('pagador_nome', e.target.value)} /><FieldError msg={errors?.pagador_nome} /></div>
           <div>
             <Label>Parentesco com o pagador</Label>
             <Select value={data.pagador_parentesco || undefined} onValueChange={v => onChange('pagador_parentesco', v)}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectTrigger className={errClass(errors?.pagador_parentesco)}><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {['Cônjuge','Filho(a)','Pai/Mãe','Irmão/Irmã','Amigo(a)','Outro'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
               </SelectContent>
             </Select>
+            <FieldError msg={errors?.pagador_parentesco} />
           </div>
           <div><Label>Endereço Completo do Pagador</Label><Input value={data.pagador_endereco || ''} onChange={e => onChange('pagador_endereco', e.target.value)} /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Email do Pagador</Label><Input value={data.pagador_email || ''} onChange={e => onChange('pagador_email', e.target.value)} /></div>
-            <div><Label>Telefone do Pagador</Label><Input value={data.pagador_telefone || ''} onChange={e => onChange('pagador_telefone', e.target.value)} /></div>
+            <div><Label>Telefone do Pagador</Label><Input className={errClass(errors?.pagador_telefone)} value={data.pagador_telefone || ''} onChange={e => onChange('pagador_telefone', e.target.value)} /><FieldError msg={errors?.pagador_telefone} /></div>
           </div>
         </div>
       )}
       {data.pagador_viagem === 'Empresa' && (
         <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
           <h3 className="font-semibold text-sm text-slate-700">Dados da Empresa Pagadora</h3>
-          <div><Label>Nome da Empresa</Label><Input value={data.pagador_empresa_nome || ''} onChange={e => onChange('pagador_empresa_nome', e.target.value)} /></div>
+          <div><Label>Nome da Empresa</Label><Input className={errClass(errors?.pagador_empresa_nome)} value={data.pagador_empresa_nome || ''} onChange={e => onChange('pagador_empresa_nome', e.target.value)} /><FieldError msg={errors?.pagador_empresa_nome} /></div>
           <div><Label>Endereço da Empresa</Label><Input value={data.pagador_empresa_endereco || ''} onChange={e => onChange('pagador_empresa_endereco', e.target.value)} /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Email da Empresa</Label><Input value={data.pagador_empresa_email || ''} onChange={e => onChange('pagador_empresa_email', e.target.value)} /></div>
-            <div><Label>Telefone da Empresa</Label><Input value={data.pagador_empresa_telefone || ''} onChange={e => onChange('pagador_empresa_telefone', e.target.value)} /></div>
+            <div><Label>Telefone da Empresa</Label><Input className={errClass(errors?.pagador_empresa_telefone)} value={data.pagador_empresa_telefone || ''} onChange={e => onChange('pagador_empresa_telefone', e.target.value)} /><FieldError msg={errors?.pagador_empresa_telefone} /></div>
           </div>
         </div>
       )}
@@ -170,7 +174,7 @@ export default function DS160Step4({ data, onChange }: DS160StepProps) {
       {data.visto_negado === 'Sim' && (
         <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><Label>Ano em que foi negado</Label><Input value={data.visto_negado_ano || ''} onChange={e => onChange('visto_negado_ano', e.target.value)} placeholder="AAAA" /></div>
+            <div><Label>Ano em que foi negado</Label><Input className={errClass(errors?.visto_negado_ano)} value={data.visto_negado_ano || ''} onChange={e => onChange('visto_negado_ano', e.target.value)} placeholder="AAAA" /><FieldError msg={errors?.visto_negado_ano} /></div>
             <div><Label>Tipo de visto solicitado</Label><Input value={data.visto_negado_tipo || ''} onChange={e => onChange('visto_negado_tipo', e.target.value)} /></div>
           </div>
           <div><Label>Motivo informado pelo consulado (se souber)</Label><Textarea value={data.visto_negado_motivo || ''} onChange={e => onChange('visto_negado_motivo', e.target.value)} rows={2} /></div>
