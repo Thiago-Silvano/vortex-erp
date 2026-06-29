@@ -171,6 +171,27 @@ export default function DS160PublicPage() {
 
   const progress = ((currentStep + 1) / 11) * 100;
 
+  // Maior etapa acessível: só libera o clique numa etapa se todas as anteriores
+  // estiverem com os campos obrigatórios completos.
+  let maxReachable = 0;
+  for (let i = 0; i < 10; i++) {
+    if (Object.keys(validateStep(i, formData)).length === 0) maxReachable = i + 1;
+    else break;
+  }
+  const goToStep = (idx: number) => {
+    if (idx > maxReachable) {
+      setErrors(validateStep(currentStep, formData));
+      setValidateActive(true);
+      scrollToFirstError();
+      toast.error('Complete os campos obrigatórios das etapas anteriores para avançar.');
+      return;
+    }
+    setErrors({});
+    setValidateActive(false);
+    setCurrentStep(idx);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
@@ -266,21 +287,27 @@ export default function DS160PublicPage() {
       <div className="bg-white/80 backdrop-blur border-b border-slate-100">
         <div className="max-w-3xl mx-auto px-4 py-2 overflow-x-auto">
           <div className="flex gap-1 min-w-max">
-            {STEPS.map((step, idx) => (
-              <button
-                key={idx}
-                onClick={() => { setErrors({}); setValidateActive(false); setCurrentStep(idx); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                  idx === currentStep
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : idx < currentStep
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                }`}
-              >
-                {step.num}. {step.label}
-              </button>
-            ))}
+            {STEPS.map((step, idx) => {
+              const locked = idx > maxReachable;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => goToStep(idx)}
+                  disabled={locked}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                    idx === currentStep
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : idx < currentStep
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : locked
+                      ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
+                >
+                  {step.num}. {step.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
