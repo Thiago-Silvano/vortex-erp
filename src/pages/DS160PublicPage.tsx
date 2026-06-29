@@ -387,18 +387,23 @@ export default function DS160PublicPage() {
                   Enviar Formulário
                 </Button>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" className="rounded-full" onClick={() => setShowConfirmSubmit(false)}>
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="rounded-full gap-1.5 bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                    Confirmar Envio
-                  </Button>
+                <div className="flex flex-col items-end gap-2">
+                  <span className="text-xs font-medium text-amber-700">
+                    ⚠️ Falta um passo: clique em "Confirmar Envio" para finalizar.
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" className="rounded-full" onClick={() => setShowConfirmSubmit(false)} disabled={submitting}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={submitting}
+                      className="rounded-full gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      {submitting ? 'Enviando...' : 'Confirmar Envio'}
+                    </Button>
+                  </div>
                 </div>
               )}
             </>
