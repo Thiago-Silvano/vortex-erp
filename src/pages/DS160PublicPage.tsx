@@ -16,6 +16,7 @@ import DS160Step8 from '@/components/ds160/DS160Step8';
 import DS160Step9 from '@/components/ds160/DS160Step9';
 import DS160Step10 from '@/components/ds160/DS160Step10';
 import DS160Step11 from '@/components/ds160/DS160Step11';
+import { validateStep } from '@/components/ds160/validation';
 
 const STEPS = [
   { label: 'Dados Pessoais', num: 1 },
@@ -44,6 +45,20 @@ export default function DS160PublicPage() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [validateActive, setValidateActive] = useState(false);
+
+  // Revalida em tempo real após a primeira tentativa de avançar (limpa erros corrigidos)
+  useEffect(() => {
+    if (validateActive) setErrors(validateStep(currentStep, formData));
+  }, [formData, validateActive, currentStep]);
+
+  const scrollToFirstError = () => {
+    setTimeout(() => {
+      const el = document.querySelector('[data-ds160-error]');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -115,6 +130,15 @@ export default function DS160PublicPage() {
 
   const goNext = async () => {
     if (currentStep < 10) {
+      const stepErrors = validateStep(currentStep, formData);
+      if (Object.keys(stepErrors).length > 0) {
+        setErrors(stepErrors);
+        setValidateActive(true);
+        scrollToFirstError();
+        return;
+      }
+      setErrors({});
+      setValidateActive(false);
       setCurrentStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       // auto-save
@@ -130,6 +154,8 @@ export default function DS160PublicPage() {
 
   const goBack = () => {
     if (currentStep > 0) {
+      setErrors({});
+      setValidateActive(false);
       setCurrentStep(prev => prev - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
