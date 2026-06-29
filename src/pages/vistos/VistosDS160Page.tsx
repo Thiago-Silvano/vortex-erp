@@ -247,12 +247,6 @@ export default function VistosDS160Page() {
     toast.success('Link copiado!');
   };
 
-  const resendCopyLink = (group: GroupForm) => {
-    const formLink = `${baseUrl}/ds160/group/${group.token}`;
-    navigator.clipboard.writeText(formLink);
-    toast.success('Link copiado!');
-  };
-
   const handleDeleteGroup = async () => {
     if (!deleteGroupId) return;
     // Mark all forms in group as deleted
