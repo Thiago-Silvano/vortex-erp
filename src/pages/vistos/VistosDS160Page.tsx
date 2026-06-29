@@ -387,19 +387,69 @@ export default function VistosDS160Page() {
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : groups.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                Nenhum link de grupo enviado ainda.
-              </p>
-            ) : (
+            ) : (() => {
+              const visibleGroups = groups.filter(g => g.status !== 'deleted');
+              const visibleIndividuals = individuals.filter(f => f.status !== 'deleted');
+              if (visibleGroups.length === 0 && visibleIndividuals.length === 0) {
+                return (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Nenhum link enviado ainda.
+                  </p>
+                );
+              }
+              const entries: LinkEntry[] = [
+                ...visibleGroups.map(g => ({ kind: 'group' as const, ...g })),
+                ...visibleIndividuals.map(f => ({ kind: 'individual' as const, ...f })),
+              ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+              return (
               <div className="space-y-4">
-                {groups.filter(g => g.status !== 'deleted').map(group => {
+                {entries.map(entry => {
+                  if (entry.kind === 'individual') {
+                    const st = statusLabel(entry.status);
+                    return (
+                      <div key={`i-${entry.id}`} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">Individual</Badge>
+                            <Badge
+                              variant={entry.status === 'submitted' ? 'default' : st.variant}
+                              className={entry.status === 'submitted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : ''}
+                            >
+                              {st.label}
+                            </Badge>
+                            <span className="text-sm font-medium">{entry.client_name}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(entry.sent_at)}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => { navigator.clipboard.writeText(`${baseUrl}/ds160/${entry.token}`); toast.success('Link copiado!'); }}>
+                            <Copy className="h-3 w-3" /> Copiar Link
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/${entry.token}`, '_blank')}>
+                            <ExternalLink className="h-3 w-3" /> Abrir
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1 text-destructive hover:bg-destructive/10 border-destructive/30"
+                            onClick={() => setDeleteIndividualId(entry.id)}
+                          >
+                            <Trash2 className="h-3 w-3" /> Excluir
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  const group = entry;
                   const st = statusLabel(group.status);
                   const allSubmitted = group.applicants.length > 0 && group.applicants.every(a => a.status === 'submitted');
                   return (
                     <div key={group.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
+                          <Badge variant="secondary" className="mr-2">Grupo</Badge>
                           <Badge
                             variant={allSubmitted ? 'default' : st.variant}
                             className={allSubmitted ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : ''}
@@ -452,9 +502,6 @@ export default function VistosDS160Page() {
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => copyLink(group.token)}>
                           <Copy className="h-3 w-3" /> Copiar Link
                         </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => resendCopyLink(group)}>
-                          <Copy className="h-3 w-3" /> Copiar Link
-                        </Button>
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/group/${group.token}`, '_blank')}>
                           <ExternalLink className="h-3 w-3" /> Abrir
                         </Button>
@@ -471,7 +518,8 @@ export default function VistosDS160Page() {
                   );
                 })}
               </div>
-            )}
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
