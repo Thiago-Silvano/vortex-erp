@@ -1,8 +1,9 @@
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DS160StepProps } from './types';
+import { FieldError } from './fieldError';
 
-export default function DS160Step11({ data, onChange }: DS160StepProps) {
+export default function DS160Step11({ data, onChange, errors }: DS160StepProps) {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">11. Declaração Final</h2>
@@ -11,7 +12,7 @@ export default function DS160Step11({ data, onChange }: DS160StepProps) {
           Declaro que li e entendi todas as perguntas deste formulário e que as respostas fornecidas são verdadeiras e corretas.
         </p>
       </div>
-      <div className="flex items-start gap-3 pt-2">
+      <div className={`flex items-start gap-3 pt-2 ${errors?.declaracao_aceita ? 'rounded-lg border-2 border-[#e53e3e] p-3' : ''}`}>
         <Checkbox
           id="declaracao_aceita"
           checked={data.declaracao_aceita || false}
@@ -21,6 +22,7 @@ export default function DS160Step11({ data, onChange }: DS160StepProps) {
           Li, entendi e confirmo que todas as informações fornecidas neste formulário são verdadeiras e corretas ao meu melhor conhecimento.
         </Label>
       </div>
+      <FieldError msg={errors?.declaracao_aceita} />
     </div>
   );
 }
