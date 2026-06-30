@@ -69,6 +69,7 @@ export default function VistosDS160Page() {
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [deleteIndividualId, setDeleteIndividualId] = useState<string | null>(null);
   const [editIndividual, setEditIndividual] = useState<IndividualForm | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const baseUrl = window.location.origin;
 
