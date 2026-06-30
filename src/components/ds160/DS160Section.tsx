@@ -601,6 +601,19 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {editForm && (
+        <DS160EditDialog
+          formId={editForm.id}
+          initialData={editForm.form_data || {}}
+          open={!!editForm}
+          onOpenChange={(o) => !o && setEditForm(null)}
+          onSaved={(fd) => {
+            setForms(prev => prev.map(f => f.id === editForm.id ? { ...f, form_data: fd } : f));
+            setEditForm(null);
+          }}
+        />
+      )}
     </div>
   );
 }
