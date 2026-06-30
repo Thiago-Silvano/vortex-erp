@@ -7,29 +7,22 @@ import { DS160StepProps } from './types';
 import { maskPhone } from '@/lib/masks';
 import { FieldError, errClass } from './fieldError';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { REDES_SOCIAIS_OPTIONS, labelRedeSocial } from './types';
 
-const SOCIAL_NETWORKS = [
-  'Facebook',
-  'Instagram',
-  'X (Twitter)',
-  'TikTok',
-  'YouTube',
-  'LinkedIn',
-  'Snapchat',
-  'Pinterest',
-  'Reddit',
-  'WhatsApp',
-];
+type SocialEntry = { plataforma: string; usuario: string };
 
 export default function DS160Step3({ data, onChange, errors }: DS160StepProps) {
-  const socialMedias: string[] = data.redes_sociais || [];
+  // Normaliza valores legados (strings) para o formato { plataforma, usuario }
+  const socialMedias: SocialEntry[] = (data.redes_sociais || []).map((s: any) =>
+    typeof s === 'string' ? { plataforma: 'OTHER', usuario: s } : s,
+  );
 
   const [newPlatform, setNewPlatform] = useState('');
   const [newUser, setNewUser] = useState('');
 
   const addSocial = () => {
     if (!newPlatform || !newUser.trim()) return;
-    onChange('redes_sociais', [...socialMedias, `${newPlatform}: ${newUser.trim()}`]);
+    onChange('redes_sociais', [...socialMedias, { plataforma: newPlatform, usuario: newUser.trim() }]);
     setNewPlatform('');
     setNewUser('');
   };
@@ -88,7 +81,7 @@ export default function DS160Step3({ data, onChange, errors }: DS160StepProps) {
           <Select value={newPlatform} onValueChange={setNewPlatform}>
             <SelectTrigger className="h-9 text-sm sm:w-52"><SelectValue placeholder="Rede social" /></SelectTrigger>
             <SelectContent>
-              {SOCIAL_NETWORKS.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+              {REDES_SOCIAIS_OPTIONS.map(o => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
           <Input value={newUser} onChange={e => setNewUser(e.target.value)} placeholder="Nome de usuário (ex: @usuario)" className="flex-1" onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSocial())} />
@@ -98,7 +91,7 @@ export default function DS160Step3({ data, onChange, errors }: DS160StepProps) {
           <div className="flex flex-wrap gap-2 mt-2">
             {socialMedias.map((s, i) => (
               <span key={i} className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-sm px-3 py-1 rounded-full">
-                {s}
+                <strong>{labelRedeSocial(s.plataforma)}</strong>: {s.usuario}
                 <button onClick={() => removeSocial(i)}><X className="h-3 w-3" /></button>
               </span>
             ))}
