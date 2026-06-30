@@ -172,6 +172,8 @@ function pega(form: any, ...chaves: string[]): any {
 export function montarDadosDS160(form: any): DadosDS160 {
   form = form || {};
 
+  // (compat) wrapper abaixo expõe o nome legado `mapearDadosDS160`.
+
   // Nome: tenta cheio; senão monta de nome + sobrenome
   const sobrenome = txt(pega(form, "sobrenome", "surname", "ultimo_nome"));
   const nome = txt(pega(form, "nome", "given_name", "primeiro_nome"));
