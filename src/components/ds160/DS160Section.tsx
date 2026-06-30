@@ -8,11 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase, UserPlus } from 'lucide-react';
+import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase, UserPlus, Bot, RefreshCw, Code2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { generateDS160Pdf } from '@/lib/generateDS160Pdf';
+import { mapearDadosDS160 } from '@/lib/ds160-mapper';
+
+const ROBOT_SERVER = 'http://localhost:3004';
 
 interface DS160Form {
   id: string;
@@ -25,6 +28,10 @@ interface DS160Form {
   form_data: Record<string, any>;
   current_step: number;
   sent_by: string;
+  robot_status?: string | null;
+  robot_application_id?: string | null;
+  robot_filled_at?: string | null;
+  robot_machine?: string | null;
 }
 
 interface Props {
@@ -112,6 +119,8 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [dutiesAvail, setDutiesAvail] = useState<DutiesAvail>({ atual: false, ant1: false, ant2: false });
   const [dutiesPdfLoading, setDutiesPdfLoading] = useState(false);
   const [fillingClientId, setFillingClientId] = useState<string | null>(null);
+  const [robotSending, setRobotSending] = useState<string | null>(null);
+  const [jsonForm, setJsonForm] = useState<DS160Form | null>(null);
 
   const fetchForms = async () => {
     const { data } = await supabase
@@ -124,6 +133,23 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   };
 
   useEffect(() => { fetchForms(); }, [clientId]);
+
+  // Realtime: atualiza a tela automaticamente quando o robô concluir o DS-160.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`ds160-client-${clientId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'ds160_forms',
+        filter: `client_id=eq.${clientId}`,
+      }, (payload) => {
+        const updated = payload.new as any;
+        setForms(prev => prev.map(f => f.id === updated.id ? { ...f, ...updated } : f));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [clientId]);
 
   const baseUrl = window.location.origin;
 
@@ -180,6 +206,45 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   };
 
   const formatDate = (d: string | null) => d ? format(new Date(d), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—';
+
+  const robotMeta = (s?: string | null) => {
+    switch (s) {
+      case 'em_andamento': return { label: 'Em andamento', dot: 'bg-blue-500', text: 'text-blue-700' };
+      case 'concluido': return { label: 'Concluído', dot: 'bg-emerald-500', text: 'text-emerald-700' };
+      case 'erro': return { label: 'Erro', dot: 'bg-red-500', text: 'text-red-700' };
+      default: return { label: 'Pendente', dot: 'bg-gray-400', text: 'text-gray-600' };
+    }
+  };
+
+  // Envia os dados do formulário para o robô local (porta 3004).
+  const sendToRobot = async (form: DS160Form) => {
+    setRobotSending(form.id);
+    try {
+      // Verifica se o servidor local está rodando.
+      try {
+        await fetch(`${ROBOT_SERVER}/ds160/health`, { method: 'GET' });
+      } catch {
+        toast.error('O servidor DS-160 não está rodando nesta máquina. Abra o DS-160 Server antes de continuar.');
+        setRobotSending(null);
+        return;
+      }
+
+      const dados = mapearDadosDS160(form.form_data || {}, clientName);
+      const resp = await fetch(`${ROBOT_SERVER}/ds160/iniciar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome_cliente: clientName, form_id: form.id, dados }),
+      });
+      if (!resp.ok) throw new Error('falha');
+
+      await supabase.from('ds160_forms').update({ robot_status: 'em_andamento' } as any).eq('id', form.id);
+      setForms(prev => prev.map(f => f.id === form.id ? { ...f, robot_status: 'em_andamento' } : f));
+      toast.success('Robô iniciado! Abra o app DS-160 na sua máquina.');
+    } catch {
+      toast.error('Erro ao iniciar o robô DS-160.');
+    }
+    setRobotSending(null);
+  };
 
   const handleDeleteForm = async () => {
     if (!deleteFormId) return;
@@ -360,6 +425,58 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
                     </Button>
                   )}
                 </div>
+
+                {form.status === 'submitted' && (() => {
+                  const rm = robotMeta(form.robot_status);
+                  return (
+                    <div className="mt-2 rounded-lg border bg-muted/30 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-sm text-foreground flex items-center gap-1.5">
+                          <Bot className="h-4 w-4" /> DS-160 Robô
+                        </span>
+                        <span className={`flex items-center gap-1.5 text-xs font-medium ${rm.text}`}>
+                          <span className={`h-2 w-2 rounded-full ${rm.dot}`} /> {rm.label}
+                        </span>
+                      </div>
+                      {form.robot_machine && (
+                        <p className="text-xs text-muted-foreground">Máquina: {form.robot_machine}</p>
+                      )}
+                      {form.robot_status === 'concluido' && form.robot_application_id && (
+                        <div className="rounded-md bg-emerald-50 border border-emerald-200 p-2">
+                          <p className="text-xs text-emerald-700">Application ID</p>
+                          <p className="font-mono font-bold text-emerald-900 text-base tracking-wider">{form.robot_application_id}</p>
+                          {form.robot_filled_at && (
+                            <p className="text-xs text-emerald-600 mt-0.5">Preenchido em {formatDate(form.robot_filled_at)}</p>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-1.5">
+                        {(!form.robot_status || form.robot_status === 'pendente' || form.robot_status === 'erro') && (
+                          <Button size="sm" className="h-7 text-xs gap-1" onClick={() => sendToRobot(form)} disabled={robotSending === form.id}>
+                            {robotSending === form.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bot className="h-3 w-3" />}
+                            Enviar para DS-160
+                          </Button>
+                        )}
+                        {form.robot_status === 'em_andamento' && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => sendToRobot(form)} disabled={robotSending === form.id}>
+                            {robotSending === form.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                            Reenviar
+                          </Button>
+                        )}
+                        {form.robot_status === 'concluido' && (
+                          <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-1">
+                            <a href="https://ceac.state.gov/CEACStatTracker/Status.aspx" target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-3 w-3" /> Verificar no CEAC
+                            </a>
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => setJsonForm(form)}>
+                          <Code2 className="h-3 w-3" /> Ver JSON
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -379,6 +496,36 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!jsonForm} onOpenChange={(o) => !o && setJsonForm(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code2 className="h-4 w-4" /> JSON enviado ao robô
+            </DialogTitle>
+            <DialogDescription>
+              Pré-visualização dos dados mapeados a partir do formulário DS-160.
+            </DialogDescription>
+          </DialogHeader>
+          <pre className="max-h-[60vh] overflow-auto rounded-lg bg-muted p-3 text-xs">
+            {jsonForm ? JSON.stringify(mapearDadosDS160(jsonForm.form_data || {}, clientName), null, 2) : ''}
+          </pre>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!jsonForm) return;
+                navigator.clipboard.writeText(JSON.stringify(mapearDadosDS160(jsonForm.form_data || {}, clientName), null, 2));
+                toast.success('JSON copiado!');
+              }}
+              className="gap-1.5"
+            >
+              <Copy className="h-4 w-4" /> Copiar
+            </Button>
+            <Button onClick={() => setJsonForm(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!dutiesFormId} onOpenChange={(o) => !o && setDutiesFormId(null)}>
         <DialogContent className="max-w-lg">

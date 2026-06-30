@@ -1,0 +1,16 @@
+{
+  "name": "ds160-server",
+  "version": "1.0.0",
+  "description": "Servidor local que conecta o ERP Vortex ao robô de preenchimento do DS-160",
+  "main": "ds160-server.js",
+  "scripts": {
+    "ds160-server": "node ds160-server.js",
+    "start": "node ds160-server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0"
+  }
+}
