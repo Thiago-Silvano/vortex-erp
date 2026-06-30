@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import DS160EditDialog from '@/components/ds160/DS160EditDialog';
 
@@ -69,6 +70,7 @@ export default function VistosDS160Page() {
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [deleteIndividualId, setDeleteIndividualId] = useState<string | null>(null);
   const [editIndividual, setEditIndividual] = useState<IndividualForm | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const baseUrl = window.location.origin;
 
@@ -376,10 +378,23 @@ export default function VistosDS160Page() {
         {/* Existing groups */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Links Enviados
-            </CardTitle>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Links Enviados
+              </CardTitle>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[190px] h-8 text-xs">
+                  <SelectValue placeholder="Filtrar por status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="sent">Enviado</SelectItem>
+                  <SelectItem value="in_progress">Em preenchimento</SelectItem>
+                  <SelectItem value="submitted">Concluído</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             {loadingGroups ? (
@@ -387,12 +402,13 @@ export default function VistosDS160Page() {
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : (() => {
-              const visibleGroups = groups.filter(g => g.status !== 'deleted');
-              const visibleIndividuals = individuals.filter(f => f.status !== 'deleted');
+              const matchesStatus = (s: string) => statusFilter === 'all' || s === statusFilter;
+              const visibleGroups = groups.filter(g => g.status !== 'deleted' && matchesStatus(g.status));
+              const visibleIndividuals = individuals.filter(f => f.status !== 'deleted' && matchesStatus(f.status));
               if (visibleGroups.length === 0 && visibleIndividuals.length === 0) {
                 return (
                   <p className="text-sm text-muted-foreground text-center py-8">
-                    Nenhum link enviado ainda.
+                    {statusFilter === 'all' ? 'Nenhum link enviado ainda.' : 'Nenhum link com este status.'}
                   </p>
                 );
               }
