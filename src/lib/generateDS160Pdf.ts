@@ -205,7 +205,7 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
       doc.text(sanitize(label) + ':', 15, y);
       doc.setFont('helvetica', 'normal');
 
-      const valStr = sanitize(String(value));
+      const valStr = sanitize(formatValue(String(key), value));
       const lines = doc.splitTextToSize(valStr, pageW - 80);
       doc.text(lines, 70, y);
       y += Math.max(lines.length * 4, 6);
