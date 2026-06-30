@@ -337,17 +337,6 @@ export default function ClientsPage() {
             </DialogHeader>
 
             <div className="space-y-3">
-              <div className="flex justify-end">
-                <Button type="button" size="sm" variant="outline" onClick={() => setDocImportOpen(true)} className="gap-1 h-7">
-                  <FileScan className="h-3.5 w-3.5" /> Importar documento (IA)
-                </Button>
-              </div>
-              {editingId && <ClientPhotosSection clientId={editingId} />}
-              <ClientFilesSection ref={filesRef} clientId={editingId || undefined} />
-              {editingId && activeCompany?.slug === 'vortex-vistos' && (
-                <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} isMaster={isMaster} onClientDataFilled={(updates) => setForm(p => ({ ...p, ...updates }))} />
-              )}
-
               {/* Row 1: CPF, Nascimento, Nome */}
               <div className="grid grid-cols-4 gap-2">
                 <div>
@@ -470,6 +459,18 @@ export default function ClientsPage() {
                   }))}
                 />
               </div>
+
+              {/* Other sections below the client data */}
+              <div className="flex justify-end">
+                <Button type="button" size="sm" variant="outline" onClick={() => setDocImportOpen(true)} className="gap-1 h-7">
+                  <FileScan className="h-3.5 w-3.5" /> Importar documento (IA)
+                </Button>
+              </div>
+              {editingId && <ClientPhotosSection clientId={editingId} />}
+              <ClientFilesSection ref={filesRef} clientId={editingId || undefined} />
+              {editingId && activeCompany?.slug === 'vortex-vistos' && (
+                <DS160Section clientId={editingId} clientName={form.full_name} clientEmail={form.email} isMaster={isMaster} onClientDataFilled={(updates) => setForm(p => ({ ...p, ...updates }))} />
+              )}
             </div>
 
             <DialogFooter>
