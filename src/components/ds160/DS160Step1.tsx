@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,6 +11,10 @@ import { BRAZIL_STATES, isBrasil } from '@/data/brazil-states';
 export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
   const paisNascimento = data.pais_nascimento || 'Brasil';
   const nascimentoBrasil = isBrasil(paisNascimento);
+  useEffect(() => {
+    if (!data.pais_nascimento) onChange('pais_nascimento', 'Brasil');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">1. Dados Pessoais</h2>
