@@ -221,9 +221,16 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     }
   };
 
+  // Retorna exatamente o JSON que será enviado ao robô (override tem prioridade).
+  const jsonParaRobo = (form: DS160Form) => {
+    const override = (form.form_data as any)?.json_override;
+    return override && typeof override === 'object'
+      ? override
+      : mapearDadosDS160(form.form_data || {}, clientName);
+  };
+
   // Abre o modal para colar/substituir o JSON enviado ao robô.
   const openJsonReplace = (form: DS160Form) => {
-    /* opens replace dialog */
     const override = (form.form_data as any)?.json_override;
     const base = override && typeof override === 'object'
       ? override
