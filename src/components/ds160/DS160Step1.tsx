@@ -13,6 +13,7 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
   const nascimentoBrasil = isBrasil(paisNascimento);
   useEffect(() => {
     if (!data.pais_nascimento) onChange('pais_nascimento', 'Brasil');
+    if (!data.nacionalidade) onChange('nacionalidade', data.pais_nascimento || 'Brasil');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const handlePaisNascimento = (v: string) => {
