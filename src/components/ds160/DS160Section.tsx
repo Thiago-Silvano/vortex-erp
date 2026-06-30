@@ -8,11 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase, UserPlus } from 'lucide-react';
+import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase, UserPlus, Bot, RefreshCw, Code2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { generateDS160Pdf } from '@/lib/generateDS160Pdf';
+import { mapearDadosDS160 } from '@/lib/ds160-mapper';
+
+const ROBOT_SERVER = 'http://localhost:3004';
 
 interface DS160Form {
   id: string;
@@ -25,6 +28,10 @@ interface DS160Form {
   form_data: Record<string, any>;
   current_step: number;
   sent_by: string;
+  robot_status?: string | null;
+  robot_application_id?: string | null;
+  robot_filled_at?: string | null;
+  robot_machine?: string | null;
 }
 
 interface Props {
