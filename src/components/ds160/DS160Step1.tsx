@@ -16,6 +16,11 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
   useEffect(() => {
     if (!data.pais_nascimento) onChange('pais_nascimento', 'Brasil');
     if (!data.nacionalidade) onChange('nacionalidade', data.pais_nascimento || 'Brasil');
+    // Converte valores antigos de estado civil para o código de uma letra
+    const ecNormalizado = normalizarEstadoCivil(data.estado_civil);
+    if (ecNormalizado && ecNormalizado !== data.estado_civil) {
+      onChange('estado_civil', ecNormalizado);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const handlePaisNascimento = (v: string) => {
