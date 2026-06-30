@@ -27,6 +27,13 @@ export interface RedeSocial {
   usuario: string;     // identificador, sem @
 }
 
+export interface Acompanhante {
+  nome: string;         // nomes (given names) — todos os tokens menos o último
+  sobrenome: string;    // sobrenome (surname) — último token
+  nome_completo: string;
+  parentesco: string;   // código/rótulo do parentesco (SPOUSE, CHILD, OTHER…)
+}
+
 // ── Contrato de saída (exatamente o que o robô consome) ────────────────────
 export interface DadosDS160 {
   // Personal 1 / 2
