@@ -273,10 +273,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const sendToRobot = async (form: DS160Form) => {
     setRobotSending(form.id);
     try {
-      const override = (form.form_data as any)?.json_override;
-      const dados = override && typeof override === 'object'
-        ? override
-        : mapearDadosDS160(form.form_data || {}, clientName);
+      const dados = jsonParaRobo(form);
       const resp = await fetch(`${ROBOT_SERVER}/ds160/iniciar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
