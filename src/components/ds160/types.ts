@@ -34,3 +34,15 @@ export const COUNTRIES = [
   'Tunísia','Turcomenistão','Turquia','Tuvalu','Ucrânia','Uganda','Uruguai','Uzbequistão',
   'Vanuatu','Vaticano','Venezuela','Vietnã','Zâmbia','Zimbábue',
 ];
+
+export const ESTADO_CIVIL_OPTIONS = [
+  { code: 'M', label: 'Casado(a)' },
+  { code: 'C', label: 'União Estável' },
+  { code: 'P', label: 'Parceria Civil/Doméstica' },
+  { code: 'S', label: 'Solteiro(a)' },
+  { code: 'W', label: 'Viúvo(a)' },
+  { code: 'D', label: 'Divorciado(a)' },
+  { code: 'L', label: 'Separado(a) Legalmente' },
+  { code: 'O', label: 'Outro' },
+] as const;
+
