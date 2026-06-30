@@ -1,4 +1,6 @@
 // ds160-mapper.ts
+import { normalizarEstadoCivil } from "@/components/ds160/types";
+
 // ---------------------------------------------------------------------------
 // Monta o payload COMPLETO que o robô DS-160 espera, a partir do registro do ERP.
 // Fonte da verdade: TODAS as chaves lidas pelo robot.py (preencher_ds160).
