@@ -8,12 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase, UserPlus, Bot, RefreshCw, Code2 } from 'lucide-react';
+import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase, UserPlus, Bot, RefreshCw, Code2, Pencil } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { generateDS160Pdf } from '@/lib/generateDS160Pdf';
 import { mapearDadosDS160 } from '@/lib/ds160-mapper';
+import DS160EditDialog from './DS160EditDialog';
 
 const ROBOT_SERVER = 'http://localhost:3004';
 
@@ -121,6 +122,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [fillingClientId, setFillingClientId] = useState<string | null>(null);
   const [robotSending, setRobotSending] = useState<string | null>(null);
   const [jsonForm, setJsonForm] = useState<DS160Form | null>(null);
+  const [editForm, setEditForm] = useState<DS160Form | null>(null);
 
   const fetchForms = async () => {
     const { data } = await supabase
@@ -415,6 +417,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
                   <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/${form.token}`, '_blank')}>
                     <ExternalLink className="h-3 w-3" />Abrir
                   </Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setEditForm(form)}>
+                    <Pencil className="h-3 w-3" />Editar respostas
+                  </Button>
                   {form.status === 'submitted' && (
                     <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleGeneratePdf(form)} disabled={generatingPdf}>
                       {generatingPdf ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
@@ -500,6 +505,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       </AlertDialog>
 
       <Dialog open={!!jsonForm} onOpenChange={(o) => !o && setJsonForm(null)}>
+        {/* JSON preview */}
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -595,6 +601,19 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {editForm && (
+        <DS160EditDialog
+          formId={editForm.id}
+          initialData={editForm.form_data || {}}
+          open={!!editForm}
+          onOpenChange={(o) => !o && setEditForm(null)}
+          onSaved={(fd) => {
+            setForms(prev => prev.map(f => f.id === editForm.id ? { ...f, form_data: fd } : f));
+            setEditForm(null);
+          }}
+        />
+      )}
     </div>
   );
 }
