@@ -196,6 +196,20 @@ function dinheiro(v: any): string {
 
 // ── Mapper principal — preenche TODOS os campos do contrato ────────────────
 
+/** Normaliza redes sociais para [{ plataforma: CODIGO, usuario }]. Aceita formato legado (string). */
+function montarRedesSociais(v: any): { plataforma: string; usuario: string }[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((item) => {
+      if (typeof item === "string") return { plataforma: "OTHER", usuario: item.trim() };
+      return {
+        plataforma: txt(item?.plataforma) || "OTHER",
+        usuario: txt(item?.usuario),
+      };
+    })
+    .filter((r) => r.usuario || r.plataforma === "NONE");
+}
+
 export function montarDadosDS160(form: any): DadosDS160 {
   form = form || {};
 
