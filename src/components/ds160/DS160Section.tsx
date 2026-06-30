@@ -221,9 +221,48 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     }
   };
 
+  // Abre o modal para colar/substituir o JSON enviado ao robô.
+  const openJsonReplace = (form: DS160Form) => {
+    const override = (form.form_data as any)?.json_override;
+    const base = override && typeof override === 'object'
+      ? override
+      : mapearDadosDS160(form.form_data || {}, clientName);
+    setJsonReplaceText(JSON.stringify(base, null, 2));
+    setJsonReplaceForm(form);
+  };
+
+  // Salva o JSON colado dentro de form_data.json_override.
+  const saveJsonReplace = async () => {
+    if (!jsonReplaceForm) return;
+    let parsed: any;
+    try {
+      parsed = JSON.parse(jsonReplaceText);
+    } catch {
+      toast.error('JSON inválido. Verifique a formatação.');
+      return;
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      toast.error('O JSON precisa ser um objeto.');
+      return;
+    }
+    setJsonReplaceSaving(true);
+    const merged = { ...(jsonReplaceForm.form_data || {}), json_override: parsed };
+    const { error } = await supabase
+      .from('ds160_forms')
+      .update({ form_data: merged as any } as any)
+      .eq('id', jsonReplaceForm.id);
+    setJsonReplaceSaving(false);
+    if (error) {
+      toast.error('Erro ao salvar o JSON.');
+      return;
+    }
+    setForms(prev => prev.map(f => f.id === jsonReplaceForm.id ? { ...f, form_data: merged } : f));
+    toast.success('JSON substituído! Ele será usado ao enviar para o robô.');
+    setJsonReplaceForm(null);
+  };
+
   // Envia os dados do formulário para o robô local (porta 3004).
   const sendToRobot = async (form: DS160Form) => {
-    /* placeholder */
     setRobotSending(form.id);
     try {
       const override = (form.form_data as any)?.json_override;
