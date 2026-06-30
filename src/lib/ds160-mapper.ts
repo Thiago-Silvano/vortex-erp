@@ -30,7 +30,7 @@ export interface DadosDS160 {
   nome_completo: string;
   nome_passaporte: string;
   sexo: string;            // "M" | "F" (ou Masculino/Feminino)
-  estado_civil: string;    // S | M | W | D (ou Solteiro/Casado/Viuvo/Divorciado)
+  estado_civil: string;    // M | C | P | S | W | D | L | O (ou rótulos em português)
   data_nascimento: string; // DD/MM/AAAA
   cidade_nascimento: string;
   estado_nascimento: string;
@@ -197,9 +197,20 @@ function dinheiro(v: any): string {
 export function montarDadosDS160(form: any): DadosDS160 {
   form = form || {};
 
-  // Nome: tenta cheio; senão monta de nome + sobrenome
-  const sobrenome = txt(pega(form, "sobrenome", "surname", "ultimo_nome"));
-  const nome = txt(pega(form, "nome", "given_name", "primeiro_nome"));
+  // Normaliza estado civil para o código de uma letra aceito pelo robô
+  const mapEstadoCivil: Record<string, string> = {
+    casado: "M", casada: "M", "casado(a)": "M", "casado(a)": "M",
+    "união estável": "C", "uniao estavel": "C", "união estavel": "C",
+    "parceria civil/doméstica": "P", "parceria civil domestica": "P", "parceria civil/domestica": "P",
+    solteiro: "S", solteira: "S", "solteiro(a)": "S",
+    viuvo: "W", viúvo: "W", viuva: "W", viúva: "W", "viúvo(a)": "W", "viuvo(a)": "W",
+    divorciado: "D", divorciada: "D", "divorciado(a)": "D",
+    "separado legalmente": "L", "separada legalmente": "L", "separado(a) legalmente": "L",
+    outro: "O", outros: "O",
+  };
+  const estadoCivilRaw = txt(pega(form, "estado_civil")).toLowerCase().replace(/\s+/g, " ").trim();
+  const estadoCivil = mapEstadoCivil[estadoCivilRaw] || (estadoCivilRaw.length === 1 ? estadoCivilRaw.toUpperCase() : "S");
+
   const nomeCompleto =
     txt(pega(form, "nome_completo", "nome_passaporte")) ||
     `${nome} ${sobrenome}`.trim();
@@ -249,7 +260,8 @@ export function montarDadosDS160(form: any): DadosDS160 {
     nome_completo: nomeCompleto,
     nome_passaporte: txt(pega(form, "nome_passaporte", "nome_completo")) || nomeCompleto,
     sexo: txt(pega(form, "sexo", "genero")) || "M",
-    estado_civil: txt(pega(form, "estado_civil")) || "S",
+    estado_civil: estadoCivil,
+
     data_nascimento: dataBR(pega(form, "data_nascimento", "nascimento", "dob")),
     cidade_nascimento: txt(pega(form, "cidade_nascimento", "naturalidade")),
     estado_nascimento: txt(pega(form, "estado_nascimento", "uf_nascimento")),
