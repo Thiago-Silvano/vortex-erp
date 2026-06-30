@@ -281,6 +281,23 @@ export function montarDadosDS160(form: any): DadosDS160 {
   // Segurança: as perguntas são salvas com prefixo `seg_` e valor "Sim"/"Não".
   const seg = (k: string) => bool(form[`seg_${k}`] ?? form[k]);
 
+  // Já visitou os EUA? (radio "Já fui" / "Não fui", com fallback p/ a lista)
+  const visitouEua =
+    txt(pega(form, "historico_viagens_eua_tipo")).toLowerCase().includes("já fui") ||
+    (Array.isArray(form.visitas_eua) &&
+      form.visitas_eua.some((v: any) => txt(v?.data_chegada) || txt(v?.duracao)));
+
+  // Participa de organizações? (campo de texto livre → true se houver conteúdo)
+  const temOrganizacao = txt(pega(form, "organizacoes")).trim().length > 0;
+
+  // Quem paga a viagem → código do robô (S=eu, O=outra pessoa, C=empresa)
+  const pagoPorBruto = txt(pega(form, "viagem_pago_por", "pagador_viagem", "pago_por")).toLowerCase();
+  const pagoPorCod = /empresa|company|c$/.test(pagoPorBruto)
+    ? "C"
+    : /outr|other|o$/.test(pagoPorBruto)
+    ? "O"
+    : "S";
+
   // Redes sociais: aceita objeto[] {plataforma|tipo, usuario|handle}, string[]
   // ("Instagram @handle"), objeto único, campos avulsos ou string única (legado).
   // Saída: [{plataforma, usuario}] — o robô seleciona pelo código OU pelo rótulo.
@@ -349,7 +366,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     viagem_duracao_dias: pega(form, "viagem_duracao_dias", "duracao_viagem", "duracao_dias") ?? "10",
     viagem_endereco_eua: txt(pega(form, "viagem_endereco_eua", "local_hospedagem", "endereco_eua", "hospedagem")),
     viagem_hospedagem: txt(pega(form, "viagem_hospedagem", "local_hospedagem", "hotel", "viagem_endereco_eua")),
-    viagem_pago_por: txt(pega(form, "viagem_pago_por", "pagador_viagem", "pago_por")) || "S",
+    viagem_pago_por: pagoPorCod,
 
     // Pagador
     pagador_nome: txt(pega(form, "pagador_nome")),
@@ -366,7 +383,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     acompanhantes,
 
     // Viagem / visto anterior
-    viagens_anteriores_eua: bool(pega(form, "viagens_anteriores_eua", "visitas_eua", "ja_viajou_eua")),
+    viagens_anteriores_eua: visitouEua || bool(pega(form, "viagens_anteriores_eua", "ja_viajou_eua")),
     visto_anterior: bool(pega(form, "visto_anterior", "ja_teve_visto", "ja_teve_visto_eua")),
     ja_teve_visto_eua: bool(pega(form, "ja_teve_visto_eua", "ja_teve_visto", "visto_anterior")),
     visto_negado: bool(pega(form, "visto_negado", "visto_recusado")),
@@ -415,7 +432,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     curso: txt(formacao0.curso ?? pega(form, "curso", "formacao")),
     data_inicio_estudo: dataBR(formacao0.inicio ?? pega(form, "data_inicio_estudo", "estudo_inicio")),
     data_fim_estudo: dataBR(formacao0.termino ?? pega(form, "data_fim_estudo", "estudo_fim")),
-    pertence_organizacao: bool(pega(form, "pertence_organizacao", "organizacoes")),
+    pertence_organizacao: temOrganizacao || bool(form.pertence_organizacao),
     data_casamento: dataBR(pega(form, "data_casamento", "conjuge_casamento_inicio", "data_matrimonio")),
 
     // Segurança (perguntas salvas como `seg_<chave>` com "Sim"/"Não")
