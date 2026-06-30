@@ -14,6 +14,14 @@ const sanitize = (text: string): string => {
     .replace(/[^\x00-\xFF]/g, '');
 };
 
+const formatValue = (key: string, value: any): string => {
+  if (key === 'estado_civil') {
+    const opt = ESTADO_CIVIL_OPTIONS.find(o => o.code === String(value));
+    return opt ? `${opt.label} (${opt.code})` : String(value);
+  }
+  return String(value);
+};
+
 const SECTIONS = [
   { title: '1. Dados Pessoais', fields: [
     ['Sobrenome', 'sobrenome'], ['Nome', 'nome'], ['Nome Completo (Passaporte)', 'nome_completo_passaporte'],
