@@ -342,7 +342,11 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
       doc.setFont('helvetica', 'bold');
       doc.text('Redes Sociais:', 15, y);
       doc.setFont('helvetica', 'normal');
-      const socials = sanitize(formData.redes_sociais.join(', '));
+      const socials = sanitize(
+        formData.redes_sociais
+          .map((s: any) => (typeof s === 'string' ? s : `${s.plataforma}: ${s.usuario}`))
+          .join(', '),
+      );
       const lines = doc.splitTextToSize(socials, pageW - 80);
       doc.text(lines, 70, y);
       y += Math.max(lines.length * 4, 6);
