@@ -207,6 +207,45 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   const formatDate = (d: string | null) => d ? format(new Date(d), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : '—';
 
+  const robotMeta = (s?: string | null) => {
+    switch (s) {
+      case 'em_andamento': return { label: 'Em andamento', dot: 'bg-blue-500', text: 'text-blue-700' };
+      case 'concluido': return { label: 'Concluído', dot: 'bg-emerald-500', text: 'text-emerald-700' };
+      case 'erro': return { label: 'Erro', dot: 'bg-red-500', text: 'text-red-700' };
+      default: return { label: 'Pendente', dot: 'bg-gray-400', text: 'text-gray-600' };
+    }
+  };
+
+  // Envia os dados do formulário para o robô local (porta 3004).
+  const sendToRobot = async (form: DS160Form) => {
+    setRobotSending(form.id);
+    try {
+      // Verifica se o servidor local está rodando.
+      try {
+        await fetch(`${ROBOT_SERVER}/ds160/health`, { method: 'GET' });
+      } catch {
+        toast.error('O servidor DS-160 não está rodando nesta máquina. Abra o DS-160 Server antes de continuar.');
+        setRobotSending(null);
+        return;
+      }
+
+      const dados = mapearDadosDS160(form.form_data || {}, clientName);
+      const resp = await fetch(`${ROBOT_SERVER}/ds160/iniciar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome_cliente: clientName, form_id: form.id, dados }),
+      });
+      if (!resp.ok) throw new Error('falha');
+
+      await supabase.from('ds160_forms').update({ robot_status: 'em_andamento' } as any).eq('id', form.id);
+      setForms(prev => prev.map(f => f.id === form.id ? { ...f, robot_status: 'em_andamento' } : f));
+      toast.success('Robô iniciado! Abra o app DS-160 na sua máquina.');
+    } catch {
+      toast.error('Erro ao iniciar o robô DS-160.');
+    }
+    setRobotSending(null);
+  };
+
   const handleDeleteForm = async () => {
     if (!deleteFormId) return;
     const { error } = await supabase.from('ds160_forms').update({
