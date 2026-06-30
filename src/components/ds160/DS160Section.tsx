@@ -418,17 +418,17 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
       {/* Floating notification for submitted forms */}
       {submittedNotDismissed.map(f => (
-        <div key={f.id} className="bg-red-50 border-2 border-red-300 rounded-xl p-4 flex items-center gap-4 animate-in fade-in shadow-sm">
-          <Bell className="h-7 w-7 text-red-600 shrink-0" />
+        <div key={f.id} className="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-4 flex items-center gap-4 animate-in fade-in shadow-sm">
+          <Bell className="h-7 w-7 text-emerald-600 shrink-0" />
           <div className="flex-1">
-            <p className="text-base font-bold text-red-800">Formulário DS-160 preenchido!</p>
-            <p className="text-sm text-red-600">Enviado em {formatDate(f.submitted_at)}</p>
+            <p className="text-base font-bold text-emerald-800">Formulário DS-160 preenchido!</p>
+            <p className="text-sm text-emerald-600">Enviado em {formatDate(f.submitted_at)}</p>
           </div>
-          <Button size="sm" variant="outline" onClick={() => openDuties(f)} className="gap-1.5 border-red-300 text-red-700 hover:bg-red-100">
+          <Button size="sm" variant="outline" onClick={() => openDuties(f)} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
             <Briefcase className="h-4 w-4" />
             Adicionar Duties
           </Button>
-          <Button size="sm" variant="outline" onClick={() => handleFillClient(f)} disabled={fillingClientId === f.id} className="gap-1.5 border-red-300 text-red-700 hover:bg-red-100">
+          <Button size="sm" variant="outline" onClick={() => handleFillClient(f)} disabled={fillingClientId === f.id} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
             {fillingClientId === f.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
             Adicionar dados ao cadastro
           </Button>
