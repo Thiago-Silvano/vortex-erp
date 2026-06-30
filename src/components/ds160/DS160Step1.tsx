@@ -15,6 +15,14 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
     if (!data.pais_nascimento) onChange('pais_nascimento', 'Brasil');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const handlePaisNascimento = (v: string) => {
+    const prev = data.pais_nascimento;
+    onChange('pais_nascimento', v);
+    // Nacionalidade acompanha o país de nascimento por padrão (se ainda não definida ou igual ao anterior)
+    if (!data.nacionalidade || data.nacionalidade === prev) {
+      onChange('nacionalidade', v);
+    }
+  };
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">1. Dados Pessoais</h2>
