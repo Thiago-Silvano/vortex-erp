@@ -233,7 +233,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
   const sobrenome = txt(pega(form, "sobrenome", "surname", "ultimo_nome"));
   const nome = txt(pega(form, "nome", "given_name", "primeiro_nome"));
   const nomeCompleto =
-    txt(pega(form, "nome_completo", "nome_passaporte")) ||
+    txt(pega(form, "nome_completo", "nome_completo_passaporte", "nome_passaporte")) ||
     `${nome} ${sobrenome}`.trim();
 
   // Acompanhantes: aceita string[] ("Nome (Relacao)") ou objeto[] {nome, parentesco}
