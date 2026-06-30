@@ -1,6 +1,4 @@
 // ds160-mapper.ts
-import { normalizarEstadoCivil, labelRedeSocial } from "@/components/ds160/types";
-
 // ---------------------------------------------------------------------------
 // Monta o payload COMPLETO que o robô DS-160 espera, a partir do registro do ERP.
 // Fonte da verdade: TODAS as chaves lidas pelo robot.py (preencher_ds160).
@@ -24,6 +22,11 @@ export interface EmpregoAnterior {
   motivo_saida: string;
 }
 
+export interface RedeSocial {
+  plataforma: string;  // rótulo ("INSTAGRAM") ou código ("INST") do DS-160
+  usuario: string;     // identificador, sem @
+}
+
 // ── Contrato de saída (exatamente o que o robô consome) ────────────────────
 export interface DadosDS160 {
   // Personal 1 / 2
@@ -32,7 +35,7 @@ export interface DadosDS160 {
   nome_completo: string;
   nome_passaporte: string;
   sexo: string;            // "M" | "F" (ou Masculino/Feminino)
-  estado_civil: string;    // M | C | P | S | W | D | L | O (ou rótulos em português)
+  estado_civil: string;    // S | M | W | D (ou Solteiro/Casado/Viuvo/Divorciado)
   data_nascimento: string; // DD/MM/AAAA
   cidade_nascimento: string;
   estado_nascimento: string;
@@ -47,7 +50,7 @@ export interface DadosDS160 {
   cep: string;
   telefone: string;
   email: string;
-  redes_sociais: { plataforma: string; usuario: string }[];   // ex: [{ plataforma: "INSTAGRAM", usuario: "joao.silva" }]
+  redes_sociais: RedeSocial[];   // [{plataforma, usuario}, ...] | []
 
   // Passaporte
   passaporte_numero: string;
@@ -194,22 +197,34 @@ function dinheiro(v: any): string {
   return s;
 }
 
-// ── Mapper principal — preenche TODOS os campos do contrato ────────────────
-
-/** Normaliza redes sociais para [{ plataforma: NOME, usuario }]. Emite o nome da plataforma (ex: INSTAGRAM, LINKEDIN). Aceita formato legado (string). */
-function montarRedesSociais(v: any): { plataforma: string; usuario: string }[] {
-  if (!Array.isArray(v)) return [];
-  return v
-    .map((item) => {
-      if (typeof item === "string") return { plataforma: "OTHER", usuario: item.trim() };
-      const cod = txt(item?.plataforma) || "OTHER";
-      return {
-        plataforma: labelRedeSocial(cod),
-        usuario: txt(item?.usuario),
-      };
-    })
-    .filter((r) => r.usuario || r.plataforma === "NONE");
+/** Remove @ do começo do identificador. */
+function limpaHandle(s: any): string {
+  return txt(s).replace(/^@+/, "").trim();
 }
+
+/** Infere a plataforma a partir de texto livre (fallback do formato antigo). */
+function inferePlataforma(texto: string): string {
+  const t = texto.toLowerCase();
+  if (t.includes("facebook") || t.includes("fb.com")) return "FACEBOOK";
+  if (t.includes("linkedin")) return "LINKEDIN";
+  if (t.includes("twitter") || t.includes("x.com")) return "TWITTER";
+  if (t.includes("instagram") || t.includes("instagr.am")) return "INSTAGRAM";
+  if (t.includes("youtube")) return "YOUTUBE";
+  const tr = texto.trim();
+  if (tr.startsWith("@") || !tr.includes(" ")) return "INSTAGRAM"; // só @handle
+  return "";
+}
+
+/** Converte uma string livre ("Instagram @joao") em {plataforma, usuario}. */
+function parseRedeLivre(s: string): RedeSocial {
+  const plataforma = inferePlataforma(s);
+  let h = s.includes(":") ? s.split(":").slice(1).join(":").trim() : s.trim();
+  if (h.includes("@")) h = (h.split("@").pop() || "").trim();
+  else if (h.includes("/")) h = (h.replace(/\/+$/, "").split("/").pop() || "").trim();
+  return { plataforma, usuario: h };
+}
+
+// ── Mapper principal — preenche TODOS os campos do contrato ────────────────
 
 export function montarDadosDS160(form: any): DadosDS160 {
   form = form || {};
@@ -220,10 +235,6 @@ export function montarDadosDS160(form: any): DadosDS160 {
   const nomeCompleto =
     txt(pega(form, "nome_completo", "nome_passaporte")) ||
     `${nome} ${sobrenome}`.trim();
-
-  const estadoCivil = normalizarEstadoCivil(txt(pega(form, "estado_civil"))) || "S";
-
-
 
   // Acompanhantes: aceita string[] ("Nome (Relacao)") ou objeto[] {nome, parentesco}
   const acompanhantes: string[] = Array.isArray(form.acompanhantes)
@@ -263,6 +274,34 @@ export function montarDadosDS160(form: any): DadosDS160 {
     .filter(Boolean);
   if (!idiomas.length) idiomas.push("Portugues");
 
+  // Redes sociais: aceita objeto[] {plataforma|tipo, usuario|handle}, string[]
+  // ("Instagram @handle"), objeto único, campos avulsos ou string única (legado).
+  // Saída: [{plataforma, usuario}] — o robô seleciona pelo código OU pelo rótulo.
+  let redes_sociais: RedeSocial[] = [];
+  const rsForm = form.redes_sociais;
+  if (Array.isArray(rsForm)) {
+    redes_sociais = rsForm
+      .map((r: any): RedeSocial =>
+        typeof r === "string"
+          ? parseRedeLivre(r)
+          : {
+              plataforma: txt(r.plataforma ?? r.tipo ?? r.platform ?? r.rede).toUpperCase(),
+              usuario: limpaHandle(r.usuario ?? r.handle ?? r.identificador ?? r.user ?? r.nome_usuario),
+            }
+      )
+      .filter((r: RedeSocial) => r.usuario || r.plataforma);
+  } else if (rsForm && typeof rsForm === "object") {
+    const plataforma = txt(rsForm.plataforma ?? rsForm.tipo).toUpperCase();
+    const usuario = limpaHandle(rsForm.usuario ?? rsForm.handle);
+    if (plataforma || usuario) redes_sociais = [{ plataforma, usuario }];
+  } else {
+    const tipoAvulso = txt(pega(form, "rede_social_tipo", "social_tipo", "plataforma_social")).toUpperCase();
+    const userAvulso = limpaHandle(pega(form, "rede_social_usuario", "social_usuario", "usuario_social"));
+    const livre = txt(pega(form, "redes_sociais", "social", "instagram"));
+    if (tipoAvulso || userAvulso) redes_sociais = [{ plataforma: tipoAvulso, usuario: userAvulso }];
+    else if (livre) redes_sociais = [parseRedeLivre(livre)];
+  }
+
   return {
     // Personal
     sobrenome,
@@ -270,8 +309,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     nome_completo: nomeCompleto,
     nome_passaporte: txt(pega(form, "nome_passaporte", "nome_completo")) || nomeCompleto,
     sexo: txt(pega(form, "sexo", "genero")) || "M",
-    estado_civil: estadoCivil,
-
+    estado_civil: txt(pega(form, "estado_civil")) || "S",
     data_nascimento: dataBR(pega(form, "data_nascimento", "nascimento", "dob")),
     cidade_nascimento: txt(pega(form, "cidade_nascimento", "naturalidade")),
     estado_nascimento: txt(pega(form, "estado_nascimento", "uf_nascimento")),
@@ -286,7 +324,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     cep: txt(pega(form, "cep")),
     telefone: txt(pega(form, "telefone", "celular", "whatsapp")),
     email: txt(pega(form, "email")),
-    redes_sociais: montarRedesSociais(pega(form, "redes_sociais", "social")),
+    redes_sociais,
 
     // Passaporte
     passaporte_numero: txt(pega(form, "passaporte_numero", "passaporte")),
@@ -339,12 +377,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     // Cônjuge
     conjuge_nome: txt(pega(form, "conjuge_nome", "nome_conjuge", "esposo_nome", "esposa_nome")),
     conjuge_nascimento: dataBR(pega(form, "conjuge_nascimento", "nascimento_conjuge")),
-    conjuge_cidade_nascimento: (() => {
-      const cidade = txt(pega(form, "conjuge_cidade_nascimento"));
-      const estado = txt(pega(form, "conjuge_estado_nascimento"));
-      if (cidade && estado) return `${cidade} - ${estado}`;
-      return cidade || estado;
-    })(),
+    conjuge_cidade_nascimento: txt(pega(form, "conjuge_cidade_nascimento")),
 
     // Trabalho
     status_profissional: txt(pega(form, "status_profissional", "ocupacao_status")),
@@ -444,17 +477,4 @@ export async function dispararRoboDS160(opts: {
       erro: e?.message || "Falha ao conectar no ds160-server (porta 3004). O servidor está rodando?",
     };
   }
-}
-
-// ── Compat: nome legado usado pelo ERP (DS160Section) ──────────────────────
-export function mapearDadosDS160(
-  formData: Record<string, any>,
-  clientName?: string,
-): DadosDS160 {
-  const dados = montarDadosDS160(formData || {});
-  if (clientName && (!dados.nome_completo || !dados.nome_completo.trim())) {
-    dados.nome_completo = clientName;
-    dados.nome_passaporte = dados.nome_passaporte || clientName;
-  }
-  return dados;
 }
