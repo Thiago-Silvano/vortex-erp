@@ -46,3 +46,21 @@ export const ESTADO_CIVIL_OPTIONS = [
   { code: 'O', label: 'Outro' },
 ] as const;
 
+export const mapEstadoCivilLegacy = (value: string | undefined): string | undefined => {
+  if (!value) return undefined;
+  const v = value.toLowerCase().replace(/\s+/g, ' ').trim();
+  const found = ESTADO_CIVIL_OPTIONS.find(o => o.code === value.toUpperCase());
+  if (found) return found.code;
+  const map: Record<string, string> = {
+    casado: 'M', casada: 'M', 'casado(a)': 'M',
+    'união estável': 'C', 'uniao estavel': 'C', 'união estavel': 'C',
+    'parceria civil/doméstica': 'P', 'parceria civil domestica': 'P', 'parceria civil/domestica': 'P',
+    solteiro: 'S', solteira: 'S', 'solteiro(a)': 'S',
+    viuvo: 'W', viúvo: 'W', viuva: 'W', viúva: 'W', 'viúvo(a)': 'W', 'viuvo(a)': 'W',
+    divorciado: 'D', divorciada: 'D', 'divorciado(a)': 'D',
+    'separado legalmente': 'L', 'separada legalmente': 'L', 'separado(a) legalmente': 'L',
+    outro: 'O', outros: 'O',
+  };
+  return map[v] || value;
+};
+
