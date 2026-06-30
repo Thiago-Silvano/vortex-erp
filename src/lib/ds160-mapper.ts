@@ -27,6 +27,13 @@ export interface RedeSocial {
   usuario: string;     // identificador, sem @
 }
 
+export interface Acompanhante {
+  nome: string;         // nomes (given names) — todos os tokens menos o último
+  sobrenome: string;    // sobrenome (surname) — último token
+  nome_completo: string;
+  parentesco: string;   // código/rótulo do parentesco (SPOUSE, CHILD, OTHER…)
+}
+
 // ── Contrato de saída (exatamente o que o robô consome) ────────────────────
 export interface DadosDS160 {
   // Personal 1 / 2
@@ -77,8 +84,8 @@ export interface DadosDS160 {
   // Contato nos EUA
   contato_eua_nome: string;
 
-  // Acompanhantes (cada item: "Nome (Relacao)")
-  acompanhantes: string[];
+  // Acompanhantes (cada item separado: nome / sobrenome / parentesco)
+  acompanhantes: Acompanhante[];
 
   // Viagem / visto anterior
   viagens_anteriores_eua: boolean;
@@ -236,16 +243,34 @@ export function montarDadosDS160(form: any): DadosDS160 {
     txt(pega(form, "nome_completo", "nome_completo_passaporte", "nome_passaporte")) ||
     `${nome} ${sobrenome}`.trim();
 
-  // Acompanhantes: aceita string[] ("Nome (Relacao)") ou objeto[] {nome, parentesco}
-  const acompanhantes: string[] = Array.isArray(form.acompanhantes)
+  // Acompanhantes: o robô preenche 3 campos separados (Sobrenome / Nome / Parentesco),
+  // então enviamos cada acompanhante já separado, nunca como objeto bruto ou string única.
+  const acompanhantes: Acompanhante[] = Array.isArray(form.acompanhantes)
     ? form.acompanhantes
-        .map((a: any) => {
-          if (typeof a === "string") return a;
-          const n = txt(a.nome ?? a.nome_completo);
-          const r = txt(a.parentesco ?? a.relacao ?? a.relationship);
-          return r ? `${n} (${r})` : n;
+        .map((a: any): Acompanhante => {
+          // aceita string ("Nome (Relacao)") ou objeto {nome, parentesco}
+          let nomeCompletoAcomp = "";
+          let parentesco = "";
+          if (typeof a === "string") {
+            const m = a.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+            nomeCompletoAcomp = txt(m ? m[1] : a);
+            parentesco = txt(m ? m[2] : "");
+          } else {
+            nomeCompletoAcomp = txt(a.nome ?? a.nome_completo);
+            parentesco = txt(a.parentesco ?? a.relacao ?? a.relationship);
+          }
+          // separa nome (todos os tokens menos o último) e sobrenome (último token)
+          const partes = nomeCompletoAcomp.split(/\s+/).filter(Boolean);
+          const sobrenomeAcomp = partes.length > 1 ? partes[partes.length - 1] : nomeCompletoAcomp;
+          const nomeAcomp = partes.length > 1 ? partes.slice(0, -1).join(" ") : "";
+          return {
+            nome: nomeAcomp,
+            sobrenome: sobrenomeAcomp,
+            nome_completo: nomeCompletoAcomp,
+            parentesco,
+          };
         })
-        .filter((s: string) => s.trim())
+        .filter((a: Acompanhante) => (a.nome_completo || "").trim())
     : [];
 
   // Empregos anteriores: normaliza cada item para o shape do robô
