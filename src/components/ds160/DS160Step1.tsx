@@ -3,20 +3,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DS160StepProps, COUNTRIES, ESTADO_CIVIL_OPTIONS, normalizarEstadoCivil } from './types';
 import { maskCpf } from '@/lib/masks';
 import { FieldError, errClass } from './fieldError';
 import { BRAZIL_STATES, isBrasil } from '@/data/brazil-states';
 import BrazilCitySelect from './BrazilCitySelect';
-import { maskCpf } from '@/lib/masks';
-import { FieldError, errClass } from './fieldError';
-import { BRAZIL_STATES, isBrasil } from '@/data/brazil-states';
-import BrazilCitySelect from './BrazilCitySelect';
+
 
 export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
   const paisNascimento = data.pais_nascimento || 'Brasil';
