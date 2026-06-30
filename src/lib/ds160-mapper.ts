@@ -47,7 +47,7 @@ export interface DadosDS160 {
   cep: string;
   telefone: string;
   email: string;
-  redes_sociais: string;   // ex: "Instagram @handle" | ""
+  redes_sociais: { plataforma: string; usuario: string }[];   // ex: [{ plataforma: "FCBK", usuario: "@handle" }]
 
   // Passaporte
   passaporte_numero: string;
