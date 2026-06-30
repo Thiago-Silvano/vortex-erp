@@ -432,7 +432,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
             {fillingClientId === f.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
             Adicionar dados ao cadastro
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => setDismissed(prev => new Set(prev).add(f.id))} className="text-red-600 font-medium">
+          <Button size="sm" variant="ghost" onClick={() => setDismissed(prev => new Set(prev).add(f.id))} className="text-emerald-600 font-medium">
             Fechar
           </Button>
         </div>
