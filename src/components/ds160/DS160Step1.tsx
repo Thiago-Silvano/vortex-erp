@@ -1,135 +1,76 @@
 import { useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { DS160StepProps, COUNTRIES, ESTADO_CIVIL_OPTIONS, normalizarEstadoCivil } from './types';
-import { maskCpf } from '@/lib/masks';
-import { FieldError, errClass } from './fieldError';
-import { BRAZIL_STATES, isBrasil } from '@/data/brazil-states';
-import BrazilCitySelect from './BrazilCitySelect';
+import { DS160StepProps, SEXO_OPTIONS, ESTADO_CIVIL_OPTIONS } from './types';
+import {
+  SectionTitle, TextField, SelectField, DateField, CountryField,
+  UfField, CityField, YesNo, NACheckbox, Repeatable,
+} from './fields';
 
+const EC_OPTS = ESTADO_CIVIL_OPTIONS.map(o => ({ value: o.code, label: `${o.label}` }));
 
 export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
-  const paisNascimento = data.pais_nascimento || 'Brasil';
-  const nascimentoBrasil = isBrasil(paisNascimento);
   useEffect(() => {
     if (!data.pais_nascimento) onChange('pais_nascimento', 'Brasil');
-    if (!data.nacionalidade) onChange('nacionalidade', data.pais_nascimento || 'Brasil');
-    // Converte valores antigos de estado civil para o código de uma letra
-    const ecNormalizado = normalizarEstadoCivil(data.estado_civil);
-    if (ecNormalizado && ecNormalizado !== data.estado_civil) {
-      onChange('estado_civil', ecNormalizado);
-    }
+    if (data.nome_nativo_na === undefined) onChange('nome_nativo_na', true);
+    if (data.outros_nomes === undefined) onChange('outros_nomes', false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const handlePaisNascimento = (v: string) => {
-    const prev = data.pais_nascimento;
-    onChange('pais_nascimento', v);
-    // Nacionalidade acompanha o país de nascimento por padrão (se ainda não definida ou igual ao anterior)
-    if (!data.nacionalidade || data.nacionalidade === prev) {
-      onChange('nacionalidade', v);
-    }
-  };
+
+  const paisNasc = data.pais_nascimento || 'Brasil';
+  const naBornState = !!data.estado_nascimento_na;
+
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">1. Dados Pessoais</h2>
+      <SectionTitle>1. Dados Pessoais</SectionTitle>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Sobrenome</Label><Input className={errClass(errors?.sobrenome)} value={data.sobrenome || ''} onChange={e => onChange('sobrenome', e.target.value)} placeholder="Seu Sobrenome" /><FieldError msg={errors?.sobrenome} /></div>
-        <div><Label>Nome</Label><Input className={errClass(errors?.nome)} value={data.nome || ''} onChange={e => onChange('nome', e.target.value)} placeholder="Seu Nome" /><FieldError msg={errors?.nome} /></div>
+        <TextField label="Sobrenome(s)" help="Nome de família, exatamente como aparece no passaporte." error={errors?.sobrenome} value={data.sobrenome} onChange={v => onChange('sobrenome', v)} placeholder="Ex: SILVA SANTOS" />
+        <TextField label="Nome(s)" help="Seus prenomes, como no passaporte." error={errors?.nome} value={data.nome} onChange={v => onChange('nome', v)} placeholder="Ex: JOÃO PEDRO" />
       </div>
-      <div><Label>Nome Completo (como no passaporte)</Label><Input className={errClass(errors?.nome_completo_passaporte)} value={data.nome_completo_passaporte || ''} onChange={e => onChange('nome_completo_passaporte', e.target.value)} placeholder="Ex: SILVA, JOSÉ DA" /><FieldError msg={errors?.nome_completo_passaporte} /></div>
-      <div>
-        <Label>Já usou outro nome? (nome de solteira, religioso, profissional ou apelido)</Label>
-        <RadioGroup value={data.usou_outro_nome || 'Não'} onValueChange={v => onChange('usou_outro_nome', v)} className="flex gap-4 mt-1">
-          <div className="flex items-center gap-2"><RadioGroupItem value="Não" id="outro_nome_nao" /><Label htmlFor="outro_nome_nao">Não</Label></div>
-          <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="outro_nome_sim" /><Label htmlFor="outro_nome_sim">Sim</Label></div>
-        </RadioGroup>
-      </div>
-      {data.usou_outro_nome === 'Sim' && (
-        <div><Label>Qual outro nome?</Label><Input className={errClass(errors?.outro_nome)} value={data.outro_nome || ''} onChange={e => onChange('outro_nome', e.target.value)} placeholder="Informe o outro nome utilizado" /><FieldError msg={errors?.outro_nome} /></div>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>CPF</Label><Input className={errClass(errors?.cpf)} value={data.cpf || ''} onChange={e => onChange('cpf', maskCpf(e.target.value))} placeholder="000.000.000-00" /><FieldError msg={errors?.cpf} /></div>
-        <div>
-          <Label>Sexo</Label>
-          <Select value={data.sexo || undefined} onValueChange={v => onChange('sexo', v)}>
-            <SelectTrigger className={errClass(errors?.sexo)}><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent><SelectItem value="Masculino">Masculino</SelectItem><SelectItem value="Feminino">Feminino</SelectItem></SelectContent>
-          </Select>
-          <FieldError msg={errors?.sexo} />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label>Estado Civil</Label>
-          <Select value={data.estado_civil || undefined} onValueChange={v => onChange('estado_civil', v)}>
-            <SelectTrigger className={errClass(errors?.estado_civil)}><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>
-              {ESTADO_CIVIL_OPTIONS.map(s => <SelectItem key={s.code} value={s.code}>{s.label} ({s.code})</SelectItem>)}
+      <TextField label="Nome completo (como no passaporte)" error={errors?.nome_completo} value={data.nome_completo} onChange={v => onChange('nome_completo', v)} placeholder="Ex: JOÃO PEDRO DA SILVA SANTOS" />
 
-            </SelectContent>
-          </Select>
-          <FieldError msg={errors?.estado_civil} />
-        </div>
-        <div><Label>Data de Nascimento</Label><Input type="date" className={errClass(errors?.data_nascimento)} value={data.data_nascimento || ''} onChange={e => onChange('data_nascimento', e.target.value)} /><FieldError msg={errors?.data_nascimento} /></div>
-      </div>
-      <div><Label>País de Nascimento</Label>
-        <Select value={paisNascimento} onValueChange={handlePaisNascimento}>
-          <SelectTrigger className={errClass(errors?.pais_nascimento)}><SelectValue placeholder="Selecione o país" /></SelectTrigger>
-          <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-        </Select>
-        <FieldError msg={errors?.pais_nascimento} />
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Estado de Nascimento (UF/Província)</Label>
-          {nascimentoBrasil ? (
-            <Select value={data.estado_nascimento || undefined} onValueChange={v => { onChange('estado_nascimento', v); onChange('cidade_nascimento', ''); }}>
-              <SelectTrigger className={errClass(errors?.estado_nascimento)}><SelectValue placeholder="Selecione o estado" /></SelectTrigger>
-              <SelectContent>{BRAZIL_STATES.map(s => <SelectItem key={s.uf} value={s.uf}>{s.nome} ({s.uf})</SelectItem>)}</SelectContent>
-            </Select>
-          ) : (
-            <Input className={errClass(errors?.estado_nascimento)} value={data.estado_nascimento || ''} onChange={e => onChange('estado_nascimento', e.target.value)} placeholder="Estado / Província" />
+        <SelectField label="Sexo" options={SEXO_OPTIONS} error={errors?.sexo} value={data.sexo} onChange={v => onChange('sexo', v)} />
+        <DateField label="Data de nascimento" error={errors?.data_nascimento} value={data.data_nascimento} onChange={v => onChange('data_nascimento', v)} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <SelectField label="Estado civil" options={EC_OPTS} error={errors?.estado_civil} value={data.estado_civil} onChange={v => onChange('estado_civil', v)} />
+          {data.estado_civil === 'O' && (
+            <div className="mt-3"><TextField label="Especifique" error={errors?.estado_civil_outro} value={data.estado_civil_outro} onChange={v => onChange('estado_civil_outro', v)} /></div>
           )}
-          <FieldError msg={errors?.estado_nascimento} />
         </div>
-        <div><Label>Cidade de Nascimento</Label>
-          {nascimentoBrasil ? (
-            <BrazilCitySelect uf={data.estado_nascimento || ''} value={data.cidade_nascimento || ''} onChange={v => onChange('cidade_nascimento', v)} />
-          ) : (
-            <Input className={errClass(errors?.cidade_nascimento)} value={data.cidade_nascimento || ''} onChange={e => onChange('cidade_nascimento', e.target.value)} placeholder="Ex: São Paulo" />
+        <CountryField label="País de nascimento" error={errors?.pais_nascimento} value={paisNasc} onChange={v => onChange('pais_nascimento', v)} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <UfField label="Estado/Província de nascimento" error={errors?.estado_nascimento} value={data.estado_nascimento} onChange={v => { onChange('estado_nascimento', v); onChange('cidade_nascimento', ''); }} country={paisNasc} disabled={naBornState} />
+          <NACheckbox checked={naBornState} onChange={c => { onChange('estado_nascimento_na', c); if (c) onChange('estado_nascimento', ''); }} />
+        </div>
+        <CityField label="Cidade de nascimento" error={errors?.cidade_nascimento} value={data.cidade_nascimento} onChange={v => onChange('cidade_nascimento', v)} uf={data.estado_nascimento || ''} country={paisNasc} />
+      </div>
+
+      <YesNo label="Já usou outros nomes? (nome de solteira, religioso, profissional ou apelido)" value={data.outros_nomes ?? false} onChange={v => onChange('outros_nomes', v)} />
+      {data.outros_nomes && (
+        <Repeatable
+          items={data.outros_nomes_lista || []}
+          onChange={v => onChange('outros_nomes_lista', v)}
+          blank={() => ({ sobrenome: '', nome: '' })}
+          addLabel="Adicionar nome"
+          emptyHint="Adicione cada nome alternativo que você já usou."
+          renderItem={(it: any, update) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <TextField label="Sobrenome" value={it.sobrenome} onChange={v => update({ ...it, sobrenome: v })} />
+              <TextField label="Nome" value={it.nome} onChange={v => update({ ...it, nome: v })} />
+            </div>
           )}
-          <FieldError msg={errors?.cidade_nascimento} />
-        </div>
-      </div>
-      <div>
-        <Label>Nacionalidade</Label>
-        <Select value={data.nacionalidade || paisNascimento} onValueChange={v => onChange('nacionalidade', v)}>
-          <SelectTrigger className={errClass(errors?.nacionalidade)}><SelectValue placeholder="Selecione o país" /></SelectTrigger>
-          <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-        </Select>
-        <p className="text-xs text-slate-400 mt-1">Por padrão acompanha o país de nascimento. Altere se sua nacionalidade for diferente.</p>
-      </div>
-      <div>
-        <Label>Possui outra nacionalidade?</Label>
-        <RadioGroup value={data.outra_nacionalidade || 'Não'} onValueChange={v => onChange('outra_nacionalidade', v)} className="flex gap-4 mt-1">
-          <div className="flex items-center gap-2"><RadioGroupItem value="Não" id="nat_nao" /><Label htmlFor="nat_nao">Não</Label></div>
-          <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="nat_sim" /><Label htmlFor="nat_sim">Sim</Label></div>
-        </RadioGroup>
-      </div>
-      {data.outra_nacionalidade === 'Sim' && (
-        <>
-          <div>
-            <Label>País da Outra Nacionalidade</Label>
-            <Select value={data.pais_outra_nacionalidade || undefined} onValueChange={v => onChange('pais_outra_nacionalidade', v)}>
-              <SelectTrigger className={errClass(errors?.pais_outra_nacionalidade)}><SelectValue placeholder="Selecione o país" /></SelectTrigger>
-              <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-            <FieldError msg={errors?.pais_outra_nacionalidade} />
-          </div>
-          <div><Label>Número de identificação (Passaporte, identidade)</Label><Input value={data.id_outra_nacionalidade || ''} onChange={e => onChange('id_outra_nacionalidade', e.target.value)} /></div>
-        </>
+        />
       )}
+
+      <div>
+        <TextField label="Nome no alfabeto nativo (avançado)" help="Só preencha se seu nome usa outro alfabeto (ex.: árabe, cirílico). Para nomes em português, deixe marcado 'Não se aplica'." value={data.nome_nativo} onChange={v => onChange('nome_nativo', v)} disabled={data.nome_nativo_na ?? true} />
+        <NACheckbox checked={data.nome_nativo_na ?? true} onChange={c => { onChange('nome_nativo_na', c); if (c) onChange('nome_nativo', ''); }} />
+      </div>
     </div>
   );
 }

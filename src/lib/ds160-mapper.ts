@@ -183,6 +183,24 @@ function pega(form: any, ...chaves: string[]): any {
 export function montarDadosDS160(form: any): DadosDS160 {
   form = form || {};
 
+  // Pass-through de TODAS as chaves do formulário (contrato do prompt), com
+  // normalização das datas. Os campos tipados abaixo sobrescrevem quando
+  // precisam de coerção especial. Isso garante que chaves novas do formulário
+  // (ex.: endereco_postal_*, viagem_cep_eua, contato_eua_*, etc.) cheguem ao robô.
+  const DATE_KEYS = [
+    "data_nascimento", "viagem_data_chegada", "visto_data_emissao",
+    "passaporte_data_emissao", "passaporte_data_validade", "pai_nascimento",
+    "mae_nascimento", "conjuge_nascimento", "ex_conjuge_nascimento",
+    "casamento_inicio", "casamento_fim", "data_admissao",
+    "militar_data_inicio", "militar_data_fim",
+  ];
+  const passthrough: Record<string, any> = { ...form };
+  delete passthrough.json_override;
+  delete passthrough.duties_override;
+  for (const k of DATE_KEYS) {
+    if (passthrough[k]) passthrough[k] = dataBR(passthrough[k]);
+  }
+
   // Nome: tenta cheio; senão monta de nome + sobrenome
   const sobrenome = txt(pega(form, "sobrenome", "surname", "ultimo_nome"));
   const nome = txt(pega(form, "nome", "given_name", "primeiro_nome"));
@@ -227,7 +245,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     .filter(Boolean);
   if (!idiomas.length) idiomas.push("Portugues");
 
-  return {
+  const typed: DadosDS160 = {
     // Personal
     sobrenome,
     nome,
@@ -340,6 +358,12 @@ export function montarDadosDS160(form: any): DadosDS160 {
     tortura: bool(form.tortura),
     deportado: bool(form.deportado),
   };
+
+  const merged: any = { ...passthrough, ...typed };
+  // O contrato do prompt usa redes_sociais como array de objetos {plataforma, usuario}.
+  // Preserva o array original do formulário (o mapper antigo tipava como string).
+  if (Array.isArray(form.redes_sociais)) merged.redes_sociais = form.redes_sociais;
+  return merged as DadosDS160;
 }
 
 // ── Validação ──────────────────────────────────────────────────────────────

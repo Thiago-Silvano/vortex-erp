@@ -5,32 +5,12 @@ import { toast } from 'sonner';
 import { Check, ChevronLeft, ChevronRight, Save, Send, Shield, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import DS160Step1 from '@/components/ds160/DS160Step1';
-import DS160Step2 from '@/components/ds160/DS160Step2';
-import DS160Step3 from '@/components/ds160/DS160Step3';
-import DS160Step4 from '@/components/ds160/DS160Step4';
-import DS160Step5 from '@/components/ds160/DS160Step5';
-import DS160Step6 from '@/components/ds160/DS160Step6';
-import DS160Step7 from '@/components/ds160/DS160Step7';
-import DS160Step8 from '@/components/ds160/DS160Step8';
-import DS160Step9 from '@/components/ds160/DS160Step9';
-import DS160Step10 from '@/components/ds160/DS160Step10';
-import DS160Step11 from '@/components/ds160/DS160Step11';
 import { validateStep } from '@/components/ds160/validation';
+import { DS160_STEPS, DS160_TOTAL_STEPS } from '@/components/ds160/steps';
 
-const STEPS = [
-  { label: 'Dados Pessoais', num: 1 },
-  { label: 'Passaporte', num: 2 },
-  { label: 'Contatos', num: 3 },
-  { label: 'Viagem', num: 4 },
-  { label: 'Contato EUA', num: 5 },
-  { label: 'Família', num: 6 },
-  { label: 'Profissional', num: 7 },
-  { label: 'Acadêmico', num: 8 },
-  { label: 'Viagens', num: 9 },
-  { label: 'Segurança', num: 10 },
-  { label: 'Declaração', num: 11 },
-];
+const STEPS = DS160_STEPS;
+const TOTAL = DS160_TOTAL_STEPS;
+const LAST = TOTAL - 1;
 
 export default function DS160PublicPage() {
   const { token } = useParams<{ token: string }>();
@@ -115,7 +95,7 @@ export default function DS160PublicPage() {
 
   const handleSubmit = async () => {
     if (!formId) return;
-    const stepErrors = validateStep(10, formData);
+    const stepErrors = validateStep(LAST, formData);
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
       setValidateActive(true);
@@ -129,7 +109,7 @@ export default function DS160PublicPage() {
       await (supabase as any).rpc('save_public_ds160', {
         p_token: token!,
         p_form_data: formData,
-        p_current_step: 10,
+        p_current_step: LAST,
       });
 
       const { error } = await (supabase as any).rpc('submit_public_ds160', {
@@ -154,7 +134,7 @@ export default function DS160PublicPage() {
   };
 
   const goNext = async () => {
-    if (currentStep < 10) {
+    if (currentStep < LAST) {
       const stepErrors = validateStep(currentStep, formData);
       if (Object.keys(stepErrors).length > 0) {
         setErrors(stepErrors);
@@ -186,12 +166,12 @@ export default function DS160PublicPage() {
     }
   };
 
-  const progress = ((currentStep + 1) / 11) * 100;
+  const progress = ((currentStep + 1) / TOTAL) * 100;
 
   // Maior etapa acessível: só libera o clique numa etapa se todas as anteriores
   // estiverem com os campos obrigatórios completos.
   let maxReachable = 0;
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < LAST; i++) {
     if (Object.keys(validateStep(i, formData)).length === 0) maxReachable = i + 1;
     else break;
   }
@@ -256,19 +236,7 @@ export default function DS160PublicPage() {
     );
   }
 
-  const stepComponents = [
-    <DS160Step1 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step2 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step3 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step4 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step5 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step6 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step7 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step8 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step9 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step10 data={formData} onChange={updateField} errors={errors} />,
-    <DS160Step11 data={formData} onChange={updateField} errors={errors} />,
-  ];
+  const CurrentStep = STEPS[currentStep].Component;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
@@ -292,7 +260,7 @@ export default function DS160PublicPage() {
         <div className="max-w-3xl mx-auto px-4 pb-3">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-medium text-slate-600">
-              Etapa {currentStep + 1} de 11 — {STEPS[currentStep].label}
+              Etapa {currentStep + 1} de {TOTAL} — {STEPS[currentStep].label}
             </span>
             <span className="text-xs font-semibold text-blue-600">{Math.round(progress)}%</span>
           </div>
@@ -351,7 +319,7 @@ export default function DS160PublicPage() {
               </p>
             </div>
           )}
-          {stepComponents[currentStep]}
+          <CurrentStep data={formData} onChange={updateField} errors={errors} onGoToStep={goToStep} />
         </div>
       </div>
 
@@ -368,7 +336,7 @@ export default function DS160PublicPage() {
             Voltar
           </Button>
 
-          {currentStep < 10 ? (
+          {currentStep < LAST ? (
             <Button
               onClick={goNext}
               className="rounded-full gap-1.5 bg-blue-600 hover:bg-blue-700"

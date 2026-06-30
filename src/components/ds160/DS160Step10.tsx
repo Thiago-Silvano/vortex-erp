@@ -1,100 +1,89 @@
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useEffect } from 'react';
 import { DS160StepProps } from './types';
-import { FieldError, errClass } from './fieldError';
+import { SectionTitle, TextField, DateField, CountryField, SelectField } from './fields';
 
-const SECURITY_GROUPS: { title: string; questions: { key: string; label: string }[] }[] = [
-  {
-    title: '🏥 Saúde',
-    questions: [
-      { key: 'doenca_contagiosa', label: 'Possui doença contagiosa de importância para a saúde pública?' },
-      { key: 'transtorno_mental', label: 'Já teve transtorno mental ou comportamental?' },
-      { key: 'dependente_drogas', label: 'Já foi dependente de drogas ou álcool?' },
-    ],
-  },
-  {
-    title: '⚖️ Antecedentes Criminais',
-    questions: [
-      { key: 'preso_condenado', label: 'Já foi preso ou condenado por algum crime?' },
-      { key: 'trafico_drogas', label: 'Já traficou ou distribuiu substâncias controladas (drogas)?' },
-    ],
-  },
-  {
-    title: '💰 Crimes Financeiros',
-    questions: [
-      { key: 'lavagem_dinheiro', label: 'Já praticou lavagem de dinheiro?' },
-    ],
-  },
-  {
-    title: '👥 Tráfico e Exploração',
-    questions: [
-      { key: 'prostituicao', label: 'Já se envolveu com prostituição?' },
-      { key: 'trafico_pessoas', label: 'Já se envolveu com tráfico de pessoas?' },
-      { key: 'auxilio_trafico_pessoas', label: 'Já auxiliou ou facilitou o tráfico de pessoas?' },
-    ],
-  },
-  {
-    title: '🔒 Segurança Nacional',
-    questions: [
-      { key: 'atividade_terrorista', label: 'Já praticou ou planejou atividades terroristas?' },
-      { key: 'apoio_terrorismo', label: 'Já apoiou financeiramente ou de outra forma grupos terroristas?' },
-      { key: 'membro_org_terrorista', label: 'Já foi membro de organização terrorista?' },
-      { key: 'genocidio', label: 'Já cometeu ou participou de genocídio?' },
-      { key: 'tortura', label: 'Já praticou tortura?' },
-      { key: 'violencia_extrajudicial', label: 'Já cometeu violência extrajudicial?' },
-      { key: 'crianca_soldado', label: 'Já recrutou ou utilizou crianças como soldados?' },
-      { key: 'violou_liberdade_religiosa', label: 'Já violou a liberdade religiosa de outras pessoas?' },
-      { key: 'controle_populacional', label: 'Já impôs controle populacional de forma coercitiva?' },
-      { key: 'transplante_orgaos', label: 'Já se envolveu com transplante de órgãos de forma coercitiva?' },
-    ],
-  },
-  {
-    title: '🇺🇸 Imigração',
-    questions: [
-      { key: 'visto_cancelado', label: 'Já teve seu Visto Americano Cancelado/Revogado?' },
-      { key: 'deportacao', label: 'Esteve envolvido em deportação ou remoção dos EUA?' },
-      { key: 'fraude', label: 'Cometeu fraude ou deturpou informações para obter visto ou entrada nos EUA?' },
-      { key: 'excedeu_prazo', label: 'Já excedeu o prazo de permanência permitido nos EUA?' },
-      { key: 'esta_negado', label: 'Seu pedido ESTA (Visa Waiver Program) foi negado?' },
-      { key: 'renunciou_cidadania_impostos', label: 'Já renunciou à cidadania americana para evitar impostos?' },
-      { key: 'violou_guarda_criancas', label: 'Já violou a guarda internacional de crianças?' },
-      { key: 'votou_ilegalmente', label: 'Já votou ilegalmente nos EUA?' },
-    ],
-  },
+const END_TIPO = [
+  { value: 'mesmo', label: 'Mesmo que o meu' },
+  { value: 'outro', label: 'Outro endereço' },
 ];
 
 export default function DS160Step10({ data, onChange, errors }: DS160StepProps) {
+  const ec = data.estado_civil;
+  const isCasado = ec === 'M' || ec === 'C' || ec === 'P';
+  const isDivorciado = ec === 'D';
+  const isViuvo = ec === 'W';
+
+  useEffect(() => {
+    if (isCasado && !data.conjuge_endereco_tipo) onChange('conjuge_endereco_tipo', 'mesmo');
+    if (isCasado && !data.conjuge_nacionalidade) onChange('conjuge_nacionalidade', 'Brasil');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ec]);
+
+  if (!isCasado && !isDivorciado && !isViuvo) {
+    return (
+      <div className="space-y-6">
+        <SectionTitle>10. Cônjuge</SectionTitle>
+        <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
+          Esta etapa não se aplica ao seu estado civil. Você pode avançar.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">10. Segurança e Antecedentes</h2>
-      <p className="text-sm text-slate-500">Para as perguntas abaixo, selecione <strong>Não</strong> como padrão. Se selecionar <strong>Sim</strong>, um campo de texto será exibido para a explicação obrigatória.</p>
-      {SECURITY_GROUPS.map(group => (
-        <div key={group.title} className="space-y-4">
-          <h3 className="font-semibold text-sm text-slate-700 bg-slate-100 rounded-lg px-3 py-2">{group.title}</h3>
-          {group.questions.map(q => (
-            <div key={q.key} className="space-y-2 pl-1">
-              <Label className="text-sm">{q.label}</Label>
-              <RadioGroup value={data[`seg_${q.key}`] || 'Não'} onValueChange={v => onChange(`seg_${q.key}`, v)} className="flex gap-4">
-                <div className="flex items-center gap-2"><RadioGroupItem value="Não" id={`${q.key}_nao`} /><Label htmlFor={`${q.key}_nao`}>Não</Label></div>
-                <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id={`${q.key}_sim`} /><Label htmlFor={`${q.key}_sim`}>Sim</Label></div>
-              </RadioGroup>
-              {data[`seg_${q.key}`] === 'Sim' && (
-                <>
-                  <Textarea
-                    value={data[`seg_${q.key}_explicacao`] || ''}
-                    onChange={e => onChange(`seg_${q.key}_explicacao`, e.target.value)}
-                    placeholder="Explicação obrigatória"
-                    rows={2}
-                    className={errClass(errors?.[`seg_${q.key}_explicacao`], 'border-amber-300 bg-amber-50/50')}
-                  />
-                  <FieldError msg={errors?.[`seg_${q.key}_explicacao`]} />
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      ))}
+      <SectionTitle>10. Cônjuge</SectionTitle>
+
+      {isCasado && (
+        <>
+          <TextField label="Nome do cônjuge" error={errors?.conjuge_nome} value={data.conjuge_nome} onChange={v => onChange('conjuge_nome', v)} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DateField label="Data de nascimento" value={data.conjuge_nascimento} onChange={v => onChange('conjuge_nascimento', v)} />
+            <CountryField label="Nacionalidade" value={data.conjuge_nacionalidade || 'Brasil'} onChange={v => onChange('conjuge_nacionalidade', v)} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TextField label="Cidade de nascimento" value={data.conjuge_cidade_nascimento} onChange={v => onChange('conjuge_cidade_nascimento', v)} />
+            <CountryField label="País de nascimento" value={data.conjuge_pais_nascimento || 'Brasil'} onChange={v => onChange('conjuge_pais_nascimento', v)} />
+          </div>
+          <SelectField label="Endereço do cônjuge" options={END_TIPO} value={data.conjuge_endereco_tipo || 'mesmo'} onChange={v => onChange('conjuge_endereco_tipo', v)} />
+        </>
+      )}
+
+      {isViuvo && (
+        <>
+          <p className="text-sm text-slate-500">Informe os dados do cônjuge falecido.</p>
+          <TextField label="Nome do cônjuge" error={errors?.conjuge_nome} value={data.conjuge_nome} onChange={v => onChange('conjuge_nome', v)} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DateField label="Data de nascimento" value={data.conjuge_nascimento} onChange={v => onChange('conjuge_nascimento', v)} />
+            <CountryField label="Nacionalidade" value={data.conjuge_nacionalidade || 'Brasil'} onChange={v => onChange('conjuge_nacionalidade', v)} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TextField label="Cidade de nascimento" value={data.conjuge_cidade_nascimento} onChange={v => onChange('conjuge_cidade_nascimento', v)} />
+            <CountryField label="País de nascimento" value={data.conjuge_pais_nascimento || 'Brasil'} onChange={v => onChange('conjuge_pais_nascimento', v)} />
+          </div>
+        </>
+      )}
+
+      {isDivorciado && (
+        <>
+          <TextField label="Número de ex-cônjuges" value={data.num_ex_conjuges} onChange={v => onChange('num_ex_conjuges', v)} inputMode="numeric" />
+          <TextField label="Nome do ex-cônjuge" error={errors?.ex_conjuge_nome} value={data.ex_conjuge_nome} onChange={v => onChange('ex_conjuge_nome', v)} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DateField label="Data de nascimento" value={data.ex_conjuge_nascimento} onChange={v => onChange('ex_conjuge_nascimento', v)} />
+            <CountryField label="Nacionalidade" value={data.ex_conjuge_nacionalidade || 'Brasil'} onChange={v => onChange('ex_conjuge_nacionalidade', v)} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TextField label="Cidade de nascimento" value={data.ex_conjuge_cidade_nascimento} onChange={v => onChange('ex_conjuge_cidade_nascimento', v)} />
+            <CountryField label="País de nascimento" value={data.ex_conjuge_pais_nascimento || 'Brasil'} onChange={v => onChange('ex_conjuge_pais_nascimento', v)} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DateField label="Início do casamento" value={data.casamento_inicio} onChange={v => onChange('casamento_inicio', v)} />
+            <DateField label="Fim do casamento" value={data.casamento_fim} onChange={v => onChange('casamento_fim', v)} />
+          </div>
+          <TextField label="Como o casamento terminou" value={data.casamento_como_terminou} onChange={v => onChange('casamento_como_terminou', v)} placeholder="Ex: Divórcio" />
+          <CountryField label="País onde terminou" value={data.casamento_pais_termino || 'Brasil'} onChange={v => onChange('casamento_pais_termino', v)} />
+        </>
+      )}
     </div>
   );
 }

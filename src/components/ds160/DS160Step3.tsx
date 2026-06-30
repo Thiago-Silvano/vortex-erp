@@ -1,104 +1,58 @@
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Plus, X } from 'lucide-react';
-import { DS160StepProps } from './types';
+import { useEffect } from 'react';
+import { DS160StepProps, PROPOSITO_OPTIONS, PAGADOR_OPTIONS } from './types';
 import { maskPhone } from '@/lib/masks';
-import { FieldError, errClass } from './fieldError';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { REDES_SOCIAIS_OPTIONS, labelRedeSocial } from './types';
-
-type SocialEntry = { plataforma: string; usuario: string };
+import { SectionTitle, SubTitle, TextField, SelectField, DateField, YesNo, UsStateField } from './fields';
 
 export default function DS160Step3({ data, onChange, errors }: DS160StepProps) {
-  // Normaliza valores legados (strings) para o formato { plataforma, usuario }
-  const socialMedias: SocialEntry[] = (data.redes_sociais || []).map((s: any) =>
-    typeof s === 'string' ? { plataforma: 'OTHER', usuario: s } : s,
-  );
+  useEffect(() => {
+    if (!data.proposito) onChange('proposito', 'B1/B2');
+    if (data.planos_especificos === undefined) onChange('planos_especificos', false);
+    if (!data.viagem_pago_por) onChange('viagem_pago_por', 'S');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const [newPlatform, setNewPlatform] = useState('');
-  const [newUser, setNewUser] = useState('');
-
-  const addSocial = () => {
-    if (!newPlatform || !newUser.trim()) return;
-    onChange('redes_sociais', [...socialMedias, { plataforma: newPlatform, usuario: newUser.trim() }]);
-    setNewPlatform('');
-    setNewUser('');
-  };
-
-  const removeSocial = (idx: number) => {
-    onChange('redes_sociais', socialMedias.filter((_, i) => i !== idx));
-  };
-
-  const fetchCep = async () => {
-    const cep = (data.contato_cep || '').replace(/\D/g, '');
-    if (cep.length !== 8) return;
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-      const d = await res.json();
-      if (!d.erro) {
-        onChange('contato_endereco', d.logradouro || '');
-        onChange('contato_bairro', d.bairro || '');
-        onChange('contato_cidade', d.localidade || '');
-        onChange('contato_estado', d.uf || '');
-      }
-    } catch {}
-  };
+  const pago = data.viagem_pago_por || 'S';
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">3. Contatos</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex gap-2 items-end">
-          <div className="flex-1"><Label>CEP (8 dígitos)</Label><Input className={errClass(errors?.contato_cep)} value={data.contato_cep || ''} onChange={e => onChange('contato_cep', e.target.value.replace(/\D/g, '').slice(0,8))} placeholder="00000000" /><FieldError msg={errors?.contato_cep} /></div>
-          <Button type="button" onClick={fetchCep} variant="outline" size="sm" className="mb-0.5">Buscar</Button>
+      <SectionTitle>3. Viagem</SectionTitle>
+      <SelectField label="Propósito da viagem" options={PROPOSITO_OPTIONS} error={errors?.proposito} value={data.proposito || 'B1/B2'} onChange={v => onChange('proposito', v)} />
+
+      <YesNo label="Você já tem planos específicos de viagem (passagem/data marcada)?" value={data.planos_especificos ?? false} onChange={v => onChange('planos_especificos', v)} />
+      {data.planos_especificos ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <DateField label="Data de chegada" error={errors?.viagem_data_chegada} value={data.viagem_data_chegada} onChange={v => onChange('viagem_data_chegada', v)} />
+          <TextField label="Voo / meio de chegada" value={data.viagem_voo} onChange={v => onChange('viagem_voo', v)} placeholder="Ex: AA950" />
         </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Endereço (Rua/Av)</Label><Input className={errClass(errors?.contato_endereco)} value={data.contato_endereco || ''} onChange={e => onChange('contato_endereco', e.target.value)} /><FieldError msg={errors?.contato_endereco} /></div>
-        <div><Label>Número / Complemento</Label><Input className={errClass(errors?.contato_numero)} value={data.contato_numero || ''} onChange={e => onChange('contato_numero', e.target.value)} /><FieldError msg={errors?.contato_numero} /></div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Bairro</Label><Input className={errClass(errors?.contato_bairro)} value={data.contato_bairro || ''} onChange={e => onChange('contato_bairro', e.target.value)} /><FieldError msg={errors?.contato_bairro} /></div>
-        <div><Label>Cidade</Label><Input className={errClass(errors?.contato_cidade)} value={data.contato_cidade || ''} onChange={e => onChange('contato_cidade', e.target.value)} /><FieldError msg={errors?.contato_cidade} /></div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Estado (UF)</Label><Input className={errClass(errors?.contato_estado)} value={data.contato_estado || ''} onChange={e => onChange('contato_estado', e.target.value)} /><FieldError msg={errors?.contato_estado} /></div>
-        <div><Label>País</Label><Input className={errClass(errors?.contato_pais)} value={data.contato_pais || 'Brasil'} onChange={e => onChange('contato_pais', e.target.value)} /><FieldError msg={errors?.contato_pais} /></div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Telefone Celular</Label><Input className={errClass(errors?.contato_telefone)} value={data.contato_telefone || ''} onChange={e => onChange('contato_telefone', maskPhone(e.target.value))} placeholder="(00) 00000-0000" /><FieldError msg={errors?.contato_telefone} /></div>
-        <div><Label>Email Atual</Label><Input type="email" className={errClass(errors?.contato_email)} value={data.contato_email || ''} onChange={e => onChange('contato_email', e.target.value.toLowerCase())} placeholder="exemplo@email.com" /><FieldError msg={errors?.contato_email} /></div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Telefone Residencial (fixo) — opcional</Label><Input value={data.contato_telefone_residencial || ''} onChange={e => onChange('contato_telefone_residencial', maskPhone(e.target.value))} placeholder="(00) 0000-0000" /></div>
-        <div><Label>Telefone Comercial — opcional</Label><Input value={data.contato_telefone_comercial || ''} onChange={e => onChange('contato_telefone_comercial', maskPhone(e.target.value))} placeholder="(00) 0000-0000" /></div>
-      </div>
-      <div>
-        <Label>Redes Sociais</Label>
-        <div className="flex flex-col sm:flex-row gap-2 mt-1">
-          <Select value={newPlatform} onValueChange={setNewPlatform}>
-            <SelectTrigger className="h-9 text-sm sm:w-52"><SelectValue placeholder="Rede social" /></SelectTrigger>
-            <SelectContent>
-              {REDES_SOCIAIS_OPTIONS.map(o => <SelectItem key={o.code} value={o.code}>{o.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Input value={newUser} onChange={e => setNewUser(e.target.value)} placeholder="Nome de usuário (ex: @usuario)" className="flex-1" onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSocial())} />
-          <Button type="button" onClick={addSocial} size="sm" variant="outline"><Plus className="h-4 w-4" /></Button>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <DateField label="Data pretendida de chegada" error={errors?.viagem_data_chegada} value={data.viagem_data_chegada} onChange={v => onChange('viagem_data_chegada', v)} />
+          <TextField label="Duração pretendida (dias)" error={errors?.viagem_duracao_dias} value={data.viagem_duracao_dias} onChange={v => onChange('viagem_duracao_dias', v)} inputMode="numeric" placeholder="Ex: 10" />
         </div>
-        {socialMedias.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {socialMedias.map((s, i) => (
-              <span key={i} className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-sm px-3 py-1 rounded-full">
-                <strong>{labelRedeSocial(s.plataforma)}</strong>: {s.usuario}
-                <button onClick={() => removeSocial(i)}><X className="h-3 w-3" /></button>
-              </span>
-            ))}
+      )}
+
+      <SubTitle>Onde você vai ficar nos EUA</SubTitle>
+      <TextField label="Endereço / Hotel" error={errors?.viagem_endereco_eua} value={data.viagem_endereco_eua} onChange={v => onChange('viagem_endereco_eua', v)} placeholder="Ex: 1601 Collins Ave" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <TextField label="Cidade de destino" error={errors?.viagem_cidade_destino} value={data.viagem_cidade_destino} onChange={v => onChange('viagem_cidade_destino', v)} placeholder="Ex: Miami" />
+        <UsStateField label="Estado (EUA)" error={errors?.viagem_estado_eua} value={data.viagem_estado_eua} onChange={v => onChange('viagem_estado_eua', v)} />
+        <TextField label="ZIP (se souber)" value={data.viagem_cep_eua} onChange={v => onChange('viagem_cep_eua', v)} inputMode="numeric" />
+      </div>
+      <TextField label="Nome do hotel / anfitrião" value={data.viagem_hospedagem} onChange={v => onChange('viagem_hospedagem', v)} />
+
+      <SubTitle>Quem está pagando a viagem?</SubTitle>
+      <SelectField label="Pagador" options={PAGADOR_OPTIONS} error={errors?.viagem_pago_por} value={pago} onChange={v => onChange('viagem_pago_por', v)} />
+      {(pago === 'O' || pago === 'C') && (
+        <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+          <TextField label={pago === 'C' ? 'Nome da empresa' : 'Nome do pagador'} error={errors?.pagador_nome} value={data.pagador_nome} onChange={v => onChange('pagador_nome', v)} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TextField label="Telefone" value={data.pagador_telefone} onChange={v => onChange('pagador_telefone', maskPhone(v))} inputMode="numeric" />
+            {pago === 'O' && <TextField label="Email" value={data.pagador_email} onChange={v => onChange('pagador_email', v)} type="email" />}
           </div>
-        )}
-        {socialMedias.length === 0 && <p className="text-xs text-slate-400 mt-1">Selecione a rede social, informe o nome de usuário e clique em '+'.</p>}
-      </div>
+          <TextField label="Relação com você" value={data.pagador_relacao} onChange={v => onChange('pagador_relacao', v)} placeholder={pago === 'C' ? 'Ex: Empregador' : 'Ex: Pai, amigo'} />
+          <TextField label="Endereço" value={data.pagador_endereco} onChange={v => onChange('pagador_endereco', v)} />
+        </div>
+      )}
     </div>
   );
 }
