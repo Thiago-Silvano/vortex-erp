@@ -223,6 +223,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   // Envia os dados do formulário para o robô local (porta 3004).
   const sendToRobot = async (form: DS160Form) => {
+    /* placeholder */
     setRobotSending(form.id);
     try {
       const override = (form.form_data as any)?.json_override;
