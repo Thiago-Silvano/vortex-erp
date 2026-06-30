@@ -61,10 +61,10 @@ interface DutiesAvail { atual: boolean; ant1: boolean; ant2: boolean; }
 function computeAvailability(formData: Record<string, any>): DutiesAvail {
   const fd = formData || {};
   const has = (v: any) => typeof v === 'string' && v.trim().length > 0;
-  const atual = has(fd.empresa_atual) || has(fd.cargo_atual) || has(fd.descricao_funcoes) ||
+  const atual = has(fd.empresa_nome) || has(fd.cargo) || has(fd.descricao_funcoes) ||
     (has(fd.status_profissional) && fd.status_profissional !== 'Desempregado');
   const emp = Array.isArray(fd.empregos_anteriores) ? fd.empregos_anteriores : [];
-  const empHas = (e: any) => e && (has(e.empresa) || has(e.cargo) || has(e.endereco) || has(e.descricao_funcoes));
+  const empHas = (e: any) => e && (has(e.empresa) || has(e.cargo) || has(e.endereco) || has(e.descricao));
   return { atual, ant1: empHas(emp[0]), ant2: empHas(emp[1]) };
 }
 
@@ -77,8 +77,8 @@ function applyDuties(formData: Record<string, any>, d: DutiesState): Record<stri
       ? fd.empregos_anteriores.map((x: any) => ({ ...x }))
       : [];
     while (emp.length < 2) emp.push({});
-    if (d.ant1Enabled && d.ant1.trim()) emp[0].descricao_funcoes = d.ant1.trim();
-    if (d.ant2Enabled && d.ant2.trim()) emp[1].descricao_funcoes = d.ant2.trim();
+    if (d.ant1Enabled && d.ant1.trim()) emp[0].descricao = d.ant1.trim();
+    if (d.ant2Enabled && d.ant2.trim()) emp[1].descricao = d.ant2.trim();
     fd.empregos_anteriores = emp;
   }
   return fd;
@@ -87,7 +87,7 @@ function applyDuties(formData: Record<string, any>, d: DutiesState): Record<stri
 // Mapeia campos do formulário DS-160 para colunas do cadastro do cliente.
 function mapFormToClient(fd: Record<string, any>): Record<string, string> {
   const s = (v: any) => (typeof v === 'string' ? v.trim() : v == null ? '' : String(v));
-  const fullName = s(fd.nome_completo_passaporte) ||
+  const fullName = s(fd.nome_completo) ||
     [s(fd.nome), s(fd.sobrenome)].filter(Boolean).join(' ').trim();
   return {
     full_name: fullName,
@@ -95,15 +95,15 @@ function mapFormToClient(fd: Record<string, any>): Record<string, string> {
     cpf: s(fd.cpf),
     passport_number: s(fd.passaporte_numero),
     passport_issue_date: s(fd.passaporte_data_emissao),
-    passport_expiry_date: s(fd.passaporte_data_expiracao),
-    email: s(fd.contato_email),
-    phone: s(fd.contato_telefone),
-    cep: s(fd.contato_cep),
-    address: s(fd.contato_endereco),
-    address_number: s(fd.contato_numero),
-    neighborhood: s(fd.contato_bairro),
-    city: s(fd.contato_cidade),
-    state: s(fd.contato_estado),
+    passport_expiry_date: s(fd.passaporte_data_validade),
+    email: s(fd.email),
+    phone: s(fd.telefone),
+    cep: s(fd.cep),
+    address: s(fd.endereco_linha1),
+    address_number: s(fd.numero),
+    neighborhood: s(fd.bairro),
+    city: s(fd.cidade_residencia),
+    state: s(fd.estado_residencia),
   };
 }
 

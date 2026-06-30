@@ -92,3 +92,132 @@ export const REDES_SOCIAIS_OPTIONS = [
 export const labelRedeSocial = (code: string): string =>
   REDES_SOCIAIS_OPTIONS.find(o => o.code === code)?.label || code;
 
+// ── Tabelas de opções do prompt (value = o que vai no JSON) ────────────────
+export interface Opt { value: string; label: string; }
+
+export const SEXO_OPTIONS: Opt[] = [
+  { value: 'M', label: 'Masculino' },
+  { value: 'F', label: 'Feminino' },
+];
+
+export const PROPOSITO_OPTIONS: Opt[] = [
+  { value: 'B1/B2', label: 'Turismo ou negócios (B1/B2)' },
+];
+
+export const PAGADOR_OPTIONS: Opt[] = [
+  { value: 'S', label: 'Eu mesmo(a)' },
+  { value: 'O', label: 'Outra pessoa' },
+  { value: 'C', label: 'Empresa / empregador' },
+];
+
+export const PARENTESCO_ACOMP_OPTIONS: Opt[] = [
+  { value: 'PARENT', label: 'Pai/Mãe' },
+  { value: 'SPOUSE', label: 'Cônjuge' },
+  { value: 'CHILD', label: 'Filho(a)' },
+  { value: 'OTHER RELATIVE', label: 'Outro parente' },
+  { value: 'FRIEND', label: 'Amigo(a)' },
+  { value: 'BUSINESS ASSOCIATE', label: 'Sócio/Colega de trabalho' },
+  { value: 'OTHER', label: 'Outro' },
+];
+
+export const PASSAPORTE_TIPO_OPTIONS: Opt[] = [
+  { value: 'Regular', label: 'Comum/Regular' },
+  { value: 'Official', label: 'Oficial' },
+  { value: 'Diplomatic', label: 'Diplomático' },
+  { value: 'Laissez-Passer', label: 'Laissez-Passer' },
+  { value: 'Other', label: 'Outro' },
+];
+
+export const STATUS_EUA_OPTIONS: Opt[] = [
+  { value: 'US_CITIZEN', label: 'Cidadão americano' },
+  { value: 'LPR', label: 'Residente permanente (green card)' },
+  { value: 'NONIMMIGRANT', label: 'Não-imigrante (visto temporário)' },
+  { value: 'OTHER', label: 'Outro / Não sei' },
+];
+
+export const OCUPACAO_OPTIONS: Opt[] = [
+  { value: 'A', label: 'Agricultura' },
+  { value: 'AP', label: 'Artista / Artes cênicas' },
+  { value: 'B', label: 'Negócios / Empresário' },
+  { value: 'CM', label: 'Comunicação' },
+  { value: 'CS', label: 'Ciência da computação / TI' },
+  { value: 'C', label: 'Gastronomia / Alimentação' },
+  { value: 'ED', label: 'Educação / Professor' },
+  { value: 'EN', label: 'Engenharia' },
+  { value: 'G', label: 'Governo / Serviço público' },
+  { value: 'H', label: 'Do lar' },
+  { value: 'LP', label: 'Advocacia / Jurídico' },
+  { value: 'MH', label: 'Saúde / Medicina' },
+  { value: 'M', label: 'Militar' },
+  { value: 'NS', label: 'Ciências naturais' },
+  { value: 'N', label: 'Desempregado(a)' },
+  { value: 'PS', label: 'Ciências físicas' },
+  { value: 'RV', label: 'Vocação religiosa' },
+  { value: 'R', label: 'Pesquisa' },
+  { value: 'RT', label: 'Aposentado(a)' },
+  { value: 'SS', label: 'Ciências sociais' },
+  { value: 'S', label: 'Estudante' },
+  { value: 'O', label: 'Outro' },
+];
+
+// Ocupações que NÃO exigem dados de empregador
+export const OCUPACAO_SEM_EMPREGADOR = ['H', 'N', 'RT'];
+
+export const CONTATO_EUA_RELACAO_OPTIONS: Opt[] = [
+  { value: 'RELATIVE', label: 'Parente' },
+  { value: 'SPOUSE', label: 'Cônjuge' },
+  { value: 'FRIEND', label: 'Amigo(a)' },
+  { value: 'BUSINESS CONTACT', label: 'Sócio / Contato de negócios' },
+  { value: 'HOTEL', label: 'Hotel' },
+  { value: 'OTHER', label: 'Outro' },
+];
+
+// Estados dos EUA (sigla = valor enviado)
+export const US_STATES: Opt[] = [
+  { value: 'AL', label: 'Alabama (AL)' }, { value: 'AK', label: 'Alaska (AK)' },
+  { value: 'AZ', label: 'Arizona (AZ)' }, { value: 'AR', label: 'Arkansas (AR)' },
+  { value: 'CA', label: 'California (CA)' }, { value: 'CO', label: 'Colorado (CO)' },
+  { value: 'CT', label: 'Connecticut (CT)' }, { value: 'DE', label: 'Delaware (DE)' },
+  { value: 'DC', label: 'District of Columbia (DC)' }, { value: 'FL', label: 'Florida (FL)' },
+  { value: 'GA', label: 'Georgia (GA)' }, { value: 'HI', label: 'Hawaii (HI)' },
+  { value: 'ID', label: 'Idaho (ID)' }, { value: 'IL', label: 'Illinois (IL)' },
+  { value: 'IN', label: 'Indiana (IN)' }, { value: 'IA', label: 'Iowa (IA)' },
+  { value: 'KS', label: 'Kansas (KS)' }, { value: 'KY', label: 'Kentucky (KY)' },
+  { value: 'LA', label: 'Louisiana (LA)' }, { value: 'ME', label: 'Maine (ME)' },
+  { value: 'MD', label: 'Maryland (MD)' }, { value: 'MA', label: 'Massachusetts (MA)' },
+  { value: 'MI', label: 'Michigan (MI)' }, { value: 'MN', label: 'Minnesota (MN)' },
+  { value: 'MS', label: 'Mississippi (MS)' }, { value: 'MO', label: 'Missouri (MO)' },
+  { value: 'MT', label: 'Montana (MT)' }, { value: 'NE', label: 'Nebraska (NE)' },
+  { value: 'NV', label: 'Nevada (NV)' }, { value: 'NH', label: 'New Hampshire (NH)' },
+  { value: 'NJ', label: 'New Jersey (NJ)' }, { value: 'NM', label: 'New Mexico (NM)' },
+  { value: 'NY', label: 'New York (NY)' }, { value: 'NC', label: 'North Carolina (NC)' },
+  { value: 'ND', label: 'North Dakota (ND)' }, { value: 'OH', label: 'Ohio (OH)' },
+  { value: 'OK', label: 'Oklahoma (OK)' }, { value: 'OR', label: 'Oregon (OR)' },
+  { value: 'PA', label: 'Pennsylvania (PA)' }, { value: 'RI', label: 'Rhode Island (RI)' },
+  { value: 'SC', label: 'South Carolina (SC)' }, { value: 'SD', label: 'South Dakota (SD)' },
+  { value: 'TN', label: 'Tennessee (TN)' }, { value: 'TX', label: 'Texas (TX)' },
+  { value: 'UT', label: 'Utah (UT)' }, { value: 'VT', label: 'Vermont (VT)' },
+  { value: 'VA', label: 'Virginia (VA)' }, { value: 'WA', label: 'Washington (WA)' },
+  { value: 'WV', label: 'West Virginia (WV)' }, { value: 'WI', label: 'Wisconsin (WI)' },
+  { value: 'WY', label: 'Wyoming (WY)' },
+];
+
+// Rótulos das 15 etapas (fonte única usada pela página pública e pelo editor)
+export const DS160_STEP_LABELS = [
+  'Dados Pessoais',
+  'Nacionalidade',
+  'Viagem',
+  'Acompanhantes',
+  'Viagens Anteriores',
+  'Endereço e Contato',
+  'Passaporte',
+  'Contato nos EUA',
+  'Família (Pais)',
+  'Cônjuge',
+  'Trabalho Atual',
+  'Trabalho/Educação',
+  'Informações Adicionais',
+  'Antecedentes',
+  'Revisão e Envio',
+];
+

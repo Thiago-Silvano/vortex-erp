@@ -4,22 +4,10 @@ import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import DS160Step1 from './DS160Step1';
-import DS160Step2 from './DS160Step2';
-import DS160Step3 from './DS160Step3';
-import DS160Step4 from './DS160Step4';
-import DS160Step5 from './DS160Step5';
-import DS160Step6 from './DS160Step6';
-import DS160Step7 from './DS160Step7';
-import DS160Step8 from './DS160Step8';
-import DS160Step9 from './DS160Step9';
-import DS160Step10 from './DS160Step10';
-import DS160Step11 from './DS160Step11';
+import { DS160_STEPS } from './steps';
+import { DS160_STEP_LABELS } from './types';
 
-const STEPS = [
-  'Dados Pessoais', 'Passaporte', 'Contatos', 'Viagem', 'Contato EUA',
-  'Família', 'Profissional', 'Acadêmico', 'Viagens', 'Segurança', 'Declaração',
-];
+const STEPS = DS160_STEP_LABELS;
 
 interface Props {
   formId: string;
@@ -46,19 +34,7 @@ export default function DS160EditDialog({ formId, initialData, open, onOpenChang
   };
 
   const noErrors: Record<string, string> = {};
-  const stepComponents = [
-    <DS160Step1 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step2 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step3 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step4 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step5 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step6 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step7 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step8 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step9 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step10 data={formData} onChange={updateField} errors={noErrors} />,
-    <DS160Step11 data={formData} onChange={updateField} errors={noErrors} />,
-  ];
+  const CurrentStep = DS160_STEPS[step].Component;
 
   const handleSave = async () => {
     setSaving(true);
@@ -102,7 +78,7 @@ export default function DS160EditDialog({ formId, initialData, open, onOpenChang
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {stepComponents[step]}
+          <CurrentStep data={formData} onChange={updateField} errors={noErrors} onGoToStep={setStep} />
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t px-6 py-3">

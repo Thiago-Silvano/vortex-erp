@@ -1,105 +1,105 @@
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DS160StepProps, COUNTRIES } from './types';
-import { FieldError, errClass } from './fieldError';
-import { BRAZIL_STATES, isBrasil } from '@/data/brazil-states';
-import BrazilCitySelect from './BrazilCitySelect';
+import { useEffect } from 'react';
+import { DS160StepProps, REDES_SOCIAIS_OPTIONS } from './types';
+import { maskPhone } from '@/lib/masks';
+import { SectionTitle, SubTitle, TextField, CountryField, UfField, CityField, SelectField, YesNo, NACheckbox, Repeatable } from './fields';
 
-const US_STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: 'U.S. CITIZEN', label: 'Cidadão americano' },
-  { value: 'LPR', label: 'Residente permanente (Green Card)' },
-  { value: 'NONIMMIGRANT', label: 'Não-imigrante (visto temporário)' },
-  { value: "OTHER/I DON'T KNOW", label: 'Outro / Não sei' },
-];
+const REDES_OPTS = REDES_SOCIAIS_OPTIONS.filter(o => o.code !== 'NONE').map(o => ({ value: o.label, label: o.label }));
 
 export default function DS160Step6({ data, onChange, errors }: DS160StepProps) {
-  const conjugePais = data.conjuge_pais_nascimento ?? 'Brasil';
-  const conjugeBrasil = isBrasil(conjugePais);
+  useEffect(() => {
+    if (!data.pais_residencia) onChange('pais_residencia', 'Brasil');
+    if (data.endereco_postal_igual === undefined) onChange('endereco_postal_igual', true);
+    if (data.telefone_secundario_na === undefined) onChange('telefone_secundario_na', true);
+    if (data.telefone_trabalho_na === undefined) onChange('telefone_trabalho_na', true);
+    if (data.email_adicional === undefined) onChange('email_adicional', false);
+    if (data.telefone_adicional === undefined) onChange('telefone_adicional', false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const pais = data.pais_residencia || 'Brasil';
+
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">6. Informações de Família</h2>
+      <SectionTitle>6. Endereço, Contato e Redes Sociais</SectionTitle>
+
+      <SubTitle>Endereço residencial</SubTitle>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2"><TextField label="Logradouro" error={errors?.endereco_linha1} value={data.endereco_linha1} onChange={v => onChange('endereco_linha1', v)} /></div>
+        <TextField label="Número" error={errors?.numero} value={data.numero} onChange={v => onChange('numero', v)} />
+      </div>
+      <TextField label="Complemento" value={data.endereco_linha2} onChange={v => onChange('endereco_linha2', v)} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Nome Completo do Pai</Label><Input className={errClass(errors?.pai_nome)} value={data.pai_nome || ''} onChange={e => onChange('pai_nome', e.target.value)} /><FieldError msg={errors?.pai_nome} /></div>
-        <div><Label>Data de Nascimento do Pai</Label><Input type="date" value={data.pai_nascimento || ''} onChange={e => onChange('pai_nascimento', e.target.value)} /></div>
+        <CountryField label="País" value={pais} onChange={v => onChange('pais_residencia', v)} />
+        <TextField label="CEP" error={errors?.cep} value={data.cep} onChange={v => onChange('cep', v)} inputMode="numeric" />
       </div>
-      <div>
-        <Label>O seu pai mora nos EUA?</Label>
-        <RadioGroup value={data.pai_mora_eua || 'Não'} onValueChange={v => onChange('pai_mora_eua', v)} className="flex gap-4 mt-1">
-          <div className="flex items-center gap-2"><RadioGroupItem value="Não" id="pai_eua_nao" /><Label htmlFor="pai_eua_nao">Não</Label></div>
-          <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="pai_eua_sim" /><Label htmlFor="pai_eua_sim">Sim</Label></div>
-        </RadioGroup>
-      </div>
-      {data.pai_mora_eua === 'Sim' && (
-        <div><Label>Status do Pai nos EUA</Label>
-          <Select value={data.pai_status_eua || undefined} onValueChange={v => onChange('pai_status_eua', v)}>
-            <SelectTrigger className={errClass(errors?.pai_status_eua)}><SelectValue placeholder="Selecione o status" /></SelectTrigger>
-            <SelectContent>{US_STATUS_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-          </Select>
-          <FieldError msg={errors?.pai_status_eua} />
-        </div>
-      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Nome Completo da Mãe</Label><Input className={errClass(errors?.mae_nome)} value={data.mae_nome || ''} onChange={e => onChange('mae_nome', e.target.value)} /><FieldError msg={errors?.mae_nome} /></div>
-        <div><Label>Data de Nascimento da Mãe</Label><Input type="date" value={data.mae_nascimento || ''} onChange={e => onChange('mae_nascimento', e.target.value)} /></div>
+        <UfField label="UF / Estado" error={errors?.estado_residencia} value={data.estado_residencia} onChange={v => { onChange('estado_residencia', v); onChange('cidade_residencia', ''); }} country={pais} />
+        <CityField label="Cidade" error={errors?.cidade_residencia} value={data.cidade_residencia} onChange={v => onChange('cidade_residencia', v)} uf={data.estado_residencia || ''} country={pais} />
       </div>
-      <div>
-        <Label>A sua mãe mora nos EUA?</Label>
-        <RadioGroup value={data.mae_mora_eua || 'Não'} onValueChange={v => onChange('mae_mora_eua', v)} className="flex gap-4 mt-1">
-          <div className="flex items-center gap-2"><RadioGroupItem value="Não" id="mae_eua_nao" /><Label htmlFor="mae_eua_nao">Não</Label></div>
-          <div className="flex items-center gap-2"><RadioGroupItem value="Sim" id="mae_eua_sim" /><Label htmlFor="mae_eua_sim">Sim</Label></div>
-        </RadioGroup>
-      </div>
-      {data.mae_mora_eua === 'Sim' && (
-        <div><Label>Status da Mãe nos EUA</Label>
-          <Select value={data.mae_status_eua || undefined} onValueChange={v => onChange('mae_status_eua', v)}>
-            <SelectTrigger className={errClass(errors?.mae_status_eua)}><SelectValue placeholder="Selecione o status" /></SelectTrigger>
-            <SelectContent>{US_STATUS_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-          </Select>
-          <FieldError msg={errors?.mae_status_eua} />
-        </div>
-      )}
-      <div><Label>Parentes imediatos nos EUA? (Explique a relação e o status migratório)</Label><Textarea value={data.parentes_eua || ''} onChange={e => onChange('parentes_eua', e.target.value)} rows={3} /></div>
-      
-      <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
-        <h3 className="font-semibold text-sm text-slate-700">Dados do Cônjuge</h3>
-        <div><Label>Nome Completo do Cônjuge</Label><Input className={errClass(errors?.conjuge_nome)} value={data.conjuge_nome || ''} onChange={e => onChange('conjuge_nome', e.target.value)} /><FieldError msg={errors?.conjuge_nome} /></div>
-        <div><Label>Data de Nascimento</Label><Input type="date" className={errClass(errors?.conjuge_nascimento)} value={data.conjuge_nascimento || ''} onChange={e => onChange('conjuge_nascimento', e.target.value)} /><FieldError msg={errors?.conjuge_nascimento} /></div>
-        <div><Label>País de Nascimento do Cônjuge</Label>
-          <Select value={conjugePais} onValueChange={v => { onChange('conjuge_pais_nascimento', v); onChange('conjuge_estado_nascimento', ''); onChange('conjuge_cidade_nascimento', ''); }}>
-            <SelectTrigger><SelectValue placeholder="Selecione o país" /></SelectTrigger>
-            <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><Label>Estado de Nascimento (UF/Província)</Label>
-            {conjugeBrasil ? (
-              <Select value={data.conjuge_estado_nascimento || undefined} onValueChange={v => { onChange('conjuge_estado_nascimento', v); onChange('conjuge_cidade_nascimento', ''); }}>
-                <SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger>
-                <SelectContent>{BRAZIL_STATES.map(s => <SelectItem key={s.uf} value={s.uf}>{s.nome} ({s.uf})</SelectItem>)}</SelectContent>
-              </Select>
-            ) : (
-              <Input value={data.conjuge_estado_nascimento || ''} onChange={e => onChange('conjuge_estado_nascimento', e.target.value)} placeholder="Estado / Província" />
-            )}
+
+      <YesNo label="Seu endereço de correspondência é o mesmo do residencial?" value={data.endereco_postal_igual ?? true} onChange={v => onChange('endereco_postal_igual', v)} />
+      {data.endereco_postal_igual === false && (
+        <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-2"><TextField label="Logradouro" value={data.endereco_postal_linha1} onChange={v => onChange('endereco_postal_linha1', v)} /></div>
+            <TextField label="Número" value={data.endereco_postal_numero} onChange={v => onChange('endereco_postal_numero', v)} />
           </div>
-          <div><Label>Cidade de Nascimento</Label>
-            {conjugeBrasil ? (
-              <BrazilCitySelect uf={data.conjuge_estado_nascimento || ''} value={data.conjuge_cidade_nascimento || ''} onChange={v => onChange('conjuge_cidade_nascimento', v)} />
-            ) : (
-              <Input value={data.conjuge_cidade_nascimento || ''} onChange={e => onChange('conjuge_cidade_nascimento', e.target.value)} placeholder="Ex: São Paulo" />
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <TextField label="Cidade" value={data.endereco_postal_cidade} onChange={v => onChange('endereco_postal_cidade', v)} />
+            <TextField label="UF / Estado" value={data.endereco_postal_estado} onChange={v => onChange('endereco_postal_estado', v)} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <TextField label="CEP" value={data.endereco_postal_cep} onChange={v => onChange('endereco_postal_cep', v)} inputMode="numeric" />
+            <CountryField label="País" value={data.endereco_postal_pais || 'Brasil'} onChange={v => onChange('endereco_postal_pais', v)} />
           </div>
         </div>
-        <div><Label>Detalhes do Divórcio</Label><Input value={data.conjuge_divorcio || ''} onChange={e => onChange('conjuge_divorcio', e.target.value)} /></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><Label>Data de Início do Casamento</Label><Input type="date" className={errClass(errors?.conjuge_casamento_inicio)} value={data.conjuge_casamento_inicio || ''} onChange={e => onChange('conjuge_casamento_inicio', e.target.value)} /><FieldError msg={errors?.conjuge_casamento_inicio} /></div>
-          <div><Label>Data de Fim do Casamento/Divórcio</Label><Input type="date" className={errClass(errors?.conjuge_casamento_fim)} value={data.conjuge_casamento_fim || ''} onChange={e => onChange('conjuge_casamento_fim', e.target.value)} /><FieldError msg={errors?.conjuge_casamento_fim} /></div>
+      )}
+
+      <SubTitle>Contato</SubTitle>
+      <TextField label="Telefone principal (celular/WhatsApp)" error={errors?.telefone} value={data.telefone} onChange={v => onChange('telefone', maskPhone(v))} inputMode="numeric" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <TextField label="Telefone secundário" value={data.telefone_secundario} onChange={v => onChange('telefone_secundario', maskPhone(v))} inputMode="numeric" disabled={data.telefone_secundario_na ?? true} />
+          <NACheckbox checked={data.telefone_secundario_na ?? true} onChange={c => { onChange('telefone_secundario_na', c); if (c) onChange('telefone_secundario', ''); }} />
         </div>
-        <div><Label>Detalhes do Falecimento</Label><Input value={data.conjuge_falecimento || ''} onChange={e => onChange('conjuge_falecimento', e.target.value)} /></div>
-        <div><Label>Data de Falecimento do Cônjuge</Label><Input type="date" className={errClass(errors?.conjuge_falecimento_data)} value={data.conjuge_falecimento_data || ''} onChange={e => onChange('conjuge_falecimento_data', e.target.value)} /><FieldError msg={errors?.conjuge_falecimento_data} /></div>
+        <div>
+          <TextField label="Telefone do trabalho" value={data.telefone_trabalho} onChange={v => onChange('telefone_trabalho', maskPhone(v))} inputMode="numeric" disabled={data.telefone_trabalho_na ?? true} />
+          <NACheckbox checked={data.telefone_trabalho_na ?? true} onChange={c => { onChange('telefone_trabalho_na', c); if (c) onChange('telefone_trabalho', ''); }} />
+        </div>
       </div>
+      <TextField label="Email" error={errors?.email} value={data.email} onChange={v => onChange('email', v)} type="email" />
+
+      <YesNo label="Tem email adicional?" value={data.email_adicional ?? false} onChange={v => onChange('email_adicional', v)} />
+      {data.email_adicional && (
+        <Repeatable items={data.email_adicional_lista || []} onChange={v => onChange('email_adicional_lista', v)} blank={() => ''} addLabel="Adicionar email"
+          renderItem={(it: any, update) => <TextField label="Email" value={it} onChange={v => update(v)} type="email" />} />
+      )}
+      <YesNo label="Tem telefone adicional?" value={data.telefone_adicional ?? false} onChange={v => onChange('telefone_adicional', v)} />
+      {data.telefone_adicional && (
+        <Repeatable items={data.telefone_adicional_lista || []} onChange={v => onChange('telefone_adicional_lista', v)} blank={() => ''} addLabel="Adicionar telefone"
+          renderItem={(it: any, update) => <TextField label="Telefone" value={it} onChange={v => update(maskPhone(v))} inputMode="numeric" />} />
+      )}
+
+      <SubTitle>Redes sociais</SubTitle>
+      <label className="flex items-center gap-2 text-sm text-slate-500 cursor-pointer select-none">
+        <input type="checkbox" checked={!!data.sem_redes_sociais} onChange={e => { onChange('sem_redes_sociais', e.target.checked); if (e.target.checked) onChange('redes_sociais', []); }} />
+        Não tenho redes sociais
+      </label>
+      {!data.sem_redes_sociais && (
+        <Repeatable
+          items={data.redes_sociais || []}
+          onChange={v => onChange('redes_sociais', v)}
+          blank={() => ({ plataforma: '', usuario: '' })}
+          addLabel="Adicionar rede social"
+          emptyHint="Adicione suas redes sociais (apenas o @/usuário, sem link)."
+          renderItem={(it: any, update) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <SelectField label="Plataforma" options={REDES_OPTS} value={it.plataforma} onChange={v => update({ ...it, plataforma: v })} />
+              <TextField label="Usuário / @" help="Apenas o nome de usuário, sem URL." value={it.usuario} onChange={v => update({ ...it, usuario: v })} />
+            </div>
+          )}
+        />
+      )}
     </div>
   );
 }
