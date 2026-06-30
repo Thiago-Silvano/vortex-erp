@@ -162,6 +162,10 @@ app.post('/ds160/iniciar', async (req, res) => {
       if (err) console.error('Erro ao abrir robô:', err.message);
     });
 
+    // Traz a janela do robô para o primeiro plano (estilo Alt+Tab), para que o
+    // operador caia direto no robô em vez de continuar no ERP.
+    trazerRoboParaFrente();
+
     res.json({ ok: true, cliente: nomePasta, pasta, campos_faltando: faltando });
   } catch (e) {
     console.error(e);
