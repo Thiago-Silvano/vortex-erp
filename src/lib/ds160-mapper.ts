@@ -274,6 +274,13 @@ export function montarDadosDS160(form: any): DadosDS160 {
     .filter(Boolean);
   if (!idiomas.length) idiomas.push("Portugues");
 
+  // Educação: o formulário salva um array `formacoes`; o robô consome a 1ª formação.
+  const formacoesArr: any[] = Array.isArray(form.formacoes) ? form.formacoes : [];
+  const formacao0: any = formacoesArr[0] || {};
+
+  // Segurança: as perguntas são salvas com prefixo `seg_` e valor "Sim"/"Não".
+  const seg = (k: string) => bool(form[`seg_${k}`] ?? form[k]);
+
   // Redes sociais: aceita objeto[] {plataforma|tipo, usuario|handle}, string[]
   // ("Instagram @handle"), objeto único, campos avulsos ou string única (legado).
   // Saída: [{plataforma, usuario}] — o robô seleciona pelo código OU pelo rótulo.
@@ -307,7 +314,9 @@ export function montarDadosDS160(form: any): DadosDS160 {
     sobrenome,
     nome,
     nome_completo: nomeCompleto,
-    nome_passaporte: txt(pega(form, "nome_passaporte", "nome_completo")) || nomeCompleto,
+    nome_passaporte:
+      txt(pega(form, "nome_passaporte", "nome_completo_passaporte", "nome_completo")) ||
+      nomeCompleto,
     sexo: txt(pega(form, "sexo", "genero")) || "M",
     estado_civil: txt(pega(form, "estado_civil")) || "S",
     data_nascimento: dataBR(pega(form, "data_nascimento", "nascimento", "dob")),
