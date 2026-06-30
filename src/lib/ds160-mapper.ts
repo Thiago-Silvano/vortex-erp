@@ -316,37 +316,37 @@ export function montarDadosDS160(form: any): DadosDS160 {
     cpf: txt(pega(form, "cpf", "cpf_cnpj")),
 
     // Endereço
-    endereco_linha1: txt(pega(form, "endereco_linha1", "endereco", "logradouro")),
+    endereco_linha1: txt(pega(form, "endereco_linha1", "contato_endereco", "endereco", "logradouro")),
     endereco_linha2: txt(pega(form, "endereco_linha2", "complemento")),
-    numero: txt(pega(form, "numero")),
-    cidade_residencia: txt(pega(form, "cidade_residencia", "cidade")),
-    estado_residencia: txt(pega(form, "estado_residencia", "uf", "estado")),
-    cep: txt(pega(form, "cep")),
-    telefone: txt(pega(form, "telefone", "celular", "whatsapp")),
-    email: txt(pega(form, "email")),
+    numero: txt(pega(form, "numero", "contato_numero")),
+    cidade_residencia: txt(pega(form, "cidade_residencia", "contato_cidade", "cidade")),
+    estado_residencia: txt(pega(form, "estado_residencia", "contato_estado", "uf", "estado")),
+    cep: txt(pega(form, "cep", "contato_cep")),
+    telefone: txt(pega(form, "telefone", "contato_telefone", "celular", "whatsapp")),
+    email: txt(pega(form, "email", "contato_email")),
     redes_sociais,
 
     // Passaporte
     passaporte_numero: txt(pega(form, "passaporte_numero", "passaporte")),
     passaporte_cidade_emissao: txt(pega(form, "passaporte_cidade_emissao")),
     passaporte_data_emissao: dataBR(pega(form, "passaporte_data_emissao", "passaporte_emissao", "emissao")),
-    passaporte_data_validade: dataBR(pega(form, "passaporte_data_validade", "passaporte_validade", "validade")),
+    passaporte_data_validade: dataBR(pega(form, "passaporte_data_validade", "passaporte_data_expiracao", "passaporte_validade", "validade")),
     passaporte_perdido: bool(form.passaporte_perdido),
 
     // Viagem
-    viagem_cidade_destino: txt(pega(form, "viagem_cidade_destino", "cidade_destino", "destino")) || "Miami",
+    viagem_cidade_destino: txt(pega(form, "viagem_cidade_destino", "cidade_destino_eua", "cidade_destino", "destino")) || "Miami",
     viagem_estado_eua: txt(pega(form, "viagem_estado_eua", "estado_destino_eua", "viagem_estado_destino")),
-    viagem_data_chegada: dataBR(pega(form, "viagem_data_chegada", "data_chegada", "data_viagem")),
-    viagem_duracao_dias: pega(form, "viagem_duracao_dias", "duracao_dias") ?? "10",
-    viagem_endereco_eua: txt(pega(form, "viagem_endereco_eua", "endereco_eua", "hospedagem")),
-    viagem_hospedagem: txt(pega(form, "viagem_hospedagem", "hotel", "viagem_endereco_eua")),
-    viagem_pago_por: txt(pega(form, "viagem_pago_por", "pago_por")) || "S",
+    viagem_data_chegada: dataBR(pega(form, "viagem_data_chegada", "data_ida", "data_chegada", "data_viagem")),
+    viagem_duracao_dias: pega(form, "viagem_duracao_dias", "duracao_viagem", "duracao_dias") ?? "10",
+    viagem_endereco_eua: txt(pega(form, "viagem_endereco_eua", "local_hospedagem", "endereco_eua", "hospedagem")),
+    viagem_hospedagem: txt(pega(form, "viagem_hospedagem", "local_hospedagem", "hotel", "viagem_endereco_eua")),
+    viagem_pago_por: txt(pega(form, "viagem_pago_por", "pagador_viagem", "pago_por")) || "S",
 
     // Pagador
     pagador_nome: txt(pega(form, "pagador_nome")),
     pagador_email: txt(pega(form, "pagador_email")),
     pagador_telefone: txt(pega(form, "pagador_telefone")),
-    pagador_relacao: txt(pega(form, "pagador_relacao")),
+    pagador_relacao: txt(pega(form, "pagador_relacao", "pagador_parentesco")),
 
     // Contato EUA (cai pro hotel/endereço quando vazio, p/ não ficar sem POC)
     contato_eua_nome:
