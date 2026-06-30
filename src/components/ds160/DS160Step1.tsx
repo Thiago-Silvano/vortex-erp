@@ -13,8 +13,17 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
   const nascimentoBrasil = isBrasil(paisNascimento);
   useEffect(() => {
     if (!data.pais_nascimento) onChange('pais_nascimento', 'Brasil');
+    if (!data.nacionalidade) onChange('nacionalidade', data.pais_nascimento || 'Brasil');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const handlePaisNascimento = (v: string) => {
+    const prev = data.pais_nascimento;
+    onChange('pais_nascimento', v);
+    // Nacionalidade acompanha o país de nascimento por padrão (se ainda não definida ou igual ao anterior)
+    if (!data.nacionalidade || data.nacionalidade === prev) {
+      onChange('nacionalidade', v);
+    }
+  };
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">1. Dados Pessoais</h2>
@@ -58,7 +67,7 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
         <div><Label>Data de Nascimento</Label><Input type="date" className={errClass(errors?.data_nascimento)} value={data.data_nascimento || ''} onChange={e => onChange('data_nascimento', e.target.value)} /><FieldError msg={errors?.data_nascimento} /></div>
       </div>
       <div><Label>País de Nascimento</Label>
-        <Select value={paisNascimento} onValueChange={v => onChange('pais_nascimento', v)}>
+        <Select value={paisNascimento} onValueChange={handlePaisNascimento}>
           <SelectTrigger className={errClass(errors?.pais_nascimento)}><SelectValue placeholder="Selecione o país" /></SelectTrigger>
           <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
         </Select>
@@ -80,8 +89,11 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
       </div>
       <div>
         <Label>Nacionalidade</Label>
-        <Input value={data.nacionalidade ?? 'Brasil'} onChange={e => onChange('nacionalidade', e.target.value)} placeholder="Ex: Brasil" />
-        <p className="text-xs text-slate-400 mt-1">Informe sua nacionalidade atual conforme consta no passaporte.</p>
+        <Select value={data.nacionalidade || paisNascimento} onValueChange={v => onChange('nacionalidade', v)}>
+          <SelectTrigger className={errClass(errors?.nacionalidade)}><SelectValue placeholder="Selecione o país" /></SelectTrigger>
+          <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+        </Select>
+        <p className="text-xs text-slate-400 mt-1">Por padrão acompanha o país de nascimento. Altere se sua nacionalidade for diferente.</p>
       </div>
       <div>
         <Label>Possui outra nacionalidade?</Label>

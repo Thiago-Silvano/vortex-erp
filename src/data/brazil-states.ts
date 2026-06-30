@@ -41,7 +41,7 @@ export async function fetchCitiesByUf(uf: string): Promise<string[]> {
   if (!uf) return [];
   if (cityCache[uf]) return cityCache[uf];
   const res = await fetch(
-    `https://servicos.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`,
+    `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`,
   );
   if (!res.ok) throw new Error(`IBGE ${res.status}`);
   const data = await res.json();
