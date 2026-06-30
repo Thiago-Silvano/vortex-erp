@@ -214,13 +214,15 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
     }
 
     // Special: companions in section 4
-    if (section.title.includes('4.') && Array.isArray(formData.acompanhantes) && formData.acompanhantes.length) {
+    const acomp = Array.isArray(formData.acompanhantes_lista) ? formData.acompanhantes_lista
+      : Array.isArray(formData.acompanhantes) ? formData.acompanhantes : [];
+    if (section.title.includes('4.') && acomp.length) {
       checkPage(8);
       doc.setFont('helvetica', 'bold');
       doc.text('Acompanhantes:', 15, y);
       doc.setFont('helvetica', 'normal');
-      const list = formData.acompanhantes
-        .map((a: any) => `${a.nome || ''}${a.parentesco ? ` (${a.parentesco})` : ''}`)
+      const list = acomp
+        .map((a: any) => `${[a.nome, a.sobrenome].filter(Boolean).join(' ')}${a.parentesco ? ` (${a.parentesco})` : ''}`)
         .join('; ');
       const lines = doc.splitTextToSize(sanitize(list), pageW - 80);
       doc.text(lines, 70, y);
@@ -243,8 +245,8 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
       }
     }
 
-    // Special: empregos anteriores in section 7
-    if (section.title.includes('7.')) {
+    // Special: empregos anteriores in section 12
+    if (section.title.includes('12.')) {
       let empregos: any[] = Array.isArray(formData.empregos_anteriores) ? formData.empregos_anteriores : [];
       if (!empregos.length) {
         for (const n of [1, 2]) {
@@ -269,8 +271,8 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
         y += 5;
         const parts = [
           ['Empresa', e.empresa], ['CEP', e.cep], ['Endereco', e.endereco], ['Telefone', e.telefone],
-          ['Supervisor', e.supervisor], ['Cargo', e.cargo], ['Inicio', e.inicio], ['Termino', e.termino],
-          ['Motivo de Saida', e.motivo_saida], ['Descricao das Funcoes', e.descricao_funcoes],
+          ['Cargo', e.cargo], ['Inicio', e.data_inicio || e.inicio], ['Termino', e.data_fim || e.termino],
+          ['Descricao das Funcoes', e.descricao || e.descricao_funcoes],
         ];
         for (const [lbl, val] of parts) {
           if (!val) continue;
@@ -285,9 +287,10 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
       });
     }
 
-    // Special: formacoes in section 8
-    if (section.title.includes('8.')) {
-      let formacoes: any[] = Array.isArray(formData.formacoes) ? formData.formacoes : [];
+    // Special: instituicoes de ensino in section 12
+    if (section.title.includes('12.')) {
+      let formacoes: any[] = Array.isArray(formData.instituicoes) ? formData.instituicoes
+        : Array.isArray(formData.formacoes) ? formData.formacoes : [];
       if (!formacoes.length) {
         for (const n of [1, 2, 3]) {
           if (formData[`formacao_${n}_instituicao`] || formData[`formacao_${n}_curso`]) {
@@ -310,8 +313,9 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
         doc.setFont('helvetica', 'normal');
         y += 5;
         const parts = [
-          ['Instituicao', f.instituicao], ['Pais', f.pais], ['CEP', f.cep], ['Endereco', f.endereco],
-          ['Telefone', f.telefone], ['Curso', f.curso], ['Inicio', f.inicio], ['Termino', f.termino],
+          ['Instituicao', f.nome || f.instituicao], ['Pais', f.pais], ['CEP', f.cep], ['Endereco', f.endereco],
+          ['Cidade', f.cidade], ['Estado', f.estado], ['Curso', f.curso],
+          ['Inicio', f.data_inicio || f.inicio], ['Termino', f.data_fim || f.termino],
         ];
         for (const [lbl, val] of parts) {
           if (!val) continue;
@@ -326,8 +330,8 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
       });
     }
 
-    // Special: countries visited in section 9
-    if (section.title.includes('9.') && formData.paises_visitados?.length) {
+    // Special: countries visited in section 13
+    if (section.title.includes('13.') && formData.paises_visitados?.length) {
       checkPage(8);
       doc.setFont('helvetica', 'bold');
       doc.text('Paises visitados:', 15, y);
@@ -338,8 +342,8 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
       y += Math.max(lines.length * 4, 6);
     }
 
-    // Special: social media in section 3
-    if (section.title.includes('3.') && formData.redes_sociais?.length) {
+    // Special: social media in section 6
+    if (section.title.includes('6.') && formData.redes_sociais?.length) {
       checkPage(8);
       doc.setFont('helvetica', 'bold');
       doc.text('Redes Sociais:', 15, y);
