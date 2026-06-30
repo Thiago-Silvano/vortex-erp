@@ -52,6 +52,44 @@ const ROBO_EXE = process.env.ROBO_EXE || 'C:\\Users\\User\\ds160-robot\\dist\\DS
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
+// ----------------------------------------------------------------------------
+// Foco da janela do robô (estilo Alt+Tab)
+// ----------------------------------------------------------------------------
+// O navegador (ERP) NÃO consegue trazer outra janela do sistema para frente —
+// é uma restrição de segurança do SO. Como é este servidor local quem abre o
+// robô, ele pode forçar o foco. No Windows usamos PowerShell para localizar o
+// processo do robô e trazer sua janela para o primeiro plano (restaurando se
+// estiver minimizada). Em outros SOs a função simplesmente não faz nada.
+function trazerRoboParaFrente() {
+  if (process.platform !== 'win32') return;
+  const procName = path.basename(ROBO_EXE).replace(/\.exe$/i, '');
+  const ps = [
+    'Add-Type @"',
+    'using System;',
+    'using System.Runtime.InteropServices;',
+    'public class WinFocus {',
+    '  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);',
+    '  [DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);',
+    '}',
+    '"@;',
+    `$p = Get-Process -Name '${procName}' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1;`,
+    'if ($p) {',
+    '  [WinFocus]::ShowWindowAsync($p.MainWindowHandle, 9) | Out-Null;', // 9 = SW_RESTORE
+    '  [WinFocus]::SetForegroundWindow($p.MainWindowHandle) | Out-Null;',
+    '}',
+  ].join(' ');
+  // Tenta algumas vezes porque a janela pode levar um instante para existir.
+  let tentativas = 0;
+  const tentar = () => {
+    tentativas += 1;
+    exec(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${ps.replace(/"/g, '\\"')}"`, (err) => {
+      if (err && tentativas < 6) setTimeout(tentar, 700);
+    });
+    if (tentativas < 6) setTimeout(tentar, 700);
+  };
+  setTimeout(tentar, 600);
+}
+
 function normalizarNome(nome) {
   return String(nome || '')
     .toUpperCase()
