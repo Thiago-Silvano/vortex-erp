@@ -497,6 +497,36 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
         </AlertDialogContent>
       </AlertDialog>
 
+      <Dialog open={!!jsonForm} onOpenChange={(o) => !o && setJsonForm(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code2 className="h-4 w-4" /> JSON enviado ao robô
+            </DialogTitle>
+            <DialogDescription>
+              Pré-visualização dos dados mapeados a partir do formulário DS-160.
+            </DialogDescription>
+          </DialogHeader>
+          <pre className="max-h-[60vh] overflow-auto rounded-lg bg-muted p-3 text-xs">
+            {jsonForm ? JSON.stringify(mapearDadosDS160(jsonForm.form_data || {}, clientName), null, 2) : ''}
+          </pre>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!jsonForm) return;
+                navigator.clipboard.writeText(JSON.stringify(mapearDadosDS160(jsonForm.form_data || {}, clientName), null, 2));
+                toast.success('JSON copiado!');
+              }}
+              className="gap-1.5"
+            >
+              <Copy className="h-4 w-4" /> Copiar
+            </Button>
+            <Button onClick={() => setJsonForm(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!dutiesFormId} onOpenChange={(o) => !o && setDutiesFormId(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
