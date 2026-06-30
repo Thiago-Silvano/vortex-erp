@@ -119,6 +119,8 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [dutiesAvail, setDutiesAvail] = useState<DutiesAvail>({ atual: false, ant1: false, ant2: false });
   const [dutiesPdfLoading, setDutiesPdfLoading] = useState(false);
   const [fillingClientId, setFillingClientId] = useState<string | null>(null);
+  const [robotSending, setRobotSending] = useState<string | null>(null);
+  const [jsonForm, setJsonForm] = useState<DS160Form | null>(null);
 
   const fetchForms = async () => {
     const { data } = await supabase
@@ -131,6 +133,23 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   };
 
   useEffect(() => { fetchForms(); }, [clientId]);
+
+  // Realtime: atualiza a tela automaticamente quando o robô concluir o DS-160.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`ds160-client-${clientId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'ds160_forms',
+        filter: `client_id=eq.${clientId}`,
+      }, (payload) => {
+        const updated = payload.new as any;
+        setForms(prev => prev.map(f => f.id === updated.id ? { ...f, ...updated } : f));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [clientId]);
 
   const baseUrl = window.location.origin;
 
