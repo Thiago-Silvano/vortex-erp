@@ -9,6 +9,17 @@ import { Plus, X } from 'lucide-react';
 import { DS160StepProps } from './types';
 import { FieldError, errClass } from './fieldError';
 
+const PARENTESCO_OPTIONS: { value: string; label: string }[] = [
+  { value: 'PARENT', label: 'Pai / Mãe' },
+  { value: 'SPOUSE', label: 'Cônjuge (esposo/esposa)' },
+  { value: 'CHILD', label: 'Filho / Filha' },
+  { value: 'OTHER RELATIVE', label: 'Outro parente (irmão, primo, tio, avô, sogro, genro…)' },
+  { value: 'FRIEND', label: 'Amigo(a)' },
+  { value: 'BUSINESS ASSOCIATE', label: 'Sócio / Colega de trabalho' },
+  { value: 'OTHER', label: 'Outro' },
+];
+const parentescoLabel = (v: string) => PARENTESCO_OPTIONS.find(o => o.value === v)?.label || v;
+
 export default function DS160Step4({ data, onChange, errors }: DS160StepProps) {
   const companions: { nome: string; parentesco: string }[] = data.acompanhantes || [];
   const [compNome, setCompNome] = useState('');
@@ -95,14 +106,19 @@ export default function DS160Step4({ data, onChange, errors }: DS160StepProps) {
         <Label>Pessoas que viajam com você</Label>
         <div className="flex gap-2 mt-1">
           <Input value={compNome} onChange={e => setCompNome(e.target.value)} placeholder="Nome" className="flex-1" />
-          <Input value={compParentesco} onChange={e => setCompParentesco(e.target.value)} placeholder="Parentesco" className="w-32" />
-          <Button type="button" onClick={addCompanion} size="sm" variant="outline"><Plus className="h-4 w-4" /></Button>
+          <Select value={compParentesco || undefined} onValueChange={setCompParentesco} disabled={!compNome.trim()}>
+            <SelectTrigger className="w-56"><SelectValue placeholder="Parentesco" /></SelectTrigger>
+            <SelectContent>
+              {PARENTESCO_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button type="button" onClick={addCompanion} size="sm" variant="outline" disabled={!compNome.trim()}><Plus className="h-4 w-4" /></Button>
         </div>
         {companions.length > 0 && (
           <div className="space-y-1 mt-2">
             {companions.map((c, i) => (
               <div key={i} className="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 text-sm">
-                <span className="flex-1">{c.nome} {c.parentesco && `(${c.parentesco})`}</span>
+                <span className="flex-1">{c.nome} {c.parentesco && `(${parentescoLabel(c.parentesco)})`}</span>
                 <button onClick={() => onChange('acompanhantes', companions.filter((_, j) => j !== i))}><X className="h-3 w-3" /></button>
               </div>
             ))}

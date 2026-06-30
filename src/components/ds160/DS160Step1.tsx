@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -5,8 +6,15 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DS160StepProps, COUNTRIES } from './types';
 import { maskCpf } from '@/lib/masks';
 import { FieldError, errClass } from './fieldError';
+import { BRAZIL_STATES, isBrasil } from '@/data/brazil-states';
 
 export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
+  const paisNascimento = data.pais_nascimento || 'Brasil';
+  const nascimentoBrasil = isBrasil(paisNascimento);
+  useEffect(() => {
+    if (!data.pais_nascimento) onChange('pais_nascimento', 'Brasil');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">1. Dados Pessoais</h2>
@@ -49,11 +57,27 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
         </div>
         <div><Label>Data de Nascimento</Label><Input type="date" className={errClass(errors?.data_nascimento)} value={data.data_nascimento || ''} onChange={e => onChange('data_nascimento', e.target.value)} /><FieldError msg={errors?.data_nascimento} /></div>
       </div>
+      <div><Label>País de Nascimento</Label>
+        <Select value={paisNascimento} onValueChange={v => onChange('pais_nascimento', v)}>
+          <SelectTrigger className={errClass(errors?.pais_nascimento)}><SelectValue placeholder="Selecione o país" /></SelectTrigger>
+          <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+        </Select>
+        <FieldError msg={errors?.pais_nascimento} />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div><Label>Cidade de Nascimento</Label><Input className={errClass(errors?.cidade_nascimento)} value={data.cidade_nascimento || ''} onChange={e => onChange('cidade_nascimento', e.target.value)} placeholder="Ex: São Paulo" /><FieldError msg={errors?.cidade_nascimento} /></div>
-        <div><Label>Estado de Nascimento (UF/Província)</Label><Input className={errClass(errors?.estado_nascimento)} value={data.estado_nascimento || ''} onChange={e => onChange('estado_nascimento', e.target.value)} placeholder="Ex: SP" /><FieldError msg={errors?.estado_nascimento} /></div>
+        <div><Label>Estado de Nascimento (UF/Província)</Label>
+          {nascimentoBrasil ? (
+            <Select value={data.estado_nascimento || undefined} onValueChange={v => onChange('estado_nascimento', v)}>
+              <SelectTrigger className={errClass(errors?.estado_nascimento)}><SelectValue placeholder="Selecione o estado" /></SelectTrigger>
+              <SelectContent>{BRAZIL_STATES.map(s => <SelectItem key={s.uf} value={s.uf}>{s.nome} ({s.uf})</SelectItem>)}</SelectContent>
+            </Select>
+          ) : (
+            <Input className={errClass(errors?.estado_nascimento)} value={data.estado_nascimento || ''} onChange={e => onChange('estado_nascimento', e.target.value)} placeholder="Estado / Província" />
+          )}
+          <FieldError msg={errors?.estado_nascimento} />
+        </div>
       </div>
-      <div><Label>País de Nascimento</Label><Input className={errClass(errors?.pais_nascimento)} value={data.pais_nascimento || ''} onChange={e => onChange('pais_nascimento', e.target.value)} placeholder="Ex: Brasil" /><FieldError msg={errors?.pais_nascimento} /></div>
       <div>
         <Label>Nacionalidade</Label>
         <Input value={data.nacionalidade ?? 'Brasil'} onChange={e => onChange('nacionalidade', e.target.value)} placeholder="Ex: Brasil" />

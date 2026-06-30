@@ -117,6 +117,7 @@ export interface DadosDS160 {
   // Educação (DS-160: instituições de nível secundário ou superior)
   nivel_educacao: string;
   instituicao_nome: string;
+  instituicao_endereco: string;
   instituicao_cidade: string;
   instituicao_pais: string;
   curso: string;
@@ -178,6 +179,17 @@ function pega(form: any, ...chaves: string[]): any {
   return undefined;
 }
 
+/** Normaliza valor monetário BR para inteiro em string. "R$2.300,00" -> "2300". */
+function dinheiro(v: any): string {
+  if (v === null || v === undefined || v === "") return "";
+  if (typeof v === "number") return String(Math.round(v));
+  let s = String(v).replace(/[^\d.,]/g, ""); // tira R$, espaços, letras
+  if (!s) return "";
+  if (s.includes(",")) s = s.split(",")[0];  // parte inteira (ignora centavos)
+  s = s.replace(/\./g, "");                  // pontos = separador de milhar
+  return s;
+}
+
 // ── Mapper principal — preenche TODOS os campos do contrato ────────────────
 
 export function montarDadosDS160(form: any): DadosDS160 {
@@ -190,14 +202,15 @@ export function montarDadosDS160(form: any): DadosDS160 {
     txt(pega(form, "nome_completo", "nome_passaporte")) ||
     `${nome} ${sobrenome}`.trim();
 
-  // Acompanhantes: aceita string[] ("Nome (Relacao)") ou objeto[] {nome, relacao}
+  // Acompanhantes: aceita string[] ("Nome (Relacao)") ou objeto[] {nome, parentesco}
   const acompanhantes: string[] = Array.isArray(form.acompanhantes)
     ? form.acompanhantes
-        .map((a: any) =>
-          typeof a === "string"
-            ? a
-            : `${txt(a.nome ?? a.nome_completo)}${a.relacao ? ` (${txt(a.relacao)})` : ""}`
-        )
+        .map((a: any) => {
+          if (typeof a === "string") return a;
+          const n = txt(a.nome ?? a.nome_completo);
+          const r = txt(a.parentesco ?? a.relacao ?? a.relationship);
+          return r ? `${n} (${r})` : n;
+        })
         .filter((s: string) => s.trim())
     : [];
 
@@ -310,7 +323,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     empresa_cidade: txt(pega(form, "empresa_cidade")),
     empresa_telefone: txt(pega(form, "empresa_telefone")),
     data_admissao: dataBR(pega(form, "data_admissao", "admissao")),
-    renda_mensal: pega(form, "renda_mensal", "salario", "renda") ?? "",
+    renda_mensal: dinheiro(pega(form, "renda_mensal", "salario", "renda")),
     descricao_funcoes: txt(pega(form, "descricao_funcoes", "funcoes")),
 
     // Empregos anteriores
@@ -323,6 +336,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     // Educação
     nivel_educacao: txt(pega(form, "nivel_educacao", "escolaridade")),
     instituicao_nome: txt(pega(form, "instituicao_nome", "instituicao", "faculdade")),
+    instituicao_endereco: txt(pega(form, "instituicao_endereco", "instituicao_logradouro")),
     instituicao_cidade: txt(pega(form, "instituicao_cidade")),
     instituicao_pais: txt(pega(form, "instituicao_pais")) || "BRA",
     curso: txt(pega(form, "curso", "formacao")),
@@ -402,8 +416,6 @@ export async function dispararRoboDS160(opts: {
 }
 
 // ── Compat: nome legado usado pelo ERP (DS160Section) ──────────────────────
-// Aceita (form_data, clientName) e delega para montarDadosDS160, mantendo o
-// fallback do nome do cliente quando o formulário não traz o nome completo.
 export function mapearDadosDS160(
   formData: Record<string, any>,
   clientName?: string,
