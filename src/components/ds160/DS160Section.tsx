@@ -526,6 +526,12 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
                         <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => setJsonForm(form)}>
                           <Code2 className="h-3 w-3" /> Ver JSON
                         </Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => openJsonReplace(form)}>
+                          <Code2 className="h-3 w-3" /> Substituir JSON
+                          {(form.form_data as any)?.json_override && (
+                            <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" title="JSON personalizado salvo" />
+                          )}
+                        </Button>
                       </div>
                     </div>
                   );
