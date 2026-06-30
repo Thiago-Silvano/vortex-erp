@@ -528,6 +528,18 @@ export default function VistosDS160Page() {
 
       {/* Send Modal */}
       <Dialog open={showSendModal} onOpenChange={setShowSendModal}>
+      {editIndividual && (
+        <DS160EditDialog
+          formId={editIndividual.id}
+          initialData={editIndividual.form_data || {}}
+          open={!!editIndividual}
+          onOpenChange={(o) => !o && setEditIndividual(null)}
+          onSaved={(fd) => {
+            setIndividuals(prev => prev.map(f => f.id === editIndividual.id ? { ...f, form_data: fd } : f));
+            setEditIndividual(null);
+          }}
+        />
+      )}
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selected.size === 1 ? 'Gerar Link DS-160 Individual' : 'Gerar Link DS-160 em Grupo'}</DialogTitle>
