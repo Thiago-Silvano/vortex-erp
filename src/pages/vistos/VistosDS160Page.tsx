@@ -9,11 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Search, Loader2, Users, FileText, ExternalLink, Copy, Link2, Trash2, Bell } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import DS160EditDialog from '@/components/ds160/DS160EditDialog';
 
 interface Client {
   id: string;
@@ -44,6 +46,7 @@ interface IndividualForm {
   sent_by: string;
   created_at: string;
   client_name: string;
+  form_data: Record<string, any>;
 }
 
 type LinkEntry =
@@ -65,6 +68,7 @@ export default function VistosDS160Page() {
   const [sendName, setSendName] = useState('');
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   const [deleteIndividualId, setDeleteIndividualId] = useState<string | null>(null);
+  const [editIndividual, setEditIndividual] = useState<IndividualForm | null>(null);
 
   const baseUrl = window.location.origin;
 
@@ -95,7 +99,7 @@ export default function VistosDS160Page() {
         .order('created_at', { ascending: false }),
       supabase
         .from('ds160_forms')
-        .select('id, token, status, sent_at, sent_by, created_at, clients(full_name)')
+        .select('id, token, status, sent_at, sent_by, created_at, form_data, clients(full_name)')
         .eq('empresa_id', activeCompany!.id)
         .is('group_id', null)
         .order('created_at', { ascending: false }),
@@ -130,6 +134,7 @@ export default function VistosDS160Page() {
           sent_by: f.sent_by,
           created_at: f.created_at,
           client_name: f.clients?.full_name || 'Cliente',
+          form_data: f.form_data || {},
         }))
       );
     }
@@ -424,6 +429,9 @@ export default function VistosDS160Page() {
                           <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/${entry.token}`, '_blank')}>
                             <ExternalLink className="h-3 w-3" /> Abrir
                           </Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setEditIndividual(entry)}>
+                            <Pencil className="h-3 w-3" /> Editar respostas
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -520,6 +528,18 @@ export default function VistosDS160Page() {
 
       {/* Send Modal */}
       <Dialog open={showSendModal} onOpenChange={setShowSendModal}>
+      {editIndividual && (
+        <DS160EditDialog
+          formId={editIndividual.id}
+          initialData={editIndividual.form_data || {}}
+          open={!!editIndividual}
+          onOpenChange={(o) => !o && setEditIndividual(null)}
+          onSaved={(fd) => {
+            setIndividuals(prev => prev.map(f => f.id === editIndividual.id ? { ...f, form_data: fd } : f));
+            setEditIndividual(null);
+          }}
+        />
+      )}
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selected.size === 1 ? 'Gerar Link DS-160 Individual' : 'Gerar Link DS-160 em Grupo'}</DialogTitle>
