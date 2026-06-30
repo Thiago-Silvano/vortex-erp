@@ -84,8 +84,8 @@ export interface DadosDS160 {
   // Contato nos EUA
   contato_eua_nome: string;
 
-  // Acompanhantes (cada item: "Nome (Relacao)")
-  acompanhantes: string[];
+  // Acompanhantes (cada item separado: nome / sobrenome / parentesco)
+  acompanhantes: Acompanhante[];
 
   // Viagem / visto anterior
   viagens_anteriores_eua: boolean;
