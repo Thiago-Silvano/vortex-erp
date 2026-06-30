@@ -1,304 +1,373 @@
-// Converte os dados do formulário DS-160 (form_data) para o JSON COMPLETO que o
-// robô local de preenchimento automático espera. A fonte é exclusivamente o que
-// o cliente preencheu no formulário público (ds160_forms.form_data) — sem PDF.
+// ds160-mapper.ts
+// ---------------------------------------------------------------------------
+// Monta o payload COMPLETO que o robô DS-160 espera, a partir do registro do ERP.
+// Fonte da verdade: TODAS as chaves lidas pelo robot.py (preencher_ds160).
+// Nenhum campo é omitido — tudo tem default, então o robô nunca recebe undefined.
 //
-// O objeto retornado espelha campo a campo o contrato `DS160Dados` esperado pelo
-// robô (ver prompt "Contrato JSON Completo DS-160").
+// O lado ESQUERDO de cada linha (o nome do campo de saída) é fixo: é o que o robô
+// lê e NÃO pode mudar. O lado direito — pega(form, "...") — é a origem no ERP;
+// ajuste os nomes ali se o seu formulário usar outros. Os aliases extras já cobrem
+// as variações mais comuns. O validarDS160() no fim mostra o que ficou vazio.
+// ---------------------------------------------------------------------------
 
-function s(v: any): string {
-  if (v == null) return '';
-  return typeof v === 'string' ? v.trim() : String(v);
+// ── Tipos aninhados ────────────────────────────────────────────────────────
+export interface EmpregoAnterior {
+  empresa: string;
+  endereco: string;
+  cargo: string;
+  telefone: string;
+  data_inicio: string; // DD/MM/AAAA
+  data_fim: string;    // DD/MM/AAAA
+  descricao: string;
+  motivo_saida: string;
 }
 
-function onlyDigits(v: any): string {
-  return s(v).replace(/\D/g, '');
+// ── Contrato de saída (exatamente o que o robô consome) ────────────────────
+export interface DadosDS160 {
+  // Personal 1 / 2
+  sobrenome: string;
+  nome: string;
+  nome_completo: string;
+  nome_passaporte: string;
+  sexo: string;            // "M" | "F" (ou Masculino/Feminino)
+  estado_civil: string;    // S | M | W | D (ou Solteiro/Casado/Viuvo/Divorciado)
+  data_nascimento: string; // DD/MM/AAAA
+  cidade_nascimento: string;
+  estado_nascimento: string;
+  cpf: string;
+
+  // Endereço e contato
+  endereco_linha1: string;
+  endereco_linha2: string;
+  numero: string;
+  cidade_residencia: string;
+  estado_residencia: string;
+  cep: string;
+  telefone: string;
+  email: string;
+  redes_sociais: string;   // ex: "Instagram @handle" | ""
+
+  // Passaporte
+  passaporte_numero: string;
+  passaporte_cidade_emissao: string;
+  passaporte_data_emissao: string;  // DD/MM/AAAA
+  passaporte_data_validade: string; // DD/MM/AAAA
+  passaporte_perdido: boolean;
+
+  // Viagem
+  viagem_cidade_destino: string;
+  viagem_estado_eua: string;        // sigla, ex "FL" (evita pausa do robô)
+  viagem_data_chegada: string;      // DD/MM/AAAA
+  viagem_duracao_dias: string | number;
+  viagem_endereco_eua: string;
+  viagem_hospedagem: string;
+  viagem_pago_por: string;          // S (self) | O (outro) | C (empresa)
+
+  // Pagador (quando viagem_pago_por = O)
+  pagador_nome: string;
+  pagador_email: string;
+  pagador_telefone: string;
+  pagador_relacao: string;
+
+  // Contato nos EUA
+  contato_eua_nome: string;
+
+  // Acompanhantes (cada item: "Nome (Relacao)")
+  acompanhantes: string[];
+
+  // Viagem / visto anterior
+  viagens_anteriores_eua: boolean;
+  visto_anterior: boolean;     // já teve visto americano
+  ja_teve_visto_eua: boolean;  // alias aceito pelo robô
+  visto_negado: boolean;
+  peticao_imigrante: boolean;
+
+  // Família
+  pai_nome: string;
+  pai_nascimento: string;      // DD/MM/AAAA
+  pai_nos_eua: boolean;
+  mae_nome: string;
+  mae_nascimento: string;      // DD/MM/AAAA
+  mae_nos_eua: boolean;
+  parentes_nos_eua: boolean;
+
+  // Cônjuge (quando casado)
+  conjuge_nome: string;
+  conjuge_nascimento: string;  // DD/MM/AAAA
+  conjuge_cidade_nascimento: string;
+
+  // Trabalho atual
+  status_profissional: string;
+  cargo: string;
+  empresa_nome: string;
+  empresa_endereco: string;
+  empresa_cidade: string;
+  empresa_telefone: string;
+  data_admissao: string;       // DD/MM/AAAA
+  renda_mensal: string | number;
+  descricao_funcoes: string;
+
+  // Empregos anteriores
+  empregos_anteriores: EmpregoAnterior[];
+
+  // Trabalho adicional
+  idiomas: string[];
+  servico_militar: boolean;
+
+  // Segurança
+  crime: boolean;
+  lavagem_dinheiro: boolean;
+  trafico_pessoas: boolean;
+  terrorismo: boolean;
+  genocidio: boolean;
+  tortura: boolean;
+  deportado: boolean;
 }
 
+// ── Helpers de coerção ─────────────────────────────────────────────────────
+
+/** Booleano tolerante: aceita true, "true", "sim", "yes", "y", "1", 1. */
 function bool(v: any): boolean {
-  if (typeof v === 'boolean') return v;
-  const t = s(v).toLowerCase();
-  return t === 'sim' || t === 'true' || t === 's' || t === 'yes' || t === 'já fui' || t === 'ja fui';
+  if (typeof v === "boolean") return v;
+  if (typeof v === "number") return v === 1;
+  if (typeof v === "string") {
+    const s = v.trim().toLowerCase();
+    return s === "true" || s === "sim" || s === "yes" || s === "y" || s === "1";
+  }
+  return false;
 }
 
-// Normaliza qualquer data (ISO, yyyy-mm-dd, dd/mm/aaaa, Date) para dd/mm/aaaa.
-function formatarData(data: any): string {
-  const raw = s(data);
-  if (!raw) return '';
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
-  // yyyy-mm-dd (input type=date) — evita problemas de fuso usando split direto.
-  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+/** Texto seguro — nunca undefined/null. */
+function txt(v: any): string {
+  return v === null || v === undefined ? "" : String(v).trim();
+}
+
+/** Normaliza data para DD/MM/AAAA. Aceita Date, ISO (YYYY-MM-DD) ou já DD/MM/AAAA. */
+function dataBR(v: any): string {
+  if (!v) return "";
+  if (v instanceof Date && !isNaN(v.getTime())) {
+    const d = String(v.getDate()).padStart(2, "0");
+    const m = String(v.getMonth() + 1).padStart(2, "0");
+    return `${d}/${m}/${v.getFullYear()}`;
+  }
+  const s = String(v).trim();
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);          // 1979-12-27[T...]
   if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return raw;
-  const dia = String(d.getUTCDate()).padStart(2, '0');
-  const mes = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const ano = d.getUTCFullYear();
-  return `${dia}/${mes}/${ano}`;
+  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);    // 27/12/1979
+  if (br) return `${br[1].padStart(2, "0")}/${br[2].padStart(2, "0")}/${br[3]}`;
+  return s; // formato desconhecido: deixa como veio
 }
 
-function mapearSexo(valor: any): 'M' | 'F' | '' {
-  const v = s(valor).toLowerCase();
-  if (v.startsWith('m')) return 'M';
-  if (v.startsWith('f')) return 'F';
-  return '';
-}
-
-function mapearEstadoCivil(valor: any): string {
-  const v = s(valor).toLowerCase();
-  if (v.startsWith('solteir')) return 'S';
-  if (v.startsWith('casad')) return 'M';
-  if (v.startsWith('divorciad')) return 'D';
-  if (v.startsWith('viúv') || v.startsWith('viuv')) return 'W';
-  if (v.startsWith('união') || v.startsWith('uniao')) return 'O';
-  if (!v) return '';
-  return 'O';
-}
-
-function mapearStatusProfissional(valor: any): string {
-  const v = s(valor).toLowerCase();
-  if (v.startsWith('empregad')) return 'E';
-  if (v.startsWith('estudante')) return 'ST';
-  if (v.startsWith('autônom') || v.startsWith('autonom') || v.startsWith('freelan')) return 'SE';
-  if (v.startsWith('empresár') || v.startsWith('empresar')) return 'SE';
-  if (v.startsWith('desempregad')) return 'U';
-  if (v.startsWith('aposentad')) return 'R';
-  if (v.startsWith('do lar')) return 'H';
-  if (!v) return '';
-  return 'O';
-}
-
-function mapearPagoPor(valor: any): 'S' | 'O' | 'C' {
-  const v = s(valor).toLowerCase();
-  if (v.startsWith('eu')) return 'S';
-  if (v.startsWith('empresa')) return 'C';
-  return 'O'; // "Outra pessoa" / "Outro"
-}
-
-// País sempre em código de 3 letras quando for Brasil.
-function paisCode(valor: any): string {
-  const v = s(valor).toLowerCase();
-  if (!v || v.startsWith('bra')) return 'BRA';
-  return s(valor);
-}
-
-// Remove caracteres especiais problemáticos para o robô (barra, etc.).
-function limparEndereco(valor: any): string {
-  return s(valor).replace(/[\/\\|]+/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function montarEndereco(endereco: any, numero: any): string {
-  const e = limparEndereco(endereco);
-  const n = s(numero);
-  if (!e) return '';
-  return n ? `${e}, ${n}` : e;
-}
-
-function mapearAcompanhantes(lista: any): string[] {
-  if (!Array.isArray(lista)) return [];
-  return lista
-    .map((a) => {
-      if (!a) return '';
-      if (typeof a === 'string') return a.trim();
-      const nome = s(a.nome);
-      const rel = s(a.parentesco || a.relacao);
-      if (!nome) return '';
-      return rel ? `${nome} (${rel})` : nome;
-    })
-    .filter(Boolean);
-}
-
-function mapearRedesSociais(valor: any): string {
-  if (Array.isArray(valor)) return valor.map((x) => s(x)).filter(Boolean).join('; ');
-  return s(valor);
-}
-
-function mapearIdiomas(valor: any): string[] {
-  if (Array.isArray(valor)) {
-    const arr = valor.map((x) => s(x)).filter(Boolean);
-    return arr.length ? arr : ['Português'];
+/** Primeiro valor não-vazio entre várias chaves possíveis do ERP. */
+function pega(form: any, ...chaves: string[]): any {
+  for (const k of chaves) {
+    const val = form?.[k];
+    if (val !== undefined && val !== null && val !== "") return val;
   }
-  const str = s(valor);
-  if (!str) return ['Português'];
-  return str.split(/[,;/]+/).map((x) => x.trim()).filter(Boolean);
+  return undefined;
 }
 
-// Normaliza empregos anteriores tanto no formato de array quanto nos
-// campos achatados (emprego_anterior_1_*).
-function mapearEmpregosAnteriores(fd: Record<string, any>): any[] {
-  let lista: any[] = Array.isArray(fd.empregos_anteriores) ? fd.empregos_anteriores : [];
-  if (!lista.length) {
-    for (const n of [1, 2]) {
-      if (fd[`emprego_anterior_${n}_empresa`] || fd[`emprego_anterior_${n}_endereco`]) {
-        lista.push({
-          empresa: fd[`emprego_anterior_${n}_empresa`],
-          endereco: fd[`emprego_anterior_${n}_endereco`],
-          telefone: fd[`emprego_anterior_${n}_telefone`],
-          cargo: fd[`emprego_anterior_${n}_cargo`],
-          inicio: fd[`emprego_anterior_${n}_inicio`],
-          termino: fd[`emprego_anterior_${n}_termino`],
-        });
-      }
-    }
-  }
-  return lista
-    .filter((e: any) => e && Object.values(e).some(Boolean))
-    .map((e: any) => ({
-      empresa: s(e.empresa),
-      endereco: limparEndereco(e.endereco),
-      telefone: onlyDigits(e.telefone),
-      cargo: s(e.cargo),
-      data_inicio: formatarData(e.inicio || e.data_inicio),
-      data_fim: formatarData(e.termino || e.data_fim),
-      motivo_saida: s(e.motivo_saida) || 'Nova oportunidade profissional',
-    }));
-}
+// ── Mapper principal — preenche TODOS os campos do contrato ────────────────
 
-// Pega a primeira formação acadêmica preenchida (array `formacoes` ou legado).
-function primeiraFormacao(fd: Record<string, any>): Record<string, any> {
-  let lista: any[] = Array.isArray(fd.formacoes) ? fd.formacoes : [];
-  if (!lista.length) {
-    for (const n of [1, 2, 3]) {
-      if (fd[`formacao_${n}_instituicao`] || fd[`formacao_${n}_curso`]) {
-        lista.push({
-          instituicao: fd[`formacao_${n}_instituicao`],
-          endereco: fd[`formacao_${n}_endereco`],
-          curso: fd[`formacao_${n}_curso`],
-          pais: 'Brasil',
-          inicio: fd[`formacao_${n}_inicio`],
-          termino: fd[`formacao_${n}_termino`],
-        });
-      }
-    }
-  }
-  return lista.find((f) => f && Object.values(f).some(Boolean)) || {};
-}
+export function montarDadosDS160(form: any): DadosDS160 {
+  form = form || {};
 
-/**
- * Converte o form_data do DS-160 para o payload COMPLETO consumido pelo robô.
- * @param formData dados preenchidos pelo cliente (ds160_forms.form_data)
- * @param clientName nome do cliente (fallback para o nome do passaporte)
- */
-export function mapearDadosDS160(
-  formData: Record<string, any>,
-  clientName?: string,
-): Record<string, any> {
-  const fd = formData || {};
-  const formacao = primeiraFormacao(fd);
-  const visitas: any[] = Array.isArray(fd.visitas_eua) ? fd.visitas_eua : [];
-  const ultimaVisita = visitas.find((v) => v && (v.data_chegada || v.duracao)) || {};
+  // Nome: tenta cheio; senão monta de nome + sobrenome
+  const sobrenome = txt(pega(form, "sobrenome", "surname", "ultimo_nome"));
+  const nome = txt(pega(form, "nome", "given_name", "primeiro_nome"));
+  const nomeCompleto =
+    txt(pega(form, "nome_completo", "nome_passaporte")) ||
+    `${nome} ${sobrenome}`.trim();
+
+  // Acompanhantes: aceita string[] ("Nome (Relacao)") ou objeto[] {nome, relacao}
+  const acompanhantes: string[] = Array.isArray(form.acompanhantes)
+    ? form.acompanhantes
+        .map((a: any) =>
+          typeof a === "string"
+            ? a
+            : `${txt(a.nome ?? a.nome_completo)}${a.relacao ? ` (${txt(a.relacao)})` : ""}`
+        )
+        .filter((s: string) => s.trim())
+    : [];
+
+  // Empregos anteriores: normaliza cada item para o shape do robô
+  const empregos_anteriores: EmpregoAnterior[] = Array.isArray(form.empregos_anteriores)
+    ? form.empregos_anteriores.map((e: any) => ({
+        empresa: txt(e.empresa ?? e.empresa_nome),
+        endereco: txt(e.endereco ?? e.empresa_endereco),
+        cargo: txt(e.cargo),
+        telefone: txt(e.telefone ?? e.empresa_telefone),
+        data_inicio: dataBR(e.data_inicio ?? e.data_admissao),
+        data_fim: dataBR(e.data_fim ?? e.data_saida),
+        descricao: txt(e.descricao ?? e.descricao_funcoes),
+        motivo_saida: txt(e.motivo_saida),
+      }))
+    : [];
+
+  // Idiomas: array de strings (default Portugues)
+  const idiomas: string[] = Array.isArray(form.idiomas) && form.idiomas.length
+    ? form.idiomas.map(txt).filter(Boolean)
+    : txt(form.idiomas)
+    ? [txt(form.idiomas)]
+    : ["Portugues"];
 
   return {
-    // ── Dados Pessoais ──
-    nome_completo: s(fd.nome_completo_passaporte) || s(clientName),
-    sobrenome: s(fd.sobrenome),
-    nome: s(fd.nome),
-    nome_passaporte: s(fd.nome_completo_passaporte) || s(clientName),
-    cpf: onlyDigits(fd.cpf),
-    sexo: mapearSexo(fd.sexo),
-    estado_civil: mapearEstadoCivil(fd.estado_civil),
-    data_nascimento: formatarData(fd.data_nascimento),
-    cidade_nascimento: s(fd.cidade_nascimento),
-    estado_nascimento: s(fd.estado_nascimento),
-    pais_nascimento: 'BRA',
-    nacionalidade: 'BRA',
+    // Personal
+    sobrenome,
+    nome,
+    nome_completo: nomeCompleto,
+    nome_passaporte: txt(pega(form, "nome_passaporte", "nome_completo")) || nomeCompleto,
+    sexo: txt(pega(form, "sexo", "genero")) || "M",
+    estado_civil: txt(pega(form, "estado_civil")) || "S",
+    data_nascimento: dataBR(pega(form, "data_nascimento", "nascimento", "dob")),
+    cidade_nascimento: txt(pega(form, "cidade_nascimento", "naturalidade")),
+    estado_nascimento: txt(pega(form, "estado_nascimento", "uf_nascimento")),
+    cpf: txt(pega(form, "cpf", "cpf_cnpj")),
 
-    // ── Passaporte ──
-    passaporte_numero: s(fd.passaporte_numero),
-    passaporte_tipo: 'P',
-    passaporte_pais_emissao: 'BRA',
-    passaporte_cidade_emissao: s(fd.passaporte_cidade_emissao) || s(fd.cidade_nascimento),
-    passaporte_data_emissao: formatarData(fd.passaporte_data_emissao),
-    passaporte_data_validade: formatarData(fd.passaporte_data_expiracao),
-    passaporte_perdido: bool(fd.passaporte_perdido) || bool(fd.passaporte_perdido_roubado),
+    // Endereço
+    endereco_linha1: txt(pega(form, "endereco_linha1", "endereco", "logradouro")),
+    endereco_linha2: txt(pega(form, "endereco_linha2", "complemento")),
+    numero: txt(pega(form, "numero")),
+    cidade_residencia: txt(pega(form, "cidade_residencia", "cidade")),
+    estado_residencia: txt(pega(form, "estado_residencia", "uf", "estado")),
+    cep: txt(pega(form, "cep")),
+    telefone: txt(pega(form, "telefone", "celular", "whatsapp")),
+    email: txt(pega(form, "email")),
+    redes_sociais: txt(pega(form, "redes_sociais", "instagram", "social")),
 
-    // ── Endereço e Contato ──
-    endereco_linha1: montarEndereco(fd.contato_endereco, fd.contato_numero),
-    endereco_linha2: s(fd.contato_bairro),
-    cidade_residencia: s(fd.contato_cidade),
-    estado_residencia: s(fd.contato_estado),
-    cep: onlyDigits(fd.contato_cep),
-    pais_residencia: 'BRA',
-    telefone: onlyDigits(fd.contato_telefone),
-    email: s(fd.contato_email),
-    redes_sociais: mapearRedesSociais(fd.redes_sociais),
+    // Passaporte
+    passaporte_numero: txt(pega(form, "passaporte_numero", "passaporte")),
+    passaporte_cidade_emissao: txt(pega(form, "passaporte_cidade_emissao")),
+    passaporte_data_emissao: dataBR(pega(form, "passaporte_data_emissao", "passaporte_emissao", "emissao")),
+    passaporte_data_validade: dataBR(pega(form, "passaporte_data_validade", "passaporte_validade", "validade")),
+    passaporte_perdido: bool(form.passaporte_perdido),
 
-    // ── Viagem ──
-    viagem_motivo: 'B1B2',
-    viagem_data_chegada: formatarData(fd.data_ida),
-    viagem_duracao_dias: s(fd.duracao_viagem),
-    viagem_cidade_destino: s(fd.cidade_destino_eua),
-    viagem_endereco_eua: s(fd.local_hospedagem),
-    viagem_pago_por: mapearPagoPor(fd.pagador_viagem),
-    pagador_nome: s(fd.pagador_nome) || s(fd.pagador_empresa_nome),
-    pagador_endereco: limparEndereco(fd.pagador_endereco) || limparEndereco(fd.pagador_empresa_endereco),
-    pagador_telefone: onlyDigits(fd.pagador_telefone || fd.pagador_empresa_telefone),
-    pagador_email: s(fd.pagador_email) || s(fd.pagador_empresa_email),
-    pagador_relacao: s(fd.pagador_parentesco),
-    acompanhantes: mapearAcompanhantes(fd.acompanhantes),
+    // Viagem
+    viagem_cidade_destino: txt(pega(form, "viagem_cidade_destino", "cidade_destino", "destino")) || "Miami",
+    viagem_estado_eua: txt(pega(form, "viagem_estado_eua", "estado_destino_eua", "viagem_estado_destino")),
+    viagem_data_chegada: dataBR(pega(form, "viagem_data_chegada", "data_chegada", "data_viagem")),
+    viagem_duracao_dias: pega(form, "viagem_duracao_dias", "duracao_dias") ?? "10",
+    viagem_endereco_eua: txt(pega(form, "viagem_endereco_eua", "endereco_eua", "hospedagem")),
+    viagem_hospedagem: txt(pega(form, "viagem_hospedagem", "hotel", "viagem_endereco_eua")),
+    viagem_pago_por: txt(pega(form, "viagem_pago_por", "pago_por")) || "S",
 
-    // ── Contato nos EUA ──
-    contato_eua_nome: s(fd.contato_eua_nome) || s(fd.contato_eua_organizacao),
-    contato_eua_endereco: limparEndereco(fd.contato_eua_endereco),
-    contato_eua_telefone: onlyDigits(fd.contato_eua_telefone),
-    contato_eua_relacao: s(fd.contato_eua_relacao),
+    // Pagador
+    pagador_nome: txt(pega(form, "pagador_nome")),
+    pagador_email: txt(pega(form, "pagador_email")),
+    pagador_telefone: txt(pega(form, "pagador_telefone")),
+    pagador_relacao: txt(pega(form, "pagador_relacao")),
 
-    // ── Família ──
-    pai_nome: s(fd.pai_nome),
-    pai_nascimento: formatarData(fd.pai_nascimento),
-    pai_nos_eua: bool(fd.pai_mora_eua),
-    mae_nome: s(fd.mae_nome),
-    mae_nascimento: formatarData(fd.mae_nascimento),
-    mae_nos_eua: bool(fd.mae_mora_eua),
-    parentes_nos_eua: !!s(fd.parentes_eua),
-    conjuge_nome: s(fd.conjuge_nome),
-    conjuge_nascimento: formatarData(fd.conjuge_nascimento),
-    conjuge_cidade_nascimento: s(fd.conjuge_cidade_nascimento),
-    conjuge_pais_nascimento: paisCode(fd.conjuge_pais_nascimento),
-    data_casamento: formatarData(fd.conjuge_casamento_inicio),
+    // Contato EUA
+    contato_eua_nome: txt(pega(form, "contato_eua_nome", "contato_eua")),
 
-    // ── Profissional ──
-    status_profissional: mapearStatusProfissional(fd.status_profissional),
-    empresa_nome: s(fd.empresa_atual),
-    empresa_endereco: limparEndereco(fd.empresa_endereco),
-    empresa_telefone: onlyDigits(fd.empresa_telefone),
-    cargo: s(fd.cargo_atual),
-    data_admissao: formatarData(fd.empresa_data_inicio),
-    renda_mensal: onlyDigits(fd.renda_mensal),
-    descricao_funcoes: s(fd.descricao_funcoes) || `Atividades de ${s(fd.cargo_atual) || 'rotina administrativa'}`,
-    empregos_anteriores: mapearEmpregosAnteriores(fd),
+    // Acompanhantes
+    acompanhantes,
 
-    // ── Educação ──
-    nivel_educacao: s(fd.nivel_educacao) || 'U',
-    instituicao_nome: s(formacao.instituicao),
-    instituicao_cidade: s(formacao.cidade) || s(fd.contato_cidade),
-    instituicao_pais: paisCode(formacao.pais),
-    curso: s(formacao.curso),
-    data_inicio_estudo: formatarData(formacao.inicio),
-    data_fim_estudo: formatarData(formacao.termino),
-    idiomas: mapearIdiomas(fd.idiomas),
+    // Viagem / visto anterior
+    viagens_anteriores_eua: bool(pega(form, "viagens_anteriores_eua", "ja_viajou_eua")),
+    visto_anterior: bool(pega(form, "visto_anterior", "ja_teve_visto_eua")),
+    ja_teve_visto_eua: bool(pega(form, "ja_teve_visto_eua", "visto_anterior")),
+    visto_negado: bool(pega(form, "visto_negado", "visto_recusado")),
+    peticao_imigrante: bool(form.peticao_imigrante),
 
-    // ── Histórico de Viagens aos EUA ──
-    viagens_anteriores_eua: bool(fd.historico_viagens_eua_tipo),
-    ultima_viagem_data: formatarData(ultimaVisita.data_chegada),
-    ultima_viagem_duracao: s(ultimaVisita.duracao),
-    visto_negado: bool(fd.visto_negado),
-    visto_negado_ano: s(fd.visto_negado_ano),
-    visto_negado_tipo: s(fd.visto_negado_tipo) || 'B1/B2',
-    deportado: bool(fd.seg_deportacao),
-    overstay: bool(fd.seg_excedeu_prazo),
+    // Família
+    pai_nome: txt(pega(form, "pai_nome", "nome_pai")),
+    pai_nascimento: dataBR(pega(form, "pai_nascimento", "nascimento_pai")),
+    pai_nos_eua: bool(pega(form, "pai_nos_eua", "pai_eua")),
+    mae_nome: txt(pega(form, "mae_nome", "nome_mae")),
+    mae_nascimento: dataBR(pega(form, "mae_nascimento", "nascimento_mae")),
+    mae_nos_eua: bool(pega(form, "mae_nos_eua", "mae_eua")),
+    parentes_nos_eua: bool(pega(form, "parentes_nos_eua", "parentes_eua")),
 
-    // ── Segurança (respostas marcadas pelo cliente — default false) ──
-    pertence_organizacao: !!s(fd.organizacoes),
-    servico_militar: bool(fd.serviu_forcas_armadas),
-    crime: bool(fd.seg_preso_condenado),
-    drogas: bool(fd.seg_dependente_drogas) || bool(fd.seg_trafico_drogas),
-    doenca_contagiosa: bool(fd.seg_doenca_contagiosa),
-    problema_mental: bool(fd.seg_transtorno_mental),
-    trafico_pessoas: bool(fd.seg_trafico_pessoas) || bool(fd.seg_auxilio_trafico_pessoas),
-    terrorismo: bool(fd.seg_atividade_terrorista) || bool(fd.seg_apoio_terrorismo) || bool(fd.seg_membro_org_terrorista),
-    genocidio: bool(fd.seg_genocidio),
-    tortura: bool(fd.seg_tortura),
-    assassinato: bool(fd.seg_violencia_extrajudicial),
-    lavagem_dinheiro: bool(fd.seg_lavagem_dinheiro),
+    // Cônjuge
+    conjuge_nome: txt(pega(form, "conjuge_nome", "nome_conjuge", "esposo_nome", "esposa_nome")),
+    conjuge_nascimento: dataBR(pega(form, "conjuge_nascimento", "nascimento_conjuge")),
+    conjuge_cidade_nascimento: txt(pega(form, "conjuge_cidade_nascimento")),
+
+    // Trabalho
+    status_profissional: txt(pega(form, "status_profissional", "ocupacao_status")),
+    cargo: txt(pega(form, "cargo", "profissao", "ocupacao")),
+    empresa_nome: txt(pega(form, "empresa_nome", "empresa")),
+    empresa_endereco: txt(pega(form, "empresa_endereco")),
+    empresa_cidade: txt(pega(form, "empresa_cidade")),
+    empresa_telefone: txt(pega(form, "empresa_telefone")),
+    data_admissao: dataBR(pega(form, "data_admissao", "admissao")),
+    renda_mensal: pega(form, "renda_mensal", "salario", "renda") ?? "",
+    descricao_funcoes: txt(pega(form, "descricao_funcoes", "funcoes")),
+
+    // Empregos anteriores
+    empregos_anteriores,
+
+    // Trabalho adicional
+    idiomas,
+    servico_militar: bool(form.servico_militar),
+
+    // Segurança
+    crime: bool(form.crime),
+    lavagem_dinheiro: bool(form.lavagem_dinheiro),
+    trafico_pessoas: bool(form.trafico_pessoas),
+    terrorismo: bool(form.terrorismo),
+    genocidio: bool(form.genocidio),
+    tortura: bool(form.tortura),
+    deportado: bool(form.deportado),
   };
+}
+
+// ── Validação ──────────────────────────────────────────────────────────────
+// Campos que o ds160-server EXIGE (retorna 400 se faltar) + os que fazem o robô
+// pausar. Use o retorno pra avisar o operador antes de abrir o robô.
+
+const CRITICOS: (keyof DadosDS160)[] = [
+  "nome_completo", "cpf", "data_nascimento", "sexo", "estado_civil",
+  "passaporte_numero", "passaporte_data_validade",
+  "endereco_linha1", "cidade_residencia", "cep", "telefone", "email",
+  "viagem_data_chegada", "viagem_cidade_destino",
+  "pai_nome", "mae_nome", "status_profissional",
+];
+
+export function validarDS160(dados: DadosDS160): string[] {
+  return CRITICOS.filter((k) => {
+    const v = dados[k];
+    return v === "" || v === null || v === undefined;
+  }) as string[];
+}
+
+// ── Disparo do robô (chama o ds160-server local, porta 3004) ───────────────
+
+export async function dispararRoboDS160(opts: {
+  form: any;
+  processoId: string;
+  nomeCliente: string;
+  serverUrl?: string;
+}): Promise<{ ok: boolean; faltando: string[]; resposta?: any; erro?: string }> {
+  const { form, processoId, nomeCliente, serverUrl = "http://localhost:3004" } = opts;
+
+  const dados = montarDadosDS160(form);
+  const faltando = validarDS160(dados);
+  if (faltando.length) {
+    console.warn("[DS160] Campos críticos vazios (o robô vai pausar nesses):", faltando);
+  }
+
+  try {
+    const r = await fetch(`${serverUrl}/ds160/iniciar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome_cliente: nomeCliente,
+        processo_id: processoId,
+        dados,
+      }),
+    });
+    const resposta = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      return { ok: false, faltando, erro: resposta?.erro || `HTTP ${r.status}`, resposta };
+    }
+    return { ok: true, faltando, resposta };
+  } catch (e: any) {
+    return {
+      ok: false,
+      faltando,
+      erro: e?.message || "Falha ao conectar no ds160-server (porta 3004). O servidor está rodando?",
+    };
+  }
 }
