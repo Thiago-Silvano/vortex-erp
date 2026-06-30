@@ -1,5 +1,5 @@
 // ds160-mapper.ts
-import { normalizarEstadoCivil } from "@/components/ds160/types";
+import { normalizarEstadoCivil, labelRedeSocial } from "@/components/ds160/types";
 
 // ---------------------------------------------------------------------------
 // Monta o payload COMPLETO que o robô DS-160 espera, a partir do registro do ERP.
@@ -47,7 +47,7 @@ export interface DadosDS160 {
   cep: string;
   telefone: string;
   email: string;
-  redes_sociais: { plataforma: string; usuario: string }[];   // ex: [{ plataforma: "FCBK", usuario: "@handle" }]
+  redes_sociais: { plataforma: string; usuario: string }[];   // ex: [{ plataforma: "INSTAGRAM", usuario: "joao.silva" }]
 
   // Passaporte
   passaporte_numero: string;
@@ -196,14 +196,15 @@ function dinheiro(v: any): string {
 
 // ── Mapper principal — preenche TODOS os campos do contrato ────────────────
 
-/** Normaliza redes sociais para [{ plataforma: CODIGO, usuario }]. Aceita formato legado (string). */
+/** Normaliza redes sociais para [{ plataforma: NOME, usuario }]. Emite o nome da plataforma (ex: INSTAGRAM, LINKEDIN). Aceita formato legado (string). */
 function montarRedesSociais(v: any): { plataforma: string; usuario: string }[] {
   if (!Array.isArray(v)) return [];
   return v
     .map((item) => {
       if (typeof item === "string") return { plataforma: "OTHER", usuario: item.trim() };
+      const cod = txt(item?.plataforma) || "OTHER";
       return {
-        plataforma: txt(item?.plataforma) || "OTHER",
+        plataforma: labelRedeSocial(cod),
         usuario: txt(item?.usuario),
       };
     })
