@@ -346,7 +346,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     pagador_nome: txt(pega(form, "pagador_nome")),
     pagador_email: txt(pega(form, "pagador_email")),
     pagador_telefone: txt(pega(form, "pagador_telefone")),
-    pagador_relacao: txt(pega(form, "pagador_relacao")),
+    pagador_relacao: txt(pega(form, "pagador_relacao", "pagador_parentesco")),
 
     // Contato EUA (cai pro hotel/endereço quando vazio, p/ não ficar sem POC)
     contato_eua_nome:
