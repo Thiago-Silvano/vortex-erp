@@ -56,7 +56,14 @@ export default function DS160Step2({ data, onChange, errors }: DS160StepProps) {
       {data.passaporte_perdido === 'Sim' && (
         <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
           <div><Label>Número do passaporte perdido/roubado</Label><Input className={errClass(errors?.passaporte_perdido_numero)} value={data.passaporte_perdido_numero || ''} onChange={e => onChange('passaporte_perdido_numero', e.target.value)} /><FieldError msg={errors?.passaporte_perdido_numero} /></div>
-          <div><Label>País emissor do passaporte perdido/roubado</Label><Input value={data.passaporte_perdido_pais || ''} onChange={e => onChange('passaporte_perdido_pais', e.target.value)} /></div>
+          <div>
+            <Label>País emissor do passaporte perdido/roubado</Label>
+            <Select value={data.passaporte_perdido_pais || undefined} onValueChange={v => onChange('passaporte_perdido_pais', v)}>
+              <SelectTrigger className={errClass(errors?.passaporte_perdido_pais)}><SelectValue placeholder="Selecione o país" /></SelectTrigger>
+              <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+            <FieldError msg={errors?.passaporte_perdido_pais} />
+          </div>
         </div>
       )}
     </div>
