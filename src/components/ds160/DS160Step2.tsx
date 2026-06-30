@@ -4,8 +4,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DS160StepProps, COUNTRIES } from './types';
 import { FieldError, errClass } from './fieldError';
+import { BRAZIL_STATES, isBrasil } from '@/data/brazil-states';
+import BrazilCitySelect from './BrazilCitySelect';
 
 export default function DS160Step2({ data, onChange, errors }: DS160StepProps) {
+  const emissorBrasil = isBrasil(data.passaporte_pais_emissor);
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-slate-600 border-b border-slate-200 pb-3">2. Informações de Passaporte</h2>
@@ -20,8 +23,25 @@ export default function DS160Step2({ data, onChange, errors }: DS160StepProps) {
           <FieldError msg={errors?.passaporte_pais_emissor} />
         </div>
       </div>
-      <div><Label>Cidade Onde o Passaporte Foi Emitido</Label><Input className={errClass(errors?.passaporte_cidade_emissao)} value={data.passaporte_cidade_emissao || ''} onChange={e => onChange('passaporte_cidade_emissao', e.target.value)} /><FieldError msg={errors?.passaporte_cidade_emissao} /></div>
-      <div><Label>Estado/Província de Emissão do Passaporte (opcional)</Label><Input value={data.passaporte_estado_emissao || ''} onChange={e => onChange('passaporte_estado_emissao', e.target.value)} /></div>
+      {emissorBrasil ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label>Estado de Emissão do Passaporte</Label>
+            <Select value={data.passaporte_estado_emissao || undefined} onValueChange={v => { onChange('passaporte_estado_emissao', v); onChange('passaporte_cidade_emissao', ''); }}>
+              <SelectTrigger className={errClass(errors?.passaporte_estado_emissao)}><SelectValue placeholder="Selecione o estado" /></SelectTrigger>
+              <SelectContent>{BRAZIL_STATES.map(s => <SelectItem key={s.uf} value={s.uf}>{s.nome} ({s.uf})</SelectItem>)}</SelectContent>
+            </Select>
+            <FieldError msg={errors?.passaporte_estado_emissao} />
+          </div>
+          <div>
+            <Label>Cidade Onde o Passaporte Foi Emitido</Label>
+            <BrazilCitySelect uf={data.passaporte_estado_emissao || ''} value={data.passaporte_cidade_emissao || ''} onChange={v => onChange('passaporte_cidade_emissao', v)} />
+            <FieldError msg={errors?.passaporte_cidade_emissao} />
+          </div>
+        </div>
+      ) : (
+        <div><Label>Cidade e Estado de Emissão do Passaporte</Label><Input className={errClass(errors?.passaporte_cidade_emissao)} value={data.passaporte_cidade_emissao || ''} onChange={e => onChange('passaporte_cidade_emissao', e.target.value)} placeholder="Ex: Lisboa, Lisboa" /><FieldError msg={errors?.passaporte_cidade_emissao} /></div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div><Label>Data de Emissão</Label><Input type="date" className={errClass(errors?.passaporte_data_emissao)} value={data.passaporte_data_emissao || ''} onChange={e => onChange('passaporte_data_emissao', e.target.value)} /><FieldError msg={errors?.passaporte_data_emissao} /></div>
         <div><Label>Data de Expiração</Label><Input type="date" className={errClass(errors?.passaporte_data_expiracao)} value={data.passaporte_data_expiracao || ''} onChange={e => onChange('passaporte_data_expiracao', e.target.value)} /><FieldError msg={errors?.passaporte_data_expiracao} /></div>
