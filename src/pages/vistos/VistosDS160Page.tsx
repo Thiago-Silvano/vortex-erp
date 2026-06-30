@@ -429,6 +429,9 @@ export default function VistosDS160Page() {
                           <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => window.open(`/ds160/${entry.token}`, '_blank')}>
                             <ExternalLink className="h-3 w-3" /> Abrir
                           </Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setEditIndividual(entry)}>
+                            <Pencil className="h-3 w-3" /> Editar respostas
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
