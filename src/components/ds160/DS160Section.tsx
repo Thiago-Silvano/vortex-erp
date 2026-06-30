@@ -223,6 +223,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   // Abre o modal para colar/substituir o JSON enviado ao robô.
   const openJsonReplace = (form: DS160Form) => {
+    /* opens replace dialog */
     const override = (form.form_data as any)?.json_override;
     const base = override && typeof override === 'object'
       ? override
