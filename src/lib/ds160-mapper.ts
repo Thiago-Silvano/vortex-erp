@@ -271,7 +271,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     cep: txt(pega(form, "cep")),
     telefone: txt(pega(form, "telefone", "celular", "whatsapp")),
     email: txt(pega(form, "email")),
-    redes_sociais: txt(pega(form, "redes_sociais", "instagram", "social")),
+    redes_sociais: montarRedesSociais(pega(form, "redes_sociais", "social")),
 
     // Passaporte
     passaporte_numero: txt(pega(form, "passaporte_numero", "passaporte")),
