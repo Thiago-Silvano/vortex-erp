@@ -569,18 +569,20 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
               <Code2 className="h-4 w-4" /> JSON enviado ao robô
             </DialogTitle>
             <DialogDescription>
-              Pré-visualização dos dados mapeados a partir do formulário DS-160.
+              {jsonForm && (jsonForm.form_data as any)?.json_override
+                ? 'Exibindo o JSON personalizado (substituído) que será enviado ao robô.'
+                : 'Pré-visualização dos dados mapeados a partir do formulário DS-160.'}
             </DialogDescription>
           </DialogHeader>
           <pre className="max-h-[60vh] overflow-auto rounded-lg bg-muted p-3 text-xs">
-            {jsonForm ? JSON.stringify(mapearDadosDS160(jsonForm.form_data || {}, clientName), null, 2) : ''}
+            {jsonForm ? JSON.stringify(jsonParaRobo(jsonForm), null, 2) : ''}
           </pre>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
                 if (!jsonForm) return;
-                navigator.clipboard.writeText(JSON.stringify(mapearDadosDS160(jsonForm.form_data || {}, clientName), null, 2));
+                navigator.clipboard.writeText(JSON.stringify(jsonParaRobo(jsonForm), null, 2));
                 toast.success('JSON copiado!');
               }}
               className="gap-1.5"
