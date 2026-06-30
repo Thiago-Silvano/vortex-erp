@@ -120,18 +120,19 @@ export function validateStep(step: number, data: Record<string, any>): Errors {
       req('pai_nome');
       req('mae_nome');
       const ec = data.estado_civil;
-      if (ec === 'Casado') {
+      if (ec === 'M' || ec === 'C' || ec === 'P') {
         req('conjuge_nome');
         req('conjuge_nascimento');
         req('conjuge_casamento_inicio');
-      } else if (ec === 'Divorciado') {
+      } else if (ec === 'D' || ec === 'L') {
         req('conjuge_nome');
         req('conjuge_casamento_inicio');
         req('conjuge_casamento_fim');
-      } else if (ec === 'Viúvo') {
+      } else if (ec === 'W') {
         req('conjuge_nome');
         req('conjuge_falecimento_data');
       }
+
       break;
     }
     case 6: { // Etapa 7 — Profissional

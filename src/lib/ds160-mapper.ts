@@ -1,4 +1,6 @@
 // ds160-mapper.ts
+import { normalizarEstadoCivil } from "@/components/ds160/types";
+
 // ---------------------------------------------------------------------------
 // Monta o payload COMPLETO que o robô DS-160 espera, a partir do registro do ERP.
 // Fonte da verdade: TODAS as chaves lidas pelo robot.py (preencher_ds160).
@@ -30,7 +32,7 @@ export interface DadosDS160 {
   nome_completo: string;
   nome_passaporte: string;
   sexo: string;            // "M" | "F" (ou Masculino/Feminino)
-  estado_civil: string;    // S | M | W | D (ou Solteiro/Casado/Viuvo/Divorciado)
+  estado_civil: string;    // M | C | P | S | W | D | L | O (ou rótulos em português)
   data_nascimento: string; // DD/MM/AAAA
   cidade_nascimento: string;
   estado_nascimento: string;
@@ -204,6 +206,10 @@ export function montarDadosDS160(form: any): DadosDS160 {
     txt(pega(form, "nome_completo", "nome_passaporte")) ||
     `${nome} ${sobrenome}`.trim();
 
+  const estadoCivil = normalizarEstadoCivil(txt(pega(form, "estado_civil"))) || "S";
+
+
+
   // Acompanhantes: aceita string[] ("Nome (Relacao)") ou objeto[] {nome, parentesco}
   const acompanhantes: string[] = Array.isArray(form.acompanhantes)
     ? form.acompanhantes
@@ -249,7 +255,8 @@ export function montarDadosDS160(form: any): DadosDS160 {
     nome_completo: nomeCompleto,
     nome_passaporte: txt(pega(form, "nome_passaporte", "nome_completo")) || nomeCompleto,
     sexo: txt(pega(form, "sexo", "genero")) || "M",
-    estado_civil: txt(pega(form, "estado_civil")) || "S",
+    estado_civil: estadoCivil,
+
     data_nascimento: dataBR(pega(form, "data_nascimento", "nascimento", "dob")),
     cidade_nascimento: txt(pega(form, "cidade_nascimento", "naturalidade")),
     estado_nascimento: txt(pega(form, "estado_nascimento", "uf_nascimento")),

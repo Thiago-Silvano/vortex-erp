@@ -3,11 +3,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { DS160StepProps, COUNTRIES } from './types';
+import { DS160StepProps, COUNTRIES, ESTADO_CIVIL_OPTIONS, normalizarEstadoCivil } from './types';
 import { maskCpf } from '@/lib/masks';
 import { FieldError, errClass } from './fieldError';
 import { BRAZIL_STATES, isBrasil } from '@/data/brazil-states';
 import BrazilCitySelect from './BrazilCitySelect';
+
 
 export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
   const paisNascimento = data.pais_nascimento || 'Brasil';
@@ -15,6 +16,11 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
   useEffect(() => {
     if (!data.pais_nascimento) onChange('pais_nascimento', 'Brasil');
     if (!data.nacionalidade) onChange('nacionalidade', data.pais_nascimento || 'Brasil');
+    // Converte valores antigos de estado civil para o código de uma letra
+    const ecNormalizado = normalizarEstadoCivil(data.estado_civil);
+    if (ecNormalizado && ecNormalizado !== data.estado_civil) {
+      onChange('estado_civil', ecNormalizado);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const handlePaisNascimento = (v: string) => {
@@ -60,7 +66,8 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
           <Select value={data.estado_civil || undefined} onValueChange={v => onChange('estado_civil', v)}>
             <SelectTrigger className={errClass(errors?.estado_civil)}><SelectValue placeholder="Selecione" /></SelectTrigger>
             <SelectContent>
-              {['Solteiro','Casado','União Estável','Divorciado','Viúvo'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {ESTADO_CIVIL_OPTIONS.map(s => <SelectItem key={s.code} value={s.code}>{s.label} ({s.code})</SelectItem>)}
+
             </SelectContent>
           </Select>
           <FieldError msg={errors?.estado_civil} />

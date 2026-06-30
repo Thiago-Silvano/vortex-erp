@@ -1,4 +1,6 @@
 import jsPDF from 'jspdf';
+import { ESTADO_CIVIL_OPTIONS } from '@/components/ds160/types';
+
 
 const sanitize = (text: string): string => {
   if (!text) return '';
@@ -10,6 +12,14 @@ const sanitize = (text: string): string => {
     .replace(/\u2026/g, '...')
     .replace(/\u2192/g, '->')
     .replace(/[^\x00-\xFF]/g, '');
+};
+
+const formatValue = (key: string, value: any): string => {
+  if (key === 'estado_civil') {
+    const opt = ESTADO_CIVIL_OPTIONS.find(o => o.code === String(value));
+    return opt ? `${opt.label} (${opt.code})` : String(value);
+  }
+  return String(value);
 };
 
 const SECTIONS = [
@@ -195,7 +205,7 @@ export function generateDS160Pdf(formData: Record<string, any>, clientName: stri
       doc.text(sanitize(label) + ':', 15, y);
       doc.setFont('helvetica', 'normal');
 
-      const valStr = sanitize(String(value));
+      const valStr = sanitize(formatValue(String(key), value));
       const lines = doc.splitTextToSize(valStr, pageW - 80);
       doc.text(lines, 70, y);
       y += Math.max(lines.length * 4, 6);
