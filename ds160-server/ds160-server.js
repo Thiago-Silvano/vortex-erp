@@ -22,7 +22,30 @@ const fetchFn = global.fetch
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
-app.use(cors());
+
+// ----------------------------------------------------------------------------
+// CORS + Private Network Access (PNA)
+// ----------------------------------------------------------------------------
+// O ERP é servido por HTTPS (site público). Ao chamar este servidor local
+// (http://localhost:3004), o Chrome aplica o "Private Network Access": envia um
+// preflight OPTIONS com o cabeçalho `Access-Control-Request-Private-Network: true`
+// e SÓ libera a requisição se o servidor responder com
+// `Access-Control-Allow-Private-Network: true`. O middleware `cors()` padrão não
+// envia esse cabeçalho, então sem isto o botão "Reenviar" é bloqueado pelo
+// navegador antes de chegar ao robô. Este middleware adiciona o header e responde
+// ao preflight manualmente.
+app.use(cors({ origin: true, methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type'] }));
+app.use((req, res, next) => {
+  // Necessário para o Private Network Access do Chrome.
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.sendStatus(204);
+  }
+  next();
+});
 
 const CLIENTES_DIR = process.env.CLIENTES_DIR || 'C:\\Users\\User\\ds160-robot\\dist\\CLIENTES';
 const ROBO_EXE = process.env.ROBO_EXE || 'C:\\Users\\User\\ds160-robot\\dist\\DS160-Robot-Vortex.exe';
