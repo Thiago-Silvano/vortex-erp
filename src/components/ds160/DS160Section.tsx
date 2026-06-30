@@ -425,6 +425,58 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
                     </Button>
                   )}
                 </div>
+
+                {form.status === 'submitted' && (() => {
+                  const rm = robotMeta(form.robot_status);
+                  return (
+                    <div className="mt-2 rounded-lg border bg-muted/30 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-sm text-foreground flex items-center gap-1.5">
+                          <Bot className="h-4 w-4" /> DS-160 Robô
+                        </span>
+                        <span className={`flex items-center gap-1.5 text-xs font-medium ${rm.text}`}>
+                          <span className={`h-2 w-2 rounded-full ${rm.dot}`} /> {rm.label}
+                        </span>
+                      </div>
+                      {form.robot_machine && (
+                        <p className="text-xs text-muted-foreground">Máquina: {form.robot_machine}</p>
+                      )}
+                      {form.robot_status === 'concluido' && form.robot_application_id && (
+                        <div className="rounded-md bg-emerald-50 border border-emerald-200 p-2">
+                          <p className="text-xs text-emerald-700">Application ID</p>
+                          <p className="font-mono font-bold text-emerald-900 text-base tracking-wider">{form.robot_application_id}</p>
+                          {form.robot_filled_at && (
+                            <p className="text-xs text-emerald-600 mt-0.5">Preenchido em {formatDate(form.robot_filled_at)}</p>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-1.5">
+                        {(!form.robot_status || form.robot_status === 'pendente' || form.robot_status === 'erro') && (
+                          <Button size="sm" className="h-7 text-xs gap-1" onClick={() => sendToRobot(form)} disabled={robotSending === form.id}>
+                            {robotSending === form.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bot className="h-3 w-3" />}
+                            Enviar para DS-160
+                          </Button>
+                        )}
+                        {form.robot_status === 'em_andamento' && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => sendToRobot(form)} disabled={robotSending === form.id}>
+                            {robotSending === form.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                            Reenviar
+                          </Button>
+                        )}
+                        {form.robot_status === 'concluido' && (
+                          <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-1">
+                            <a href="https://ceac.state.gov/CEACStatTracker/Status.aspx" target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-3 w-3" /> Verificar no CEAC
+                            </a>
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => setJsonForm(form)}>
+                          <Code2 className="h-3 w-3" /> Ver JSON
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
