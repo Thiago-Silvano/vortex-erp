@@ -60,8 +60,9 @@ function normalizarNome(nome) {
     .replace(/[^A-Z0-9_]/g, '');
 }
 
-// Campos mínimos exigidos pelo robô. Se algum faltar, o ERP recebe um erro
-// claro e específico — evitando que o robô falhe silenciosamente depois.
+// Campos importantes para o preenchimento. Se algum faltar, o servidor avisa o
+// ERP, mas NÃO bloqueia a abertura do robô. Assim o operador pode iniciar o
+// processo e complementar manualmente quando necessário.
 const CAMPOS_OBRIGATORIOS = [
   'nome_completo', 'cpf', 'data_nascimento', 'sexo', 'estado_civil',
   'passaporte_numero', 'passaporte_data_validade',
@@ -107,10 +108,7 @@ app.post('/ds160/iniciar', async (req, res) => {
 
     const faltando = CAMPOS_OBRIGATORIOS.filter((campo) => !dados[campo]);
     if (faltando.length > 0) {
-      return res.status(400).json({
-        erro: 'Campos obrigatórios faltando no JSON',
-        campos_faltando: faltando,
-      });
+      console.warn('DS-160 iniciado com campos pendentes:', faltando.join(', '));
     }
 
     const nomePasta = normalizarNome(nome_cliente);
@@ -126,7 +124,7 @@ app.post('/ds160/iniciar', async (req, res) => {
       if (err) console.error('Erro ao abrir robô:', err.message);
     });
 
-    res.json({ ok: true, cliente: nomePasta, pasta });
+    res.json({ ok: true, cliente: nomePasta, pasta, campos_faltando: faltando });
   } catch (e) {
     console.error(e);
     res.status(500).json({ erro: e.message });
