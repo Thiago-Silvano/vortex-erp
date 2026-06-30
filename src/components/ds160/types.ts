@@ -64,3 +64,31 @@ export const normalizarEstadoCivil = (value: string | undefined): string | undef
   return map[v] || value;
 };
 
+// Lista oficial de redes sociais do DS-160 (rótulo + código enviado no JSON)
+export const REDES_SOCIAIS_OPTIONS = [
+  { code: 'ASKF', label: 'ASK.FM' },
+  { code: 'DUBN', label: 'DOUBAN' },
+  { code: 'FCBK', label: 'FACEBOOK' },
+  { code: 'FLKR', label: 'FLICKR' },
+  { code: 'GOGL', label: 'GOOGLE+' },
+  { code: 'INST', label: 'INSTAGRAM' },
+  { code: 'LINK', label: 'LINKEDIN' },
+  { code: 'MYSP', label: 'MYSPACE' },
+  { code: 'PNTR', label: 'PINTEREST' },
+  { code: 'QZNE', label: 'QZONE (QQ)' },
+  { code: 'RDDT', label: 'REDDIT' },
+  { code: 'SWBO', label: 'SINA WEIBO' },
+  { code: 'TWBO', label: 'TENCENT WEIBO' },
+  { code: 'TUMB', label: 'TUMBLR' },
+  { code: 'TWIT', label: 'TWITTER' },
+  { code: 'TWOO', label: 'TWOO' },
+  { code: 'VINE', label: 'VINE' },
+  { code: 'VKON', label: 'VKONTAKTE (VK)' },
+  { code: 'YUKU', label: 'YOUKU' },
+  { code: 'YTUB', label: 'YOUTUBE' },
+  { code: 'NONE', label: 'NONE' },
+] as const;
+
+export const labelRedeSocial = (code: string): string =>
+  REDES_SOCIAIS_OPTIONS.find(o => o.code === code)?.label || code;
+
