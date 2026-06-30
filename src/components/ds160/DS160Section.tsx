@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { generateDS160Pdf } from '@/lib/generateDS160Pdf';
 import { mapearDadosDS160 } from '@/lib/ds160-mapper';
+import DS160EditDialog from './DS160EditDialog';
 
 const ROBOT_SERVER = 'http://localhost:3004';
 
@@ -121,6 +122,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [fillingClientId, setFillingClientId] = useState<string | null>(null);
   const [robotSending, setRobotSending] = useState<string | null>(null);
   const [jsonForm, setJsonForm] = useState<DS160Form | null>(null);
+  const [editForm, setEditForm] = useState<DS160Form | null>(null);
 
   const fetchForms = async () => {
     const { data } = await supabase
