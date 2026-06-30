@@ -220,28 +220,30 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const sendToRobot = async (form: DS160Form) => {
     setRobotSending(form.id);
     try {
-      // Verifica se o servidor local está rodando.
-      try {
-        await fetch(`${ROBOT_SERVER}/ds160/health`, { method: 'GET' });
-      } catch {
-        toast.error('O servidor DS-160 não está rodando nesta máquina. Abra o DS-160 Server antes de continuar.');
-        setRobotSending(null);
-        return;
-      }
-
       const dados = mapearDadosDS160(form.form_data || {}, clientName);
       const resp = await fetch(`${ROBOT_SERVER}/ds160/iniciar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome_cliente: clientName, form_id: form.id, dados }),
       });
-      if (!resp.ok) throw new Error('falha');
+      const result = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        const details = Array.isArray(result?.campos_faltando) && result.campos_faltando.length
+          ? ` Campos pendentes: ${result.campos_faltando.join(', ')}`
+          : '';
+        throw new Error(`${result?.erro || 'Falha ao chamar o servidor local.'}${details}`);
+      }
 
       await supabase.from('ds160_forms').update({ robot_status: 'em_andamento' } as any).eq('id', form.id);
       setForms(prev => prev.map(f => f.id === form.id ? { ...f, robot_status: 'em_andamento' } : f));
-      toast.success('Robô iniciado! Abra o app DS-160 na sua máquina.');
-    } catch {
-      toast.error('Erro ao iniciar o robô DS-160.');
+      if (Array.isArray(result?.campos_faltando) && result.campos_faltando.length) {
+        toast.warning(`Robô iniciado com campos pendentes: ${result.campos_faltando.join(', ')}`);
+      } else {
+        toast.success('Robô iniciado! Abra o app DS-160 na sua máquina.');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao iniciar o robô DS-160.';
+      toast.error(message || 'Erro ao iniciar o robô DS-160.');
     }
     setRobotSending(null);
   };
