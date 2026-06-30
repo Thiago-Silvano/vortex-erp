@@ -317,7 +317,12 @@ export function montarDadosDS160(form: any): DadosDS160 {
     // Cônjuge
     conjuge_nome: txt(pega(form, "conjuge_nome", "nome_conjuge", "esposo_nome", "esposa_nome")),
     conjuge_nascimento: dataBR(pega(form, "conjuge_nascimento", "nascimento_conjuge")),
-    conjuge_cidade_nascimento: txt(pega(form, "conjuge_cidade_nascimento")),
+    conjuge_cidade_nascimento: (() => {
+      const cidade = txt(pega(form, "conjuge_cidade_nascimento"));
+      const estado = txt(pega(form, "conjuge_estado_nascimento"));
+      if (cidade && estado) return `${cidade} - ${estado}`;
+      return cidade || estado;
+    })(),
 
     // Trabalho
     status_profissional: txt(pega(form, "status_profissional", "ocupacao_status")),
