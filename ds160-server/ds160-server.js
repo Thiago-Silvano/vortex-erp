@@ -37,6 +37,15 @@ function normalizarNome(nome) {
     .replace(/[^A-Z0-9_]/g, '');
 }
 
+// Campos mínimos exigidos pelo robô. Se algum faltar, o ERP recebe um erro
+// claro e específico — evitando que o robô falhe silenciosamente depois.
+const CAMPOS_OBRIGATORIOS = [
+  'nome_completo', 'cpf', 'data_nascimento', 'sexo', 'estado_civil',
+  'passaporte_numero', 'passaporte_data_validade',
+  'endereco_linha1', 'cidade_residencia', 'cep', 'telefone', 'email',
+  'viagem_data_chegada', 'viagem_cidade_destino',
+];
+
 // Atualiza um registro de ds160_forms via REST API do Supabase (service role).
 async function patchForm(formId, body) {
   if (!SUPABASE_URL || !SUPABASE_KEY || !formId) return;
@@ -64,8 +73,21 @@ app.get('/ds160/health', (_req, res) => res.json({ ok: true }));
 app.post('/ds160/iniciar', async (req, res) => {
   try {
     const { nome_cliente, form_id, dados } = req.body || {};
-    if (!nome_cliente || !dados) {
-      return res.status(400).json({ erro: 'nome_cliente e dados são obrigatórios' });
+    if (!nome_cliente) {
+      return res.status(400).json({ erro: 'nome_cliente é obrigatório' });
+    }
+    if (!dados) {
+      return res.status(400).json({
+        erro: 'dados é obrigatório — envie o JSON completo do formulário, sem PDF.',
+      });
+    }
+
+    const faltando = CAMPOS_OBRIGATORIOS.filter((campo) => !dados[campo]);
+    if (faltando.length > 0) {
+      return res.status(400).json({
+        erro: 'Campos obrigatórios faltando no JSON',
+        campos_faltando: faltando,
+      });
     }
 
     const nomePasta = normalizarNome(nome_cliente);
