@@ -505,7 +505,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       </AlertDialog>
 
       <Dialog open={!!jsonForm} onOpenChange={(o) => !o && setJsonForm(null)}>
-        {/* placeholder */}
+        {/* JSON preview */}
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
