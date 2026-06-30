@@ -6,16 +6,32 @@ import { Plus, X } from 'lucide-react';
 import { DS160StepProps } from './types';
 import { maskPhone } from '@/lib/masks';
 import { FieldError, errClass } from './fieldError';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const SOCIAL_NETWORKS = [
+  'Facebook',
+  'Instagram',
+  'X (Twitter)',
+  'TikTok',
+  'YouTube',
+  'LinkedIn',
+  'Snapchat',
+  'Pinterest',
+  'Reddit',
+  'WhatsApp',
+];
 
 export default function DS160Step3({ data, onChange, errors }: DS160StepProps) {
   const socialMedias: string[] = data.redes_sociais || [];
 
-  const [newSocial, setNewSocial] = useState('');
+  const [newPlatform, setNewPlatform] = useState('');
+  const [newUser, setNewUser] = useState('');
 
   const addSocial = () => {
-    if (!newSocial.trim()) return;
-    onChange('redes_sociais', [...socialMedias, newSocial.trim()]);
-    setNewSocial('');
+    if (!newPlatform || !newUser.trim()) return;
+    onChange('redes_sociais', [...socialMedias, `${newPlatform}: ${newUser.trim()}`]);
+    setNewPlatform('');
+    setNewUser('');
   };
 
   const removeSocial = (idx: number) => {
@@ -68,8 +84,14 @@ export default function DS160Step3({ data, onChange, errors }: DS160StepProps) {
       </div>
       <div>
         <Label>Redes Sociais</Label>
-        <div className="flex gap-2 mt-1">
-          <Input value={newSocial} onChange={e => setNewSocial(e.target.value)} placeholder="Ex: Instagram @usuario" className="flex-1" onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSocial())} />
+        <div className="flex flex-col sm:flex-row gap-2 mt-1">
+          <Select value={newPlatform} onValueChange={setNewPlatform}>
+            <SelectTrigger className="h-9 text-sm sm:w-52"><SelectValue placeholder="Rede social" /></SelectTrigger>
+            <SelectContent>
+              {SOCIAL_NETWORKS.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input value={newUser} onChange={e => setNewUser(e.target.value)} placeholder="Nome de usuário (ex: @usuario)" className="flex-1" onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSocial())} />
           <Button type="button" onClick={addSocial} size="sm" variant="outline"><Plus className="h-4 w-4" /></Button>
         </div>
         {socialMedias.length > 0 && (
@@ -82,7 +104,7 @@ export default function DS160Step3({ data, onChange, errors }: DS160StepProps) {
             ))}
           </div>
         )}
-        {socialMedias.length === 0 && <p className="text-xs text-slate-400 mt-1">Clique em '+' para listar suas contas (Ex: Instagram, Facebook).</p>}
+        {socialMedias.length === 0 && <p className="text-xs text-slate-400 mt-1">Selecione a rede social, informe o nome de usuário e clique em '+'.</p>}
       </div>
     </div>
   );
