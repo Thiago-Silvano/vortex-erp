@@ -373,3 +373,18 @@ export async function dispararRoboDS160(opts: {
     };
   }
 }
+
+// ── Compat: nome legado usado pelo ERP (DS160Section) ──────────────────────
+// Aceita (form_data, clientName) e delega para montarDadosDS160, mantendo o
+// fallback do nome do cliente quando o formulário não traz o nome completo.
+export function mapearDadosDS160(
+  formData: Record<string, any>,
+  clientName?: string,
+): DadosDS160 {
+  const dados = montarDadosDS160(formData || {});
+  if (clientName && (!dados.nome_completo || !dados.nome_completo.trim())) {
+    dados.nome_completo = clientName;
+    dados.nome_passaporte = dados.nome_passaporte || clientName;
+  }
+  return dados;
+}
