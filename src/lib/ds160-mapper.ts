@@ -366,20 +366,20 @@ export function montarDadosDS160(form: any): DadosDS160 {
     acompanhantes,
 
     // Viagem / visto anterior
-    viagens_anteriores_eua: bool(pega(form, "viagens_anteriores_eua", "ja_viajou_eua")),
-    visto_anterior: bool(pega(form, "visto_anterior", "ja_teve_visto_eua")),
-    ja_teve_visto_eua: bool(pega(form, "ja_teve_visto_eua", "visto_anterior")),
+    viagens_anteriores_eua: bool(pega(form, "viagens_anteriores_eua", "visitas_eua", "ja_viajou_eua")),
+    visto_anterior: bool(pega(form, "visto_anterior", "ja_teve_visto", "ja_teve_visto_eua")),
+    ja_teve_visto_eua: bool(pega(form, "ja_teve_visto_eua", "ja_teve_visto", "visto_anterior")),
     visto_negado: bool(pega(form, "visto_negado", "visto_recusado")),
-    peticao_imigrante: bool(form.peticao_imigrante),
+    peticao_imigrante: bool(pega(form, "peticao_imigrante", "peticao_imigracao_negada")),
 
     // Família
     pai_nome: txt(pega(form, "pai_nome", "nome_pai")),
     pai_nascimento: dataBR(pega(form, "pai_nascimento", "nascimento_pai")),
-    pai_nos_eua: bool(pega(form, "pai_nos_eua", "pai_eua")),
+    pai_nos_eua: bool(pega(form, "pai_nos_eua", "pai_mora_eua", "pai_eua")),
     pai_status_eua: txt(pega(form, "pai_status_eua", "pai_status", "status_pai")).toUpperCase(),
     mae_nome: txt(pega(form, "mae_nome", "nome_mae")),
     mae_nascimento: dataBR(pega(form, "mae_nascimento", "nascimento_mae")),
-    mae_nos_eua: bool(pega(form, "mae_nos_eua", "mae_eua")),
+    mae_nos_eua: bool(pega(form, "mae_nos_eua", "mae_mora_eua", "mae_eua")),
     mae_status_eua: txt(pega(form, "mae_status_eua", "mae_status", "status_mae")).toUpperCase(),
     parentes_nos_eua: bool(pega(form, "parentes_nos_eua", "parentes_eua")),
 
@@ -390,12 +390,12 @@ export function montarDadosDS160(form: any): DadosDS160 {
 
     // Trabalho
     status_profissional: txt(pega(form, "status_profissional", "ocupacao_status")),
-    cargo: txt(pega(form, "cargo", "profissao", "ocupacao")),
-    empresa_nome: txt(pega(form, "empresa_nome", "empresa")),
+    cargo: txt(pega(form, "cargo", "cargo_atual", "profissao", "ocupacao")),
+    empresa_nome: txt(pega(form, "empresa_nome", "empresa_atual", "empresa")),
     empresa_endereco: txt(pega(form, "empresa_endereco")),
     empresa_cidade: txt(pega(form, "empresa_cidade")),
     empresa_telefone: txt(pega(form, "empresa_telefone")),
-    data_admissao: dataBR(pega(form, "data_admissao", "admissao")),
+    data_admissao: dataBR(pega(form, "data_admissao", "empresa_data_inicio", "admissao")),
     renda_mensal: dinheiro(pega(form, "renda_mensal", "salario", "renda")),
     descricao_funcoes: txt(pega(form, "descricao_funcoes", "funcoes")),
 
@@ -404,28 +404,28 @@ export function montarDadosDS160(form: any): DadosDS160 {
 
     // Trabalho adicional
     idiomas,
-    servico_militar: bool(form.servico_militar),
+    servico_militar: bool(pega(form, "servico_militar", "serviu_forcas_armadas")),
 
-    // Educação
+    // Educação (lê do array `formacoes`, com fallback para campos planos)
     nivel_educacao: txt(pega(form, "nivel_educacao", "escolaridade")),
-    instituicao_nome: txt(pega(form, "instituicao_nome", "instituicao", "faculdade")),
-    instituicao_endereco: txt(pega(form, "instituicao_endereco", "instituicao_logradouro")),
-    instituicao_cidade: txt(pega(form, "instituicao_cidade")),
-    instituicao_pais: txt(pega(form, "instituicao_pais")) || "BRA",
-    curso: txt(pega(form, "curso", "formacao")),
-    data_inicio_estudo: dataBR(pega(form, "data_inicio_estudo", "estudo_inicio")),
-    data_fim_estudo: dataBR(pega(form, "data_fim_estudo", "estudo_fim")),
-    pertence_organizacao: bool(form.pertence_organizacao),
-    data_casamento: dataBR(pega(form, "data_casamento", "data_matrimonio")),
+    instituicao_nome: txt(formacao0.instituicao ?? pega(form, "instituicao_nome", "instituicao", "faculdade")),
+    instituicao_endereco: txt(formacao0.endereco ?? pega(form, "instituicao_endereco", "instituicao_logradouro")),
+    instituicao_cidade: txt(formacao0.cidade ?? pega(form, "instituicao_cidade")),
+    instituicao_pais: txt(formacao0.pais ?? pega(form, "instituicao_pais")) || "BRA",
+    curso: txt(formacao0.curso ?? pega(form, "curso", "formacao")),
+    data_inicio_estudo: dataBR(formacao0.inicio ?? pega(form, "data_inicio_estudo", "estudo_inicio")),
+    data_fim_estudo: dataBR(formacao0.termino ?? pega(form, "data_fim_estudo", "estudo_fim")),
+    pertence_organizacao: bool(pega(form, "pertence_organizacao", "organizacoes")),
+    data_casamento: dataBR(pega(form, "data_casamento", "conjuge_casamento_inicio", "data_matrimonio")),
 
-    // Segurança
-    crime: bool(form.crime),
-    lavagem_dinheiro: bool(form.lavagem_dinheiro),
-    trafico_pessoas: bool(form.trafico_pessoas),
-    terrorismo: bool(form.terrorismo),
-    genocidio: bool(form.genocidio),
-    tortura: bool(form.tortura),
-    deportado: bool(form.deportado),
+    // Segurança (perguntas salvas como `seg_<chave>` com "Sim"/"Não")
+    crime: seg("preso_condenado"),
+    lavagem_dinheiro: seg("lavagem_dinheiro"),
+    trafico_pessoas: seg("trafico_pessoas"),
+    terrorismo: seg("atividade_terrorista"),
+    genocidio: seg("genocidio"),
+    tortura: seg("tortura"),
+    deportado: seg("deportacao"),
   };
 }
 
