@@ -22,18 +22,6 @@ export interface EmpregoAnterior {
   motivo_saida: string;
 }
 
-export interface RedeSocial {
-  plataforma: string;  // rótulo ("INSTAGRAM") ou código ("INST") do DS-160
-  usuario: string;     // identificador, sem @
-}
-
-export interface Acompanhante {
-  nome: string;         // nomes (given names) — todos os tokens menos o último
-  sobrenome: string;    // sobrenome (surname) — último token
-  nome_completo: string;
-  parentesco: string;   // código/rótulo do parentesco (SPOUSE, CHILD, OTHER…)
-}
-
 // ── Contrato de saída (exatamente o que o robô consome) ────────────────────
 export interface DadosDS160 {
   // Personal 1 / 2
@@ -57,7 +45,7 @@ export interface DadosDS160 {
   cep: string;
   telefone: string;
   email: string;
-  redes_sociais: RedeSocial[];   // [{plataforma, usuario}, ...] | []
+  redes_sociais: string;   // ex: "Instagram @handle" | ""
 
   // Passaporte
   passaporte_numero: string;
@@ -84,8 +72,8 @@ export interface DadosDS160 {
   // Contato nos EUA
   contato_eua_nome: string;
 
-  // Acompanhantes (cada item separado: nome / sobrenome / parentesco)
-  acompanhantes: Acompanhante[];
+  // Acompanhantes (cada item: "Nome (Relacao)")
+  acompanhantes: string[];
 
   // Viagem / visto anterior
   viagens_anteriores_eua: boolean;
@@ -98,11 +86,9 @@ export interface DadosDS160 {
   pai_nome: string;
   pai_nascimento: string;      // DD/MM/AAAA
   pai_nos_eua: boolean;
-  pai_status_eua: string;      // US_CITIZEN | LPR | NONIMMIGRANT | OTHER (se pai_nos_eua)
   mae_nome: string;
   mae_nascimento: string;      // DD/MM/AAAA
   mae_nos_eua: boolean;
-  mae_status_eua: string;      // idem (se mae_nos_eua)
   parentes_nos_eua: boolean;
 
   // Cônjuge (quando casado)
@@ -131,7 +117,6 @@ export interface DadosDS160 {
   // Educação (DS-160: instituições de nível secundário ou superior)
   nivel_educacao: string;
   instituicao_nome: string;
-  instituicao_endereco: string;
   instituicao_cidade: string;
   instituicao_pais: string;
   curso: string;
@@ -193,44 +178,6 @@ function pega(form: any, ...chaves: string[]): any {
   return undefined;
 }
 
-/** Normaliza valor monetário BR para inteiro em string. "R$2.300,00" -> "2300". */
-function dinheiro(v: any): string {
-  if (v === null || v === undefined || v === "") return "";
-  if (typeof v === "number") return String(Math.round(v));
-  let s = String(v).replace(/[^\d.,]/g, ""); // tira R$, espaços, letras
-  if (!s) return "";
-  if (s.includes(",")) s = s.split(",")[0];  // parte inteira (ignora centavos)
-  s = s.replace(/\./g, "");                  // pontos = separador de milhar
-  return s;
-}
-
-/** Remove @ do começo do identificador. */
-function limpaHandle(s: any): string {
-  return txt(s).replace(/^@+/, "").trim();
-}
-
-/** Infere a plataforma a partir de texto livre (fallback do formato antigo). */
-function inferePlataforma(texto: string): string {
-  const t = texto.toLowerCase();
-  if (t.includes("facebook") || t.includes("fb.com")) return "FACEBOOK";
-  if (t.includes("linkedin")) return "LINKEDIN";
-  if (t.includes("twitter") || t.includes("x.com")) return "TWITTER";
-  if (t.includes("instagram") || t.includes("instagr.am")) return "INSTAGRAM";
-  if (t.includes("youtube")) return "YOUTUBE";
-  const tr = texto.trim();
-  if (tr.startsWith("@") || !tr.includes(" ")) return "INSTAGRAM"; // só @handle
-  return "";
-}
-
-/** Converte uma string livre ("Instagram @joao") em {plataforma, usuario}. */
-function parseRedeLivre(s: string): RedeSocial {
-  const plataforma = inferePlataforma(s);
-  let h = s.includes(":") ? s.split(":").slice(1).join(":").trim() : s.trim();
-  if (h.includes("@")) h = (h.split("@").pop() || "").trim();
-  else if (h.includes("/")) h = (h.replace(/\/+$/, "").split("/").pop() || "").trim();
-  return { plataforma, usuario: h };
-}
-
 // ── Mapper principal — preenche TODOS os campos do contrato ────────────────
 
 export function montarDadosDS160(form: any): DadosDS160 {
@@ -240,37 +187,18 @@ export function montarDadosDS160(form: any): DadosDS160 {
   const sobrenome = txt(pega(form, "sobrenome", "surname", "ultimo_nome"));
   const nome = txt(pega(form, "nome", "given_name", "primeiro_nome"));
   const nomeCompleto =
-    txt(pega(form, "nome_completo", "nome_completo_passaporte", "nome_passaporte")) ||
+    txt(pega(form, "nome_completo", "nome_passaporte")) ||
     `${nome} ${sobrenome}`.trim();
 
-  // Acompanhantes: o robô preenche 3 campos separados (Sobrenome / Nome / Parentesco),
-  // então enviamos cada acompanhante já separado, nunca como objeto bruto ou string única.
-  const acompanhantes: Acompanhante[] = Array.isArray(form.acompanhantes)
+  // Acompanhantes: aceita string[] ("Nome (Relacao)") ou objeto[] {nome, relacao}
+  const acompanhantes: string[] = Array.isArray(form.acompanhantes)
     ? form.acompanhantes
-        .map((a: any): Acompanhante => {
-          // aceita string ("Nome (Relacao)") ou objeto {nome, parentesco}
-          let nomeCompletoAcomp = "";
-          let parentesco = "";
-          if (typeof a === "string") {
-            const m = a.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
-            nomeCompletoAcomp = txt(m ? m[1] : a);
-            parentesco = txt(m ? m[2] : "");
-          } else {
-            nomeCompletoAcomp = txt(a.nome ?? a.nome_completo);
-            parentesco = txt(a.parentesco ?? a.relacao ?? a.relationship);
-          }
-          // separa nome (todos os tokens menos o último) e sobrenome (último token)
-          const partes = nomeCompletoAcomp.split(/\s+/).filter(Boolean);
-          const sobrenomeAcomp = partes.length > 1 ? partes[partes.length - 1] : nomeCompletoAcomp;
-          const nomeAcomp = partes.length > 1 ? partes.slice(0, -1).join(" ") : "";
-          return {
-            nome: nomeAcomp,
-            sobrenome: sobrenomeAcomp,
-            nome_completo: nomeCompletoAcomp,
-            parentesco,
-          };
-        })
-        .filter((a: Acompanhante) => (a.nome_completo || "").trim())
+        .map((a: any) =>
+          typeof a === "string"
+            ? a
+            : `${txt(a.nome ?? a.nome_completo)}${a.relacao ? ` (${txt(a.relacao)})` : ""}`
+        )
+        .filter((s: string) => s.trim())
     : [];
 
   // Empregos anteriores: normaliza cada item para o shape do robô
@@ -299,66 +227,12 @@ export function montarDadosDS160(form: any): DadosDS160 {
     .filter(Boolean);
   if (!idiomas.length) idiomas.push("Portugues");
 
-  // Educação: o formulário salva um array `formacoes`; o robô consome a 1ª formação.
-  const formacoesArr: any[] = Array.isArray(form.formacoes) ? form.formacoes : [];
-  const formacao0: any = formacoesArr[0] || {};
-
-  // Segurança: as perguntas são salvas com prefixo `seg_` e valor "Sim"/"Não".
-  const seg = (k: string) => bool(form[`seg_${k}`] ?? form[k]);
-
-  // Já visitou os EUA? (radio "Já fui" / "Não fui", com fallback p/ a lista)
-  const visitouEua =
-    txt(pega(form, "historico_viagens_eua_tipo")).toLowerCase().includes("já fui") ||
-    (Array.isArray(form.visitas_eua) &&
-      form.visitas_eua.some((v: any) => txt(v?.data_chegada) || txt(v?.duracao)));
-
-  // Participa de organizações? (campo de texto livre → true se houver conteúdo)
-  const temOrganizacao = txt(pega(form, "organizacoes")).trim().length > 0;
-
-  // Quem paga a viagem → código do robô (S=eu, O=outra pessoa, C=empresa)
-  const pagoPorBruto = txt(pega(form, "viagem_pago_por", "pagador_viagem", "pago_por")).toLowerCase();
-  const pagoPorCod = /empresa|company|c$/.test(pagoPorBruto)
-    ? "C"
-    : /outr|other|o$/.test(pagoPorBruto)
-    ? "O"
-    : "S";
-
-  // Redes sociais: aceita objeto[] {plataforma|tipo, usuario|handle}, string[]
-  // ("Instagram @handle"), objeto único, campos avulsos ou string única (legado).
-  // Saída: [{plataforma, usuario}] — o robô seleciona pelo código OU pelo rótulo.
-  let redes_sociais: RedeSocial[] = [];
-  const rsForm = form.redes_sociais;
-  if (Array.isArray(rsForm)) {
-    redes_sociais = rsForm
-      .map((r: any): RedeSocial =>
-        typeof r === "string"
-          ? parseRedeLivre(r)
-          : {
-              plataforma: txt(r.plataforma ?? r.tipo ?? r.platform ?? r.rede).toUpperCase(),
-              usuario: limpaHandle(r.usuario ?? r.handle ?? r.identificador ?? r.user ?? r.nome_usuario),
-            }
-      )
-      .filter((r: RedeSocial) => r.usuario || r.plataforma);
-  } else if (rsForm && typeof rsForm === "object") {
-    const plataforma = txt(rsForm.plataforma ?? rsForm.tipo).toUpperCase();
-    const usuario = limpaHandle(rsForm.usuario ?? rsForm.handle);
-    if (plataforma || usuario) redes_sociais = [{ plataforma, usuario }];
-  } else {
-    const tipoAvulso = txt(pega(form, "rede_social_tipo", "social_tipo", "plataforma_social")).toUpperCase();
-    const userAvulso = limpaHandle(pega(form, "rede_social_usuario", "social_usuario", "usuario_social"));
-    const livre = txt(pega(form, "redes_sociais", "social", "instagram"));
-    if (tipoAvulso || userAvulso) redes_sociais = [{ plataforma: tipoAvulso, usuario: userAvulso }];
-    else if (livre) redes_sociais = [parseRedeLivre(livre)];
-  }
-
   return {
     // Personal
     sobrenome,
     nome,
     nome_completo: nomeCompleto,
-    nome_passaporte:
-      txt(pega(form, "nome_passaporte", "nome_completo_passaporte", "nome_completo")) ||
-      nomeCompleto,
+    nome_passaporte: txt(pega(form, "nome_passaporte", "nome_completo")) || nomeCompleto,
     sexo: txt(pega(form, "sexo", "genero")) || "M",
     estado_civil: txt(pega(form, "estado_civil")) || "S",
     data_nascimento: dataBR(pega(form, "data_nascimento", "nascimento", "dob")),
@@ -367,37 +241,37 @@ export function montarDadosDS160(form: any): DadosDS160 {
     cpf: txt(pega(form, "cpf", "cpf_cnpj")),
 
     // Endereço
-    endereco_linha1: txt(pega(form, "endereco_linha1", "contato_endereco", "endereco", "logradouro")),
+    endereco_linha1: txt(pega(form, "endereco_linha1", "endereco", "logradouro")),
     endereco_linha2: txt(pega(form, "endereco_linha2", "complemento")),
-    numero: txt(pega(form, "numero", "contato_numero")),
-    cidade_residencia: txt(pega(form, "cidade_residencia", "contato_cidade", "cidade")),
-    estado_residencia: txt(pega(form, "estado_residencia", "contato_estado", "uf", "estado")),
-    cep: txt(pega(form, "cep", "contato_cep")),
-    telefone: txt(pega(form, "telefone", "contato_telefone", "celular", "whatsapp")),
-    email: txt(pega(form, "email", "contato_email")),
-    redes_sociais,
+    numero: txt(pega(form, "numero")),
+    cidade_residencia: txt(pega(form, "cidade_residencia", "cidade")),
+    estado_residencia: txt(pega(form, "estado_residencia", "uf", "estado")),
+    cep: txt(pega(form, "cep")),
+    telefone: txt(pega(form, "telefone", "celular", "whatsapp")),
+    email: txt(pega(form, "email")),
+    redes_sociais: txt(pega(form, "redes_sociais", "instagram", "social")),
 
     // Passaporte
     passaporte_numero: txt(pega(form, "passaporte_numero", "passaporte")),
     passaporte_cidade_emissao: txt(pega(form, "passaporte_cidade_emissao")),
     passaporte_data_emissao: dataBR(pega(form, "passaporte_data_emissao", "passaporte_emissao", "emissao")),
-    passaporte_data_validade: dataBR(pega(form, "passaporte_data_validade", "passaporte_data_expiracao", "passaporte_validade", "validade")),
+    passaporte_data_validade: dataBR(pega(form, "passaporte_data_validade", "passaporte_validade", "validade")),
     passaporte_perdido: bool(form.passaporte_perdido),
 
     // Viagem
-    viagem_cidade_destino: txt(pega(form, "viagem_cidade_destino", "cidade_destino_eua", "cidade_destino", "destino")) || "Miami",
+    viagem_cidade_destino: txt(pega(form, "viagem_cidade_destino", "cidade_destino", "destino")) || "Miami",
     viagem_estado_eua: txt(pega(form, "viagem_estado_eua", "estado_destino_eua", "viagem_estado_destino")),
-    viagem_data_chegada: dataBR(pega(form, "viagem_data_chegada", "data_ida", "data_chegada", "data_viagem")),
-    viagem_duracao_dias: pega(form, "viagem_duracao_dias", "duracao_viagem", "duracao_dias") ?? "10",
-    viagem_endereco_eua: txt(pega(form, "viagem_endereco_eua", "local_hospedagem", "endereco_eua", "hospedagem")),
-    viagem_hospedagem: txt(pega(form, "viagem_hospedagem", "local_hospedagem", "hotel", "viagem_endereco_eua")),
-    viagem_pago_por: pagoPorCod,
+    viagem_data_chegada: dataBR(pega(form, "viagem_data_chegada", "data_chegada", "data_viagem")),
+    viagem_duracao_dias: pega(form, "viagem_duracao_dias", "duracao_dias") ?? "10",
+    viagem_endereco_eua: txt(pega(form, "viagem_endereco_eua", "endereco_eua", "hospedagem")),
+    viagem_hospedagem: txt(pega(form, "viagem_hospedagem", "hotel", "viagem_endereco_eua")),
+    viagem_pago_por: txt(pega(form, "viagem_pago_por", "pago_por")) || "S",
 
     // Pagador
     pagador_nome: txt(pega(form, "pagador_nome")),
     pagador_email: txt(pega(form, "pagador_email")),
     pagador_telefone: txt(pega(form, "pagador_telefone")),
-    pagador_relacao: txt(pega(form, "pagador_relacao", "pagador_parentesco")),
+    pagador_relacao: txt(pega(form, "pagador_relacao")),
 
     // Contato EUA (cai pro hotel/endereço quando vazio, p/ não ficar sem POC)
     contato_eua_nome:
@@ -408,21 +282,19 @@ export function montarDadosDS160(form: any): DadosDS160 {
     acompanhantes,
 
     // Viagem / visto anterior
-    viagens_anteriores_eua: visitouEua || bool(pega(form, "viagens_anteriores_eua", "ja_viajou_eua")),
-    visto_anterior: bool(pega(form, "visto_anterior", "ja_teve_visto", "ja_teve_visto_eua")),
-    ja_teve_visto_eua: bool(pega(form, "ja_teve_visto_eua", "ja_teve_visto", "visto_anterior")),
+    viagens_anteriores_eua: bool(pega(form, "viagens_anteriores_eua", "ja_viajou_eua")),
+    visto_anterior: bool(pega(form, "visto_anterior", "ja_teve_visto_eua")),
+    ja_teve_visto_eua: bool(pega(form, "ja_teve_visto_eua", "visto_anterior")),
     visto_negado: bool(pega(form, "visto_negado", "visto_recusado")),
-    peticao_imigrante: bool(pega(form, "peticao_imigrante", "peticao_imigracao_negada")),
+    peticao_imigrante: bool(form.peticao_imigrante),
 
     // Família
     pai_nome: txt(pega(form, "pai_nome", "nome_pai")),
     pai_nascimento: dataBR(pega(form, "pai_nascimento", "nascimento_pai")),
-    pai_nos_eua: bool(pega(form, "pai_nos_eua", "pai_mora_eua", "pai_eua")),
-    pai_status_eua: txt(pega(form, "pai_status_eua", "pai_status", "status_pai")).toUpperCase(),
+    pai_nos_eua: bool(pega(form, "pai_nos_eua", "pai_eua")),
     mae_nome: txt(pega(form, "mae_nome", "nome_mae")),
     mae_nascimento: dataBR(pega(form, "mae_nascimento", "nascimento_mae")),
-    mae_nos_eua: bool(pega(form, "mae_nos_eua", "mae_mora_eua", "mae_eua")),
-    mae_status_eua: txt(pega(form, "mae_status_eua", "mae_status", "status_mae")).toUpperCase(),
+    mae_nos_eua: bool(pega(form, "mae_nos_eua", "mae_eua")),
     parentes_nos_eua: bool(pega(form, "parentes_nos_eua", "parentes_eua")),
 
     // Cônjuge
@@ -432,13 +304,13 @@ export function montarDadosDS160(form: any): DadosDS160 {
 
     // Trabalho
     status_profissional: txt(pega(form, "status_profissional", "ocupacao_status")),
-    cargo: txt(pega(form, "cargo", "cargo_atual", "profissao", "ocupacao")),
-    empresa_nome: txt(pega(form, "empresa_nome", "empresa_atual", "empresa")),
+    cargo: txt(pega(form, "cargo", "profissao", "ocupacao")),
+    empresa_nome: txt(pega(form, "empresa_nome", "empresa")),
     empresa_endereco: txt(pega(form, "empresa_endereco")),
     empresa_cidade: txt(pega(form, "empresa_cidade")),
     empresa_telefone: txt(pega(form, "empresa_telefone")),
-    data_admissao: dataBR(pega(form, "data_admissao", "empresa_data_inicio", "admissao")),
-    renda_mensal: dinheiro(pega(form, "renda_mensal", "salario", "renda")),
+    data_admissao: dataBR(pega(form, "data_admissao", "admissao")),
+    renda_mensal: pega(form, "renda_mensal", "salario", "renda") ?? "",
     descricao_funcoes: txt(pega(form, "descricao_funcoes", "funcoes")),
 
     // Empregos anteriores
@@ -446,28 +318,27 @@ export function montarDadosDS160(form: any): DadosDS160 {
 
     // Trabalho adicional
     idiomas,
-    servico_militar: bool(pega(form, "servico_militar", "serviu_forcas_armadas")),
+    servico_militar: bool(form.servico_militar),
 
-    // Educação (lê do array `formacoes`, com fallback para campos planos)
+    // Educação
     nivel_educacao: txt(pega(form, "nivel_educacao", "escolaridade")),
-    instituicao_nome: txt(formacao0.instituicao ?? pega(form, "instituicao_nome", "instituicao", "faculdade")),
-    instituicao_endereco: txt(formacao0.endereco ?? pega(form, "instituicao_endereco", "instituicao_logradouro")),
-    instituicao_cidade: txt(formacao0.cidade ?? pega(form, "instituicao_cidade")),
-    instituicao_pais: txt(formacao0.pais ?? pega(form, "instituicao_pais")) || "BRA",
-    curso: txt(formacao0.curso ?? pega(form, "curso", "formacao")),
-    data_inicio_estudo: dataBR(formacao0.inicio ?? pega(form, "data_inicio_estudo", "estudo_inicio")),
-    data_fim_estudo: dataBR(formacao0.termino ?? pega(form, "data_fim_estudo", "estudo_fim")),
-    pertence_organizacao: temOrganizacao || bool(form.pertence_organizacao),
-    data_casamento: dataBR(pega(form, "data_casamento", "conjuge_casamento_inicio", "data_matrimonio")),
+    instituicao_nome: txt(pega(form, "instituicao_nome", "instituicao", "faculdade")),
+    instituicao_cidade: txt(pega(form, "instituicao_cidade")),
+    instituicao_pais: txt(pega(form, "instituicao_pais")) || "BRA",
+    curso: txt(pega(form, "curso", "formacao")),
+    data_inicio_estudo: dataBR(pega(form, "data_inicio_estudo", "estudo_inicio")),
+    data_fim_estudo: dataBR(pega(form, "data_fim_estudo", "estudo_fim")),
+    pertence_organizacao: bool(form.pertence_organizacao),
+    data_casamento: dataBR(pega(form, "data_casamento", "data_matrimonio")),
 
-    // Segurança (perguntas salvas como `seg_<chave>` com "Sim"/"Não")
-    crime: seg("preso_condenado"),
-    lavagem_dinheiro: seg("lavagem_dinheiro"),
-    trafico_pessoas: seg("trafico_pessoas"),
-    terrorismo: seg("atividade_terrorista"),
-    genocidio: seg("genocidio"),
-    tortura: seg("tortura"),
-    deportado: seg("deportacao"),
+    // Segurança
+    crime: bool(form.crime),
+    lavagem_dinheiro: bool(form.lavagem_dinheiro),
+    trafico_pessoas: bool(form.trafico_pessoas),
+    terrorismo: bool(form.terrorismo),
+    genocidio: bool(form.genocidio),
+    tortura: bool(form.tortura),
+    deportado: bool(form.deportado),
   };
 }
 
@@ -529,17 +400,3 @@ export async function dispararRoboDS160(opts: {
     };
   }
 }
-
-// ── Compat: nome legado usado pelo ERP (DS160Section) ──────────────────────
-export function mapearDadosDS160(
-  formData: Record<string, any>,
-  clientName?: string,
-): DadosDS160 {
-  const dados = montarDadosDS160(formData || {});
-  if (clientName && (!dados.nome_completo || !dados.nome_completo.trim())) {
-    dados.nome_completo = clientName;
-    dados.nome_passaporte = dados.nome_passaporte || clientName;
-  }
-  return dados;
-}
-
