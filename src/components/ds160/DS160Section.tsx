@@ -123,6 +123,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [robotSending, setRobotSending] = useState<string | null>(null);
   const [jsonForm, setJsonForm] = useState<DS160Form | null>(null);
   const [editForm, setEditForm] = useState<DS160Form | null>(null);
+  const [jsonReplaceForm, setJsonReplaceForm] = useState<DS160Form | null>(null);
+  const [jsonReplaceText, setJsonReplaceText] = useState('');
+  const [jsonReplaceSaving, setJsonReplaceSaving] = useState(false);
 
   const fetchForms = async () => {
     const { data } = await supabase
@@ -218,11 +221,54 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     }
   };
 
+  // Abre o modal para colar/substituir o JSON enviado ao robô.
+  const openJsonReplace = (form: DS160Form) => {
+    const override = (form.form_data as any)?.json_override;
+    const base = override && typeof override === 'object'
+      ? override
+      : mapearDadosDS160(form.form_data || {}, clientName);
+    setJsonReplaceText(JSON.stringify(base, null, 2));
+    setJsonReplaceForm(form);
+  };
+
+  // Salva o JSON colado dentro de form_data.json_override.
+  const saveJsonReplace = async () => {
+    if (!jsonReplaceForm) return;
+    let parsed: any;
+    try {
+      parsed = JSON.parse(jsonReplaceText);
+    } catch {
+      toast.error('JSON inválido. Verifique a formatação.');
+      return;
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      toast.error('O JSON precisa ser um objeto.');
+      return;
+    }
+    setJsonReplaceSaving(true);
+    const merged = { ...(jsonReplaceForm.form_data || {}), json_override: parsed };
+    const { error } = await supabase
+      .from('ds160_forms')
+      .update({ form_data: merged as any } as any)
+      .eq('id', jsonReplaceForm.id);
+    setJsonReplaceSaving(false);
+    if (error) {
+      toast.error('Erro ao salvar o JSON.');
+      return;
+    }
+    setForms(prev => prev.map(f => f.id === jsonReplaceForm.id ? { ...f, form_data: merged } : f));
+    toast.success('JSON substituído! Ele será usado ao enviar para o robô.');
+    setJsonReplaceForm(null);
+  };
+
   // Envia os dados do formulário para o robô local (porta 3004).
   const sendToRobot = async (form: DS160Form) => {
     setRobotSending(form.id);
     try {
-      const dados = mapearDadosDS160(form.form_data || {}, clientName);
+      const override = (form.form_data as any)?.json_override;
+      const dados = override && typeof override === 'object'
+        ? override
+        : mapearDadosDS160(form.form_data || {}, clientName);
       const resp = await fetch(`${ROBOT_SERVER}/ds160/iniciar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -480,6 +526,12 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
                         <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => setJsonForm(form)}>
                           <Code2 className="h-3 w-3" /> Ver JSON
                         </Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => openJsonReplace(form)}>
+                          <Code2 className="h-3 w-3" /> Substituir JSON
+                          {(form.form_data as any)?.json_override && (
+                            <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" title="JSON personalizado salvo" />
+                          )}
+                        </Button>
                       </div>
                     </div>
                   );
@@ -531,6 +583,44 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
               <Copy className="h-4 w-4" /> Copiar
             </Button>
             <Button onClick={() => setJsonForm(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!jsonReplaceForm} onOpenChange={(o) => !o && setJsonReplaceForm(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code2 className="h-4 w-4" /> Substituir JSON
+            </DialogTitle>
+            <DialogDescription>
+              Cole abaixo o JSON completo que será enviado ao robô. Ao salvar, ele substitui o JSON gerado automaticamente e passa a ser usado em "Enviar para DS-160" / "Reenviar".
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={jsonReplaceText}
+            onChange={(e) => setJsonReplaceText(e.target.value)}
+            placeholder='{ "first_name": "..." }'
+            className="max-h-[55vh] min-h-[300px] font-mono text-xs"
+          />
+          <DialogFooter>
+            {jsonReplaceForm && (jsonReplaceForm.form_data as any)?.json_override && (
+              <Button
+                variant="outline"
+                className="mr-auto gap-1.5"
+                onClick={() => {
+                  if (!jsonReplaceForm) return;
+                  setJsonReplaceText(JSON.stringify(mapearDadosDS160(jsonReplaceForm.form_data || {}, clientName), null, 2));
+                }}
+              >
+                <RefreshCw className="h-4 w-4" /> Restaurar gerado
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setJsonReplaceForm(null)}>Cancelar</Button>
+            <Button onClick={saveJsonReplace} disabled={jsonReplaceSaving} className="gap-1.5">
+              {jsonReplaceSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Code2 className="h-4 w-4" />}
+              Salvar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
