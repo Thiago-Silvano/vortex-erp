@@ -1309,8 +1309,12 @@ export type Database = {
           ip_address: string | null
           last_saved_at: string | null
           pdf_url: string | null
+          robot_application_id: string | null
           robot_errors: string | null
+          robot_filled_at: string | null
+          robot_machine: string | null
           robot_result: Json | null
+          robot_status: string
           screenshot_url: string | null
           sent_at: string | null
           sent_by: string | null
@@ -1332,8 +1336,12 @@ export type Database = {
           ip_address?: string | null
           last_saved_at?: string | null
           pdf_url?: string | null
+          robot_application_id?: string | null
           robot_errors?: string | null
+          robot_filled_at?: string | null
+          robot_machine?: string | null
           robot_result?: Json | null
+          robot_status?: string
           screenshot_url?: string | null
           sent_at?: string | null
           sent_by?: string | null
@@ -1355,8 +1363,12 @@ export type Database = {
           ip_address?: string | null
           last_saved_at?: string | null
           pdf_url?: string | null
+          robot_application_id?: string | null
           robot_errors?: string | null
+          robot_filled_at?: string | null
+          robot_machine?: string | null
           robot_result?: Json | null
+          robot_status?: string
           screenshot_url?: string | null
           sent_at?: string | null
           sent_by?: string | null
