@@ -587,6 +587,44 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!jsonReplaceForm} onOpenChange={(o) => !o && setJsonReplaceForm(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code2 className="h-4 w-4" /> Substituir JSON
+            </DialogTitle>
+            <DialogDescription>
+              Cole abaixo o JSON completo que será enviado ao robô. Ao salvar, ele substitui o JSON gerado automaticamente e passa a ser usado em "Enviar para DS-160" / "Reenviar".
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={jsonReplaceText}
+            onChange={(e) => setJsonReplaceText(e.target.value)}
+            placeholder='{ "first_name": "..." }'
+            className="max-h-[55vh] min-h-[300px] font-mono text-xs"
+          />
+          <DialogFooter>
+            {jsonReplaceForm && (jsonReplaceForm.form_data as any)?.json_override && (
+              <Button
+                variant="outline"
+                className="mr-auto gap-1.5"
+                onClick={() => {
+                  if (!jsonReplaceForm) return;
+                  setJsonReplaceText(JSON.stringify(mapearDadosDS160(jsonReplaceForm.form_data || {}, clientName), null, 2));
+                }}
+              >
+                <RefreshCw className="h-4 w-4" /> Restaurar gerado
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setJsonReplaceForm(null)}>Cancelar</Button>
+            <Button onClick={saveJsonReplace} disabled={jsonReplaceSaving} className="gap-1.5">
+              {jsonReplaceSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Code2 className="h-4 w-4" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!dutiesFormId} onOpenChange={(o) => !o && setDutiesFormId(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
