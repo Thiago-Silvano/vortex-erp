@@ -1,4 +1,6 @@
 import jsPDF from 'jspdf';
+import { ESTADO_CIVIL_OPTIONS } from '@/components/ds160/types';
+
 
 const sanitize = (text: string): string => {
   if (!text) return '';
