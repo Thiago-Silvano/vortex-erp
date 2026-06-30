@@ -47,7 +47,7 @@ export interface DadosDS160 {
   cep: string;
   telefone: string;
   email: string;
-  redes_sociais: string;   // ex: "Instagram @handle" | ""
+  redes_sociais: { plataforma: string; usuario: string }[];   // ex: [{ plataforma: "FCBK", usuario: "@handle" }]
 
   // Passaporte
   passaporte_numero: string;
@@ -196,6 +196,20 @@ function dinheiro(v: any): string {
 
 // ── Mapper principal — preenche TODOS os campos do contrato ────────────────
 
+/** Normaliza redes sociais para [{ plataforma: CODIGO, usuario }]. Aceita formato legado (string). */
+function montarRedesSociais(v: any): { plataforma: string; usuario: string }[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((item) => {
+      if (typeof item === "string") return { plataforma: "OTHER", usuario: item.trim() };
+      return {
+        plataforma: txt(item?.plataforma) || "OTHER",
+        usuario: txt(item?.usuario),
+      };
+    })
+    .filter((r) => r.usuario || r.plataforma === "NONE");
+}
+
 export function montarDadosDS160(form: any): DadosDS160 {
   form = form || {};
 
@@ -271,7 +285,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     cep: txt(pega(form, "cep")),
     telefone: txt(pega(form, "telefone", "celular", "whatsapp")),
     email: txt(pega(form, "email")),
-    redes_sociais: txt(pega(form, "redes_sociais", "instagram", "social")),
+    redes_sociais: montarRedesSociais(pega(form, "redes_sociais", "social")),
 
     // Passaporte
     passaporte_numero: txt(pega(form, "passaporte_numero", "passaporte")),
