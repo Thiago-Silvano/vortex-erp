@@ -114,6 +114,17 @@ export interface DadosDS160 {
   idiomas: string[];
   servico_militar: boolean;
 
+  // Educação (DS-160: instituições de nível secundário ou superior)
+  nivel_educacao: string;
+  instituicao_nome: string;
+  instituicao_cidade: string;
+  instituicao_pais: string;
+  curso: string;
+  data_inicio_estudo: string;  // DD/MM/AAAA
+  data_fim_estudo: string;     // DD/MM/AAAA
+  pertence_organizacao: boolean;
+  data_casamento: string;      // DD/MM/AAAA
+
   // Segurança
   crime: boolean;
   lavagem_dinheiro: boolean;
@@ -172,8 +183,6 @@ function pega(form: any, ...chaves: string[]): any {
 export function montarDadosDS160(form: any): DadosDS160 {
   form = form || {};
 
-  // (compat) wrapper abaixo expõe o nome legado `mapearDadosDS160`.
-
   // Nome: tenta cheio; senão monta de nome + sobrenome
   const sobrenome = txt(pega(form, "sobrenome", "surname", "ultimo_nome"));
   const nome = txt(pega(form, "nome", "given_name", "primeiro_nome"));
@@ -206,12 +215,17 @@ export function montarDadosDS160(form: any): DadosDS160 {
       }))
     : [];
 
-  // Idiomas: array de strings (default Portugues)
-  const idiomas: string[] = Array.isArray(form.idiomas) && form.idiomas.length
-    ? form.idiomas.map(txt).filter(Boolean)
+  // Idiomas: separa "Inglês e português" / "X, Y" em itens individuais
+  const idiomasBrutos: string[] = Array.isArray(form.idiomas)
+    ? form.idiomas.map(txt)
     : txt(form.idiomas)
     ? [txt(form.idiomas)]
-    : ["Portugues"];
+    : [];
+  const idiomas: string[] = idiomasBrutos
+    .flatMap((s) => s.split(/\s+e\s+|[,/&]/))
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!idiomas.length) idiomas.push("Portugues");
 
   return {
     // Personal
@@ -259,8 +273,10 @@ export function montarDadosDS160(form: any): DadosDS160 {
     pagador_telefone: txt(pega(form, "pagador_telefone")),
     pagador_relacao: txt(pega(form, "pagador_relacao")),
 
-    // Contato EUA
-    contato_eua_nome: txt(pega(form, "contato_eua_nome", "contato_eua")),
+    // Contato EUA (cai pro hotel/endereço quando vazio, p/ não ficar sem POC)
+    contato_eua_nome:
+      txt(pega(form, "contato_eua_nome", "contato_eua")) ||
+      txt(pega(form, "viagem_hospedagem", "viagem_endereco_eua")),
 
     // Acompanhantes
     acompanhantes,
@@ -303,6 +319,17 @@ export function montarDadosDS160(form: any): DadosDS160 {
     // Trabalho adicional
     idiomas,
     servico_militar: bool(form.servico_militar),
+
+    // Educação
+    nivel_educacao: txt(pega(form, "nivel_educacao", "escolaridade")),
+    instituicao_nome: txt(pega(form, "instituicao_nome", "instituicao", "faculdade")),
+    instituicao_cidade: txt(pega(form, "instituicao_cidade")),
+    instituicao_pais: txt(pega(form, "instituicao_pais")) || "BRA",
+    curso: txt(pega(form, "curso", "formacao")),
+    data_inicio_estudo: dataBR(pega(form, "data_inicio_estudo", "estudo_inicio")),
+    data_fim_estudo: dataBR(pega(form, "data_fim_estudo", "estudo_fim")),
+    pertence_organizacao: bool(form.pertence_organizacao),
+    data_casamento: dataBR(pega(form, "data_casamento", "data_matrimonio")),
 
     // Segurança
     crime: bool(form.crime),
@@ -372,19 +399,4 @@ export async function dispararRoboDS160(opts: {
       erro: e?.message || "Falha ao conectar no ds160-server (porta 3004). O servidor está rodando?",
     };
   }
-}
-
-// ── Compat: nome legado usado pelo ERP (DS160Section) ──────────────────────
-// Aceita (form_data, clientName) e delega para montarDadosDS160, mantendo o
-// fallback do nome do cliente quando o formulário não traz o nome completo.
-export function mapearDadosDS160(
-  formData: Record<string, any>,
-  clientName?: string,
-): DadosDS160 {
-  const dados = montarDadosDS160(formData || {});
-  if (clientName && (!dados.nome_completo || !dados.nome_completo.trim())) {
-    dados.nome_completo = clientName;
-    dados.nome_passaporte = dados.nome_passaporte || clientName;
-  }
-  return dados;
 }
