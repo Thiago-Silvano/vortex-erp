@@ -204,19 +204,8 @@ export function montarDadosDS160(form: any): DadosDS160 {
     txt(pega(form, "nome_completo", "nome_passaporte")) ||
     `${nome} ${sobrenome}`.trim();
 
-  // Normaliza estado civil para o código de uma letra aceito pelo robô
-  const mapEstadoCivil: Record<string, string> = {
-    casado: "M", casada: "M", "casado(a)": "M",
-    "união estável": "C", "uniao estavel": "C", "união estavel": "C",
-    "parceria civil/doméstica": "P", "parceria civil domestica": "P", "parceria civil/domestica": "P",
-    solteiro: "S", solteira: "S", "solteiro(a)": "S",
-    viuvo: "W", viúvo: "W", viuva: "W", viúva: "W", "viúvo(a)": "W", "viuvo(a)": "W",
-    divorciado: "D", divorciada: "D", "divorciado(a)": "D",
-    "separado legalmente": "L", "separada legalmente": "L", "separado(a) legalmente": "L",
-    outro: "O", outros: "O",
-  };
-  const estadoCivilRaw = txt(pega(form, "estado_civil")).toLowerCase().replace(/\s+/g, " ").trim();
-  const estadoCivil = mapEstadoCivil[estadoCivilRaw] || (estadoCivilRaw.length === 1 ? estadoCivilRaw.toUpperCase() : "S");
+  const estadoCivil = normalizarEstadoCivil(txt(pega(form, "estado_civil"))) || "S";
+
 
 
   // Acompanhantes: aceita string[] ("Nome (Relacao)") ou objeto[] {nome, parentesco}
