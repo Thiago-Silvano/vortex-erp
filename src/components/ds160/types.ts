@@ -46,7 +46,7 @@ export const ESTADO_CIVIL_OPTIONS = [
   { code: 'O', label: 'Outro' },
 ] as const;
 
-export const mapEstadoCivilLegacy = (value: string | undefined): string | undefined => {
+export const normalizarEstadoCivil = (value: string | undefined): string | undefined => {
   if (!value) return undefined;
   const v = value.toLowerCase().replace(/\s+/g, ' ').trim();
   const found = ESTADO_CIVIL_OPTIONS.find(o => o.code === value.toUpperCase());
