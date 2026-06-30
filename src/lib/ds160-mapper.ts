@@ -86,9 +86,11 @@ export interface DadosDS160 {
   pai_nome: string;
   pai_nascimento: string;      // DD/MM/AAAA
   pai_nos_eua: boolean;
+  pai_status_eua: string;      // US_CITIZEN | LPR | NONIMMIGRANT | OTHER (se pai_nos_eua)
   mae_nome: string;
   mae_nascimento: string;      // DD/MM/AAAA
   mae_nos_eua: boolean;
+  mae_status_eua: string;      // idem (se mae_nos_eua)
   parentes_nos_eua: boolean;
 
   // Cônjuge (quando casado)
@@ -305,15 +307,22 @@ export function montarDadosDS160(form: any): DadosDS160 {
     pai_nome: txt(pega(form, "pai_nome", "nome_pai")),
     pai_nascimento: dataBR(pega(form, "pai_nascimento", "nascimento_pai")),
     pai_nos_eua: bool(pega(form, "pai_nos_eua", "pai_eua")),
+    pai_status_eua: txt(pega(form, "pai_status_eua", "pai_status", "status_pai")).toUpperCase(),
     mae_nome: txt(pega(form, "mae_nome", "nome_mae")),
     mae_nascimento: dataBR(pega(form, "mae_nascimento", "nascimento_mae")),
     mae_nos_eua: bool(pega(form, "mae_nos_eua", "mae_eua")),
+    mae_status_eua: txt(pega(form, "mae_status_eua", "mae_status", "status_mae")).toUpperCase(),
     parentes_nos_eua: bool(pega(form, "parentes_nos_eua", "parentes_eua")),
 
     // Cônjuge
     conjuge_nome: txt(pega(form, "conjuge_nome", "nome_conjuge", "esposo_nome", "esposa_nome")),
     conjuge_nascimento: dataBR(pega(form, "conjuge_nascimento", "nascimento_conjuge")),
-    conjuge_cidade_nascimento: txt(pega(form, "conjuge_cidade_nascimento")),
+    conjuge_cidade_nascimento: (() => {
+      const cidade = txt(pega(form, "conjuge_cidade_nascimento"));
+      const estado = txt(pega(form, "conjuge_estado_nascimento"));
+      if (cidade && estado) return `${cidade} - ${estado}`;
+      return cidade || estado;
+    })(),
 
     // Trabalho
     status_profissional: txt(pega(form, "status_profissional", "ocupacao_status")),
