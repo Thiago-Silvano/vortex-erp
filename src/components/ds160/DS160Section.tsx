@@ -258,7 +258,6 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   const handleDeleteForm = async () => {
     if (!deleteFormId) return;
-    if (!deleteFormId) return;
     const { error } = await supabase.from('ds160_forms').update({
       status: 'deleted',
     } as any).eq('id', deleteFormId);
