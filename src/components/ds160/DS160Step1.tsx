@@ -7,6 +7,7 @@ import { DS160StepProps, COUNTRIES } from './types';
 import { maskCpf } from '@/lib/masks';
 import { FieldError, errClass } from './fieldError';
 import { BRAZIL_STATES, isBrasil } from '@/data/brazil-states';
+import BrazilCitySelect from './BrazilCitySelect';
 
 export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
   const paisNascimento = data.pais_nascimento || 'Brasil';
@@ -74,10 +75,9 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
         <FieldError msg={errors?.pais_nascimento} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><Label>Cidade de Nascimento</Label><Input className={errClass(errors?.cidade_nascimento)} value={data.cidade_nascimento || ''} onChange={e => onChange('cidade_nascimento', e.target.value)} placeholder="Ex: São Paulo" /><FieldError msg={errors?.cidade_nascimento} /></div>
         <div><Label>Estado de Nascimento (UF/Província)</Label>
           {nascimentoBrasil ? (
-            <Select value={data.estado_nascimento || undefined} onValueChange={v => onChange('estado_nascimento', v)}>
+            <Select value={data.estado_nascimento || undefined} onValueChange={v => { onChange('estado_nascimento', v); onChange('cidade_nascimento', ''); }}>
               <SelectTrigger className={errClass(errors?.estado_nascimento)}><SelectValue placeholder="Selecione o estado" /></SelectTrigger>
               <SelectContent>{BRAZIL_STATES.map(s => <SelectItem key={s.uf} value={s.uf}>{s.nome} ({s.uf})</SelectItem>)}</SelectContent>
             </Select>
@@ -85,6 +85,14 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
             <Input className={errClass(errors?.estado_nascimento)} value={data.estado_nascimento || ''} onChange={e => onChange('estado_nascimento', e.target.value)} placeholder="Estado / Província" />
           )}
           <FieldError msg={errors?.estado_nascimento} />
+        </div>
+        <div><Label>Cidade de Nascimento</Label>
+          {nascimentoBrasil ? (
+            <BrazilCitySelect uf={data.estado_nascimento || ''} value={data.cidade_nascimento || ''} onChange={v => onChange('cidade_nascimento', v)} />
+          ) : (
+            <Input className={errClass(errors?.cidade_nascimento)} value={data.cidade_nascimento || ''} onChange={e => onChange('cidade_nascimento', e.target.value)} placeholder="Ex: São Paulo" />
+          )}
+          <FieldError msg={errors?.cidade_nascimento} />
         </div>
       </div>
       <div>
