@@ -123,6 +123,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [robotSending, setRobotSending] = useState<string | null>(null);
   const [jsonForm, setJsonForm] = useState<DS160Form | null>(null);
   const [editForm, setEditForm] = useState<DS160Form | null>(null);
+  const [jsonReplaceForm, setJsonReplaceForm] = useState<DS160Form | null>(null);
+  const [jsonReplaceText, setJsonReplaceText] = useState('');
+  const [jsonReplaceSaving, setJsonReplaceSaving] = useState(false);
 
   const fetchForms = async () => {
     const { data } = await supabase
