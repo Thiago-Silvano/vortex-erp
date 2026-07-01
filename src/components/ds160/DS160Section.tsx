@@ -335,7 +335,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       const resp = await fetch(`${ROBOT_SERVER}/ds160/iniciar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome_cliente: clientName, form_id: form.id, dados }),
+        body: JSON.stringify({ nome_cliente: clientName, form_id: form.id, processo_id: form.id, dados }),
       });
       const result = await resp.json().catch(() => null);
       if (!resp.ok) {
