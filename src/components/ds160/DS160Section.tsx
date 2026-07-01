@@ -164,6 +164,19 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
 
   useEffect(() => { fetchForms(); }, [clientId]);
 
+  // Preenche automaticamente o cadastro do cliente sempre que um formulário
+  // preenchido (submitted) for detectado — sem necessidade de botão.
+  const autoFilledRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    forms.forEach(f => {
+      if (f.status === 'submitted' && !autoFilledRef.current.has(f.id)) {
+        autoFilledRef.current.add(f.id);
+        autoFillClient(f);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forms]);
+
   // Realtime: atualiza a tela automaticamente quando o robô concluir o DS-160.
   useEffect(() => {
     const channel = supabase
