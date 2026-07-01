@@ -613,6 +613,36 @@ export function montarDadosDS160(form: any): DadosDS160 {
   const merged: any = { ...passthrough, ...typed };
   // O contrato do prompt usa redes_sociais como array de objetos {plataforma, usuario}.
   if (Array.isArray(typed.redes_sociais)) merged.redes_sociais = typed.redes_sociais;
+  // Coerência geral (aplicada APÓS o merge, para não ser sobrescrita pelo bloco
+  // tipado): se a lista de dados complementares de uma pergunta condicional
+  // tiver conteúdo, o flag "Sim/Não" correspondente NUNCA pode sair false.
+  // Trava a contradição de o cliente responder SIM, preencher os dados, e o
+  // JSON sair com o flag em false.
+  {
+    const temConteudo = (v: any): boolean =>
+      Array.isArray(v) &&
+      v.some((it) => {
+        if (it == null) return false;
+        if (typeof it === "string") return it.trim() !== "";
+        if (typeof it === "object")
+          return Object.values(it).some((x) => String(x ?? "").trim() !== "");
+        return true;
+      });
+    // [flag, listas que comprovam "Sim"]
+    const PARES: [string, string[]][] = [
+      ["outros_nomes", ["outros_nomes_lista"]],
+      ["tem_acompanhantes", ["acompanhantes_lista", "acompanhantes"]],
+      ["viagens_anteriores_eua", ["visitas_anteriores"]],
+      ["parentes_nos_eua", ["parentes_lista"]],
+      ["tem_empregos_anteriores", ["empregos_anteriores"]],
+      ["pertence_organizacao", ["organizacoes"]],
+    ];
+    for (const [flag, listas] of PARES) {
+      if (listas.some((lk) => temConteudo(merged[lk]))) merged[flag] = true;
+    }
+    // Inverso: se há redes sociais informadas, "não possuo redes" tem de ser false.
+    if (temConteudo(merged.redes_sociais)) merged.sem_redes_sociais = false;
+  }
   return ordenarPorFormulario(merged) as DadosDS160;
 }
 
