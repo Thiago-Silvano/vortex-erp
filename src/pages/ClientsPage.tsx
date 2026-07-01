@@ -331,12 +331,12 @@ export default function ClientsPage() {
             setReturnTo(null);
           }
         }}>
-          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0 gap-0">
+            <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0">
               <DialogTitle>{editingId ? 'Editar Cliente' : 'Cadastrar Cliente'}</DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-3">
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
               {/* Row 1: CPF, Nascimento, Nome */}
               <div className="grid grid-cols-4 gap-2">
                 <div>
@@ -473,7 +473,7 @@ export default function ClientsPage() {
               )}
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="px-6 py-4 border-t shrink-0">
               <Button variant="outline" onClick={() => {
                 setDialogOpen(false);
                 if (returnTo) {
