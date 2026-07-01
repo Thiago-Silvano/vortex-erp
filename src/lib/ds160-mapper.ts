@@ -464,7 +464,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
     else if (livre) redes_sociais = [parseRedeLivre(livre)];
   }
 
-  return {
+  const typed: DadosDS160 = {
     // Personal
     sobrenome,
     nome,
