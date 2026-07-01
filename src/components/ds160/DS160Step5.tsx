@@ -24,6 +24,7 @@ export default function DS160Step5({ data, onChange, errors }: DS160StepProps) {
             onChange={v => onChange('visitas_anteriores', v)}
             blank={() => ({ data_chegada: '', duracao_dias: '' })}
             addLabel="Adicionar visita"
+            error={errors?.visitas_anteriores}
             renderItem={(it: any, update) => (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <DateField label="Data de chegada" value={it.data_chegada} onChange={v => update({ ...it, data_chegada: v })} />
@@ -34,8 +35,8 @@ export default function DS160Step5({ data, onChange, errors }: DS160StepProps) {
           <YesNo label="Tem ou já teve carteira de motorista dos EUA?" value={data.carteira_motorista_eua ?? false} onChange={v => onChange('carteira_motorista_eua', v)} />
           {data.carteira_motorista_eua && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <TextField label="Número da carteira" value={data.carteira_motorista_numero} onChange={v => onChange('carteira_motorista_numero', v)} />
-              <TextField label="Estado emissor" value={data.carteira_motorista_estado} onChange={v => onChange('carteira_motorista_estado', v)} />
+              <TextField label="Número da carteira" error={errors?.carteira_motorista_numero} value={data.carteira_motorista_numero} onChange={v => onChange('carteira_motorista_numero', v)} />
+              <TextField label="Estado emissor" error={errors?.carteira_motorista_estado} value={data.carteira_motorista_estado} onChange={v => onChange('carteira_motorista_estado', v)} />
             </div>
           )}
         </div>
@@ -45,8 +46,8 @@ export default function DS160Step5({ data, onChange, errors }: DS160StepProps) {
       {data.visto_anterior && (
         <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <DateField label="Data de emissão" value={data.visto_data_emissao} onChange={v => onChange('visto_data_emissao', v)} />
-            <TextField label="Número do visto" value={data.visto_numero} onChange={v => onChange('visto_numero', v)} />
+            <DateField label="Data de emissão" error={errors?.visto_data_emissao} value={data.visto_data_emissao} onChange={v => onChange('visto_data_emissao', v)} />
+            <TextField label="Número do visto" error={errors?.visto_numero} value={data.visto_numero} onChange={v => onChange('visto_numero', v)} />
           </div>
           <YesNo label="Está solicitando o mesmo tipo de visto?" value={data.visto_mesmo_tipo ?? false} onChange={v => onChange('visto_mesmo_tipo', v)} />
           <YesNo label="No mesmo local/país?" value={data.visto_mesmo_local ?? false} onChange={v => onChange('visto_mesmo_local', v)} />
@@ -54,25 +55,25 @@ export default function DS160Step5({ data, onChange, errors }: DS160StepProps) {
           <YesNo label="Visto perdido ou roubado?" value={data.visto_perdido_roubado ?? false} onChange={v => onChange('visto_perdido_roubado', v)} />
           {data.visto_perdido_roubado && (
             <div className="space-y-3">
-              <TextField label="Ano" value={data.visto_perdido_ano} onChange={v => onChange('visto_perdido_ano', v)} inputMode="numeric" />
-              <AreaField label="Explicação" value={data.visto_perdido_explicacao} onChange={v => onChange('visto_perdido_explicacao', v)} />
+              <TextField label="Ano" error={errors?.visto_perdido_ano} value={data.visto_perdido_ano} onChange={v => onChange('visto_perdido_ano', v)} inputMode="numeric" />
+              <AreaField label="Explicação" error={errors?.visto_perdido_explicacao} value={data.visto_perdido_explicacao} onChange={v => onChange('visto_perdido_explicacao', v)} />
             </div>
           )}
           <YesNo label="Visto já foi cancelado/revogado?" value={data.visto_cancelado ?? false} onChange={v => onChange('visto_cancelado', v)} />
           {data.visto_cancelado && (
-            <AreaField label="Explicação" value={data.visto_cancelado_explicacao} onChange={v => onChange('visto_cancelado_explicacao', v)} />
+            <AreaField label="Explicação" error={errors?.visto_cancelado_explicacao} value={data.visto_cancelado_explicacao} onChange={v => onChange('visto_cancelado_explicacao', v)} />
           )}
         </div>
       )}
 
       <YesNo label="Algum visto americano já foi recusado/negado a você?" value={data.visto_negado ?? false} onChange={v => onChange('visto_negado', v)} />
       {data.visto_negado && (
-        <AreaField label="Explicação" value={data.visto_negado_explicacao} onChange={v => onChange('visto_negado_explicacao', v)} />
+        <AreaField label="Explicação" error={errors?.visto_negado_explicacao} value={data.visto_negado_explicacao} onChange={v => onChange('visto_negado_explicacao', v)} />
       )}
 
       <YesNo label="Alguém já entrou com uma petição de imigração em seu nome?" value={data.peticao_imigrante ?? false} onChange={v => onChange('peticao_imigrante', v)} />
       {data.peticao_imigrante && (
-        <AreaField label="Explicação" value={data.peticao_imigrante_explicacao} onChange={v => onChange('peticao_imigrante_explicacao', v)} />
+        <AreaField label="Explicação" error={errors?.peticao_imigrante_explicacao} value={data.peticao_imigrante_explicacao} onChange={v => onChange('peticao_imigrante_explicacao', v)} />
       )}
     </div>
   );
