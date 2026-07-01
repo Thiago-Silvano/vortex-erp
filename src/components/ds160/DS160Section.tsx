@@ -454,9 +454,9 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
             const st = statusLabel(form.status);
             const showBanner = form.status === 'submitted' && !dismissed.has(form.id);
             return (
-              <div key={form.id} className="border rounded-lg p-3 space-y-2">
+              <div key={form.id} className={`border rounded-lg p-3 space-y-2 ${form.status === 'submitted' ? 'bg-emerald-50 border-emerald-200' : ''}`}>
                 {showBanner && (
-                  <div className="-mx-3 -mt-3 mb-1 bg-emerald-50 border-b-2 border-emerald-300 rounded-t-lg p-3 flex flex-wrap items-center gap-3 animate-in fade-in">
+                  <div className="-mx-3 -mt-3 mb-1 border-b border-emerald-200 rounded-t-lg p-3 flex flex-wrap items-center gap-3 animate-in fade-in">
                     <Bell className="h-6 w-6 text-emerald-600 shrink-0" />
                     <div className="flex-1 min-w-[180px]">
                       <p className="text-sm font-bold text-emerald-800">Formulário DS-160 preenchido!</p>
