@@ -167,7 +167,24 @@ export default function ClientsPage() {
     }
 
     if (editingId) {
-      const { error } = await supabase.from('clients').update(formToSave).eq('id', editingId);
+      const { data: currentClient } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', editingId)
+        .single();
+
+      const safeFormToSave = { ...formToSave } as Record<string, any>;
+      if (currentClient) {
+        Object.keys(safeFormToSave).forEach((key) => {
+          const nextValue = safeFormToSave[key];
+          const currentValue = (currentClient as any)[key];
+          const nextIsEmpty = nextValue == null || (typeof nextValue === 'string' && nextValue.trim() === '');
+          const currentHasValue = currentValue != null && !(typeof currentValue === 'string' && currentValue.trim() === '');
+          if (nextIsEmpty && currentHasValue) safeFormToSave[key] = currentValue;
+        });
+      }
+
+      const { error } = await supabase.from('clients').update(safeFormToSave).eq('id', editingId);
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Cliente atualizado!');
     } else {
@@ -223,12 +240,23 @@ export default function ClientsPage() {
     }
   };
 
-  const handleEdit = (c: Client) => {
+  const handleEdit = async (c: Client) => {
     setEditingId(c.id);
     const { id, ...rest } = c;
     setForm(rest);
     setEmailError('');
     setDialogOpen(true);
+
+    const { data: freshClient } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', c.id)
+      .single();
+    if (freshClient) {
+      const { id: freshId, ...freshRest } = freshClient as Client;
+      setForm(freshRest);
+      setClients(prev => prev.map(item => item.id === freshId ? freshClient as Client : item));
+    }
   };
 
   const handleDelete = async () => {
