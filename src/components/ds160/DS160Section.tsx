@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase, UserPlus, Bot, RefreshCw, Code2, Pencil } from 'lucide-react';
+import { Copy, ExternalLink, FileText, Loader2, Bell, Trash2, Link2, Briefcase, Bot, RefreshCw, Code2, Pencil } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
