@@ -144,7 +144,6 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
   const [duties, setDuties] = useState<DutiesState>(emptyDuties);
   const [dutiesAvail, setDutiesAvail] = useState<DutiesAvail>({ atual: false, ant1: false, ant2: false });
   const [dutiesPdfLoading, setDutiesPdfLoading] = useState(false);
-  const [fillingClientId, setFillingClientId] = useState<string | null>(null);
   const [robotSending, setRobotSending] = useState<string | null>(null);
   const [jsonForm, setJsonForm] = useState<DS160Form | null>(null);
   const [editForm, setEditForm] = useState<DS160Form | null>(null);
