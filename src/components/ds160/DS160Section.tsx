@@ -431,9 +431,6 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     setFillingClientId(null);
   };
 
-  // Check for newly submitted forms (notification)
-  const submittedNotDismissed = forms.filter(f => f.status === 'submitted' && !dismissed.has(f.id));
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
