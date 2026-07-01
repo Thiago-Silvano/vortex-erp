@@ -112,6 +112,14 @@ function applyDuties(formData: Record<string, any>, d: DutiesState): Record<stri
 // Mapeia campos do formulário DS-160 para colunas do cadastro do cliente.
 function mapFormToClient(fd: Record<string, any>): Record<string, string> {
   const s = (v: any) => (typeof v === 'string' ? v.trim() : v == null ? '' : String(v));
+  const d = (v: any) => {
+    const raw = s(v);
+    if (!raw) return '';
+    // DD/MM/YYYY -> YYYY-MM-DD
+    const m = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+    return raw;
+  };
   const fullName = s(fd.nome_completo) ||
     [s(fd.nome), s(fd.sobrenome)].filter(Boolean).join(' ').trim();
   const pick = (...keys: string[]) => {
@@ -123,11 +131,11 @@ function mapFormToClient(fd: Record<string, any>): Record<string, string> {
   };
   return {
     full_name: fullName,
-    birth_date: pick('data_nascimento'),
+    birth_date: d(pick('data_nascimento')),
     cpf: pick('cpf'),
     passport_number: pick('passaporte_numero'),
-    passport_issue_date: pick('passaporte_data_emissao'),
-    passport_expiry_date: pick('passaporte_data_expiracao', 'passaporte_data_validade'),
+    passport_issue_date: d(pick('passaporte_data_emissao')),
+    passport_expiry_date: d(pick('passaporte_data_expiracao', 'passaporte_data_validade')),
     email: pick('contato_email', 'email'),
     phone: pick('contato_telefone', 'telefone'),
     cep: pick('contato_cep', 'cep'),
