@@ -592,6 +592,11 @@ export function montarDadosDS160(form: any): DadosDS160 {
     tortura: bool(form.tortura),
     deportado: bool(form.deportado),
   };
+
+  const merged: any = { ...passthrough, ...typed };
+  // O contrato do prompt usa redes_sociais como array de objetos {plataforma, usuario}.
+  if (Array.isArray(typed.redes_sociais)) merged.redes_sociais = typed.redes_sociais;
+  return ordenarPorFormulario(merged) as DadosDS160;
 }
 
 // ── Validação ──────────────────────────────────────────────────────────────
