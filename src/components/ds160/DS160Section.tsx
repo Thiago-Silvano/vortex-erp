@@ -18,6 +18,31 @@ import DS160EditDialog from './DS160EditDialog';
 
 const ROBOT_SERVER = 'http://localhost:3004';
 
+// Converte, recursivamente, strings de data no formato do robô (DD/MM/AAAA)
+// de volta para o formato dos inputs do formulário (AAAA-MM-DD), mantendo os
+// demais valores intactos. Assim os campos de data voltam a exibir corretamente.
+function normalizeDatasParaForm<T = any>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((v) => normalizeDatasParaForm(v)) as any;
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(value as Record<string, any>)) {
+      out[k] = normalizeDatasParaForm(v);
+    }
+    return out as any;
+  }
+  if (typeof value === 'string') {
+    const m = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) {
+      const dd = m[1].padStart(2, '0');
+      const mm = m[2].padStart(2, '0');
+      return `${m[3]}-${mm}-${dd}` as any;
+    }
+  }
+  return value;
+}
+
 interface DS160Form {
   id: string;
   token: string;
