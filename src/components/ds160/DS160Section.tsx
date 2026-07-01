@@ -514,7 +514,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
                 {form.status === 'submitted' && (() => {
                   const rm = robotMeta(form.robot_status);
                   return (
-                    <div className="mt-2 rounded-lg border bg-muted/30 p-3 space-y-2">
+                    <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-sm text-foreground flex items-center gap-1.5">
                           <Bot className="h-4 w-4" /> DS-160 Robô
