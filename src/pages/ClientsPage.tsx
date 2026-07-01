@@ -68,6 +68,7 @@ export default function ClientsPage() {
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
   const filesRef = useRef<ClientFilesSectionRef>(null);
+  const openedClientSnapshotRef = useRef<Record<string, any> | null>(null);
   const [returnTo, setReturnTo] = useState<{ path: string; state?: any } | null>(null);
   const [docImportOpen, setDocImportOpen] = useState(false);
   const [docType, setDocType] = useState<'identidade' | 'passaporte' | 'cnh'>('identidade');
@@ -178,9 +179,11 @@ export default function ClientsPage() {
         Object.keys(safeFormToSave).forEach((key) => {
           const nextValue = safeFormToSave[key];
           const currentValue = (currentClient as any)[key];
+          const openedValue = openedClientSnapshotRef.current?.[key];
           const nextIsEmpty = nextValue == null || (typeof nextValue === 'string' && nextValue.trim() === '');
           const currentHasValue = currentValue != null && !(typeof currentValue === 'string' && currentValue.trim() === '');
-          if (nextIsEmpty && currentHasValue) safeFormToSave[key] = currentValue;
+          const openedWasEmpty = openedValue == null || (typeof openedValue === 'string' && openedValue.trim() === '');
+          if (nextIsEmpty && openedWasEmpty && currentHasValue) safeFormToSave[key] = currentValue;
         });
       }
 
@@ -228,6 +231,7 @@ export default function ClientsPage() {
       toast.success('Cliente cadastrado!');
     }
     filesRef.current?.clearPending();
+    openedClientSnapshotRef.current = null;
     const shouldReturn = returnTo;
     setDialogOpen(false);
     setEditingId(null);
@@ -243,6 +247,7 @@ export default function ClientsPage() {
   const handleEdit = async (c: Client) => {
     setEditingId(c.id);
     const { id, ...rest } = c;
+    openedClientSnapshotRef.current = rest;
     setForm(rest);
     setEmailError('');
     setDialogOpen(true);
@@ -254,6 +259,7 @@ export default function ClientsPage() {
       .single();
     if (freshClient) {
       const { id: freshId, ...freshRest } = freshClient as Client;
+      openedClientSnapshotRef.current = freshRest;
       setForm(freshRest);
       setClients(prev => prev.map(item => item.id === freshId ? freshClient as Client : item));
     }
@@ -269,6 +275,7 @@ export default function ClientsPage() {
 
   const openNew = () => {
     setEditingId(null);
+    openedClientSnapshotRef.current = null;
     setForm(emptyClient());
     setEmailError('');
     setIsDependent(false);
