@@ -46,12 +46,18 @@ export default function DS160Step9({ data, onChange, errors }: DS160StepProps) {
           label="Parentes nos EUA"
           items={data.parentes_lista || []}
           onChange={v => onChange('parentes_lista', v)}
-          blank={() => ({ relacao: '', status: '' })}
+          blank={() => ({ sobrenome: '', nome: '', relacao: '', status: '' })}
           addLabel="Adicionar parente"
           renderItem={(it: any, update) => (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <TextField label="Relação" value={it.relacao} onChange={v => update({ ...it, relacao: v })} placeholder="Ex: Irmão" />
-              <SelectField label="Status nos EUA" options={STATUS_EUA_OPTIONS} value={it.status} onChange={v => update({ ...it, status: v })} />
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <TextField label="Sobrenome(s)" value={it.sobrenome} onChange={v => update({ ...it, sobrenome: v })} />
+                <TextField label="Nome(s)" value={it.nome} onChange={v => update({ ...it, nome: v })} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <TextField label="Relação" value={it.relacao} onChange={v => update({ ...it, relacao: v })} placeholder="Ex: Irmão" />
+                <SelectField label="Status nos EUA" options={STATUS_EUA_OPTIONS} value={it.status} onChange={v => update({ ...it, status: v })} />
+              </div>
             </div>
           )}
         />
