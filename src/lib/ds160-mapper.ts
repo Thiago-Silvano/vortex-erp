@@ -450,7 +450,7 @@ export function montarDadosDS160(form: any): DadosDS160 {
   // O contrato do prompt usa redes_sociais como array de objetos {plataforma, usuario}.
   // Preserva o array original do formulário (o mapper antigo tipava como string).
   if (Array.isArray(form.redes_sociais)) merged.redes_sociais = form.redes_sociais;
-  return merged as DadosDS160;
+  return ordenarPorFormulario(merged) as DadosDS160;
 }
 
 // ── Validação ──────────────────────────────────────────────────────────────
