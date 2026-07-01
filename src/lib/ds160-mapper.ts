@@ -379,6 +379,37 @@ export function montarDadosDS160(form: any): DadosDS160 {
     passthrough.visitou_paises = visitou;
     if (!visitou) passthrough.paises_visitados = [];
   }
+  // Coerência geral: se a lista de dados complementares de uma pergunta
+  // condicional tiver conteúdo, o flag "Sim/Não" correspondente NUNCA pode
+  // sair como false. Isso trava a contradição de o cliente responder SIM,
+  // preencher os dados, e o JSON sair com o flag em false.
+  {
+    const temConteudo = (v: any): boolean =>
+      Array.isArray(v) &&
+      v.some((it) => {
+        if (it == null) return false;
+        if (typeof it === "string") return it.trim() !== "";
+        if (typeof it === "object")
+          return Object.values(it).some((x) => String(x ?? "").trim() !== "");
+        return true;
+      });
+    // [flag, listas que comprovam "Sim"]
+    const PARES: [string, string[]][] = [
+      ["outros_nomes", ["outros_nomes_lista"]],
+      ["tem_acompanhantes", ["acompanhantes_lista", "acompanhantes"]],
+      ["viagens_anteriores_eua", ["visitas_anteriores"]],
+      ["parentes_nos_eua", ["parentes_lista"]],
+      ["tem_empregos_anteriores", ["empregos_anteriores"]],
+      ["pertence_organizacao", ["organizacoes"]],
+    ];
+    for (const [flag, listas] of PARES) {
+      if (listas.some((lk) => temConteudo(passthrough[lk]))) {
+        passthrough[flag] = true;
+      }
+    }
+    // Inverso: se há redes sociais informadas, "não possuo redes" tem de ser false.
+    if (temConteudo(passthrough.redes_sociais)) passthrough.sem_redes_sociais = false;
+  }
   for (const k of DATE_KEYS) {
     if (passthrough[k]) passthrough[k] = dataBR(passthrough[k]);
   }
