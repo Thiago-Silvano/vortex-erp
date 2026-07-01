@@ -112,23 +112,38 @@ function applyDuties(formData: Record<string, any>, d: DutiesState): Record<stri
 // Mapeia campos do formulário DS-160 para colunas do cadastro do cliente.
 function mapFormToClient(fd: Record<string, any>): Record<string, string> {
   const s = (v: any) => (typeof v === 'string' ? v.trim() : v == null ? '' : String(v));
+  const d = (v: any) => {
+    const raw = s(v);
+    if (!raw) return '';
+    // DD/MM/YYYY -> YYYY-MM-DD
+    const m = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+    return raw;
+  };
   const fullName = s(fd.nome_completo) ||
     [s(fd.nome), s(fd.sobrenome)].filter(Boolean).join(' ').trim();
+  const pick = (...keys: string[]) => {
+    for (const k of keys) {
+      const v = s(fd[k]);
+      if (v) return v;
+    }
+    return '';
+  };
   return {
     full_name: fullName,
-    birth_date: s(fd.data_nascimento),
-    cpf: s(fd.cpf),
-    passport_number: s(fd.passaporte_numero),
-    passport_issue_date: s(fd.passaporte_data_emissao),
-    passport_expiry_date: s(fd.passaporte_data_validade),
-    email: s(fd.email),
-    phone: s(fd.telefone),
-    cep: s(fd.cep),
-    address: s(fd.endereco_linha1),
-    address_number: s(fd.numero),
-    neighborhood: s(fd.bairro),
-    city: s(fd.cidade_residencia),
-    state: s(fd.estado_residencia),
+    birth_date: d(pick('data_nascimento')),
+    cpf: pick('cpf'),
+    passport_number: pick('passaporte_numero'),
+    passport_issue_date: d(pick('passaporte_data_emissao')),
+    passport_expiry_date: d(pick('passaporte_data_expiracao', 'passaporte_data_validade')),
+    email: pick('contato_email', 'email'),
+    phone: pick('contato_telefone', 'telefone'),
+    cep: pick('contato_cep', 'cep'),
+    address: pick('contato_endereco', 'endereco_linha1'),
+    address_number: pick('contato_numero', 'numero'),
+    neighborhood: pick('contato_bairro', 'bairro'),
+    city: pick('contato_cidade', 'cidade_residencia'),
+    state: pick('contato_estado', 'estado_residencia'),
   };
 }
 
