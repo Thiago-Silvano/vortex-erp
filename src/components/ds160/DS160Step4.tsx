@@ -43,6 +43,7 @@ export default function DS160Step4({ data, onChange, errors }: DS160StepProps) {
               blank={() => ({ sobrenome: '', nome: '', relacao: '' })}
               addLabel="Adicionar acompanhante"
               emptyHint="Adicione cada pessoa que viaja com você."
+              error={errors?.acompanhantes_lista}
               renderItem={(it: any, update) => (
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
