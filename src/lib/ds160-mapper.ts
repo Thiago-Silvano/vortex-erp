@@ -284,6 +284,21 @@ export function montarDadosDS160(form: any): DadosDS160 {
   const passthrough: Record<string, any> = { ...form };
   delete passthrough.json_override;
   delete passthrough.duties_override;
+  // Chaves legadas de versões antigas do formulário que não são mais usadas.
+  // A fonte de verdade das visitas anteriores é `visitas_anteriores`.
+  const LEGACY_KEYS = ["viagens_anteriores_lista"];
+  for (const k of LEGACY_KEYS) {
+    // migra o conteúdo legado para a chave atual se esta estiver vazia
+    if (
+      k === "viagens_anteriores_lista" &&
+      Array.isArray(passthrough[k]) &&
+      passthrough[k].length > 0 &&
+      !(Array.isArray(passthrough.visitas_anteriores) && passthrough.visitas_anteriores.length > 0)
+    ) {
+      passthrough.visitas_anteriores = passthrough[k];
+    }
+    delete passthrough[k];
+  }
   for (const k of DATE_KEYS) {
     if (passthrough[k]) passthrough[k] = dataBR(passthrough[k]);
   }
