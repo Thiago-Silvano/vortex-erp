@@ -49,10 +49,10 @@ export default function DS160Step7({ data, onChange, errors }: DS160StepProps) {
       {data.passaporte_perdido && (
         <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <TextField label="Número" value={data.passaporte_perdido_numero} onChange={v => onChange('passaporte_perdido_numero', v)} />
-            <CountryField label="País" value={data.passaporte_perdido_pais || 'Brasil'} onChange={v => onChange('passaporte_perdido_pais', v)} />
+            <TextField label="Número" error={errors?.passaporte_perdido_numero} value={data.passaporte_perdido_numero} onChange={v => onChange('passaporte_perdido_numero', v)} />
+            <CountryField label="País" error={errors?.passaporte_perdido_pais} value={data.passaporte_perdido_pais || 'Brasil'} onChange={v => onChange('passaporte_perdido_pais', v)} />
           </div>
-          <AreaField label="Explicação" value={data.passaporte_perdido_explicacao} onChange={v => onChange('passaporte_perdido_explicacao', v)} />
+          <AreaField label="Explicação" error={errors?.passaporte_perdido_explicacao} value={data.passaporte_perdido_explicacao} onChange={v => onChange('passaporte_perdido_explicacao', v)} />
         </div>
       )}
     </div>
