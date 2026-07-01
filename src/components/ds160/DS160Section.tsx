@@ -454,7 +454,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
             const st = statusLabel(form.status);
             const showBanner = form.status === 'submitted' && !dismissed.has(form.id);
             return (
-              <div key={form.id} className={`border rounded-lg p-3 space-y-2 ${form.status === 'submitted' ? 'bg-emerald-50 border-emerald-200' : ''}`}>
+              <div key={form.id} className={`border rounded-lg p-3 space-y-2 ${form.status === 'submitted' ? 'bg-emerald-50 border-emerald-200' : form.status === 'sent' ? 'bg-orange-50 border-orange-200' : ''}`}>
                 {showBanner && (
                   <div className="-mx-3 -mt-3 mb-1 border-b border-emerald-200 rounded-t-lg p-3 flex flex-wrap items-center gap-3 animate-in fade-in">
                     <Bell className="h-6 w-6 text-emerald-600 shrink-0" />
