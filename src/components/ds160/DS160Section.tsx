@@ -254,7 +254,13 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       return;
     }
     setJsonReplaceSaving(true);
-    const merged = { ...(jsonReplaceForm.form_data || {}), json_override: parsed };
+    // Mescla o JSON colado de volta nos campos do formulário (form_data), para
+    // que "Editar respostas" reflita os novos valores. Converte datas do formato
+    // do robô (DD/MM/AAAA) de volta para o formato dos campos (AAAA-MM-DD).
+    const normalized = normalizeDatasParaForm(parsed);
+    const merged = { ...(jsonReplaceForm.form_data || {}), ...normalized };
+    // O JSON agora é a fonte da verdade nos campos; remove override antigo.
+    delete (merged as any).json_override;
     const { error } = await supabase
       .from('ds160_forms')
       .update({ form_data: merged as any } as any)
@@ -265,7 +271,7 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       return;
     }
     setForms(prev => prev.map(f => f.id === jsonReplaceForm.id ? { ...f, form_data: merged } : f));
-    toast.success('JSON substituído! Ele será usado ao enviar para o robô.');
+    toast.success('JSON aplicado! Os campos do formulário foram atualizados.');
     setJsonReplaceForm(null);
   };
 
