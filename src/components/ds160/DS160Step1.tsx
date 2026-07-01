@@ -58,6 +58,7 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
           blank={() => ({ sobrenome: '', nome: '' })}
           addLabel="Adicionar nome"
           emptyHint="Adicione cada nome alternativo que você já usou."
+          error={errors?.outros_nomes_lista}
           renderItem={(it: any, update) => (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <TextField label="Sobrenome" value={it.sobrenome} onChange={v => update({ ...it, sobrenome: v })} />
@@ -68,7 +69,7 @@ export default function DS160Step1({ data, onChange, errors }: DS160StepProps) {
       )}
 
       <div>
-        <TextField label="Nome no alfabeto nativo (avançado)" help="Só preencha se seu nome usa outro alfabeto (ex.: árabe, cirílico). Para nomes em português, deixe marcado 'Não se aplica'." value={data.nome_nativo} onChange={v => onChange('nome_nativo', v)} disabled={data.nome_nativo_na ?? true} />
+        <TextField label="Nome no alfabeto nativo (avançado)" help="Só preencha se seu nome usa outro alfabeto (ex.: árabe, cirílico). Para nomes em português, deixe marcado 'Não se aplica'." error={errors?.nome_nativo} value={data.nome_nativo} onChange={v => onChange('nome_nativo', v)} disabled={data.nome_nativo_na ?? true} />
         <NACheckbox checked={data.nome_nativo_na ?? true} onChange={c => { onChange('nome_nativo_na', c); if (c) onChange('nome_nativo', ''); }} />
       </div>
     </div>

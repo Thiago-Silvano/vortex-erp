@@ -41,16 +41,16 @@ export default function DS160Step6({ data, onChange, errors }: DS160StepProps) {
       {data.endereco_postal_igual === false && (
         <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-2"><TextField label="Logradouro" value={data.endereco_postal_linha1} onChange={v => onChange('endereco_postal_linha1', v)} /></div>
-            <TextField label="Número" value={data.endereco_postal_numero} onChange={v => onChange('endereco_postal_numero', v)} />
+            <div className="md:col-span-2"><TextField label="Logradouro" error={errors?.endereco_postal_linha1} value={data.endereco_postal_linha1} onChange={v => onChange('endereco_postal_linha1', v)} /></div>
+            <TextField label="Número" error={errors?.endereco_postal_numero} value={data.endereco_postal_numero} onChange={v => onChange('endereco_postal_numero', v)} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <TextField label="Cidade" value={data.endereco_postal_cidade} onChange={v => onChange('endereco_postal_cidade', v)} />
-            <TextField label="UF / Estado" value={data.endereco_postal_estado} onChange={v => onChange('endereco_postal_estado', v)} />
+            <TextField label="Cidade" error={errors?.endereco_postal_cidade} value={data.endereco_postal_cidade} onChange={v => onChange('endereco_postal_cidade', v)} />
+            <TextField label="UF / Estado" error={errors?.endereco_postal_estado} value={data.endereco_postal_estado} onChange={v => onChange('endereco_postal_estado', v)} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <TextField label="CEP" value={data.endereco_postal_cep} onChange={v => onChange('endereco_postal_cep', v)} inputMode="numeric" />
-            <CountryField label="País" value={data.endereco_postal_pais || 'Brasil'} onChange={v => onChange('endereco_postal_pais', v)} />
+            <TextField label="CEP" error={errors?.endereco_postal_cep} value={data.endereco_postal_cep} onChange={v => onChange('endereco_postal_cep', v)} inputMode="numeric" />
+            <CountryField label="País" error={errors?.endereco_postal_pais} value={data.endereco_postal_pais || 'Brasil'} onChange={v => onChange('endereco_postal_pais', v)} />
           </div>
         </div>
       )}
@@ -71,12 +71,12 @@ export default function DS160Step6({ data, onChange, errors }: DS160StepProps) {
 
       <YesNo label="Tem email adicional?" value={data.email_adicional ?? false} onChange={v => onChange('email_adicional', v)} />
       {data.email_adicional && (
-        <Repeatable items={data.email_adicional_lista || []} onChange={v => onChange('email_adicional_lista', v)} blank={() => ''} addLabel="Adicionar email"
+        <Repeatable items={data.email_adicional_lista || []} onChange={v => onChange('email_adicional_lista', v)} blank={() => ''} addLabel="Adicionar email" error={errors?.email_adicional_lista}
           renderItem={(it: any, update) => <TextField label="Email" value={it} onChange={v => update(v)} type="email" />} />
       )}
       <YesNo label="Tem telefone adicional?" value={data.telefone_adicional ?? false} onChange={v => onChange('telefone_adicional', v)} />
       {data.telefone_adicional && (
-        <Repeatable items={data.telefone_adicional_lista || []} onChange={v => onChange('telefone_adicional_lista', v)} blank={() => ''} addLabel="Adicionar telefone"
+        <Repeatable items={data.telefone_adicional_lista || []} onChange={v => onChange('telefone_adicional_lista', v)} blank={() => ''} addLabel="Adicionar telefone" error={errors?.telefone_adicional_lista}
           renderItem={(it: any, update) => <TextField label="Telefone" value={it} onChange={v => update(maskPhone(v))} inputMode="numeric" />} />
       )}
 
@@ -92,6 +92,7 @@ export default function DS160Step6({ data, onChange, errors }: DS160StepProps) {
           blank={() => ({ plataforma: '', usuario: '' })}
           addLabel="Adicionar rede social"
           emptyHint="Adicione suas redes sociais (apenas o @/usuário, sem link)."
+          error={errors?.redes_sociais}
           renderItem={(it: any, update) => (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <SelectField label="Plataforma" options={REDES_OPTS} value={it.plataforma} onChange={v => update({ ...it, plataforma: v })} />

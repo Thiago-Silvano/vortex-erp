@@ -46,11 +46,11 @@ export default function DS160Step3({ data, onChange, errors }: DS160StepProps) {
         <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
           <TextField label={pago === 'C' ? 'Nome da empresa' : 'Nome do pagador'} error={errors?.pagador_nome} value={data.pagador_nome} onChange={v => onChange('pagador_nome', v)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TextField label="Telefone" value={data.pagador_telefone} onChange={v => onChange('pagador_telefone', maskPhone(v))} inputMode="numeric" />
+            <TextField label="Telefone" error={errors?.pagador_telefone} value={data.pagador_telefone} onChange={v => onChange('pagador_telefone', maskPhone(v))} inputMode="numeric" />
             {pago === 'O' && <TextField label="Email" value={data.pagador_email} onChange={v => onChange('pagador_email', v)} type="email" />}
           </div>
-          <TextField label="Relação com você" value={data.pagador_relacao} onChange={v => onChange('pagador_relacao', v)} placeholder={pago === 'C' ? 'Ex: Empregador' : 'Ex: Pai, amigo'} />
-          <TextField label="Endereço" value={data.pagador_endereco} onChange={v => onChange('pagador_endereco', v)} />
+          <TextField label="Relação com você" error={errors?.pagador_relacao} value={data.pagador_relacao} onChange={v => onChange('pagador_relacao', v)} placeholder={pago === 'C' ? 'Ex: Empregador' : 'Ex: Pai, amigo'} />
+          <TextField label="Endereço" error={errors?.pagador_endereco} value={data.pagador_endereco} onChange={v => onChange('pagador_endereco', v)} />
         </div>
       )}
     </div>

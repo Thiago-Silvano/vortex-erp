@@ -22,6 +22,7 @@ export default function DS160Step12({ data, onChange, errors }: DS160StepProps) 
           onChange={v => onChange('empregos_anteriores', v)}
           blank={() => ({ empresa: '', endereco: '', telefone: '', cargo: '', supervisor_sobrenome: '', supervisor_nome: '', data_inicio: '', data_fim: '', descricao: '' })}
           addLabel="Adicionar emprego"
+          error={errors?.empregos_anteriores}
           renderItem={(it: any, update) => (
             <div className="space-y-3">
               <TextField label="Empresa" value={it.empresa} onChange={v => update({ ...it, empresa: v })} />
@@ -48,13 +49,14 @@ export default function DS160Step12({ data, onChange, errors }: DS160StepProps) 
       <YesNo label="Você estudou além do ensino fundamental (médio, técnico, superior, pós)?" value={data.educacao_adicional ?? false} onChange={v => { onChange('educacao_adicional', v); if (!v) onChange('instituicoes', []); }} />
       {data.educacao_adicional && (
         <>
-          <TextField label="Nível de educação" value={data.nivel_educacao} onChange={v => onChange('nivel_educacao', v)} placeholder="Ex: Superior, Médio, Pós" />
+          <TextField label="Nível de educação" error={errors?.nivel_educacao} value={data.nivel_educacao} onChange={v => onChange('nivel_educacao', v)} placeholder="Ex: Superior, Médio, Pós" />
           <Repeatable
             label="Instituições de ensino"
             items={data.instituicoes || []}
             onChange={v => onChange('instituicoes', v)}
             blank={() => ({ nome: '', endereco: '', cidade: '', estado: '', estado_na: false, cep: '', cep_na: false, pais: 'Brasil', curso: '', data_inicio: '', data_fim: '' })}
             addLabel="Adicionar instituição"
+            error={errors?.instituicoes}
             renderItem={(it: any, update) => (
               <div className="space-y-3">
                 <TextField label="Nome" value={it.nome} onChange={v => update({ ...it, nome: v })} />

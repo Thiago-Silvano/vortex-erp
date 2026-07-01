@@ -220,7 +220,7 @@ export function NACheckbox({
 }
 
 export function Repeatable<T>({
-  label, help, items, onChange, blank, renderItem, addLabel = 'Adicionar', emptyHint,
+  label, help, items, onChange, blank, renderItem, addLabel = 'Adicionar', emptyHint, error,
 }: {
   label?: ReactNode;
   help?: string;
@@ -230,6 +230,7 @@ export function Repeatable<T>({
   renderItem: (item: T, update: (val: T) => void, index: number) => ReactNode;
   addLabel?: string;
   emptyHint?: string;
+  error?: string;
 }) {
   const list = Array.isArray(items) ? items : [];
   const update = (i: number, val: T) => { const n = [...list]; n[i] = val; onChange(n); };
@@ -262,6 +263,7 @@ export function Repeatable<T>({
       <Button type="button" variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={add}>
         <Plus className="h-4 w-4" /> {addLabel}
       </Button>
+      <FieldError msg={error} />
     </div>
   );
 }
