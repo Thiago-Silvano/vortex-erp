@@ -362,6 +362,23 @@ export function montarDadosDS160(form: any): DadosDS160 {
     }
     delete passthrough[k];
   }
+  // Coerência da etapa 13: se há países visitados listados, a resposta
+  // "viajou a outros países" tem de ser SIM. Também emite a chave que o
+  // robô espera (`visitou_paises`) mantendo `tem_paises_visitados` alinhado.
+  {
+    const paises = Array.isArray(passthrough.paises_visitados)
+      ? passthrough.paises_visitados
+          .map((p: any) => String(p ?? "").trim())
+          .filter(Boolean)
+      : [];
+    const visitou =
+      paises.length > 0 ||
+      passthrough.tem_paises_visitados === true ||
+      passthrough.visitou_paises === true;
+    passthrough.tem_paises_visitados = visitou;
+    passthrough.visitou_paises = visitou;
+    if (!visitou) passthrough.paises_visitados = [];
+  }
   for (const k of DATE_KEYS) {
     if (passthrough[k]) passthrough[k] = dataBR(passthrough[k]);
   }
