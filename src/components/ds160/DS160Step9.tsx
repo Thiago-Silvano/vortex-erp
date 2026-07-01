@@ -23,7 +23,7 @@ export default function DS160Step9({ data, onChange, errors }: DS160StepProps) {
       </div>
       <YesNo label="Seu pai está nos EUA?" value={data.pai_nos_eua ?? false} onChange={v => onChange('pai_nos_eua', v)} />
       {data.pai_nos_eua && (
-        <SelectField label="Status do pai nos EUA" options={STATUS_EUA_OPTIONS} value={data.pai_status_eua} onChange={v => onChange('pai_status_eua', v)} />
+        <SelectField label="Status do pai nos EUA" options={STATUS_EUA_OPTIONS} error={errors?.pai_status_eua} value={data.pai_status_eua} onChange={v => onChange('pai_status_eua', v)} />
       )}
 
       <SubTitle>Mãe</SubTitle>
@@ -37,7 +37,7 @@ export default function DS160Step9({ data, onChange, errors }: DS160StepProps) {
       </div>
       <YesNo label="Sua mãe está nos EUA?" value={data.mae_nos_eua ?? false} onChange={v => onChange('mae_nos_eua', v)} />
       {data.mae_nos_eua && (
-        <SelectField label="Status da mãe nos EUA" options={STATUS_EUA_OPTIONS} value={data.mae_status_eua} onChange={v => onChange('mae_status_eua', v)} />
+        <SelectField label="Status da mãe nos EUA" options={STATUS_EUA_OPTIONS} error={errors?.mae_status_eua} value={data.mae_status_eua} onChange={v => onChange('mae_status_eua', v)} />
       )}
 
       <YesNo label="Você tem outros parentes diretos nos EUA (irmãos, filhos, noivo(a))?" value={data.parentes_nos_eua ?? false} onChange={v => onChange('parentes_nos_eua', v)} />
@@ -48,6 +48,7 @@ export default function DS160Step9({ data, onChange, errors }: DS160StepProps) {
           onChange={v => onChange('parentes_lista', v)}
           blank={() => ({ sobrenome: '', nome: '', relacao: '', status: '' })}
           addLabel="Adicionar parente"
+          error={errors?.parentes_lista}
           renderItem={(it: any, update) => (
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
