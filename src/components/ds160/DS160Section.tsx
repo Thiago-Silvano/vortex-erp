@@ -431,9 +431,6 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     setFillingClientId(null);
   };
 
-  // Check for newly submitted forms (notification)
-  const submittedNotDismissed = forms.filter(f => f.status === 'submitted' && !dismissed.has(f.id));
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -447,28 +444,6 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
         </Button>
       </div>
 
-      {/* Floating notification for submitted forms */}
-      {submittedNotDismissed.map(f => (
-        <div key={f.id} className="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-4 flex items-center gap-4 animate-in fade-in shadow-sm">
-          <Bell className="h-7 w-7 text-emerald-600 shrink-0" />
-          <div className="flex-1">
-            <p className="text-base font-bold text-emerald-800">Formulário DS-160 preenchido!</p>
-            <p className="text-sm text-emerald-600">Enviado em {formatDate(f.submitted_at)}</p>
-          </div>
-          <Button size="sm" variant="outline" onClick={() => openDuties(f)} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
-            <Briefcase className="h-4 w-4" />
-            Adicionar Duties
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => handleFillClient(f)} disabled={fillingClientId === f.id} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
-            {fillingClientId === f.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-            Adicionar dados ao cadastro
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setDismissed(prev => new Set(prev).add(f.id))} className="text-emerald-600 font-medium">
-            Fechar
-          </Button>
-        </div>
-      ))}
-
       {loading ? (
         <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
       ) : forms.length === 0 ? (
@@ -477,8 +452,29 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
         <div className="space-y-3">
           {forms.map(form => {
             const st = statusLabel(form.status);
+            const showBanner = form.status === 'submitted' && !dismissed.has(form.id);
             return (
               <div key={form.id} className="border rounded-lg p-3 space-y-2">
+                {showBanner && (
+                  <div className="-mx-3 -mt-3 mb-1 bg-emerald-50 border-b-2 border-emerald-300 rounded-t-lg p-3 flex flex-wrap items-center gap-3 animate-in fade-in">
+                    <Bell className="h-6 w-6 text-emerald-600 shrink-0" />
+                    <div className="flex-1 min-w-[180px]">
+                      <p className="text-sm font-bold text-emerald-800">Formulário DS-160 preenchido!</p>
+                      <p className="text-xs text-emerald-600">Enviado em {formatDate(form.submitted_at)}</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => openDuties(form)} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
+                      <Briefcase className="h-4 w-4" />
+                      Adicionar Duties
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleFillClient(form)} disabled={fillingClientId === form.id} className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-100">
+                      {fillingClientId === form.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                      Adicionar dados ao cadastro
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setDismissed(prev => new Set(prev).add(form.id))} className="text-emerald-600 font-medium">
+                      Fechar
+                    </Button>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <Badge variant={st.variant} className={form.status === 'submitted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : form.status === 'in_progress' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}>
                     {st.label}
