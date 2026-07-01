@@ -24,7 +24,7 @@ export default function DS160Step2({ data, onChange, errors }: DS160StepProps) {
           <CountryField label="País da outra nacionalidade" error={errors?.outra_nacionalidade_pais} value={data.outra_nacionalidade_pais} onChange={v => onChange('outra_nacionalidade_pais', v)} />
           <YesNo label="Tem passaporte desse país?" value={data.outra_nacionalidade_tem_passaporte ?? false} onChange={v => onChange('outra_nacionalidade_tem_passaporte', v)} />
           {data.outra_nacionalidade_tem_passaporte && (
-            <TextField label="Número do passaporte dessa nacionalidade" value={data.outra_nacionalidade_passaporte} onChange={v => onChange('outra_nacionalidade_passaporte', v)} />
+            <TextField label="Número do passaporte dessa nacionalidade" error={errors?.outra_nacionalidade_passaporte} value={data.outra_nacionalidade_passaporte} onChange={v => onChange('outra_nacionalidade_passaporte', v)} />
           )}
         </div>
       )}
@@ -40,12 +40,12 @@ export default function DS160Step2({ data, onChange, errors }: DS160StepProps) {
       </div>
 
       <div>
-        <TextField label="Número de Seguro Social dos EUA (SSN)" value={data.ssn_eua} onChange={v => onChange('ssn_eua', v)} disabled={data.ssn_eua_na ?? true} />
+        <TextField label="Número de Seguro Social dos EUA (SSN)" error={errors?.ssn_eua} value={data.ssn_eua} onChange={v => onChange('ssn_eua', v)} disabled={data.ssn_eua_na ?? true} />
         <NACheckbox checked={data.ssn_eua_na ?? true} onChange={c => { onChange('ssn_eua_na', c); if (c) onChange('ssn_eua', ''); }} />
       </div>
 
       <div>
-        <TextField label="Número de contribuinte fiscal dos EUA (Tax ID)" value={data.tax_id_eua} onChange={v => onChange('tax_id_eua', v)} disabled={data.tax_id_eua_na ?? true} />
+        <TextField label="Número de contribuinte fiscal dos EUA (Tax ID)" error={errors?.tax_id_eua} value={data.tax_id_eua} onChange={v => onChange('tax_id_eua', v)} disabled={data.tax_id_eua_na ?? true} />
         <NACheckbox checked={data.tax_id_eua_na ?? true} onChange={c => { onChange('tax_id_eua_na', c); if (c) onChange('tax_id_eua', ''); }} />
       </div>
     </div>
