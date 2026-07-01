@@ -390,20 +390,16 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
     setDutiesPdfLoading(false);
   };
 
-  // Preenche apenas os campos vazios do cadastro do cliente com os dados do formulário.
-  const handleFillClient = async (form: DS160Form) => {
-    setFillingClientId(form.id);
+  // Preenche automaticamente apenas os campos vazios do cadastro do cliente
+  // com os dados de um formulário DS-160 preenchido. Silencioso por padrão.
+  const autoFillClient = async (form: DS160Form) => {
     try {
       const { data: client, error: fetchErr } = await supabase
         .from('clients')
         .select('*')
         .eq('id', clientId)
         .single();
-      if (fetchErr || !client) {
-        toast.error('Erro ao carregar cadastro do cliente');
-        setFillingClientId(null);
-        return;
-      }
+      if (fetchErr || !client) return;
       const mapped = mapFormToClient(form.form_data || {});
       const updates: Record<string, any> = {};
       for (const [key, value] of Object.entries(mapped)) {
@@ -413,22 +409,14 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
         if (isEmpty) updates[key] = value;
       }
       const count = Object.keys(updates).length;
-      if (count === 0) {
-        toast.info('Nenhum campo vazio para preencher — cadastro já está completo.');
-        setFillingClientId(null);
-        return;
-      }
+      if (count === 0) return;
       const { error: updErr } = await supabase.from('clients').update(updates as any).eq('id', clientId);
-      if (updErr) {
-        toast.error('Erro ao atualizar cadastro');
-      } else {
-        onClientDataFilled?.(updates);
-        toast.success(`${count} campo(s) preenchido(s) no cadastro do cliente.`);
-      }
+      if (updErr) return;
+      onClientDataFilled?.(updates);
+      toast.success(`${count} campo(s) preenchido(s) automaticamente no cadastro do cliente.`);
     } catch {
-      toast.error('Erro ao preencher cadastro');
+      /* silencioso */
     }
-    setFillingClientId(null);
   };
 
   return (
