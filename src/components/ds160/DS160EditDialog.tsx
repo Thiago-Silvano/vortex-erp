@@ -38,9 +38,13 @@ export default function DS160EditDialog({ formId, initialData, open, onOpenChang
 
   const handleSave = async () => {
     setSaving(true);
+    // Remove o json_override antigo: as respostas editadas passam a ser a
+    // fonte da verdade (senão o override travado continuaria sendo enviado
+    // ao robô e exibido, ignorando as edições).
+    const { json_override, ...cleaned } = formData as Record<string, any>;
     const { error } = await supabase
       .from('ds160_forms')
-      .update({ form_data: formData as any, last_saved_at: new Date().toISOString() } as any)
+      .update({ form_data: cleaned as any, last_saved_at: new Date().toISOString() } as any)
       .eq('id', formId);
     setSaving(false);
     if (error) {
@@ -48,7 +52,7 @@ export default function DS160EditDialog({ formId, initialData, open, onOpenChang
       return;
     }
     toast.success('Respostas atualizadas com sucesso!');
-    onSaved(formData);
+    onSaved(cleaned);
     onOpenChange(false);
   };
 
