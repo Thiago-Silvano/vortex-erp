@@ -733,7 +733,18 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
       {editForm && (
         <DS160EditDialog
           formId={editForm.id}
-          initialData={editForm.form_data || {}}
+          initialData={(() => {
+            const fd = editForm.form_data || {};
+            const override = (fd as any)?.json_override;
+            // Se existe um JSON substituído, ele é a fonte da verdade: mescla
+            // seus valores nos campos (datas normalizadas) para que o editor
+            // exiba exatamente o que será enviado ao robô.
+            if (override && typeof override === 'object' && !Array.isArray(override)) {
+              const { json_override, ...base } = fd as Record<string, any>;
+              return { ...base, ...normalizeDatasParaForm(override) };
+            }
+            return fd;
+          })()}
           open={!!editForm}
           onOpenChange={(o) => !o && setEditForm(null)}
           onSaved={(fd) => {
