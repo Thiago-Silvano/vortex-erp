@@ -68,6 +68,7 @@ export default function ClientsPage() {
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
   const filesRef = useRef<ClientFilesSectionRef>(null);
+  const openedClientSnapshotRef = useRef<Record<string, any> | null>(null);
   const [returnTo, setReturnTo] = useState<{ path: string; state?: any } | null>(null);
   const [docImportOpen, setDocImportOpen] = useState(false);
   const [docType, setDocType] = useState<'identidade' | 'passaporte' | 'cnh'>('identidade');
@@ -167,7 +168,26 @@ export default function ClientsPage() {
     }
 
     if (editingId) {
-      const { error } = await supabase.from('clients').update(formToSave).eq('id', editingId);
+      const { data: currentClient } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', editingId)
+        .single();
+
+      const safeFormToSave = { ...formToSave } as Record<string, any>;
+      if (currentClient) {
+        Object.keys(safeFormToSave).forEach((key) => {
+          const nextValue = safeFormToSave[key];
+          const currentValue = (currentClient as any)[key];
+          const openedValue = openedClientSnapshotRef.current?.[key];
+          const nextIsEmpty = nextValue == null || (typeof nextValue === 'string' && nextValue.trim() === '');
+          const currentHasValue = currentValue != null && !(typeof currentValue === 'string' && currentValue.trim() === '');
+          const openedWasEmpty = openedValue == null || (typeof openedValue === 'string' && openedValue.trim() === '');
+          if (nextIsEmpty && openedWasEmpty && currentHasValue) safeFormToSave[key] = currentValue;
+        });
+      }
+
+      const { error } = await supabase.from('clients').update(safeFormToSave).eq('id', editingId);
       if (error) { toast.error('Erro ao atualizar'); return; }
       toast.success('Cliente atualizado!');
     } else {
@@ -211,6 +231,7 @@ export default function ClientsPage() {
       toast.success('Cliente cadastrado!');
     }
     filesRef.current?.clearPending();
+    openedClientSnapshotRef.current = null;
     const shouldReturn = returnTo;
     setDialogOpen(false);
     setEditingId(null);
@@ -223,12 +244,25 @@ export default function ClientsPage() {
     }
   };
 
-  const handleEdit = (c: Client) => {
+  const handleEdit = async (c: Client) => {
     setEditingId(c.id);
     const { id, ...rest } = c;
+    openedClientSnapshotRef.current = rest;
     setForm(rest);
     setEmailError('');
     setDialogOpen(true);
+
+    const { data: freshClient } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', c.id)
+      .single();
+    if (freshClient) {
+      const { id: freshId, ...freshRest } = freshClient as Client;
+      openedClientSnapshotRef.current = freshRest;
+      setForm(freshRest);
+      setClients(prev => prev.map(item => item.id === freshId ? freshClient as Client : item));
+    }
   };
 
   const handleDelete = async () => {
@@ -241,6 +275,7 @@ export default function ClientsPage() {
 
   const openNew = () => {
     setEditingId(null);
+    openedClientSnapshotRef.current = null;
     setForm(emptyClient());
     setEmailError('');
     setIsDependent(false);

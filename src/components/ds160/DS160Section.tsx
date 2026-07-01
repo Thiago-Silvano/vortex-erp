@@ -428,6 +428,15 @@ export default function DS160Section({ clientId, clientName, clientEmail, isMast
         .single();
       if (fetchErr || !client) return;
       const mapped = mapFormToClient(form.form_data || {});
+      const existingClientValues: Record<string, any> = {};
+      Object.keys(mapped).forEach((key) => {
+        const current = (client as any)[key];
+        const currentHasValue = current != null && !(typeof current === 'string' && current.trim() === '');
+        if (currentHasValue) existingClientValues[key] = current;
+      });
+      if (Object.keys(existingClientValues).length > 0) {
+        onClientDataFilled?.(existingClientValues);
+      }
       const updates: Record<string, any> = {};
       for (const [key, value] of Object.entries(mapped)) {
         if (!value) continue;

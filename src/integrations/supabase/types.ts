@@ -5910,6 +5910,15 @@ export type Database = {
       }
     }
     Functions: {
+      autofill_client_from_ds160: {
+        Args: { p_client_id: string; p_form_data: Json }
+        Returns: undefined
+      }
+      ds160_date_value: { Args: { p_value: string }; Returns: string }
+      ds160_text_value: {
+        Args: { p_data: Json; p_keys: string[] }
+        Returns: string
+      }
       finalize_bundle_signatures: {
         Args: {
           p_device_info: string
