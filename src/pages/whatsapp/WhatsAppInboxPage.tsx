@@ -61,6 +61,11 @@ export default function WhatsAppInboxPage() {
   const { activeCompany } = useCompany();
   const empresaId = activeCompany?.id || '';
   const navigate = useNavigate();
+  const location = useLocation();
+  const handleBack = () => {
+    const from = (location.state as any)?.from;
+    navigate(from || '/dashboard');
+  };
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
