@@ -92,6 +92,7 @@ import WhatsAppLabelsPage from "./pages/whatsapp/WhatsAppLabelsPage";
 import WhatsAppQuickRepliesPage from "./pages/whatsapp/WhatsAppQuickRepliesPage";
 import WhatsAppSettingsPage from "./pages/whatsapp/WhatsAppSettingsPage";
 import WhatsAppNotificationListener from "./components/WhatsAppNotificationListener";
+import WhatsAppFab from "./components/WhatsAppFab";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,7 @@ const App = () => (
         <ColorModeProvider>
         <ThemeProvider>
         <WhatsAppNotificationListener />
+        <WhatsAppFab />
         <Routes>
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
