@@ -1731,6 +1731,7 @@ export default function WhatsAppInboxPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* New Message Dialog */}
