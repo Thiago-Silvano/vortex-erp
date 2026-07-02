@@ -1023,7 +1023,19 @@ export default function WhatsAppInboxPage() {
 
   return (
     <AppLayout>
-      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden" style={{ backgroundColor: '#eae6df' }}>
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
+        {/* Barra Voltar destacada */}
+        <div className="shrink-0 flex items-center h-12 px-3 border-b" style={{ backgroundColor: '#f0f2f5', borderColor: '#e9edef' }}>
+          <Button
+            onClick={handleBack}
+            size="lg"
+            className="gap-2 h-9 px-5 text-sm font-semibold text-white"
+            style={{ backgroundColor: '#25D366' }}
+          >
+            <ArrowLeft className="h-5 w-5" /> Voltar
+          </Button>
+        </div>
+        <div className="flex flex-1 overflow-hidden" style={{ backgroundColor: '#eae6df' }}>
         {/* ==================== LEFT PANEL ==================== */}
         <div className="w-[400px] flex flex-col shrink-0 border-r" style={{ backgroundColor: '#ffffff', borderColor: '#e9edef' }}>
           {/* Header */}
