@@ -70,13 +70,13 @@ export default function WhatsAppFab() {
       onClick={handleClick}
       aria-label="Abrir WhatsApp"
       title="Abrir WhatsApp"
-      className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform duration-200 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+      className="fixed bottom-6 right-6 z-40 flex h-[84px] w-[84px] items-center justify-center rounded-full shadow-lg transition-transform duration-200 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
       style={{ backgroundColor: '#25D366' }}
     >
       {/* WhatsApp glyph */}
       <svg
         viewBox="0 0 32 32"
-        className="h-7 w-7"
+        className="h-[42px] w-[42px]"
         fill="#ffffff"
         aria-hidden="true"
       >
@@ -84,7 +84,7 @@ export default function WhatsAppFab() {
       </svg>
 
       {unread > 0 && (
-        <span className="absolute -top-1 -right-1 flex min-w-[20px] h-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow">
+        <span className="absolute -top-1 -right-1 flex min-w-[30px] h-[30px] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white shadow">
           {badgeLabel}
         </span>
       )}
